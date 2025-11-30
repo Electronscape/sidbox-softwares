@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 6.10.0
+** Created by: Qt User Interface Compiler version 6.10.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -194,6 +194,36 @@ public:
         cmdOpenFTP->setObjectName("cmdOpenFTP");
         cmdOpenFTP->setMinimumSize(QSize(50, 0));
         cmdOpenFTP->setMaximumSize(QSize(50, 16777215));
+        QPalette palette2;
+        QBrush brush5(QColor(0, 85, 127, 255));
+        brush5.setStyle(Qt::BrushStyle::SolidPattern);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush5);
+        QBrush brush6(QColor(215, 235, 255, 255));
+        brush6.setStyle(Qt::BrushStyle::SolidPattern);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush6);
+        QBrush brush7(QColor(0, 170, 255, 255));
+        brush7.setStyle(Qt::BrushStyle::SolidPattern);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush7);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush1);
+        QBrush brush8(QColor(85, 255, 255, 255));
+        brush8.setStyle(Qt::BrushStyle::SolidPattern);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush8);
+#endif
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush5);
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush6);
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush7);
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush1);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush8);
+#endif
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Button, brush5);
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush6);
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Midlight, brush7);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush8);
+#endif
+        cmdOpenFTP->setPalette(palette2);
 
         horizontalLayout_2->addWidget(cmdOpenFTP);
 
@@ -201,6 +231,34 @@ public:
         cmdOpenDirectory->setObjectName("cmdOpenDirectory");
         cmdOpenDirectory->setMinimumSize(QSize(70, 0));
         cmdOpenDirectory->setMaximumSize(QSize(70, 16777215));
+        QPalette palette3;
+        QBrush brush9(QColor(0, 85, 0, 255));
+        brush9.setStyle(Qt::BrushStyle::SolidPattern);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush9);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush6);
+        QBrush brush10(QColor(85, 170, 127, 255));
+        brush10.setStyle(Qt::BrushStyle::SolidPattern);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush10);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush10);
+        QBrush brush11(QColor(0, 255, 0, 255));
+        brush11.setStyle(Qt::BrushStyle::SolidPattern);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush11);
+#endif
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush9);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush6);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush10);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush10);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush11);
+#endif
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Button, brush9);
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush6);
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Midlight, brush10);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush11);
+#endif
+        cmdOpenDirectory->setPalette(palette3);
 
         horizontalLayout_2->addWidget(cmdOpenDirectory);
 

@@ -289,44 +289,27 @@ public:
 ""));
         cmdFiltersetDefaults = new QPushButton(groupBox_2);
         cmdFiltersetDefaults->setObjectName("cmdFiltersetDefaults");
-        cmdFiltersetDefaults->setGeometry(QRect(10, 60, 86, 26));
-        cmdFiltersetChipTunes = new QPushButton(groupBox_2);
-        cmdFiltersetChipTunes->setObjectName("cmdFiltersetChipTunes");
-        cmdFiltersetChipTunes->setGeometry(QRect(100, 60, 86, 26));
-        cmdFiltersetAppsAndDatas = new QPushButton(groupBox_2);
-        cmdFiltersetAppsAndDatas->setObjectName("cmdFiltersetAppsAndDatas");
-        cmdFiltersetAppsAndDatas->setGeometry(QRect(190, 60, 86, 26));
-        cmdFiltersetNone = new QPushButton(groupBox_2);
-        cmdFiltersetNone->setObjectName("cmdFiltersetNone");
-        cmdFiltersetNone->setGeometry(QRect(280, 60, 86, 26));
-        cmdOpenFTP = new QPushButton(groupBox_2);
-        cmdOpenFTP->setObjectName("cmdOpenFTP");
-        cmdOpenFTP->setGeometry(QRect(400, 60, 50, 26));
-        cmdOpenFTP->setMinimumSize(QSize(50, 0));
-        cmdOpenFTP->setMaximumSize(QSize(50, 16777215));
-        cmdCloseMe = new QPushButton(groupBox_2);
-        cmdCloseMe->setObjectName("cmdCloseMe");
-        cmdCloseMe->setGeometry(QRect(460, 60, 71, 26));
+        cmdFiltersetDefaults->setGeometry(QRect(10, 60, 70, 26));
         QPalette palette3;
-        QBrush brush7(QColor(117, 0, 0, 255));
+        QBrush brush7(QColor(0, 85, 0, 255));
         brush7.setStyle(Qt::BrushStyle::SolidPattern);
         palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush7);
         QBrush brush8(QColor(215, 235, 255, 255));
         brush8.setStyle(Qt::BrushStyle::SolidPattern);
         palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush8);
-        QBrush brush9(QColor(236, 56, 56, 255));
+        QBrush brush9(QColor(85, 170, 127, 255));
         brush9.setStyle(Qt::BrushStyle::SolidPattern);
         palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush9);
-        QBrush brush10(QColor(255, 0, 4, 255));
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush9);
+        QBrush brush10(QColor(0, 255, 0, 255));
         brush10.setStyle(Qt::BrushStyle::SolidPattern);
-        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush10);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush10);
 #endif
         palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush7);
         palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush8);
         palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush9);
-        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush10);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush9);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush10);
 #endif
@@ -336,7 +319,78 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush10);
 #endif
-        cmdCloseMe->setPalette(palette3);
+        cmdFiltersetDefaults->setPalette(palette3);
+        cmdFiltersetChipTunes = new QPushButton(groupBox_2);
+        cmdFiltersetChipTunes->setObjectName("cmdFiltersetChipTunes");
+        cmdFiltersetChipTunes->setGeometry(QRect(82, 60, 80, 26));
+        cmdFiltersetAppsAndDatas = new QPushButton(groupBox_2);
+        cmdFiltersetAppsAndDatas->setObjectName("cmdFiltersetAppsAndDatas");
+        cmdFiltersetAppsAndDatas->setGeometry(QRect(164, 60, 50, 26));
+        cmdFiltersetNone = new QPushButton(groupBox_2);
+        cmdFiltersetNone->setObjectName("cmdFiltersetNone");
+        cmdFiltersetNone->setGeometry(QRect(216, 60, 70, 26));
+        cmdOpenFTP = new QPushButton(groupBox_2);
+        cmdOpenFTP->setObjectName("cmdOpenFTP");
+        cmdOpenFTP->setGeometry(QRect(400, 60, 50, 26));
+        cmdOpenFTP->setMinimumSize(QSize(50, 0));
+        cmdOpenFTP->setMaximumSize(QSize(50, 16777215));
+        QPalette palette4;
+        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush4);
+        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush8);
+        QBrush brush11(QColor(0, 170, 255, 255));
+        brush11.setStyle(Qt::BrushStyle::SolidPattern);
+        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush11);
+        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush5);
+        QBrush brush12(QColor(85, 255, 255, 255));
+        brush12.setStyle(Qt::BrushStyle::SolidPattern);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush12);
+#endif
+        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush4);
+        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush8);
+        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush11);
+        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush5);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush12);
+#endif
+        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Button, brush4);
+        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush8);
+        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Midlight, brush11);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush12);
+#endif
+        cmdOpenFTP->setPalette(palette4);
+        cmdCloseMe = new QPushButton(groupBox_2);
+        cmdCloseMe->setObjectName("cmdCloseMe");
+        cmdCloseMe->setGeometry(QRect(460, 60, 71, 26));
+        QPalette palette5;
+        QBrush brush13(QColor(117, 0, 0, 255));
+        brush13.setStyle(Qt::BrushStyle::SolidPattern);
+        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush13);
+        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush8);
+        QBrush brush14(QColor(236, 56, 56, 255));
+        brush14.setStyle(Qt::BrushStyle::SolidPattern);
+        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush14);
+        QBrush brush15(QColor(255, 0, 4, 255));
+        brush15.setStyle(Qt::BrushStyle::SolidPattern);
+        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush15);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush15);
+#endif
+        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush13);
+        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush8);
+        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush14);
+        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush15);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush15);
+#endif
+        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Button, brush13);
+        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush8);
+        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Midlight, brush14);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush15);
+#endif
+        cmdCloseMe->setPalette(palette5);
         line = new QFrame(centralwidget);
         line->setObjectName("line");
         line->setGeometry(QRect(550, -100, 20, 761));
@@ -657,25 +711,25 @@ public:
         txtKFMProgram = new QPlainTextEdit(groupBox_8);
         txtKFMProgram->setObjectName("txtKFMProgram");
         txtKFMProgram->setGeometry(QRect(10, 31, 131, 250));
-        QPalette palette4;
-        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush1);
-        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Dark, brush2);
-        QBrush brush11(QColor(255, 255, 0, 255));
-        brush11.setStyle(Qt::BrushStyle::SolidPattern);
-        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Text, brush11);
-        QBrush brush12(QColor(80, 80, 80, 255));
-        brush12.setStyle(Qt::BrushStyle::SolidPattern);
-        palette4.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Base, brush12);
-        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush1);
-        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Dark, brush2);
-        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Text, brush11);
-        palette4.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Base, brush12);
-        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::WindowText, brush2);
-        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush1);
-        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Dark, brush2);
-        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Text, brush2);
-        palette4.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::ButtonText, brush2);
-        txtKFMProgram->setPalette(palette4);
+        QPalette palette6;
+        palette6.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush1);
+        palette6.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Dark, brush2);
+        QBrush brush16(QColor(255, 255, 0, 255));
+        brush16.setStyle(Qt::BrushStyle::SolidPattern);
+        palette6.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Text, brush16);
+        QBrush brush17(QColor(80, 80, 80, 255));
+        brush17.setStyle(Qt::BrushStyle::SolidPattern);
+        palette6.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Base, brush17);
+        palette6.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush1);
+        palette6.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Dark, brush2);
+        palette6.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Text, brush16);
+        palette6.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Base, brush17);
+        palette6.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::WindowText, brush2);
+        palette6.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush1);
+        palette6.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Dark, brush2);
+        palette6.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Text, brush2);
+        palette6.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::ButtonText, brush2);
+        txtKFMProgram->setPalette(palette6);
         QFont font2;
         font2.setFamilies({QString::fromUtf8("Consolas")});
         font2.setPointSize(9);
@@ -707,21 +761,21 @@ public:
         txtKFMBytecode = new QPlainTextEdit(groupBox_8);
         txtKFMBytecode->setObjectName("txtKFMBytecode");
         txtKFMBytecode->setGeometry(QRect(150, 31, 71, 250));
-        QPalette palette5;
-        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush1);
-        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Dark, brush2);
-        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Text, brush11);
-        palette5.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Base, brush12);
-        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush1);
-        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Dark, brush2);
-        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Text, brush11);
-        palette5.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Base, brush12);
-        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::WindowText, brush2);
-        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush1);
-        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Dark, brush2);
-        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Text, brush2);
-        palette5.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::ButtonText, brush2);
-        txtKFMBytecode->setPalette(palette5);
+        QPalette palette7;
+        palette7.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush1);
+        palette7.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Dark, brush2);
+        palette7.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Text, brush16);
+        palette7.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Base, brush17);
+        palette7.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush1);
+        palette7.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Dark, brush2);
+        palette7.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Text, brush16);
+        palette7.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Base, brush17);
+        palette7.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::WindowText, brush2);
+        palette7.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush1);
+        palette7.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Dark, brush2);
+        palette7.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Text, brush2);
+        palette7.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::ButtonText, brush2);
+        txtKFMBytecode->setPalette(palette7);
         txtKFMBytecode->setFont(font2);
         txtKFMBytecode->setFrameShape(QFrame::Shape::Panel);
         txtKFMBytecode->setFrameShadow(QFrame::Shadow::Sunken);
