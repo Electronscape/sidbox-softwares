@@ -34,6 +34,14 @@
      <height>320</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <stylestrategy>NoAntialias</stylestrategy>
+    </font>
+   </property>
+   <property name="cursor" stdset="0">
+    <cursorShape>CrossCursor</cursorShape>
+   </property>
   </widget>
   <widget class="QPushButton" name="cmdClose">
    <property name="geometry">

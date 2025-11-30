@@ -34,21 +34,6 @@ Dialog::Dialog(QWidget *parent)
     });
 
 
-
-
-
-    sbgfx_fill(9);
-
-    uint8_t colind = 0;
-    uint16_t tbx = 0, tby = 0;
-    for(tby = 0; tby < 16; tby++){
-        for(tbx = 0; tbx < 16; tbx++){
-            sbgfx_drawbox(1+tbx * 20, 1+tby * 20, 18, 18, colind);
-            colind++;
-        }
-    }
-
-
 }
 
 Dialog::~Dialog()
@@ -69,7 +54,7 @@ void Dialog::updateScreen()
 
 
     offsetty++;
-    if(offsetty>200)
+    if(offsetty>160)
         offsetty=0;
 
     uint8_t colind = 0;
