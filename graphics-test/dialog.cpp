@@ -56,12 +56,17 @@ Dialog::~Dialog()
     delete ui;
 }
 
+char strText[128];
+
 
 void Dialog::updateScreen()
 {
     uint8_t *v = VRAM;
 
-    sbgfx_fill(9);
+    sbgfx_fill(0);
+
+    dopalletecycle();
+
 
     offsetty++;
     if(offsetty>200)
@@ -76,6 +81,15 @@ void Dialog::updateScreen()
         }
     }
 
+    gfx_setcolour(2);
+
+    //strcpy(strText, "hello world testings!");
+    sprintf(strText, "Offsets: x=%lu", offsetty);
+    draw_text816(5, 5, (const unsigned char *)strText);
+
+
+
+    // ------- TRANSFER VRAM to IMAGE output ----------- //
     for (int y = 0; y < SCR_HEIGHT; y++)
     {
         QRgb *scan = reinterpret_cast<QRgb*>(screenImage.scanLine(y));
@@ -84,7 +98,5 @@ void Dialog::updateScreen()
             scan[x] = CRAM[*v++]; // look up RGB from color index
         }
     }
-
-
     pixmapItem->setPixmap(QPixmap::fromImage(screenImage));
 }

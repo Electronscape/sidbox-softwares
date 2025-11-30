@@ -13,6 +13,9 @@ qt_add_executable(graphics-test
     dialog.ui
     graphics.cpp
     sbapi_graphics.h
+    font.h
+    font.cpp
+
 )
 
 target_link_libraries(graphics-test
