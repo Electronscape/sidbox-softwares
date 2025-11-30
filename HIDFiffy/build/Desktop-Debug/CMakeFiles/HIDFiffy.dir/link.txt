@@ -1,0 +1,1 @@
+/usr/bin/g++ -DQT_QML_DEBUG -g -Wl,--dependency-file=CMakeFiles/HIDFiffy.dir/link.d CMakeFiles/HIDFiffy.dir/HIDFiffy_autogen/mocs_compilation.cpp.o CMakeFiles/HIDFiffy.dir/main.cpp.o -o HIDFiffy  -Wl,-rpath,:::::::::::::::::::::::: /usr/lib64/libQt6Widgets.so.6.10.0 /usr/lib64/libQt6Gui.so.6.10.0 /usr/lib64/libGLX.so /usr/lib64/libOpenGL.so /usr/lib64/libQt6Core.so.6.10.0

@@ -1,0 +1,1 @@
+/usr/bin/g++ -DQT_QML_DEBUG -g -Wl,--dependency-file=CMakeFiles/asound-test.dir/link.d "CMakeFiles/asound-test.dir/main.cpp.o" -o asound-test  /usr/lib64/libasound.so

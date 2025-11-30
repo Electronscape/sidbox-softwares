@@ -1,0 +1,34 @@
+# depslib dependency file v1.0
+1752190174 source:w:\work\programming\gcc\sidbox kb_hid to serial\packet2\main.c
+	<stdio.h>
+	<stdint.h>
+	<ctype.h>
+	<conio.h>
+	<stdbool.h>
+	<windows.h>
+	<winuser.h>
+
+1752190174 >
+
+1750102084 source:w:\work\programming\gcc\sidbox kb_hid to serial\packet2\icon.rc
+
+1763147524 source:/mnt/LinuxDatas/work/sidbox-softwares/packet2/main.c
+	<stdio.h>
+	<stdint.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<stdbool.h>
+	<unistd.h>
+	<fcntl.h>
+	<termios.h>
+	<sys/ioctl.h>
+	<sys/select.h>
+	<poll.h>
+	<signal.h>
+	<errno.h>
+	<linux/input.h>
+	<linux/input-event-codes.h>
+	<termios.h>
+	<unistd.h>
+

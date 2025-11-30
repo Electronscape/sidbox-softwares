@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-43a0bd92afacd45eecb7.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "hidjibjab",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "hidjibjab::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-hidjibjab-Debug-cd685643e2deca271221.json",
+					"name" : "hidjibjab",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "hidjibjab_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-hidjibjab_autogen-Debug-a46e8fd3b89e28cbffe0.json",
+					"name" : "hidjibjab_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "hidjibjab_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-hidjibjab_autogen_timestamp_deps-Debug-f35f3a3c5f07f084b201.json",
+					"name" : "hidjibjab_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/mnt/LinuxDatas/work/sidbox-softwares/hidjibjab/build/Desktop-Debug",
+		"source" : "/mnt/LinuxDatas/work/sidbox-softwares/hidjibjab"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

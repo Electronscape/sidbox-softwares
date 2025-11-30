@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_SidboxTerminal_FILE /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/SidboxTerminal)
+set(__QT_DEPLOY_TARGET_SidboxTerminal_TYPE EXECUTABLE)

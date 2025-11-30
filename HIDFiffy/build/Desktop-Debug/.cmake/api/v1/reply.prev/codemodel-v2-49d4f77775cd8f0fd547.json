@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-c3f80459c1a72941e941.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "HIDFiffy",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "HIDFiffy::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-HIDFiffy-Debug-d20e92aca73c37f3206b.json",
+					"name" : "HIDFiffy",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "HIDFiffy_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-HIDFiffy_autogen-Debug-0872ce7ca279d4abd561.json",
+					"name" : "HIDFiffy_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "HIDFiffy_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-HIDFiffy_autogen_timestamp_deps-Debug-bbc29d78f6005381e536.json",
+					"name" : "HIDFiffy_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/mnt/LinuxDatas/work/sidbox-softwares/HIDFiffy/build/Desktop-Debug",
+		"source" : "/mnt/LinuxDatas/work/sidbox-softwares/HIDFiffy"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

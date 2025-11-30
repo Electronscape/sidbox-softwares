@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-84e681c6fb8a6ea4c4d6.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SidboxTerminal",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "SidboxTerminal::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SidboxTerminal-Release-2fd97a65acb756e494c4.json",
+					"name" : "SidboxTerminal",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SidboxTerminal_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SidboxTerminal_autogen-Release-04f4dc9e0c2501afcc31.json",
+					"name" : "SidboxTerminal_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SidboxTerminal_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SidboxTerminal_autogen_timestamp_deps-Release-f3318e9860d4f696fdde.json",
+					"name" : "SidboxTerminal_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release",
+		"source" : "/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

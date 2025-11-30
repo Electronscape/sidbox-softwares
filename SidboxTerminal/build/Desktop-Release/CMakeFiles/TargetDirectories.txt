@@ -1,0 +1,9 @@
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/SidboxTerminal.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/edit_cache.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/rebuild_cache.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/list_install_components.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/install.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/install/local.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/install/strip.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/SidboxTerminal_autogen_timestamp_deps.dir
+/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/CMakeFiles/SidboxTerminal_autogen.dir

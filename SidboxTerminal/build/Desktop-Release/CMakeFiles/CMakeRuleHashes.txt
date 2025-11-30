@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+aed3f08032263cf3797b9a459cd34230 CMakeFiles/SidboxTerminal_autogen
+4c66d370779c6d7c0f4b7d8b13ef3ae7 SidboxTerminal_autogen/timestamp
+67e123e66b1aba048db44417a44cc93f qrc_resources.cpp

@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+7b3066a2f1020efdea2ced467cd19f45 CMakeFiles/HIDFiffy_autogen
+31164d1d19499dc9d9c7098df34e03f8 HIDFiffy_autogen/timestamp
