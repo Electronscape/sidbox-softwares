@@ -13,6 +13,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+
+#ifdef Q_OS_LINUX
     QString platform = QGuiApplication::platformName();
     printf("Current platform:");;
     printf(platform.toUtf8());
@@ -46,8 +48,8 @@ int main(int argc, char *argv[])
             delete p;
         }
     } else
-        printf("already bubbling with fanny\n");
-
+        printf("already bubbling !!!\n");
+#endif
 
     MainWindow w;
 
