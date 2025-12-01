@@ -11,7 +11,7 @@ SidboxTerminal: \
   CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6SerialPort.so.6.10.1 \
-  /tmp/ccrmvHtG.o \
+  /tmp/cc3pdS7y.o \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
   /usr/lib64/libOpenGL.so \
@@ -102,7 +102,7 @@ CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o:
 
 /usr/lib64/libQt6SerialPort.so.6.10.1:
 
-/tmp/ccrmvHtG.o:
+/tmp/cc3pdS7y.o:
 
 /usr/lib64/libQt6Gui.so.6.10.1:
 

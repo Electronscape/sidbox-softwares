@@ -50,6 +50,7 @@ uint32_t CRAM[256] = {
 
 unsigned char cyclefrom = 16, cycleto = 25;
 char bCycleDirection = 0;
+
 unsigned char clut_cycle_index[256] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
@@ -68,8 +69,8 @@ unsigned char clut_cycle_index[256] = {
     0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
     0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
 };
-unsigned char cyclespeed = 3; // special cycle pallet
 
+unsigned char cyclespeed = 5; // special cycle pallet
 
 void sbgfx_pset(int16_t x, int16_t y, uint8_t cindex){
     if ((unsigned)x >= SCR_WIDTH || (unsigned)y >= SCR_HEIGHT)
@@ -79,12 +80,10 @@ void sbgfx_pset(int16_t x, int16_t y, uint8_t cindex){
     *vmem = cindex;
 }
 
-
 void sbgfx_fill(uint8_t colour){
     for (int i = 0; i < SCR_RAMSIZE; i++)
         VRAM[i] = colour;
 }
-
 
 void sbgfx_drawbox(int x, int y, int w, int h, uint8_t col){
     // Clip to screen bounds
@@ -103,10 +102,7 @@ void sbgfx_drawbox(int x, int y, int w, int h, uint8_t col){
     }
     */
     for (int fx = 0; fx < w; fx++) {
-        //uint8_t *row = VRAM + (y + fy) * SCR_WIDTH + x;
-
         uint8_t *row = VRAM + ((x + fx) * SCR_HEIGHT) + y;
-
         for (int fy = 0; fy < h; fy++) {
             row[fy] = col;
         }
@@ -208,51 +204,6 @@ void draw_text816(int x, int y, const unsigned char* textptr) {
     }
 }
 
-
-/*
-
-void draw_text816(int x, int y, const unsigned char* textptr)
-{
-    int start_x = x;
-    uint8_t colf = current_fr_colour;
-
-
-    for (int i = 0; textptr[i] != '\0'; ++i) {
-        if (textptr[i] == '\n') {
-            x = start_x;
-            y += 16; // next char row
-            continue;
-        }
-
-        if (x >= SCR_WIDTH || y >= SCR_HEIGHT - 15)
-            break;
-
-        const uint8_t* font_col = DEFAULT_SYSFONT[textptr[i]];
-
-        for (int col = 0; col < 8; col++) { // each column of the ROM
-            if (x + col >= SCR_WIDTH)
-                break;
-
-            uint8_t column_bits = font_col[col]; // 8 vertical pixels
-
-            for (int row = 0; row < 8; row++) { // vertical pixels
-                if (y + row*2 >= SCR_HEIGHT)
-                    break;
-
-                if (column_bits & (1 << row)) {
-                    // vertical doubling only
-                    uint8_t* dp = VRAM + (y + row*2) * SCR_WIDTH + (x + col);
-                    dp[0] = colf;                 // top pixel
-                    dp[SCR_WIDTH + 0] = colf;     // bottom pixel
-                }
-            }
-        }
-
-        x += 8; // move to next char horizontally
-    }
-
-}
-*/
 
 
 

@@ -60,6 +60,8 @@ Dialog::Dialog(QWidget *parent)
         setScreenScale(winScale);
     });
 
+    setScreenScale(1);
+
 }
 
 void Dialog::resizeEvent(QResizeEvent *event)
@@ -89,7 +91,7 @@ void Dialog::setScreenScale(float factor)
     ui->gfxPort->scale(factor, factor);
 
 
-    int currentY = ui->gfxPort->y();   // get current Y position
+    //int currentY = ui->gfxPort->y();   // get current Y position
     //ui->gfxPort->move(10, currentY);   // move to X=10, keep Y the same
 
     // Update the graphics view size to match scaled content
@@ -106,17 +108,12 @@ void Dialog::setScreenScale(float factor)
     int posY = (winH - gfxH) / 2;
 
     ui->gfxPort->move(posX, posY+18);
-
-
-
 }
-
 
 Dialog::~Dialog()
 {
     delete ui;
 }
-
 
 /////////// ------------------------------- SID BOXY STUFF ----------------------------------------------------------------------------
 
@@ -125,7 +122,7 @@ char strText[128];
 
 void Dialog::updateScreen()
 {
-    uint8_t *v = VRAM;
+    //uint8_t *v = VRAM;
 
     sbgfx_fill(0);
 

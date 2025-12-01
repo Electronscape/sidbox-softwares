@@ -9,6 +9,8 @@
 
 #define     SCR_WIDTH   480
 #define     SCR_HEIGHT  320
+#define     SCR_STRIDE  320
+
 #define     SCR_RAMSIZE (SCR_WIDTH * SCR_HEIGHT)
 
 extern uint8_t current_fr_colour;

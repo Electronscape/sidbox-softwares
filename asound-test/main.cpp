@@ -36,7 +36,7 @@ int main() {
     double lfo_rate = 2.0;   /* 2 Hz duty modulation */
     double lfo_depth = 0.35; /* pulse modulation depth */
     double base_duty = 0.5;  /* 50% square wave */
-    double amp = 16000.0;
+    double amp = 1600.0;
 
     /* Phase accumulators */
     double phase = 0.0;
