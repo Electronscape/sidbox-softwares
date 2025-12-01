@@ -71,6 +71,9 @@
   <property name="windowTitle">
    <string>SIDBOX Graphics Labs</string>
   </property>
+  <property name="windowIcon">
+   <iconset theme="QIcon::ThemeIcon::ImageLoading"/>
+  </property>
   <widget class="QPushButton" name="cmdClose">
    <property name="geometry">
     <rect>

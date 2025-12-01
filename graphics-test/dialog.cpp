@@ -98,12 +98,14 @@ void Dialog::setScreenScale(float factor)
 
 
     int winW = this->width();
+    int winH = this->height();
     int gfxW = ui->gfxPort->width();
-    //int gfxH = ui->gfxPort->height();
+    int gfxH = ui->gfxPort->height();
 
     int posX = (winW - gfxW) / 2;
+    int posY = (winH - gfxH) / 2;
 
-    ui->gfxPort->move(posX, currentY);
+    ui->gfxPort->move(posX, posY+18);
 
 
 
