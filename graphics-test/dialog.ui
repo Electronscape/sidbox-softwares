@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>374</height>
+    <width>1108</width>
+    <height>728</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -18,36 +18,64 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>502</width>
-    <height>374</height>
+    <width>16384</width>
+    <height>16384</height>
    </size>
+  </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>49</red>
+        <green>53</green>
+        <blue>58</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>49</red>
+        <green>53</green>
+        <blue>58</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>49</red>
+        <green>53</green>
+        <blue>58</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>49</red>
+        <green>53</green>
+        <blue>58</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
   </property>
   <property name="windowTitle">
    <string>SIDBOX Graphics Labs</string>
   </property>
-  <widget class="QGraphicsView" name="gfxPort">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>480</width>
-     <height>320</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <stylestrategy>NoAntialias</stylestrategy>
-    </font>
-   </property>
-   <property name="cursor" stdset="0">
-    <cursorShape>CrossCursor</cursorShape>
-   </property>
-  </widget>
   <widget class="QPushButton" name="cmdClose">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>340</y>
+     <x>270</x>
+     <y>6</y>
      <width>80</width>
      <height>24</height>
     </rect>
@@ -190,6 +218,79 @@
    </property>
    <property name="text">
     <string>close</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cmdZoom1x">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>6</y>
+     <width>80</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Zoom x 1</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cmdZoom2x">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>6</y>
+     <width>80</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Zoom x 2</string>
+   </property>
+  </widget>
+  <widget class="QGraphicsView" name="gfxPort">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>40</y>
+     <width>480</width>
+     <height>320</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <stylestrategy>PreferAntialias</stylestrategy>
+    </font>
+   </property>
+   <property name="cursor" stdset="0">
+    <cursorShape>CrossCursor</cursorShape>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cmdZoomWx">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>6</y>
+     <width>91</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>To Scale Win</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>-490</x>
+     <y>34</y>
+     <width>2510</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Orientation::Horizontal</enum>
    </property>
   </widget>
  </widget>

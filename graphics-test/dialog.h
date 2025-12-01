@@ -32,6 +32,11 @@ private:
     QTimer *timer;
 
     void updateScreen();
+    void setScreenScale(float factor);
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 
 };
 #endif // DIALOG_H

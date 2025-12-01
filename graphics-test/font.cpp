@@ -1,9 +1,6 @@
 #include <stddef.h>
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#include "sbapi_graphics.h"
 
 unsigned char DEFAULT_SYSFONT[256][8] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,	// (  0)   0x00

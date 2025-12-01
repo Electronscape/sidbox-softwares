@@ -94,10 +94,21 @@ void sbgfx_drawbox(int x, int y, int w, int h, uint8_t col){
     if (y + h > SCR_HEIGHT) h = SCR_HEIGHT - y;
     if (w <= 0 || h <= 0) return;
 
+    /*
     for (int fy = 0; fy < h; fy++) {
         uint8_t *row = VRAM + (y + fy) * SCR_WIDTH + x;
         for (int fx = 0; fx < w; fx++) {
             row[fx] = col;
+        }
+    }
+    */
+    for (int fx = 0; fx < w; fx++) {
+        //uint8_t *row = VRAM + (y + fy) * SCR_WIDTH + x;
+
+        uint8_t *row = VRAM + ((x + fx) * SCR_HEIGHT) + y;
+
+        for (int fy = 0; fy < h; fy++) {
+            row[fy] = col;
         }
     }
 }
@@ -156,6 +167,50 @@ void dopalletecycle() {
 }
 
 
+void draw_text816(int x, int y, const unsigned char* textptr) {
+    int32_t start_x = x;
+    uint8_t colf = current_fr_colour;
+
+
+    for (int32_t i = 0; textptr[i] != '\0'; ++i) {
+        if (textptr[i] == '\n') {
+            x = start_x;
+            y += 16;
+            continue;
+        }
+
+        if ((uint32_t)x >= SCR_WIDTH || (uint32_t)y >= SCR_HEIGHT - 14)
+            continue;
+
+        const uint8_t* pixeldata = DEFAULT_SYSFONT[textptr[i]];
+        uint32_t dx = x * SCR_HEIGHT;
+        uint8_t* drawptr = VRAM + dx + y;
+
+        for (int j = 0; j < 8; ++j) {
+            if ((uint32_t)x >= SCR_WIDTH)
+                break;
+
+            uint8_t pixdat = pixeldata[j];
+            uint8_t* dp = VRAM + x * SCR_HEIGHT + y;
+
+            // Draw 2 pixels vertically every 2 pixels (H=2)
+            if (pixdat & 0x01) { dp[0] = colf; dp[1] = colf; } //else { dp[0] = colb; dp[1] = colb; }
+            if (pixdat & 0x02) { dp[2] = colf; dp[3] = colf; } //else { dp[2] = colb; dp[3] = colb; }
+            if (pixdat & 0x04) { dp[4] = colf; dp[5] = colf; } //else { dp[4] = colb; dp[5] = colb; }
+            if (pixdat & 0x08) { dp[6] = colf; dp[7] = colf; } //else { dp[6] = colb; dp[7] = colb; }
+            if (pixdat & 0x10) { dp[8] = colf; dp[9] = colf; } //else { dp[8] = colb; dp[9] = colb; }
+            if (pixdat & 0x20) { dp[10] = colf; dp[11] = colf; } //else { dp[10] = colb; dp[11] = colb; }
+            if (pixdat & 0x40) { dp[12] = colf; dp[13] = colf; } //else { dp[12] = colb; dp[13] = colb; }
+            if (pixdat & 0x80) { dp[14] = colf; dp[15] = colf; } //else { dp[14] = colb; dp[15] = colb; }
+
+            x++;
+        }
+    }
+}
+
+
+/*
+
 void draw_text816(int x, int y, const unsigned char* textptr)
 {
     int start_x = x;
@@ -197,6 +252,7 @@ void draw_text816(int x, int y, const unsigned char* textptr)
     }
 
 }
+*/
 
 
 
