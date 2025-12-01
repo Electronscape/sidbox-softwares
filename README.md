@@ -1,6 +1,13 @@
 This is where I keep my softwares, and tools and scrap code to make sure things at least work before I start adding things to the sidbox firmware.
+So far ALL these projects are written in QT6's Creator, I have VisualCode but for essentially ANY GUI work, QTCreator is on point.
+
+If you're following this, you should be able to cloan this compile it with your own system to see what they do. Sorry there isn't much else at the moment. 
 
 Added tools to help me do things and test
+- SIDBOX GRAPHICS TEST: (very early stages at the moment)
+  Essentially this is the testing ground for any new Sidbox Graphics routines. It's designed to work like the VRAM in the sidbox's pixel array arrangement.
+  I can test new features without burning it to ROM first. 
+
 - SIDBOX TERMINAL:
   This allows me to communicate directly to the sidbox, it's a little bit like terminal, since the sidbox internally sends commands to this, giving it an almost perfect commandline system.
   The sidbox terminal still under development with the more things I need to test. I'll add its function here.
