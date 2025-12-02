@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "audiosys.h"
 
 #include <QThread>
@@ -20,6 +21,13 @@ volatile bool audioThreadRunning = true;
 
 
 pthread_t audioThreadHandle;
+
+void clearAudioBuffer(){
+    memset(audiobuf, 0, sizeof(audiobuf)); // clears the whole buffer
+    writePos = 0;
+    readPos = 0;
+
+}
 
 int initAudioHardware(){
     snd_pcm_hw_params_t *params;
@@ -42,6 +50,9 @@ int initAudioHardware(){
     snd_pcm_hw_params(pcm_handle, params);
     snd_pcm_hw_params_free(params);
 
+
+    for(int i = 0; i < AUDIO_BUFFER_SIZE * 2; i++)
+        audiobuf[i] = 0;
 
     pthread_create(&audioThreadHandle, NULL, audioThread, NULL);
 
@@ -122,8 +133,8 @@ int processAudio()
 {
     int fps = 60;
     const int sampleRate = 44100;
-    const int freq = 440;
-    const double amp = 1000.0;
+    const int freq = 220;
+    const double amp = 2000.0;
 
     int samples_per_frame = sampleRate / fps;
     double phaseInc = 2.0 * M_PI * freq / (double)sampleRate;

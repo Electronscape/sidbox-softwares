@@ -23,22 +23,29 @@ public:
     Dialog(QWidget *parent = nullptr);
     ~Dialog();
 
+    void updateSMSScreen();
+    void clearSMSScreen();
+
 private:
     Ui::Dialog *ui;
 
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixmapItem;
-    QImage screenImage;
+    QImage screenImageF;
+    QImage screenImageB;
     QTimer *timer;
 
     void updateScreen();
+
     void setScreenScale(float factor);
+    void swapBuffers();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
-
-
 };
+
+extern class Dialog *g_dialog;
+
 #endif // DIALOG_H

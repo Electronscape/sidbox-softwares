@@ -11,12 +11,6 @@ int main(int argc, char *argv[])
 
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    // init the hardware bits we need:
-    if(initAudioHardware()){
-        printf("Failed to open the audio systems\n");
-    } else
-        printf("Audio opened ok\n");
-
     w.show();
 
 

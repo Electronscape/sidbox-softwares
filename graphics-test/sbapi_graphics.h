@@ -15,8 +15,8 @@
 extern uint8_t current_fr_colour;
 extern uint8_t current_bk_colour;
 
-extern uint8_t VRAM[SCR_RAMSIZE];
-extern uint32_t CRAM[256];
+extern uint8_t PROJ_VRAM[SCR_RAMSIZE];
+extern uint32_t PROJ_CRAM[256];
 extern unsigned char clut_cycle_index[256];
 void dopalletecycle();
 

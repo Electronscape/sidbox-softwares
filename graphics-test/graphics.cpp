@@ -10,9 +10,9 @@
 uint8_t current_fr_colour = 1;
 uint8_t current_bk_colour = 0;
 
-uint8_t VRAM[SCR_RAMSIZE];
+uint8_t PROJ_VRAM[SCR_RAMSIZE];
 
-uint32_t CRAM[256] = {
+uint32_t PROJ_CRAM[256] = {
     0x00000000, 0x00AFAFAF, 0x00FFFFFF, 0x003B67A2, 0x00AA907C, 0x00959595, 0x007B7B7B, 0x00FFA997,
     0x0037A91D, 0x007CA9FF, 0x00BF8112, 0x00EBBF66, 0x0078C178, 0x003D9318, 0x00B33418, 0x00D9311C,
     0x00000000, 0x0000001C, 0x00000039, 0x00000055, 0x00000071, 0x0000018E, 0x000001AA, 0x000001C6,
@@ -48,6 +48,21 @@ uint32_t CRAM[256] = {
 };
 
 
+uint32_t dxf[480];
+uint32_t dyf[320];
+
+void prepXYs(){
+    long i;
+    for(i=0; i<480; i++){
+        dxf[i] = i*320;
+    }
+
+    for(i=0; i<320; i++){
+        dyf[i] = i*480;
+    }
+}
+
+
 unsigned char cyclefrom = 16, cycleto = 25;
 char bCycleDirection = 0;
 
@@ -76,13 +91,13 @@ void sbgfx_pset(int16_t x, int16_t y, uint8_t cindex){
     if ((unsigned)x >= SCR_WIDTH || (unsigned)y >= SCR_HEIGHT)
         return;
 
-    uint8_t *vmem = VRAM + (y * SCR_WIDTH + x);
+    uint8_t *vmem = PROJ_VRAM + (y * SCR_WIDTH + x);
     *vmem = cindex;
 }
 
 void sbgfx_fill(uint8_t colour){
     for (int i = 0; i < SCR_RAMSIZE; i++)
-        VRAM[i] = colour;
+        PROJ_VRAM[i] = colour;
 }
 
 void sbgfx_drawbox(int x, int y, int w, int h, uint8_t col){
@@ -102,7 +117,7 @@ void sbgfx_drawbox(int x, int y, int w, int h, uint8_t col){
     }
     */
     for (int fx = 0; fx < w; fx++) {
-        uint8_t *row = VRAM + ((x + fx) * SCR_HEIGHT) + y;
+        uint8_t *row = PROJ_VRAM + ((x + fx) * SCR_HEIGHT) + y;
         for (int fy = 0; fy < h; fy++) {
             row[fy] = col;
         }
@@ -140,23 +155,23 @@ void dopalletecycle() {
     if (SpeedStep > cyclespeed) {
         SpeedStep = 0;
         if (bCycleDirection == 0) {
-            tmp = CRAM[cyclefrom];
+            tmp = PROJ_CRAM[cyclefrom];
             tmpold = clut_cycle_index[cyclefrom];
             for (i = cyclefrom; i < cycleto; i++) {
-                CRAM[i] = CRAM[i + 1];
+                PROJ_CRAM[i] = PROJ_CRAM[i + 1];
                 clut_cycle_index[i] = clut_cycle_index[i + 1];
             }
-            CRAM[i] = tmp;
+            PROJ_CRAM[i] = tmp;
             clut_cycle_index[i] = tmpold;
 
         } else {
-            tmp = CRAM[cycleto];
+            tmp = PROJ_CRAM[cycleto];
             tmpold = clut_cycle_index[cycleto];
             for (i = cycleto; i > cyclefrom; i--) {
-                CRAM[i] = CRAM[i - 1];
+                PROJ_CRAM[i] = PROJ_CRAM[i - 1];
                 clut_cycle_index[i] = clut_cycle_index[i - 1];
             }
-            CRAM[i] = tmp;
+            PROJ_CRAM[i] = tmp;
             clut_cycle_index[i] = tmpold;
         }
     }
@@ -180,14 +195,14 @@ void draw_text816(int x, int y, const unsigned char* textptr) {
 
         const uint8_t* pixeldata = DEFAULT_SYSFONT[textptr[i]];
         uint32_t dx = x * SCR_HEIGHT;
-        uint8_t* drawptr = VRAM + dx + y;
+        uint8_t* drawptr = PROJ_VRAM + dx + y;
 
         for (int j = 0; j < 8; ++j) {
             if ((uint32_t)x >= SCR_WIDTH)
                 break;
 
             uint8_t pixdat = pixeldata[j];
-            uint8_t* dp = VRAM + x * SCR_HEIGHT + y;
+            uint8_t* dp = PROJ_VRAM + x * SCR_HEIGHT + y;
 
             // Draw 2 pixels vertically every 2 pixels (H=2)
             if (pixdat & 0x01) { dp[0] = colf; dp[1] = colf; } //else { dp[0] = colb; dp[1] = colb; }
@@ -204,6 +219,128 @@ void draw_text816(int x, int y, const unsigned char* textptr) {
     }
 }
 
+//-------------------------------------- DEDICATED TO THE SMS RENDERER -----------------------------------------------------------
 
+// source://smsemu/vdp.cpp
+extern float stretch_wide;	// allows for stretching across the screen
+static void (*sms_plot)(int32_t x, int32_t y, uint8_t c);
 
+void vdp_plot(int32_t x, int32_t y, uint8_t c){
+    /*
+    uint8_t *dfxz;
+    uint8_t *dfxz2;
+
+    x *= stretch_wide;
+    y *= 1.66f;
+
+    if(x<0) return;
+    if(x>478) return;
+    if(y<0) return;
+    if(y>318) return;
+
+    dfxz  = noxgf_current_buffer + dxf[x++] + y;
+    dfxz2 = noxgf_current_buffer + dxf[x] + y;
+
+    *dfxz++ =  c; *dfxz =  c;
+    *dfxz2++ = c; *dfxz2 = c;
+*/
+    uint8_t *p1, *p2;
+    uint32_t dx1, dx2;
+    uint8_t *base;  // our current graphics draw buffer (though only using our project it has double buffering already, draw, copy to front method)
+    uint16_t cc;
+
+    // Use hardware FPU for fast float ops (M7 supports single-precision in hardware)
+    x = (int)(x * stretch_wide);
+    y = (int)(y * 1.66f);
+
+    // Fast bounds check (unsigned to avoid branches and negative checks)
+    if ((uint32_t)x > 478u || (uint32_t)y > 318u) return;
+
+    // Combine color into 16-bit word: two pixels
+    cc = (uint16_t)(c << 8) | c;
+
+    // Get row base pointer
+    base = PROJ_VRAM + y;
+
+    // Compute column offsets
+    dx1 = dxf[x];
+    dx2 = dxf[x + 1];
+
+    // Compute destination pointers
+    p1 = base + dx1;
+    p2 = base + dx2;
+
+    // Write 2 pixels to each column using a single 16-bit store (assumes 2-byte alignment)
+    *(uint16_t *)p1 = cc;
+    *(uint16_t *)p2 = cc;
+}
+
+void vdp_plotGG(int32_t x, int32_t y, uint8_t c){
+    /*
+    uint8_t *dfxz;
+    uint8_t *dfxz2;
+    uint8_t *dfxz3;
+
+    // Basic Working Aspect
+    x-= 56;
+    y-= 46;
+    x *=2.7;
+    y *=2;
+    if(x<16) return;
+    if(x>448) return;
+    if(y<0) return;
+    if(y>318) return;
+
+    dfxz  = noxgf_current_buffer + dxf[x++] + y;
+    dfxz2 = noxgf_current_buffer + dxf[x++] + y;
+    dfxz3 = noxgf_current_buffer + dxf[x] + y;
+
+    *dfxz++ = c; *dfxz = c;
+    *dfxz2++ = c; *dfxz2 = c;
+    *dfxz3++ = c; *dfxz3 = c;
+*/
+    uint8_t *p1, *p2, *p3;
+    uint32_t dx1, dx2, dx3;
+    uint8_t *base;
+    uint16_t cc;
+
+    // Apply translation and scaling (hardware FPU: fast)
+    x = (int)((x - 56) * 2.7f);  // scale x
+    y = (int)((y - 46) * 2.0f);  // scale y
+
+    // Fast unsigned bounds check (branchless)
+    if ((uint32_t)(x - 16) > (448 - 16) || (uint32_t)y > 318u) return;
+
+    // Combine two pixels into 16-bit word
+    cc = (uint16_t)(c << 8) | c;
+
+    // Get pointer to the start of line
+    base = PROJ_VRAM + y;
+
+    // Compute offsets for 3 columns
+    dx1 = dxf[x];
+    dx2 = dxf[x + 1];
+    dx3 = dxf[x + 2];
+
+    // Compute pixel pointers
+    p1 = base + dx1;
+    p2 = base + dx2;
+    p3 = base + dx3;
+
+    // Write two pixels to each column (16-bit aligned stores)
+    *(uint16_t *)p1 = cc;
+    *(uint16_t *)p2 = cc;
+    *(uint16_t *)p3 = cc;
+}
+
+void setSMSPlotter(uint8_t mode){
+    if(mode)	// gamegear plotter
+        sms_plot = &vdp_plotGG;
+    else
+        sms_plot = &vdp_plot;
+}
+
+void SMSPlot(int32_t x, int32_t y, uint8_t c){
+    sms_plot(x,y,c);
+}
 

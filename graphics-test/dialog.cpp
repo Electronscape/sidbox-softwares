@@ -5,23 +5,35 @@
 #include "sbapi_graphics.h"
 #include "hardware/audiosys.h"
 
+void clearAudioBuffer();
+
 float winScale = 1.0f;
 int currentScale = 1;
+
+void prepXYs();
+void BEGIN_SMSEMU(char *filename);
+void doSMSFrames();
+
+Dialog *g_dialog = nullptr;
+char frame_db = 0;
 
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Dialog)
 {
+
     ui->setupUi(this);
 
     printf("Hello world\n");
+    prepXYs();
 
     scene = new QGraphicsScene(this);
     ui->gfxPort->setScene(scene);
 
     // Your framebuffer image (480×320)
-    screenImage = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
+    screenImageF = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
+    screenImageB = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
 
     ui->gfxPort->setRenderHint(QPainter::SmoothPixmapTransform, true);
     ui->gfxPort->setRenderHint(QPainter::Antialiasing, false); // don't need antialias for pixels
@@ -33,15 +45,12 @@ Dialog::Dialog(QWidget *parent)
 
 
     // Add it to the scene
-    pixmapItem = scene->addPixmap(QPixmap::fromImage(screenImage));
+    pixmapItem = scene->addPixmap(QPixmap::fromImage(screenImageF));
     pixmapItem->setTransformationMode(Qt::SmoothTransformation);
 
     pixmapItem->setPos(0, 0);
 
-    // Timer to update at ~60Hz
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &Dialog::updateScreen);
-    timer->start(16);
+    g_dialog = this;
 
     connect(ui->cmdClose, &QPushButton::clicked, this, [=]() {
         this->close();
@@ -70,6 +79,32 @@ Dialog::Dialog(QWidget *parent)
     });
     t->start(1);   // every 1ms
 */
+
+    clearAudioBuffer();
+    timer = new QTimer(this);
+    QTimer::singleShot(500, this, [=]() {
+        if(initAudioHardware()){
+            printf("Failed to open the audio systems\n");
+        } else {
+            printf("Audio opened ok\n");
+        }
+
+        // Timer to update at ~60Hz
+
+        //connect(timer, &QTimer::timeout, this, &Dialog::updateScreen);
+        //timer->start(16);
+    });
+
+
+    //BEGIN_SMSEMU((char *)"/home/kbox/sonic.sms");
+    BEGIN_SMSEMU((char *)"sonic.sms");
+
+    QTimer *frameTimer = new QTimer(this);
+    connect(frameTimer, &QTimer::timeout, this, [=]() {
+        doSMSFrames();
+    });
+    frameTimer->start(16);   // 0ms = run every cycle
+
 
 }
 
@@ -132,12 +167,14 @@ Dialog::~Dialog()
 
 char strText[128];
 
-
+/*
 void Dialog::updateScreen()
 {
     //uint8_t *v = VRAM;
 
     sbgfx_fill(0);
+
+
 
     dopalletecycle();
 
@@ -163,14 +200,72 @@ void Dialog::updateScreen()
 
     // ------- TRANSFER VRAM to IMAGE output ----------- //
     // simulates the SIDBOX Graphics view LCD
-    uint8_t *p = VRAM;
+    uint8_t *p = PROJ_VRAM;
     for (int x = 0; x < SCR_WIDTH; x++){
         for (int y = 0; y < SCR_HEIGHT; y++){
             QRgb *scan = reinterpret_cast<QRgb*>(screenImage.scanLine(y));
-            scan[x] = CRAM[*p++];
+            scan[x] = PROJ_CRAM[*p++];
         }
     }
 
     pixmapItem->setPixmap(QPixmap::fromImage(screenImage));
     processAudio();
+}
+*/
+
+void Dialog::swapBuffers() {
+    std::swap(screenImageF, screenImageB);
+    pixmapItem->setPixmap(QPixmap::fromImage(screenImageF));
+}
+
+void Dialog::updateSMSScreen(){
+
+    //sbgfx_fill(0);
+    //dopalletecycle();
+/*
+    uint8_t colind = 0;
+    uint16_t tbx = 0, tby = 0;
+    for(tby = 0; tby < 16; tby++){
+        for(tbx = 0; tbx < 16; tbx++){
+            sbgfx_drawbox(tbx * 20, 1+tby * 20, 18, 18, colind);
+            colind++;
+        }
+    }
+
+    sprintf(strText, "Hello world testing ...\nI hope new line also works!");
+    gfx_setcolour(208);
+    draw_text816(4, 5, (const unsigned char *)strText);
+    draw_text816(6, 5, (const unsigned char *)strText);
+    draw_text816(5, 4, (const unsigned char *)strText);
+    draw_text816(5, 6, (const unsigned char *)strText);
+
+    gfx_setcolour(7);
+    draw_text816(5, 5, (const unsigned char *)strText);
+*/
+    // ------- TRANSFER VRAM to IMAGE output ----------- //
+    // simulates the SIDBOX Graphics view LCD
+    uint8_t *p = PROJ_VRAM;
+    for (int x = 0; x < SCR_WIDTH; x++){
+        for (int y = 0; y < SCR_HEIGHT; y++){
+            QRgb *scan = reinterpret_cast<QRgb*>(screenImageB.scanLine(y));
+            scan[x] = PROJ_CRAM[*p++];
+        }
+    }
+
+    //pixmapItem->setPixmap(QPixmap::fromImage(screenImage));
+    swapBuffers();
+    //processAudio();
+    //printf("piss\n");
+}
+
+void Dialog::clearSMSScreen(){
+    sbgfx_fill(0);
+    uint8_t *p = PROJ_VRAM;
+    for (int x = 0; x < SCR_WIDTH; x++){
+        for (int y = 0; y < SCR_HEIGHT; y++){
+            QRgb *scan = reinterpret_cast<QRgb*>(screenImageB.scanLine(y));
+            scan[x] = PROJ_CRAM[*p++];
+        }
+    }
+    swapBuffers();
 }

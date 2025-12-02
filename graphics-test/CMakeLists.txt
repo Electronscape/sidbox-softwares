@@ -15,12 +15,23 @@ qt_add_executable(graphics-test
     sbapi_graphics.h
     font.h
     font.cpp
-    smsemu/bus.cpp
+
 
     hardware/audiosys.h
     hardware/audiosys.cpp
-    hardware/stm32ram.cpp
     hardware/stm32ram.h
+    hardware/stm32ram.cpp
+
+    smsemu/bus.cpp
+    smsemu/types.h
+    smsemu/internal.h
+    smsemu/sms.h
+    smsemu/cpu.cpp
+    smsemu/sms_main.cpp
+    smsemu/vdp.cpp
+    smsemu/sms.cpp
+    smsemu/sn76489.cpp
+    smsemu/joypad.cpp
 
 )
 
@@ -37,6 +48,12 @@ target_link_libraries(graphics-test
         Qt::Widgets
         Threads::Threads
 )
+
+#allows for static declaration of functions, bizaaar
+#add them to the project CMAKE options to
+# CMAKE_CXX_FLAGS eg, -fpermissive -anotheroption -then another
+# CMAKE_C_FLAGS eg, -fpermissive -anotheroption -then another
+add_compile_options(graphics-test PRIVATE -fpermissive)
 
 
 
