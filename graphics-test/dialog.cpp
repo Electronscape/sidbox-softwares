@@ -3,6 +3,7 @@
 #include <QTimer>
 
 #include "sbapi_graphics.h"
+#include "hardware/audiosys.h"
 
 float winScale = 1.0f;
 int currentScale = 1;
@@ -62,6 +63,14 @@ Dialog::Dialog(QWidget *parent)
 
     setScreenScale(1);
 
+/*
+    QTimer *t = new QTimer(this);
+    connect(t, &QTimer::timeout, this, [=](){
+        processAudio();
+    });
+    t->start(1);   // every 1ms
+*/
+
 }
 
 void Dialog::resizeEvent(QResizeEvent *event)
@@ -108,6 +117,10 @@ void Dialog::setScreenScale(float factor)
     int posY = (winH - gfxH) / 2;
 
     ui->gfxPort->move(posX, posY+18);
+}
+
+void Dialog::closeEvent(QCloseEvent *event){
+    closeAudioHardware();
 }
 
 Dialog::~Dialog()
@@ -159,4 +172,5 @@ void Dialog::updateScreen()
     }
 
     pixmapItem->setPixmap(QPixmap::fromImage(screenImage));
+    processAudio();
 }

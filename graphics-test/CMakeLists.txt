@@ -15,14 +15,30 @@ qt_add_executable(graphics-test
     sbapi_graphics.h
     font.h
     font.cpp
+    smsemu/bus.cpp
 
+    hardware/audiosys.h
+    hardware/audiosys.cpp
+    hardware/stm32ram.cpp
+    hardware/stm32ram.h
+
+)
+
+
+find_package(
+    ALSA REQUIRED
+    Threads REQUIRED
 )
 
 target_link_libraries(graphics-test
     PRIVATE
+        ALSA::ALSA
         Qt::Core
         Qt::Widgets
+        Threads::Threads
 )
+
+
 
 include(GNUInstallDirs)
 

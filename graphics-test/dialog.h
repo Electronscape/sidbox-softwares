@@ -36,6 +36,8 @@ private:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+
 
 
 };
