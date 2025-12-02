@@ -95,9 +95,7 @@ Dialog::Dialog(QWidget *parent)
         //timer->start(16);
     });
 
-
-    //BEGIN_SMSEMU((char *)"/home/kbox/sonic.sms");
-    BEGIN_SMSEMU((char *)"sonic.sms");
+    BEGIN_SMSEMU((char *)"../../sonic.sms");
 
     QTimer *frameTimer = new QTimer(this);
     connect(frameTimer, &QTimer::timeout, this, [=]() {
