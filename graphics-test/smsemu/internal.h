@@ -126,7 +126,11 @@ bool vdp_has_interrupt(const struct SMS_Core* sms);
 // AUP DELCARATIONS
 void SN76489_init(struct SMS_Core* sms);
 void SN76489_run(struct SMS_Core* sms, uint8_t cycles);
+void SN76489_rend(struct SMS_Core *sms, int8_t *tonesL, int8_t *tonesR);
 void SN76489_reg_write(struct SMS_Core *sms, uint8_t value);
+// extern
+void addToAudio(int16_t l, int16_t r);
+void playFrameAudio(int16_t *snd, unsigned long SPF);
 
 
 // [MISC]

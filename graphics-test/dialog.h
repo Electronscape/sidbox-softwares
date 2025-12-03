@@ -36,7 +36,7 @@ private:
     QTimer *timer;
 
     void updateScreen();
-
+    void loadROM();
     void setScreenScale(float factor);
     void swapBuffers();
 

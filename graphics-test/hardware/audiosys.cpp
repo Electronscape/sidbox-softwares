@@ -26,7 +26,6 @@ void clearAudioBuffer(){
     memset(audiobuf, 0, sizeof(audiobuf)); // clears the whole buffer
     writePos = 0;
     readPos = 0;
-
 }
 
 int initAudioHardware(){
@@ -43,10 +42,19 @@ int initAudioHardware(){
     /* Set hardware parameters */
     snd_pcm_hw_params_malloc(&params);
     snd_pcm_hw_params_any(pcm_handle, params);
+
+    snd_pcm_uframes_t buffer_size = SAMPLES_PER_FRAME;  // Must be uframes_t
+    snd_pcm_uframes_t period_size = SAMPLES_PER_FRAME;
+
     snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE);
     snd_pcm_hw_params_set_channels(pcm_handle, params, 2);
     snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0);
+
+    // Use the "_near" versions for safety
+    snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &buffer_size);
+    snd_pcm_hw_params_set_period_size_near(pcm_handle, params, &period_size, 0);
+
     snd_pcm_hw_params(pcm_handle, params);
     snd_pcm_hw_params_free(params);
 
@@ -54,7 +62,7 @@ int initAudioHardware(){
     for(int i = 0; i < AUDIO_BUFFER_SIZE * 2; i++)
         audiobuf[i] = 0;
 
-    pthread_create(&audioThreadHandle, NULL, audioThread, NULL);
+    //pthread_create(&audioThreadHandle, NULL, audioThread, NULL);
 
     return 0; // it came back with zero issues
 }
@@ -76,7 +84,7 @@ void addToAudio(int16_t l, int16_t r) {
 
 
 void *audioThread(void *arg) {
-    const int chunk = 64; // frames per write
+    const int chunk = 2; // frames per write
     int16_t tmp[chunk * 2];
 
     while (audioThreadRunning) {
@@ -111,6 +119,20 @@ void *audioThread(void *arg) {
     return 0;
 }
 
+
+void playFrameAudio(int16_t *snd, unsigned long SPF){
+    // Blocking write to ALSA
+    if(!pcm_handle) return;
+    snd_pcm_sframes_t written = snd_pcm_writei(pcm_handle, snd, SPF);
+    if (written < 0) {
+        if (written == -EPIPE) {
+            // underrun
+            snd_pcm_prepare(pcm_handle);
+        } else {
+            printf("ALSA write error: %s\n", snd_strerror(written));
+        }
+    }
+}
 
 int closeAudioHardware(){
     printf("closing audio\n");

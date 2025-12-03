@@ -1,6 +1,9 @@
 #include "dialog.h"
 #include "ui_dialog.h"
 #include <QTimer>
+#include <QFileDialog>
+#include <QString>
+#include <QMessageBox>
 
 #include "sbapi_graphics.h"
 #include "hardware/audiosys.h"
@@ -16,7 +19,9 @@ void doSMSFrames();
 
 Dialog *g_dialog = nullptr;
 char frame_db = 0;
+char EmuReady = 0;
 
+char RomFileName[1024];
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
@@ -81,6 +86,7 @@ Dialog::Dialog(QWidget *parent)
 */
 
     clearAudioBuffer();
+
     timer = new QTimer(this);
     QTimer::singleShot(500, this, [=]() {
         if(initAudioHardware()){
@@ -95,16 +101,50 @@ Dialog::Dialog(QWidget *parent)
         //timer->start(16);
     });
 
-    BEGIN_SMSEMU((char *)"../../sonic.sms");
+    //BEGIN_SMSEMU((char *)"../../../../sonic.sms");
+    //BEGIN_SMSEMU((char *)"../../../../GameGear Shinobi.GG");
+    //BEGIN_SMSEMU((char *)"../../../../GenesisProject-Lambo.sms");
+    //
+
 
     QTimer *frameTimer = new QTimer(this);
     connect(frameTimer, &QTimer::timeout, this, [=]() {
-        doSMSFrames();
+        if(EmuReady)
+            doSMSFrames();
     });
     frameTimer->start(16);   // 0ms = run every cycle
 
+    connect(ui->cmdOpenRom, &QPushButton::clicked, this, &Dialog::loadROM);
+
 
 }
+void Dialog::loadROM() {
+    QString fileName = QFileDialog::getOpenFileName(
+        this,
+        tr("Open ROM"),
+        "",
+        tr("ROM Files (*.sms *.gg);;All Files (*)")
+        );
+
+    if (fileName.isEmpty()) {
+        return; // User cancelled
+    }
+
+    // Copy safely to your C-style buffer
+    strncpy(RomFileName, fileName.toStdString().c_str(), sizeof(RomFileName)-1);
+    RomFileName[sizeof(RomFileName)-1] = '\0';  // ensure null termination
+
+    EmuReady = 1;
+
+    printf("ROM selected: %s\n", RomFileName);
+
+    BEGIN_SMSEMU(RomFileName);
+
+    // Optionally, call your ROM loader here
+    // uint32_t romSize;
+    // read_file(RomFileName, &romSize);
+}
+
 
 void Dialog::resizeEvent(QResizeEvent *event)
 {
@@ -217,29 +257,6 @@ void Dialog::swapBuffers() {
 }
 
 void Dialog::updateSMSScreen(){
-
-    //sbgfx_fill(0);
-    //dopalletecycle();
-/*
-    uint8_t colind = 0;
-    uint16_t tbx = 0, tby = 0;
-    for(tby = 0; tby < 16; tby++){
-        for(tbx = 0; tbx < 16; tbx++){
-            sbgfx_drawbox(tbx * 20, 1+tby * 20, 18, 18, colind);
-            colind++;
-        }
-    }
-
-    sprintf(strText, "Hello world testing ...\nI hope new line also works!");
-    gfx_setcolour(208);
-    draw_text816(4, 5, (const unsigned char *)strText);
-    draw_text816(6, 5, (const unsigned char *)strText);
-    draw_text816(5, 4, (const unsigned char *)strText);
-    draw_text816(5, 6, (const unsigned char *)strText);
-
-    gfx_setcolour(7);
-    draw_text816(5, 5, (const unsigned char *)strText);
-*/
     // ------- TRANSFER VRAM to IMAGE output ----------- //
     // simulates the SIDBOX Graphics view LCD
     uint8_t *p = PROJ_VRAM;
@@ -250,7 +267,6 @@ void Dialog::updateSMSScreen(){
         }
     }
 
-    //pixmapItem->setPixmap(QPixmap::fromImage(screenImage));
     swapBuffers();
     //processAudio();
     //printf("piss\n");

@@ -6,6 +6,9 @@
 
 #define PCM_DEVICE "default"
 
+#define FPS     60
+#define SAMPLE_FREQ     44100
+#define SAMPLES_PER_FRAME   (SAMPLE_FREQ / FPS)
 
 // prototypes
 int initAudioHardware();

@@ -294,8 +294,50 @@ void BEGIN_SMSEMU(char *filename){
     };
 }
 
+static int8_t SMPRes, SMPin1, SMPin2;
+#define VDPFPS  60
+#define AUDIOSAMPLERATE 44100
+
+#define SAMPLES_PER_FRAME (AUDIOSAMPLERATE / VDPFPS)
+int16_t frameAudBuffer[SAMPLES_PER_FRAME * 2];// stereo output
+#define AMP 120
+
 void doSMSFrames(){
     SMS_run_frame(&sms);
+
+
+    for(int t=0; t<SAMPLES_PER_FRAME; t++){
+
+
+        SN76489_run(&sms, 82);
+        SN76489_rend(&sms, &SMPin1, &SMPin2);
+
+        int16_t s1 = (int16_t) SMPin1 - 0x80;
+        int16_t s2 = (int16_t) SMPin2 - 0x80;
+
+        //DAC1->DHR12R1 = (uint16_t) (s1 << 4);  // Left
+
+        if (SMS_is_system_type_gg(&sms)) {
+            //DAC1->DHR12R2 = (uint16_t) (s2 << 4);  // Right (stereo)
+        } else {
+            //DAC1->DHR12R2 = (uint16_t) (s1 << 4);  // Right (echo)
+        }
+
+
+        //addToAudio(s1 * 120, s2 * 120);
+        frameAudBuffer[t * 2 + 0] = s1 * AMP;
+        frameAudBuffer[t * 2 + 1] = s2 * AMP;
+    }
+
+
+    playFrameAudio(frameAudBuffer, (unsigned long)SAMPLES_PER_FRAME);
+
+
+
+
+
+
+    //processAudio();
     //sms_update_screen();
 }
 
