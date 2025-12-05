@@ -219,8 +219,27 @@ int main_sms(char *filename)
     for(long f=0; f<0x80000; f++){
         dF += ROM[f];
     }
+
+    uint32_t last_4;
+    memcpy(&last_4, (const void *)(ROM + rom_size - 4), 4);
+
+
+#if SMS_LITTLE_ENDIAN
+    last_4 = le32toh(last_4); // ensure little-endian ordering
+#endif
+
+    uint8_t region_code = (last_4 >> 28) & 0xF;
+
+    if (region_code & 0x01)
+        sms.region = REGION_NTSC;
+    else
+        sms.region = REGION_PAL;
+
+    dbug("REGION: %x\n", sms.region);
+
     dbug("READ from location 0=%p CRCF_VALUE %lu\r\n", &ROM[0], (unsigned long)dF);
     dbug("[INFO]: Original source from: https://github.com/ITotalJustice/TotalSMS/\n");
+    dbug("##################################################################\n\n");
     return 0;
 
 }
@@ -275,23 +294,6 @@ void BEGIN_SMSEMU(char *filename){
     */
     sms.apu.better_sid = (!!(bSEGAConfigs & SEGAHV_CONFIG_TONEMODE));
 
-
-
-    //for(;;)
-    {
-        /*
-        if(JOYSTICK_A_INPUT_DOWN && JOYSTICK_A_INPUT_FIRE && JOYSTICK_A_INPUT_FIRE2){
-            SMS_set_port_b(&sms, PAUSE_BUTTON, 1);
-        }
-
-        if(JOYSTICK_A_INPUT_UP && JOYSTICK_A_INPUT_FIRE && JOYSTICK_A_INPUT_FIRE2){
-            SMS_set_port_b(&sms, RESET_BUTTON, 1);
-        }
-        */
-
-
-
-    };
 }
 
 static int8_t SMPRes, SMPin1, SMPin2;
@@ -302,43 +304,45 @@ static int8_t SMPRes, SMPin1, SMPin2;
 int16_t frameAudBuffer[SAMPLES_PER_FRAME * 2];// stereo output
 #define AMP 120
 
+extern enum SMS_PortA joyPadBindA;
+extern enum SMS_PortB joyPadBindB;
+
+extern enum SMS_PortA joyPadBindAC;
+extern enum SMS_PortB joyPadBindBC;
+
 void doSMSFrames(){
+    // reapply the joystick commanders
+    if(joyPadBindA) SMS_set_port_a(&sms, joyPadBindA);
+    if(joyPadBindB) SMS_set_port_b(&sms, joyPadBindB);
+
     SMS_run_frame(&sms);
 
+    // this handles the release of a button event
+    // Clear the release bits from the current pressed state
+    joyPadBindA = (SMS_PortA)((uint32_t)joyPadBindA & ~((uint32_t)joyPadBindAC));
+    joyPadBindB = (SMS_PortB)((uint32_t)joyPadBindB & ~((uint32_t)joyPadBindBC));
+
+    // Reset the "clear-once" trackers
+    joyPadBindAC = (SMS_PortA)0;
+    joyPadBindBC = (SMS_PortB)0;
 
     for(int t=0; t<SAMPLES_PER_FRAME; t++){
-
-
         SN76489_run(&sms, 82);
         SN76489_rend(&sms, &SMPin1, &SMPin2);
 
         int16_t s1 = (int16_t) SMPin1 - 0x80;
         int16_t s2 = (int16_t) SMPin2 - 0x80;
 
-        //DAC1->DHR12R1 = (uint16_t) (s1 << 4);  // Left
-
         if (SMS_is_system_type_gg(&sms)) {
             //DAC1->DHR12R2 = (uint16_t) (s2 << 4);  // Right (stereo)
         } else {
             //DAC1->DHR12R2 = (uint16_t) (s1 << 4);  // Right (echo)
         }
-
-
         //addToAudio(s1 * 120, s2 * 120);
         frameAudBuffer[t * 2 + 0] = s1 * AMP;
         frameAudBuffer[t * 2 + 1] = s2 * AMP;
     }
-
-
     playFrameAudio(frameAudBuffer, (unsigned long)SAMPLES_PER_FRAME);
-
-
-
-
-
-
-    //processAudio();
-    //sms_update_screen();
 }
 
 enum { STATE_MAGIC = 0x5E6A };

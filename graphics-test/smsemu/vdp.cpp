@@ -13,17 +13,45 @@ float stretch_wide = 1.0f;
 int16_t dpv_offset_x, dpv_offset_y;
 
 enum {
-    NTSC_HCOUNT_MAX = 342, NTSC_VCOUNT_MAX = 262,
+    // NTSC constants
+    NTSC_HCOUNT_MAX = 342,
+    NTSC_VCOUNT_MAX = 262,
     NTSC_FPS = 60,
     NTSC_CYCLES_PER_LINE = (int)(CPU_CLOCK / NTSC_VCOUNT_MAX / NTSC_FPS), // ~228
-    NTSC_HBLANK_LEFT = 29, NTSC_HBLANK_RIGHT = 29,
-    NTSC_BORDER_TOP = 27, NTSC_BORDER_BOTTOM = 24,
-    NTSC_BORDER_LEFT = 13, NTSC_BORDER_RIGHT = 15,
-    NTSC_ACTIVE_DISPLAY_HORIZONTAL = 256, NTSC_ACTIVE_DISPLAY_VERTICAL = 192,
-    NTSC_DISPLAY_VERTICAL_START = NTSC_BORDER_TOP, NTSC_DISPLAY_VERTICAL_END = NTSC_DISPLAY_VERTICAL_START + NTSC_ACTIVE_DISPLAY_VERTICAL,
-    NTSC_DISPLAY_HORIZONTAL_START = NTSC_BORDER_LEFT, NTSC_DISPLAY_HORIZONTAL_END = NTSC_DISPLAY_HORIZONTAL_START + NTSC_ACTIVE_DISPLAY_HORIZONTAL,
+    NTSC_HBLANK_LEFT = 29,
+    NTSC_HBLANK_RIGHT = 29,
+    NTSC_BORDER_TOP = 27,
+    NTSC_BORDER_BOTTOM = 24,
+    NTSC_BORDER_LEFT = 13,
+    NTSC_BORDER_RIGHT = 15,
+    NTSC_ACTIVE_DISPLAY_HORIZONTAL = 256,
+    NTSC_ACTIVE_DISPLAY_VERTICAL = 192,
+    NTSC_DISPLAY_VERTICAL_START = NTSC_BORDER_TOP,
+    NTSC_DISPLAY_VERTICAL_END = NTSC_DISPLAY_VERTICAL_START + NTSC_ACTIVE_DISPLAY_VERTICAL,
+    NTSC_DISPLAY_HORIZONTAL_START = NTSC_BORDER_LEFT,
+    NTSC_DISPLAY_HORIZONTAL_END = NTSC_DISPLAY_HORIZONTAL_START + NTSC_ACTIVE_DISPLAY_HORIZONTAL,
+
+    // PAL constants
+    PAL_HCOUNT_MAX = 342,          // horizontal counts usually same
+    PAL_VCOUNT_MAX = 313,          // PAL has more lines
+    PAL_FPS = 50,                  // PAL runs at 50 Hz
+    PAL_CYCLES_PER_LINE = (int)(CPU_CLOCK / PAL_VCOUNT_MAX / PAL_FPS),
+    PAL_HBLANK_LEFT = 29,          // can copy NTSC
+    PAL_HBLANK_RIGHT = 29,
+    PAL_BORDER_TOP = 27,           // adjust if needed
+    PAL_BORDER_BOTTOM = 24,
+    PAL_BORDER_LEFT = 13,
+    PAL_BORDER_RIGHT = 15,
+    PAL_ACTIVE_DISPLAY_HORIZONTAL = 256,
+    PAL_ACTIVE_DISPLAY_VERTICAL = 192,
+    PAL_DISPLAY_VERTICAL_START = PAL_BORDER_TOP,
+    PAL_DISPLAY_VERTICAL_END = PAL_DISPLAY_VERTICAL_START + PAL_ACTIVE_DISPLAY_VERTICAL,
+    PAL_DISPLAY_HORIZONTAL_START = PAL_BORDER_LEFT,
+    PAL_DISPLAY_HORIZONTAL_END = PAL_DISPLAY_HORIZONTAL_START + PAL_ACTIVE_DISPLAY_HORIZONTAL,
+
     SPRITE_EOF = 208,
 };
+
 
 static bool vdp_is_line_irq_wanted(const struct SMS_Core *sms) {
     return BIT_TST4(VDP.registers[0x0]);
@@ -635,6 +663,94 @@ void vdp_run(struct SMS_Core *sms, uint8_t cycles) {
 }
 
 
+
+
+void vdp_run_pal(struct SMS_Core *sms, uint8_t cycles) {
+    // Add cycles
+    VDP.cycles += cycles;
+
+    // PAL constants
+    const int HCOUNT_MAX = 341;              // typical PAL horizontal count
+    const int VCOUNT_MAX = 312;              // PAL vertical lines
+    const int CYCLES_PER_LINE = 3546900 / VCOUNT_MAX / 50; // PAL CPU cycles per line
+    const int VBLANK_START = 262;            // approximate VBLANK start line
+    const int VBLANK_END = VCOUNT_MAX;
+
+    // Run per line
+    while (VDP.cycles >= CYCLES_PER_LINE) {
+        if (VDP.vcount < 192) { // visible lines
+            const uint8_t reg0 = VDP.registers[0x0];
+            const bool reg0_bit5 = (reg0 & (1 << 5)) != 0;
+
+            short xoff = reg0_bit5 ? 8 : 0;
+            stretch_wide = (xoff == 0) ? 1.87f : 1.94f;
+
+            const bool is_gg = SMS_is_system_type_gg(sms);
+
+            if (is_gg) {
+                dpv_offset_x = 14;
+                dpv_offset_y = 27;
+            } else {
+                dpv_offset_x = reg0_bit5 ? -8 : 0;
+                dpv_offset_y = 0;
+            }
+
+            if (is_gg) {
+                vdp_update_gg_colours();
+            } else {
+                vdp_update_sms_colours();
+            }
+
+            VDP.line_counter--;
+
+            if (VDP.line_counter == 0xFF) {
+                VDP.line_interrupt_pending = true;
+                VDP.line_counter = VDP.registers[0xA];
+            }
+
+            if (vdp_is_display_enabled(sms) && vdp_is_display_active(sms)) {
+                vdp_render_background();
+                vdp_render_sprites();
+                tbitOf1 = 50;
+            } else if (tbitOf1 > 0) {
+#ifndef __linux__
+                if (tbitOf1 == 30) {
+                    LCDClearBuffer(200);
+                    SCB_CleanDCache();
+                    LCDUpdateDD();
+                }
+#else
+                if (tbitOf1 == 30) sms_clear_screen();
+#endif
+                tbitOf1--;
+            }
+        }
+
+        VDP.cycles -= CYCLES_PER_LINE;
+        VDP.vcount++;
+        VDP.vcount_port++;
+
+        // VBLANK and interrupts
+        if (VDP.vcount == VBLANK_START) {
+            VDP.frame_interrupt_pending = true;
+            VDP.vertical_scroll = VDP.registers[0x9];
+            VDP.line_counter = VDP.registers[0xA];
+            core_on_vblank();
+        } else if (VDP.vcount == VBLANK_START + 1) {
+            if (SMS_is_spiderman_int_hack_enabled(sms) && vdp_is_vblank_irq_wanted(sms)) {
+                z80_irq(sms);
+            }
+        } else if (VDP.vcount == 219) {
+            VDP.vcount_port = NTSC_VCOUNT_PORT_JUMP; // keep legacy behavior if needed
+        } else if (VDP.vcount >= VBLANK_END) {
+            VDP.vcount = 0;
+            VDP.vcount_port = 0;
+        }
+    }
+}
+
+
+
 void vdp_mark_palette_dirty(struct SMS_Core* sms){
     memset(sms->vdp.dirty_cram, true, sizeof(sms->vdp.dirty_cram));
     /*
@@ -662,11 +778,24 @@ void vdp_init(struct SMS_Core *sms) {
     // i think unused regs return 0xFF?
     memset(VDP.registers, 0xFF, sizeof(VDP.registers));
 
-    VDP.registers[0x0] = 0x36;
+    VDP.registers[0x0] = 0x16;
     VDP.registers[0x1] = 0x80;
     VDP.registers[0x6] = 0xFB;
 
     VDP.line_counter = 0xFF;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

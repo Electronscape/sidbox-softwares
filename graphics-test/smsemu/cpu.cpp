@@ -2473,7 +2473,7 @@ void z80_run(struct SMS_Core *sms) {
     if (!sms->cpu.halt) {
         execute(sms);
     } else {
-        sms->cpu.cycles = 4;
+        sms->cpu.cycles += 4;
     }
 
     isr(sms);
@@ -2501,8 +2501,8 @@ void z80_build_cyclesDB(){
     CYC_DDFD = smsCYC_DDFD;
     CYC_CB = smsCYC_CB;
 
-    memcpy(CYC_00,   DBCYC_00, 0x100);
-    memcpy(CYC_ED,   DBCYC_ED, 0x100);
+    memcpy(CYC_00,   DBCYC_00,   0x100);
+    memcpy(CYC_ED,   DBCYC_ED,   0x100);
     memcpy(CYC_DDFD, DBCYC_DDFD, 0x100);
-    memcpy(CYC_CB,   DBCYC_CB, 0x100);
+    memcpy(CYC_CB,   DBCYC_CB,   0x100);
 }

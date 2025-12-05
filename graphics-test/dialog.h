@@ -7,6 +7,7 @@
 #include <QGraphicsPixmapItem>
 #include <QTimer>
 #include <QImage>
+#include <QKeyEvent>
 
 
 QT_BEGIN_NAMESPACE
@@ -39,10 +40,13 @@ private:
     void loadROM();
     void setScreenScale(float factor);
     void swapBuffers();
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
+
+
 
 };
 

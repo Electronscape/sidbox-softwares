@@ -13,7 +13,7 @@
     #define __ATTR_RAM_TC
     #define FORCE_INLINE
     extern unsigned char  duunmap_types[64][64];			// world data types
-    extern unsigned char  duunmap_textureid[4][64][64];	// textures: floor+wall(side a)/ walls(side b)/ ceiling
+    extern unsigned char  duunmap_textureid[4][64][64];     // textures: floor+wall(side a)/ walls(side b)/ ceiling
     extern signed   short duunmap_lm[64][64];				// light levels
     // MASTERGEAR MOD
     #define SEGAHV_CONFIG_TONEMODE		0x01	// 0=standard SY chip, 1=pwm style ;)
@@ -24,8 +24,10 @@ extern volatile bool frameReady;
 
 #define MAX_SPRITES 16
 
+#define NTSC_CLOCK  (3579545)
+#define PAL_CLOCK   (3546900)
 
-#if 0
+#if 1
     // runs at 3.58MHz
     #define CPU_CLOCK (3580000)
 #else
@@ -33,7 +35,7 @@ extern volatile bool frameReady;
     //#define CPU_CLOCK (4117000)// 15%
     //#define CPU_CLOCK (3899545)	// 8% faster
     //#define CPU_CLOCK (3580000)
-    #define CPU_CLOCK (int)(3580000.0f * 1.08f)	// 20% faster
+    #define CPU_CLOCK (int)(NTSC_CLOCK * 1.08f)	// 20% faster
 #endif
 
 #define CYCLES_PER_FRAME (CPU_CLOCK / 60)

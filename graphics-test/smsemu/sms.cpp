@@ -12710,16 +12710,22 @@ bool SMS_parity8(uint8_t value) {
 
 
 uint16_t smsAudioCycs, smsAudioTicks;
+void vdp_run_pal(struct SMS_Core *sms, uint8_t cycles);
 
 void SMS_step(struct SMS_Core *sms)
 {
     z80_run(sms);
-    vdp_run(sms, sms->cpu.cycles);
-    //smsAudioCycs
-    //SN76489_run(sms, sms->cpu.cycles);
+    const bool is_pal = (sms->region == REGION_PAL);
+    if(is_pal)
+        vdp_run_pal(sms, sms->cpu.cycles);  // pal region renderer
+    else
+        vdp_run(sms, sms->cpu.cycles);      // ntsc region renderer
 
-    //assert(sms->cpu.cycles != 0);
+
+    // audio sync: scale similarly
+    // SN76489_run(sms, vdp_cycles);
 }
+
 
 #ifdef __linux__
 
@@ -12743,16 +12749,15 @@ int proc_dpad_a_right(){return 0;}
 
 void SMS_run_frame_cycles(struct SMS_Core* sms, size_t cycles)
 {
-    uint8_t port_a_state = 0;
+    //uint8_t port_a_state = 0;
 
-    if (JOYSTICK_A_INPUT_FIRE)  port_a_state |= JOY1_A_BUTTON;
-    if (JOYSTICK_A_INPUT_FIRE2) port_a_state |= JOY1_B_BUTTON;
-    if (JOYSTICK_A_INPUT_UP)    port_a_state |= JOY1_UP_BUTTON;
-    if (JOYSTICK_A_INPUT_DOWN)  port_a_state |= JOY1_DOWN_BUTTON;
-    if (JOYSTICK_A_INPUT_LEFT)  port_a_state |= JOY1_LEFT_BUTTON;
-    if (JOYSTICK_A_INPUT_RIGHT) port_a_state |= JOY1_RIGHT_BUTTON;
-
-    SMS_set_port_a(sms, (enum SMS_PortA)(uint8_t)port_a_state);
+    //if (JOYSTICK_A_INPUT_FIRE)  port_a_state |= JOY1_A_BUTTON;
+    //if (JOYSTICK_A_INPUT_FIRE2) port_a_state |= JOY1_B_BUTTON;
+    //if (JOYSTICK_A_INPUT_UP)    port_a_state |= JOY1_UP_BUTTON;
+    //if (JOYSTICK_A_INPUT_DOWN)  port_a_state |= JOY1_DOWN_BUTTON;
+    //if (JOYSTICK_A_INPUT_LEFT)  port_a_state |= JOY1_LEFT_BUTTON;
+    //if (JOYSTICK_A_INPUT_RIGHT) port_a_state |= JOY1_RIGHT_BUTTON;
+    //SMS_set_port_a(sms, (enum SMS_PortA)(uint8_t)port_a_state);
 
     for (size_t i = 0; i < cycles; i += sms->cpu.cycles)
         SMS_step(sms);
@@ -12764,6 +12769,8 @@ void SMS_run_frame_delta(struct SMS_Core *sms, double delta)
 
     SMS_run_frame_cycles(sms, cycles);
 }
+
+
 
 void SMS_run_frame(struct SMS_Core *sms)
 {

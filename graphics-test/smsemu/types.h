@@ -120,7 +120,7 @@ enum SMS_MapperType
 
 struct SMS_SegaMapper
 {
-    const uint8_t* banks[48]; // mapped every 0x400
+    const uint8_t* banks[64]; // mapped every 0x400
 
     struct // control
     {
@@ -241,6 +241,7 @@ struct SMS_Vdp
 
 enum SMS_PortA
 {
+    JOY1_NONE           = 0,
     JOY1_UP_BUTTON      = 1 << 0,
     JOY1_DOWN_BUTTON    = 1 << 1,
     JOY1_LEFT_BUTTON    = 1 << 2,
@@ -253,6 +254,7 @@ enum SMS_PortA
 
 enum SMS_PortB
 {
+    JOY2_NONE           = 0,
     JOY2_LEFT_BUTTON    = 1 << 0,
     JOY2_RIGHT_BUTTON   = 1 << 1,
     JOY2_A_BUTTON       = 1 << 2,
@@ -330,6 +332,10 @@ struct SMS_MemoryControlRegister
 };
 
 
+typedef enum {
+    REGION_PAL  = 0x00,
+    REGION_NTSC = 0x01
+} SMS_Region;
 
 
 struct SMS_Core
@@ -353,6 +359,7 @@ struct SMS_Core
     //void* apu_callback_user;
     uint32_t apu_callback_freq;
     int32_t apu_callback_counter;
+    SMS_Region region;
 };
 
 #endif

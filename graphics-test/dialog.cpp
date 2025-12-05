@@ -20,8 +20,10 @@ void doSMSFrames();
 Dialog *g_dialog = nullptr;
 char frame_db = 0;
 char EmuReady = 0;
-
 char RomFileName[1024];
+
+void sms_keydown(int keycode);
+void sms_keyup(int keycode);
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
@@ -109,12 +111,21 @@ Dialog::Dialog(QWidget *parent)
 
     QTimer *frameTimer = new QTimer(this);
     connect(frameTimer, &QTimer::timeout, this, [=]() {
-        if(EmuReady)
-            doSMSFrames();
+        if(EmuReady) doSMSFrames();
     });
     frameTimer->start(16);   // 0ms = run every cycle
 
     connect(ui->cmdOpenRom, &QPushButton::clicked, this, &Dialog::loadROM);
+
+    //setFocusPolicy(Qt::StrongFocus);
+    //setAttribute(Qt::WA_KeyboardFocusChange);
+
+    ui->gfxPort->installEventFilter(this);
+    ui->gfxPort->setFocusPolicy(Qt::StrongFocus);
+    ui->gfxPort->setFocus();
+
+
+
 
 
 }
@@ -138,12 +149,91 @@ void Dialog::loadROM() {
 
     printf("ROM selected: %s\n", RomFileName);
 
+    ui->gfxPort->setFocus();
+
+
     BEGIN_SMSEMU(RomFileName);
 
     // Optionally, call your ROM loader here
     // uint32_t romSize;
     // read_file(RomFileName, &romSize);
 }
+
+volatile uint8_t portA_state = 0;
+volatile uint8_t portB_state = 0;
+enum SMS_PortA
+{
+    JOY1_NOTHING        = 0,
+    JOY1_UP_BUTTON      = 1 << 0,
+    JOY1_DOWN_BUTTON    = 1 << 1,
+    JOY1_LEFT_BUTTON    = 1 << 2,
+    JOY1_RIGHT_BUTTON   = 1 << 3,
+    JOY1_A_BUTTON       = 1 << 4,
+    JOY1_B_BUTTON       = 1 << 5,
+    JOY2_UP_BUTTON      = 1 << 6,
+    JOY2_DOWN_BUTTON    = 1 << 7,
+};
+
+enum SMS_PortB
+{
+    JOY2_NOTHING        = 0,
+    JOY2_LEFT_BUTTON    = 1 << 0,
+    JOY2_RIGHT_BUTTON   = 1 << 1,
+    JOY2_A_BUTTON       = 1 << 2,
+    JOY2_B_BUTTON       = 1 << 3,
+    RESET_BUTTON        = 1 << 4,
+    PAUSE_BUTTON        = 1 << 5,
+};
+
+int mapQtKeyToSMS(int qtKey) {
+    switch(qtKey) {
+
+/*0*/   case Qt::Key_Up:    return (0x0000 | JOY1_UP_BUTTON);
+/*1*/   case Qt::Key_Down:  return (0x0000 | JOY1_DOWN_BUTTON);
+/*2*/   case Qt::Key_Left:  return (0x0000 | JOY1_LEFT_BUTTON);
+/*3*/   case Qt::Key_Right: return (0x0000 | JOY1_RIGHT_BUTTON);
+/*4*/   case Qt::Key_Z:     return (0x0000 | JOY1_A_BUTTON);
+/*5*/   case Qt::Key_X:     return (0x0000 | JOY1_B_BUTTON);
+
+/*6*/   case Qt::Key_W:     return (0x0000 | JOY2_UP_BUTTON);
+/*7*/   case Qt::Key_S:     return (0x0000 | JOY2_DOWN_BUTTON);
+/*0*/   case Qt::Key_A:     return (0xF000 | JOY2_LEFT_BUTTON);
+/*1*/   case Qt::Key_D:     return (0xF000 | JOY2_RIGHT_BUTTON);
+/*2*/   case Qt::Key_K:     return (0xF000 | JOY2_A_BUTTON);
+/*3*/   case Qt::Key_L:     return (0xF000 | JOY2_B_BUTTON);
+
+/*4*/   case Qt::Key_R:     return (0xF000 | RESET_BUTTON);
+/*5*/   case Qt::Key_P:     return (0xF000 | PAUSE_BUTTON);
+
+    }
+    return 0; // unknown
+}
+
+bool Dialog::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == ui->gfxPort) {
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+            //handleKeyPress(keyEvent->key());
+            if (!keyEvent->isAutoRepeat()) { // only handle first press
+                sms_keydown(mapQtKeyToSMS(keyEvent->key()));
+            }
+            return true; // stop further processing
+        }
+        if (event->type() == QEvent::KeyRelease) {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+            //handleKeyRelease(keyEvent->key());
+            if (!keyEvent->isAutoRepeat()) { // only handle first press
+                sms_keyup(mapQtKeyToSMS(keyEvent->key()));
+            }
+            return true; // stop further processing
+        }
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+
+
+
 
 
 void Dialog::resizeEvent(QResizeEvent *event)
@@ -195,6 +285,8 @@ void Dialog::setScreenScale(float factor)
 void Dialog::closeEvent(QCloseEvent *event){
     closeAudioHardware();
 }
+
+
 
 Dialog::~Dialog()
 {

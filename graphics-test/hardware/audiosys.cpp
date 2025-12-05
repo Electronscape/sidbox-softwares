@@ -11,7 +11,7 @@ snd_pcm_t *pcm_handle;
 
 #define AUDIO_BUFFER_SIZE           1024   // frames
 
-int16_t audiobuf[AUDIO_BUFFER_SIZE * 2];                         /* stereo interleaved frames */
+int16_t audiobuf[AUDIO_BUFFER_SIZE * 2];          /* stereo interleaved frames */
 //int frames_per_write = sizeof(audiobuf) / 4;    /* 4 bytes per frame: L+R */
 
 volatile unsigned int writePos = 0;
@@ -30,7 +30,7 @@ void clearAudioBuffer(){
 
 int initAudioHardware(){
     snd_pcm_hw_params_t *params;
-    unsigned int rate = 44100;
+    unsigned int rate = SAMPLE_FREQ;
     int err;
 
     /* Open PCM device for playback */
@@ -137,7 +137,9 @@ void playFrameAudio(int16_t *snd, unsigned long SPF){
 int closeAudioHardware(){
     printf("closing audio\n");
     audioThreadRunning = false;
-    pthread_join(audioThreadHandle, NULL);  // wait until it’s done
+    //pthread_join(audioThreadHandle, NULL);  // wait until it’s done
+
+    snd_pcm_drop(pcm_handle);   // immediately stops playback
 
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
