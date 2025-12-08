@@ -132,27 +132,18 @@ static inline void SN76489_tick_tone(struct SMS_Core *sms, uint8_t index, uint8_
     } else {
         int counter = APU.tone[index].counter;
         int tone = APU.tone[index].tone;
-
         if (counter > 0 || tone > 0) {
             counter -= cycles;
-
             if (counter <= 0) {
                 counter += tone << 4; // tone * 16
-
                 if (tone != 1) {
                     APU.polarity[index] *= -1;
                 }
             }
-
             APU.tone[index].counter = counter;
         }
     }
 }
-
-
-
-
-
 
 static inline void SN76489_tick_tone2(struct SMS_Core *sms, uint8_t index, uint8_t cycles) {
     // we don't want to keep change the polarity if the counter is already zero,
@@ -160,8 +151,6 @@ static inline void SN76489_tick_tone2(struct SMS_Core *sms, uint8_t index, uint8
     // otherwise this will cause a hi-pitch screech, can be heard in golden-axe
     // to fix this, i check if the counter > 0 || if we have a value to reload
     // the counter with.
-
-
     if (APU.better_sid) {
         if(APU.tone[index].pwmbit){	// increasing
             APU.tone[index].pwm += bSEGAPWMer;
@@ -197,15 +186,14 @@ static inline void SN76489_tick_tone2(struct SMS_Core *sms, uint8_t index, uint8
         if (APU.tone[index].counter <= 0) {
             // the apu runs x16 slower than cpu!
             APU.tone[index].counter += APU.tone[index].tone * 16;
-
             /*
-             from the docs:
+                from the docs:
 
-             Sample playback makes use of a feature of the SN76489's tone generators:
-             when the half-wavelength (tone value) is set to 1, they output a DC offset
-             value corresponding to the volume level (i.e. the wave does not flip-flop).
-             By rapidly manipulating the volume, a crude form of PCM is obtained.
-             */
+                Sample playback makes use of a feature of the SN76489's tone generators:
+                when the half-wavelength (tone value) is set to 1, they output a DC offset
+                value corresponding to the volume level (i.e. the wave does not flip-flop).
+                By rapidly manipulating the volume, a crude form of PCM is obtained.
+            */
             // this effect is used by the sega intro in Tail's Adventure and
             // sonic tripple trouble.
             if (APU.tone[index].tone != 1) {
@@ -218,16 +206,15 @@ static inline void SN76489_tick_tone2(struct SMS_Core *sms, uint8_t index, uint8
 
 static inline void SN76489_tick_noise(struct SMS_Core *sms, uint8_t cycles) {
     APU.noise.counter -= cycles;
-
     if (APU.noise.counter <= 0) {
         const uint8_t multi = APU.noise.better_drums ? 1 : 16;
         uint16_t reload = 0;
 
         switch (APU.noise.shift_rate) {
-        case 0x0: reload = 1 * 16 * multi; break;
-        case 0x1: reload = 2 * 16 * multi; break;
-        case 0x2: reload = 4 * 16 * multi; break;
-        case 0x3: reload = APU.tone[2].tone * 16; break;
+            case 0x0: reload = 1 * 16 * multi; break;
+            case 0x1: reload = 2 * 16 * multi; break;
+            case 0x2: reload = 4 * 16 * multi; break;
+            case 0x3: reload = APU.tone[2].tone * 16; break;
         }
         APU.noise.counter += reload;
         APU.noise.flip_flop ^= 1;
@@ -255,10 +242,10 @@ static inline void SN76489_tick_noise_old(struct SMS_Core *sms, uint8_t cycles) 
 
         // the apu runs x16 slower than cpu!
         switch (APU.noise.shift_rate) {
-        case 0x0: APU.noise.counter += 1 * 16 * multi; break;
-        case 0x1: APU.noise.counter += 2 * 16 * multi; break;
-        case 0x2: APU.noise.counter += 4 * 16 * multi; break;
-        case 0x3: APU.noise.counter = APU.tone[2].tone * 16; break;
+            case 0x0: APU.noise.counter += 1 * 16 * multi; break;
+            case 0x1: APU.noise.counter += 2 * 16 * multi; break;
+            case 0x2: APU.noise.counter += 4 * 16 * multi; break;
+            case 0x3: APU.noise.counter = APU.tone[2].tone * 16; break;
         }
 
         // change the polarity
@@ -285,23 +272,23 @@ static inline int8_t SN76489_sample_channel(struct SMS_Core *sms, uint8_t index)
 }
 
 /*
- static void SN76489_sample(struct SMS_Core* sms)
- {
- const int8_t tone0 = SN76489_sample_channel(sms, 0);
- const int8_t tone1 = SN76489_sample_channel(sms, 1);
- const int8_t tone2 = SN76489_sample_channel(sms, 2);
- const int8_t noise = SN76489_sample_channel(sms, 3);
+static void SN76489_sample(struct SMS_Core* sms)
+{
+const int8_t tone0 = SN76489_sample_channel(sms, 0);
+const int8_t tone1 = SN76489_sample_channel(sms, 1);
+const int8_t tone2 = SN76489_sample_channel(sms, 2);
+const int8_t noise = SN76489_sample_channel(sms, 3);
 
- struct SMS_ApuCallbackData data =
- {
- .tone0 = { tone0 * APU.tone0_left, tone0 * APU.tone0_right },
- .tone1 = { tone1 * APU.tone1_left, tone1 * APU.tone1_right },
- .tone2 = { tone2 * APU.tone2_left, tone2 * APU.tone2_right },
- .noise = { noise * APU.noise_left, noise * APU.noise_right },
- };
+struct SMS_ApuCallbackData data =
+{
+.tone0 = { tone0 * APU.tone0_left, tone0 * APU.tone0_right },
+.tone1 = { tone1 * APU.tone1_left, tone1 * APU.tone1_right },
+.tone2 = { tone2 * APU.tone2_left, tone2 * APU.tone2_right },
+.noise = { noise * APU.noise_left, noise * APU.noise_right },
+};
 
- sms->apu_callback(sms->apu_callback_user, &data);
- }
+sms->apu_callback(sms->apu_callback_user, &data);
+}
  */
 
 #ifndef __linux__
@@ -323,23 +310,27 @@ void SN76489_rend(struct SMS_Core *sms, int8_t *tonesL, int8_t *tonesR) {
     const int8_t tone2 = SN76489_sample_channel(sms, 2);
     const int8_t noise = SN76489_sample_channel(sms, 3);
 
-    struct SMS_ApuCallbackData data = { .tone0 = { tone0 * APU.tone0_left, tone0 * APU.tone0_right }, .tone1 = { tone1 * APU.tone1_left, tone1 * APU.tone1_right }, .tone2 = { tone2
-                      * APU.tone2_left, tone2 * APU.tone2_right }, .noise = { noise * APU.noise_left, noise * APU.noise_right }, };
+    struct SMS_ApuCallbackData data = {
+        .tone0 = { (int8_t)(tone0 * APU.tone0_left), (int8_t)(tone0 * APU.tone0_right) },
+        .tone1 = { (int8_t)(tone1 * APU.tone1_left), (int8_t)(tone1 * APU.tone1_right) },
+        .tone2 = { (int8_t)(tone2 * APU.tone2_left), (int8_t)(tone2 * APU.tone2_right) },
+        .noise = { (int8_t)(noise * APU.noise_left), (int8_t)(noise * APU.noise_right) }
+    };
 
     //*tonesL = (data.tone0[0] + data.tone1[0] + data.tone2[0] + data.noise[0]);
     //*tonesR = (data.tone0[1] + data.tone1[1] + data.tone2[1] + data.noise[1]);
 
-    signed short ail, air, ar, al;
-
     if (audioMode1 == 1) {
-
+#ifndef __linux__
+        signed short ail, air;
+        signed short ar=0, al=0;
         ail = (data.tone0[0] + data.tone1[0] + data.tone2[0] + data.noise[0]);
         air = (data.tone0[1] + data.tone1[1] + data.tone2[1] + data.noise[1]);
 
         air <<= 4;
         ail <<= 4;
 
-#ifndef __linux__
+
         // ####### TRI-BANDING EQUALISER ###############################################
         //if (!eq3bandoverride)
         {	// we might need to over ride this, for TAP/TZX files
@@ -351,16 +342,17 @@ void SN76489_rend(struct SMS_Core *sms, int8_t *tonesL, int8_t *tonesR) {
             ar = do_3band(&eqright, ar);
             //*al = aud + 2048;
         }
-#endif
 
-        *tonesL = al >> 4;
-        *tonesR = ar >> 4; //(data.tone0[1] + data.tone1[1] + data.tone2[1] + data.noise[1]);
+        *tonesL = (al >> 4);
+        *tonesR = (ar >> 4); //(data.tone0[1] + data.tone1[1] + data.tone2[1] + data.noise[1]);
+#else
+        *tonesL = (data.tone0[0] + data.tone1[0] + data.tone2[0] + data.noise[0]);
+        *tonesR = (data.tone0[1] + data.tone1[1] + data.tone2[1] + data.noise[1]);
+#endif
     } else {
         *tonesL = (data.tone0[0] + data.tone1[0] + data.tone2[0] + data.noise[0]);
         *tonesR = (data.tone0[1] + data.tone1[1] + data.tone2[1] + data.noise[1]);
-
     }
-
     //sms->apu_callback(sms->apu_callback_user, &data);
 }
 

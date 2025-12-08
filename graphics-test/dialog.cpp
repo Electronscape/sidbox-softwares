@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QString>
 #include <QMessageBox>
+#include <QSettings>
 
 #include "sbapi_graphics.h"
 #include "hardware/audiosys.h"
@@ -129,16 +130,30 @@ Dialog::Dialog(QWidget *parent)
 
 
 }
+
+
 void Dialog::loadROM() {
+    static QString lastDir;
+    {
+        QSettings settings("Electronscape", "MySMSemu");
+        lastDir = settings.value("lastRomDir", QDir::homePath()).toString();
+    }
+
     QString fileName = QFileDialog::getOpenFileName(
         this,
         tr("Open ROM"),
-        "",
+        lastDir,
         tr("ROM Files (*.sms *.gg);;All Files (*)")
         );
 
     if (fileName.isEmpty()) {
         return; // User cancelled
+    }
+
+    {
+        QFileInfo info(fileName);
+        QSettings settings("Electronscape", "MySMSemu");
+        settings.setValue("lastRomDir", info.absolutePath());
     }
 
     // Copy safely to your C-style buffer
@@ -158,6 +173,8 @@ void Dialog::loadROM() {
     // uint32_t romSize;
     // read_file(RomFileName, &romSize);
 }
+
+
 
 volatile uint8_t portA_state = 0;
 volatile uint8_t portB_state = 0;
@@ -352,21 +369,26 @@ void Dialog::updateSMSScreen(){
     // ------- TRANSFER VRAM to IMAGE output ----------- //
     // simulates the SIDBOX Graphics view LCD
     uint8_t *p = PROJ_VRAM;
+
     for (int x = 0; x < SCR_WIDTH; x++){
         for (int y = 0; y < SCR_HEIGHT; y++){
             QRgb *scan = reinterpret_cast<QRgb*>(screenImageB.scanLine(y));
             scan[x] = PROJ_CRAM[*p++];
         }
     }
+    sbgfx_drawbox(476, 0, 479, 320, 63);
+    sbgfx_drawbox(0, 319, 479, 319, 63);
 
     swapBuffers();
     //processAudio();
     //printf("piss\n");
 }
 
+
 void Dialog::clearSMSScreen(){
     sbgfx_fill(0);
     uint8_t *p = PROJ_VRAM;
+
     for (int x = 0; x < SCR_WIDTH; x++){
         for (int y = 0; y < SCR_HEIGHT; y++){
             QRgb *scan = reinterpret_cast<QRgb*>(screenImageB.scanLine(y));

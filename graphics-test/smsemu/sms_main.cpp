@@ -179,8 +179,9 @@ int main_sms(char *filename)
             dbug("failed to read file %s\n", filename);
             return -1;
         }
-        strcpy(romfilename, filename);
-        strcat(romfilename, ".sav");
+        //strcpy(romfilename, filename);
+        //strcat(romfilename, ".sav\0");
+        snprintf(romfilename, sizeof(romfilename), "%s.sav", filename);
     }
 
     z80_build_cyclesDB();	// need this first to build the CYCLES database for RAM
@@ -234,6 +235,9 @@ int main_sms(char *filename)
         sms.region = REGION_NTSC;
     else
         sms.region = REGION_PAL;
+
+    //sms.region = REGION_NTSC;
+    //sms.region = REGION_PAL;
 
     dbug("REGION: %x\n", sms.region);
 
@@ -292,7 +296,8 @@ void BEGIN_SMSEMU(char *filename){
         }
     }
     */
-    sms.apu.better_sid = (!!(bSEGAConfigs & SEGAHV_CONFIG_TONEMODE));
+    //sms.apu.better_sid = (!!(bSEGAConfigs & SEGAHV_CONFIG_TONEMODE));
+    sms.apu.better_sid = SEGAHV_CONFIG_TONEMODE;
 
 }
 
