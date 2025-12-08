@@ -38,8 +38,11 @@ private:
 
     void UpdatePrePaletteMixer();
 
+    void SelectedPaletteID();
     void renderPaletteCanvas();
     void renderEditorCanvas();
+    void reSize();
+    uint32_t colourSqueeze(uint32_t srcColour);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

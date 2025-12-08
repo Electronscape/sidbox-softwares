@@ -6,6 +6,8 @@
 #include <QPushButton>
 #include <QTimer>
 #include <functional>
+#include <cstring>
+#include <string.h>
 
 #define PALETTE_BOX_HSIZE   16
 #define PALETTE_BOX_VSIZE   22
@@ -20,14 +22,18 @@ uint8_t     pltColourPreset[3] = {0,0,0};
 
 QPalette pal;
 
+int hoverPixelX = -1;
+int hoverPixelY = -1;
+
+
 #define gridEnabled      true
 #define gridRed          255
 #define gridGreen        255
 #define gridBlue         255
 
-uint16_t icon_zoom       = 24;
-uint16_t icon_width      = 8;
-uint16_t icon_height     = 8;
+uint16_t icon_zoom       = 16;
+uint16_t icon_width      = 32;
+uint16_t icon_height     = 32;
 
 int editorViewPortWidth  = 8;   // editor width grid
 int editorViewPortHeight = 8;
@@ -113,6 +119,8 @@ uint32_t BACKUP_CLUT[256];
 
 uint8_t palleteCanvas[PALETTE_VRAM_SIZE];
 
+QTimer *updateTimer;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -147,17 +155,8 @@ MainWindow::MainWindow(QWidget *parent)
     editorScene = new QGraphicsScene(this);
     ui->gfxEditor->setScene(editorScene);
 
-    // Resize the IconImageData.
-    int old_height, old_width;
-    old_height = icon_height;
-    old_width = icon_width;
-
     // assume old icon_area
-    //std::vector<std::vector<int>> icon_area(old_height, std::vector<int>(old_width, 0));
-
     // new size
-    icon_width = 32;
-    icon_height = 32;
 
     // resize rows first
     icon_area.resize(icon_height);
@@ -168,29 +167,23 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 
+    /*
     for(int y=0; y<icon_height; y++){
         for(int x=0; x<icon_width; x++){
             icon_area[y][x] = rand() & 0x1;
         }
     }
-
-    //int editorViewPortWidth  = 8;   // editor width grid
-    //int editorViewPortHeight = 8;
-
+    */
 
     //editorImg = QImage(32, 32, QImage::Format_RGB32);
     editorPixmap = editorScene->addPixmap(QPixmap::fromImage(editorImg));
-    //renderEditorCanvas();
-
-
-
-
+    renderEditorCanvas();
 
     for(int i=0; i<256; i++){
         BACKUP_CLUT[i] = CLUT[i];
     }
     //
-    QTimer *updateTimer;
+
     updateTimer = new QTimer(this);
     updateTimer->setSingleShot(true);
 
@@ -220,20 +213,13 @@ MainWindow::MainWindow(QWidget *parent)
         pltColourPreset[2] = value;
         UpdatePrePaletteMixer();
         updateTimer->start(1);  // restart timer for a one-shot update
-
     });
-
-
 
     connect(ui->cmdRevertPalette, &QPushButton::clicked, this, [=](){
         uint8_t r,g,b;
-        //CLUT[numSelectedPaletteID] = BACKUP_CLUT[numSelectedPaletteID];  // assign colour back to what it was
         r = BACKUP_CLUT[numSelectedPaletteID] >> 16;
         g = BACKUP_CLUT[numSelectedPaletteID] >> 8;
         b = BACKUP_CLUT[numSelectedPaletteID] & 0xff;
-
-        //printf("rgb: %u,%u,%u\n", r,g,b);
-
 
         pltColourPreset[0] = r;
         pltColourPreset[1] = g;
@@ -250,8 +236,126 @@ MainWindow::MainWindow(QWidget *parent)
         UpdatePrePaletteMixer();
         renderEditorCanvas();
     });
+
+    connect(ui->rad24BitMode, &QRadioButton::clicked, this, [=](){
+        UpdatePrePaletteMixer();
+        renderEditorCanvas();
+    });
+    connect(ui->rad16BitMode, &QRadioButton::clicked, this, [=](){
+        UpdatePrePaletteMixer();
+        renderEditorCanvas();
+    });
+
+    ui->gfxEditor->setMouseTracking(true);
+    ui->gfxEditor->viewport()->setMouseTracking(true); // important for QGraphicsView
+    ui->gfxEditor->viewport()->installEventFilter(this);
+
+    QTimer *allDoneTimer;
+    allDoneTimer = new QTimer(this);
+    allDoneTimer->setSingleShot(true);
+
+    connect(allDoneTimer, &QTimer::timeout, this, &MainWindow::reSize);
+    //icon_width
+    ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+    ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
+
+    allDoneTimer->start(100);
+
+
+    connect(ui->cmdPushImageUp, &QPushButton::clicked, this, [this](){
+        // Temporary copy of the top row
+        uint8_t topRow[icon_width];
+        for (int x = 0; x < icon_width; x++)
+            topRow[x] = icon_area[0][x];
+
+        // Shift all rows up
+        for (int y = 0; y < icon_height - 1; y++)
+            for (int x = 0; x < icon_width; x++)
+                icon_area[y][x] = icon_area[y + 1][x];
+
+        // Put the top row at the bottom
+        for (int x = 0; x < icon_width; x++)
+            icon_area[icon_height - 1][x] = topRow[x];
+
+        renderEditorCanvas();
+    });
+
+
+    connect(ui->cmdPushImageDown, &QPushButton::clicked, this, [this](){
+        uint8_t bottomRow[icon_width];
+        for (int x = 0; x < icon_width; x++) bottomRow[x] = icon_area[icon_height - 1][x];
+
+        for (int y = icon_height - 1; y > 0; y--)
+            for (int x = 0; x < icon_width; x++)
+                icon_area[y][x] = icon_area[y - 1][x];
+
+        for (int x = 0; x < icon_width; x++)
+            icon_area[0][x] = bottomRow[x];
+
+        renderEditorCanvas();
+    });
+
+
+    connect(ui->cmdPushImageLeft, &QPushButton::clicked, this, [this](){
+        for (int y = 0; y < icon_height; y++) {
+            uint8_t leftPixel = icon_area[y][0];
+            for (int x = 0; x < icon_width - 1; x++)
+                icon_area[y][x] = icon_area[y][x + 1];
+            icon_area[y][icon_width - 1] = leftPixel;
+        }
+        renderEditorCanvas();
+    });
+    connect(ui->cmdPushImageRight, &QPushButton::clicked, this, [this](){
+        for (int y = 0; y < icon_height; y++) {
+            uint8_t rightPixel = icon_area[y][icon_width - 1];
+            for (int x = icon_width - 1; x > 0; x--)
+                icon_area[y][x] = icon_area[y][x - 1];
+            icon_area[y][0] = rightPixel;
+        }
+        renderEditorCanvas();
+    });
+
+    connect(ui->cmdFlipH, &QPushButton::clicked, this, [this](){
+        for(int y = 0; y < icon_height; y++){
+            for(int x = 0; x < icon_width / 2; x++){
+                uint8_t tmp = icon_area[y][x];
+                icon_area[y][x] = icon_area[y][icon_width - 1 - x];
+                icon_area[y][icon_width - 1 - x] = tmp;
+            }
+        }
+        renderEditorCanvas();
+    });
+
+    connect(ui->cmdFlipV, &QPushButton::clicked, this, [this](){
+        for(int y = 0; y < icon_height / 2; y++){
+            for(int x = 0; x < icon_width; x++){
+                uint8_t tmp = icon_area[y][x];
+                icon_area[y][x] = icon_area[icon_height - 1 - y][x];
+                icon_area[icon_height - 1 - y][x] = tmp;
+            }
+        }
+        renderEditorCanvas();
+    });
+
+
 }
 
+uint32_t MainWindow::colourSqueeze(uint32_t srcColour){
+    if(ui->rad24BitMode->isChecked())
+        return srcColour; // 24-bit untouched
+
+    uint8_t r = (srcColour >> 16) & 0xFF;
+    uint8_t g = (srcColour >> 8) & 0xFF;
+    uint8_t b = srcColour & 0xFF;
+
+    // simulate RGB565 in 8 bits per channel
+    r = (r & 0xF8);            // 5 bits
+    g = (g & 0xFC);            // 6 bits
+    b = (b & 0xF8);            // 5 bits
+
+    return (r << 16) | (g << 8) | b;
+
+}
 
 void MainWindow::UpdatePrePaletteMixer(){
     uint32_t bit32col;
@@ -260,18 +364,13 @@ void MainWindow::UpdatePrePaletteMixer(){
     pal.setColor(QPalette::Window, QColor(pltColourPreset[0], pltColourPreset[1], pltColourPreset[2])); // RGB
     ui->lblPaletteColour->setAutoFillBackground(true);   // must enable for background
     ui->lblPaletteColour->setPalette(pal);
-
     CLUT[numSelectedPaletteID] = (pltColourPreset[0] << 16) | (pltColourPreset[1] << 8) | (pltColourPreset[2]);
-
-
 
     renderPaletteCanvas();
 
     bit32col = CLUT[numSelectedPaletteID] | (255 << 24);    // making sure that the alpha channel is full solid
 
-
-    // TODO: convert the 32bit value (ignoring the alpha channel not important, to a RGB565 format)
-    // ---- RGB888 to RGB565 conversion ----
+    // ---- RGB888 to RGB565 conversion ---- // TODO: convert the 32bit value (ignoring the alpha channel not important, to a RGB565 format)
     int r = pltColourPreset[0];
     int g = pltColourPreset[1];
     int b = pltColourPreset[2];
@@ -280,27 +379,42 @@ void MainWindow::UpdatePrePaletteMixer(){
         ((g & 0xFC) << 3) |   // 6 bits green
         ((b & 0xF8) >> 3);    // 5 bits blue
 
-
     //ui->txtHEXcolour32Bit->setText();
     ui->txtHEXcolour32Bit->setText("0x" + QString("%1").arg(bit32col & 0xFFFFFF, 6, 16, QChar('0')).toUpper());
     ui->txtHEXcolour16Bit->setText("0x" + QString("%1").arg(bit16col & 0x00FFFF, 4, 16, QChar('0')).toUpper());
 
     ui->txtDECcolour32Bit->setText(QString("%1").arg(bit32col & 0xffffff));
     ui->txtDECcolour16Bit->setText(QString("%1").arg(bit16col & 0x00ffff));
-
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow(){
     delete ui;
 }
 
-
-bool MainWindow::eventFilter(QObject *obj, QEvent *event)
-{
+void MainWindow::SelectedPaletteID(){
     uint8_t r,g,b;
-    if (obj == ui->gfxPalleteSelect->viewport() && event->type() == QEvent::MouseButtonPress)
-    {
+    ui->grpPaletteBox->setTitle(
+        QString("Colour Palette Data: %1 (0x%2)")
+            .arg(numSelectedPaletteID)
+            .arg(QString("%1").arg(numSelectedPaletteID, 2, 16, QChar('0')).toUpper())
+        );
+
+    r = CLUT[numSelectedPaletteID] >> 16;
+    g = CLUT[numSelectedPaletteID] >> 8;
+    b = CLUT[numSelectedPaletteID] & 0xff;
+
+    ui->txtPaletteR->setText(QString::number(r));
+    ui->txtPaletteG->setText(QString::number(g));
+    ui->txtPaletteB->setText(QString::number(b));
+
+    ui->horizontalScrollBarR->setValue(r);
+    ui->horizontalScrollBarG->setValue(g);
+    ui->horizontalScrollBarB->setValue(b);
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event){
+    uint8_t r,g,b;
+    if (obj == ui->gfxPalleteSelect->viewport() && event->type() == QEvent::MouseButtonPress){
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         QPoint viewPos = mouseEvent->pos(); // position in the QGraphicsView
         QPointF scenePos = ui->gfxPalleteSelect->mapToScene(viewPos); // map to scene coordinates
@@ -313,8 +427,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
         renderPaletteCanvas();
 
-
-
         // clicked on another colour - ONLY if selected another colour
         if(numPrevSelectedPaletteID != numSelectedPaletteID){
             for(int i=0; i<256; i++){
@@ -326,29 +438,61 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
         numPrevSelectedPaletteID = numSelectedPaletteID;
         numSelectedPaletteID = (SelectedX + (SelectedY * PALETTE_WIDTH));
 
-        ui->grpPaletteBox->setTitle(
-            QString("Colour Palette Data: %1 (0x%2)")
-                .arg(numSelectedPaletteID)
-                .arg(QString("%1").arg(numSelectedPaletteID, 2, 16, QChar('0')).toUpper())
-            );
+        SelectedPaletteID();
 
-
-        //printf("Selected ID %lu : %lu\n", numSelectedPaletteID, numPrevSelectedPaletteID);
-
-        r = CLUT[numSelectedPaletteID] >> 16;
-        g = CLUT[numSelectedPaletteID] >> 8;
-        b = CLUT[numSelectedPaletteID] & 0xff;
-
-        ui->txtPaletteR->setText(QString::number(r));
-        ui->txtPaletteG->setText(QString::number(g));
-        ui->txtPaletteB->setText(QString::number(b));
-
-        ui->horizontalScrollBarR->setValue(r);
-        ui->horizontalScrollBarG->setValue(g);
-        ui->horizontalScrollBarB->setValue(b);
 
         return true; // mark event as handled
     }
+
+    if (obj == ui->gfxEditor->viewport() && event->type() == QEvent::MouseMove){
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
+
+        hoverPixelX = int(scenePos.x()) / icon_zoom;
+        hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+        if(hoverPixelX < 0) hoverPixelX = 0;
+        if(hoverPixelY < 0) hoverPixelY = 0;
+        if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
+        if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
+
+        // Only draw if a button is pressed
+        if (mouseEvent->buttons() & Qt::LeftButton) {
+            icon_area[hoverPixelY][hoverPixelX] = numSelectedPaletteID;//currentPaletteID; // paint
+        } else if (mouseEvent->buttons() & Qt::RightButton) {
+            icon_area[hoverPixelY][hoverPixelX] = 0; // erase
+        }
+
+        updateTimer->start(1);
+        return true; // event handled
+    } else if (event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+        if (mouseEvent->button() == Qt::LeftButton) {
+            //printf( "Left click at %lu\n",  mouseEvent->pos());
+            icon_area[hoverPixelY][hoverPixelX] = numSelectedPaletteID;
+            updateTimer->start(1);
+        }
+        else if (mouseEvent->button() == Qt::RightButton) {
+            //printf( "Right click atlu\n",  mouseEvent->pos());
+            icon_area[hoverPixelY][hoverPixelX] = 0;
+            updateTimer->start(1);
+
+        }
+        else if (mouseEvent->button() == Qt::MiddleButton){
+            numSelectedPaletteID = icon_area[hoverPixelY][hoverPixelX];
+
+            SelectedX = numSelectedPaletteID % PALETTE_WIDTH;
+
+            SelectedY = (numSelectedPaletteID / PALETTE_WIDTH) % PALETTE_HEIGHT;
+
+            SelectedPaletteID();
+            renderPaletteCanvas();
+        }
+
+        return true; // event handled
+    }
+
 
     return QMainWindow::eventFilter(obj, event);
 }
@@ -357,13 +501,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
 //// ----------------------------------------------------------------------------------------////
 
-void reSize(){
-
-}
-
-void MainWindow::resizeEvent(QResizeEvent *event){
-    QMainWindow::resizeEvent(event);
-
+void MainWindow::reSize(){
     int WinXW, WinXH;
     int PWinXW, PWinXH;
 
@@ -375,7 +513,6 @@ void MainWindow::resizeEvent(QResizeEvent *event){
 
     if(container)
         container->resize(WinXW, WinXH);  // or any size you want
-
 
     PWinXW = ui->gfxEditor->width()  - 4;
     PWinXH = ui->gfxEditor->height() - 4;
@@ -390,7 +527,10 @@ void MainWindow::resizeEvent(QResizeEvent *event){
     renderEditorCanvas();
 }
 
-
+void MainWindow::resizeEvent(QResizeEvent *event){
+    QMainWindow::resizeEvent(event);
+    reSize();
+}
 
 void MainWindow::renderEditorCanvas(){
     int visibleWidth  = editorViewPortWidth * icon_zoom;   // in pixels
@@ -401,30 +541,65 @@ void MainWindow::renderEditorCanvas(){
     QRgb gridColor = gridEnabled ? QColor(gridRed, gridGreen, gridBlue).rgb() : 0; // choose color
     bool drawGrid = gridEnabled;
 
-
-    // Render only the visible area
     for(int y = 0; y < visibleHeight; y++) {
         QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(y));
-        int imgY = 0 + y / icon_zoom;
-
+        int imgY = y / icon_zoom;
         for(int x = 0; x < visibleWidth; x++) {
-            int imgX = 0 + x / icon_zoom;
-            scan[x] = CLUT[icon_area[imgY][imgX]];
+            int imgX = x / icon_zoom;
 
-            // Draw grid lines
+            QRgb base = colourSqueeze(CLUT[icon_area[imgY][imgX]]);
+            scan[x] = base;
+
+            // -------- GRID --------
             if(drawGrid) {
-                if ((x % icon_zoom == 0 && x != 0) || (y % icon_zoom == 0 && y != 0)) {
+                if ((x % icon_zoom == 0 && x != 0) ||
+                    (y % icon_zoom == 0 && y != 0)){
                     scan[x] = gridColor;
                 }
             }
         }
     }
+    // ---------------- DRAW HOVER BOX OVER THE TOP ---------------- //
+    if (hoverPixelX >= 0 && hoverPixelY >= 0){
+        int px = hoverPixelX * icon_zoom;
+        int py = hoverPixelY * icon_zoom;
+
+        int inner = 1;             // offset from gridline
+        int thick = 2;             // border thickness
+
+        int left   = px + inner;
+        int right  = px + icon_zoom - inner ;
+        int top    = py + inner;
+        int bottom = py + icon_zoom - inner ;
+
+        // Clamp to viewport (for safety)
+        if (left >= 0 && right < visibleWidth &&
+            top >= 0 && bottom < visibleHeight){
+            // Invert border color
+            auto invert = [&](int xx, int yy){
+                QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(yy));
+                scan[xx] = 0xFFFFFFFF - scan[xx];
+            };
+
+            // TOP
+            for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, top + t);
+
+            // BOTTOM
+            for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, bottom - t);
+
+            // LEFT
+            for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(left + t, y);
+
+            // RIGHT
+            for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(right - t, y);
+        }
+    }
+
     editorPixmap->setPixmap(QPixmap::fromImage(editorImg));
 }
 
 
-void MainWindow::renderPaletteCanvas()
-{
+void MainWindow::renderPaletteCanvas(){
     const int totalWidth  = PALETTE_WIDTH  * PALETTE_BOX_HSIZE;  // 16 * 16 = 256
     const int totalHeight = PALETTE_HEIGHT * PALETTE_BOX_VSIZE;  // 16 * 16 = 256
 
@@ -434,15 +609,13 @@ void MainWindow::renderPaletteCanvas()
     const int GridX = SelectedX * PALETTE_BOX_HSIZE;
     const int GridY = SelectedY * PALETTE_BOX_VSIZE;
 
-    for (int y = 0; y < totalHeight; y++)
-    {
+    for (int y = 0; y < totalHeight; y++){
         QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(y));
 
         // which palette row?
         int tileY = y / PALETTE_BOX_VSIZE;
 
-        for (int x = 0; x < totalWidth; x++)
-        {
+        for (int x = 0; x < totalWidth; x++){
             // which palette column?
             int tileX = x / PALETTE_BOX_HSIZE;
 
@@ -450,7 +623,7 @@ void MainWindow::renderPaletteCanvas()
             int colorIndex = tileY * PALETTE_WIDTH + tileX;
 
             // draw the pixel
-            scan[x] = CLUT[colorIndex];
+            scan[x] = colourSqueeze(CLUT[colorIndex]);
         }
     }
 
@@ -471,8 +644,6 @@ void MainWindow::renderPaletteCanvas()
             }
         }
     }
-
-
     palettePixmap->setPixmap(QPixmap::fromImage(paletteImg));
 
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1317</width>
-    <height>856</height>
+    <width>1168</width>
+    <height>872</height>
    </rect>
   </property>
   <property name="palette">
@@ -374,7 +374,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1317</width>
+     <width>1168</width>
      <height>23</height>
     </rect>
    </property>
@@ -451,27 +451,316 @@
     <number>2</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents">
-    <widget class="QFrame" name="frame_3">
+    <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>4</x>
        <y>10</y>
-       <width>150</width>
-       <height>80</height>
+       <width>179</width>
+       <height>140</height>
       </rect>
      </property>
-     <property name="contextMenuPolicy">
-      <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+     <property name="title">
+      <string>Graphics Basic Tools</string>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
-     </property>
+     <widget class="QPushButton" name="cmdPushImageUp">
+      <property name="geometry">
+       <rect>
+        <x>42</x>
+        <y>36</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Push Image Up</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::GoUp"/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdPushImageDown">
+      <property name="geometry">
+       <rect>
+        <x>42</x>
+        <y>98</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Push Image Down</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::GoDown"/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdPushImageLeft">
+      <property name="geometry">
+       <rect>
+        <x>11</x>
+        <y>67</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Push Image Left</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::GoPrevious"/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdPushImageRight">
+      <property name="geometry">
+       <rect>
+        <x>73</x>
+        <y>67</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Push Image Right</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::GoNext"/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_21">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>33</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Rotate 90 degrees C-ClockWise</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::EditUndo"/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_22">
+      <property name="geometry">
+       <rect>
+        <x>76</x>
+        <y>33</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Rotate 90 degrees ClockWise</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::EditRedo"/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdFlipV">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>101</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Rotate 90 degrees C-ClockWise</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string>FV</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdFlipH">
+      <property name="geometry">
+       <rect>
+        <x>76</x>
+        <y>101</y>
+        <width>30</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Rotate 90 degrees C-ClockWise</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+      </property>
+      <property name="text">
+       <string>FH</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -504,11 +793,11 @@
        <x>4</x>
        <y>489</y>
        <width>430</width>
-       <height>361</height>
+       <height>335</height>
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -518,7 +807,7 @@
        <property name="geometry">
         <rect>
          <x>3</x>
-         <y>4</y>
+         <y>6</y>
          <width>418</width>
          <height>290</height>
         </rect>
@@ -707,10 +996,10 @@
       <widget class="QGroupBox" name="groupBox">
        <property name="geometry">
         <rect>
-         <x>2</x>
-         <y>1</y>
-         <width>420</width>
-         <height>320</height>
+         <x>3</x>
+         <y>3</y>
+         <width>418</width>
+         <height>290</height>
         </rect>
        </property>
        <property name="title">
@@ -790,7 +1079,7 @@
           <x>0</x>
           <y>60</y>
           <width>420</width>
-          <height>41</height>
+          <height>40</height>
          </rect>
         </property>
         <property name="frameShape">
@@ -821,12 +1110,18 @@
            <height>20</height>
           </rect>
          </property>
+         <property name="acceptDrops">
+          <bool>false</bool>
+         </property>
          <property name="styleSheet">
           <string notr="true">border: 1px solid #3c6dc3;
 </string>
          </property>
          <property name="text">
           <string>128</string>
+         </property>
+         <property name="maxLength">
+          <number>5</number>
          </property>
         </widget>
         <widget class="QLineEdit" name="txtProjectImageWidth">
@@ -838,12 +1133,18 @@
            <height>20</height>
           </rect>
          </property>
+         <property name="acceptDrops">
+          <bool>false</bool>
+         </property>
          <property name="styleSheet">
           <string notr="true">border: 1px solid #3c6dc3;
 </string>
          </property>
          <property name="text">
           <string>128</string>
+         </property>
+         <property name="maxLength">
+          <number>5</number>
          </property>
         </widget>
         <widget class="QLabel" name="label">
@@ -1359,7 +1660,7 @@
         <rect>
          <x>56</x>
          <y>24</y>
-         <width>130</width>
+         <width>110</width>
          <height>18</height>
         </rect>
        </property>
@@ -1379,7 +1680,7 @@
         <rect>
          <x>56</x>
          <y>45</y>
-         <width>130</width>
+         <width>110</width>
          <height>18</height>
         </rect>
        </property>
@@ -1399,7 +1700,7 @@
         <rect>
          <x>56</x>
          <y>66</y>
-         <width>130</width>
+         <width>110</width>
          <height>18</height>
         </rect>
        </property>
@@ -1417,7 +1718,7 @@
       <widget class="QLineEdit" name="txtPaletteR">
        <property name="geometry">
         <rect>
-         <x>192</x>
+         <x>170</x>
          <y>23</y>
          <width>30</width>
          <height>20</height>
@@ -1434,7 +1735,7 @@
       <widget class="QLineEdit" name="txtPaletteG">
        <property name="geometry">
         <rect>
-         <x>192</x>
+         <x>170</x>
          <y>44</y>
          <width>30</width>
          <height>20</height>
@@ -1451,7 +1752,7 @@
       <widget class="QLineEdit" name="txtPaletteB">
        <property name="geometry">
         <rect>
-         <x>192</x>
+         <x>170</x>
          <y>65</y>
          <width>30</width>
          <height>20</height>
@@ -1465,23 +1766,10 @@
         <string>0</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_3">
-       <property name="geometry">
-        <rect>
-         <x>229</x>
-         <y>46</y>
-         <width>41</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>24Bit:</string>
-       </property>
-      </widget>
       <widget class="QLineEdit" name="txtHEXcolour32Bit">
        <property name="geometry">
         <rect>
-         <x>266</x>
+         <x>270</x>
          <y>44</y>
          <width>70</width>
          <height>20</height>
@@ -1503,7 +1791,7 @@
       <widget class="QLineEdit" name="txtDECcolour32Bit">
        <property name="geometry">
         <rect>
-         <x>338</x>
+         <x>342</x>
          <y>44</y>
          <width>70</width>
          <height>20</height>
@@ -1520,7 +1808,7 @@
       <widget class="QLineEdit" name="txtHEXcolour16Bit">
        <property name="geometry">
         <rect>
-         <x>266</x>
+         <x>270</x>
          <y>65</y>
          <width>70</width>
          <height>20</height>
@@ -1542,7 +1830,7 @@
       <widget class="QLineEdit" name="txtDECcolour16Bit">
        <property name="geometry">
         <rect>
-         <x>338</x>
+         <x>342</x>
          <y>65</y>
          <width>70</width>
          <height>20</height>
@@ -1556,30 +1844,46 @@
         <string>0</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_4">
-       <property name="geometry">
-        <rect>
-         <x>229</x>
-         <y>67</y>
-         <width>41</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>16Bit:</string>
-       </property>
-      </widget>
       <widget class="QPushButton" name="cmdRevertPalette">
        <property name="geometry">
         <rect>
-         <x>266</x>
-         <y>21</y>
+         <x>205</x>
+         <y>22</y>
          <width>60</width>
          <height>22</height>
         </rect>
        </property>
        <property name="text">
         <string>revert</string>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="rad24BitMode">
+       <property name="geometry">
+        <rect>
+         <x>208</x>
+         <y>44</y>
+         <width>60</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>24 Bit</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="rad16BitMode">
+       <property name="geometry">
+        <rect>
+         <x>208</x>
+         <y>65</y>
+         <width>60</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>16 Bit</string>
        </property>
       </widget>
      </widget>
