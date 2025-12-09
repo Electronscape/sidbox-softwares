@@ -1,13 +1,21 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QCoreApplication>
+#include <QThread> // for QThread::msleep
 #include <QIcon>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QTimer>
-#include <functional>
-#include <cstring>
-#include <string.h>
+#include <QMessageBox>
+#include <QFileDialog>
+//#include <functional>
+//#include <cstring>
+//#include <string.h>
+#include <stack>
+#include <QPoint>  // for the QPoint objects
+
+#include <stdio.h>
 
 #define PALETTE_BOX_HSIZE   16
 #define PALETTE_BOX_VSIZE   22
@@ -26,10 +34,10 @@ int hoverPixelX = -1;
 int hoverPixelY = -1;
 
 
-#define gridEnabled      true
-#define gridRed          255
-#define gridGreen        255
-#define gridBlue         255
+bool gridEnabled        = true;
+#define gridRed          128
+#define gridGreen        128
+#define gridBlue         128
 
 uint16_t icon_zoom       = 16;
 uint16_t icon_width      = 32;
@@ -120,6 +128,9 @@ uint32_t BACKUP_CLUT[256];
 uint8_t palleteCanvas[PALETTE_VRAM_SIZE];
 
 QTimer *updateTimer;
+QTimer *scrollUpdateTimer;
+
+enum DrawMode { Plot, Line, Rect, Circle, FloodFill } currentDrawMode = Plot;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -262,6 +273,18 @@ MainWindow::MainWindow(QWidget *parent)
     allDoneTimer->start(100);
 
 
+    connect(ui->chkShowGrid, &QCheckBox::clicked, this, [this](){
+        gridEnabled = ui->chkShowGrid->isChecked();
+        renderEditorCanvas();
+    });
+
+    connect(ui->scrEditorZoomVal, &QScrollBar::valueChanged, this, [this](){
+        icon_zoom = ui->scrEditorZoomVal->value();
+        ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));
+        reSize();
+        renderEditorCanvas();
+    });
+
     connect(ui->cmdPushImageUp, &QPushButton::clicked, this, [this](){
         // Temporary copy of the top row
         uint8_t topRow[icon_width];
@@ -295,7 +318,6 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
-
     connect(ui->cmdPushImageLeft, &QPushButton::clicked, this, [this](){
         for (int y = 0; y < icon_height; y++) {
             uint8_t leftPixel = icon_area[y][0];
@@ -305,6 +327,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
         renderEditorCanvas();
     });
+
     connect(ui->cmdPushImageRight, &QPushButton::clicked, this, [this](){
         for (int y = 0; y < icon_height; y++) {
             uint8_t rightPixel = icon_area[y][icon_width - 1];
@@ -337,8 +360,187 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
+    connect(ui->cmdClsIconImage, &QPushButton::clicked, this, [this](){
+        auto reply = QMessageBox::question(
+            this,
+            "Clear Icon",
+            "Are you sure you want to clear the icon?",
+            QMessageBox::Yes | QMessageBox::No
+            );
+
+        if(reply == QMessageBox::Yes) {
+            // Clear icon_area
+            for(int y = 0; y < icon_height; y++)
+                for(int x = 0; x < icon_width; x++)
+                    icon_area[y][x] = 0;
+
+            renderEditorCanvas(); // redraw empty icon
+        }
+    });
+
+
+    connect(ui->cmdSaveIconProject, &QPushButton::clicked, this, [this](){
+        QString filename = QFileDialog::getSaveFileName(this, "Save Icon", "", "Icon Files (*.icn)");
+        // saveIcon(filename);
+        if(!filename.isEmpty())
+            saveProjectIcon(filename.toUtf8().constData());
+
+    });
+
+    connect(ui->cmdLoadIconProject, &QPushButton::clicked, this, [this](){
+        QString filename = QFileDialog::getOpenFileName(this, "Load Icon", "", "Icon Files (*.icn)");
+        if(!filename.isEmpty()) loadProjectIcon(filename.toUtf8().constData());
+
+    });
+
+    connect(ui->cmdSetIconAreaSize, &QPushButton::clicked, this, [=](){
+        icon_width = ui->txtProjectImageWidth->text().toInt();
+        icon_height = ui->txtProjectImageHeight->text().toInt();
+
+        if(icon_width>2048) icon_width = 2048;
+        if(icon_height>2048) icon_height = 2048;
+
+        if(icon_width  < 8) icon_width = 8;
+        if(icon_height < 8) icon_height = 8;
+
+        ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+        ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
+
+        // resize rows first
+        icon_area.resize(icon_height);
+
+        // resize each row (columns)
+        for (auto &row : icon_area)
+            row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+
+        reSize();
+        renderEditorCanvas();
+    });
+
+
+
+    scrollUpdateTimer = new QTimer(this);
+    scrollUpdateTimer->setSingleShot(true);
+
+    connect(scrollUpdateTimer, &QTimer::timeout, this, &MainWindow::renderEditorCanvas);
+
+    connect(ui->scrEditorH, &QScrollBar::valueChanged, this, &MainWindow::onEditorScrollChanged);
+    connect(ui->scrEditorV, &QScrollBar::valueChanged, this, &MainWindow::onEditorScrollChanged);
+
+
+    connect(ui->cmdRotateCC90, &QPushButton::clicked, this, [this](){
+        rotateIcon(1);
+    });
+    connect(ui->cmdRotateC90, &QPushButton::clicked, this, [this](){
+        rotateIcon(0);
+    });
+
+
+    //enum DrawMode { Plot, Line, Rect, Circle, FloodFill } currentDrawMode = Plot;
+    connect(ui->radDrawModePlot,      &QPushButton::clicked, this, [this](){ currentDrawMode = Plot;      });
+    connect(ui->radDrawModeLine,      &QPushButton::clicked, this, [this](){ currentDrawMode = Line;      });
+    connect(ui->radDrawModeCircle,    &QPushButton::clicked, this, [this](){ currentDrawMode = Circle;    });
+    connect(ui->radDrawModeRect,      &QPushButton::clicked, this, [this](){ currentDrawMode = Rect;      });
+    connect(ui->radDrawModeFloodfill, &QPushButton::clicked, this, [this](){ currentDrawMode = FloodFill; });
+}
+
+
+void MainWindow::onEditorScrollChanged(){
+    scrollUpdateTimer->start(1);
+}
+
+
+
+void MainWindow::saveProjectIcon(const char *filename){
+    // file structure
+    FILE *f = fopen(filename, "wb");
+    if(!f) {
+        QMessageBox::warning(this, "Save Icon", "Cannot open file for writing!");
+        return;
+    }
+
+    fwrite(&icon_width, sizeof(uint16_t), 1, f);
+    fwrite(&icon_height, sizeof(uint16_t), 1, f);
+
+    for(int y = 0; y < icon_height; y++) {
+        fwrite(icon_area[y].data(), sizeof(uint8_t), icon_width, f);
+    }
+
+    fclose(f);
+}
+
+void MainWindow::loadProjectIcon(const char *filename){
+    FILE *f = fopen(filename, "rb");
+    if(!f) { QMessageBox::warning(this, "Load Icon", "Cannot open file!"); return; }
+
+    // read width and height
+    uint16_t w, h;
+    fread(&w, sizeof(uint16_t), 1, f);
+    fread(&h, sizeof(uint16_t), 1, f);
+    icon_width = w;
+    icon_height = h;
+
+    ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+    ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
+
+    // resize rows first
+    icon_area.resize(icon_height);
+
+    // resize each row (columns)
+    for (auto &row : icon_area)
+        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+
+    reSize();
+
+    // optionally resize your icon_area here if variable size
+    for(int y = 0; y < h; y++) {
+        fread(icon_area[y].data(), sizeof(uint8_t), w, f);
+    }
+
+    fclose(f);
+
+
+    renderEditorCanvas();
 
 }
+
+// 0 clockwise, 1 = counter-clockwise
+void MainWindow::rotateIcon(int direction){
+    if(icon_width == 0 || icon_height == 0) return;
+
+    std::vector<std::vector<uint8_t>> buffer = icon_area;
+
+    int oldW = icon_width;
+    int oldH = icon_height;
+
+    int newW = oldH;
+    int newH = oldW;
+
+    icon_area.assign(newH, std::vector<uint8_t>(newW, 0));
+
+    if(direction == 0) {  // clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area[y][x] = buffer[oldH - 1 - x][y];
+            }
+        }
+    }
+    else if(direction == 1) { // counter-clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area[y][x] = buffer[x][oldW - 1 - y];
+            }
+        }
+    }
+
+    icon_width  = newW;
+    icon_height = newH;
+
+    reSize();
+    renderEditorCanvas();
+}
+
+
 
 uint32_t MainWindow::colourSqueeze(uint32_t srcColour){
     if(ui->rad24BitMode->isChecked())
@@ -444,6 +646,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
         return true; // mark event as handled
     }
 
+    int xOffset = ui->scrEditorH->value();
+    int yOffset = ui->scrEditorV->value();
+
     if (obj == ui->gfxEditor->viewport() && event->type() == QEvent::MouseMove){
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
@@ -456,11 +661,20 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
         if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
         if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
 
+        ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
+            .arg(hoverPixelX, 4, 10, QChar('0'))
+            .arg(hoverPixelY, 4, 10, QChar('0'))
+        );
+
+
         // Only draw if a button is pressed
-        if (mouseEvent->buttons() & Qt::LeftButton) {
-            icon_area[hoverPixelY][hoverPixelX] = numSelectedPaletteID;//currentPaletteID; // paint
-        } else if (mouseEvent->buttons() & Qt::RightButton) {
-            icon_area[hoverPixelY][hoverPixelX] = 0; // erase
+        if(currentDrawMode == Plot){    // this will only work with Motion Drawing (plot)
+            if (mouseEvent->buttons() & Qt::LeftButton) {
+                icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = numSelectedPaletteID;//currentPaletteID; // paint
+            } else if (mouseEvent->buttons() & Qt::RightButton) {
+                icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = 0; // erase
+            }
+
         }
 
         updateTimer->start(1);
@@ -470,17 +684,18 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
         if (mouseEvent->button() == Qt::LeftButton) {
             //printf( "Left click at %lu\n",  mouseEvent->pos());
-            icon_area[hoverPixelY][hoverPixelX] = numSelectedPaletteID;
+            ProcessLeftClickPaint();
+
             updateTimer->start(1);
         }
         else if (mouseEvent->button() == Qt::RightButton) {
             //printf( "Right click atlu\n",  mouseEvent->pos());
-            icon_area[hoverPixelY][hoverPixelX] = 0;
+            icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = 0;
             updateTimer->start(1);
 
         }
         else if (mouseEvent->button() == Qt::MiddleButton){
-            numSelectedPaletteID = icon_area[hoverPixelY][hoverPixelX];
+            numSelectedPaletteID = icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset];
 
             SelectedX = numSelectedPaletteID % PALETTE_WIDTH;
 
@@ -498,8 +713,92 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 }
 
 
+void MainWindow::ProcessLeftClickPaint(){
+    int xOffset = ui->scrEditorH->value();
+    int yOffset = ui->scrEditorV->value();
+    //
+    switch(currentDrawMode){
+        case Plot:
+            icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = numSelectedPaletteID;
+            break;
 
-//// ----------------------------------------------------------------------------------------////
+        case FloodFill:
+            floodFill(hoverPixelX + xOffset, hoverPixelY + yOffset, numSelectedPaletteID);
+            break;
+        default:
+            return;
+    }
+}
+
+
+void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
+    int tick=0;
+    if(startX < 0 || startX >= icon_width || startY < 0 || startY >= icon_height)
+        return;
+
+    uint8_t targetColor = icon_area[startY][startX];
+    if (targetColor == fillColor) return;
+
+    std::stack<QPoint> s;
+    s.push(QPoint(startX, startY));
+
+    while (!s.empty())
+    {
+        QPoint p = s.top();
+        s.pop();
+
+        int x = p.x();
+        int y = p.y();
+
+        if (x < 0 || x >= icon_width || y < 0 || y >= icon_height) continue;
+        if (icon_area[y][x] != targetColor) continue;
+
+        icon_area[y][x] = fillColor;
+
+        // --- redraw step ---
+        tick++;
+        if(tick>250){
+            renderEditorCanvas();
+            QCoreApplication::processEvents(); // allow GUI to update
+            QThread::msleep(3);               // slow down (ms)
+            tick=0;
+        }
+
+        // push neighbors
+        //s.push(QPoint(x+1, y));
+        //s.push(QPoint(x-1, y));
+        //s.push(QPoint(x, y+1));
+        //s.push(QPoint(x, y-1));
+
+        // push vertical neighbors first (processed later)
+        s.push(QPoint(x, y+1)); // down
+        s.push(QPoint(x, y-1)); // up
+        // push horizontal neighbors last (processed first)
+        s.push(QPoint(x+1, y)); // right
+        s.push(QPoint(x-1, y)); // left
+
+    }
+
+    renderEditorCanvas(); // update display after fill
+}
+
+
+void MainWindow::updateEditorScrollBars()
+{
+    int totalWidth  = icon_width;
+    int totalHeight = icon_height ;
+
+    int viewportWidth  = editorViewPortWidth ;
+    int viewportHeight = editorViewPortHeight ;
+
+    // horizontal scrollbar
+    ui->scrEditorH->setRange(0, totalWidth - viewportWidth);
+    ui->scrEditorH->setPageStep(viewportWidth);
+
+    // vertical scrollbar
+    ui->scrEditorV->setRange(0, totalHeight - viewportHeight);
+    ui->scrEditorV->setPageStep(viewportHeight);
+}
 
 void MainWindow::reSize(){
     int WinXW, WinXH;
@@ -508,7 +807,7 @@ void MainWindow::reSize(){
     QWidget *wincontainer = ui->verticalLayoutWidget->parentWidget();
     QWidget *container = ui->verticalLayoutWidget;
 
-    WinXW = wincontainer->width() - 16;
+    WinXW = wincontainer->width() - 2;
     WinXH = wincontainer->height() - 28;
 
     if(container)
@@ -524,8 +823,16 @@ void MainWindow::reSize(){
     if(editorViewPortHeight > icon_height) editorViewPortHeight = icon_height;
 
     //printf("EditorCanv: W:%lu, H:%lu\n", editorViewPortWidth, editorViewPortHeight);
+    updateEditorScrollBars();
     renderEditorCanvas();
 }
+
+
+
+
+
+
+
 
 void MainWindow::resizeEvent(QResizeEvent *event){
     QMainWindow::resizeEvent(event);
@@ -536,6 +843,9 @@ void MainWindow::renderEditorCanvas(){
     int visibleWidth  = editorViewPortWidth * icon_zoom;   // in pixels
     int visibleHeight = editorViewPortHeight * icon_zoom;
 
+    int xOffset = ui->scrEditorH->value();
+    int yOffset = ui->scrEditorV->value();
+
     editorImg = QImage(visibleWidth, visibleHeight, QImage::Format_RGB32);
 
     QRgb gridColor = gridEnabled ? QColor(gridRed, gridGreen, gridBlue).rgb() : 0; // choose color
@@ -543,11 +853,11 @@ void MainWindow::renderEditorCanvas(){
 
     for(int y = 0; y < visibleHeight; y++) {
         QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(y));
-        int imgY = y / icon_zoom;
+        int imgY = (y) / icon_zoom;
         for(int x = 0; x < visibleWidth; x++) {
-            int imgX = x / icon_zoom;
+            int imgX = (x) / icon_zoom;
 
-            QRgb base = colourSqueeze(CLUT[icon_area[imgY][imgX]]);
+            QRgb base = colourSqueeze(CLUT[icon_area[imgY + yOffset][imgX + xOffset]]);
             scan[x] = base;
 
             // -------- GRID --------

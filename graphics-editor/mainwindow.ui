@@ -277,7 +277,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QScrollBar" name="verticalScrollBar">
+        <widget class="QScrollBar" name="scrEditorV">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
            <horstretch>0</horstretch>
@@ -296,9 +296,11 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
          <property name="styleSheet">
-          <string notr="true">border: 1px solid #3c6dc3;
-</string>
+          <string notr="true">border: 1px solid #3c6dc3;\n</string>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>
@@ -313,7 +315,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QScrollBar" name="horizontalScrollBar">
+        <widget class="QScrollBar" name="scrEditorH">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -360,9 +362,15 @@
      <rect>
       <x>8</x>
       <y>2</y>
-      <width>181</width>
+      <width>321</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Courier New</family>
+      <pointsize>11</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Coords: x:0, y:0</string>
@@ -398,9 +406,9 @@
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>56</red>
-         <green>56</green>
-         <blue>56</blue>
+         <red>88</red>
+         <green>88</green>
+         <blue>88</blue>
         </color>
        </brush>
       </colorrole>
@@ -409,9 +417,9 @@
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>56</red>
-         <green>56</green>
-         <blue>56</blue>
+         <red>88</red>
+         <green>88</green>
+         <blue>88</blue>
         </color>
        </brush>
       </colorrole>
@@ -420,18 +428,18 @@
       <colorrole role="Base">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>56</red>
-         <green>56</green>
-         <blue>56</blue>
+         <red>88</red>
+         <green>88</green>
+         <blue>88</blue>
         </color>
        </brush>
       </colorrole>
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>56</red>
-         <green>56</green>
-         <blue>56</blue>
+         <red>88</red>
+         <green>88</green>
+         <blue>88</blue>
         </color>
        </brush>
       </colorrole>
@@ -454,14 +462,14 @@
     <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
       <rect>
-       <x>4</x>
+       <x>3</x>
        <y>10</y>
        <width>179</width>
        <height>140</height>
       </rect>
      </property>
      <property name="title">
-      <string>Graphics Basic Tools</string>
+      <string>Graphics Basic Tools:</string>
      </property>
      <widget class="QPushButton" name="cmdPushImageUp">
       <property name="geometry">
@@ -499,6 +507,12 @@ QPushButton:hover {
       </property>
       <property name="icon">
        <iconset theme="QIcon::ThemeIcon::GoUp"/>
+      </property>
+      <property name="autoRepeat">
+       <bool>true</bool>
+      </property>
+      <property name="autoRepeatInterval">
+       <number>20</number>
       </property>
      </widget>
      <widget class="QPushButton" name="cmdPushImageDown">
@@ -538,6 +552,12 @@ QPushButton:hover {
       <property name="icon">
        <iconset theme="QIcon::ThemeIcon::GoDown"/>
       </property>
+      <property name="autoRepeat">
+       <bool>true</bool>
+      </property>
+      <property name="autoRepeatInterval">
+       <number>20</number>
+      </property>
      </widget>
      <widget class="QPushButton" name="cmdPushImageLeft">
       <property name="geometry">
@@ -575,6 +595,12 @@ QPushButton:hover {
       </property>
       <property name="icon">
        <iconset theme="QIcon::ThemeIcon::GoPrevious"/>
+      </property>
+      <property name="autoRepeat">
+       <bool>true</bool>
+      </property>
+      <property name="autoRepeatInterval">
+       <number>20</number>
       </property>
      </widget>
      <widget class="QPushButton" name="cmdPushImageRight">
@@ -614,8 +640,14 @@ QPushButton:hover {
       <property name="icon">
        <iconset theme="QIcon::ThemeIcon::GoNext"/>
       </property>
+      <property name="autoRepeat">
+       <bool>true</bool>
+      </property>
+      <property name="autoRepeatInterval">
+       <number>20</number>
+      </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_21">
+     <widget class="QPushButton" name="cmdRotateCC90">
       <property name="geometry">
        <rect>
         <x>8</x>
@@ -653,7 +685,7 @@ QPushButton:hover {
        <iconset theme="QIcon::ThemeIcon::EditUndo"/>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_22">
+     <widget class="QPushButton" name="cmdRotateC90">
       <property name="geometry">
        <rect>
         <x>76</x>
@@ -759,6 +791,168 @@ QPushButton:hover {
       </property>
       <property name="text">
        <string>FH</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>3</x>
+       <y>158</y>
+       <width>180</width>
+       <height>81</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Editing QOL:</string>
+     </property>
+     <widget class="QCheckBox" name="chkShowGrid">
+      <property name="geometry">
+       <rect>
+        <x>9</x>
+        <y>25</y>
+        <width>100</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Show Grid</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>41</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Zoom:</string>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="scrEditorZoomVal">
+      <property name="geometry">
+       <rect>
+        <x>57</x>
+        <y>51</y>
+        <width>80</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="minimum">
+       <number>4</number>
+      </property>
+      <property name="maximum">
+       <number>32</number>
+      </property>
+      <property name="value">
+       <number>16</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblEditorZoomLevel">
+      <property name="geometry">
+       <rect>
+        <x>143</x>
+        <y>51</y>
+        <width>30</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>16</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>3</x>
+       <y>247</y>
+       <width>180</width>
+       <height>140</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Drawing Mode:</string>
+     </property>
+     <widget class="QRadioButton" name="radDrawModePlot">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>94</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Plot Draw</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radDrawModeLine">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>94</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Line Draw</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radDrawModeRect">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>70</y>
+        <width>94</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Rect Draw</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radDrawModeFloodfill">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>110</y>
+        <width>94</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Floodfill</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radDrawModeCircle">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>90</y>
+        <width>94</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Circle Draw</string>
       </property>
      </widget>
     </widget>
@@ -1033,7 +1227,7 @@ QPushButton:hover {
           <string>Export.h</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_14">
+        <widget class="QPushButton" name="cmdLoadIconProject">
          <property name="geometry">
           <rect>
            <x>93</x>
@@ -1046,7 +1240,7 @@ QPushButton:hover {
           <string>Load Project</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_13">
+        <widget class="QPushButton" name="cmdClsIconImage">
          <property name="geometry">
           <rect>
            <x>10</x>
@@ -1059,7 +1253,7 @@ QPushButton:hover {
           <string>Cls Image</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_15">
+        <widget class="QPushButton" name="cmdSaveIconProject">
          <property name="geometry">
           <rect>
            <x>186</x>
@@ -1173,7 +1367,7 @@ QPushButton:hover {
           <string>H:</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="cmdSetIconAreaSize">
          <property name="geometry">
           <rect>
            <x>156</x>

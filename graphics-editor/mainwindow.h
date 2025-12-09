@@ -43,6 +43,13 @@ private:
     void renderEditorCanvas();
     void reSize();
     uint32_t colourSqueeze(uint32_t srcColour);
+    void saveProjectIcon(const char *filename);
+    void loadProjectIcon(const char *filename);
+    void updateEditorScrollBars();
+    void onEditorScrollChanged();
+    void rotateIcon(int direction = 0);
+    void ProcessLeftClickPaint();
+    void floodFill(int startX, int startY, uint8_t fillColor);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
