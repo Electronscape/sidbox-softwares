@@ -9,6 +9,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o.d"
   "CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o"
   "CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o.d"
+  "CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o"
+  "CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o.d"
   "CMakeFiles/SidboxTerminal.dir/main.cpp.o"
   "CMakeFiles/SidboxTerminal.dir/main.cpp.o.d"
   "CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o"

@@ -6,11 +6,11 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "build/Desktop-Debug/.qtc/package-manager/auto-setup.cmake"
+			"path" : "build/Desktop-Release/.qtc/package-manager/auto-setup.cmake"
 		},
 		{
 			"isGenerated" : true,
-			"path" : "build/Desktop-Debug/CMakeFiles/3.31.6/CMakeSystem.cmake"
+			"path" : "build/Desktop-Release/CMakeFiles/3.31.6/CMakeSystem.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -24,7 +24,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "build/Desktop-Debug/CMakeFiles/3.31.6/CMakeCXXCompiler.cmake"
+			"path" : "build/Desktop-Release/CMakeFiles/3.31.6/CMakeCXXCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -144,15 +144,15 @@
 		},
 		{
 			"isExternal" : true,
+			"path" : "/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake"
+		},
+		{
+			"isExternal" : true,
 			"path" : "/usr/lib64/cmake/Qt6/Qt6ConfigExtras.cmake"
 		},
 		{
 			"isExternal" : true,
 			"path" : "/usr/lib64/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake"
 		},
 		{
 			"isExternal" : true,
@@ -1389,69 +1389,6 @@
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginConfig.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginTargets.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginTargets-relwithdebinfo.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginAdditionalTargetInfo.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginConfig.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginTargets.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginTargets-relwithdebinfo.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginAdditionalTargetInfo.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginConfig.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginTargets.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginTargets-relwithdebinfo.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginAdditionalTargetInfo.cmake"
-		},
-		{
-			"isExternal" : true,
 			"path" : "/usr/lib64/cmake/Qt6Gui/Qt6QTgaPluginConfig.cmake"
 		},
 		{
@@ -1774,15 +1711,15 @@
 		},
 		{
 			"isExternal" : true,
+			"path" : "/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake"
+		},
+		{
+			"isExternal" : true,
 			"path" : "/usr/lib64/cmake/Qt6/Qt6ConfigExtras.cmake"
 		},
 		{
 			"isExternal" : true,
 			"path" : "/usr/lib64/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake"
 		},
 		{
 			"isExternal" : true,
@@ -1979,7 +1916,7 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug",
+		"build" : "/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release",
 		"source" : "/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal"
 	},
 	"version" : 

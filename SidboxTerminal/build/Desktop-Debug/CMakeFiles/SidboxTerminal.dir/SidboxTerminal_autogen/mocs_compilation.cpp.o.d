@@ -252,12 +252,12 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtCore/qbytearrayalgorithms.h \
  /usr/include/qt6/QtCore/qbytearrayview.h \
  /usr/include/qt6/QtCore/qstringfwd.h /usr/include/c++/15/stdlib.h \
- /usr/include/qt6/QtCore/qstringliteral.h \
  /usr/include/qt6/QtCore/qstringalgorithms.h \
  /usr/include/qt6/QtCore/qlatin1stringview.h \
  /usr/include/qt6/QtCore/qanystringview.h \
  /usr/include/qt6/QtCore/qutf8stringview.h \
  /usr/include/qt6/QtCore/qstringtokenizer.h \
+ /usr/include/qt6/QtCore/q23type_traits.h \
  /usr/include/qt6/QtCore/qstringbuilder.h \
  /usr/include/qt6/QtCore/qstringconverter.h \
  /usr/include/qt6/QtCore/qstringconverter_base.h \
@@ -276,9 +276,9 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtCore/qfloat16.h /usr/include/qt6/QtCore/qmath.h \
  /usr/include/qt6/QtCore/qtformat_impl.h \
  /usr/include/qt6/QtCore/qiterable.h \
+ /usr/include/qt6/QtCore/qtaggedpointer.h \
  /usr/include/qt6/QtCore/qmetacontainer.h \
  /usr/include/qt6/QtCore/qcontainerinfo.h \
- /usr/include/qt6/QtCore/qtaggedpointer.h \
  /usr/include/qt6/QtCore/qscopeguard.h /usr/include/c++/15/list \
  /usr/include/c++/15/bits/stl_list.h /usr/include/c++/15/bits/list.tcc \
  /usr/include/c++/15/map /usr/include/c++/15/bits/stl_tree.h \
@@ -328,6 +328,11 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtWidgets/qtabwidget.h \
  /usr/include/qt6/QtCore/QModelIndex \
  /usr/include/qt6/QtCore/qabstractitemmodel.h \
+ /usr/include/qt6/QtCore/QSettings /usr/include/qt6/QtCore/qsettings.h \
+ /usr/include/qt6/QtCore/QList /usr/include/qt6/QtCore/qlist.h \
+ /usr/include/qt6/QtWidgets/QCheckBox \
+ /usr/include/qt6/QtWidgets/qcheckbox.h \
+ /usr/include/qt6/QtWidgets/qabstractbutton.h \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/../../../../serialhandler.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/qobject.h \
  /usr/include/qt6/QtSerialPort/QtSerialPort \
@@ -497,8 +502,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtCore/qlibraryinfo.h \
  /usr/include/qt6/QtCore/qversionnumber.h \
  /usr/include/qt6/QtCore/qtyperevision.h /usr/include/qt6/QtCore/qline.h \
- /usr/include/qt6/QtCore/qlist.h /usr/include/qt6/QtCore/qlocale.h \
- /usr/include/qt6/QtCore/qlockfile.h \
+ /usr/include/qt6/QtCore/qlocale.h /usr/include/qt6/QtCore/qlockfile.h \
  /usr/include/qt6/QtCore/qloggingcategory.h \
  /usr/include/qt6/QtCore/qmalloc.h /usr/include/qt6/QtCore/qmap.h \
  /usr/include/qt6/QtCore/qmargins.h /usr/include/qt6/QtCore/qmath.h \
@@ -550,8 +554,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtCore/qsemaphore.h \
  /usr/include/qt6/QtCore/qsequentialanimationgroup.h \
  /usr/include/qt6/QtCore/qsequentialiterable.h \
- /usr/include/qt6/QtCore/qset.h /usr/include/qt6/QtCore/qsettings.h \
- /usr/include/qt6/QtCore/qshareddata.h \
+ /usr/include/qt6/QtCore/qset.h /usr/include/qt6/QtCore/qshareddata.h \
  /usr/include/qt6/QtCore/qsharedmemory.h \
  /usr/include/qt6/QtCore/qtipccommon.h \
  /usr/include/qt6/QtCore/qsharedpointer.h \
@@ -755,13 +758,21 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtGui/qtextformat.h /usr/include/qt6/QtGui/qpen.h \
  /usr/include/qt6/QtCore/qtmochelpers.h \
  /usr/include/qt6/QtCore/qtmocconstants.h \
- /usr/include/qt6/QtCore/q23type_traits.h \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/moc_frmftp.cpp \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/../../../../frmftp.h \
+ /usr/include/qt6/QtGui/QScreen /usr/include/qt6/QtGui/qscreen.h \
+ /usr/include/qt6/QtCore/QRect /usr/include/qt6/QtCore/QSize \
+ /usr/include/qt6/QtCore/QSizeF /usr/include/qt6/QtGui/QTransform \
+ /usr/include/qt6/QtGui/qtransform.h \
+ /usr/include/qt6/QtGui/qscreen_platform.h \
+ /usr/include/qt6/QtGui/qguiapplication.h \
+ /usr/include/qt6/QtGui/qinputmethod.h \
+ /usr/include/qt6/QtGui/qguiapplication_platform.h \
+ /usr/include/qt6/QtSerialPort/QSerialPort \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/moc_mainwindow.cpp \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/../../../../mainwindow.h \
  /usr/include/qt6/QtWidgets/QMenu /usr/include/qt6/QtWidgets/qmenu.h \
- /usr/include/qt6/QtCore/QString /usr/include/qt6/QtCore/QList \
+ /usr/include/qt6/QtCore/QString \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/../../../../directoryboss.h \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/../../../../frmftp.h \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Debug/SidboxTerminal_autogen/EWIEGA46WW/moc_serialhandler.cpp

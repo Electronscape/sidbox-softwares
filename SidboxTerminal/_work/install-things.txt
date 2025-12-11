@@ -1,0 +1,3 @@
+sudo dnf install qt6-qtserialport-devel
+
+sudo usermod -a -G dialout $USER

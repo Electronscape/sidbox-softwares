@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 6.10.0
+** Created by: Qt User Interface Compiler version 6.10.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -29,7 +29,10 @@ QT_BEGIN_NAMESPACE
 class Ui_MainWindow
 {
 public:
+    QAction *action;
     QAction *actionAbout;
+    QAction *mnuItemSDDirectory;
+    QAction *mnuItemFTP;
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
     QTextEdit *textBox;
@@ -39,8 +42,10 @@ public:
     QWidget *widget;
     QPushButton *cmdSendCustomCMDDir;
     QPushButton *cmdSetTimeDate;
+    QPushButton *cmdHIDCtrl;
     QPushButton *cmdOpenFTP;
     QPushButton *cmdOpenDirectory;
+    QPushButton *cmdClrRam;
     QPushButton *cmdViewRam;
     QLineEdit *txtViewFrom;
     QPushButton *cmdClearLog;
@@ -50,7 +55,7 @@ public:
     QPushButton *cmdSend;
     QMenuBar *menubar;
     QMenu *menuTerminal;
-    QMenu *menuHelp;
+    QMenu *menuWindow;
     QStatusBar *statusbar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -58,23 +63,37 @@ public:
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
         MainWindow->setWindowModality(Qt::WindowModality::NonModal);
-        MainWindow->resize(977, 537);
+        MainWindow->resize(899, 537);
         QSizePolicy sizePolicy(QSizePolicy::Policy::Preferred, QSizePolicy::Policy::Preferred);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(MainWindow->sizePolicy().hasHeightForWidth());
         MainWindow->setSizePolicy(sizePolicy);
-        MainWindow->setMinimumSize(QSize(780, 433));
+        MainWindow->setMinimumSize(QSize(864, 537));
         MainWindow->setMaximumSize(QSize(16777215, 16777215));
-        MainWindow->setBaseSize(QSize(780, 800));
+        MainWindow->setBaseSize(QSize(864, 537));
+        QPalette palette;
+        QBrush brush(QColor(88, 88, 88, 255));
+        brush.setStyle(Qt::BrushStyle::SolidPattern);
+        palette.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Window, brush);
+        palette.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Window, brush);
+        palette.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Base, brush);
+        palette.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Window, brush);
+        MainWindow->setPalette(palette);
         MainWindow->setFocusPolicy(Qt::FocusPolicy::ClickFocus);
         MainWindow->setAcceptDrops(false);
         QIcon icon;
         icon.addFile(QString::fromUtf8("../system-icons/guildwars2.ico"), QSize(), QIcon::Mode::Normal, QIcon::State::Off);
         MainWindow->setWindowIcon(icon);
         MainWindow->setTabShape(QTabWidget::TabShape::Rounded);
+        action = new QAction(MainWindow);
+        action->setObjectName("action");
         actionAbout = new QAction(MainWindow);
         actionAbout->setObjectName("actionAbout");
+        mnuItemSDDirectory = new QAction(MainWindow);
+        mnuItemSDDirectory->setObjectName("mnuItemSDDirectory");
+        mnuItemFTP = new QAction(MainWindow);
+        mnuItemFTP->setObjectName("mnuItemFTP");
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         centralwidget->setMaximumSize(QSize(16777215, 16777215));
@@ -89,23 +108,32 @@ public:
         sizePolicy1.setHeightForWidth(textBox->sizePolicy().hasHeightForWidth());
         textBox->setSizePolicy(sizePolicy1);
         textBox->setMaximumSize(QSize(16777215, 16777215));
-        QPalette palette;
-        QBrush brush(QColor(0, 255, 255, 255));
-        brush.setStyle(Qt::BrushStyle::SolidPattern);
-        palette.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::WindowText, brush);
-        palette.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Text, brush);
-        QBrush brush1(QColor(26, 31, 63, 255));
+        QPalette palette1;
+        QBrush brush1(QColor(0, 255, 255, 255));
         brush1.setStyle(Qt::BrushStyle::SolidPattern);
-        palette.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Base, brush1);
-        palette.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::WindowText, brush);
-        palette.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Text, brush);
-        palette.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Base, brush1);
-        textBox->setPalette(palette);
+        palette1.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::WindowText, brush1);
+        QBrush brush2(QColor(141, 141, 141, 255));
+        brush2.setStyle(Qt::BrushStyle::SolidPattern);
+        palette1.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush2);
+        QBrush brush3(QColor(255, 145, 34, 255));
+        brush3.setStyle(Qt::BrushStyle::SolidPattern);
+        palette1.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Text, brush3);
+        QBrush brush4(QColor(20, 33, 47, 255));
+        brush4.setStyle(Qt::BrushStyle::SolidPattern);
+        palette1.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Base, brush4);
+        palette1.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::WindowText, brush1);
+        palette1.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush2);
+        palette1.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Text, brush3);
+        palette1.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Base, brush4);
+        palette1.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush2);
+        textBox->setPalette(palette1);
         QFont font;
-        font.setFamilies({QString::fromUtf8("Liberation Mono")});
+        font.setFamilies({QString::fromUtf8("Consolas")});
         font.setPointSize(10);
         textBox->setFont(font);
+        textBox->setAutoFillBackground(false);
         textBox->setFrameShape(QFrame::Shape::WinPanel);
+        textBox->setLineWrapMode(QTextEdit::LineWrapMode::WidgetWidth);
         textBox->setReadOnly(true);
 
         verticalLayout->addWidget(textBox);
@@ -117,14 +145,14 @@ public:
         cmdOpenPort = new QPushButton(centralwidget);
         cmdOpenPort->setObjectName("cmdOpenPort");
         cmdOpenPort->setMinimumSize(QSize(0, 22));
-        cmdOpenPort->setMaximumSize(QSize(80, 16777215));
+        cmdOpenPort->setMaximumSize(QSize(75, 16777215));
 
         horizontalLayout_2->addWidget(cmdOpenPort);
 
         cmdClosePort = new QPushButton(centralwidget);
         cmdClosePort->setObjectName("cmdClosePort");
-        cmdClosePort->setMinimumSize(QSize(0, 22));
-        cmdClosePort->setMaximumSize(QSize(80, 16777215));
+        cmdClosePort->setMinimumSize(QSize(75, 22));
+        cmdClosePort->setMaximumSize(QSize(75, 16777215));
 
         horizontalLayout_2->addWidget(cmdClosePort);
 
@@ -140,8 +168,8 @@ public:
         sizePolicy2.setVerticalStretch(0);
         sizePolicy2.setHeightForWidth(cmdSendCustomCMDDir->sizePolicy().hasHeightForWidth());
         cmdSendCustomCMDDir->setSizePolicy(sizePolicy2);
-        cmdSendCustomCMDDir->setMinimumSize(QSize(64, 22));
-        cmdSendCustomCMDDir->setMaximumSize(QSize(64, 16777215));
+        cmdSendCustomCMDDir->setMinimumSize(QSize(55, 22));
+        cmdSendCustomCMDDir->setMaximumSize(QSize(55, 16777215));
         cmdSendCustomCMDDir->setBaseSize(QSize(0, 0));
         cmdSendCustomCMDDir->setFlat(false);
 
@@ -149,48 +177,122 @@ public:
 
         cmdSetTimeDate = new QPushButton(centralwidget);
         cmdSetTimeDate->setObjectName("cmdSetTimeDate");
-        cmdSetTimeDate->setMinimumSize(QSize(90, 22));
-        cmdSetTimeDate->setMaximumSize(QSize(90, 16777215));
+        cmdSetTimeDate->setMinimumSize(QSize(85, 22));
+        cmdSetTimeDate->setMaximumSize(QSize(85, 16777215));
         cmdSetTimeDate->setFlat(false);
 
         horizontalLayout_2->addWidget(cmdSetTimeDate);
+
+        cmdHIDCtrl = new QPushButton(centralwidget);
+        cmdHIDCtrl->setObjectName("cmdHIDCtrl");
+        cmdHIDCtrl->setMinimumSize(QSize(75, 0));
+        cmdHIDCtrl->setMaximumSize(QSize(75, 16777215));
+
+        horizontalLayout_2->addWidget(cmdHIDCtrl);
 
         cmdOpenFTP = new QPushButton(centralwidget);
         cmdOpenFTP->setObjectName("cmdOpenFTP");
         cmdOpenFTP->setMinimumSize(QSize(50, 0));
         cmdOpenFTP->setMaximumSize(QSize(50, 16777215));
+        QPalette palette2;
+        QBrush brush5(QColor(0, 85, 127, 255));
+        brush5.setStyle(Qt::BrushStyle::SolidPattern);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush5);
+        QBrush brush6(QColor(215, 235, 255, 255));
+        brush6.setStyle(Qt::BrushStyle::SolidPattern);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush6);
+        QBrush brush7(QColor(0, 170, 255, 255));
+        brush7.setStyle(Qt::BrushStyle::SolidPattern);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush7);
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush1);
+        QBrush brush8(QColor(85, 255, 255, 255));
+        brush8.setStyle(Qt::BrushStyle::SolidPattern);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette2.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush8);
+#endif
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush5);
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush6);
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush7);
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush1);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette2.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush8);
+#endif
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Button, brush5);
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush6);
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Midlight, brush7);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette2.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush8);
+#endif
+        cmdOpenFTP->setPalette(palette2);
 
         horizontalLayout_2->addWidget(cmdOpenFTP);
 
         cmdOpenDirectory = new QPushButton(centralwidget);
         cmdOpenDirectory->setObjectName("cmdOpenDirectory");
-        cmdOpenDirectory->setMinimumSize(QSize(110, 0));
-        cmdOpenDirectory->setMaximumSize(QSize(110, 16777215));
+        cmdOpenDirectory->setMinimumSize(QSize(70, 0));
+        cmdOpenDirectory->setMaximumSize(QSize(70, 16777215));
+        QPalette palette3;
+        QBrush brush9(QColor(0, 85, 0, 255));
+        brush9.setStyle(Qt::BrushStyle::SolidPattern);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Button, brush9);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Light, brush6);
+        QBrush brush10(QColor(85, 170, 127, 255));
+        brush10.setStyle(Qt::BrushStyle::SolidPattern);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Midlight, brush10);
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Highlight, brush10);
+        QBrush brush11(QColor(0, 255, 0, 255));
+        brush11.setStyle(Qt::BrushStyle::SolidPattern);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette3.setBrush(QPalette::ColorGroup::Active, QPalette::ColorRole::Accent, brush11);
+#endif
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Button, brush9);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Light, brush6);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Midlight, brush10);
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Highlight, brush10);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette3.setBrush(QPalette::ColorGroup::Inactive, QPalette::ColorRole::Accent, brush11);
+#endif
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Button, brush9);
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Light, brush6);
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Midlight, brush10);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        palette3.setBrush(QPalette::ColorGroup::Disabled, QPalette::ColorRole::Accent, brush11);
+#endif
+        cmdOpenDirectory->setPalette(palette3);
 
         horizontalLayout_2->addWidget(cmdOpenDirectory);
 
+        cmdClrRam = new QPushButton(centralwidget);
+        cmdClrRam->setObjectName("cmdClrRam");
+        cmdClrRam->setMinimumSize(QSize(74, 22));
+        cmdClrRam->setMaximumSize(QSize(74, 16777215));
+        cmdClrRam->setFlat(false);
+
+        horizontalLayout_2->addWidget(cmdClrRam);
+
         cmdViewRam = new QPushButton(centralwidget);
         cmdViewRam->setObjectName("cmdViewRam");
-        cmdViewRam->setMinimumSize(QSize(100, 22));
-        cmdViewRam->setMaximumSize(QSize(100, 16777215));
+        cmdViewRam->setMinimumSize(QSize(88, 22));
+        cmdViewRam->setMaximumSize(QSize(88, 16777215));
         cmdViewRam->setFlat(false);
 
         horizontalLayout_2->addWidget(cmdViewRam);
 
         txtViewFrom = new QLineEdit(centralwidget);
         txtViewFrom->setObjectName("txtViewFrom");
-        txtViewFrom->setMinimumSize(QSize(100, 0));
-        txtViewFrom->setMaximumSize(QSize(100, 16777215));
+        txtViewFrom->setMinimumSize(QSize(80, 0));
+        txtViewFrom->setMaximumSize(QSize(80, 16777215));
         QFont font1;
-        font1.setFamilies({QString::fromUtf8("Noto Sans Mono")});
+        font1.setFamilies({QString::fromUtf8("Courier New")});
+        font1.setPointSize(10);
         txtViewFrom->setFont(font1);
 
         horizontalLayout_2->addWidget(txtViewFrom);
 
         cmdClearLog = new QPushButton(centralwidget);
         cmdClearLog->setObjectName("cmdClearLog");
-        cmdClearLog->setMinimumSize(QSize(60, 22));
-        cmdClearLog->setMaximumSize(QSize(60, 16384));
+        cmdClearLog->setMinimumSize(QSize(50, 22));
+        cmdClearLog->setMaximumSize(QSize(50, 16384));
         cmdClearLog->setFlat(false);
 
         horizontalLayout_2->addWidget(cmdClearLog);
@@ -243,20 +345,21 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 977, 23));
+        menubar->setGeometry(QRect(0, 0, 899, 23));
         menuTerminal = new QMenu(menubar);
         menuTerminal->setObjectName("menuTerminal");
-        menuHelp = new QMenu(menubar);
-        menuHelp->setObjectName("menuHelp");
+        menuWindow = new QMenu(menubar);
+        menuWindow->setObjectName("menuWindow");
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName("statusbar");
         MainWindow->setStatusBar(statusbar);
 
         menubar->addAction(menuTerminal->menuAction());
-        menubar->addAction(menuHelp->menuAction());
-        menuHelp->addSeparator();
-        menuHelp->addAction(actionAbout);
+        menubar->addAction(menuWindow->menuAction());
+        menuTerminal->addAction(actionAbout);
+        menuWindow->addAction(mnuItemSDDirectory);
+        menuWindow->addAction(mnuItemFTP);
 
         retranslateUi(MainWindow);
 
@@ -269,29 +372,34 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "Sidbox Terminal", nullptr));
+        action->setText(QCoreApplication::translate("MainWindow", "About", nullptr));
         actionAbout->setText(QCoreApplication::translate("MainWindow", "About", nullptr));
+        mnuItemSDDirectory->setText(QCoreApplication::translate("MainWindow", "SD-Directory", nullptr));
+        mnuItemFTP->setText(QCoreApplication::translate("MainWindow", "FTP", nullptr));
         textBox->setHtml(QCoreApplication::translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
 "li.unchecked::marker { content: \"\\2610\"; }\n"
 "li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Liberation Mono'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", nullptr));
+"</style></head><body style=\" font-family:'Consolas'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:11pt;\"><br /></p></body></html>", nullptr));
         cmdOpenPort->setText(QCoreApplication::translate("MainWindow", "Open Port", nullptr));
         cmdClosePort->setText(QCoreApplication::translate("MainWindow", "Close Port", nullptr));
-        cmdSendCustomCMDDir->setText(QCoreApplication::translate("MainWindow", "[ dir.. ]", nullptr));
-        cmdSetTimeDate->setText(QCoreApplication::translate("MainWindow", "[ set time ]", nullptr));
+        cmdSendCustomCMDDir->setText(QCoreApplication::translate("MainWindow", "[ Dir ]", nullptr));
+        cmdSetTimeDate->setText(QCoreApplication::translate("MainWindow", "[ Set Time ]", nullptr));
+        cmdHIDCtrl->setText(QCoreApplication::translate("MainWindow", "HID Ctrl...", nullptr));
         cmdOpenFTP->setText(QCoreApplication::translate("MainWindow", "FTP...", nullptr));
-        cmdOpenDirectory->setText(QCoreApplication::translate("MainWindow", "SD-Directory...", nullptr));
+        cmdOpenDirectory->setText(QCoreApplication::translate("MainWindow", "SD-Dir...", nullptr));
+        cmdClrRam->setText(QCoreApplication::translate("MainWindow", "[ clr ram ]", nullptr));
         cmdViewRam->setText(QCoreApplication::translate("MainWindow", "[ view ram ]", nullptr));
-        txtViewFrom->setText(QCoreApplication::translate("MainWindow", "0x4000", nullptr));
+        txtViewFrom->setText(QCoreApplication::translate("MainWindow", "0x400000", nullptr));
         cmdClearLog->setText(QCoreApplication::translate("MainWindow", "clear", nullptr));
         txtCommandLine->setPlaceholderText(QString());
         cmdClear->setText(QCoreApplication::translate("MainWindow", "clear", nullptr));
         cmdSend->setText(QCoreApplication::translate("MainWindow", "send", nullptr));
         menuTerminal->setTitle(QCoreApplication::translate("MainWindow", "Terminal", nullptr));
-        menuHelp->setTitle(QCoreApplication::translate("MainWindow", "Help", nullptr));
+        menuWindow->setTitle(QCoreApplication::translate("MainWindow", "Window", nullptr));
     } // retranslateUi
 
 };

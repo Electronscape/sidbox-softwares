@@ -16,39 +16,40 @@ int main(int argc, char *argv[])
 
 #ifdef Q_OS_LINUX
     QString platform = QGuiApplication::platformName();
-    printf("Current platform:");;
-    printf(platform.toUtf8());
-    printf("\n");
+    printf("Current platform: %s\n", platform.toUtf8().constData());
 
-
-    if (platform != QLatin1String("xcb")) {
+    // If not already running under X11/XWayland
+    if (!platform.contains("xcb", Qt::CaseInsensitive)) {
         printf("Relaunching with XWayland...\n");
 
         QStringList args = QCoreApplication::arguments();
         args.removeFirst();  // remove program name
 
-        // Build environment
+        // Build environment without Wayland variables
         QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+        env.remove("WAYLAND_DISPLAY");
+        env.remove("WAYLAND_SOCKET");
+        env.remove("XDG_SESSION_TYPE");
+        env.insert("XDG_SESSION_TYPE", "x11");
         env.insert("QT_QPA_PLATFORM", "xcb");
 
-        // Create process
+        // Launch the process
         QProcess *p = new QProcess;
         p->setProcessEnvironment(env);
         p->setProgram(QCoreApplication::applicationFilePath());
         p->setArguments(args);
         p->setWorkingDirectory(QCoreApplication::applicationDirPath());
 
-        // Launch and exit
-        bool launched = p->startDetached();
-        if (launched) {
-            printf("Relaunched successfully!");
+        if (p->startDetached()) {
+            printf("Relaunched successfully!\n");
             return 0;
         } else {
-            printf("!Relaunch failed!");
+            printf("!Relaunch failed!\n");
             delete p;
         }
-    } else
+    } else {
         printf("already bubbling !!!\n");
+    }
 #endif
 
     MainWindow w;

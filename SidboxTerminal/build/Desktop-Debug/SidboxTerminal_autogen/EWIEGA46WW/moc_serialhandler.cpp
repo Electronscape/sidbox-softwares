@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'serialhandler.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.0)
+** Created by: The Qt Meta Object Compiler version 69 (Qt 6.10.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -19,7 +19,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'serialhandler.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.10.0. It"
+#error "This file was generated using the moc from 6.10.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -43,7 +43,7 @@ template <> constexpr inline auto SerialHandler::qt_create_metaobjectdata<qt_met
         "rawSerial",
         "",
         "text",
-        "readData"
+        "requestOpenSerialPort"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -51,8 +51,8 @@ template <> constexpr inline auto SerialHandler::qt_create_metaobjectdata<qt_met
         QtMocHelpers::SignalData<void(const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 },
         }}),
-        // Slot 'readData'
-        QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Signal 'requestOpenSerialPort'
+        QtMocHelpers::SignalData<void()>(4, 2, QMC::AccessPublic, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -77,12 +77,14 @@ void SerialHandler::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->rawSerial((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 1: _t->readData(); break;
+        case 1: _t->requestOpenSerialPort(); break;
         default: ;
         }
     }
     if (_c == QMetaObject::IndexOfMethod) {
         if (QtMocHelpers::indexOfMethod<void (SerialHandler::*)(const QString & )>(_a, &SerialHandler::rawSerial, 0))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (SerialHandler::*)()>(_a, &SerialHandler::requestOpenSerialPort, 1))
             return;
     }
 }
@@ -122,5 +124,11 @@ int SerialHandler::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 void SerialHandler::rawSerial(const QString & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1);
+}
+
+// SIGNAL 1
+void SerialHandler::requestOpenSerialPort()
+{
+    QMetaObject::activate(this, &staticMetaObject, 1, nullptr);
 }
 QT_WARNING_POP

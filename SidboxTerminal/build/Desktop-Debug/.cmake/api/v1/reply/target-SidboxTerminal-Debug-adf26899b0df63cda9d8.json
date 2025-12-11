@@ -53,7 +53,7 @@
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 1000,
+				"line" : 1012,
 				"parent" : 1
 			},
 			{
@@ -71,13 +71,13 @@
 			{
 				"command" : 4,
 				"file" : 1,
-				"line" : 34,
+				"line" : 40,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
 				"file" : 1,
-				"line" : 24,
+				"line" : 30,
 				"parent" : 0
 			},
 			{
@@ -93,7 +93,7 @@
 			{
 				"command" : 8,
 				"file" : 4,
-				"line" : 243,
+				"line" : 247,
 				"parent" : 8
 			},
 			{
@@ -129,7 +129,7 @@
 			{
 				"command" : 12,
 				"file" : 11,
-				"line" : 45,
+				"line" : 50,
 				"parent" : 15
 			},
 			{
@@ -161,7 +161,7 @@
 			{
 				"command" : 11,
 				"file" : 9,
-				"line" : 36,
+				"line" : 37,
 				"parent" : 21
 			},
 			{
@@ -283,7 +283,8 @@
 				2,
 				5,
 				9,
-				12
+				12,
+				15
 			]
 		}
 	],
@@ -330,12 +331,12 @@
 			},
 			{
 				"backtrace" : 6,
-				"fragment" : "/usr/lib64/libQt6Widgets.so.6.10.0",
+				"fragment" : "/usr/lib64/libQt6Widgets.so.6.10.1",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 6,
-				"fragment" : "/usr/lib64/libQt6SerialPort.so.6.10.0",
+				"fragment" : "/usr/lib64/libQt6SerialPort.so.6.10.1",
 				"role" : "libraries"
 			},
 			{
@@ -345,7 +346,7 @@
 			},
 			{
 				"backtrace" : 13,
-				"fragment" : "/usr/lib64/libQt6Gui.so.6.10.0",
+				"fragment" : "/usr/lib64/libQt6Gui.so.6.10.1",
 				"role" : "libraries"
 			},
 			{
@@ -360,7 +361,7 @@
 			},
 			{
 				"backtrace" : 30,
-				"fragment" : "/usr/lib64/libQt6Core.so.6.10.0",
+				"fragment" : "/usr/lib64/libQt6Core.so.6.10.1",
 				"role" : "libraries"
 			}
 		],
@@ -380,10 +381,10 @@
 			"sourceIndexes" : 
 			[
 				0,
-				14,
-				15,
 				16,
-				17
+				17,
+				18,
+				19
 			]
 		},
 		{
@@ -394,7 +395,8 @@
 				2,
 				5,
 				9,
-				12
+				12,
+				15
 			]
 		},
 		{
@@ -404,7 +406,8 @@
 				3,
 				6,
 				10,
-				11
+				11,
+				14
 			]
 		},
 		{
@@ -427,7 +430,7 @@
 			"name" : "CMake Rules",
 			"sourceIndexes" : 
 			[
-				18
+				20
 			]
 		}
 	],
@@ -509,6 +512,17 @@
 			"backtrace" : 4,
 			"path" : "frmftp.ui",
 			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 4,
+			"path" : "kfmparser.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 4,
+			"compileGroupIndex" : 0,
+			"path" : "kfmparser.cpp",
+			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 0,

@@ -1,6 +1,14 @@
 #ifndef AUDIOSYS_H
 #define AUDIOSYS_H
 
+// will need to install asoundlib-dev
+/*
+
+// will need the following lib
+sudo dnf install alsa-lib-devel
+
+
+*/
 
 #include <alsa/asoundlib.h>
 

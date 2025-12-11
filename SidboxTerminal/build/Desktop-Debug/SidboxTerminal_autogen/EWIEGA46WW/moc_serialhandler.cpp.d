@@ -302,6 +302,7 @@
   /usr/include/qt6/QtCore/q20utility.h \
   /usr/include/qt6/QtCore/q20vector.h \
   /usr/include/qt6/QtCore/q23functional.h \
+  /usr/include/qt6/QtCore/q23type_traits.h \
   /usr/include/qt6/QtCore/q23utility.h \
   /usr/include/qt6/QtCore/q26numeric.h \
   /usr/include/qt6/QtCore/qabstractanimation.h \

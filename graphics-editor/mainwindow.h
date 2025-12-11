@@ -50,6 +50,12 @@ private:
     void rotateIcon(int direction = 0);
     void ProcessLeftClickPaint();
     void floodFill(int startX, int startY, uint8_t fillColor);
+    bool importGif(const QString &path);
+    void doReassignedPalette(uint8_t targetPalID);
+    void doSwapPalette(uint8_t targetPalID);
+    void doSpreadPalette(uint8_t targetID);
+    void SavePaletteData(const char *filename);
+    void LoadPaletteData(const char *filename);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

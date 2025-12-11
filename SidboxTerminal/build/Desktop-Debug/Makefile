@@ -272,6 +272,30 @@ frmftp.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SidboxTerminal.dir/build.make CMakeFiles/SidboxTerminal.dir/frmftp.cpp.s
 .PHONY : frmftp.cpp.s
 
+kfmparser.o: kfmparser.cpp.o
+.PHONY : kfmparser.o
+
+# target to build an object file
+kfmparser.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SidboxTerminal.dir/build.make CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o
+.PHONY : kfmparser.cpp.o
+
+kfmparser.i: kfmparser.cpp.i
+.PHONY : kfmparser.i
+
+# target to preprocess a source file
+kfmparser.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SidboxTerminal.dir/build.make CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.i
+.PHONY : kfmparser.cpp.i
+
+kfmparser.s: kfmparser.cpp.s
+.PHONY : kfmparser.s
+
+# target to generate assembly for a file
+kfmparser.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SidboxTerminal.dir/build.make CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.s
+.PHONY : kfmparser.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -368,6 +392,9 @@ help:
 	@echo "... frmftp.o"
 	@echo "... frmftp.i"
 	@echo "... frmftp.s"
+	@echo "... kfmparser.o"
+	@echo "... kfmparser.i"
+	@echo "... kfmparser.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

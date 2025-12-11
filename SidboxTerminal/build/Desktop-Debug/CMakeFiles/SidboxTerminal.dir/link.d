@@ -8,13 +8,14 @@ SidboxTerminal: \
   CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o \
   CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o \
   CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o \
-  /usr/lib64/libQt6Widgets.so.6.10.0 \
-  /usr/lib64/libQt6SerialPort.so.6.10.0 \
-  /tmp/ccG0h5YJ.o \
-  /usr/lib64/libQt6Gui.so.6.10.0 \
+  CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o \
+  /usr/lib64/libQt6Widgets.so.6.10.1 \
+  /usr/lib64/libQt6SerialPort.so.6.10.1 \
+  /tmp/ccBvXvHE.o \
+  /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
   /usr/lib64/libOpenGL.so \
-  /usr/lib64/libQt6Core.so.6.10.0 \
+  /usr/lib64/libQt6Core.so.6.10.1 \
   /usr/lib/gcc/x86_64-redhat-linux/15/libstdc++.so \
   /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so \
   /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so \
@@ -95,19 +96,21 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o:
 
 CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o:
 
-/usr/lib64/libQt6Widgets.so.6.10.0:
+CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o:
 
-/usr/lib64/libQt6SerialPort.so.6.10.0:
+/usr/lib64/libQt6Widgets.so.6.10.1:
 
-/tmp/ccG0h5YJ.o:
+/usr/lib64/libQt6SerialPort.so.6.10.1:
 
-/usr/lib64/libQt6Gui.so.6.10.0:
+/tmp/ccBvXvHE.o:
+
+/usr/lib64/libQt6Gui.so.6.10.1:
 
 /usr/lib64/libGLX.so:
 
 /usr/lib64/libOpenGL.so:
 
-/usr/lib64/libQt6Core.so.6.10.0:
+/usr/lib64/libQt6Core.so.6.10.1:
 
 /usr/lib/gcc/x86_64-redhat-linux/15/libstdc++.so:
 

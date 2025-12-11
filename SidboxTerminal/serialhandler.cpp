@@ -35,6 +35,7 @@ bool SerialHandler::openPort(const QString& portName, int baud)
 
     if (!serial->open(QIODevice::ReadWrite)) {
         textBox->append("Failed to open port: " + serial->errorString());
+
         return false;
     }
 

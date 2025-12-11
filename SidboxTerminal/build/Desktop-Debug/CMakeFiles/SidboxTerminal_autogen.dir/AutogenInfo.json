@@ -36,9 +36,9 @@
 		"/usr/lib64/cmake/Qt6/Qt6ConfigVersionImpl.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6Config.cmake",
 		"/usr/lib64/cmake/Qt6/QtPublicCMakeEarlyPolicyHelpers.cmake",
+		"/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6ConfigExtras.cmake",
 		"/usr/lib64/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake",
-		"/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake",
 		"/usr/lib64/cmake/Qt6/QtInstallPaths.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6Targets.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6VersionlessAliasTargets.cmake",
@@ -331,21 +331,6 @@
 		"/usr/lib64/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginTargets.cmake",
 		"/usr/lib64/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginTargets-relwithdebinfo.cmake",
 		"/usr/lib64/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginAdditionalTargetInfo.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginConfig.cmake",
-		"/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginTargets.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginTargets-relwithdebinfo.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginAdditionalTargetInfo.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginConfig.cmake",
-		"/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginTargets.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginTargets-relwithdebinfo.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgIconPluginAdditionalTargetInfo.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginConfig.cmake",
-		"/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginTargets.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginTargets-relwithdebinfo.cmake",
-		"/usr/lib64/cmake/Qt6Gui/Qt6QSvgPluginAdditionalTargetInfo.cmake",
 		"/usr/lib64/cmake/Qt6Gui/Qt6QTgaPluginConfig.cmake",
 		"/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake",
 		"/usr/lib64/cmake/Qt6Gui/Qt6QTgaPluginTargets.cmake",
@@ -423,9 +408,9 @@
 		"/usr/lib64/cmake/Qt6/Qt6ConfigVersionImpl.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6Config.cmake",
 		"/usr/lib64/cmake/Qt6/QtPublicCMakeEarlyPolicyHelpers.cmake",
+		"/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6ConfigExtras.cmake",
 		"/usr/lib64/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake",
-		"/usr/lib64/cmake/Qt6/QtPublicCMakeHelpers.cmake",
 		"/usr/lib64/cmake/Qt6/QtInstallPaths.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6Targets.cmake",
 		"/usr/lib64/cmake/Qt6/Qt6VersionlessAliasTargets.cmake",
@@ -490,6 +475,12 @@
 			"/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/frmftp.h",
 			"MU",
 			"EWIEGA46WW/moc_frmftp.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/kfmparser.h",
+			"MU",
+			"EWIEGA46WW/moc_kfmparser.cpp",
 			null
 		],
 		[
@@ -573,6 +564,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/frmftp.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/kfmparser.cpp",
 			"MU",
 			null
 		],

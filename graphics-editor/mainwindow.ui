@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1168</width>
+    <width>1432</width>
     <height>872</height>
    </rect>
   </property>
@@ -360,8 +360,8 @@
    <widget class="QLabel" name="lblCoords">
     <property name="geometry">
      <rect>
-      <x>8</x>
-      <y>2</y>
+      <x>5</x>
+      <y>3</y>
       <width>321</width>
       <height>16</height>
      </rect>
@@ -376,13 +376,227 @@
      <string>Coords: x:0, y:0</string>
     </property>
    </widget>
+   <widget class="QFrame" name="outputTextView">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>22</y>
+      <width>820</width>
+      <height>660</height>
+     </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Shape::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Shadow::Raised</enum>
+    </property>
+    <widget class="QPlainTextEdit" name="txtOutputText">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>810</width>
+       <height>621</height>
+      </rect>
+     </property>
+     <property name="palette">
+      <palette>
+       <active>
+        <colorrole role="WindowText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>170</red>
+           <green>170</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Dark">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Text">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>170</red>
+           <green>255</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </active>
+       <inactive>
+        <colorrole role="WindowText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>170</red>
+           <green>170</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Dark">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Text">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>170</red>
+           <green>255</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </inactive>
+       <disabled>
+        <colorrole role="WindowText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Dark">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Text">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="ButtonText">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>49</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </disabled>
+      </palette>
+     </property>
+     <property name="font">
+      <font>
+       <family>Courier New</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">border: 1px solid #3c6dc3;
+</string>
+     </property>
+     <property name="plainText">
+      <string>#include &lt;stdint.h&gt;
+
+uint32_t clut[256] = {
+    0xFF000000, 0xFFAFAFAF, 0xFFFFFFFF, 0xFF3B67A2, 0xFFAA907C, 0xFF959595, 0xFF7B7B7B, 0xFFFFA997,
+    0xFF37A91D, 0xFF7CA9FF, 0xFFBF8112, 0xFFEBBF66, 0xFF78C178, 0xFF3D9318, 0xFFB33418, 0xFFD9311C,
+    0xFF000000, 0xFF00000E, 0xFF00001D, 0xFF00002B, 0xFF000139, 0xFF000147, 0xFF000156, 0xFF000164,
+    0xFF0001D2, 0xFF0001FF, 0xFFCECECE, 0xFF00FF00, 0xFFB2FF00, 0xFFFFE700, 0xFFFF9600, 0xFFFF1100,
+    0xFF491200, 0xFF491355, 0xFF4914AA, 0xFF4916FF, 0xFF5B1700, 0xFF5B1855, 0xFF5B19AA, 0xFF5B1AFF,
+    0xFF6D1B00, 0xFF6D1C55, 0xFF00E300, 0xFF85FF54, 0xFFC4FF00, 0xFFFFD900, 0xFFFFA41F, 0xFFE05400,
+    0xFFFF0000, 0xFF922655, 0xFF9227AA, 0xFF9228FF, 0xFFA42900, 0xFFA42A55, 0xFFA42BAA, 0xFFA42CFF,
+    0xFFB62D00, 0xFFB62F55, 0xFFB630AA, 0xFFB631FF, 0xFFC93200, 0xFFC93355, 0xFFC934AA, 0xFFC935FF,
+    0xFFDB3700, 0xFFDB3855, 0xFFDB39AA, 0xFFDB3AFF, 0xFFED3B00, 0xFFED3C55, 0xFFED3DAA, 0xFFED3FFF,
+    0xFFFF4000, 0xFFFF4155, 0xFFFF42AA, 0xFFFF43FF, 0xFF004400, 0xFF004555, 0xFF0046AA, 0xFF0048FF,
+    0xFFFFFF00, 0xFF12FF55, 0xFF12EE55, 0xFF12B6FF, 0xFF001FFF, 0xFF9D0EC7, 0xFFF10000, 0xFFFF7700,
+    0xFF375200, 0xFF375355, 0xFF3754AA, 0xFF3755FF, 0xFF495600, 0xFF495855, 0xFF4959AA, 0xFF495AFF,
+    0xFF5B5B00, 0xFF5B5C55, 0xFF5B5DAA, 0xFF5B5EFF, 0xFF6D6000, 0xFF6D6155, 0xFF6D62AA, 0xFF6D63FF,
+    0xFF6D6400, 0xFF806555, 0xFF8066AA, 0xFF8067FF, 0xFF926900, 0xFF926A55, 0xFF926BAA, 0xFF926CFF,
+    0xFFA46D00, 0xFFA46E55, 0xFFA46FAA, 0xFFA471FF, 0xFFB67200, 0xFFB67355, 0xFFB674AA, 0xFFB675FF,
+    0xFFC97600, 0xFFC97755, 0xFFC979AA, 0xFFC97AFF, 0xFFDB7B00, 0xFFDB7C55, 0xFFDB7DAA, 0xFFDB7EFF,
+    0xFFED7F00, 0xFFED8055, 0xFFED82AA, 0xFFED83FF, 0xFFFF8400, 0xFFFF8555, 0xFFFF86AA, 0xFFFF87FF,
+    0xFF008800, 0xFF008A55, 0xFF008BAA, 0xFF008CFF, 0xFF128D00, 0xFF128E55, 0xFF128FAA, 0xFF1290FF,
+    0xFF249200, 0xFF249355, 0xFF2494AA, 0xFF2495FF, 0xFF379600, 0xFF379755, 0xFF3798AA, 0xFF3799FF,
+    0xFF499B00, 0xFF499C55, 0xFF499DAA, 0xFF499EFF, 0xFF5B9F00, 0xFF5BA055, 0xFF5BA1AA, 0xFF5BA3FF,
+    0xFFA4B5D5, 0xFFA0B0F8, 0xFF94A3E6, 0xFF7C89C1, 0xFF6281C0, 0xFF1C62A1, 0xFF4254EA, 0xFF62A1BD,
+    0xFF7093C0, 0xFF4977A1, 0xFF003FAA, 0xFF1554FF, 0xFF1C50B9, 0xFF00B3FF, 0xFF0088AA, 0xFF00B5FF,
+    0xFF0E62FF, 0xFF5EB7E3, 0xFFBDC0B9, 0xFF85B9FF, 0xFF006CAF, 0xFF1F81B9, 0xFF3F5BAA, 0xFFC9BEFF,
+    0xFF5BAFCB, 0xFFDBC055, 0xFFDBC1AA, 0xFFBDC0C0, 0xFFEDC400, 0xFFEDC555, 0xFFEDC6AA, 0xFFEDC7FF,
+    0xFFFFC800, 0xFFFFC955, 0xFFFFCAAA, 0xFFFFCCFF, 0xFF00CD00, 0xFF00CE55, 0xFF00CFAA, 0xFF00D0FF,
+    0xFF12D100, 0xFF12D255, 0xFF12D3AA, 0xFF12D5FF, 0xFF24D600, 0xFF24D755, 0xFF24D8AA, 0xFF24D9FF,
+    0xFF37DA00, 0xFF37DB55, 0xFF37DDAA, 0xFF37DEFF, 0xFF49DF00, 0xFF49E055, 0xFF49E1AA, 0xFF49E2FF,
+    0xFF5BE300, 0xFF5BE555, 0xFF5BE6AA, 0xFF5BE7FF, 0xFF6DE800, 0xFF6DE955, 0xFF6DEAAA, 0xFF6DEBFF,
+    0xFF6DEC00, 0xFF80EE55, 0xFF80EFAA, 0xFF80F0FF, 0xFF93CEA2, 0xFF92F255, 0xFF92F3AA, 0xFF92F4FF,
+    0xFFA4F600, 0xFFA4F755, 0xFFA4F8AA, 0xFFA4F9FF, 0xFFB6FA00, 0xFFB6FB55, 0xFFB6FCAA, 0xFFB6FEFF,
+    0xFFC9FF00, 0xFFC9FF55, 0xFFC9FFAA, 0xFFC9FFFF, 0xFFDBFF00, 0xFFDBFF55, 0xFFDBFFAA, 0xFFDBFFFF,
+    0xFFEDFF00, 0xFFEDFF55, 0xFFEDFFAA, 0xFFEDFFFF, 0xFFFFFF00, 0xFFFFFF55, 0xFFFFFFAA, 0xFFFFFFFF
+};</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cmdCloseOutputText">
+     <property name="geometry">
+      <rect>
+       <x>7</x>
+       <y>628</y>
+       <width>80</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Close</string>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1168</width>
+     <width>1432</width>
      <height>23</height>
     </rect>
    </property>
@@ -390,13 +604,13 @@
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
     <size>
-     <width>187</width>
-     <height>34</height>
+     <width>168</width>
+     <height>36</height>
     </size>
    </property>
    <property name="maximumSize">
     <size>
-     <width>187</width>
+     <width>168</width>
      <height>524287</height>
     </size>
    </property>
@@ -464,7 +678,7 @@
       <rect>
        <x>3</x>
        <y>10</y>
-       <width>179</width>
+       <width>160</width>
        <height>140</height>
       </rect>
      </property>
@@ -798,9 +1012,9 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>158</y>
-       <width>180</width>
-       <height>81</height>
+       <y>157</y>
+       <width>160</width>
+       <height>105</height>
       </rect>
      </property>
      <property name="title">
@@ -809,7 +1023,7 @@ QPushButton:hover {
      <widget class="QCheckBox" name="chkShowGrid">
       <property name="geometry">
        <rect>
-        <x>9</x>
+        <x>7</x>
         <y>25</y>
         <width>100</width>
         <height>21</height>
@@ -825,7 +1039,7 @@ QPushButton:hover {
      <widget class="QLabel" name="label_3">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>8</x>
         <y>50</y>
         <width>41</width>
         <height>16</height>
@@ -838,7 +1052,7 @@ QPushButton:hover {
      <widget class="QScrollBar" name="scrEditorZoomVal">
       <property name="geometry">
        <rect>
-        <x>57</x>
+        <x>50</x>
         <y>51</y>
         <width>80</width>
         <height>16</height>
@@ -849,7 +1063,7 @@ QPushButton:hover {
 </string>
       </property>
       <property name="minimum">
-       <number>4</number>
+       <number>1</number>
       </property>
       <property name="maximum">
        <number>32</number>
@@ -864,7 +1078,7 @@ QPushButton:hover {
      <widget class="QLabel" name="lblEditorZoomLevel">
       <property name="geometry">
        <rect>
-        <x>143</x>
+        <x>136</x>
         <y>51</y>
         <width>30</width>
         <height>16</height>
@@ -874,14 +1088,79 @@ QPushButton:hover {
        <string>16</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="cmdZoomPreX1">
+      <property name="geometry">
+       <rect>
+        <x>93</x>
+        <y>22</y>
+        <width>40</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>1:1</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdZoomPreX4">
+      <property name="geometry">
+       <rect>
+        <x>7</x>
+        <y>74</y>
+        <width>30</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>x4</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdZoomPreX8">
+      <property name="geometry">
+       <rect>
+        <x>39</x>
+        <y>74</y>
+        <width>30</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>x8</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdZoomPreX16">
+      <property name="geometry">
+       <rect>
+        <x>71</x>
+        <y>74</y>
+        <width>40</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>x16</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdZoomPreX32">
+      <property name="geometry">
+       <rect>
+        <x>113</x>
+        <y>74</y>
+        <width>40</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>x32</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_6">
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>247</y>
-       <width>180</width>
-       <height>140</height>
+       <y>269</y>
+       <width>160</width>
+       <height>139</height>
       </rect>
      </property>
      <property name="title">
@@ -955,6 +1234,22 @@ QPushButton:hover {
        <string>Circle Draw</string>
       </property>
      </widget>
+     <widget class="QCheckBox" name="chkInstaFill">
+      <property name="geometry">
+       <rect>
+        <x>96</x>
+        <y>111</y>
+        <width>50</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Inst</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -962,7 +1257,7 @@ QPushButton:hover {
    <property name="minimumSize">
     <size>
      <width>439</width>
-     <height>34</height>
+     <height>36</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -981,416 +1276,13 @@ QPushButton:hover {
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_2">
-    <widget class="QTabWidget" name="tabWidget">
-     <property name="geometry">
-      <rect>
-       <x>4</x>
-       <y>489</y>
-       <width>430</width>
-       <height>335</height>
-      </rect>
-     </property>
-     <property name="currentIndex">
-      <number>1</number>
-     </property>
-     <widget class="QWidget" name="tab">
-      <attribute name="title">
-       <string>Image Previewer</string>
-      </attribute>
-      <widget class="QGraphicsView" name="gfxPreviewImage">
-       <property name="geometry">
-        <rect>
-         <x>3</x>
-         <y>6</y>
-         <width>418</width>
-         <height>290</height>
-        </rect>
-       </property>
-       <property name="palette">
-        <palette>
-         <active>
-          <colorrole role="Light">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>188</red>
-             <green>188</green>
-             <blue>188</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Dark">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>67</red>
-             <green>67</green>
-             <blue>67</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Mid">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>56</red>
-             <green>56</green>
-             <blue>56</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Base">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>39</red>
-             <green>39</green>
-             <blue>39</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Shadow">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>36</red>
-             <green>36</green>
-             <blue>36</blue>
-            </color>
-           </brush>
-          </colorrole>
-         </active>
-         <inactive>
-          <colorrole role="Light">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>188</red>
-             <green>188</green>
-             <blue>188</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Dark">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>67</red>
-             <green>67</green>
-             <blue>67</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Mid">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>56</red>
-             <green>56</green>
-             <blue>56</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Base">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>39</red>
-             <green>39</green>
-             <blue>39</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Shadow">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>36</red>
-             <green>36</green>
-             <blue>36</blue>
-            </color>
-           </brush>
-          </colorrole>
-         </inactive>
-         <disabled>
-          <colorrole role="WindowText">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>67</red>
-             <green>67</green>
-             <blue>67</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Light">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>188</red>
-             <green>188</green>
-             <blue>188</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Dark">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>67</red>
-             <green>67</green>
-             <blue>67</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Mid">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>56</red>
-             <green>56</green>
-             <blue>56</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Text">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>67</red>
-             <green>67</green>
-             <blue>67</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="ButtonText">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>67</red>
-             <green>67</green>
-             <blue>67</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="Shadow">
-           <brush brushstyle="SolidPattern">
-            <color alpha="255">
-             <red>36</red>
-             <green>36</green>
-             <blue>36</blue>
-            </color>
-           </brush>
-          </colorrole>
-         </disabled>
-        </palette>
-       </property>
-       <property name="frameShape">
-        <enum>QFrame::Shape::WinPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Shadow::Sunken</enum>
-       </property>
-       <property name="verticalScrollBarPolicy">
-        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-       </property>
-       <property name="horizontalScrollBarPolicy">
-        <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QWidget" name="tab_2">
-      <attribute name="title">
-       <string>Image Processing...</string>
-      </attribute>
-      <widget class="QGroupBox" name="groupBox">
-       <property name="geometry">
-        <rect>
-         <x>3</x>
-         <y>3</y>
-         <width>418</width>
-         <height>290</height>
-        </rect>
-       </property>
-       <property name="title">
-        <string>Image Systems:</string>
-       </property>
-       <widget class="QFrame" name="frame_2">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>20</y>
-          <width>420</width>
-          <height>41</height>
-         </rect>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Raised</enum>
-        </property>
-        <widget class="QPushButton" name="pushButton_16">
-         <property name="geometry">
-          <rect>
-           <x>320</x>
-           <y>10</y>
-           <width>90</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Export.h</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="cmdLoadIconProject">
-         <property name="geometry">
-          <rect>
-           <x>93</x>
-           <y>9</y>
-           <width>90</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Load Project</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="cmdClsIconImage">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>9</y>
-           <width>80</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Cls Image</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="cmdSaveIconProject">
-         <property name="geometry">
-          <rect>
-           <x>186</x>
-           <y>9</y>
-           <width>90</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Save Project</string>
-         </property>
-        </widget>
-       </widget>
-       <widget class="QFrame" name="frame">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>60</y>
-          <width>420</width>
-          <height>40</height>
-         </rect>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Raised</enum>
-        </property>
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="geometry">
-          <rect>
-           <x>272</x>
-           <y>10</y>
-           <width>140</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Process src image...</string>
-         </property>
-        </widget>
-        <widget class="QLineEdit" name="txtProjectImageHeight">
-         <property name="geometry">
-          <rect>
-           <x>100</x>
-           <y>12</y>
-           <width>50</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="acceptDrops">
-          <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">border: 1px solid #3c6dc3;
-</string>
-         </property>
-         <property name="text">
-          <string>128</string>
-         </property>
-         <property name="maxLength">
-          <number>5</number>
-         </property>
-        </widget>
-        <widget class="QLineEdit" name="txtProjectImageWidth">
-         <property name="geometry">
-          <rect>
-           <x>28</x>
-           <y>12</y>
-           <width>50</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="acceptDrops">
-          <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">border: 1px solid #3c6dc3;
-</string>
-         </property>
-         <property name="text">
-          <string>128</string>
-         </property>
-         <property name="maxLength">
-          <number>5</number>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label">
-         <property name="geometry">
-          <rect>
-           <x>9</x>
-           <y>14</y>
-           <width>30</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>W:</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_2">
-         <property name="geometry">
-          <rect>
-           <x>84</x>
-           <y>14</y>
-           <width>30</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>H:</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="cmdSetIconAreaSize">
-         <property name="geometry">
-          <rect>
-           <x>156</x>
-           <y>10</y>
-           <width>110</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>set image size</string>
-         </property>
-        </widget>
-       </widget>
-      </widget>
-     </widget>
-    </widget>
     <widget class="QGroupBox" name="grpPaletteBox">
      <property name="geometry">
       <rect>
        <x>4</x>
        <y>3</y>
        <width>430</width>
-       <height>480</height>
+       <height>448</height>
       </rect>
      </property>
      <property name="title">
@@ -1403,10 +1295,16 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>4</x>
-        <y>24</y>
+        <y>25</y>
         <width>260</width>
-        <height>356</height>
+        <height>324</height>
        </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>260</width>
+        <height>324</height>
+       </size>
       </property>
       <property name="palette">
        <palette>
@@ -1583,6 +1481,9 @@ QPushButton:hover {
       <property name="horizontalScrollBarPolicy">
        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
       </property>
+      <property name="interactive">
+       <bool>false</bool>
+      </property>
      </widget>
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
@@ -1656,7 +1557,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>6</x>
-        <y>385</y>
+        <y>353</y>
         <width>418</width>
         <height>89</height>
        </rect>
@@ -2041,8 +1942,8 @@ QPushButton:hover {
       <widget class="QPushButton" name="cmdRevertPalette">
        <property name="geometry">
         <rect>
-         <x>205</x>
-         <y>22</y>
+         <x>203</x>
+         <y>21</y>
          <width>60</width>
          <height>22</height>
         </rect>
@@ -2080,8 +1981,21 @@ QPushButton:hover {
         <string>16 Bit</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="cmdReassignColour">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>21</y>
+         <width>80</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>re-assign...</string>
+       </property>
+      </widget>
      </widget>
-     <widget class="QPushButton" name="pushButton_3">
+     <widget class="QPushButton" name="cmdDefaultPalette">
       <property name="geometry">
        <rect>
         <x>271</x>
@@ -2094,7 +2008,7 @@ QPushButton:hover {
        <string>default</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_4">
+     <widget class="QPushButton" name="cmdLoadPalette">
       <property name="geometry">
        <rect>
         <x>328</x>
@@ -2107,7 +2021,7 @@ QPushButton:hover {
        <string>Load</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_5">
+     <widget class="QPushButton" name="cmdSavePalette">
       <property name="geometry">
        <rect>
         <x>377</x>
@@ -2120,24 +2034,11 @@ QPushButton:hover {
        <string>Save</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_6">
+     <widget class="QPushButton" name="cmdSwapColours">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>181</y>
-        <width>147</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Grab GIF Palette...</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_7">
-      <property name="geometry">
-       <rect>
-        <x>272</x>
-        <y>207</y>
+        <y>180</y>
         <width>147</width>
         <height>26</height>
        </rect>
@@ -2152,11 +2053,11 @@ QPushButton:hover {
        <iconset theme="QIcon::ThemeIcon::SystemReboot"/>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_8">
+     <widget class="QPushButton" name="cmdSpreadPalette">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>236</y>
+        <y>209</y>
         <width>147</width>
         <height>26</height>
        </rect>
@@ -2171,11 +2072,11 @@ QPushButton:hover {
        <iconset theme="QIcon::ThemeIcon::MailForward"/>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_9">
+     <widget class="QPushButton" name="cmdExportClut16">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>355</y>
+        <y>325</y>
         <width>70</width>
         <height>24</height>
        </rect>
@@ -2184,11 +2085,11 @@ QPushButton:hover {
        <string>clut16.H</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_10">
+     <widget class="QPushButton" name="cmdExportClut32">
       <property name="geometry">
        <rect>
         <x>345</x>
-        <y>355</y>
+        <y>325</y>
         <width>70</width>
         <height>24</height>
        </rect>
@@ -2210,11 +2111,11 @@ QPushButton:hover {
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_11">
+     <widget class="QPushButton" name="cmdReorgPalette">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>265</y>
+        <y>238</y>
         <width>147</width>
         <height>26</height>
        </rect>
@@ -2230,7 +2131,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>270</x>
-        <y>300</y>
+        <y>270</y>
         <width>150</width>
         <height>3</height>
        </rect>
@@ -2243,7 +2144,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>278</x>
-        <y>306</y>
+        <y>276</y>
         <width>80</width>
         <height>16</height>
        </rect>
@@ -2252,17 +2153,238 @@ QPushButton:hover {
        <string>exporters:</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_12">
+     <widget class="QPushButton" name="cmdExportClutVHDL12">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>330</y>
+        <y>300</y>
         <width>70</width>
         <height>24</height>
        </rect>
       </property>
       <property name="text">
        <string>vhdl12.H</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_7">
+     <property name="geometry">
+      <rect>
+       <x>4</x>
+       <y>458</y>
+       <width>430</width>
+       <height>164</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Image Systems</string>
+     </property>
+     <widget class="QPushButton" name="pushButton_16">
+      <property name="geometry">
+       <rect>
+        <x>320</x>
+        <y>30</y>
+        <width>90</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Export.h</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdClsIconImage">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>29</y>
+        <width>80</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Cls Image</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdLoadIconProject">
+      <property name="geometry">
+       <rect>
+        <x>93</x>
+        <y>29</y>
+        <width>90</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load Project</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdSaveIconProject">
+      <property name="geometry">
+       <rect>
+        <x>186</x>
+        <y>29</y>
+        <width>90</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save Project</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdImportImage">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>60</y>
+        <width>120</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Import image...</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkUsePalette">
+      <property name="geometry">
+       <rect>
+        <x>257</x>
+        <y>62</y>
+        <width>160</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Reuse existing Palette</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkImportPalette">
+      <property name="geometry">
+       <rect>
+        <x>137</x>
+        <y>62</y>
+        <width>110</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Import Palette</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdSetIconAreaSize">
+      <property name="geometry">
+       <rect>
+        <x>160</x>
+        <y>98</y>
+        <width>110</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>set image size</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtProjectImageWidth">
+      <property name="geometry">
+       <rect>
+        <x>33</x>
+        <y>100</y>
+        <width>50</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="acceptDrops">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="text">
+       <string>128</string>
+      </property>
+      <property name="maxLength">
+       <number>5</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>88</x>
+        <y>102</y>
+        <width>30</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>H:</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>13</x>
+        <y>102</y>
+        <width>30</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>W:</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtProjectImageHeight">
+      <property name="geometry">
+       <rect>
+        <x>105</x>
+        <y>100</y>
+        <width>50</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="acceptDrops">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="text">
+       <string>128</string>
+      </property>
+      <property name="maxLength">
+       <number>5</number>
+      </property>
+     </widget>
+     <widget class="Line" name="line_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>90</y>
+        <width>410</width>
+        <height>3</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_6">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>147</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Grab GIF Palette...</string>
       </property>
      </widget>
     </widget>

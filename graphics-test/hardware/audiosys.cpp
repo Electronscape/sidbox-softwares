@@ -9,7 +9,7 @@
 snd_pcm_t *pcm_handle;
 
 
-#define AUDIO_BUFFER_SIZE           1024   // frames
+#define AUDIO_BUFFER_SIZE           2048   // frames
 
 int16_t audiobuf[AUDIO_BUFFER_SIZE * 2];          /* stereo interleaved frames */
 //int frames_per_write = sizeof(audiobuf) / 4;    /* 4 bytes per frame: L+R */
@@ -43,8 +43,8 @@ int initAudioHardware(){
     snd_pcm_hw_params_malloc(&params);
     snd_pcm_hw_params_any(pcm_handle, params);
 
-    snd_pcm_uframes_t buffer_size = SAMPLES_PER_FRAME;  // Must be uframes_t
-    snd_pcm_uframes_t period_size = SAMPLES_PER_FRAME;
+    snd_pcm_uframes_t buffer_size = 8192;//SAMPLES_PER_FRAME;  // Must be uframes_t
+    snd_pcm_uframes_t period_size = 8192;//SAMPLES_PER_FRAME;
 
     snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE);
@@ -67,8 +67,6 @@ int initAudioHardware(){
     return 0; // it came back with zero issues
 }
 
-
-
 void addToAudio(int16_t l, int16_t r) {
     unsigned int next = (writePos + 1) % AUDIO_BUFFER_SIZE;
 
@@ -80,9 +78,7 @@ void addToAudio(int16_t l, int16_t r) {
 
     writePos = next;
 }
-
-
-
+/*
 void *audioThread(void *arg) {
     const int chunk = 2; // frames per write
     int16_t tmp[chunk * 2];
@@ -118,7 +114,7 @@ void *audioThread(void *arg) {
     }
     return 0;
 }
-
+*/
 
 void playFrameAudio(int16_t *snd, unsigned long SPF){
     // Blocking write to ALSA

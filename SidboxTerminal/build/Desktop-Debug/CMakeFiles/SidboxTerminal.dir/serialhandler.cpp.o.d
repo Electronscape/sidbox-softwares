@@ -243,12 +243,12 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtCore/qbytearrayalgorithms.h \
  /usr/include/qt6/QtCore/qbytearrayview.h \
  /usr/include/qt6/QtCore/qstringfwd.h /usr/include/c++/15/stdlib.h \
- /usr/include/qt6/QtCore/qstringliteral.h \
  /usr/include/qt6/QtCore/qstringalgorithms.h \
  /usr/include/qt6/QtCore/qlatin1stringview.h \
  /usr/include/qt6/QtCore/qanystringview.h \
  /usr/include/qt6/QtCore/qutf8stringview.h \
  /usr/include/qt6/QtCore/qstringtokenizer.h \
+ /usr/include/qt6/QtCore/q23type_traits.h \
  /usr/include/qt6/QtCore/qstringbuilder.h \
  /usr/include/qt6/QtCore/qstringconverter.h \
  /usr/include/qt6/QtCore/qstringconverter_base.h \
@@ -267,9 +267,9 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtCore/qfloat16.h /usr/include/qt6/QtCore/qmath.h \
  /usr/include/qt6/QtCore/qtformat_impl.h \
  /usr/include/qt6/QtCore/qiterable.h \
+ /usr/include/qt6/QtCore/qtaggedpointer.h \
  /usr/include/qt6/QtCore/qmetacontainer.h \
  /usr/include/qt6/QtCore/qcontainerinfo.h \
- /usr/include/qt6/QtCore/qtaggedpointer.h \
  /usr/include/qt6/QtCore/qscopeguard.h /usr/include/c++/15/list \
  /usr/include/c++/15/bits/stl_list.h /usr/include/c++/15/bits/list.tcc \
  /usr/include/c++/15/map /usr/include/c++/15/bits/stl_tree.h \
@@ -751,4 +751,7 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtWidgets/QMainWindow \
  /usr/include/qt6/QtWidgets/qmainwindow.h \
  /usr/include/qt6/QtWidgets/qtabwidget.h \
- /usr/include/qt6/QtCore/QModelIndex
+ /usr/include/qt6/QtCore/QModelIndex /usr/include/qt6/QtCore/QSettings \
+ /usr/include/qt6/QtCore/QList /usr/include/qt6/QtWidgets/QCheckBox \
+ /usr/include/qt6/QtWidgets/qcheckbox.h \
+ /usr/include/qt6/QtWidgets/qabstractbutton.h
