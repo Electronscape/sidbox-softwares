@@ -56,6 +56,12 @@ private:
     void doSpreadPalette(uint8_t targetID);
     void SavePaletteData(const char *filename);
     void LoadPaletteData(const char *filename);
+    void ExportImageToH(const char *filename, const uint16_t modes);
+
+    void readToolXY(int *rx, int *ry);
+
+    void doColourCycle();
+    void onColourCycleTick();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QMessageBox>
+#include <QSettings>
 #include <QFileDialog>
 //#include <functional>
 //#include <cstring>
@@ -20,15 +21,16 @@
 #include <stdio.h>
 
 #define PALETTE_BOX_HSIZE   16
-#define PALETTE_BOX_VSIZE   20
+#define PALETTE_BOX_VSIZE   16
 #define PALETTE_WIDTH       PALETTE_BOX_HSIZE
 #define PALETTE_HEIGHT      PALETTE_BOX_VSIZE
 
 #define PALETTE_VRAM_SIZE   (PALETTE_WIDTH * PALETTE_BOX_HSIZE * PALETTE_HEIGHT * PALETTE_BOX_VSIZE)
 int SelectedX = 0;    // this will be clickable later
 int SelectedY = 0;
+int colourCycleSpeed = 0;
 uint8_t     numSelectedPaletteID = 0, numPrevSelectedPaletteID = 0;
-int         palleteDepth    = 256;
+int         paletteDepth    = 256;
 uint8_t     pltColourPreset[3] = {0,0,0};
 
 uint8_t     capturedPaletteIndex;
@@ -37,6 +39,20 @@ bool        bSwapColours    = false;
 bool        bSpreadPalette  = false;
 
 QPalette pal;
+QTimer *tmrColourCycle;
+int cyclefrom, cycleto, cyclelength = 8;
+bool selectingCycle = false;   // true when CTRL is held
+bool waitingForEnd = false;    // true after choosing cycle_from
+int clickedIndex = 256; // way off grid
+
+
+// for previewing new primatives, lines, circles, rectangles
+bool captureXYStart = false;
+int ctcapturedX = -1, ctcapturedY = -1;  // current location target
+int ltcapturedX = -1, ltcapturedY = -1;  // last location target
+int capturedX = -1, capturedY = -1;
+
+
 
 int hoverPixelX = -1;
 int hoverPixelY = -1;
@@ -48,14 +64,21 @@ bool gridEnabled        = false;
 #define gridBlue         128
 
 uint16_t icon_zoom       = 16;
-uint16_t icon_width      = 32;
-uint16_t icon_height     = 32;
+uint16_t icon_width      = 640;
+uint16_t icon_height     = 480;
 
 int editorViewPortWidth  = 8;   // editor width grid
 int editorViewPortHeight = 8;
 
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
 std::vector<std::vector<uint8_t>> icon_area;
+
+
+enum ImageExportConfig {
+    ExportRLE           = 1,  // chkExportRLE
+    ExportSidBoxVRAM    = 2,  // chkExportSBVRAM
+};
+uint16_t    ExportBits  = 0;    // just basic bits
 
 
 uint32_t CLUT[256] = {
@@ -128,6 +151,25 @@ const uint32_t DEFAULT_CLUT[256] = {
     0xFFEDFF00, 0xFFEDFF55, 0xFFEDFFAA, 0xFFEDFFFF, 0xFFFFFF00, 0xFFFFFF55, 0xFFFFFFAA, 0xFFFFFFFF,
 };
 
+static unsigned char clut_cycle_index[256] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F,
+    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+    0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+    0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+    0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+    0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
+    0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+    0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+};
+
 
 // this keeps the original colour so can revert the selected palette,
 // commiting the change, simply just click on another colour item
@@ -161,7 +203,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gfxPalleteSelect->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->gfxPalleteSelect->setMouseTracking(true);
 
+    ui->gfxPalleteSelect->installEventFilter(this);
+
     ui->gfxPalleteSelect->viewport()->installEventFilter(this);
+    ui->gfxPalleteSelect->setFocusPolicy(Qt::StrongFocus);
+    ui->gfxPalleteSelect->setFocus();
+
 
     // Add it to the scene
     palettePixmap = scene->addPixmap(QPixmap::fromImage(paletteImg));
@@ -173,6 +220,11 @@ MainWindow::MainWindow(QWidget *parent)
     // the editor Canvas
     editorScene = new QGraphicsScene(this);
     ui->gfxEditor->setScene(editorScene);
+
+    ui->gfxEditor->setMouseTracking(true);
+    ui->gfxEditor->viewport()->setMouseTracking(true); // important for QGraphicsView
+    ui->gfxEditor->installEventFilter(this);
+    ui->gfxEditor->viewport()->installEventFilter(this);
 
     // assume old icon_area
     // new size
@@ -351,9 +403,7 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
-    ui->gfxEditor->setMouseTracking(true);
-    ui->gfxEditor->viewport()->setMouseTracking(true); // important for QGraphicsView
-    ui->gfxEditor->viewport()->installEventFilter(this);
+
 
     QTimer *allDoneTimer;
     allDoneTimer = new QTimer(this);
@@ -507,16 +557,32 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(ui->cmdSaveIconProject, &QPushButton::clicked, this, [this](){
-        QString filename = QFileDialog::getSaveFileName(this, "Save Icon", "", "Icon Files (*.icn)");
+        static QString lastDir;
+        QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+        lastDir = settings.value("lastProjectDir", QDir::homePath()).toString();
+
+        QString filename = QFileDialog::getSaveFileName(this, "Save Icon", lastDir, "Icon Files (*.icn)");
         // saveIcon(filename);
-        if(!filename.isEmpty())
+        if(!filename.isEmpty()){
+            QFileInfo info(filename);
+            QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+            settings.setValue("lastProjectDir", info.absolutePath());
             saveProjectIcon(filename.toUtf8().constData());
+        }
 
     });
 
     connect(ui->cmdLoadIconProject, &QPushButton::clicked, this, [this](){
-        QString filename = QFileDialog::getOpenFileName(this, "Load Icon", "", "Icon Files (*.icn)");
-        if(!filename.isEmpty()) loadProjectIcon(filename.toUtf8().constData());
+        static QString lastDir;
+        QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+        lastDir = settings.value("lastProjectDir", QDir::homePath()).toString();
+        QString filename = QFileDialog::getOpenFileName(this, "Load Icon", lastDir, "Icon Files (*.icn)");
+        if(!filename.isEmpty()) {
+            QFileInfo info(filename);
+            QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+            settings.setValue("lastProjectDir", info.absolutePath());
+            loadProjectIcon(filename.toUtf8().constData());
+        }
 
     });
 
@@ -567,10 +633,21 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->radDrawModeFloodfill, &QPushButton::clicked, this, [this](){ currentDrawMode = FloodFill; });
 
     connect(ui->cmdImportImage, &QPushButton::clicked, this, [this](){
-        QString filename = QFileDialog::getOpenFileName(this, "Import Image...", "",
-                "Acceptable Images [*.bmp, *.png, *.gif](*.bmp *.png *.gif);;"
+        static QString lastDir;
+        QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+        lastDir = settings.value("lastImportDir", QDir::homePath()).toString();
+
+
+        QString filename = QFileDialog::getOpenFileName(this, "Import Image...", lastDir,
+                "Acceptable Images [*.bmp, *.png, *.gif, *.jpg, *.iff, *.ilbm](*.bmp *.png *.gif *.iff *.ilbm *.jpg);;"
                 "bitmap [*.bmp](*.bmp)");
         if(!filename.isEmpty()) {
+
+            QFileInfo info(filename);
+            QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+            settings.setValue("lastImportDir", info.absolutePath());
+
+
             importGif(filename);
         }
     });
@@ -606,10 +683,10 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
-    connect(ui->chkColourBits1, &QRadioButton::clicked, this, [this](){ palleteDepth = 2;   });
-    connect(ui->chkColourBits2, &QRadioButton::clicked, this, [this](){ palleteDepth = 4;   });
-    connect(ui->chkColourBits4, &QRadioButton::clicked, this, [this](){ palleteDepth = 16;  });
-    connect(ui->chkColourBits8, &QRadioButton::clicked, this, [this](){ palleteDepth = 256; });
+    connect(ui->chkColourBits1, &QRadioButton::clicked, this, [this](){ paletteDepth = 2;   });
+    connect(ui->chkColourBits2, &QRadioButton::clicked, this, [this](){ paletteDepth = 4;   });
+    connect(ui->chkColourBits4, &QRadioButton::clicked, this, [this](){ paletteDepth = 16;  });
+    connect(ui->chkColourBits8, &QRadioButton::clicked, this, [this](){ paletteDepth = 256; });
 
     connect(ui->cmdReassignColour, &QPushButton::clicked, this, [this](){
         //QMessageBox::warning(this, "Reassign", "To re-assign, click on the new palette index!\nThis will change the currently selected palette ID to the new one OnClick");
@@ -723,10 +800,299 @@ MainWindow::MainWindow(QWidget *parent)
             LoadPaletteData(filename.toUtf8().constData());
     });
 
-
+    connect(ui->cmdExportH, &QPushButton::clicked, this, [this](){
+        uint16_t bits;   // collect the config bits
+        bits = ui->chkExportRLE->isChecked() * ExportRLE;
+        bits += ui->chkExportSBVRAM->isChecked() * ExportSidBoxVRAM;
+        //printf("Bits checked: %x\n", bits);
+        ExportImageToH("", bits);
+    });
 
     ui->outputTextView->hide();
+
+
+
+    colourCycleSpeed = ui->scrColourCycleSpeed->value() * 22;
+    ui->lblColourCycle->setText(QString("%1 ms").arg(colourCycleSpeed));
+
+    tmrColourCycle = new QTimer(this);          // create the timer
+    tmrColourCycle->setInterval(colourCycleSpeed);  // initial interval
+
+
+    connect(ui->scrColourCycleSpeed, &QScrollBar::valueChanged, this, [this](){
+        colourCycleSpeed = ui->scrColourCycleSpeed->value() * 22;
+        ui->lblColourCycle->setText(QString("%1 ms").arg(colourCycleSpeed));
+        // todo: change the QTimer
+        if (tmrColourCycle) {
+            tmrColourCycle->setInterval(colourCycleSpeed);
+        }
+
+    });
+
+    connect(ui->chkColourCycleEn, &QCheckBox::clicked, this, [this](){
+        if(!(ui->chkColourCycleEn->isChecked())){
+            for(int i = 0; i < 256; i++){
+                CLUT[i] = BACKUP_CLUT[i];
+                renderPaletteCanvas();
+                renderEditorCanvas(); // redraw empty icon
+            }
+        }
+        //doColourCycles();
+
+    });
+
+    connect(tmrColourCycle, &QTimer::timeout, this, &MainWindow::onColourCycleTick);  // your slot
+    tmrColourCycle->start();
+
 }
+
+
+void MainWindow::doColourCycle(){
+    static char cbd;
+    static unsigned char i;
+    static unsigned long tmp;
+    static unsigned char tmpold;
+
+    static unsigned short SpeedStep;
+
+
+
+    //if(cyclespeed==255) return;
+
+    int bCycleDirection = 0;
+
+
+    //cyclefrom = 80;
+    //cycleto = cyclefrom + (length - 1);
+
+    if (bCycleDirection == 0) {
+        tmp = CLUT[cyclefrom];
+        tmpold = clut_cycle_index[cyclefrom];
+        for (i = cyclefrom; i < cycleto; i++) {
+            CLUT[i] = CLUT[i + 1];
+            clut_cycle_index[i] = clut_cycle_index[i + 1];
+        }
+        CLUT[i] = tmp;
+        clut_cycle_index[i] = tmpold;
+
+    } else {
+        tmp = CLUT[cycleto];
+        tmpold = clut_cycle_index[cycleto];
+        for (i = cycleto; i > cyclefrom; i--) {
+            CLUT[i] = CLUT[i - 1];
+            clut_cycle_index[i] = clut_cycle_index[i - 1];
+        }
+        CLUT[i] = tmp;
+        clut_cycle_index[i] = tmpold;
+    }
+
+    renderPaletteCanvas();
+    renderEditorCanvas(); // redraw empty icon
+}
+
+void MainWindow::onColourCycleTick() {
+    // do your colour cycling here
+    if(!(ui->chkColourCycleEn->isChecked())) return;    // do nothing
+    doColourCycle();
+}
+
+QString hex8(uint8_t value){
+    // returns a string like "0xAF" (0x lowercase, digits uppercase)
+    return QString("0x%1").arg(QString::number(value, 16).toUpper().rightJustified(2, '0'));
+}
+
+
+QString generateRLE(
+    const std::vector<std::vector<uint8_t>>& icon_area,
+    uint16_t width,
+    uint16_t height,
+    int colWidthMax,
+    int& outRLESize)   // returns compressed byte count
+{
+    QString output;
+    int columnstep = 0;
+    bool firstElement = true;
+    uint8_t lastPixel = 0xFF;
+    uint8_t runLength = 0;
+
+    outRLESize = 0;
+
+    for (uint16_t y = 0; y < height; y++) {
+        for (uint16_t x = 0; x < width; x++) {
+            uint8_t pixel = icon_area[y][x];
+
+            if (pixel == lastPixel && runLength < 255) {
+                runLength++;
+            } else {
+                if (runLength > 0) {
+                    // line wrap first
+                    if (columnstep >= colWidthMax) {
+                        output += "\n    ";
+                        columnstep = 0;
+                    }
+
+                    // prepend comma if needed
+                    if (!firstElement && columnstep > 0) output += ", ";
+
+                    // output RLE pair
+                    output += hex8(runLength) + ", " + hex8(lastPixel);
+                    columnstep += 2;
+
+                    outRLESize += 2; // count + value
+
+                    firstElement = false;
+                }
+
+                lastPixel = pixel;
+                runLength = 1;
+            }
+        }
+    }
+
+    // flush final run
+    if (runLength > 0) {
+        if (columnstep >= colWidthMax) {
+            output += "\n    ";
+            columnstep = 0;
+        }
+        if (!firstElement && columnstep > 0) output += ", ";
+        output += hex8(runLength) + ", " + hex8(lastPixel);
+        outRLESize += 2;
+    }
+
+    return output;
+}
+
+
+void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
+    // export the icon_area according to colour bit size and rotation and memory mapping. GONNA be some funky crap
+
+
+    uint16_t    imgW, imgH; // 16bit never should see an image 64k wide or in height! IMAGING the storage size!!
+    uint32_t    imgLen;
+
+    // temp local vars, might need to manipulate these later
+
+    uint8_t w_lo = (icon_width >> 8) & 0xFF;
+    uint8_t w_hi = icon_width & 0xFF;
+
+    uint8_t h_lo = (icon_height >> 8) & 0xFF;
+    uint8_t h_hi = icon_height & 0xFF;
+
+    // the size will be affected by the bit depth
+    uint8_t bitDepth;
+
+    switch (paletteDepth) {
+        case 2:   bitDepth = 1; break;
+        case 4:   bitDepth = 2; break;
+        case 16:  bitDepth = 4; break;
+        case 256: bitDepth = 8; break;
+    }
+
+    bitDepth = paletteDepth;
+    imgLen = icon_width * icon_height;
+
+    uint8_t il_v0 = (imgLen >> 24) & 0xff;
+    uint8_t il_v1 = (imgLen >> 16) & 0xff;
+    uint8_t il_v2 = (imgLen >> 8) & 0xff;
+    uint8_t il_v3 = (imgLen >> 0) & 0xff;
+
+
+    QString output;
+    QString rleData;
+    output += "#include <stdint.h>\n\n";
+    output += "// Image Params //\n";
+    if(!(modes & ExportRLE))
+        output += "// non compressed \n";
+    else
+        output += "// RLE compressed bytes are now (how-many), (pixel colour index), ...\n";
+    output += "\n";
+    output += "uint8_t image[] = {\n";
+
+    uint8_t configbits = 0;
+    configbits = (!!(modes & ExportRLE) << 4);
+
+    //output += "    0x00,                   // Colour depth (1=2colours, 2=4colours, 4=16colours, 8=256colours\n";   // colour depth 1, 2, 4, 8
+    output += QString("    %1,                 // Colour depth (1,2,4,8 bit colour modes) + 0x10 if RLE\n")
+                  .arg(hex8(configbits));
+    output += QString("    %1, %2,             // image width (%3)\n")
+                  .arg(hex8(w_lo))
+                  .arg(hex8(w_hi))
+                  .arg(imgW);
+
+    // Image height
+    output += QString("    %1, %2,             // image height (%3)\n")
+                  .arg(hex8(h_lo))
+                  .arg(hex8(h_hi))
+                  .arg(imgH);
+
+    // Total image array size
+    if(!(modes & ExportRLE)){
+        output += QString("    %1, %2, %3, %4, // total image array size: %5 bytes\n")
+                  .arg(hex8(il_v0))
+                  .arg(hex8(il_v1))
+                  .arg(hex8(il_v2))
+                  .arg(hex8(il_v3))
+                  .arg(imgLen);
+    } else {
+        // will need to pre-compress this to know the size wont we?
+
+        // TODO: a precompress helper needed i think
+        int rleSize;
+        rleData = generateRLE(icon_area, icon_width, icon_height, 16, rleSize);
+
+        il_v0 = (rleSize >> 24) & 0xff;
+        il_v1 = (rleSize >> 16) & 0xff;
+        il_v2 = (rleSize >> 8) & 0xff;
+        il_v3 = (rleSize >> 0) & 0xff;
+
+        output += QString("    %1, %2, %3, %4, // total image array size: %5 bytes\n")
+                      .arg(hex8(il_v0))
+                      .arg(hex8(il_v1))
+                      .arg(hex8(il_v2))
+                      .arg(hex8(il_v3))
+                      .arg(rleSize);
+    }
+
+    const uint8_t colWidthMax = 16;
+    uint8_t     colDat = 0;
+    int columnstep = 0;
+
+
+    if(!(modes & ExportRLE)){
+        /// Uncompressed, unchanged
+        // the loop of the actual data to be spat out
+        // for now spit out the full byte, no packing bits yet
+        output += "    ";
+        for (uint16_t y = 0; y < icon_height; y++) {
+            for (uint16_t x = 0; x < icon_width; x++) {
+                uint8_t colDat = icon_area[y][x];
+
+                // Add comma only if this is NOT the first element
+                if (!(x == 0 && y == 0)) {
+                    output += ", ";
+                }
+                // Insert newline+indent when exceeding column width
+                if (columnstep >= colWidthMax) {
+                    output += "\n    ";
+                    columnstep = 0;
+                }
+                output += QString("%1").arg(hex8(colDat));
+                columnstep++;
+            }
+        }
+    } else {
+        output += "    ";
+        output += rleData;
+    }
+
+    output += "\n};\n";
+
+    // Show in the text view
+    ui->txtOutputText->setPlainText(output);
+    ui->outputTextView->show();
+}
+
 
 
 void MainWindow::SavePaletteData(const char *filename){
@@ -751,8 +1117,6 @@ void MainWindow::LoadPaletteData(const char *filename){
     renderPaletteCanvas();
     renderEditorCanvas(); // redraw empty icon
 }
-
-
 
 void MainWindow::doSpreadPalette(uint8_t targetID){
     uint8_t r, g, b,
@@ -878,7 +1242,7 @@ bool MainWindow::importGif(const QString &path)
                 int bestDist  = INT_MAX;
 
                 // Compare to *current editor palette* CLUT[]
-                for (int pi = 0; pi < palleteDepth; pi++) {
+                for (int pi = 0; pi < paletteDepth; pi++) {
 
                     int r2 = (CLUT[pi] >> 16) & 0xFF;
                     int g2 = (CLUT[pi] >> 8)  & 0xFF;
@@ -895,13 +1259,11 @@ bool MainWindow::importGif(const QString &path)
                         bestIndex = pi;
                     }
                 }
-
                 colourIndex = bestIndex;
             }
             icon_area[y][x] = colourIndex;
         }
     }
-
 
     reSize();
     renderEditorCanvas();
@@ -1106,12 +1468,51 @@ void MainWindow::doSwapPalette(uint8_t targetPalID){
     renderEditorCanvas();
 }
 
+void setIconArea(int x, int y){
+    if(x<0) return;
+    if(y<0) return;
+    if(x > icon_width-1) return;
+    if(y > icon_height-1) return;
+    icon_area[y][x] = numSelectedPaletteID;
+}
+
+
+// in your MainWindow class
+bool grabbing = false;
+QPoint grabStartMouse;      // screen pos when SPACE pressed
+int grabStartScrollH, grabStartScrollV;
+
 bool MainWindow::eventFilter(QObject *obj, QEvent *event){
     uint8_t r,g,b;
 
     // Palette Selector
+    if(obj == ui->gfxPalleteSelect){
+        if (event->type() == QEvent::KeyPress){ // capture current Colour Palette Index.
+            QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+            if (ke->isAutoRepeat()) return true; // ignore repeats
+            printf("Palette keypress event\n");
+            if (ke->key() == Qt::Key_Control){
+                clickedIndex = numSelectedPaletteID;
+                selectingCycle = true;
+                waitingForEnd = false;
+                cyclefrom = clickedIndex;
+                //printf("Cycle Setting Start: Start pos %lu\n", clickedIndex);
+                return true;
+            }
+        }
+
+        if (event->type() == QEvent::KeyRelease){   // finished setting the Colour Cycle range.
+            QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+            if (ke->key() == Qt::Key_Control) {
+                selectingCycle = false;
+                waitingForEnd = false;
+                return true;
+            }
+        }
+    }
 
     if(obj == ui->gfxPalleteSelect->viewport()){
+
         if(event->type() == QEvent::Wheel){
         // Ignore wheel events
             return true; // this prevents the default scrolling
@@ -1119,6 +1520,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
         if (event->type() == QEvent::MouseButtonPress){
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            ui->gfxPalleteSelect->setFocus();
+
+
             QPoint viewPos = mouseEvent->pos(); // position in the QGraphicsView
             QPointF scenePos = ui->gfxPalleteSelect->mapToScene(viewPos); // map to scene coordinates
 
@@ -1130,6 +1534,18 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
             renderPaletteCanvas();
 
+            numSelectedPaletteID = (SelectedX + (SelectedY * PALETTE_WIDTH));
+
+            if(selectingCycle == true){
+                cycleto = numSelectedPaletteID;
+                //cyclelen = 8;
+                if(cycleto < cyclefrom){
+                    std::swap(cycleto, cyclefrom);
+                    printf("New Cycle Setting From: %lu to: %ld\n", cyclefrom, cycleto);
+                } else
+                    printf("Cycle Setting End: pos %ld\n", cycleto);
+            }
+
             // clicked on another colour - ONLY if selected another colour
             if(numPrevSelectedPaletteID != numSelectedPaletteID){
                 for(int i=0; i<256; i++){
@@ -1137,8 +1553,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 }
                 //printf("Commited new pallete\n");
             }
-
-            numSelectedPaletteID = (SelectedX + (SelectedY * PALETTE_WIDTH));
             numPrevSelectedPaletteID = numSelectedPaletteID;
             if(bReassignedPaletteIndex == true){
                 bReassignedPaletteIndex = false;
@@ -1163,42 +1577,247 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
     int xOffset = ui->scrEditorH->value();
     int yOffset = ui->scrEditorV->value();
 
+    if(obj == ui->gfxEditor){   // keyboard interfacing blob
+        if (event->type() == QEvent::KeyPress){
+            QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+            //if (ke->isAutoRepeat()) return true; // ignore repeats
+            if(ke->key() == Qt::Key_Space && !grabbing && !ke->isAutoRepeat()){
+
+                grabbing = true;
+
+                setCursor(Qt::ClosedHandCursor);
+                return true;
+            }
+        }
+        if(event->type() == QEvent::KeyRelease){
+            QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+            if(ke->key() == Qt::Key_Space && grabbing && !ke->isAutoRepeat()){
+                grabbing = false;
+                setCursor(Qt::ArrowCursor);
+                return true;
+            }
+        }
+
+
+        return QObject::eventFilter(obj, event);
+    }
+
     if(obj == ui->gfxEditor->viewport()){
+
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (event->type() == QEvent::MouseButtonPress){
+            if(grabbing) {
+                if(mouseEvent->buttons() & Qt::LeftButton) {
+                    grabStartMouse = QCursor::pos();
+                    grabStartScrollH = ui->scrEditorH->value();
+                    grabStartScrollV = ui->scrEditorV->value();
+                }
+            }
+        }
+
+
         if (event->type() == QEvent::MouseMove){
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
 
-            hoverPixelX = int(scenePos.x()) / icon_zoom;
-            hoverPixelY = int(scenePos.y()) / icon_zoom;
+            if(grabbing) {
+                if(mouseEvent->buttons() & Qt::LeftButton) {
+                    QPoint current = mouseEvent->globalPos();
 
-            if(hoverPixelX < 0) hoverPixelX = 0;
-            if(hoverPixelY < 0) hoverPixelY = 0;
-            if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
-            if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
+                    int newH = grabStartScrollH + (grabStartMouse.x() - current.x()) / icon_zoom;
+                    int newV = grabStartScrollV + (grabStartMouse.y() - current.y()) / icon_zoom;
 
-            ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
-                .arg(hoverPixelX, 4, 10, QChar('0'))
-                .arg(hoverPixelY, 4, 10, QChar('0'))
-            );
+                    newH = std::clamp(newH, ui->scrEditorH->minimum(), ui->scrEditorH->maximum());
+                    newV = std::clamp(newV, ui->scrEditorV->minimum(), ui->scrEditorV->maximum());
 
-            // Only draw if a button is pressed
-            if(currentDrawMode == Plot){    // this will only work with Motion Drawing (plot)
-                if (mouseEvent->buttons() & Qt::LeftButton) {
-                    icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = numSelectedPaletteID;//currentPaletteID; // paint
-                } else if (mouseEvent->buttons() & Qt::RightButton) {
-                    icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = 0; // erase
+                    ui->scrEditorH->setValue(newH);
+                    ui->scrEditorV->setValue(newV);
+
+                    renderEditorCanvas();
+                }
+                return true;
+            } else {
+
+                hoverPixelX = int(scenePos.x()) / icon_zoom;
+                hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+                if(hoverPixelX < 0) hoverPixelX = 0;
+                if(hoverPixelY < 0) hoverPixelY = 0;
+                if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
+                if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
+
+                ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
+                    .arg(hoverPixelX, 4, 10, QChar('0'))
+                    .arg(hoverPixelY, 4, 10, QChar('0'))
+                );
+
+                // Only draw if a button is pressed
+                if(currentDrawMode == Plot){    // this will only work with Motion Drawing (plot)
+                    if (mouseEvent->buttons() & Qt::LeftButton) {
+                        icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = numSelectedPaletteID;//currentPaletteID; // paint
+                    } else if (mouseEvent->buttons() & Qt::RightButton) {
+                        icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = 0; // erase
+                    }
+                }
+
+                if(captureXYStart==true){
+                    ltcapturedX = ctcapturedX;
+                    ltcapturedY = ctcapturedY;
+                    readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
                 }
             }
 
             updateTimer->start(1);
             return true; // event handled
+        } else if (event->type() == QEvent::MouseButtonRelease) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            if (mouseEvent->button() == Qt::LeftButton) {
+                //printf( "Left click at %lu\n",  mouseEvent->pos());
+
+                // check if we're in a tool that needs point to point interaction
+                // if() {
+                if(captureXYStart==true){
+                    int xOffset = ui->scrEditorH->value();
+                    int yOffset = ui->scrEditorV->value();
+                    if(currentDrawMode == Line){
+                        int x1 = ctcapturedX + xOffset;
+                        int y1 = ctcapturedY + yOffset;
+
+                        // Draw the actual line into the icon area
+                        int x0 = capturedX + xOffset;
+                        int y0 = capturedY + yOffset;
+
+                        // Bresenham line (cells)
+                        int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+                        int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+                        int err = dx + dy, e2;
+                        int x = x0, y = y0;
+
+                        while(true){
+                            // Commit pixel color (for example, foreground color)
+                            icon_area[y][x] = numSelectedPaletteID;
+
+                            if(x == x1 && y == y1) break;
+                            e2 = 2 * err;
+                            if(e2 >= dy){ err += dy; x += sx; }
+                            if(e2 <= dx){ err += dx; y += sy; }
+                        }
+                    }
+                    if(currentDrawMode == Rect){
+
+
+                        // Rectangle corners
+                        int x0 = capturedX + xOffset;
+                        int y0 = capturedY + yOffset;
+                        int x1 = hoverPixelX + xOffset;
+                        int y1 = hoverPixelY + yOffset;
+
+                        // Ensure top-left -> bottom-right ordering
+                        int left   = std::min(x0, x1);
+                        int right  = std::max(x0, x1);
+                        int top    = std::min(y0, y1);
+                        int bottom = std::max(y0, y1);
+
+                        // Draw top and bottom edges
+                        for(int x = left; x <= right; x++){
+                            setIconArea(x, top);
+                            setIconArea(x, bottom);
+                        }
+
+                        // Draw left and right edges
+                        for(int y = top; y <= bottom; y++){
+                            setIconArea(left, y);
+                            setIconArea(right, y);
+                        }
+
+                        if(ui->chkFillIt->isChecked()){
+                            for(int x = left; x <= right; x++){
+                                for(int y = top; y <= bottom; y++)
+                                    setIconArea(x, y);
+                            }
+                        }
+                    }
+                    if(currentDrawMode == Circle){
+                        int cx = capturedX + xOffset;
+                        int cy = capturedY + yOffset;
+                        int radius = std::max(abs((hoverPixelX  + xOffset) - cx), abs((hoverPixelY  + yOffset) - cy));
+                        bool fill = ui->chkFillIt->isChecked();
+
+                        if(radius <= 3){ // small radius -> distance check
+                            for(int y = cy - radius; y <= cy + radius; y++){
+                                for(int x = cx - radius; x <= cx + radius; x++){
+                                    int dx = x - cx;
+                                    int dy = y - cy;
+                                    float dist = std::sqrt(dx*dx + dy*dy);
+                                    // Outline
+                                    if(dist >= radius - 0.5f && dist <= radius + 0.5f){
+                                        setIconArea(x, y);
+                                    }
+                                    // Fill
+                                    else if(fill && dist < radius - 0.5f){
+                                        setIconArea(x, y);
+                                    }
+                                }
+                            }
+                        } else { // large radius -> classic Midpoint Circle
+                            int x = radius;
+                            int y = 0;
+                            int err = 0;
+                            while(x >= y){
+                                setIconArea(cx + x, cy + y);
+                                setIconArea(cx + y, cy + x);
+                                setIconArea(cx - y, cy + x);
+                                setIconArea(cx - x, cy + y);
+                                setIconArea(cx - x, cy - y);
+                                setIconArea(cx - y, cy - x);
+                                setIconArea(cx + y, cy - x);
+                                setIconArea(cx + x, cy - y);
+
+                                // Fill: draw horizontal spans inside the circle
+                                if(fill){
+                                    for(int fx = cx - x + 1; fx < cx + x; fx++){
+                                        setIconArea(fx, cy + y);
+                                        setIconArea(fx, cy - y);
+                                    }
+                                    for(int fx = cx - y + 1; fx < cx + y; fx++){
+                                        setIconArea(fx, cy + x);
+                                        setIconArea(fx, cy - x);
+                                    }
+                                }
+
+                                y++;
+                                if(err <= 0){
+                                    err += 2*y + 1;
+                                }
+                                if(err > 0){
+                                    x--;
+                                    err -= 2*x + 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                renderPaletteCanvas();
+                captureXYStart = false;
+            }
         } else if (event->type() == QEvent::MouseButtonPress) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
 
             if (mouseEvent->button() == Qt::LeftButton) {
                 //printf( "Left click at %lu\n",  mouseEvent->pos());
-                ProcessLeftClickPaint();
 
+                // check if we're in a tool that needs point to point interaction
+                // if() {
+                captureXYStart = true;
+                readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
+                readToolXY(&capturedX, &capturedY); // process where the capturey point is
+                ltcapturedX = ctcapturedX;
+                ltcapturedY = ctcapturedY;
+                printf("P2P Tool: capture point CX: %d, CY: %d\n", capturedX, capturedY);
+                // }
+                // else //its likely just to a pixel draw
+                if(!grabbing)
+                    ProcessLeftClickPaint();
                 updateTimer->start(1);
             }
             else if (mouseEvent->button() == Qt::RightButton) {
@@ -1266,6 +1885,19 @@ void MainWindow::ProcessLeftClickPaint(){
     }
 }
 
+void MainWindow::readToolXY(int *rx, int *ry){
+    int resx, resy;
+    int xOffset = ui->scrEditorH->value();
+    int yOffset = ui->scrEditorV->value();
+
+    resx = hoverPixelX;// + xOffset;
+    resy = hoverPixelY;// + yOffset;
+
+    *rx = resx;
+    *ry = resy;
+
+}
+
 
 void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
     int tick=0;
@@ -1320,6 +1952,8 @@ void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
     renderEditorCanvas(); // update display after fill
 }
 
+int pendingScrollX = -1;
+int pendingScrollY = -1;
 
 void MainWindow::updateEditorScrollBars()
 {
@@ -1344,12 +1978,18 @@ void MainWindow::reSize(){
 
     QWidget *wincontainer = ui->verticalLayoutWidget->parentWidget();
     QWidget *container = ui->verticalLayoutWidget;
+    QWidget *vboxh = ui->vboxTextoutputv;
 
     WinXW = wincontainer->width() - 2;
     WinXH = wincontainer->height() - 28;
 
-    if(container)
+    if(container){
         container->resize(WinXW, WinXH);  // or any size you want
+    }
+    if(vboxh){
+        ui->outputTextView->resize(WinXW, WinXH);
+        vboxh->resize(WinXW-16, WinXH-64);
+    }
 
     PWinXW = ui->gfxEditor->width()  - 4;
     PWinXH = ui->gfxEditor->height() - 4;
@@ -1438,6 +2078,173 @@ void MainWindow::renderEditorCanvas(){
         }
     }
 
+
+    if(captureXYStart==true){
+        //ltcapturedX = ctcapturedX;
+        //ltcapturedY = ctcapturedY;
+        //readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
+        //printf("P2P Tool: Target point TX: %d, TY: %d\n", ctcapturedX, ctcapturedY);
+        if(currentDrawMode == Line){
+            auto invertCell = [&](int cellX, int cellY){
+                int startX = cellX * icon_zoom;
+                int startY = cellY * icon_zoom;
+                for(int yy = 0; yy < icon_zoom; yy++){
+                    int py = startY + yy;
+                    if(py < 0 || py >= visibleHeight) continue;
+                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
+                    for(int xx = 0; xx < icon_zoom; xx++){
+                        int px = startX + xx;
+                        if(px < 0 || px >= visibleWidth) continue;
+                        //scan[px] = 0xFFFFFFFF - scan[px]; // invert
+                        scan[px] = CLUT[numSelectedPaletteID];
+                    }
+                }
+            };
+
+            int x0cell = capturedX;
+            int y0cell = capturedY;
+            int x1cell = hoverPixelX;
+            int y1cell = hoverPixelY;
+
+            // Bresenham using cells
+            int dx = abs(x1cell - x0cell), sx = x0cell < x1cell ? 1 : -1;
+            int dy = -abs(y1cell - y0cell), sy = y0cell < y1cell ? 1 : -1;
+            int err = dx + dy, e2;
+
+            int x = x0cell, y = y0cell;
+            while(true){
+                invertCell(x, y);        // invert a full cell instead of 1 pixel
+                if(x == x1cell && y == y1cell) break;
+                e2 = 2 * err;
+                if(e2 >= dy){ err += dy; x += sx; }
+                if(e2 <= dx){ err += dx; y += sy; }
+            }
+        }
+
+        if(currentDrawMode == Rect){
+            auto invertCell = [&](int cellX, int cellY){
+                int startX = cellX * icon_zoom;
+                int startY = cellY * icon_zoom;
+                for(int yy = 0; yy < icon_zoom; yy++){
+                    int py = startY + yy;
+                    if(py < 0 || py >= visibleHeight) continue;
+                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
+                    for(int xx = 0; xx < icon_zoom; xx++){
+                        int px = startX + xx;
+                        if(px < 0 || px >= visibleWidth) continue;
+                        //scan[px] = 0xFFFFFFFF - scan[px]; // invert for ghost
+                        scan[px] = CLUT[numSelectedPaletteID];
+                    }
+                }
+            };
+
+            // Rectangle corners
+            int x0 = capturedX;
+            int y0 = capturedY;
+            int x1 = hoverPixelX;
+            int y1 = hoverPixelY;
+
+            // Ensure top-left -> bottom-right ordering
+            int left   = std::min(x0, x1);
+            int right  = std::max(x0, x1);
+            int top    = std::min(y0, y1);
+            int bottom = std::max(y0, y1);
+
+            // Draw top and bottom edges
+            for(int x = left; x <= right; x++){
+                invertCell(x, top);
+                invertCell(x, bottom);
+            }
+
+            // Draw left and right edges
+            for(int y = top; y <= bottom; y++){
+                invertCell(left, y);
+                invertCell(right, y);
+            }
+
+            if(ui->chkFillIt->isChecked()){
+                for(int x = left; x <= right; x++){
+                    for(int y = top; y <= bottom; y++)
+                        invertCell(x, y);
+                }
+            }
+        }
+
+
+        if(currentDrawMode == Circle){
+            auto invertCell = [&](int cellX, int cellY){
+                int startX = cellX * icon_zoom;
+                int startY = cellY * icon_zoom;
+                for(int yy = 0; yy < icon_zoom; yy++){
+                    int py = startY + yy;
+                    if(py < 0 || py >= visibleHeight) continue;
+                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
+                    for(int xx = 0; xx < icon_zoom; xx++){
+                        int px = startX + xx;
+                        if(px < 0 || px >= visibleWidth) continue;
+                        scan[px] = CLUT[numSelectedPaletteID]; // or invert for ghost
+                    }
+                }
+            };
+
+            int cx = capturedX;
+            int cy = capturedY;
+            int radius = std::max(abs(hoverPixelX - cx), abs(hoverPixelY - cy));
+
+            if(radius <= 3){ // small radius -> distance check
+                for(int y = cy - radius; y <= cy + radius; y++){
+                    for(int x = cx - radius; x <= cx + radius; x++){
+                        int dx = x - cx;
+                        int dy = y - cy;
+                        float dist = std::sqrt(dx*dx + dy*dy);
+                        if(dist >= radius - 0.5f && dist <= radius + 0.5f){
+                            invertCell(x, y);
+                        }
+                        // Fill: inside the radius
+                        else if(ui->chkFillIt->isChecked() && dist < radius - 0.5f){
+                            invertCell(x, y);
+                        }
+                    }
+                }
+            } else { // large radius -> classic Midpoint Circle
+                int x = radius;
+                int y = 0;
+                int err = 0;
+                while(x >= y){
+                    invertCell(cx + x, cy + y);
+                    invertCell(cx + y, cy + x);
+                    invertCell(cx - y, cy + x);
+                    invertCell(cx - x, cy + y);
+                    invertCell(cx - x, cy - y);
+                    invertCell(cx - y, cy - x);
+                    invertCell(cx + y, cy - x);
+                    invertCell(cx + x, cy - y);
+
+
+                    if(ui->chkFillIt->isChecked()){
+                        // Fill horizontal spans between the left/right of the circle
+                        for(int fillX = cx - x + 1; fillX < cx + x; fillX++){
+                            invertCell(fillX, cy + y);
+                            invertCell(fillX, cy - y);
+                        }
+                        for(int fillX = cx - y + 1; fillX < cx + y; fillX++){
+                            invertCell(fillX, cy + x);
+                            invertCell(fillX, cy - x);
+                        }
+                    }
+
+                    y++;
+                    if(err <= 0){
+                        err += 2*y + 1;
+                    }
+                    if(err > 0){
+                        x--;
+                        err -= 2*x + 1;
+                    }
+                }
+            }
+        }
+    }
     editorPixmap->setPixmap(QPixmap::fromImage(editorImg));
 }
 
