@@ -1,12 +1,18 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "fonteditor.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QImage>
 #include <QObject>
+
+
+
+// basic C
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,9 +25,11 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+
+    // font system
 
 private:
     Ui::MainWindow *ui;
@@ -33,6 +41,7 @@ private:
 
     QGraphicsPixmapItem *palettePixmap;
     QGraphicsPixmapItem *editorPixmap;
+
     QImage paletteImg;
     QImage editorImg;
 
@@ -62,6 +71,8 @@ private:
 
     void doColourCycle();
     void onColourCycleTick();
+
+    FontEditor *fontEditor;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

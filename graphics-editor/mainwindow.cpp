@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "fonteditor.h"
 #include "ui_mainwindow.h"
 
 #include <QCoreApplication>
@@ -63,9 +64,10 @@ bool gridEnabled        = false;
 #define gridGreen        128
 #define gridBlue         128
 
-uint16_t icon_zoom       = 16;
-uint16_t icon_width      = 640;
-uint16_t icon_height     = 480;
+// default settings at startup
+uint16_t icon_zoom       = 25;
+uint16_t icon_width      = 32;
+uint16_t icon_height     = 32;
 
 int editorViewPortWidth  = 8;   // editor width grid
 int editorViewPortHeight = 8;
@@ -73,12 +75,21 @@ int editorViewPortHeight = 8;
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
 std::vector<std::vector<uint8_t>> icon_area;
 
+// only rastering 8x8 pixel font, nothing advanced
+uint8_t fontedit_area[8][8];
+
+
+// prototype calls
+void loadDefaultFont();
+
 
 enum ImageExportConfig {
     ExportRLE           = 1,  // chkExportRLE
     ExportSidBoxVRAM    = 2,  // chkExportSBVRAM
 };
 uint16_t    ExportBits  = 0;    // just basic bits
+
+
 
 
 uint32_t CLUT[256] = {
@@ -189,6 +200,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
 
+    loadDefaultFont();
 
 
     scene = new QGraphicsScene(this);
@@ -225,6 +237,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gfxEditor->viewport()->setMouseTracking(true); // important for QGraphicsView
     ui->gfxEditor->installEventFilter(this);
     ui->gfxEditor->viewport()->installEventFilter(this);
+
+    // Font Selector/Editor Canvas setup --------------------------------//
+    fontEditor = new FontEditor(ui->gfxFontSelector, ui->gfxFontEditbox, this);  // the object of FontEditor
+    fontEditor->RenderFontSelect();
+
 
     // assume old icon_area
     // new size
@@ -421,6 +438,7 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
+    ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));  // load the default value
     connect(ui->scrEditorZoomVal, &QScrollBar::valueChanged, this, [this](){
         icon_zoom = ui->scrEditorZoomVal->value();
         ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));
@@ -517,22 +535,22 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(ui->cmdFlipH, &QPushButton::clicked, this, [this](){
-        for(int y = 0; y < icon_height; y++){
-            for(int x = 0; x < icon_width / 2; x++){
+        for(int y = 0; y < icon_height / 2; y++){
+            for(int x = 0; x < icon_width; x++){
                 uint8_t tmp = icon_area[y][x];
-                icon_area[y][x] = icon_area[y][icon_width - 1 - x];
-                icon_area[y][icon_width - 1 - x] = tmp;
+                icon_area[y][x] = icon_area[icon_height - 1 - y][x];
+                icon_area[icon_height - 1 - y][x] = tmp;
             }
         }
         renderEditorCanvas();
     });
 
     connect(ui->cmdFlipV, &QPushButton::clicked, this, [this](){
-        for(int y = 0; y < icon_height / 2; y++){
-            for(int x = 0; x < icon_width; x++){
+        for(int y = 0; y < icon_height; y++){
+            for(int x = 0; x < icon_width / 2; x++){
                 uint8_t tmp = icon_area[y][x];
-                icon_area[y][x] = icon_area[icon_height - 1 - y][x];
-                icon_area[icon_height - 1 - y][x] = tmp;
+                icon_area[y][x] = icon_area[y][icon_width - 1 - x];
+                icon_area[y][icon_width - 1 - x] = tmp;
             }
         }
         renderEditorCanvas();
@@ -583,7 +601,6 @@ MainWindow::MainWindow(QWidget *parent)
             settings.setValue("lastProjectDir", info.absolutePath());
             loadProjectIcon(filename.toUtf8().constData());
         }
-
     });
 
     connect(ui->cmdSetIconAreaSize, &QPushButton::clicked, this, [=](){
@@ -736,7 +753,6 @@ MainWindow::MainWindow(QWidget *parent)
             }
             output += "\n";
         }
-
         output += "};\n";
 
         // Show in the text view
@@ -747,7 +763,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdExportClut32, &QPushButton::clicked, this, [this](){
         ui->txtOutputText->clear();  // clear previous content
-
         QString output;
         uint32_t rgb;
         output += "#include <stdint.h>\n\n";
@@ -767,17 +782,14 @@ MainWindow::MainWindow(QWidget *parent)
                 output += "0x" + QString::number(rgb, 16).rightJustified(8, '0').toUpper();
                 if (i < 255) output += ",";
                 if(x != 7) output += " ";
-
             }
             output += "\n";
         }
-
         output += "};\n";
 
         // Show in the text view
         ui->txtOutputText->setPlainText(output);
         ui->outputTextView->show();
-
     });
 
     connect(ui->cmdCloseOutputText, &QPushButton::clicked, this, [this](){
@@ -809,6 +821,15 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     ui->outputTextView->hide();
+    ui->frmFontWorkbench->hide();
+
+    connect(ui->cmdOpenFontWorkbench, &QPushButton::clicked, this, [this](){
+        ui->frmFontWorkbench->show();
+    });
+
+    connect(ui->cmdCloseFontWorkbench, &QPushButton::clicked, this, [this](){
+        ui->frmFontWorkbench->hide();
+    });
 
 
 
@@ -840,6 +861,66 @@ MainWindow::MainWindow(QWidget *parent)
         //doColourCycles();
 
     });
+
+
+    ///// FONTEditor ////
+    connect(ui->cmdLoadDefaultFont, &QPushButton::clicked, this, [this](){
+        auto reply = QMessageBox::question(
+            this,
+            "Default Font",
+            "Are you sure you want to reset this font?",
+            QMessageBox::Yes | QMessageBox::No
+            );
+
+        if(reply == QMessageBox::Yes){
+            loadDefaultFont();
+            fontEditor->RenderFontEdit();
+            fontEditor->RenderFontSelect();
+        }
+    });
+
+    // FONT EDIT Buttons
+    connect(ui->cmdPushFontLeft,    &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_move_left);});
+    connect(ui->cmdPushFontRight,   &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_move_right);});
+    connect(ui->cmdPushFontUp,      &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_move_up);});
+    connect(ui->cmdPushFontDown,    &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_move_down);});
+    connect(ui->cmdRotateFontCC90,  &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_rotate_cc);});
+    connect(ui->cmdRotateFontC90,   &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_rotate_c);});
+    connect(ui->cmdFlipFontV,       &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_flip_v);});
+    connect(ui->cmdFlipFontH,       &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_flip_h);});
+
+    connect(ui->cmdRotateFontsCC90, &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_rotate_cc_all);});
+    connect(ui->cmdRotateFontsC90,  &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_rotate_c_all);});
+
+
+    connect(ui->cmdClearFontBank,  &QPushButton::clicked, this, [this](){
+        auto reply = QMessageBox::question(
+            this,
+            "Clear Font",
+            "Are you sure you want to clear the entire font?\n(NOTE: use set default if you want them all back, this WILL over write what you've done though!)",
+            QMessageBox::Yes | QMessageBox::No
+            );
+
+        if(reply == QMessageBox::Yes){
+            clearFontBank();
+            fontEditor->RenderFontEdit();
+            fontEditor->RenderFontSelect();
+        }
+    });
+
+    connect(ui->cmdLoadFont, &QPushButton::clicked, this, [this](){ fontEditor->LoadFont();   });
+    connect(ui->cmdSaveFont, &QPushButton::clicked, this, [this](){ fontEditor->SaveFontAs(); });
+
+    connect(ui->cmdExportFont, &QPushButton::clicked, this, [this](){
+        fontEditor->ExportFont(ui->txtOutputText);
+        //
+        ui->outputTextView->show();
+        ui->frmFontWorkbench->hide();
+    });
+
+
+
+    loadDefaultFont();
 
     connect(tmrColourCycle, &QTimer::timeout, this, &MainWindow::onColourCycleTick);  // your slot
     tmrColourCycle->start();
@@ -1541,9 +1622,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 //cyclelen = 8;
                 if(cycleto < cyclefrom){
                     std::swap(cycleto, cyclefrom);
-                    printf("New Cycle Setting From: %lu to: %ld\n", cyclefrom, cycleto);
-                } else
-                    printf("Cycle Setting End: pos %ld\n", cycleto);
+                    //printf("New Cycle Setting From: %lu to: %ld\n", cyclefrom, cycleto);
+                }// else
+                   // printf("Cycle Setting End: pos %ld\n", cycleto);
             }
 
             // clicked on another colour - ONLY if selected another colour
@@ -1619,10 +1700,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
         if (event->type() == QEvent::MouseMove){
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
+            ui->gfxEditor->setFocus();
 
             if(grabbing) {
                 if(mouseEvent->buttons() & Qt::LeftButton) {
-                    QPoint current = mouseEvent->globalPos();
+                    QPointF current = mouseEvent->globalPosition();
 
                     int newH = grabStartScrollH + (grabStartMouse.x() - current.x()) / icon_zoom;
                     int newV = grabStartScrollV + (grabStartMouse.y() - current.y()) / icon_zoom;
@@ -1676,122 +1758,124 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                 // check if we're in a tool that needs point to point interaction
                 // if() {
-                if(captureXYStart==true){
-                    int xOffset = ui->scrEditorH->value();
-                    int yOffset = ui->scrEditorV->value();
-                    if(currentDrawMode == Line){
-                        int x1 = ctcapturedX + xOffset;
-                        int y1 = ctcapturedY + yOffset;
+                if(!grabbing){
+                    if(captureXYStart==true){
+                        int xOffset = ui->scrEditorH->value();
+                        int yOffset = ui->scrEditorV->value();
+                        if(currentDrawMode == Line){
+                            int x1 = ctcapturedX + xOffset;
+                            int y1 = ctcapturedY + yOffset;
 
-                        // Draw the actual line into the icon area
-                        int x0 = capturedX + xOffset;
-                        int y0 = capturedY + yOffset;
+                            // Draw the actual line into the icon area
+                            int x0 = capturedX + xOffset;
+                            int y0 = capturedY + yOffset;
 
-                        // Bresenham line (cells)
-                        int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-                        int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-                        int err = dx + dy, e2;
-                        int x = x0, y = y0;
+                            // Bresenham line (cells)
+                            int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+                            int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+                            int err = dx + dy, e2;
+                            int x = x0, y = y0;
 
-                        while(true){
-                            // Commit pixel color (for example, foreground color)
-                            icon_area[y][x] = numSelectedPaletteID;
+                            while(true){
+                                // Commit pixel color (for example, foreground color)
+                                icon_area[y][x] = numSelectedPaletteID;
 
-                            if(x == x1 && y == y1) break;
-                            e2 = 2 * err;
-                            if(e2 >= dy){ err += dy; x += sx; }
-                            if(e2 <= dx){ err += dx; y += sy; }
+                                if(x == x1 && y == y1) break;
+                                e2 = 2 * err;
+                                if(e2 >= dy){ err += dy; x += sx; }
+                                if(e2 <= dx){ err += dx; y += sy; }
+                            }
                         }
-                    }
-                    if(currentDrawMode == Rect){
+                        if(currentDrawMode == Rect){
 
 
-                        // Rectangle corners
-                        int x0 = capturedX + xOffset;
-                        int y0 = capturedY + yOffset;
-                        int x1 = hoverPixelX + xOffset;
-                        int y1 = hoverPixelY + yOffset;
+                            // Rectangle corners
+                            int x0 = capturedX + xOffset;
+                            int y0 = capturedY + yOffset;
+                            int x1 = hoverPixelX + xOffset;
+                            int y1 = hoverPixelY + yOffset;
 
-                        // Ensure top-left -> bottom-right ordering
-                        int left   = std::min(x0, x1);
-                        int right  = std::max(x0, x1);
-                        int top    = std::min(y0, y1);
-                        int bottom = std::max(y0, y1);
+                            // Ensure top-left -> bottom-right ordering
+                            int left   = std::min(x0, x1);
+                            int right  = std::max(x0, x1);
+                            int top    = std::min(y0, y1);
+                            int bottom = std::max(y0, y1);
 
-                        // Draw top and bottom edges
-                        for(int x = left; x <= right; x++){
-                            setIconArea(x, top);
-                            setIconArea(x, bottom);
-                        }
-
-                        // Draw left and right edges
-                        for(int y = top; y <= bottom; y++){
-                            setIconArea(left, y);
-                            setIconArea(right, y);
-                        }
-
-                        if(ui->chkFillIt->isChecked()){
+                            // Draw top and bottom edges
                             for(int x = left; x <= right; x++){
-                                for(int y = top; y <= bottom; y++)
-                                    setIconArea(x, y);
+                                setIconArea(x, top);
+                                setIconArea(x, bottom);
+                            }
+
+                            // Draw left and right edges
+                            for(int y = top; y <= bottom; y++){
+                                setIconArea(left, y);
+                                setIconArea(right, y);
+                            }
+
+                            if(ui->chkFillIt->isChecked()){
+                                for(int x = left; x <= right; x++){
+                                    for(int y = top; y <= bottom; y++)
+                                        setIconArea(x, y);
+                                }
                             }
                         }
-                    }
-                    if(currentDrawMode == Circle){
-                        int cx = capturedX + xOffset;
-                        int cy = capturedY + yOffset;
-                        int radius = std::max(abs((hoverPixelX  + xOffset) - cx), abs((hoverPixelY  + yOffset) - cy));
-                        bool fill = ui->chkFillIt->isChecked();
+                        if(currentDrawMode == Circle){
+                            int cx = capturedX + xOffset;
+                            int cy = capturedY + yOffset;
+                            int radius = std::max(abs((hoverPixelX  + xOffset) - cx), abs((hoverPixelY  + yOffset) - cy));
+                            bool fill = ui->chkFillIt->isChecked();
 
-                        if(radius <= 3){ // small radius -> distance check
-                            for(int y = cy - radius; y <= cy + radius; y++){
-                                for(int x = cx - radius; x <= cx + radius; x++){
-                                    int dx = x - cx;
-                                    int dy = y - cy;
-                                    float dist = std::sqrt(dx*dx + dy*dy);
-                                    // Outline
-                                    if(dist >= radius - 0.5f && dist <= radius + 0.5f){
-                                        setIconArea(x, y);
-                                    }
-                                    // Fill
-                                    else if(fill && dist < radius - 0.5f){
-                                        setIconArea(x, y);
+                            if(radius <= 3){ // small radius -> distance check
+                                for(int y = cy - radius; y <= cy + radius; y++){
+                                    for(int x = cx - radius; x <= cx + radius; x++){
+                                        int dx = x - cx;
+                                        int dy = y - cy;
+                                        float dist = std::sqrt(dx*dx + dy*dy);
+                                        // Outline
+                                        if(dist >= radius - 0.5f && dist <= radius + 0.5f){
+                                            setIconArea(x, y);
+                                        }
+                                        // Fill
+                                        else if(fill && dist < radius - 0.5f){
+                                            setIconArea(x, y);
+                                        }
                                     }
                                 }
-                            }
-                        } else { // large radius -> classic Midpoint Circle
-                            int x = radius;
-                            int y = 0;
-                            int err = 0;
-                            while(x >= y){
-                                setIconArea(cx + x, cy + y);
-                                setIconArea(cx + y, cy + x);
-                                setIconArea(cx - y, cy + x);
-                                setIconArea(cx - x, cy + y);
-                                setIconArea(cx - x, cy - y);
-                                setIconArea(cx - y, cy - x);
-                                setIconArea(cx + y, cy - x);
-                                setIconArea(cx + x, cy - y);
+                            } else { // large radius -> classic Midpoint Circle
+                                int x = radius;
+                                int y = 0;
+                                int err = 0;
+                                while(x >= y){
+                                    setIconArea(cx + x, cy + y);
+                                    setIconArea(cx + y, cy + x);
+                                    setIconArea(cx - y, cy + x);
+                                    setIconArea(cx - x, cy + y);
+                                    setIconArea(cx - x, cy - y);
+                                    setIconArea(cx - y, cy - x);
+                                    setIconArea(cx + y, cy - x);
+                                    setIconArea(cx + x, cy - y);
 
-                                // Fill: draw horizontal spans inside the circle
-                                if(fill){
-                                    for(int fx = cx - x + 1; fx < cx + x; fx++){
-                                        setIconArea(fx, cy + y);
-                                        setIconArea(fx, cy - y);
+                                    // Fill: draw horizontal spans inside the circle
+                                    if(fill){
+                                        for(int fx = cx - x + 1; fx < cx + x; fx++){
+                                            setIconArea(fx, cy + y);
+                                            setIconArea(fx, cy - y);
+                                        }
+                                        for(int fx = cx - y + 1; fx < cx + y; fx++){
+                                            setIconArea(fx, cy + x);
+                                            setIconArea(fx, cy - x);
+                                        }
                                     }
-                                    for(int fx = cx - y + 1; fx < cx + y; fx++){
-                                        setIconArea(fx, cy + x);
-                                        setIconArea(fx, cy - x);
-                                    }
-                                }
 
-                                y++;
-                                if(err <= 0){
-                                    err += 2*y + 1;
-                                }
-                                if(err > 0){
-                                    x--;
-                                    err -= 2*x + 1;
+                                    y++;
+                                    if(err <= 0){
+                                        err += 2*y + 1;
+                                    }
+                                    if(err > 0){
+                                        x--;
+                                        err -= 2*x + 1;
+                                    }
                                 }
                             }
                         }
@@ -1813,7 +1897,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 readToolXY(&capturedX, &capturedY); // process where the capturey point is
                 ltcapturedX = ctcapturedX;
                 ltcapturedY = ctcapturedY;
-                printf("P2P Tool: capture point CX: %d, CY: %d\n", capturedX, capturedY);
+                //printf("P2P Tool: capture point CX: %d, CY: %d\n", capturedX, capturedY);
                 // }
                 // else //its likely just to a pixel draw
                 if(!grabbing)
@@ -1979,6 +2063,7 @@ void MainWindow::reSize(){
     QWidget *wincontainer = ui->verticalLayoutWidget->parentWidget();
     QWidget *container = ui->verticalLayoutWidget;
     QWidget *vboxh = ui->vboxTextoutputv;
+    QWidget *fonteditBox = ui->frmFontWorkbench;
 
     WinXW = wincontainer->width() - 2;
     WinXH = wincontainer->height() - 28;
@@ -1989,6 +2074,10 @@ void MainWindow::reSize(){
     if(vboxh){
         ui->outputTextView->resize(WinXW, WinXH);
         vboxh->resize(WinXW-16, WinXH-64);
+    }
+    if(fonteditBox){
+        //ui->frmFontWorkbench->resize((WinXW))
+        fonteditBox->resize(WinXW, WinXH);
     }
 
     PWinXW = ui->gfxEditor->width()  - 4;
@@ -2040,206 +2129,209 @@ void MainWindow::renderEditorCanvas(){
             }
         }
     }
-    // ---------------- DRAW HOVER BOX OVER THE TOP ---------------- //
-    if(ui->scrEditorZoomVal->value() > 3){
-        if (hoverPixelX >= 0 && hoverPixelY >= 0){
-            int px = hoverPixelX * icon_zoom;
-            int py = hoverPixelY * icon_zoom;
 
-            int inner = 1;             // offset from gridline
-            int thick = 2;             // border thickness
+    if(!grabbing){
+        // ---------------- DRAW HOVER BOX OVER THE TOP ---------------- //
+        if(ui->scrEditorZoomVal->value() > 3){
+            if (hoverPixelX >= 0 && hoverPixelY >= 0){
+                int px = hoverPixelX * icon_zoom;
+                int py = hoverPixelY * icon_zoom;
 
-            int left   = px + inner;
-            int right  = px + icon_zoom - inner ;
-            int top    = py + inner;
-            int bottom = py + icon_zoom - inner ;
+                int inner = 1;             // offset from gridline
+                int thick = 2;             // border thickness
 
-            // Clamp to viewport (for safety)
-            if (left >= 0 && right < visibleWidth &&
-                top >= 0 && bottom < visibleHeight){
-                // Invert border color
-                auto invert = [&](int xx, int yy){
-                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(yy));
-                    scan[xx] = 0xFFFFFFFF - scan[xx];
+                int left   = px + inner;
+                int right  = px + icon_zoom - inner ;
+                int top    = py + inner;
+                int bottom = py + icon_zoom - inner ;
+
+                // Clamp to viewport (for safety)
+                if (left >= 0 && right < visibleWidth &&
+                    top >= 0 && bottom < visibleHeight){
+                    // Invert border color
+                    auto invert = [&](int xx, int yy){
+                        QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(yy));
+                        scan[xx] = 0xFFFFFFFF - scan[xx];
+                    };
+
+                    // TOP
+                    for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, top + t);
+
+                    // BOTTOM
+                    for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, bottom - t);
+
+                    // LEFT
+                    for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(left + t, y);
+
+                    // RIGHT
+                    for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(right - t, y);
+                }
+            }
+        }
+
+
+        if(captureXYStart==true){
+            //ltcapturedX = ctcapturedX;
+            //ltcapturedY = ctcapturedY;
+            //readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
+            //printf("P2P Tool: Target point TX: %d, TY: %d\n", ctcapturedX, ctcapturedY);
+            if(currentDrawMode == Line){
+                auto invertCell = [&](int cellX, int cellY){
+                    int startX = cellX * icon_zoom;
+                    int startY = cellY * icon_zoom;
+                    for(int yy = 0; yy < icon_zoom; yy++){
+                        int py = startY + yy;
+                        if(py < 0 || py >= visibleHeight) continue;
+                        QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
+                        for(int xx = 0; xx < icon_zoom; xx++){
+                            int px = startX + xx;
+                            if(px < 0 || px >= visibleWidth) continue;
+                            //scan[px] = 0xFFFFFFFF - scan[px]; // invert
+                            scan[px] = CLUT[numSelectedPaletteID];
+                        }
+                    }
                 };
 
-                // TOP
-                for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, top + t);
+                int x0cell = capturedX;
+                int y0cell = capturedY;
+                int x1cell = hoverPixelX;
+                int y1cell = hoverPixelY;
 
-                // BOTTOM
-                for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, bottom - t);
+                // Bresenham using cells
+                int dx = abs(x1cell - x0cell), sx = x0cell < x1cell ? 1 : -1;
+                int dy = -abs(y1cell - y0cell), sy = y0cell < y1cell ? 1 : -1;
+                int err = dx + dy, e2;
 
-                // LEFT
-                for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(left + t, y);
-
-                // RIGHT
-                for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(right - t, y);
-            }
-        }
-    }
-
-
-    if(captureXYStart==true){
-        //ltcapturedX = ctcapturedX;
-        //ltcapturedY = ctcapturedY;
-        //readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
-        //printf("P2P Tool: Target point TX: %d, TY: %d\n", ctcapturedX, ctcapturedY);
-        if(currentDrawMode == Line){
-            auto invertCell = [&](int cellX, int cellY){
-                int startX = cellX * icon_zoom;
-                int startY = cellY * icon_zoom;
-                for(int yy = 0; yy < icon_zoom; yy++){
-                    int py = startY + yy;
-                    if(py < 0 || py >= visibleHeight) continue;
-                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
-                    for(int xx = 0; xx < icon_zoom; xx++){
-                        int px = startX + xx;
-                        if(px < 0 || px >= visibleWidth) continue;
-                        //scan[px] = 0xFFFFFFFF - scan[px]; // invert
-                        scan[px] = CLUT[numSelectedPaletteID];
-                    }
+                int x = x0cell, y = y0cell;
+                while(true){
+                    invertCell(x, y);        // invert a full cell instead of 1 pixel
+                    if(x == x1cell && y == y1cell) break;
+                    e2 = 2 * err;
+                    if(e2 >= dy){ err += dy; x += sx; }
+                    if(e2 <= dx){ err += dx; y += sy; }
                 }
-            };
-
-            int x0cell = capturedX;
-            int y0cell = capturedY;
-            int x1cell = hoverPixelX;
-            int y1cell = hoverPixelY;
-
-            // Bresenham using cells
-            int dx = abs(x1cell - x0cell), sx = x0cell < x1cell ? 1 : -1;
-            int dy = -abs(y1cell - y0cell), sy = y0cell < y1cell ? 1 : -1;
-            int err = dx + dy, e2;
-
-            int x = x0cell, y = y0cell;
-            while(true){
-                invertCell(x, y);        // invert a full cell instead of 1 pixel
-                if(x == x1cell && y == y1cell) break;
-                e2 = 2 * err;
-                if(e2 >= dy){ err += dy; x += sx; }
-                if(e2 <= dx){ err += dx; y += sy; }
             }
-        }
 
-        if(currentDrawMode == Rect){
-            auto invertCell = [&](int cellX, int cellY){
-                int startX = cellX * icon_zoom;
-                int startY = cellY * icon_zoom;
-                for(int yy = 0; yy < icon_zoom; yy++){
-                    int py = startY + yy;
-                    if(py < 0 || py >= visibleHeight) continue;
-                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
-                    for(int xx = 0; xx < icon_zoom; xx++){
-                        int px = startX + xx;
-                        if(px < 0 || px >= visibleWidth) continue;
-                        //scan[px] = 0xFFFFFFFF - scan[px]; // invert for ghost
-                        scan[px] = CLUT[numSelectedPaletteID];
+            if(currentDrawMode == Rect){
+                auto invertCell = [&](int cellX, int cellY){
+                    int startX = cellX * icon_zoom;
+                    int startY = cellY * icon_zoom;
+                    for(int yy = 0; yy < icon_zoom; yy++){
+                        int py = startY + yy;
+                        if(py < 0 || py >= visibleHeight) continue;
+                        QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
+                        for(int xx = 0; xx < icon_zoom; xx++){
+                            int px = startX + xx;
+                            if(px < 0 || px >= visibleWidth) continue;
+                            //scan[px] = 0xFFFFFFFF - scan[px]; // invert for ghost
+                            scan[px] = CLUT[numSelectedPaletteID];
+                        }
                     }
-                }
-            };
+                };
 
-            // Rectangle corners
-            int x0 = capturedX;
-            int y0 = capturedY;
-            int x1 = hoverPixelX;
-            int y1 = hoverPixelY;
+                // Rectangle corners
+                int x0 = capturedX;
+                int y0 = capturedY;
+                int x1 = hoverPixelX;
+                int y1 = hoverPixelY;
 
-            // Ensure top-left -> bottom-right ordering
-            int left   = std::min(x0, x1);
-            int right  = std::max(x0, x1);
-            int top    = std::min(y0, y1);
-            int bottom = std::max(y0, y1);
+                // Ensure top-left -> bottom-right ordering
+                int left   = std::min(x0, x1);
+                int right  = std::max(x0, x1);
+                int top    = std::min(y0, y1);
+                int bottom = std::max(y0, y1);
 
-            // Draw top and bottom edges
-            for(int x = left; x <= right; x++){
-                invertCell(x, top);
-                invertCell(x, bottom);
-            }
-
-            // Draw left and right edges
-            for(int y = top; y <= bottom; y++){
-                invertCell(left, y);
-                invertCell(right, y);
-            }
-
-            if(ui->chkFillIt->isChecked()){
+                // Draw top and bottom edges
                 for(int x = left; x <= right; x++){
-                    for(int y = top; y <= bottom; y++)
-                        invertCell(x, y);
+                    invertCell(x, top);
+                    invertCell(x, bottom);
+                }
+
+                // Draw left and right edges
+                for(int y = top; y <= bottom; y++){
+                    invertCell(left, y);
+                    invertCell(right, y);
+                }
+
+                if(ui->chkFillIt->isChecked()){
+                    for(int x = left; x <= right; x++){
+                        for(int y = top; y <= bottom; y++)
+                            invertCell(x, y);
+                    }
                 }
             }
-        }
 
 
-        if(currentDrawMode == Circle){
-            auto invertCell = [&](int cellX, int cellY){
-                int startX = cellX * icon_zoom;
-                int startY = cellY * icon_zoom;
-                for(int yy = 0; yy < icon_zoom; yy++){
-                    int py = startY + yy;
-                    if(py < 0 || py >= visibleHeight) continue;
-                    QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
-                    for(int xx = 0; xx < icon_zoom; xx++){
-                        int px = startX + xx;
-                        if(px < 0 || px >= visibleWidth) continue;
-                        scan[px] = CLUT[numSelectedPaletteID]; // or invert for ghost
-                    }
-                }
-            };
-
-            int cx = capturedX;
-            int cy = capturedY;
-            int radius = std::max(abs(hoverPixelX - cx), abs(hoverPixelY - cy));
-
-            if(radius <= 3){ // small radius -> distance check
-                for(int y = cy - radius; y <= cy + radius; y++){
-                    for(int x = cx - radius; x <= cx + radius; x++){
-                        int dx = x - cx;
-                        int dy = y - cy;
-                        float dist = std::sqrt(dx*dx + dy*dy);
-                        if(dist >= radius - 0.5f && dist <= radius + 0.5f){
-                            invertCell(x, y);
-                        }
-                        // Fill: inside the radius
-                        else if(ui->chkFillIt->isChecked() && dist < radius - 0.5f){
-                            invertCell(x, y);
+            if(currentDrawMode == Circle){
+                auto invertCell = [&](int cellX, int cellY){
+                    int startX = cellX * icon_zoom;
+                    int startY = cellY * icon_zoom;
+                    for(int yy = 0; yy < icon_zoom; yy++){
+                        int py = startY + yy;
+                        if(py < 0 || py >= visibleHeight) continue;
+                        QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(py));
+                        for(int xx = 0; xx < icon_zoom; xx++){
+                            int px = startX + xx;
+                            if(px < 0 || px >= visibleWidth) continue;
+                            scan[px] = CLUT[numSelectedPaletteID]; // or invert for ghost
                         }
                     }
-                }
-            } else { // large radius -> classic Midpoint Circle
-                int x = radius;
-                int y = 0;
-                int err = 0;
-                while(x >= y){
-                    invertCell(cx + x, cy + y);
-                    invertCell(cx + y, cy + x);
-                    invertCell(cx - y, cy + x);
-                    invertCell(cx - x, cy + y);
-                    invertCell(cx - x, cy - y);
-                    invertCell(cx - y, cy - x);
-                    invertCell(cx + y, cy - x);
-                    invertCell(cx + x, cy - y);
+                };
 
+                int cx = capturedX;
+                int cy = capturedY;
+                int radius = std::max(abs(hoverPixelX - cx), abs(hoverPixelY - cy));
 
-                    if(ui->chkFillIt->isChecked()){
-                        // Fill horizontal spans between the left/right of the circle
-                        for(int fillX = cx - x + 1; fillX < cx + x; fillX++){
-                            invertCell(fillX, cy + y);
-                            invertCell(fillX, cy - y);
-                        }
-                        for(int fillX = cx - y + 1; fillX < cx + y; fillX++){
-                            invertCell(fillX, cy + x);
-                            invertCell(fillX, cy - x);
+                if(radius <= 3){ // small radius -> distance check
+                    for(int y = cy - radius; y <= cy + radius; y++){
+                        for(int x = cx - radius; x <= cx + radius; x++){
+                            int dx = x - cx;
+                            int dy = y - cy;
+                            float dist = std::sqrt(dx*dx + dy*dy);
+                            if(dist >= radius - 0.5f && dist <= radius + 0.5f){
+                                invertCell(x, y);
+                            }
+                            // Fill: inside the radius
+                            else if(ui->chkFillIt->isChecked() && dist < radius - 0.5f){
+                                invertCell(x, y);
+                            }
                         }
                     }
+                } else { // large radius -> classic Midpoint Circle
+                    int x = radius;
+                    int y = 0;
+                    int err = 0;
+                    while(x >= y){
+                        invertCell(cx + x, cy + y);
+                        invertCell(cx + y, cy + x);
+                        invertCell(cx - y, cy + x);
+                        invertCell(cx - x, cy + y);
+                        invertCell(cx - x, cy - y);
+                        invertCell(cx - y, cy - x);
+                        invertCell(cx + y, cy - x);
+                        invertCell(cx + x, cy - y);
 
-                    y++;
-                    if(err <= 0){
-                        err += 2*y + 1;
-                    }
-                    if(err > 0){
-                        x--;
-                        err -= 2*x + 1;
+
+                        if(ui->chkFillIt->isChecked()){
+                            // Fill horizontal spans between the left/right of the circle
+                            for(int fillX = cx - x + 1; fillX < cx + x; fillX++){
+                                invertCell(fillX, cy + y);
+                                invertCell(fillX, cy - y);
+                            }
+                            for(int fillX = cx - y + 1; fillX < cx + y; fillX++){
+                                invertCell(fillX, cy + x);
+                                invertCell(fillX, cy - x);
+                            }
+                        }
+
+                        y++;
+                        if(err <= 0){
+                            err += 2*y + 1;
+                        }
+                        if(err > 0){
+                            x--;
+                            err -= 2*x + 1;
+                        }
                     }
                 }
             }
@@ -2295,6 +2387,4 @@ void MainWindow::renderPaletteCanvas(){
         }
     }
     palettePixmap->setPixmap(QPixmap::fromImage(paletteImg));
-
 }
-

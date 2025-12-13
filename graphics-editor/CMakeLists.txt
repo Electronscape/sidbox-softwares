@@ -7,11 +7,14 @@ qt_standard_project_setup()
 
 qt_add_executable(graphics-editor
     WIN32 MACOSX_BUNDLE
+    font.cpp
     main.cpp
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
     resources.qrc
+    fonteditor.h
+    fonteditor.cpp
 )
 
 
