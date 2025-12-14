@@ -53,7 +53,8 @@ int ctcapturedX = -1, ctcapturedY = -1;  // current location target
 int ltcapturedX = -1, ltcapturedY = -1;  // last location target
 int capturedX = -1, capturedY = -1;
 
-
+bool paletteRestrictor = false;
+int paletteRangerOffset, paletteRangerLength;
 
 int hoverPixelX = -1;
 int hoverPixelY = -1;
@@ -918,6 +919,27 @@ MainWindow::MainWindow(QWidget *parent)
         ui->frmFontWorkbench->hide();
     });
 
+    connect(ui->sldPaletteOffset, &QScrollBar::valueChanged, this, [this](){
+        paletteRangerOffset = ui->sldPaletteOffset->value();
+        ui->lblPaletteOffset->setText( QString("%1").arg(paletteRangerOffset));
+    });
+    connect(ui->sldPaletteSize, &QScrollBar::valueChanged, this, [this](){
+        paletteRangerLength = ui->sldPaletteSize->value();
+        ui->lblPaletteSizer->setText( QString("%1").arg(paletteRangerLength));
+    });
+    connect(ui->chkPaletteUseRestrictor, &QCheckBox::clicked, this, [this](){
+        paletteRestrictor = ui->chkPaletteUseRestrictor->isChecked();
+    });
+
+
+    paletteRangerOffset = 128;
+    paletteRangerLength = 16;
+
+    ui->lblPaletteOffset->setText( QString("%1").arg(paletteRangerOffset));
+    ui->lblPaletteSizer->setText( QString("%1").arg(paletteRangerLength));
+
+    ui->sldPaletteOffset->setValue(paletteRangerOffset);
+    ui->sldPaletteSize->setValue(paletteRangerLength);
 
 
     loadDefaultFont();
@@ -1242,107 +1264,310 @@ void MainWindow::doSpreadPalette(uint8_t targetID){
 }
 
 
-bool MainWindow::importGif(const QString &path)
+
+bool extractGifPalette(const QString &path, uint32_t CLUT[256])
 {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+
+    QByteArray data = f.readAll();
+    f.close();
+
+    if (data.size() < 13) return false; // minimal GIF header + LSD
+
+    // Check header "GIF87a" or "GIF89a"
+    if (!(data.startsWith("GIF87a") || data.startsWith("GIF89a"))) return false;
+
+    // Logical Screen Descriptor starts at byte 6
+    quint8 packed = quint8(data[10]);
+
+    bool hasGlobalPalette = packed & 0x80; // 1 = global palette exists
+    int colorRes = (packed & 0x07);        // size = 2^(N+1)
+    int paletteSize = 2 << colorRes;
+
+    if (!hasGlobalPalette) return false;
+
+    //CLUT.resize(paletteSize);
+    const uchar *p = reinterpret_cast<const uchar*>(data.constData());
+    int offset = 13; // header (6) + LSD (7)
+
+    for (int i = 0; i < paletteSize; i++) {
+        int r = p[offset + i*3 + 0];
+        int g = p[offset + i*3 + 1];
+        int b = p[offset + i*3 + 2];
+        CLUT[i] = (r << 16) | (g << 8) | b;
+    }
+
+    return true;
+}
+
+bool extractPngPalette(const QString &path, uint32_t CLUT[256])
+{
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+
+    QByteArray data = f.readAll();
+    f.close();
+
+    if (data.size() < 8) return false; // PNG signature
+    if (!(data.startsWith("\x89PNG\r\n\x1a\n"))) return false;
+
+    const uchar* p = reinterpret_cast<const uchar*>(data.constData());
+    int pos = 8; // after signature
+    int clutIndex = 0;
+
+    while (pos + 8 <= data.size()) {
+        quint32 chunkLen = (p[pos+0]<<24) | (p[pos+1]<<16) | (p[pos+2]<<8) | p[pos+3];
+        QByteArray chunkType = data.mid(pos+4, 4);
+
+        if(paletteRestrictor){
+            if (chunkType == "PLTE") {
+                int totalCols = chunkLen / 3;
+                if (totalCols <= 0) return false;
+
+                struct Col {
+                    int r, g, b;
+                    int lum;
+                };
+
+                QVector<Col> cols;
+                cols.reserve(totalCols);
+
+                // 1) Read full palette
+                for (int i = 0; i < totalCols; i++) {
+                    int base = pos + 8 + i * 3;
+                    int r = p[base + 0];
+                    int g = p[base + 1];
+                    int b = p[base + 2];
+
+                    // perceptual-ish luminance
+                    int lum = r * 30 + g * 59 + b * 11;
+
+                    cols.push_back({ r, g, b, lum });
+                }
+
+                // 2) Sort by luminance (groups similar shades)
+                std::sort(cols.begin(), cols.end(),
+                          [](const Col &a, const Col &b) {
+                              return a.lum < b.lum;
+                          });
+
+                int outCount = qMin(paletteRangerLength, totalCols);
+                float step = float(totalCols) / float(outCount);
+
+                // 3) Average groups
+                for (int i = 0; i < outCount; i++) {
+
+                    int start = int(i * step);
+                    int end   = int((i + 1) * step);
+                    if (end <= start) end = start + 1;
+                    if (end > totalCols) end = totalCols;
+
+                    int rs = 0, gs = 0, bs = 0;
+                    int cnt = 0;
+
+                    for (int j = start; j < end; j++) {
+                        rs += cols[j].r;
+                        gs += cols[j].g;
+                        bs += cols[j].b;
+                        cnt++;
+                    }
+
+                    if (cnt == 0) cnt = 1;
+
+                    int r = rs / cnt;
+                    int g = gs / cnt;
+                    int b = bs / cnt;
+
+                    CLUT[paletteRangerOffset + i] =
+                        (r << 16) | (g << 8) | b;
+                }
+
+                return true;
+            }
+        } else {
+            if (chunkType == "PLTE") {
+                int n = qMin(int(chunkLen / 3), 256);
+                for (int i = 0; i < n; i++) {
+                    int r = p[pos+8 + i*3 + 0];
+                    int g = p[pos+8 + i*3 + 1];
+                    int b = p[pos+8 + i*3 + 2];
+                    CLUT[i] = (r << 16) | (g << 8) | b;
+                }
+                // fill rest with black
+                for (int i = n; i < 256; i++) CLUT[i] = 0;
+                return true;
+            }
+        }
+
+        pos += 8 + chunkLen + 4; // move to next chunk (length + type + data + CRC)
+    }
+
+    return false; // no PLTE found
+}
+
+
+bool MainWindow::importGif(const QString &path){
+
+    bool isGIF, isPNG;
     QImage img(path);
     if (img.isNull()) return false;
 
-    //img = img.convertToFormat(QImage::Format_Indexed8);
-    /*
-    img = img.convertToFormat(
-        QImage::Format_Indexed8,
-        Qt::ColorOnly | Qt::AvoidDither
-        );
-    */
     img = QImage(path);
 
     // Create a 256-colour palette (your own, no dither!)
     QVector<QRgb> pal;
     QVector<QRgb> ct;
 
+
     int r, g, b, rf, gf, bf;
     int w = img.width();
     int h = img.height();
+    int ictoffset = 0;
 
     pal.resize(256);
 
-    // simple grayscale example, you’ll replace this with your quantizer
-
-    if(ui->chkImportPalette->isChecked()){
-        img = img.convertToFormat(QImage::Format_Indexed8);
-        ct = img.colorTable();    // get the image data
-
-        //gif_palette.clear();
-        for (int i = 0; i < ct.size(); i++) {
-            //gif_palette.push_back(ct[i]);  // store QRgb values
-
-            r = qRed(ct[i]);
-            g = qGreen(ct[i]);
-            b = qBlue(ct[i]);
-
-            CLUT[i] = ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
-            BACKUP_CLUT[i] = CLUT[i];
-
+    if (ui->chkImportPalette->isChecked()) {
+        bool isGood;
+        isGood = false;
+        isGIF = extractGifPalette(path, CLUT);
+        if(!isGIF) {
+            printf("Not Gif\n");
+            isPNG = extractPngPalette(path, CLUT);
+            if(!isPNG)
+                printf("not png\n");
         }
+
+        isGood = isGIF + isPNG;
+
+        if(!isGood){    // no pallete data good enough, will have to faff for it our selves
+            img = img.convertToFormat(QImage::Format_Indexed8);
+            ct = img.colorTable();
+            for (int i = 0; i < ct.size(); i++) {
+                int r = qRed(ct[i + ictoffset]), g = qGreen(ct[i + ictoffset]), b = qBlue(ct[i + ictoffset]);
+                CLUT[i] = (r << 16) | (g << 8) | b;
+                BACKUP_CLUT[i] = CLUT[i];
+            }
+        }
+
         renderPaletteCanvas();
     }
 
-    for (int i = 0; i < 256; i++)
-        pal[i] = CLUT[i];//qRgb(i, i, i);
 
-    // Apply your palette
-    img = img.convertToFormat(QImage::Format_Indexed8, pal, Qt::AvoidDither);
-
-
-    // Resize your buffer
     icon_area.assign(h, std::vector<uint8_t>(w, 0));
     icon_width  = w;
     icon_height = h;
-
     ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
     ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
 
-    // ===== PIXELS =====
-    for (int y = 0; y < h; y++) {
-        const uchar* row = img.scanLine(y);
-        for (int x = 0; x < w; x++) {
-            uint8_t colourIndex;
+    if(paletteRestrictor){
+        int palStart = 0;
+        int palEnd   = paletteDepth;
 
-            colourIndex = row[x];
-            // ===== IMPORT PALETTE =====
+        if (paletteRestrictor) {
+            palStart = paletteRangerOffset;
+            palEnd   = paletteRangerOffset + paletteRangerLength;
+            if (palEnd > 256) palEnd = 256;
+        }
 
-            if (ui->chkUsePalette->isChecked()) {
-                ct = img.colorTable();    // get the image data
-                // RGB of pixel *in GIF palette*
-                rf = (ct[colourIndex] >> 16) & 0xFF;
-                gf = (ct[colourIndex] >> 8)  & 0xFF;
-                bf =  ct[colourIndex]        & 0xFF;
+        // ===== PIXELS =====
+        for (int y = 0; y < h; y++) {
+            const uchar* row = img.scanLine(y);
+            for (int x = 0; x < w; x++) {
 
-                int bestIndex = 0;
-                int bestDist  = INT_MAX;
+                uint8_t colourIndex = row[x];
 
-                // Compare to *current editor palette* CLUT[]
-                for (int pi = 0; pi < paletteDepth; pi++) {
+                //if (ui->chkUsePalette->isChecked())
+                {
 
-                    int r2 = (CLUT[pi] >> 16) & 0xFF;
-                    int g2 = (CLUT[pi] >> 8)  & 0xFF;
-                    int b2 =  CLUT[pi]        & 0xFF;
+                    ct = img.colorTable();
 
-                    int dr = rf - r2;
-                    int dg = gf - g2;
-                    int db = bf - b2;
+                    int rf = (ct[colourIndex] >> 16) & 0xFF;
+                    int gf = (ct[colourIndex] >> 8)  & 0xFF;
+                    int bf =  ct[colourIndex]        & 0xFF;
 
-                    int dist = dr*dr + dg*dg + db*db;
+                    int bestIndex = palStart;
+                    int bestDist  = INT_MAX;
 
-                    if (dist < bestDist) {
-                        bestDist  = dist;
-                        bestIndex = pi;
+                    // 🔥 SEARCH ONLY WITHIN RANGE
+                    for (int pi = palStart; pi < palEnd; pi++) {
+
+                        int r2 = (CLUT[pi] >> 16) & 0xFF;
+                        int g2 = (CLUT[pi] >> 8)  & 0xFF;
+                        int b2 =  CLUT[pi]        & 0xFF;
+
+                        int dr = rf - r2;
+                        int dg = gf - g2;
+                        int db = bf - b2;
+
+                        int dist = dr*dr + dg*dg + db*db;
+
+                        if (dist < bestDist) {
+                            bestDist  = dist;
+                            bestIndex = pi;
+                        }
                     }
+
+                    colourIndex = bestIndex;
                 }
-                colourIndex = bestIndex;
+
+                icon_area[y][x] = colourIndex;
             }
-            icon_area[y][x] = colourIndex;
+        }
+
+
+
+
+    } else { // not using the restrictor
+
+        for (int i = 0; i < 256; i++)
+            pal[i] = CLUT[i];//qRgb(i, i, i);
+
+        // Apply your palette
+        img = img.convertToFormat(QImage::Format_Indexed8, pal, Qt::AvoidDither);
+
+        // ===== PIXELS =====
+        for (int y = 0; y < h; y++) {
+            const uchar* row = img.scanLine(y);
+            for (int x = 0; x < w; x++) {
+                uint8_t colourIndex;
+
+                colourIndex = row[x];
+                // ===== IMPORT PALETTE =====
+
+                if (ui->chkUsePalette->isChecked()) {
+                    ct = img.colorTable();    // get the image data
+                    // RGB of pixel *in GIF palette*
+                    rf = (ct[colourIndex] >> 16) & 0xFF;
+                    gf = (ct[colourIndex] >> 8)  & 0xFF;
+                    bf =  ct[colourIndex]        & 0xFF;
+
+                    int bestIndex = 0;
+                    int bestDist  = INT_MAX;
+
+                    // Compare to *current editor palette* CLUT[]
+                    for (int pi = 0; pi < paletteDepth; pi++) {
+
+                        int r2 = (CLUT[pi] >> 16) & 0xFF;
+                        int g2 = (CLUT[pi] >> 8)  & 0xFF;
+                        int b2 =  CLUT[pi]        & 0xFF;
+
+                        int dr = rf - r2;
+                        int dg = gf - g2;
+                        int db = bf - b2;
+
+                        int dist = dr*dr + dg*dg + db*db;
+
+                        if (dist < bestDist) {
+                            bestDist  = dist;
+                            bestIndex = pi;
+                        }
+                    }
+                    colourIndex = bestIndex;
+                }
+                icon_area[y][x] = colourIndex;
+            }
         }
     }
 
