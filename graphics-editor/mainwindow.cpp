@@ -31,6 +31,7 @@ int SelectedX = 1;    // this will be clickable later
 int SelectedY = 0;
 int colourCycleSpeed = 0;
 uint8_t     numSelectedPaletteID = 1, numPrevSelectedPaletteID = 1;
+uint8_t     numSelectedBackPaletteID = 0;
 int         paletteDepth    = 256;
 uint8_t     pltColourPreset[3] = {0,0,0};
 
@@ -378,11 +379,29 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
+    int r, g, b;
+
+    r = (CLUT[numSelectedPaletteID] >> 16) & 0xff;
+    g = (CLUT[numSelectedPaletteID] >> 8) & 0xff;
+    b = (CLUT[numSelectedPaletteID]) & 0xff;
 
     pal = ui->lblPaletteColour->palette();
-    pal.setColor(QPalette::Window, QColor(0, 0, 0)); // RGB
+    pal.setColor(QPalette::Window, QColor(r, g, b)); // RGB
     ui->lblPaletteColour->setAutoFillBackground(true);   // must enable for background
     ui->lblPaletteColour->setPalette(pal);
+
+    ui->lblPaletteForeSelect->setAutoFillBackground(true);   // must enable for background
+    ui->lblPaletteForeSelect->setPalette(pal);
+
+    r = (CLUT[numSelectedBackPaletteID] >> 16) & 0xff;
+    g = (CLUT[numSelectedBackPaletteID] >> 8) & 0xff;
+    b = (CLUT[numSelectedBackPaletteID]) & 0xff;
+
+    pal = ui->lblPaletteBackSelect->palette();
+    pal.setColor(QPalette::Window, QColor(r, g, b)); // RGB
+    ui->lblPaletteBackSelect->setAutoFillBackground(true);   // must enable for background
+    ui->lblPaletteBackSelect->setPalette(pal);
+
 
     //connect(ui->txtPaletteR, &QPushButton::clicked(), this, [=](){
     connect(ui->horizontalScrollBarR, &QScrollBar::valueChanged, this, [=](int value){
@@ -584,7 +603,7 @@ MainWindow::MainWindow(QWidget *parent)
             // Clear icon_area
             for(int y = 0; y < icon_height; y++)
                 for(int x = 0; x < icon_width; x++)
-                    icon_area[y][x] = 0;
+                    icon_area[y][x] = numSelectedBackPaletteID;
 
             renderEditorCanvas(); // redraw empty icon
         }
@@ -1833,6 +1852,8 @@ void MainWindow::UpdatePrePaletteMixer(){
     pal.setColor(QPalette::Window, QColor(pltColourPreset[0], pltColourPreset[1], pltColourPreset[2])); // RGB
     ui->lblPaletteColour->setAutoFillBackground(true);   // must enable for background
     ui->lblPaletteColour->setPalette(pal);
+
+    ui->lblPaletteForeSelect->setPalette(pal);
     CLUT[numSelectedPaletteID] = (pltColourPreset[0] << 16) | (pltColourPreset[1] << 8) | (pltColourPreset[2]);
 
     renderPaletteCanvas();
@@ -1932,7 +1953,7 @@ void clrIconArea(int x, int y){
     if(y<0) return;
     if(x > icon_width-1) return;
     if(y > icon_height-1) return;
-    icon_area[y][x] = 0;
+    icon_area[y][x] = numSelectedBackPaletteID;
 }
 
 void setIconAreaPen(int sx, int sy, int size, bool set){
@@ -2220,6 +2241,30 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
             int x = int(scenePos.x());
             int y = int(scenePos.y());
+
+
+            if(mouseEvent->buttons() == Qt::RightButton){
+                //printf("Right Clicked on the Palette  ");
+
+                unsigned char r, g, b;
+                int tSelectedX = x / PALETTE_BOX_HSIZE;
+                int tSelectedY = y / PALETTE_BOX_VSIZE;
+
+                numSelectedBackPaletteID = (tSelectedX + (tSelectedY * PALETTE_WIDTH));
+
+                r = (CLUT[numSelectedBackPaletteID] >> 16) & 0xff;
+                g = (CLUT[numSelectedBackPaletteID] >> 8) & 0xff;
+                b = (CLUT[numSelectedBackPaletteID]) & 0xff;
+
+                pal.setColor(QPalette::Window, QColor(r, g, b)); // RGB
+                ui->lblPaletteColour->setAutoFillBackground(true);   // must enable for background
+                ui->lblPaletteColour->setPalette(pal);
+
+                ui->lblPaletteBackSelect->setPalette(pal);
+
+                return true;
+            }
+
 
             SelectedX = x / PALETTE_BOX_HSIZE;
             SelectedY = y / PALETTE_BOX_VSIZE;
@@ -2778,6 +2823,8 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
         case FloodFill:
             if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_LeftMouseButton))   // only allow this to work on the Initial Mouse Hit
                 floodFill(sx, sy, numSelectedPaletteID);
+            if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_RightMouseButton))   // only allow this to work on the Initial Mouse Hit
+                floodFill(sx, sy, numSelectedBackPaletteID);
             break;
 
         case DrawText: {
