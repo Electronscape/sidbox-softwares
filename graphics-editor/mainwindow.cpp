@@ -47,6 +47,8 @@ bool selectingCycle = false;   // true when CTRL is held
 bool waitingForEnd = false;    // true after choosing cycle_from
 int clickedIndex = 256; // way off grid
 
+bool bMouseLeftRight    = true; // true if it is left
+
 
 // for previewing new primatives, lines, circles, rectangles
 bool captureXYStart = false;
@@ -219,7 +221,43 @@ int     iTextHeight     = 1;        // height of the text
 bool    bPenShapeCircle = true;
 int     iPenShapeSize   = 10;        // default pen size for spray and pen actions
 bool    bFillToolIn     = false;     // weather the cirlce/box tool filles in (MINCE PIE'D!)
-enum DrawMode { Plot, Line, Pen, SprayCan, Rect, Circle, FloodFill, DrawText } currentDrawMode = Plot;
+
+// Copying and draw brushing
+std::vector<std::vector<uint8_t>> icon_copy_area;   // this is the buffer that holes the copied area
+                                                    // we'll use this to draw from this to the icon_area ;)
+bool    bCapturingCopyArea  = false;
+bool    bGrabbedCopyStart = false;
+int     iCapturedCopyX, iCapturedCopyY;
+int     iTargetCopyX, iTargetCopyY;
+
+int     iCopyWidth      = 0;        // nothing in the buffer, so REALLY make sure this is checked
+int     iCopyHeight     = 0;
+
+enum DrawMode {
+    noDrawing,
+    Plot,
+    Line,
+    Pen,
+    SprayCan,
+    Rect,
+    Circle,
+    FloodFill,
+    DrawText,
+    CopyBrush,  // Copy meaning we're capturing
+    PasteBrush, // THEN it will turn to this when we let go of the mouse button
+} currentDrawMode = Plot;
+
+enum ResizeMode {
+    Resample,       // averaging
+    NearestNeighbor // simple pixel copy
+};
+
+enum BrushChange {
+    brushflipX,
+    brushflipY,
+    brushrotateR,
+    brushrotateL
+};
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -773,7 +811,12 @@ MainWindow::MainWindow(QWidget *parent)
         currentDrawMode = Circle;
     });
 
-
+    ui->toolButtonCopyArea->installEventFilter(this);
+    connect(ui->toolButtonCopyArea, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonCopyArea->setChecked(true);   // keep this high lighted!
+        //currentDrawMode = noDrawing;    // prevents ANYTHING happening until we start clicking and releasing stuffs
+    });
 
     // pen draw modes ----------------------
     ui->chkPenDrawShape->setChecked(bPenShapeCircle);   // initial size
@@ -1156,10 +1199,6 @@ void UndoIconArea(){
 }
 
 
-enum ResizeMode {
-    Resample,       // averaging
-    NearestNeighbor // simple pixel copy
-};
 
 void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight){
     if (newWidth <= 0 || newHeight <= 0) return;
@@ -1259,6 +1298,7 @@ void MainWindow::clearToolButtons(){
     ui->toolButtonText->setChecked(false);
     ui->toolButtonRect->setChecked(false);
     ui->toolButtonCircle->setChecked(false);
+    ui->toolButtonCopyArea->setChecked(false);
 }
 
 void MainWindow::doColourCycle(){
@@ -1268,9 +1308,6 @@ void MainWindow::doColourCycle(){
     static unsigned char tmpold;
 
     static unsigned short SpeedStep;
-
-
-
     //if(cyclespeed==255) return;
 
     int bCycleDirection = 0;
@@ -2099,12 +2136,50 @@ void MainWindow::loadProjectIcon(const char *filename){
 void MainWindow::rotateIcon(int direction){
     if(icon_width == 0 || icon_height == 0) return;
     std::vector<std::vector<uint8_t>> buffer = icon_area;
+    std::vector<std::vector<uint8_t>> buffer_bk = icon_area_backup;
+    std::vector<std::vector<uint8_t>> buffer_rd = icon_area_redo;
 
     int oldW = icon_width;
     int oldH = icon_height;
 
     int newW = oldH;
     int newH = oldW;
+
+
+
+    icon_area_backup.assign(newH, std::vector<uint8_t>(newW, 0));
+    if(direction == 0) {  // clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area_backup[y][x] = buffer_bk[oldH - 1 - x][y];
+            }
+        }
+    }
+    else if(direction == 1) { // counter-clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area_backup[y][x] = buffer_bk[x][oldW - 1 - y];
+            }
+        }
+    }
+
+
+
+    icon_area_redo.assign(newH, std::vector<uint8_t>(newW, 0));
+    if(direction == 0) {  // clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area_redo[y][x] = buffer_rd[oldH - 1 - x][y];
+            }
+        }
+    }
+    else if(direction == 1) { // counter-clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area_redo[y][x] = buffer_rd[x][oldW - 1 - y];
+            }
+        }
+    }
 
     icon_area.assign(newH, std::vector<uint8_t>(newW, 0));
     if(direction == 0) {  // clockwise
@@ -2334,9 +2409,128 @@ void drawHoverBox(int sx, int sy, QImage *edImg){
             if (pxcell < 0 || pxcell >= edImg->width()) continue;
 
 
-            scanLine[px + dx] = CLUT[numSelectedPaletteID];
+            scanLine[px + dx] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
         }
     }
+}
+
+void drawHoverSelectionBox(int sx, int sy, int sw, int sh, QImage *edImg){
+    int z = icon_zoom;
+
+    sw += 1;
+    sh += 1;
+
+    int px0 = sx * z;
+    int py0 = sy * z;
+    int pw  = sw * z;
+    int ph  = sh * z;
+
+    /* ---------- Top & Bottom ---------- */
+    for (int t = 0; t < z; t++) {
+        int yTop = py0 + t;
+        int yBot = py0 + ph - z + t;
+
+        if (yTop >= 0 && yTop < edImg->height()) {
+            QRgb *line = reinterpret_cast<QRgb*>(edImg->scanLine(yTop));
+            for (int x = px0; x < px0 + pw; x++) {
+                if (x >= 0 && x < edImg->width())
+                    line[x] ^= 0x00FFFFFF;
+            }
+        }
+
+        if (yBot >= 0 && yBot < edImg->height()) {
+            QRgb *line = reinterpret_cast<QRgb*>(edImg->scanLine(yBot));
+            for (int x = px0; x < px0 + pw; x++) {
+                if (x >= 0 && x < edImg->width())
+                    line[x] ^= 0x00FFFFFF;
+            }
+        }
+    }
+
+    /* ---------- Left & Right ---------- */
+    for (int t = 0; t < z; t++) {
+        int xLeft  = px0 + t;
+        int xRight = px0 + pw - z + t;
+
+        for (int y = py0 + z; y < py0 + ph - z; y++) {
+            if (y < 0 || y >= edImg->height()) continue;
+
+            QRgb *line = reinterpret_cast<QRgb*>(edImg->scanLine(y));
+
+            if (xLeft >= 0 && xLeft < edImg->width())
+                line[xLeft] ^= 0x00FFFFFF;
+
+            if (xRight >= 0 && xRight < edImg->width())
+                line[xRight] ^= 0x00FFFFFF;
+        }
+    }
+
+
+}
+
+
+
+void MainWindow::drawCopyBrushHover(int sx, int sy, QImage *edImg){
+    int brush_width  = iCopyWidth;
+    int brush_height = iCopyHeight;
+
+    if (icon_copy_area.empty() || brush_width <= 0 || brush_height <= 0)
+        return;
+
+    int z = icon_zoom; // zoom factor
+
+    for (int y = 0; y < brush_height; y++) {
+        for (int x = 0; x < brush_width; x++) {
+            uint8_t pix = icon_copy_area[y][x];
+
+            if(pix==0) continue;
+            QRgb col = CLUT[pix]; // palette color
+
+            // SNAP TO GRID: sx/sy are grid positions
+            int px0 = (sx + x) * z;
+            int py0 = (sy + y) * z;
+
+            for (int dy = 0; dy < z; dy++) {
+                int py = py0 + dy;
+                if (py < 0 || py >= edImg->height()) continue;
+
+                QRgb* scanLine = reinterpret_cast<QRgb*>(edImg->scanLine(py));
+
+                for (int dx = 0; dx < z; dx++) {
+                    int px = px0 + dx;
+                    if (px < 0 || px >= edImg->width()) continue;
+
+                    scanLine[px] = col;
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::PlaceBrush(int gridX, int gridY)
+{
+    if (icon_copy_area.empty() || iCopyWidth <= 0 || iCopyHeight <= 0)
+        return;
+
+    icon_area_backup = icon_area;
+    for (int y = 0; y < iCopyHeight; y++) {
+        int targetY = gridY + y;
+        if (targetY < 0 || targetY >= icon_height) continue;
+
+        for (int x = 0; x < iCopyWidth; x++) {
+            int targetX = gridX + x;
+            if (targetX < 0 || targetX >= icon_width) continue;
+
+            if(icon_copy_area[y][x]==0) continue;
+
+            icon_area[targetY][targetX] = icon_copy_area[y][x];
+        }
+    }
+
+    // After placing, update backup for undo
+    //
+
+    renderEditorCanvas();
 }
 
 
@@ -2475,7 +2669,22 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 //printf("Right side");
                 bFillToolIn = true;
             }
+        }
+        if(obj == ui->toolButtonCopyArea){
+            auto *me = static_cast<QMouseEvent*>(event);
+            QPoint p = me->pos(); // position INSIDE button
 
+            // Example: split button
+            if (p.x() < ui->toolButtonCopyArea->width() / 2) {
+                //printf("Left side");
+                currentDrawMode = CopyBrush;    // a new copy region, anything in the copy buffer is lost.
+                bCapturingCopyArea = true;      // love how we're going to start GRABBING things ;) Yumm yumm.
+            } else {
+                //printf("Right side");
+                currentDrawMode = PasteBrush;   // continue drawing what ever is in the copy job
+                bCapturingCopyArea = false;     // abandon the capturing state
+                bGrabbedCopyStart = false;
+            }
         }
 
         if(obj == ui->toolButtonCircle){
@@ -2638,6 +2847,25 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 renderEditorCanvas();
                 return true;
             }
+
+            if(!ke->isAutoRepeat()){
+                if (ke->key() == Qt::Key_X){
+                    doAlterBrush(brushflipX);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == Qt::Key_Y){
+                    doAlterBrush(brushflipY);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == Qt::Key_Q){
+                    doAlterBrush(brushrotateL);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == Qt::Key_E){
+                    doAlterBrush(brushrotateR);
+                    renderEditorCanvas();
+                }
+            }
         }
         return QObject::eventFilter(obj, event);
     }
@@ -2653,6 +2881,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                     grabStartScrollV = ui->scrEditorV->value();
                 }
             }
+
+            if(mouseEvent->buttons() & Qt::LeftButton)
+                bMouseLeftRight = true;
+            else
+                bMouseLeftRight = false;
         }
 
 
@@ -2661,49 +2894,113 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
             ui->gfxEditor->setFocus();
 
-            if(grabbing) {
-                if(mouseEvent->buttons() & Qt::LeftButton) {
-                    QPointF current = mouseEvent->globalPosition();
+            int coordX = int(scenePos.x()) / icon_zoom;
+            int coordY = int(scenePos.y()) / icon_zoom;
 
-                    int newH = grabStartScrollH + (grabStartMouse.x() - current.x()) / icon_zoom;
-                    int newV = grabStartScrollV + (grabStartMouse.y() - current.y()) / icon_zoom;
+            if(coordX < 0) coordX = 0;
+            if(coordY < 0) coordY = 0;
+            if(coordX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
+            if(coordY > editorViewPortHeight - 1) coordY = editorViewPortHeight-1;
 
-                    newH = std::clamp(newH, ui->scrEditorH->minimum(), ui->scrEditorH->maximum());
-                    newV = std::clamp(newV, ui->scrEditorV->minimum(), ui->scrEditorV->maximum());
+            int dx = coordX + xOffset;
+            int dy = coordY + yOffset;
 
-                    ui->scrEditorH->setValue(newH);
-                    ui->scrEditorV->setValue(newV);
+            ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
+                                       .arg(dx, 4, 10, QChar('0'))
+                                       .arg(dy, 4, 10, QChar('0'))
+                                   );
+
+            if(!bCapturingCopyArea){
+                if(grabbing) {
+                    if(mouseEvent->buttons() & Qt::LeftButton) {
+                        QPointF current = mouseEvent->globalPosition();
+
+                        int newH = grabStartScrollH + (grabStartMouse.x() - current.x()) / icon_zoom;
+                        int newV = grabStartScrollV + (grabStartMouse.y() - current.y()) / icon_zoom;
+
+                        newH = std::clamp(newH, ui->scrEditorH->minimum(), ui->scrEditorH->maximum());
+                        newV = std::clamp(newV, ui->scrEditorV->minimum(), ui->scrEditorV->maximum());
+
+                        ui->scrEditorH->setValue(newH);
+                        ui->scrEditorV->setValue(newV);
+
+                        renderEditorCanvas();
+                    }
+                    return true;
+                } else {
+
+                    hoverPixelX = int(scenePos.x()) / icon_zoom;
+                    hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+                    if(hoverPixelX < 0) hoverPixelX = 0;
+                    if(hoverPixelY < 0) hoverPixelY = 0;
+                    if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
+                    if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
+
+                    int dx = hoverPixelX + xOffset;
+                    int dy = hoverPixelY + yOffset;
+
+                    /*
+                    ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
+                        .arg(dx, 4, 10, QChar('0'))
+                        .arg(dy, 4, 10, QChar('0'))
+                    );
+                    */
+
+
+                    if(mouseEvent->buttons() & Qt::LeftButton)  ProcessClickPaint(dx, dy, DrawUIMode_LeftMouseButton);  // moving draw process
+                    if(mouseEvent->buttons() & Qt::RightButton) ProcessClickPaint(dx, dy, DrawUIMode_RightMouseButton); // moving draw process
+
+                    /*
+                    if(currentDrawMode == PasteBrush){
+                        //printf("COX... ");
+                        drawCopyBrushHover(dx, dy, &editorImg);
+                        renderEditorCanvas(); // redraw empty icon
+                    }
+
+                    */
+
+                    if(captureXYStart==true){
+                        ltcapturedX = ctcapturedX;
+                        ltcapturedY = ctcapturedY;
+                        readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
+                    }
+                }
+            } else {
+                if(bGrabbedCopyStart){
+                    QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
+                    ui->gfxEditor->setFocus();
+
+                    hoverPixelX = int(scenePos.x()) / icon_zoom;
+                    hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+                    hoverPixelX = std::clamp(hoverPixelX, 0, editorViewPortWidth  - 1);
+                    hoverPixelY = std::clamp(hoverPixelY, 0, editorViewPortHeight - 1);
+
+                    int dx = hoverPixelX + xOffset;
+                    int dy = hoverPixelY + yOffset;
+
+                    dx = std::clamp(dx, 0, icon_width  - 1);
+                    dy = std::clamp(dy, 0, icon_height - 1);
+
+                    int dxw = dx - iCapturedCopyX;
+                    int dyh = dy - iCapturedCopyY;
+
+                    iCopyWidth  = abs(dxw);
+                    iCopyHeight = abs(dyh);
+
+                    int copyX = (dxw < 0) ? dx : iCapturedCopyX;
+                    int copyY = (dyh < 0) ? dy : iCapturedCopyY;
+
+                    iTargetCopyX = copyX;
+                    iTargetCopyY = copyY;
+
 
                     renderEditorCanvas();
+
+                   // printf("areaLoad Grab Size W:%d, H:%d\n", iCopyWidth, iCopyHeight);
                 }
-                return true;
-            } else {
 
-                hoverPixelX = int(scenePos.x()) / icon_zoom;
-                hoverPixelY = int(scenePos.y()) / icon_zoom;
-
-                if(hoverPixelX < 0) hoverPixelX = 0;
-                if(hoverPixelY < 0) hoverPixelY = 0;
-                if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
-                if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
-
-                int dx = hoverPixelX + xOffset;
-                int dy = hoverPixelY + yOffset;
-
-                ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
-                    .arg(dx, 4, 10, QChar('0'))
-                    .arg(dy, 4, 10, QChar('0'))
-                );
-
-
-                if(mouseEvent->buttons() & Qt::LeftButton)  ProcessClickPaint(dx, dy, DrawUIMode_LeftMouseButton); // moving draw process
-                if(mouseEvent->buttons() & Qt::RightButton) ProcessClickPaint(dx, dy, DrawUIMode_RightMouseButton); // moving draw process
-
-                if(captureXYStart==true){
-                    ltcapturedX = ctcapturedX;
-                    ltcapturedY = ctcapturedY;
-                    readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
-                }
             }
 
             updateTimer->start(1);
@@ -2715,6 +3012,13 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                 // check if we're in a tool that needs point to point interaction
                 // if() {
+                if(bCapturingCopyArea){
+                    bCapturingCopyArea = false;
+                    bGrabbedCopyStart = false;
+                    CopySelectionToBrush(); // now perform the bit where we copy
+                    currentDrawMode = PasteBrush;   // now this is the bit where we should be able to see the brush and draw it later
+                    renderEditorCanvas();
+                }
                 if(!grabbing){
                     tmrSprayCanTimer->stop();   // regardless, should stop the spray can just incase, stuck
                     bSprayingTheCan = false;
@@ -2862,8 +3166,41 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 //printf("P2P Tool: capture point CX: %d, CY: %d\n", capturedX, capturedY);
                 // }
                 // else //its likely just to a pixel draw
-                if(!grabbing){
-                    ProcessClickPaint(hoverPixelX + xOffset, hoverPixelY + yOffset, DrawUIMode_InitButton | DrawUIMode_LeftMouseButton); // initial click
+
+                if(bCapturingCopyArea){
+                    if(mouseEvent->buttons() & Qt::LeftButton) {
+                        QPointF current = mouseEvent->globalPosition();
+                        QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
+                        ui->gfxEditor->setFocus();
+                        int xOffset = ui->scrEditorH->value();
+                        int yOffset = ui->scrEditorV->value();
+
+                        hoverPixelX = int(scenePos.x()) / icon_zoom;
+                        hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+                        if(hoverPixelX < 0) hoverPixelX = 0;
+                        if(hoverPixelY < 0) hoverPixelY = 0;
+                        if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
+                        if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
+
+                        int dx = hoverPixelX + xOffset;
+                        int dy = hoverPixelY + yOffset;
+
+                        iCapturedCopyX = dx;
+                        iCapturedCopyY = dy;
+                        iCopyWidth = 0;
+                        iCopyHeight = 0;
+
+                        bGrabbedCopyStart = true;
+
+                        //printf("Start Grab from x:%d, y:%d\n", iCapturedCopyX, iCapturedCopyY);
+
+                        //bCapturingCopyArea = false;// just turn this off for now
+                    }
+                } else {
+                    if(!grabbing){
+                        ProcessClickPaint(hoverPixelX + xOffset, hoverPixelY + yOffset, DrawUIMode_InitButton | DrawUIMode_LeftMouseButton); // initial click
+                    }
                 }
                 updateTimer->start(1);
             }
@@ -2915,7 +3252,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
     return QMainWindow::eventFilter(obj, event);
 }
 
-
 static void buildTextPtrFromQString(const QString &src, char *outBuf, int outBufSize){
     if (!outBuf || outBufSize <= 0) return;
 
@@ -2961,7 +3297,7 @@ void MainWindow::drawTextHover(int sx, int sy, QImage *edImg){
     int x = sx;
     int y = sy;
 
-    const QRgb colf = CLUT[numSelectedPaletteID]; // foreground color
+    const QRgb colf = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID]; // foreground color
     const int zoom = icon_zoom; // base editor zoom
 
     const int scaleX = zoom * iTextWidth;   // horizontal block size
@@ -3101,6 +3437,12 @@ void MainWindow::getTextCenterHandle(int sx, int sy, int* outX, int* outY){
 }
 
 
+void MainWindow::getCenterHandle(int sx, int sy, int* outX, int* outY, int width, int height){
+    *outX = sx - width / 2;
+    *outY = sy - height / 2;
+}
+
+
 void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
     int nsx, nsy;
     nsx = sx;
@@ -3150,6 +3492,19 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
                     //printf("new spray rate: %lu\n", 1000 - (iSprayRate * 10));
                 }
             } // the handling of the stop spray can, is in the mouse release event in the Editor Window
+        }
+
+        case PasteBrush:{
+            getCenterHandle(sx, sy, &nsx, &nsy, iCopyWidth, iCopyHeight);    // source x, source y, return results x, return results y
+            if(flags & DrawUIMode_InitButton){   // only allow this to work on the Initial Mouse Hit
+                PlaceBrush(nsx, nsy);
+                /*
+                if(flags & DrawUIMode_LeftMouseButton)
+                    drawText(nsx, nsy, 1);
+                else
+                    drawText(nsx, nsy, 0);
+                */
+            }
         }
 
         default:
@@ -3377,7 +3732,7 @@ void MainWindow::renderEditorCanvas(){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
                             //scan[px] = 0xFFFFFFFF - scan[px]; // invert
-                            scan[px] = CLUT[numSelectedPaletteID];
+                            scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
                         }
                     }
                 };
@@ -3414,7 +3769,7 @@ void MainWindow::renderEditorCanvas(){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
                             //scan[px] = 0xFFFFFFFF - scan[px]; // invert for ghost
-                            scan[px] = CLUT[numSelectedPaletteID];
+                            scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
                         }
                     }
                 };
@@ -3463,7 +3818,7 @@ void MainWindow::renderEditorCanvas(){
                         for(int xx = 0; xx < icon_zoom; xx++){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
-                            scan[px] = CLUT[numSelectedPaletteID]; // or invert for ghost
+                            scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID]; // or invert for ghost
                         }
                     }
                 };
@@ -3551,9 +3906,40 @@ void MainWindow::renderEditorCanvas(){
                 int y1cell = hoverPixelY;// * icon_zoom;
                 drawIconAreaPenHover(x1cell, y1cell, iPenShapeSize * 2, &editorImg, false);
             }
+            //if(currentDrawMode == CopyBrush)
+
 
         }
     }
+
+    if(bGrabbedCopyStart){
+        int xOffset = ui->scrEditorH->value();
+        int yOffset = ui->scrEditorV->value();
+        int x1cell = iTargetCopyX - xOffset;
+        int y1cell = iTargetCopyY - yOffset;
+        // this is just the area around the graphics box!
+        drawHoverSelectionBox(x1cell, y1cell, iCopyWidth, iCopyHeight, &editorImg);
+    }
+    if(currentDrawMode == PasteBrush){
+        //printf("COX... ");
+        int xOffset = ui->scrEditorH->value();
+        int yOffset = ui->scrEditorV->value();
+        //int x1cell = iTargetCopyX - xOffset;
+        //int y1cell = iTargetCopyY - yOffset;
+
+        int x1cell = hoverPixelX;// * icon_zoom;
+        int y1cell = hoverPixelY;// * icon_zoom;
+
+        int nsx, nsy;
+
+
+        getCenterHandle(x1cell, y1cell, &nsx, &nsy, iCopyWidth, iCopyHeight);    // source x, source y, return results x, return results y
+        drawCopyBrushHover(nsx, nsy, &editorImg);
+        //renderEditorCanvas(); // redraw empty icon
+    }
+
+
+
     editorPixmap->setPixmap(QPixmap::fromImage(editorImg));
 }
 
@@ -3604,4 +3990,73 @@ void MainWindow::renderPaletteCanvas(){
         }
     }
     palettePixmap->setPixmap(QPixmap::fromImage(paletteImg));
+}
+
+
+
+void MainWindow::CopySelectionToBrush(){
+    // hit this with a one hit adjust
+    iCopyWidth ++;
+    iCopyHeight ++;
+    if (iCopyWidth <= 0 || iCopyHeight <= 0)
+        return;
+
+    icon_copy_area.resize(iCopyHeight);
+    for (auto &row : icon_copy_area)
+        row.resize(iCopyWidth, 0);
+
+    for (int y = 0; y < iCopyHeight; y++){
+        int srcY = iTargetCopyY + y;
+        if (srcY < 0 || srcY >= icon_height) continue;
+
+        for (int x = 0; x < iCopyWidth; x++){
+            int srcX = iTargetCopyX + x;
+            if (srcX < 0 || srcX >= icon_width) continue;
+            icon_copy_area[y][x] = icon_area[srcY][srcX];
+        }
+    }
+}
+
+void MainWindow::doAlterBrush(int mode){
+    switch(mode){
+        case brushflipX: {
+            // Flip horizontally
+            for (int y = 0; y < iCopyHeight; y++) {
+                for (int x = 0; x < iCopyWidth / 2; x++) {
+                    std::swap(icon_copy_area[y][x], icon_copy_area[y][iCopyWidth - 1 - x]);
+                }
+            }
+        } break;
+
+        case brushflipY: {
+            // Flip vertically
+            for (int y = 0; y < iCopyHeight / 2; y++) {
+                std::swap(icon_copy_area[y], icon_copy_area[iCopyHeight - 1 - y]);
+            }
+        } break;
+
+        case brushrotateR: {
+            // Rotate 90° clockwise
+            std::vector<std::vector<uint8_t>> newArea(iCopyWidth, std::vector<uint8_t>(iCopyHeight));
+            for (int y = 0; y < iCopyHeight; y++) {
+                for (int x = 0; x < iCopyWidth; x++) {
+                    newArea[x][iCopyHeight - 1 - y] = icon_copy_area[y][x];
+                }
+            }
+            std::swap(iCopyWidth, iCopyHeight);
+            icon_copy_area = std::move(newArea);
+        } break;
+
+        case brushrotateL: {
+            // Rotate 90° counter-clockwise
+            std::vector<std::vector<uint8_t>> newArea(iCopyWidth, std::vector<uint8_t>(iCopyHeight));
+            for (int y = 0; y < iCopyHeight; y++) {
+                for (int x = 0; x < iCopyWidth; x++) {
+                    newArea[iCopyWidth - 1 - x][y] = icon_copy_area[y][x];
+                }
+            }
+            std::swap(iCopyWidth, iCopyHeight);
+            icon_copy_area = std::move(newArea);
+        } break;
+    }
 }

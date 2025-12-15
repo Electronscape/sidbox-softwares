@@ -79,8 +79,13 @@ private:
     void onColourCycleTick();
     void onSprayCanTick();
 
+    void getCenterHandle(int sx, int sy, int* outX, int* outY, int width, int height);
+    void PlaceBrush(int gridX, int gridY);
+    void drawCopyBrushHover(int sx, int sy, QImage *edImg);
+    void CopySelectionToBrush();
     void ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight);
     void clearToolButtons();
+    void doAlterBrush(int mode);
 
     FontEditor *fontEditor;
 

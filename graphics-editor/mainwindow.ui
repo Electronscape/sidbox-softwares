@@ -2531,7 +2531,7 @@ QPushButton:hover {
        <x>3</x>
        <y>260</y>
        <width>160</width>
-       <height>334</height>
+       <height>370</height>
       </rect>
      </property>
      <property name="title">
@@ -2541,344 +2541,13 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>210</y>
+        <y>250</y>
         <width>140</width>
         <height>3</height>
        </rect>
       </property>
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-     <widget class="QScrollBar" name="scrPenDrawSize">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>187</y>
-        <width>120</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="palette">
-       <palette>
-        <active/>
-        <inactive/>
-        <disabled/>
-       </palette>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border: 1px solid #3c6dc3;
-</string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblPenSize">
-      <property name="geometry">
-       <rect>
-        <x>134</x>
-        <y>187</y>
-        <width>20</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>99</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="chkPenDrawShape">
-      <property name="geometry">
-       <rect>
-        <x>60</x>
-        <y>100</y>
-        <width>90</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pen Shape</string>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QScrollBar" name="scrSprayRate">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>145</y>
-        <width>120</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>170</red>
-            <green>170</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>170</red>
-            <green>170</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled/>
-       </palette>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border: 1px solid #3c6dc3;
-</string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-      <property name="invertedAppearance">
-       <bool>false</bool>
-      </property>
-      <property name="invertedControls">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblSprayRate">
-      <property name="geometry">
-       <rect>
-        <x>135</x>
-        <y>145</y>
-        <width>20</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>99</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblPenSize_3">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>124</y>
-        <width>70</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Spray Rate:</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblPenSize_4">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>167</y>
-        <width>110</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Spray/Pen Size:</string>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="txtTextDrawText">
-      <property name="geometry">
-       <rect>
-        <x>3</x>
-        <y>220</y>
-        <width>154</width>
-        <height>70</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Monospace</family>
-       </font>
-      </property>
-      <property name="lineWrapMode">
-       <enum>QPlainTextEdit::LineWrapMode::NoWrap</enum>
-      </property>
-      <property name="plainText">
-       <string>Hello World
-Text Box! $0xCC</string>
-      </property>
-      <property name="maximumBlockCount">
-       <number>127</number>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_14">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>292</y>
-        <width>40</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Size X:</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_15">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>310</y>
-        <width>40</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Size Y:</string>
-      </property>
-     </widget>
-     <widget class="QScrollBar" name="scrTextWidth">
-      <property name="geometry">
-       <rect>
-        <x>52</x>
-        <y>293</y>
-        <width>80</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>170</red>
-            <green>170</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>170</red>
-            <green>170</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled/>
-       </palette>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border: 1px solid #3c6dc3;
-</string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>8</number>
-      </property>
-      <property name="pageStep">
-       <number>1</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-     <widget class="QScrollBar" name="scrTextHeight">
-      <property name="geometry">
-       <rect>
-        <x>52</x>
-        <y>311</y>
-        <width>80</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>170</red>
-            <green>170</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>170</red>
-            <green>170</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled/>
-       </palette>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border: 1px solid #3c6dc3;
-</string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>8</number>
-      </property>
-      <property name="pageStep">
-       <number>1</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblTextHeight">
-      <property name="geometry">
-       <rect>
-        <x>136</x>
-        <y>310</y>
-        <width>20</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>1</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblTextWidth">
-      <property name="geometry">
-       <rect>
-        <x>136</x>
-        <y>292</y>
-        <width>20</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>1</string>
       </property>
      </widget>
      <widget class="QToolButton" name="toolButtonSprayCan">
@@ -2891,7 +2560,8 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Spray can - Random particles in a circle or square shape</string>
+       <string>Spray can:
+Random particles in a circle or square shape</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -2933,7 +2603,9 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Pen Draw - This uses a thicker nib, can be a square or rounded end.</string>
+       <string>Pen Draw:
+This uses a thicker nib.
+Can be a square or rounded end.</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -2975,7 +2647,8 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Line Draw</string>
+       <string>Line Draw:
+Simply that's what it is!</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -3017,7 +2690,8 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Plot Draw</string>
+       <string>Plot Draw:
+Just simple point setting for pixel</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -3059,7 +2733,8 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Flood Fill area</string>
+       <string>Flood Fill area:
+Using Inst - allows for instant fill, or animated slow fill</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -3070,7 +2745,7 @@ Text Box! $0xCC</string>
       <property name="icon">
        <iconset resource="resources.qrc">
         <normaloff>:/_work/tool-fill.png</normaloff>
-        <activeon>:/_work/tool-spray-a.png</activeon>:/_work/tool-fill.png</iconset>
+        <activeon>:/_work/tool-fill-a.png</activeon>:/_work/tool-fill.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -3101,7 +2776,9 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Draw text - using the text box type something there</string>
+       <string>Draw text:
+Draw a text from the text box below.
+Eg: Hello world $0xCC will print &quot;hello world&quot; and the symbol</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -3143,7 +2820,9 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Draw Rect - Click left side: Hollow Rect, Click Right side: Filled Rect</string>
+       <string>Draw Rect:
+Click Left side: Hollow Rect
+Click Right side: Filled Rect</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -3185,7 +2864,9 @@ Text Box! $0xCC</string>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Draw Circle - Click left side: Hollow Circle, Click Right side: Filled Circle</string>
+       <string>Draw Circle:
+Click Left side: Hollow Circle
+Click Right side: Filled Circle</string>
       </property>
       <property name="styleSheet">
        <string notr="true">border: 0px</string>
@@ -3217,20 +2898,543 @@ Text Box! $0xCC</string>
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QCheckBox" name="chkInstaFill">
+     <widget class="QFrame" name="frame_2">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>100</y>
-        <width>50</width>
-        <height>21</height>
+        <x>0</x>
+        <y>252</y>
+        <width>170</width>
+        <height>115</height>
        </rect>
       </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <widget class="QPlainTextEdit" name="txtTextDrawText">
+       <property name="geometry">
+        <rect>
+         <x>3</x>
+         <y>4</y>
+         <width>154</width>
+         <height>70</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Monospace</family>
+        </font>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::LineWrapMode::NoWrap</enum>
+       </property>
+       <property name="plainText">
+        <string>Hello World
+Text Box! $0xCC</string>
+       </property>
+       <property name="maximumBlockCount">
+        <number>127</number>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_14">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>76</y>
+         <width>40</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Size X:</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="scrTextHeight">
+       <property name="geometry">
+        <rect>
+         <x>52</x>
+         <y>95</y>
+         <width>80</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>170</red>
+             <green>170</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>170</red>
+             <green>170</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled/>
+        </palette>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>8</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_15">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>94</y>
+         <width>40</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Size Y:</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="scrTextWidth">
+       <property name="geometry">
+        <rect>
+         <x>52</x>
+         <y>77</y>
+         <width>80</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>170</red>
+             <green>170</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>170</red>
+             <green>170</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled/>
+        </palette>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>8</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblTextWidth">
+       <property name="geometry">
+        <rect>
+         <x>136</x>
+         <y>76</y>
+         <width>20</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblTextHeight">
+       <property name="geometry">
+        <rect>
+         <x>136</x>
+         <y>94</y>
+         <width>20</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QFrame" name="frame_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>140</y>
+        <width>160</width>
+        <height>110</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <widget class="QLabel" name="lblPenSize">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>90</y>
+         <width>20</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>99</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblSprayRate">
+       <property name="geometry">
+        <rect>
+         <x>131</x>
+         <y>48</y>
+         <width>20</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>99</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="chkInstaFill">
+       <property name="geometry">
+        <rect>
+         <x>6</x>
+         <y>3</y>
+         <width>50</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Inst</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblPenSize_4">
+       <property name="geometry">
+        <rect>
+         <x>6</x>
+         <y>70</y>
+         <width>110</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Spray/Pen Size:</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="chkPenDrawShape">
+       <property name="geometry">
+        <rect>
+         <x>56</x>
+         <y>3</y>
+         <width>90</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Pen Shape</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblPenSize_3">
+       <property name="geometry">
+        <rect>
+         <x>6</x>
+         <y>27</y>
+         <width>70</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Spray Rate:</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="scrPenDrawSize">
+       <property name="geometry">
+        <rect>
+         <x>6</x>
+         <y>90</y>
+         <width>120</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="palette">
+        <palette>
+         <active/>
+         <inactive/>
+         <disabled/>
+        </palette>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="scrSprayRate">
+       <property name="geometry">
+        <rect>
+         <x>6</x>
+         <y>48</y>
+         <width>120</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>170</red>
+             <green>170</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>170</red>
+             <green>170</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled/>
+        </palette>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="invertedControls">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QToolButton" name="toolButtonCircle_2">
+      <property name="geometry">
+       <rect>
+        <x>119</x>
+        <y>101</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Draw Circle - Click left side: Hollow Circle, Click Right side: Filled Circle</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
       <property name="text">
-       <string>Inst</string>
+       <string/>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
       </property>
       <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonCopyArea">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>101</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Grab Brush:
+Left side: Grab an area
+Right side: Use an already grabbed image
+keyboard default: x - flip left/right
+keyboard default: y - flip up/down
+keyboard default: q - rotate counter clockwise
+keyboard default: e - rotate clockwise
+</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-copy.png</normaloff>
+        <activeon>:/_work/tool-copy-a.png</activeon>:/_work/tool-copy.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
        <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonGridToggle">
+      <property name="geometry">
+       <rect>
+        <x>45</x>
+        <y>101</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Draw text - using the text box type something there</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonRect_2">
+      <property name="geometry">
+       <rect>
+        <x>82</x>
+        <y>101</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Draw Rect - Click left side: Hollow Rect, Click Right side: Filled Rect</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
       </property>
      </widget>
     </widget>
@@ -3238,7 +3442,7 @@ Text Box! $0xCC</string>
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>600</y>
+       <y>630</y>
        <width>160</width>
        <height>160</height>
       </rect>
