@@ -610,8 +610,8 @@ uint32_t clut[256] = {
      <rect>
       <x>0</x>
       <y>22</y>
-      <width>801</width>
-      <height>741</height>
+      <width>800</width>
+      <height>761</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -1525,6 +1525,32 @@ QPushButton:hover {
        </property>
       </widget>
      </widget>
+     <widget class="QLabel" name="label_16">
+      <property name="geometry">
+       <rect>
+        <x>550</x>
+        <y>180</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Selected index:</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblSelectedFont">
+      <property name="geometry">
+       <rect>
+        <x>550</x>
+        <y>200</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>0x00 (0)</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -1601,7 +1627,7 @@ QPushButton:hover {
     <set>QDockWidget::DockWidgetFeature::NoDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
-    <string>Icon Informations:</string>
+    <string>Icon Draw Tools:</string>
    </property>
    <property name="dockLocation">
     <enum>Qt::DockWidgetArea::RightDockWidgetArea</enum>
@@ -1614,7 +1640,7 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>10</y>
+       <y>0</y>
        <width>160</width>
        <height>140</height>
       </rect>
@@ -1949,7 +1975,7 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>157</y>
+       <y>148</y>
        <width>160</width>
        <height>105</height>
       </rect>
@@ -2095,87 +2121,675 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>271</y>
+       <y>260</y>
        <width>160</width>
-       <height>164</height>
+       <height>334</height>
       </rect>
      </property>
      <property name="title">
       <string>Drawing Mode:</string>
      </property>
-     <widget class="QRadioButton" name="radDrawModePlot">
+     <widget class="Line" name="line_10">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>30</y>
-        <width>94</width>
+        <y>210</y>
+        <width>140</width>
+        <height>3</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="scrPenDrawSize">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>187</y>
+        <width>120</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active/>
+        <inactive/>
+        <disabled/>
+       </palette>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblPenSize">
+      <property name="geometry">
+       <rect>
+        <x>134</x>
+        <y>187</y>
+        <width>20</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>99</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkPenDrawShape">
+      <property name="geometry">
+       <rect>
+        <x>60</x>
+        <y>100</y>
+        <width>90</width>
         <height>21</height>
        </rect>
       </property>
       <property name="text">
-       <string>Plot Draw</string>
+       <string>Pen Shape</string>
       </property>
       <property name="checked">
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QRadioButton" name="radDrawModeLine">
+     <widget class="QScrollBar" name="scrSprayRate">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>50</y>
-        <width>94</width>
-        <height>21</height>
+        <y>145</y>
+        <width>120</width>
+        <height>16</height>
        </rect>
       </property>
-      <property name="text">
-       <string>Line Draw</string>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled/>
+       </palette>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <property name="invertedAppearance">
+       <bool>false</bool>
+      </property>
+      <property name="invertedControls">
+       <bool>true</bool>
       </property>
      </widget>
-     <widget class="QRadioButton" name="radDrawModeRect">
+     <widget class="QLabel" name="lblSprayRate">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>82</y>
-        <width>94</width>
-        <height>21</height>
+        <x>135</x>
+        <y>145</y>
+        <width>20</width>
+        <height>16</height>
        </rect>
       </property>
       <property name="text">
-       <string>Rect Draw</string>
+       <string>99</string>
       </property>
      </widget>
-     <widget class="QRadioButton" name="radDrawModeFloodfill">
+     <widget class="QLabel" name="lblPenSize_3">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>135</y>
-        <width>94</width>
-        <height>21</height>
+        <y>124</y>
+        <width>70</width>
+        <height>16</height>
        </rect>
       </property>
       <property name="text">
-       <string>Floodfill</string>
+       <string>Spray Rate:</string>
       </property>
      </widget>
-     <widget class="QRadioButton" name="radDrawModeCircle">
+     <widget class="QLabel" name="lblPenSize_4">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>102</y>
-        <width>94</width>
-        <height>21</height>
+        <y>167</y>
+        <width>110</width>
+        <height>16</height>
        </rect>
       </property>
       <property name="text">
-       <string>Circle Draw</string>
+       <string>Spray/Pen Size:</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="txtTextDrawText">
+      <property name="geometry">
+       <rect>
+        <x>3</x>
+        <y>220</y>
+        <width>154</width>
+        <height>70</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Monospace</family>
+       </font>
+      </property>
+      <property name="lineWrapMode">
+       <enum>QPlainTextEdit::LineWrapMode::NoWrap</enum>
+      </property>
+      <property name="plainText">
+       <string>Hello World
+Text Box! $0xCC</string>
+      </property>
+      <property name="maximumBlockCount">
+       <number>127</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_14">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>292</y>
+        <width>40</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Size X:</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_15">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>310</y>
+        <width>40</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Size Y:</string>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="scrTextWidth">
+      <property name="geometry">
+       <rect>
+        <x>52</x>
+        <y>293</y>
+        <width>80</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled/>
+       </palette>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>8</number>
+      </property>
+      <property name="pageStep">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="scrTextHeight">
+      <property name="geometry">
+       <rect>
+        <x>52</x>
+        <y>311</y>
+        <width>80</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled/>
+       </palette>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>8</number>
+      </property>
+      <property name="pageStep">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblTextHeight">
+      <property name="geometry">
+       <rect>
+        <x>136</x>
+        <y>310</y>
+        <width>20</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>1</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblTextWidth">
+      <property name="geometry">
+       <rect>
+        <x>136</x>
+        <y>292</y>
+        <width>20</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>1</string>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonSprayCan">
+      <property name="geometry">
+       <rect>
+        <x>119</x>
+        <y>28</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-spray.xcf</normaloff>
+        <activeon>:/_work/tool-spray-a.xcf</activeon>:/_work/tool-spray.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonPen">
+      <property name="geometry">
+       <rect>
+        <x>82</x>
+        <y>28</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-pen.xcf</normaloff>
+        <activeon>:/_work/tool-pen-a.xcf</activeon>:/_work/tool-pen.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonLine">
+      <property name="geometry">
+       <rect>
+        <x>45</x>
+        <y>28</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-line.xcf</normaloff>
+        <activeon>:/_work/tool-line-a.xcf</activeon>:/_work/tool-line.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonPlot">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>28</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-plot.xcf</normaloff>
+        <activeon>:/_work/tool-plot-a.xcf</activeon>:/_work/tool-plot.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonFloodFill">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>65</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-fill.xcf</normaloff>
+        <activeon>:/_work/tool-fill-a.xcf</activeon>:/_work/tool-fill.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonText">
+      <property name="geometry">
+       <rect>
+        <x>45</x>
+        <y>65</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-text.xcf</normaloff>
+        <activeon>:/_work/tool-text-a.xcf</activeon>:/_work/tool-text.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonRect">
+      <property name="geometry">
+       <rect>
+        <x>82</x>
+        <y>65</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-box.xcf</normaloff>
+        <activeon>:/_work/tool-box-a.xcf</activeon>:/_work/tool-box.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="toolButtonCircle">
+      <property name="geometry">
+       <rect>
+        <x>119</x>
+        <y>65</y>
+        <width>32</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/tool-circle.xcf</normaloff>
+        <activeon>:/_work/tool-circle-a.xcf</activeon>:/_work/tool-circle.xcf</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QCheckBox" name="chkInstaFill">
       <property name="geometry">
        <rect>
-        <x>96</x>
-        <y>136</y>
+        <x>10</x>
+        <y>100</y>
         <width>50</width>
         <height>21</height>
        </rect>
@@ -2187,115 +2801,79 @@ QPushButton:hover {
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="Line" name="line_5">
+    </widget>
+    <widget class="QFrame" name="frame">
+     <property name="geometry">
+      <rect>
+       <x>3</x>
+       <y>600</y>
+       <width>160</width>
+       <height>160</height>
+      </rect>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <widget class="QLabel" name="label_9">
       <property name="geometry">
        <rect>
-        <x>106</x>
-        <y>90</y>
-        <width>3</width>
-        <height>25</height>
+        <x>10</x>
+        <y>80</y>
+        <width>151</width>
+        <height>70</height>
        </rect>
       </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Vertical</enum>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="chkFillIt">
-      <property name="geometry">
-       <rect>
-        <x>113</x>
-        <y>93</y>
-        <width>41</width>
-        <height>21</height>
-       </rect>
+      <property name="styleSheet">
+       <string notr="true"/>
       </property>
       <property name="text">
-       <string>Fill</string>
+       <string>hold [left-ctrl] and then select the target palette colour to set the colour cycle range.</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
       </property>
      </widget>
-     <widget class="Line" name="line_6">
+     <widget class="QLabel" name="label_8">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>78</y>
-        <width>140</width>
-        <height>3</height>
+        <y>30</y>
+        <width>151</width>
+        <height>40</height>
        </rect>
       </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string>hold [space] in the and left click mouse to PAN</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
       </property>
      </widget>
-     <widget class="Line" name="line_7">
+     <widget class="QLabel" name="label_7">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>124</y>
-        <width>140</width>
-        <height>3</height>
+        <y>0</y>
+        <width>151</width>
+        <height>31</height>
        </rect>
       </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string>TIPS:</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
       </property>
      </widget>
-    </widget>
-    <widget class="QLabel" name="label_7">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>440</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>TIPS:</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_8">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>480</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>hold [space] in the and left click mouse to PAN</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_9">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>520</y>
-       <width>151</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>hold [left-ctrl] and then select the target palette colour</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
     </widget>
    </widget>
   </widget>
@@ -2326,7 +2904,7 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>4</x>
-       <y>3</y>
+       <y>325</y>
        <width>430</width>
        <height>448</height>
       </rect>
@@ -3282,7 +3860,7 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>4</x>
-       <y>458</y>
+       <y>0</y>
        <width>430</width>
        <height>320</height>
       </rect>
@@ -3333,7 +3911,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>260</x>
-        <y>100</y>
+        <y>70</y>
         <width>160</width>
         <height>24</height>
        </rect>
@@ -3476,13 +4054,13 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>260</x>
-        <y>70</y>
+        <y>100</y>
         <width>160</width>
         <height>24</height>
        </rect>
       </property>
       <property name="text">
-       <string>Grab GIF/PNG Palette...</string>
+       <string>Export to Amiga .ilbm ...</string>
       </property>
      </widget>
      <widget class="Line" name="line_4">
@@ -3530,7 +4108,7 @@ QPushButton:hover {
        <property name="geometry">
         <rect>
          <x>320</x>
-         <y>30</y>
+         <y>50</y>
          <width>80</width>
          <height>24</height>
         </rect>

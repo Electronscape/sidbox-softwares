@@ -7,6 +7,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QImage>
 #include <QPlainTextEdit>
+#include <QLabel>
 
 enum {
     font_move_up,
@@ -26,7 +27,7 @@ void clearFontBank();
 class FontEditor : public QObject
 {
 public:
-    FontEditor(QGraphicsView *fnSelectorView, QGraphicsView *fnEditorView, QObject *parent = nullptr);
+    FontEditor(QGraphicsView *fnSelectorView, QGraphicsView *fnEditorView, QLabel *selected, QObject *parent = nullptr);
     QGraphicsScene *fontEditScene;
     QGraphicsScene *fontSelectScene;
     QGraphicsPixmapItem *fontEditPixmap;

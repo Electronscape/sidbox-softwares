@@ -27,10 +27,10 @@
 #define PALETTE_HEIGHT      PALETTE_BOX_VSIZE
 
 #define PALETTE_VRAM_SIZE   (PALETTE_WIDTH * PALETTE_BOX_HSIZE * PALETTE_HEIGHT * PALETTE_BOX_VSIZE)
-int SelectedX = 0;    // this will be clickable later
+int SelectedX = 1;    // this will be clickable later
 int SelectedY = 0;
 int colourCycleSpeed = 0;
-uint8_t     numSelectedPaletteID = 0, numPrevSelectedPaletteID = 0;
+uint8_t     numSelectedPaletteID = 1, numPrevSelectedPaletteID = 1;
 int         paletteDepth    = 256;
 uint8_t     pltColourPreset[3] = {0,0,0};
 
@@ -66,15 +66,16 @@ bool gridEnabled        = false;
 #define gridBlue         128
 
 // default settings at startup
-uint16_t icon_zoom       = 25;
-uint16_t icon_width      = 32;
-uint16_t icon_height     = 32;
+uint16_t icon_zoom       = 4;
+uint16_t icon_width      = 320; // Sidbox 4.3 Screen dimentions;
+uint16_t icon_height     = 240;
 
 int editorViewPortWidth  = 8;   // editor width grid
 int editorViewPortHeight = 8;
 
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
 std::vector<std::vector<uint8_t>> icon_area;
+std::vector<std::vector<uint8_t>> icon_area_backup; // this is the one for if we ever "undo"
 
 // only rastering 8x8 pixel font, nothing advanced
 uint8_t fontedit_area[8][8];
@@ -90,6 +91,10 @@ enum ImageExportConfig {
 };
 uint16_t    ExportBits  = 0;    // just basic bits
 
+
+#define DrawUIMode_InitButton       0x01    // when the mouse  is initially clicked
+#define DrawUIMode_LeftMouseButton  0x10    // used when the mouse is moving while button L is held down
+#define DrawUIMode_RightMouseButton 0x20    // used when the mouse is moving while button R is held down
 
 
 
@@ -192,7 +197,24 @@ uint8_t palleteCanvas[PALETTE_VRAM_SIZE];
 QTimer *updateTimer;
 QTimer *scrollUpdateTimer;
 
-enum DrawMode { Plot, Line, Rect, Circle, FloodFill } currentDrawMode = Plot;
+extern unsigned char SYSFONT[256][8];
+
+// spray can worker
+QTimer *tmrSprayCanTimer;           // the spray can deposite rate
+int     iSpraySX, iSpraySY;         // the current mouse location + scroll offset
+bool    bSprayingTheCan = false;    // this is going to be a trigger needed for spray draw routine
+int     iSprayRate      = 90;       // default rate
+bool    bSprayDraw      = 1;        // 1 is drawing, 0 is clearing
+
+// draw text worker
+int     iTextWidth      = 1;        // width of the text
+int     iTextHeight     = 1;        // height of the text
+
+// PEN system is the host for Spray Can and simple primative
+bool    bPenShapeCircle = true;
+int     iPenShapeSize   = 10;        // default pen size for spray and pen actions
+bool    bFillToolIn     = false;     // weather the cirlce/box tool filles in (MINCE PIE'D!)
+enum DrawMode { Plot, Line, Pen, SprayCan, Rect, Circle, FloodFill, DrawText } currentDrawMode = Plot;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -240,7 +262,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gfxEditor->viewport()->installEventFilter(this);
 
     // Font Selector/Editor Canvas setup --------------------------------//
-    fontEditor = new FontEditor(ui->gfxFontSelector, ui->gfxFontEditbox, this);  // the object of FontEditor
+    fontEditor = new FontEditor(ui->gfxFontSelector, ui->gfxFontEditbox, ui->lblSelectedFont, this);  // the object of FontEditor
     fontEditor->RenderFontSelect();
 
 
@@ -249,20 +271,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // resize rows first
     icon_area.resize(icon_height);
+    icon_area_backup.resize(icon_height);
 
     // resize each row (columns)
-    for (auto &row : icon_area)
-        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
 
-
-
-    /*
-    for(int y=0; y<icon_height; y++){
-        for(int x=0; x<icon_width; x++){
-            icon_area[y][x] = rand() & 0x1;
-        }
-    }
-    */
 
     //editorImg = QImage(32, 32, QImage::Format_RGB32);
     editorPixmap = editorScene->addPixmap(QPixmap::fromImage(editorImg));
@@ -440,6 +454,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));  // load the default value
+    ui->scrEditorZoomVal->setValue(icon_zoom);
     connect(ui->scrEditorZoomVal, &QScrollBar::valueChanged, this, [this](){
         icon_zoom = ui->scrEditorZoomVal->value();
         ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));
@@ -601,6 +616,12 @@ MainWindow::MainWindow(QWidget *parent)
             QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
             settings.setValue("lastProjectDir", info.absolutePath());
             loadProjectIcon(filename.toUtf8().constData());
+            // ---- Palette side-load ----
+            QString baseName = info.completeBaseName();
+            QString paletteFile = info.absolutePath() + "/" + baseName + ".pal";
+            if (QFile::exists(paletteFile)){
+                LoadPaletteData(paletteFile.toUtf8().constData());
+            }
         }
     });
 
@@ -608,21 +629,22 @@ MainWindow::MainWindow(QWidget *parent)
         icon_width = ui->txtProjectImageWidth->text().toInt();
         icon_height = ui->txtProjectImageHeight->text().toInt();
 
-        if(icon_width>2048) icon_width = 2048;
-        if(icon_height>2048) icon_height = 2048;
+        if(icon_width >  2048) icon_width = 2048;
+        if(icon_height > 2048) icon_height = 2048;
 
-        if(icon_width  < 8) icon_width = 8;
-        if(icon_height < 8) icon_height = 8;
+        if(icon_width  < 8)    icon_width = 8;
+        if(icon_height < 8)    icon_height = 8;
 
         ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
         ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
         // resize rows first
         icon_area.resize(icon_height);
+        icon_area_backup.resize(icon_height);
 
         // resize each row (columns)
-        for (auto &row : icon_area)
-            row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
 
         reSize();
         renderEditorCanvas();
@@ -643,13 +665,104 @@ MainWindow::MainWindow(QWidget *parent)
         rotateIcon(0);
     });
 
-    //enum DrawMode { Plot, Line, Rect, Circle, FloodFill } currentDrawMode = Plot;
-    connect(ui->radDrawModePlot,      &QPushButton::clicked, this, [this](){ currentDrawMode = Plot;      });
-    connect(ui->radDrawModeLine,      &QPushButton::clicked, this, [this](){ currentDrawMode = Line;      });
-    connect(ui->radDrawModeCircle,    &QPushButton::clicked, this, [this](){ currentDrawMode = Circle;    });
-    connect(ui->radDrawModeRect,      &QPushButton::clicked, this, [this](){ currentDrawMode = Rect;      });
-    connect(ui->radDrawModeFloodfill, &QPushButton::clicked, this, [this](){ currentDrawMode = FloodFill; });
+    // DRAWING MODE SELECTOR ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // draw tool bar
+    //ui->toolButtonPlot->installEventFilter(this);
+    connect(ui->toolButtonPlot, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonPlot->setChecked(true);   // keep this high lighted!
+        currentDrawMode = Plot;
+    });
+
+    connect(ui->toolButtonLine, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonLine->setChecked(true);   // keep this high lighted!
+        currentDrawMode = Line;
+    });
+
+    connect(ui->toolButtonPen, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonPen->setChecked(true);   // keep this high lighted!
+        currentDrawMode = Pen;
+    });
+
+    connect(ui->toolButtonSprayCan, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonSprayCan->setChecked(true);   // keep this high lighted!
+        currentDrawMode = SprayCan;
+    });
+
+    connect(ui->toolButtonFloodFill, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonFloodFill->setChecked(true);   // keep this high lighted!
+        currentDrawMode = FloodFill;
+    });
+
+    connect(ui->toolButtonText, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonText->setChecked(true);   // keep this high lighted!
+        currentDrawMode = DrawText;
+    });
+
+    ui->toolButtonRect->installEventFilter(this);
+    connect(ui->toolButtonRect, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonRect->setChecked(true);   // keep this high lighted!
+        currentDrawMode = Rect;
+    });
+
+    ui->toolButtonCircle->installEventFilter(this);
+    connect(ui->toolButtonCircle, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonCircle->setChecked(true);   // keep this high lighted!
+        currentDrawMode = Circle;
+    });
+
+
+
+    // pen draw modes ----------------------
+    ui->chkPenDrawShape->setChecked(bPenShapeCircle);   // initial size
+    connect(ui->chkPenDrawShape,      &QCheckBox::clicked,   this, [this](){
+        bPenShapeCircle = ui->chkPenDrawShape->isChecked();
+    });
+
+    ui->scrPenDrawSize->setValue(iPenShapeSize);        // initial size
+    ui->lblPenSize->setText(QString("%1").arg(iPenShapeSize));
+    connect(ui->scrPenDrawSize,       &QScrollBar::valueChanged, this, [this](){
+        iPenShapeSize = ui->scrPenDrawSize->value();
+        ui->lblPenSize->setText(QString("%1").arg(iPenShapeSize));
+    });
+
+    // spray can ---------------------------
+    tmrSprayCanTimer = new QTimer(this);
+    tmrSprayCanTimer->setInterval(iSprayRate);
+    connect(tmrSprayCanTimer, &QTimer::timeout, this, &MainWindow::onSprayCanTick);  // your slot
+
+    ui->scrSprayRate->setValue(iSprayRate);
+    ui->lblSprayRate->setText(QString("%1").arg(iSprayRate));
+    connect(ui->scrSprayRate,         &QScrollBar::valueChanged, this, [this](){
+        iSprayRate = ui->scrSprayRate->value();
+        ui->lblSprayRate->setText(QString("%1").arg(iSprayRate));
+    });
+
+    // text draw ---------------------------
+    ui->scrTextWidth->setValue(iTextWidth);
+    ui->lblTextWidth->setText(QString("%1").arg(iTextWidth));
+
+    ui->scrTextHeight->setValue(iTextHeight);
+    ui->lblTextHeight->setText(QString("%1").arg(iTextHeight));
+    connect(ui->scrTextWidth, &QScrollBar::valueChanged, this, [this](){
+        iTextWidth = ui->scrTextWidth->value();
+        ui->lblTextWidth->setText(QString("%1").arg(iTextWidth));
+    });
+    connect(ui->scrTextHeight, &QScrollBar::valueChanged, this, [this](){
+        iTextHeight = ui->scrTextHeight->value();
+        ui->lblTextHeight->setText(QString("%1").arg(iTextHeight));
+    });
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     connect(ui->cmdImportImage, &QPushButton::clicked, this, [this](){
         static QString lastDir;
         QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
@@ -859,8 +972,6 @@ MainWindow::MainWindow(QWidget *parent)
                 renderEditorCanvas(); // redraw empty icon
             }
         }
-        //doColourCycles();
-
     });
 
 
@@ -949,6 +1060,34 @@ MainWindow::MainWindow(QWidget *parent)
 
 }
 
+
+// used for copying the icon_area to the backup
+void CommitIconArea(){
+    for(int x = 0; x < icon_width; x++){
+        for(int y = 0; y < icon_height; y++){
+            icon_area_backup[y][x] = icon_area[y][x];
+        }
+    }
+}
+
+void UndoIconArea(){
+    for(int x = 0; x < icon_width; x++){
+        for(int y = 0; y < icon_height; y++){
+            icon_area[y][x] = icon_area_backup[y][x];
+        }
+    }
+}
+
+void MainWindow::clearToolButtons(){
+    ui->toolButtonPlot->setChecked(false);
+    ui->toolButtonLine->setChecked(false);
+    ui->toolButtonPen->setChecked(false);
+    ui->toolButtonSprayCan->setChecked(false);
+    ui->toolButtonFloodFill->setChecked(false);
+    ui->toolButtonText->setChecked(false);
+    ui->toolButtonRect->setChecked(false);
+    ui->toolButtonCircle->setChecked(false);
+}
 
 void MainWindow::doColourCycle(){
     static char cbd;
@@ -1333,20 +1472,20 @@ bool extractPngPalette(const QString &path, uint32_t CLUT[256])
                 QVector<Col> cols;
                 cols.reserve(totalCols);
 
-                // 1) Read full palette
+                // Get full palette
                 for (int i = 0; i < totalCols; i++) {
                     int base = pos + 8 + i * 3;
                     int r = p[base + 0];
                     int g = p[base + 1];
                     int b = p[base + 2];
 
-                    // perceptual-ish luminance
+                    // perceptual luminance
                     int lum = r * 30 + g * 59 + b * 11;
 
                     cols.push_back({ r, g, b, lum });
                 }
 
-                // 2) Sort by luminance (groups similar shades)
+                // Sort by luminance (groups similar shades)
                 std::sort(cols.begin(), cols.end(),
                           [](const Col &a, const Col &b) {
                               return a.lum < b.lum;
@@ -1355,7 +1494,7 @@ bool extractPngPalette(const QString &path, uint32_t CLUT[256])
                 int outCount = qMin(paletteRangerLength, totalCols);
                 float step = float(totalCols) / float(outCount);
 
-                // 3) Average groups
+                // Average groups
                 for (int i = 0; i < outCount; i++) {
 
                     int start = int(i * step);
@@ -1425,6 +1564,7 @@ bool MainWindow::importGif(const QString &path){
     int h = img.height();
     int ictoffset = 0;
 
+
     pal.resize(256);
 
     if (ui->chkImportPalette->isChecked()) {
@@ -1460,6 +1600,13 @@ bool MainWindow::importGif(const QString &path){
     ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
     ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
+    icon_area.resize(icon_height);
+    icon_area_backup.resize(icon_height);
+
+    // resize each row (columns)
+    for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+
 
     if(paletteRestrictor){
         int palStart = 0;
@@ -1478,40 +1625,34 @@ bool MainWindow::importGif(const QString &path){
 
                 uint8_t colourIndex = row[x];
 
-                //if (ui->chkUsePalette->isChecked())
-                {
+                ct = img.colorTable();
 
-                    ct = img.colorTable();
+                int rf = (ct[colourIndex] >> 16) & 0xFF;
+                int gf = (ct[colourIndex] >> 8)  & 0xFF;
+                int bf =  ct[colourIndex]        & 0xFF;
 
-                    int rf = (ct[colourIndex] >> 16) & 0xFF;
-                    int gf = (ct[colourIndex] >> 8)  & 0xFF;
-                    int bf =  ct[colourIndex]        & 0xFF;
+                int bestIndex = palStart;
+                int bestDist  = INT_MAX;
 
-                    int bestIndex = palStart;
-                    int bestDist  = INT_MAX;
+                // 🔥 SEARCH ONLY WITHIN RANGE
+                for (int pi = palStart; pi < palEnd; pi++) {
 
-                    // 🔥 SEARCH ONLY WITHIN RANGE
-                    for (int pi = palStart; pi < palEnd; pi++) {
+                    int r2 = (CLUT[pi] >> 16) & 0xFF;
+                    int g2 = (CLUT[pi] >> 8)  & 0xFF;
+                    int b2 =  CLUT[pi]        & 0xFF;
 
-                        int r2 = (CLUT[pi] >> 16) & 0xFF;
-                        int g2 = (CLUT[pi] >> 8)  & 0xFF;
-                        int b2 =  CLUT[pi]        & 0xFF;
+                    int dr = rf - r2;
+                    int dg = gf - g2;
+                    int db = bf - b2;
 
-                        int dr = rf - r2;
-                        int dg = gf - g2;
-                        int db = bf - b2;
+                    int dist = dr*dr + dg*dg + db*db;
 
-                        int dist = dr*dr + dg*dg + db*db;
-
-                        if (dist < bestDist) {
-                            bestDist  = dist;
-                            bestIndex = pi;
-                        }
+                    if (dist < bestDist) {
+                        bestDist  = dist;
+                        bestIndex = pi;
                     }
-
-                    colourIndex = bestIndex;
                 }
-
+                colourIndex = bestIndex;
                 icon_area[y][x] = colourIndex;
             }
         }
@@ -1524,7 +1665,7 @@ bool MainWindow::importGif(const QString &path){
         for (int i = 0; i < 256; i++)
             pal[i] = CLUT[i];//qRgb(i, i, i);
 
-        // Apply your palette
+        // Apply to palette
         img = img.convertToFormat(QImage::Format_Indexed8, pal, Qt::AvoidDither);
 
         // ===== PIXELS =====
@@ -1615,10 +1756,11 @@ void MainWindow::loadProjectIcon(const char *filename){
 
     // resize rows first
     icon_area.resize(icon_height);
+    icon_area_backup.resize(icon_height);
 
     // resize each row (columns)
-    for (auto &row : icon_area)
-        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
 
     reSize();
 
@@ -1627,7 +1769,10 @@ void MainWindow::loadProjectIcon(const char *filename){
         fread(icon_area[y].data(), sizeof(uint8_t), w, f);
     }
 
+
+
     fclose(f);
+    CommitIconArea();
     renderEditorCanvas();
 }
 
@@ -1782,6 +1927,205 @@ void setIconArea(int x, int y){
     icon_area[y][x] = numSelectedPaletteID;
 }
 
+void clrIconArea(int x, int y){
+    if(x<0) return;
+    if(y<0) return;
+    if(x > icon_width-1) return;
+    if(y > icon_height-1) return;
+    icon_area[y][x] = 0;
+}
+
+void setIconAreaPen(int sx, int sy, int size, bool set){
+    //if(set) setIconArea(sx, sy);
+    //else    clrIconArea(sx, sy);
+    void (*IconDrawM)(int, int);
+
+    if(set) IconDrawM = setIconArea;
+    else    IconDrawM = clrIconArea;
+
+    int dx = sx;
+    int dy = sy;
+
+    int x = size/2;
+    int y = 0;
+
+    if(bPenShapeCircle){
+        int err = 0;
+        while(x >= y){
+            IconDrawM(dx + x, dy + y);
+            IconDrawM(dx + y, dy + x);
+            IconDrawM(dx - y, dy + x);
+            IconDrawM(dx - x, dy + y);
+            IconDrawM(dx - x, dy - y);
+            IconDrawM(dx - y, dy - x);
+            IconDrawM(dx + y, dy - x);
+            IconDrawM(dx + x, dy - y);
+
+            // Fill: draw horizontal spans inside the circle
+            for(int fx = dx - x + 1; fx < dx + x; fx++){
+                IconDrawM(fx, dy + y);
+                IconDrawM(fx, dy - y);
+            }
+            for(int fx = dx - y + 1; fx < dx + y; fx++){
+                IconDrawM(fx, dy + x);
+                IconDrawM(fx, dy - x);
+            }
+
+            y++;
+            if(err <= 0){
+                err += 2*y + 1;
+            }
+            if(err > 0){
+                x--;
+                err -= 2*x + 1;
+            }
+        }
+    } else { // just a square box
+        x = size / 2;
+        y = size / 2;
+        for(int rdy = (dy - y); rdy <= (dy + y); rdy++){
+            for(int rdx = (dx - x); rdx <= (dx + x); rdx++){
+                IconDrawM(rdx, rdy);
+            }
+        }
+    }
+}
+
+
+//
+
+void drawHoverBox(int sx, int sy, QImage *edImg){
+    int scaleY = icon_zoom;
+    int scaleX = icon_zoom;
+    int px = sx * icon_zoom;
+    int py = sy * icon_zoom;
+    for (int dy = 0; dy < scaleY; dy++){
+        //if (py + dy >= edImg->height()) break;
+
+        int pycell = py + dy;
+        if (pycell < 0 || pycell >= edImg->height()) continue;
+
+
+        QRgb* scanLine = reinterpret_cast<QRgb*>(edImg->scanLine(py + dy));
+        for (int dx = 0; dx < scaleX; dx++){
+            //if (px + dx >= edImg->width()) break;
+            int pxcell = px + dx;
+            if (pxcell < 0 || pxcell >= edImg->width()) continue;
+
+
+            scanLine[px + dx] = CLUT[numSelectedPaletteID];
+        }
+    }
+}
+
+
+void MainWindow::drawIconAreaPenHover(int sx, int sy, int size, QImage *edImg, bool filled){
+    //if(set) setIconArea(sx, sy);
+    //else    clrIconArea(sx, sy);
+
+    int dx = sx;
+    int dy = sy;
+
+    int x = size/2;
+    int y = 0;
+
+    if(bPenShapeCircle){
+        int err = 0;
+        while(x >= y){
+            drawHoverBox(dx + x, dy + y, edImg);
+            drawHoverBox(dx + y, dy + x, edImg);
+            drawHoverBox(dx - y, dy + x, edImg);
+            drawHoverBox(dx - x, dy + y, edImg);
+            drawHoverBox(dx - x, dy - y, edImg);
+            drawHoverBox(dx - y, dy - x, edImg);
+            drawHoverBox(dx + y, dy - x, edImg);
+            drawHoverBox(dx + x, dy - y, edImg);
+
+            // Fill: draw horizontal spans inside the circle
+            if(filled){
+                for(int fx = dx - x + 1; fx < dx + x; fx++){
+                    drawHoverBox(fx, dy + y, edImg);
+                    drawHoverBox(fx, dy - y, edImg);
+                }
+                for(int fx = dx - y + 1; fx < dx + y; fx++){
+                    drawHoverBox(fx, dy + x, edImg);
+                    drawHoverBox(fx, dy - x, edImg);
+                }
+            }
+
+            y++;
+            if(err <= 0){
+                err += 2*y + 1;
+            }
+            if(err > 0){
+                x--;
+                err -= 2*x + 1;
+            }
+        }
+    } else { // just a square box
+        x = size / 2;
+        y = size / 2;
+        for(int rdy = (dy - y); rdy <= (dy + y); rdy++){
+            for(int rdx = (dx - x); rdx <= (dx + x); rdx++){
+                drawHoverBox(rdx, rdy, edImg);
+            }
+        }
+    }
+}
+
+
+#define DENSITY_SCALE 64
+void MainWindow::onSprayCanTick(){
+    // all the params should already be known by the time this is triggereded
+
+    int osx, osy, dsx, dsy;
+    int rsx, rsy;   // results
+
+    // source location
+    dsx = iSpraySX;
+    dsy = iSpraySY;
+
+    int radius = iPenShapeSize;
+    int progSteps ;
+
+
+    // this is to make it seem constant spread over larger areas, so BIGGER brushes will want MORE itterations, at the scale of our iSprayRate
+    int r = iPenShapeSize;   // radius
+    if( r<1) r=1;
+    progSteps = 1 + (1 * r * r) / (100 - iSprayRate);
+
+    if(progSteps < 1) progSteps = 1;
+
+
+    // osx, osy - are used for the offsets, but they'll need to be calculated in a shape of a circle, cos, sin stuff (yey maths time)
+
+    for(int steps = 0; steps < progSteps; steps++){
+        if(bPenShapeCircle){    // calculate in a circle area
+            do {
+                osx = (rand() % (radius * 2 + 1)) - radius;
+                osy = (rand() % (radius * 2 + 1)) - radius;
+            } while (osx*osx + osy*osy > radius*radius);
+        } else {                // otherwise just a simple boxey area
+            osx = (rand() % (radius * 2 + 1)) - radius;
+            osy = (rand() % (radius * 2 + 1)) - radius;
+
+        }
+
+        rsx = dsx + osx;
+        rsy = dsy + osy;
+
+        if(bSprayingTheCan){    // only works when the conditions are set, BUT i've put this here just incase the timer triggers AFTER the update to Spraycan
+            if(bSprayDraw)
+                setIconArea(rsx, rsy);
+            else
+                clrIconArea(rsx, rsy);
+        }
+    }
+
+    renderEditorCanvas();
+}
+
+
 
 // in your MainWindow class
 bool grabbing = false;
@@ -1791,12 +2135,54 @@ int grabStartScrollH, grabStartScrollV;
 bool MainWindow::eventFilter(QObject *obj, QEvent *event){
     uint8_t r,g,b;
 
+
+    if(event->type() == QEvent::MouseButtonPress) {
+        // will need these for the tool buttons that need the left and right bitsies
+        if(obj == ui->toolButtonRect){
+            //printf("plot draw mode      ");
+            auto *me = static_cast<QMouseEvent*>(event);
+            QPoint p = me->pos(); // position INSIDE button
+
+            // Do your region logic here
+            //qDebug() << "Clicked at:" << p;
+
+            // Example: split button
+            if (p.x() < ui->toolButtonRect->width() / 2) {
+                //printf("Left side");
+                bFillToolIn = false;
+            } else {
+                //printf("Right side");
+                bFillToolIn = true;
+            }
+
+        }
+
+        if(obj == ui->toolButtonCircle){
+            //printf("plot draw mode      ");
+            auto *me = static_cast<QMouseEvent*>(event);
+            QPoint p = me->pos(); // position INSIDE button
+
+            // Do your region logic here
+            //qDebug() << "Clicked at:" << p;
+
+            // Example: split button
+            if (p.x() < ui->toolButtonCircle->width() / 2) {
+                //printf("Left side");
+                bFillToolIn = false;
+            } else {
+                //printf("Right side");
+                bFillToolIn = true;
+            }
+
+        }
+    }
+
     // Palette Selector
     if(obj == ui->gfxPalleteSelect){
         if (event->type() == QEvent::KeyPress){ // capture current Colour Palette Index.
             QKeyEvent *ke = static_cast<QKeyEvent*>(event);
             if (ke->isAutoRepeat()) return true; // ignore repeats
-            printf("Palette keypress event\n");
+            //printf("Palette keypress event\n");
             if (ke->key() == Qt::Key_Control){
                 clickedIndex = numSelectedPaletteID;
                 selectingCycle = true;
@@ -1902,9 +2288,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 setCursor(Qt::ArrowCursor);
                 return true;
             }
+            if (ke->key() == Qt::Key_Z && (ke->modifiers() & Qt::ControlModifier) && !ke->isAutoRepeat()){
+                UndoIconArea();
+                renderEditorCanvas();
+                return true;
+            }
         }
-
-
         return QObject::eventFilter(obj, event);
     }
 
@@ -1953,19 +2342,17 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 if(hoverPixelX > editorViewPortWidth - 1)  hoverPixelX = editorViewPortWidth-1;
                 if(hoverPixelY > editorViewPortHeight - 1) hoverPixelY = editorViewPortHeight-1;
 
+                int dx = hoverPixelX + xOffset;
+                int dy = hoverPixelY + yOffset;
+
                 ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
-                    .arg(hoverPixelX, 4, 10, QChar('0'))
-                    .arg(hoverPixelY, 4, 10, QChar('0'))
+                    .arg(dx, 4, 10, QChar('0'))
+                    .arg(dy, 4, 10, QChar('0'))
                 );
 
-                // Only draw if a button is pressed
-                if(currentDrawMode == Plot){    // this will only work with Motion Drawing (plot)
-                    if (mouseEvent->buttons() & Qt::LeftButton) {
-                        icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = numSelectedPaletteID;//currentPaletteID; // paint
-                    } else if (mouseEvent->buttons() & Qt::RightButton) {
-                        icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = 0; // erase
-                    }
-                }
+
+                if(mouseEvent->buttons() & Qt::LeftButton)  ProcessClickPaint(dx, dy, DrawUIMode_LeftMouseButton); // moving draw process
+                if(mouseEvent->buttons() & Qt::RightButton) ProcessClickPaint(dx, dy, DrawUIMode_RightMouseButton); // moving draw process
 
                 if(captureXYStart==true){
                     ltcapturedX = ctcapturedX;
@@ -1984,6 +2371,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 // check if we're in a tool that needs point to point interaction
                 // if() {
                 if(!grabbing){
+                    tmrSprayCanTimer->stop();   // regardless, should stop the spray can just incase, stuck
+                    bSprayingTheCan = false;
+
                     if(captureXYStart==true){
                         int xOffset = ui->scrEditorH->value();
                         int yOffset = ui->scrEditorV->value();
@@ -2003,7 +2393,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                             while(true){
                                 // Commit pixel color (for example, foreground color)
-                                icon_area[y][x] = numSelectedPaletteID;
+                                //icon_area[y][x] = numSelectedPaletteID;
+                                setIconArea(x,y);
 
                                 if(x == x1 && y == y1) break;
                                 e2 = 2 * err;
@@ -2038,7 +2429,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                 setIconArea(right, y);
                             }
 
-                            if(ui->chkFillIt->isChecked()){
+                            if(bFillToolIn){
                                 for(int x = left; x <= right; x++){
                                     for(int y = top; y <= bottom; y++)
                                         setIconArea(x, y);
@@ -2049,7 +2440,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                             int cx = capturedX + xOffset;
                             int cy = capturedY + yOffset;
                             int radius = std::max(abs((hoverPixelX  + xOffset) - cx), abs((hoverPixelY  + yOffset) - cy));
-                            bool fill = ui->chkFillIt->isChecked();
+                            bool fill = bFillToolIn;
 
                             if(radius <= 3){ // small radius -> distance check
                                 for(int y = cy - radius; y <= cy + radius; y++){
@@ -2114,6 +2505,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
             if (mouseEvent->button() == Qt::LeftButton) {
                 //printf( "Left click at %lu\n",  mouseEvent->pos());
+                CommitIconArea();   // copy what we have right now to backup
 
                 // check if we're in a tool that needs point to point interaction
                 // if() {
@@ -2125,13 +2517,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 //printf("P2P Tool: capture point CX: %d, CY: %d\n", capturedX, capturedY);
                 // }
                 // else //its likely just to a pixel draw
-                if(!grabbing)
-                    ProcessLeftClickPaint();
+                if(!grabbing){
+                    ProcessClickPaint(hoverPixelX + xOffset, hoverPixelY + yOffset, DrawUIMode_InitButton | DrawUIMode_LeftMouseButton); // initial click
+                }
                 updateTimer->start(1);
             }
             else if (mouseEvent->button() == Qt::RightButton) {
+                CommitIconArea();   // copy what we have right now to backup
                 //printf( "Right click atlu\n",  mouseEvent->pos());
-                icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = 0;
+                ProcessClickPaint(hoverPixelX + xOffset, hoverPixelY + yOffset, DrawUIMode_InitButton | DrawUIMode_RightMouseButton); // initial click
                 updateTimer->start(1);
 
             }
@@ -2177,21 +2571,244 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 }
 
 
-void MainWindow::ProcessLeftClickPaint(){
-    int xOffset = ui->scrEditorH->value();
-    int yOffset = ui->scrEditorV->value();
-    //
+static void buildTextPtrFromQString(const QString &src, char *outBuf, int outBufSize){
+    if (!outBuf || outBufSize <= 0) return;
+
+    QByteArray ba;
+    ba.reserve(outBufSize);
+
+    for (int i = 0; i < src.length(); ){
+        // Detect $0xNN
+        if (src[i] == '$' && i + 4 < src.length() && src[i + 1] == '0' && (src[i + 2] == 'x' || src[i + 2] == 'X')) {
+            bool ok = false;
+            QString hex = src.mid(i + 3, 2);
+            int value = hex.toInt(&ok, 16);
+
+            if (ok && value >= 0 && value <= 255) {
+                ba.append(static_cast<char>(value)); // exact byte
+                i += 5;
+                continue;
+            }
+        }
+
+        // Normal character → force to raw 8-bit
+        ushort uc = src[i].unicode();
+        ba.append(static_cast<char>(uc & 0xFF));
+        i++;
+    }
+
+    int out = 0;
+    for (; out < ba.size() && out < outBufSize - 1; ++out)
+        outBuf[out] = ba[out];
+    outBuf[out] = '\0';
+}
+
+
+void MainWindow::drawTextHover(int sx, int sy, QImage *edImg){
+    // in this section we're only drawing over the top of what is already rendered, but NOT commiting it to icon_area.
+    char textptr[128];
+    QString src = ui->txtTextDrawText->toPlainText();
+
+    if (!edImg) return;
+
+    buildTextPtrFromQString(src, textptr, sizeof(textptr));
+
+    int x = sx;
+    int y = sy;
+
+    const QRgb colf = CLUT[numSelectedPaletteID]; // foreground color
+    const int zoom = icon_zoom; // base editor zoom
+
+    const int scaleX = zoom * iTextWidth;   // horizontal block size
+    const int scaleY = zoom * iTextHeight;  // vertical block size
+
+    for (int32_t i = 0; textptr[i] != '\0'; ++i){
+        if (textptr[i] == '\n') {
+            x = sx;
+            y += 8 * scaleY; // next line
+            continue;
+        }
+
+        //if ((uint32_t)x >= edImg->width() || (uint32_t)y >= edImg->height())            continue;
+
+
+        const uint8_t* pixeldata = SYSFONT[(uint8_t)textptr[i]];
+
+        for (int row = 0; row < 8; ++row){
+            int py = y + row * scaleY;
+            //if ((uint32_t)py >= edImg->height()) break;
+            if ((py + scaleY <= 0) || (py >= edImg->height())) // fully off-screen vertically
+                continue;
+
+            for (int col = 0; col < 8; ++col){
+                if (pixeldata[col] & (1 << row)){
+                    int px = x + col * scaleX;
+
+                    //if ((uint32_t)px >= edImg->width()) break;
+                    if ((px + scaleX <= 0) || (px >= edImg->width())) // fully off-screen horizontally
+                        continue;
+
+                    // Fill block taking both zoom and text scaling into account
+                    for (int dy = 0; dy < scaleY; dy++){
+                        //if (py + dy >= edImg->height()) break;
+
+                        int pycell = py + dy;
+                        if (pycell < 0 || pycell >= edImg->height()) continue;
+
+
+                        QRgb* scanLine = reinterpret_cast<QRgb*>(edImg->scanLine(py + dy));
+                        for (int dx = 0; dx < scaleX; dx++){
+                            //if (px + dx >= edImg->width()) break;
+                            int pxcell = px + dx;
+                            if (pxcell < 0 || pxcell >= edImg->width()) continue;
+
+
+                            scanLine[px + dx] = colf;
+                        }
+                    }
+                }
+            }
+        }
+
+        x += 8 * scaleX; // advance for next character
+    }
+
+}
+
+void MainWindow::drawText(int sx, int sy, bool setPixel){
+    char textptr[128];
+    QString src = ui->txtTextDrawText->toPlainText();
+    buildTextPtrFromQString(src, textptr, sizeof(textptr));
+
+    int x = sx;
+    int y = sy;
+
+    const int zoom = icon_zoom; // editor zoom
+    const int scaleX = iTextWidth;   // horizontal block size
+    const int scaleY = iTextHeight;  // vertical block size
+
+    for (int32_t i = 0; textptr[i] != '\0'; ++i){
+        if (textptr[i] == '\n') {
+            x = sx;
+            y += 8 * scaleY; // next line
+            continue;
+        }
+
+        const uint8_t* pixeldata = SYSFONT[(uint8_t)textptr[i]];
+
+        // each row
+        for (int row = 0; row < 8; ++row){
+            int py = y + row * scaleY;
+            if (py + scaleY <= 0 || py >= icon_height) // fully off-screen vertically
+                continue;
+
+            for (int col = 0; col < 8; ++col){
+                if (pixeldata[col] & (1 << row)){
+                    int px = x + col * scaleX;
+                    if (px + scaleX <= 0 || px >= icon_width) // fully off-screen horizontally
+                        continue;
+
+                    // Fill block in icon_area with clipping
+                    for (int dy = 0; dy < scaleY; dy++){
+                        int pycell = py + dy;
+                        if (pycell < 0 || pycell >= icon_height) continue;
+
+                        for (int dx = 0; dx < scaleX; dx++){
+                            int pxcell = px + dx;
+                            if (pxcell < 0 || pxcell >= icon_width) continue;
+
+                            if(setPixel)
+                                setIconArea(pxcell, pycell);
+                            else
+                                clrIconArea(pxcell, pycell);
+                        }
+                    }
+                }
+            }
+        }
+
+        x += 8 * scaleX; // advance for next character
+    }
+}
+
+
+void MainWindow::getTextCenterHandle(int sx, int sy, int* outX, int* outY){
+    QByteArray ba = ui->txtTextDrawText->toPlainText().toUtf8();
+    const char* textptr = ba.constData();
+
+    int lineWidth = 0;
+    int maxWidth = 0;
+    int totalHeight = 8 * iTextHeight; // start with one line
+
+    for (int i = 0; textptr[i] != '\0'; i++) {
+        if (textptr[i] == '\n') {
+            totalHeight += 8 * iTextHeight;
+            if (lineWidth > maxWidth) maxWidth = lineWidth;
+            lineWidth = 0;
+        } else
+            lineWidth += 8 * iTextWidth;
+    }
+    if (lineWidth > maxWidth) maxWidth = lineWidth;
+
+    // Compute center handle
+    *outX = sx - maxWidth / 2;
+    *outY = sy - totalHeight / 2;
+}
+
+
+void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
+    int nsx, nsy;
+    nsx = sx;
+    nsy = sy;
     switch(currentDrawMode){
-        case Plot:
-            icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset] = numSelectedPaletteID;
-            break;
+        case Plot: {    // this will only work with Motion Drawing (plot)
+            if(flags & DrawUIMode_LeftMouseButton) // only when left mouse is down
+                setIconArea(sx, sy);
+            else    // otherwise Right mouse button?
+                clrIconArea(sx, sy);
+        } break;
+
+        case Pen: {    // this will only work with Motion Drawing (plot)
+            if(flags & DrawUIMode_LeftMouseButton) // only when left mouse is down
+                setIconAreaPen(sx, sy, iPenShapeSize, true);
+            else    // otherwise Right mouse button?
+                setIconAreaPen(sx, sy, iPenShapeSize, false);
+        } break;
 
         case FloodFill:
-            floodFill(hoverPixelX + xOffset, hoverPixelY + yOffset, numSelectedPaletteID);
+            if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_LeftMouseButton))   // only allow this to work on the Initial Mouse Hit
+                floodFill(sx, sy, numSelectedPaletteID);
             break;
+
+        case DrawText: {
+            getTextCenterHandle(sx, sy, &nsx, &nsy);    // source x, source y, return results x, return results y
+            if(flags & DrawUIMode_InitButton){   // only allow this to work on the Initial Mouse Hit
+                if(flags & DrawUIMode_LeftMouseButton)
+                    drawText(nsx, nsy, 1);
+                else
+                    drawText(nsx, nsy, 0);
+            }
+        } break;
+
+        case SprayCan:{ // some weird condition logic here
+            if(flags & DrawUIMode_LeftMouseButton){
+                iSpraySX = sx;
+                iSpraySY = sy;
+                bSprayDraw = 1; // is drawing, NOT erassing (assing!??)
+                if(bSprayingTheCan == false){
+                    bSprayingTheCan=true;
+                    tmrSprayCanTimer->stop();   // just incase it didnt stop
+                    tmrSprayCanTimer->setInterval(22); // for a roughly 60hz update
+                    tmrSprayCanTimer->start();
+                    //printf("new spray rate: %lu\n", 1000 - (iSprayRate * 10));
+                }
+            } // the handling of the stop spray can, is in the mouse release event in the Editor Window
+        }
+
         default:
             return;
     }
+
 }
 
 void MainWindow::readToolXY(int *rx, int *ry){
@@ -2204,7 +2821,6 @@ void MainWindow::readToolXY(int *rx, int *ry){
 
     *rx = resx;
     *ry = resy;
-
 }
 
 
@@ -2347,9 +2963,11 @@ void MainWindow::renderEditorCanvas(){
 
             // -------- GRID --------
             if(drawGrid) {
-                if ((x % icon_zoom == 0 && x != 0) ||
-                    (y % icon_zoom == 0 && y != 0)){
-                    scan[x] = gridColor;
+                if(icon_zoom>7){
+                    if ((x % icon_zoom == 0 && x != 0) ||
+                        (y % icon_zoom == 0 && y != 0)){
+                        scan[x] = gridColor;
+                    }
                 }
             }
         }
@@ -2478,7 +3096,7 @@ void MainWindow::renderEditorCanvas(){
                     invertCell(right, y);
                 }
 
-                if(ui->chkFillIt->isChecked()){
+                if(bFillToolIn){
                     for(int x = left; x <= right; x++){
                         for(int y = top; y <= bottom; y++)
                             invertCell(x, y);
@@ -2517,7 +3135,7 @@ void MainWindow::renderEditorCanvas(){
                                 invertCell(x, y);
                             }
                             // Fill: inside the radius
-                            else if(ui->chkFillIt->isChecked() && dist < radius - 0.5f){
+                            else if(bFillToolIn && dist < radius - 0.5f){
                                 invertCell(x, y);
                             }
                         }
@@ -2537,7 +3155,7 @@ void MainWindow::renderEditorCanvas(){
                         invertCell(cx + x, cy - y);
 
 
-                        if(ui->chkFillIt->isChecked()){
+                        if(bFillToolIn){
                             // Fill horizontal spans between the left/right of the circle
                             for(int fillX = cx - x + 1; fillX < cx + x; fillX++){
                                 invertCell(fillX, cy + y);
@@ -2560,6 +3178,33 @@ void MainWindow::renderEditorCanvas(){
                     }
                 }
             }
+        } else {
+            if(currentDrawMode == DrawText){
+                //int startX = cellX * icon_zoom;
+                //int startY = cellY * icon_zoom;
+                int x1cell = hoverPixelX;// * icon_zoom;
+                int y1cell = hoverPixelY;// * icon_zoom;
+                int nsx, nsy;
+
+                getTextCenterHandle(x1cell, y1cell, &nsx, &nsy);
+
+                nsx *= icon_zoom;
+                nsy *= icon_zoom;
+
+                //drawTextHover(x1cell, y1cell, &editorImg);
+                drawTextHover(nsx, nsy, &editorImg);
+            }
+            if(currentDrawMode == Pen){
+                int x1cell = hoverPixelX;// * icon_zoom;
+                int y1cell = hoverPixelY;// * icon_zoom;
+                drawIconAreaPenHover(x1cell, y1cell, iPenShapeSize, &editorImg, true);
+            }
+            if(currentDrawMode == SprayCan){
+                int x1cell = hoverPixelX;// * icon_zoom;
+                int y1cell = hoverPixelY;// * icon_zoom;
+                drawIconAreaPenHover(x1cell, y1cell, iPenShapeSize * 2, &editorImg, false);
+            }
+
         }
     }
     editorPixmap->setPixmap(QPixmap::fromImage(editorImg));

@@ -57,7 +57,7 @@ private:
     void updateEditorScrollBars();
     void onEditorScrollChanged();
     void rotateIcon(int direction = 0);
-    void ProcessLeftClickPaint();
+    void ProcessClickPaint(int sx, int sy, unsigned char flags);
     void floodFill(int startX, int startY, uint8_t fillColor);
     bool importGif(const QString &path);
     void doReassignedPalette(uint8_t targetPalID);
@@ -69,8 +69,15 @@ private:
 
     void readToolXY(int *rx, int *ry);
 
+    void getTextCenterHandle(int sx, int sy, int* outX, int* outY);
+    void drawIconAreaPenHover(int sx, int sy, int size, QImage *edImg, bool filled=false);
+    void drawTextHover(int sx, int sy, QImage *edImg);
+    void drawText(int sx, int sy, bool setPixel);
     void doColourCycle();
     void onColourCycleTick();
+    void onSprayCanTick();
+
+    void clearToolButtons();
 
     FontEditor *fontEditor;
 

@@ -11,6 +11,7 @@
 
 QGraphicsView *gfxSelectorView;
 QGraphicsView *gfxEditorView;
+QLabel        *fontSelectedLabel;
 QObject       *host;
 
 #define editorViewPortWidth     16
@@ -25,11 +26,12 @@ int selectedFontID = 0;
 extern unsigned char SYSFONT[256][8];
 
 //FontEditor::FontEditor(QGraphicsView *fnSelectorView, QGraphicsView *fnEditorView, QObject *parent){
-FontEditor::FontEditor(QGraphicsView *fnSelectorView, QGraphicsView *fnEditorView, QObject *parent) : QObject(parent)
+FontEditor::FontEditor(QGraphicsView *fnSelectorView, QGraphicsView *fnEditorView, QLabel *selected, QObject *parent) : QObject(parent)
 {
 
     gfxSelectorView = fnSelectorView;
     gfxEditorView = fnEditorView;
+    fontSelectedLabel = selected;
     host = parent;
 
     fontSelectScene = new QGraphicsScene(parent);
@@ -75,6 +77,11 @@ bool FontEditor::eventFilter(QObject *obj, QEvent *event){
                 FShoverPixelY = int(scenePos.y()) / 16;
 
                 selectedFontID = (FShoverPixelY * 16) + FShoverPixelX;
+
+                fontSelectedLabel->setText(QString("%1 (%2)")
+                                .arg(hex8(selectedFontID))
+                                .arg(selectedFontID)
+                                );
 
                 if(FShoverPixelX < 0) FShoverPixelX = 0;
                 if(FShoverPixelY < 0) FShoverPixelY = 0;
