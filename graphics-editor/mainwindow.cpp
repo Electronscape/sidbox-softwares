@@ -71,12 +71,16 @@ uint16_t icon_zoom       = 4;
 uint16_t icon_width      = 320; // Sidbox 4.3 Screen dimentions;
 uint16_t icon_height     = 240;
 
+uint16_t icon_old_width  = 320;
+uint16_t icon_old_height = 240;
+
 int editorViewPortWidth  = 8;   // editor width grid
 int editorViewPortHeight = 8;
 
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
 std::vector<std::vector<uint8_t>> icon_area;
 std::vector<std::vector<uint8_t>> icon_area_backup; // this is the one for if we ever "undo"
+std::vector<std::vector<uint8_t>> icon_area_redo;   // basically this is the area to redo things
 
 // only rastering 8x8 pixel font, nothing advanced
 uint8_t fontedit_area[8][8];
@@ -273,10 +277,12 @@ MainWindow::MainWindow(QWidget *parent)
     // resize rows first
     icon_area.resize(icon_height);
     icon_area_backup.resize(icon_height);
+    icon_area_redo.resize(icon_height);
 
     // resize each row (columns)
     for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
     for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
 
 
     //editorImg = QImage(32, 32, QImage::Format_RGB32);
@@ -648,6 +654,10 @@ MainWindow::MainWindow(QWidget *parent)
         icon_width = ui->txtProjectImageWidth->text().toInt();
         icon_height = ui->txtProjectImageHeight->text().toInt();
 
+        // this image was SET a new size, no resizing
+        icon_old_width = icon_width;
+        icon_old_height = icon_height;
+
         if(icon_width >  2048) icon_width = 2048;
         if(icon_height > 2048) icon_height = 2048;
 
@@ -660,10 +670,35 @@ MainWindow::MainWindow(QWidget *parent)
         // resize rows first
         icon_area.resize(icon_height);
         icon_area_backup.resize(icon_height);
+        icon_area_redo.resize(icon_height);
+
 
         // resize each row (columns)
         for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
         for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+
+        reSize();
+        renderEditorCanvas();
+    });
+
+    connect(ui->cmdSetIconAreaResize, &QPushButton::clicked, this, [this](){
+        icon_old_width = icon_width;
+        icon_old_height = icon_height;
+
+
+        icon_width = ui->txtProjectImageWidth->text().toInt();
+        icon_height = ui->txtProjectImageHeight->text().toInt();
+
+        if(icon_width >  2048) icon_width = 2048;
+        if(icon_height > 2048) icon_height = 2048;
+
+        if(icon_width  < 8)    icon_width = 8;
+        if(icon_height < 8)    icon_height = 8;
+
+        ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+        ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
+        ResizeIconArea(icon_width, icon_height, icon_old_width, icon_old_height);
 
         reSize();
         renderEditorCanvas();
@@ -1049,6 +1084,13 @@ MainWindow::MainWindow(QWidget *parent)
         ui->frmFontWorkbench->hide();
     });
 
+    connect(ui->cmdExportAmigaILBM, &QPushButton::clicked, this, [this](){
+        QString filename = QFileDialog::getSaveFileName(this, "Save Amiga ILBM (256 AGA)", "", "Amiga ILBM (*.iff *.ilbm)");
+        // saveIcon(filename);
+        if(!filename.isEmpty())
+            ExportToILBM(filename.toUtf8().constData());
+    });
+
     connect(ui->sldPaletteOffset, &QScrollBar::valueChanged, this, [this](){
         paletteRangerOffset = ui->sldPaletteOffset->value();
         ui->lblPaletteOffset->setText( QString("%1").arg(paletteRangerOffset));
@@ -1090,12 +1132,123 @@ void CommitIconArea(){
 }
 
 void UndoIconArea(){
+
+    // copy whats in the icon_area to the redo buffer
+    for(int x = 0; x < icon_width; x++){
+        for(int y = 0; y < icon_height; y++){
+            icon_area_redo[y][x] = icon_area[y][x];
+        }
+    }
+
+    // copy back from the backup to the icon area
     for(int x = 0; x < icon_width; x++){
         for(int y = 0; y < icon_height; y++){
             icon_area[y][x] = icon_area_backup[y][x];
         }
     }
+
+    // make a back up of the last known icon_area
+    for(int x = 0; x < icon_width; x++){
+        for(int y = 0; y < icon_height; y++){
+            icon_area_backup[y][x] = icon_area_redo[y][x];
+        }
+    }
 }
+
+
+enum ResizeMode {
+    Resample,       // averaging
+    NearestNeighbor // simple pixel copy
+};
+
+void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight){
+    if (newWidth <= 0 || newHeight <= 0) return;
+    int mode = ui->chkResampler->isChecked() ? Resample:NearestNeighbor;
+
+    std::vector<std::vector<uint8_t>> icon_area_tmp = icon_area;
+
+    // Resize icon_area
+    icon_area.resize(newHeight);
+    for (auto &row : icon_area)
+        row.resize(newWidth, 0);
+
+    double scaleX = (double)oldWidth / newWidth;
+    double scaleY = (double)oldHeight / newHeight;
+
+    for (int y = 0; y < newHeight; y++) {
+        int srcY = (mode == NearestNeighbor) ? (int)(y * scaleY) : 0;
+        for (int x = 0; x < newWidth; x++) {
+            int srcX = (mode == NearestNeighbor) ? (int)(x * scaleX) : 0;
+
+            if (mode == NearestNeighbor) {
+                // same as before
+                if (srcY >= oldHeight) srcY = oldHeight - 1;
+                if (srcX >= oldWidth)  srcX = oldWidth - 1;
+                icon_area[y][x] = icon_area_tmp[srcY][srcX];
+            } else {
+                // Color-aware resample
+                double x0 = x * scaleX;
+                double x1 = (x + 1) * scaleX;
+                double y0 = y * scaleY;
+                double y1 = (y + 1) * scaleY;
+
+                int ix0 = (int)floor(x0), ix1 = (int)ceil(x1);
+                int iy0 = (int)floor(y0), iy1 = (int)ceil(y1);
+
+                if (ix1 > oldWidth)  ix1 = oldWidth;
+                if (iy1 > oldHeight) iy1 = oldHeight;
+
+                int rSum = 0, gSum = 0, bSum = 0;
+                int count = 0;
+
+                for (int sy = iy0; sy < iy1; sy++) {
+                    for (int sx = ix0; sx < ix1; sx++) {
+                        uint8_t idx = icon_area_tmp[sy][sx];
+                        uint32_t c = CLUT[idx];
+                        rSum += (c >> 16) & 0xFF;
+                        gSum += (c >> 8) & 0xFF;
+                        bSum += c & 0xFF;
+                        count++;
+                    }
+                }
+
+                if (count == 0) count = 1;
+                int rAvg = rSum / count;
+                int gAvg = gSum / count;
+                int bAvg = bSum / count;
+
+                // Find nearest palette index
+                int bestIdx = 0;
+                int bestDist = 256*256*3;
+                for (int i = 0; i < 256; i++) {
+                    uint32_t c = CLUT[i];
+                    int dr = ((c >> 16) & 0xFF) - rAvg;
+                    int dg = ((c >> 8) & 0xFF) - gAvg;
+                    int db = (c & 0xFF) - bAvg;
+                    int dist = dr*dr + dg*dg + db*db;
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestIdx = i;
+                    }
+                }
+                icon_area[y][x] = (uint8_t)bestIdx;
+            }
+        }
+    }
+
+    icon_width  = newWidth;
+    icon_height = newHeight;
+
+    icon_area_backup.resize(newHeight);
+    for (auto &row : icon_area_backup) row.resize(newWidth, 0);
+
+    icon_area_redo.resize(newHeight);
+    for (auto &row : icon_area_redo)   row.resize(newWidth, 0);
+
+    renderEditorCanvas();
+}
+
+
 
 void MainWindow::clearToolButtons(){
     ui->toolButtonPlot->setChecked(false);
@@ -1222,6 +1375,148 @@ QString generateRLE(
     }
 
     return output;
+}
+
+void MainWindow::ExportToILBM(const char *filename)
+{
+    bool RLE = true;   // <-- toggle compression here
+
+    RLE = ui->chkExportRLE->isChecked();
+
+    FILE *f = fopen(filename, "wb");
+    if (!f) return;
+
+    const int width  = icon_width;
+    const int height = icon_height;
+    const int planes = 8;
+
+    const int bytesPerRow = ((width + 15) / 16) * 2;
+
+    // # Build BODY (compressed or not)
+
+    uint8_t *bodyBuf = (uint8_t*)malloc(height * planes * bytesPerRow * 2);
+    int bodySize = 0;
+
+    uint8_t *rowBuf = (uint8_t*)calloc(planes * bytesPerRow, 1);
+
+    for (int y = 0; y < height; y++){
+        memset(rowBuf, 0, planes * bytesPerRow);
+        for (int x = 0; x < width; x++){
+            uint8_t pix = icon_area[y][x];
+            int byte = x >> 3;
+            int bit  = 7 - (x & 7);
+            for (int p = 0; p < planes; p++){
+                if (pix & (1 << p))
+                    rowBuf[p * bytesPerRow + byte] |= (1 << bit);
+            }
+        }
+
+        // RLE or raw
+        if (!RLE){  // RAW output
+            memcpy(bodyBuf + bodySize, rowBuf, planes * bytesPerRow);
+            bodySize += planes * bytesPerRow;
+        } else {    // RLE Compressed
+            for (int p = 0; p < planes; p++){
+                uint8_t *src = rowBuf + p * bytesPerRow;
+                int i = 0;
+                while (i < bytesPerRow){
+                    int run = 1;
+                    while (i + run < bytesPerRow && run < 128 && src[i] == src[i + run])
+                        run++;
+
+                    if (run >= 2){
+                        bodyBuf[bodySize++] = (uint8_t)(1 - run);
+                        bodyBuf[bodySize++] = src[i];
+                        i += run;
+                    } else {
+                        int start = i++;
+                        while (i < bytesPerRow) {
+                            int look = 1;
+                            while (i + look < bytesPerRow && look < 128 && src[i] == src[i + look])
+                                look++;
+                            if (look >= 2 || (i - start) >= 127)
+                                break;
+                            i++;
+                        }
+
+                        int count = i - start;
+                        bodyBuf[bodySize++] = (uint8_t)(count - 1);
+                        for (int j = 0; j < count; j++)
+                            bodyBuf[bodySize++] = src[start + j];
+                    }
+                }
+            }
+        }
+    }
+
+    free(rowBuf);
+
+    // IFF requires even-sized chunks
+    int bodyPad = bodySize & 1;
+
+    // Calculate FORM size
+    uint32_t bmhdSize = 20;
+    uint32_t cmapSize = 256 * 3;
+
+    uint32_t formSize =
+        4 +
+        8 + bmhdSize +
+        8 + cmapSize +
+        8 + bodySize +
+        bodyPad;
+    // FORM header
+    fputs("FORM", f);
+    fputc((formSize >> 24) & 0xFF, f);
+    fputc((formSize >> 16) & 0xFF, f);
+    fputc((formSize >> 8)  & 0xFF, f);
+    fputc(formSize & 0xFF, f);
+    fputs("ILBM", f);
+
+    // BMHD
+    fputs("BMHD", f);
+    fputc(0, f); fputc(0, f); fputc(0, f); fputc(20, f);
+
+    fputc(width >> 8, f);  fputc(width & 0xFF, f);
+    fputc(height >> 8, f); fputc(height & 0xFF, f);
+
+    fputc(0, f); fputc(0, f);   // x
+    fputc(0, f); fputc(0, f);   // y
+
+    fputc(planes, f);
+    fputc(0, f);                // masking
+    fputc(RLE ? 1 : 0, f);      // compression
+    fputc(0, f);                // pad
+
+    fputc(0, f); fputc(0, f);   // transparent
+    fputc(10, f); fputc(10, f); // aspect
+
+    fputc(width >> 8, f);  fputc(width & 0xFF, f);
+    fputc(height >> 8, f); fputc(height & 0xFF, f);
+
+    // CMAP
+    fputs("CMAP", f);
+    fputc(0, f); fputc(0, f);
+    fputc(3, f); fputc(0, f);
+
+    for (int i = 0; i < 256; i++){
+        uint32_t c = CLUT[i];
+        fputc((c >> 16) & 0xFF, f);
+        fputc((c >> 8)  & 0xFF, f);
+        fputc(c & 0xFF, f);
+    }
+
+    // BODY
+    fputs("BODY", f);
+    fputc((bodySize >> 24) & 0xFF, f);
+    fputc((bodySize >> 16) & 0xFF, f);
+    fputc((bodySize >> 8)  & 0xFF, f);
+    fputc(bodySize & 0xFF, f);
+
+    fwrite(bodyBuf, bodySize, 1, f);
+    if (bodyPad) fputc(0, f);
+
+    free(bodyBuf);
+    fclose(f);
 }
 
 
@@ -1621,10 +1916,12 @@ bool MainWindow::importGif(const QString &path){
 
     icon_area.resize(icon_height);
     icon_area_backup.resize(icon_height);
+    icon_area_redo.resize(icon_height);
 
     // resize each row (columns)
     for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
     for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
 
 
     if(paletteRestrictor){
@@ -1776,10 +2073,13 @@ void MainWindow::loadProjectIcon(const char *filename){
     // resize rows first
     icon_area.resize(icon_height);
     icon_area_backup.resize(icon_height);
+    icon_area_redo.resize(icon_height);
+
 
     // resize each row (columns)
     for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
     for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
 
     reSize();
 

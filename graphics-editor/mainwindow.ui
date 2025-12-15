@@ -4389,12 +4389,12 @@ Text Box! $0xCC</string>
        <rect>
         <x>260</x>
         <y>190</y>
-        <width>160</width>
+        <width>79</width>
         <height>24</height>
        </rect>
       </property>
       <property name="text">
-       <string>set image size</string>
+       <string>set size</string>
       </property>
      </widget>
      <widget class="QLineEdit" name="txtProjectImageWidth">
@@ -4482,19 +4482,6 @@ Text Box! $0xCC</string>
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_6">
-      <property name="geometry">
-       <rect>
-        <x>260</x>
-        <y>100</y>
-        <width>160</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Export to Amiga .ilbm ...</string>
-      </property>
-     </widget>
      <widget class="Line" name="line_4">
       <property name="geometry">
        <rect>
@@ -4539,8 +4526,8 @@ Text Box! $0xCC</string>
       <widget class="QPushButton" name="cmdExportH">
        <property name="geometry">
         <rect>
-         <x>320</x>
-         <y>50</y>
+         <x>322</x>
+         <y>53</y>
          <width>80</width>
          <height>24</height>
         </rect>
@@ -4560,6 +4547,19 @@ Text Box! $0xCC</string>
        </property>
        <property name="text">
         <string>RLE (Run-Len-Encode)</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="cmdExportAmigaILBM">
+       <property name="geometry">
+        <rect>
+         <x>242</x>
+         <y>25</y>
+         <width>160</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Export to Amiga .ilbm ...</string>
        </property>
       </widget>
      </widget>
@@ -4747,6 +4747,32 @@ Text Box! $0xCC</string>
       </property>
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdSetIconAreaResize">
+      <property name="geometry">
+       <rect>
+        <x>343</x>
+        <y>190</y>
+        <width>77</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>resize</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkResampler">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>138</y>
+        <width>81</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Resample</string>
       </property>
      </widget>
     </widget>

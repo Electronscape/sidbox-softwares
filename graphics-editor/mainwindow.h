@@ -65,6 +65,8 @@ private:
     void doSpreadPalette(uint8_t targetID);
     void SavePaletteData(const char *filename);
     void LoadPaletteData(const char *filename);
+
+    void ExportToILBM(const char *filename);
     void ExportImageToH(const char *filename, const uint16_t modes);
 
     void readToolXY(int *rx, int *ry);
@@ -77,6 +79,7 @@ private:
     void onColourCycleTick();
     void onSprayCanTick();
 
+    void ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight);
     void clearToolButtons();
 
     FontEditor *fontEditor;
