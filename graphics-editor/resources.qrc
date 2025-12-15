@@ -2,21 +2,23 @@
     <qresource prefix="/">
         <file>icons/mainicon.ico</file>
         <file>icons/mainicon.png</file>
-        <file>_work/tool-plot.xcf</file>
-        <file>_work/tool-plot-a.xcf</file>
-        <file>_work/tool-line.xcf</file>
-        <file>_work/tool-line-a.xcf</file>
-        <file>_work/tool-pen-a.xcf</file>
-        <file>_work/tool-pen.xcf</file>
-        <file>_work/tool-spray-a.xcf</file>
-        <file>_work/tool-spray.xcf</file>
-        <file>_work/tool-fill-a.xcf</file>
-        <file>_work/tool-fill.xcf</file>
-        <file>_work/tool-text-a.xcf</file>
-        <file>_work/tool-text.xcf</file>
-        <file>_work/tool-box-a.xcf</file>
-        <file>_work/tool-box.xcf</file>
-        <file>_work/tool-circle-a.xcf</file>
-        <file>_work/tool-circle.xcf</file>
+        <file>_work/tool-box-a.png</file>
+        <file>_work/tool-box.png</file>
+        <file>_work/tool-circle-a.png</file>
+        <file>_work/tool-circle.png</file>
+        <file>_work/tool-fill-a.png</file>
+        <file>_work/tool-fill.png</file>
+        <file>_work/tool-line-a.png</file>
+        <file>_work/tool-line.png</file>
+        <file>_work/tool-pen-a.png</file>
+        <file>_work/tool-pen.png</file>
+        <file>_work/tool-plot-a.png</file>
+        <file>_work/tool-plot.png</file>
+        <file>_work/tool-spray-a.png</file>
+        <file>_work/tool-spray.png</file>
+        <file>_work/tool-systems-a.png</file>
+        <file>_work/tool-systems.png</file>
+        <file>_work/tool-text-a.png</file>
+        <file>_work/tool-text.png</file>
     </qresource>
 </RCC>

@@ -2901,8 +2901,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-spray.xcf</normaloff>
-        <activeon>:/_work/tool-spray-a.xcf</activeon>:/_work/tool-spray.xcf</iconset>
+        <normaloff>:/_work/tool-spray.png</normaloff>
+        <activeon>:/_work/tool-spray-a.png</activeon>:/_work/tool-spray.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -2943,8 +2943,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-pen.xcf</normaloff>
-        <activeon>:/_work/tool-pen-a.xcf</activeon>:/_work/tool-pen.xcf</iconset>
+        <normaloff>:/_work/tool-pen.png</normaloff>
+        <activeon>:/_work/tool-pen-a.png</activeon>:/_work/tool-pen.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -2985,8 +2985,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-line.xcf</normaloff>
-        <activeon>:/_work/tool-line-a.xcf</activeon>:/_work/tool-line.xcf</iconset>
+        <normaloff>:/_work/tool-line.png</normaloff>
+        <activeon>:/_work/tool-line-a.png</activeon>:/_work/tool-line.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -3027,8 +3027,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-plot.xcf</normaloff>
-        <activeon>:/_work/tool-plot-a.xcf</activeon>:/_work/tool-plot.xcf</iconset>
+        <normaloff>:/_work/tool-plot.png</normaloff>
+        <activeon>:/_work/tool-plot-a.png</activeon>:/_work/tool-plot.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -3069,8 +3069,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-fill.xcf</normaloff>
-        <activeon>:/_work/tool-fill-a.xcf</activeon>:/_work/tool-fill.xcf</iconset>
+        <normaloff>:/_work/tool-fill.png</normaloff>
+        <activeon>:/_work/tool-spray-a.png</activeon>:/_work/tool-fill.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -3111,8 +3111,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-text.xcf</normaloff>
-        <activeon>:/_work/tool-text-a.xcf</activeon>:/_work/tool-text.xcf</iconset>
+        <normaloff>:/_work/tool-text.png</normaloff>
+        <activeon>:/_work/tool-text-a.png</activeon>:/_work/tool-text.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -3153,8 +3153,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-box.xcf</normaloff>
-        <activeon>:/_work/tool-box-a.xcf</activeon>:/_work/tool-box.xcf</iconset>
+        <normaloff>:/_work/tool-box.png</normaloff>
+        <activeon>:/_work/tool-box-a.png</activeon>:/_work/tool-box.png</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -3195,8 +3195,8 @@ Text Box! $0xCC</string>
       </property>
       <property name="icon">
        <iconset resource="resources.qrc">
-        <normaloff>:/_work/tool-circle.xcf</normaloff>
-        <activeon>:/_work/tool-circle-a.xcf</activeon>:/_work/tool-circle.xcf</iconset>
+        <normaloff>:/_work/tool-circle.png</normaloff>
+        <activeon>:/_work/tool-circle-a.png</activeon>:/_work/tool-circle.png</iconset>
       </property>
       <property name="iconSize">
        <size>
