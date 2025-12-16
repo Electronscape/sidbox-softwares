@@ -3107,7 +3107,7 @@ keyboard default: e - rotate clockwise
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>260</y>
+       <y>258</y>
        <width>144</width>
        <height>38</height>
       </rect>
@@ -3292,7 +3292,7 @@ keyboard default: e - rotate clockwise
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>268</y>
+       <y>266</y>
        <width>105</width>
        <height>22</height>
       </rect>
