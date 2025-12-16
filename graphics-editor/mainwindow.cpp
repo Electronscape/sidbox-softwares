@@ -53,6 +53,7 @@ int  GradientRangeFrom = 80;
 int  GradientRangeTo = 87;
 
 bool bMouseLeftRight    = true; // true if it is left
+bool bMouseButtonDown   = false;
 
 
 // for previewing new primatives, lines, circles, rectangles
@@ -239,13 +240,14 @@ int     iCopyWidth      = 0;        // nothing in the buffer, so REALLY make sur
 int     iCopyHeight     = 0;
 
 // flood fill options
-bool bDithered = false;
-bool bNoisyDither = false; // toggle noisy dithering
+bool    bDithered = false;
+bool    bNoisyDither = false; // toggle noisy dithering
 
-bool gradientDragging = false;
-int gradStartX = 0;
-int gradStartY = 0;
-float gradAngle = 0.0f;
+bool    gradientDragging = false;
+int     gradStartX  = 0;
+int     gradStartY  = 0;
+int     gradLength  = 0;
+float   gradAngle   = 0.0f;
 
 
 enum DrawMode {
@@ -267,6 +269,14 @@ enum ResizeMode {
     Resample,       // averaging
     NearestNeighbor // simple pixel copy
 };
+
+enum FloodFillType {
+    FillLinear,
+    FillDiamond,
+    FillCircles
+};
+
+int iFillType = FillLinear;
 
 enum BrushChange {
     brushflipX,
@@ -830,6 +840,18 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
+    connect(ui->radFillTypeLinear, &QRadioButton::clicked, this, [this](){
+        iFillType = FillLinear;
+    });
+
+    connect(ui->radFillTypeDiamond, &QRadioButton::clicked, this, [this](){
+        iFillType = FillDiamond;
+    });
+
+    connect(ui->radFillTypeCircles, &QRadioButton::clicked, this, [this](){
+        iFillType = FillCircles;
+    });
+
     ui->toolButtonFloodFill->installEventFilter(this);
     connect(ui->toolButtonFloodFill, &QPushButton::clicked, this, [this](){
         clearToolButtons();
@@ -1337,6 +1359,7 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
 
 
 void MainWindow::clearToolButtons(){
+    gradientDragging = false;    // restart this
     ui->toolButtonPlot->setChecked(false);
     ui->toolButtonLine->setChecked(false);
     ui->toolButtonPen->setChecked(false);
@@ -2131,8 +2154,20 @@ void MainWindow::saveProjectIcon(const char *filename){
         return;
     }
 
+    // [ header ]
+    fwrite("SBCN", 4, 1, f);// the header type file.
+
+    // [width height] image dimentions
     fwrite(&icon_width, sizeof(uint16_t), 1, f);
     fwrite(&icon_height, sizeof(uint16_t), 1, f);
+
+    // [ palette data ]
+    fwrite(&CLUT, 4, 256, f);   // 4 byte @ 256 elements
+    fwrite(&cyclefrom, 1, 1, f);
+    fwrite(&cycleto, 1, 1, f);
+    fwrite(&cyclelength, 1, 1, f);
+
+    // [ image body ]
 
     for(int y = 0; y < icon_height; y++) {
         fwrite(icon_area[y].data(), sizeof(uint8_t), icon_width, f);
@@ -2141,43 +2176,90 @@ void MainWindow::saveProjectIcon(const char *filename){
     fclose(f);
 }
 
+/*
+    // [ header ]
+    fwrite("SBCN", 4, 1, f);// the header type file.
+
+    // [width height] image dimentions
+    fwrite(&icon_width, sizeof(uint16_t), 1, f);
+    fwrite(&icon_height, sizeof(uint16_t), 1, f);
+
+    // [ palette data ]
+    fwrite(&CLUT, 4, 256, f);   // 4 byte @ 256 elements
+    fwrite(&cyclefrom, 1, 1, f);
+    fwrite(&cycleto, 1, 1, f);
+    fwrite(&cyclelength, 1, 1, f);
+
+    // [ image body ]
+
+    for(int y = 0; y < icon_height; y++) {
+        fwrite(icon_area[y].data(), sizeof(uint8_t), icon_width, f);
+    }
+*/
+
 void MainWindow::loadProjectIcon(const char *filename){
     FILE *f = fopen(filename, "rb");
     if(!f) { QMessageBox::warning(this, "Load Icon", "Cannot open file!"); return; }
 
     // read width and height
     uint16_t w, h;
-    fread(&w, sizeof(uint16_t), 1, f);
-    fread(&h, sizeof(uint16_t), 1, f);
-    icon_width = w;
-    icon_height = h;
+    uint32_t magic_header;
 
-    ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
-    ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
-
-    // resize rows first
-    icon_area.resize(icon_height);
-    icon_area_backup.resize(icon_height);
-    icon_area_redo.resize(icon_height);
+    fread(&magic_header, 4, 1, f);
+    //if(magic_header == 0x5342434E){
+    if(magic_header == 0x4E434253){
 
 
-    // resize each row (columns)
-    for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-    for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-    for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        fread(&w, sizeof(uint16_t), 1, f);
+        fread(&h, sizeof(uint16_t), 1, f);
+        icon_width = w;
+        icon_height = h;
 
-    reSize();
+        ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+        ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
-    // optionally resize your icon_area here if variable size
-    for(int y = 0; y < h; y++) {
-        fread(icon_area[y].data(), sizeof(uint8_t), w, f);
+        // resize rows first
+        icon_area.resize(icon_height);
+        icon_area_backup.resize(icon_height);
+        icon_area_redo.resize(icon_height);
+
+
+        // resize each row (columns)
+        for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+
+        reSize();
+
+        // [ palette data ]
+        if(fread(CLUT, sizeof(uint32_t), 256, f) != 256){
+            QMessageBox::warning(this,"Load Icon", "Palette read fail!");
+            fclose(f);
+            return;
+        };
+        for(int c = 0; c < 256; c++) BACKUP_CLUT[c] = CLUT[c];
+        fread(&cyclefrom, 1, 1, f);
+        fread(&cycleto, 1, 1, f);
+        fread(&cyclelength, 1, 1, f);
+
+        // [ Image Body ]
+        for(int y = 0; y < h; y++) {
+            if(fread(icon_area[y].data(), sizeof(uint8_t), w, f) != w){
+                QMessageBox::warning(this, "Load Icon", "Image data corrupted!");
+                fclose(f);
+                return;
+            }
+        }
+
+        fclose(f);
+        CommitIconArea();
+        renderEditorCanvas();
+        renderPaletteCanvas();
+    } else {
+        fclose(f);
+        QMessageBox::warning(this, "Load Icon - Error", "Not a Sidbox Icon Project file!"); return;
+
     }
-
-
-
-    fclose(f);
-    CommitIconArea();
-    renderEditorCanvas();
 }
 
 // 0 clockwise, 1 = counter-clockwise
@@ -2885,6 +2967,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             if(ke->key() == Qt::Key_Space && !grabbing && !ke->isAutoRepeat()){
 
                 grabbing = true;
+                gradientDragging = false;
 
                 setCursor(Qt::ClosedHandCursor);
                 return true;
@@ -2929,12 +3012,17 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         if (event->type() == QEvent::MouseButtonPress){
+            bMouseButtonDown = true;
             if(grabbing) {
                 if(mouseEvent->buttons() & Qt::LeftButton) {
                     grabStartMouse = QCursor::pos();
                     grabStartScrollH = ui->scrEditorH->value();
                     grabStartScrollV = ui->scrEditorV->value();
                 }
+            } else {
+                // annoying but more a glue logic:
+                if(currentDrawMode == FloodFillGradient)
+                    gradientDragging = true;
             }
 
             if(mouseEvent->buttons() & Qt::LeftButton)
@@ -2979,7 +3067,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                     gradAngle = atan2f(dy, dx) * (180.0f / M_PI);
 
-                    printf("Angle TO Grad: %f\n", gradAngle);
+                    // Length (distance)
+                    float dist = std::sqrt(dx*dx + dy*dy);
+                    gradLength = (int)(dist);
+
+
+                    printf("Angle TO Grad: %f, len:%d\n", gradAngle, gradLength);
                 } else
                 if(grabbing) {
                     if(mouseEvent->buttons() & Qt::LeftButton) {
@@ -3077,12 +3170,13 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             return true; // event handled
         } else if (event->type() == QEvent::MouseButtonRelease) {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            bMouseButtonDown = false;
             if (mouseEvent->button() == Qt::LeftButton) {
                 //printf( "Left click at %lu\n",  mouseEvent->pos());
 
                 // check if we're in a tool that needs point to point interaction
                 // if() {
-                todo: make the circle tool have long inverted cross hairs in the overlay draw
+                //todo: make the circle tool have long inverted cross hairs in the overlay draw
 
                 if(bCapturingCopyArea){
                     bCapturingCopyArea = false;
@@ -3101,8 +3195,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                         if(currentDrawMode == FloodFillGradient){
                             int x1 = ctcapturedX + xOffset;
                             int y1 = ctcapturedY + yOffset;
-                            gradientDragging = false;
-                            floodFillGradient(x1, y1, GradientRangeFrom, GradientRangeTo, gradAngle);
+                            gradientDragging = true;    // restart this
+                            floodFillGradient(x1, y1, GradientRangeFrom, GradientRangeTo, gradLength, gradAngle);
                         }
                         if(currentDrawMode == Line){
                             int x1 = ctcapturedX + xOffset;
@@ -3635,9 +3729,12 @@ void MainWindow::readToolXY(int *rx, int *ry){
 }
 
 
+struct FillNode {
+    int x, y;
+    int dist;
+};
 
-
-void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uint8_t colEnd, float angleDegrees){
+void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uint8_t colEnd, int length, float angleDegrees){
     if(startX < 0 || startX >= icon_width || startY < 0 || startY >= icon_height)
         return;
 
@@ -3650,28 +3747,39 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
     float dirX = cosf(rad);
     float dirY = sinf(rad);
 
-    std::stack<QPoint> s;
-    std::vector<QPoint> filled;
-    s.push(QPoint(startX, startY));
-    const uint8_t VISITED = 0xFF;
 
     int tick = 0;
 
-    // ---- FLOOD COLLECT ----
-    while(!s.empty()){
-        QPoint p = s.top(); s.pop();
-        int x = p.x(), y = p.y();
-        if(x < 0 || x >= icon_width || y < 0 || y >= icon_height) continue;
-        if(icon_area[y][x] != targetColor) continue;
+    std::vector<FillNode> open;
+    std::vector<FillNode> filled;
+
+    open.push_back({ startX, startY, 0 });
+    size_t head = 0;
+
+    const uint8_t VISITED = 0xFF;
+    int maxDist = 0;
+
+
+    while(head < open.size()){
+        FillNode n = open[head++];
+        int x = n.x;
+        int y = n.y;
+
+        if(x < 0 || x >= icon_width || y < 0 || y >= icon_height)
+            continue;
+
+        if(icon_area[y][x] != targetColor)
+            continue;
 
         icon_area[y][x] = VISITED;
-        filled.push_back(p);
+        filled.push_back(n);
 
-        // neighbors
-        s.push(QPoint(x, y+1));
-        s.push(QPoint(x, y-1));
-        s.push(QPoint(x+1, y));
-        s.push(QPoint(x-1, y));
+        maxDist = std::max(maxDist, n.dist);
+
+        open.push_back({ x+1, y, n.dist+1 });
+        open.push_back({ x-1, y, n.dist+1 });
+        open.push_back({ x, y+1, n.dist+1 });
+        open.push_back({ x, y-1, n.dist+1 });
     }
 
     if(filled.empty()){
@@ -3680,14 +3788,9 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
     }
 
     // ---- FIND GRADIENT RANGE ----
-    float minProj = 1e9f, maxProj = -1e9f;
-    for(const QPoint &p : filled){
-        float proj = p.x()*dirX + p.y()*dirY;
-        minProj = std::min(minProj, proj);
-        maxProj = std::max(maxProj, proj);
-    }
-    float range = maxProj - minProj;
-    if(range == 0.0f) range = 1.0f;
+    float range = float(gradLength);
+    if (range <= 0.0f)
+        range = 1.0f;
 
     // Optional Bayer matrix for dithering
     const int ditherMatrix[4][4] = {
@@ -3698,9 +3801,36 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
     };
 
     // ---- APPLY GRADIENT ----
-    for(const QPoint &p : filled){
-        float proj = p.x()*dirX + p.y()*dirY;
-        float t = (proj - minProj)/range;
+    //for(const QPoint &p : filled){
+    for(const FillNode &n : filled){
+        int x = n.x;
+        int y = n.y;
+        // OLD feature again the option for use full area instead
+        float proj = (x - startX) * dirX + (y - startY) * dirY;
+
+        float dx = x - startX;
+        float dy = y - startY;
+        float dist = std::sqrt(dx*dx + dy*dy);
+
+        float t;
+
+        switch(iFillType){
+            case FillLinear:
+                t = proj / range;   // Linear
+                break;
+            case FillDiamond:
+                t = float(n.dist) / range;  // diamond
+                break;
+            case FillCircles:
+                t = dist / range;   // Circles
+                break;
+            default:
+                t = proj / range;   // Linear
+        }
+
+
+
+
         t = std::clamp(t, 0.0f, 1.0f);
 
         if(!ui->chkInstaFill->isChecked()){
@@ -3725,8 +3855,10 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
                 finalCol = (frac > noise) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
             } else {
                 // Bayer matrix dither
-                int mx = p.x() % 4;
-                int my = p.y() % 4;
+                //int mx = p.x() % 4;
+                //int my = p.y() % 4;
+                int mx = x % 4;
+                int my = y % 4;
                 float threshold = (ditherMatrix[my][mx] + 0.5f) / 16.0f; // normalized 0..1
                 float frac = rawColor - std::floor(rawColor);
                 finalCol = (frac > threshold) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
@@ -3737,7 +3869,8 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
 
         finalCol = std::clamp(finalCol, colStart, colEnd);
 
-        icon_area[p.y()][p.x()] = finalCol;
+        //icon_area[p.y()][p.x()] = finalCol;
+        icon_area[y][x] = finalCol;
     }
 
     renderEditorCanvas();
@@ -3901,7 +4034,7 @@ void MainWindow::renderEditorCanvas(){
 
     if(!grabbing){
         // ---------------- DRAW HOVER BOX OVER THE TOP ---------------- //
-        if(ui->scrEditorZoomVal->value() > 3){
+        if((ui->scrEditorZoomVal->value() > 3) || (currentDrawMode == Circle) ){
             if (hoverPixelX >= 0 && hoverPixelY >= 0){
                 int px = hoverPixelX * icon_zoom;
                 int py = hoverPixelY * icon_zoom;
@@ -3914,26 +4047,62 @@ void MainWindow::renderEditorCanvas(){
                 int top    = py + inner;
                 int bottom = py + icon_zoom - inner ;
 
-                // Clamp to viewport (for safety)
-                if (left >= 0 && right < visibleWidth &&
-                    top >= 0 && bottom < visibleHeight){
-                    // Invert border color
+                if((currentDrawMode == Circle) && !(bMouseButtonDown)){
+                    // draw a cross hair (ruler like)
+                    // Clamp to viewport (for safety)
+                    int cx = px;
+                    int cy = py;
+
+                    int thickPx = icon_zoom - 1;
+
                     auto invert = [&](int xx, int yy){
                         QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(yy));
                         scan[xx] = 0xFFFFFFFF - scan[xx];
                     };
 
-                    // TOP
-                    for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, top + t);
+                    // Vertical ruler (aligned to icon pixel column)
+                    if (cx >= 0 && cx + thickPx < visibleWidth) {
+                        for (int t = 0; t <= thickPx; t++) {
+                            int xx = cx + t;
+                            for (int y = 0; y < visibleHeight; y++) {
+                                invert(xx, y);
+                            }
+                        }
+                    }
 
-                    // BOTTOM
-                    for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, bottom - t);
+                    // Horizontal ruler (aligned to icon pixel row)
+                    if (cy >= 0 && cy + thickPx < visibleHeight) {
+                        for (int t = 0; t <= thickPx; t++) {
+                            int yy = cy + t;
+                            for (int x = 0; x < visibleWidth; x++) {
+                                invert(x, yy);
+                            }
+                        }
+                    }
 
-                    // LEFT
-                    for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(left + t, y);
 
-                    // RIGHT
-                    for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(right - t, y);
+                } else {
+
+                    if (left >= 0 && right < visibleWidth &&
+                        top >= 0 && bottom < visibleHeight){
+                        // Invert border color
+                        auto invert = [&](int xx, int yy){
+                            QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(yy));
+                            scan[xx] = 0xFFFFFFFF - scan[xx];
+                        };
+
+                        // TOP
+                        for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, top + t);
+
+                        // BOTTOM
+                        for (int t = 0; t < thick; t++) for (int x = left; x <= right; x++) invert(x, bottom - t);
+
+                        // LEFT
+                        for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(left + t, y);
+
+                        // RIGHT
+                        for (int t = 0; t < thick; t++) for (int y = top; y <= bottom; y++) invert(right - t, y);
+                    }
                 }
             }
         }

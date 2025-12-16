@@ -58,7 +58,7 @@ private:
     void onEditorScrollChanged();
     void rotateIcon(int direction = 0);
     void ProcessClickPaint(int sx, int sy, unsigned char flags);
-    void floodFillGradient(int startX, int startY, uint8_t colStart, uint8_t colEnd, float angleDegrees);
+    void floodFillGradient(int startX, int startY, uint8_t colStart, uint8_t colEnd, int length, float angleDegrees);
     void floodFill(int startX, int startY, uint8_t fillColor);
     bool importGif(const QString &path);
     void doReassignedPalette(uint8_t targetPalID);

@@ -1600,7 +1600,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>290</y>
+        <y>320</y>
         <width>250</width>
         <height>80</height>
        </rect>
@@ -1745,7 +1745,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>200</y>
+        <y>230</y>
         <width>250</width>
         <height>80</height>
        </rect>
@@ -1776,7 +1776,7 @@ QPushButton:hover {
         <x>10</x>
         <y>30</y>
         <width>250</width>
-        <height>160</height>
+        <height>190</height>
        </rect>
       </property>
       <property name="title">
@@ -1829,6 +1829,77 @@ QPushButton:hover {
        <property name="checked">
         <bool>false</bool>
        </property>
+      </widget>
+      <widget class="Line" name="line_5">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>230</width>
+         <height>3</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QFrame" name="frame_3">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>110</y>
+         <width>250</width>
+         <height>80</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Shape::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <widget class="QRadioButton" name="radFillTypeLinear">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>94</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Linear</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radFillTypeDiamond">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>94</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Diamond</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radFillTypeCircles">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>94</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Circles</string>
+        </property>
+       </widget>
       </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_15">
