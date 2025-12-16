@@ -42,6 +42,10 @@ bool        bSpreadPalette  = false;
 
 QPalette pal;
 QTimer *tmrColourCycle;
+
+//chkCyclePaletteDraw
+int cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
+int cyclePaletteStepping = 0;   // used to control the division of steps before next cyclePaletteID increment.
 int cyclefrom, cycleto, cyclelength = 8;
 bool selectingCycle = false;   // true when CTRL is held
 bool waitingForEnd = false;    // true after choosing cycle_from
@@ -227,6 +231,8 @@ int     iTextHeight     = 1;        // height of the text
 bool    bPenShapeCircle = true;
 int     iPenShapeSize   = 10;        // default pen size for spray and pen actions
 bool    bFillToolIn     = false;     // weather the cirlce/box tool filles in (MINCE PIE'D!)
+
+
 
 // Copying and draw brushing
 std::vector<std::vector<uint8_t>> icon_copy_area;   // this is the buffer that holes the copied area
@@ -1080,6 +1086,12 @@ MainWindow::MainWindow(QWidget *parent)
         ExportImageToH("", bits);
         ui->outputTextView->raise();
     });
+
+
+    connect(ui->scrCycleStepper, &QScrollBar::valueChanged, this, [this](){
+        ui->lblCycleStepping->setText(QString("%1").arg(ui->scrCycleStepper->value()));
+    });
+
 
     ui->outputTextView->hide();
     ui->frmFontWorkbench->hide();
@@ -3103,25 +3115,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                     int dx = hoverPixelX + xOffset;
                     int dy = hoverPixelY + yOffset;
 
-                    /*
-                    ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
-                        .arg(dx, 4, 10, QChar('0'))
-                        .arg(dy, 4, 10, QChar('0'))
-                    );
-                    */
-
-
                     if(mouseEvent->buttons() & Qt::LeftButton)  ProcessClickPaint(dx, dy, DrawUIMode_LeftMouseButton);  // moving draw process
                     if(mouseEvent->buttons() & Qt::RightButton) ProcessClickPaint(dx, dy, DrawUIMode_RightMouseButton); // moving draw process
 
-                    /*
-                    if(currentDrawMode == PasteBrush){
-                        //printf("COX... ");
-                        drawCopyBrushHover(dx, dy, &editorImg);
-                        renderEditorCanvas(); // redraw empty icon
-                    }
-
-                    */
 
                     if(captureXYStart==true){
                         ltcapturedX = ctcapturedX;
@@ -3199,23 +3195,32 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                             floodFillGradient(x1, y1, GradientRangeFrom, GradientRangeTo, gradLength, gradAngle);
                         }
                         if(currentDrawMode == Line){
+                            int x0 = capturedX + xOffset;
+                            int y0 = capturedY + yOffset;
                             int x1 = ctcapturedX + xOffset;
                             int y1 = ctcapturedY + yOffset;
 
-                            // Draw the actual line into the icon area
-                            int x0 = capturedX + xOffset;
-                            int y0 = capturedY + yOffset;
-
-                            // Bresenham line (cells)
                             int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
                             int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
                             int err = dx + dy, e2;
+
+                            int halfPen = iPenShapeSize / 2; // half thickness
                             int x = x0, y = y0;
 
+                            auto setThickPixel = [&](int px, int py){
+                                for(int yy = -halfPen; yy <= halfPen; yy++){
+                                    int ny = py + yy;
+                                    if(ny < 0 || ny >= icon_height) continue;
+                                    for(int xx = -halfPen; xx <= halfPen; xx++){
+                                        int nx = px + xx;
+                                        if(nx < 0 || nx >= icon_width) continue;
+                                        setIconArea(nx, ny); // commit color to icon_area
+                                    }
+                                }
+                            };
+
                             while(true){
-                                // Commit pixel color (for example, foreground color)
-                                //icon_area[y][x] = numSelectedPaletteID;
-                                setIconArea(x,y);
+                                setThickPixel(x, y);
 
                                 if(x == x1 && y == y1) break;
                                 e2 = 2 * err;
@@ -3223,9 +3228,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                 if(e2 <= dx){ err += dx; y += sy; }
                             }
                         }
+
                         if(currentDrawMode == Rect){
-
-
                             // Rectangle corners
                             int x0 = capturedX + xOffset;
                             int y0 = capturedY + yOffset;
@@ -3238,18 +3242,26 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                             int top    = std::min(y0, y1);
                             int bottom = std::max(y0, y1);
 
-                            // Draw top and bottom edges
+                            int drawHeight = std::min(iPenShapeSize, bottom - top + 1);
+                            int drawWidth  = std::min(iPenShapeSize, right - left + 1);
+
+                            // Top and bottom edges
                             for(int x = left; x <= right; x++){
-                                setIconArea(x, top);
-                                setIconArea(x, bottom);
+                                for(int py = 0; py < drawHeight; py++){
+                                    setIconArea(x, top + py);
+                                    setIconArea(x, bottom - py);
+                                }
                             }
 
-                            // Draw left and right edges
+                            // Left and right edges
                             for(int y = top; y <= bottom; y++){
-                                setIconArea(left, y);
-                                setIconArea(right, y);
+                                for(int px = 0; px < drawWidth; px++){
+                                    setIconArea(left + px, y);
+                                    setIconArea(right - px, y);
+                                }
                             }
 
+                            // Fill inside if required
                             if(bFillToolIn){
                                 for(int x = left; x <= right; x++){
                                     for(int y = top; y <= bottom; y++)
@@ -3257,65 +3269,36 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                 }
                             }
                         }
+
+
                         if(currentDrawMode == Circle){
                             int cx = capturedX + xOffset;
                             int cy = capturedY + yOffset;
-                            int radius = std::max(abs((hoverPixelX  + xOffset) - cx), abs((hoverPixelY  + yOffset) - cy));
-                            bool fill = bFillToolIn;
+                            int radius = std::max(abs(hoverPixelX - capturedX), abs(hoverPixelY - capturedY));
+                            int halfPen = iPenShapeSize / 2;
 
-                            if(radius <= 3){ // small radius -> distance check
-                                for(int y = cy - radius; y <= cy + radius; y++){
-                                    for(int x = cx - radius; x <= cx + radius; x++){
-                                        int dx = x - cx;
-                                        int dy = y - cy;
-                                        float dist = std::sqrt(dx*dx + dy*dy);
+                            int outerRadius = radius + halfPen;
+                            int innerRadius = std::max(0, radius - halfPen);
+
+                            for(int y = cy - outerRadius; y <= cy + outerRadius; y++){
+                                for(int x = cx - outerRadius; x <= cx + outerRadius; x++){
+                                    int dx = x - cx;
+                                    int dy = y - cy;
+                                    float dist = std::sqrt(dx*dx + dy*dy);
+
+                                    float epsilon = 0.5f; // small tolerance
+                                    if(dist >= innerRadius - epsilon && dist <= outerRadius + epsilon){
                                         // Outline
-                                        if(dist >= radius - 0.5f && dist <= radius + 0.5f){
-                                            setIconArea(x, y);
-                                        }
-                                        // Fill
-                                        else if(fill && dist < radius - 0.5f){
-                                            setIconArea(x, y);
-                                        }
-                                    }
-                                }
-                            } else { // large radius -> classic Midpoint Circle
-                                int x = radius;
-                                int y = 0;
-                                int err = 0;
-                                while(x >= y){
-                                    setIconArea(cx + x, cy + y);
-                                    setIconArea(cx + y, cy + x);
-                                    setIconArea(cx - y, cy + x);
-                                    setIconArea(cx - x, cy + y);
-                                    setIconArea(cx - x, cy - y);
-                                    setIconArea(cx - y, cy - x);
-                                    setIconArea(cx + y, cy - x);
-                                    setIconArea(cx + x, cy - y);
-
-                                    // Fill: draw horizontal spans inside the circle
-                                    if(fill){
-                                        for(int fx = cx - x + 1; fx < cx + x; fx++){
-                                            setIconArea(fx, cy + y);
-                                            setIconArea(fx, cy - y);
-                                        }
-                                        for(int fx = cx - y + 1; fx < cx + y; fx++){
-                                            setIconArea(fx, cy + x);
-                                            setIconArea(fx, cy - x);
-                                        }
-                                    }
-
-                                    y++;
-                                    if(err <= 0){
-                                        err += 2*y + 1;
-                                    }
-                                    if(err > 0){
-                                        x--;
-                                        err -= 2*x + 1;
+                                        setIconArea(x, y);
+                                    } else if(bFillToolIn && dist < innerRadius){
+                                        // Fill inside
+                                        setIconArea(x, y);
                                     }
                                 }
                             }
                         }
+
+
                     }
                 }
                 renderPaletteCanvas();
@@ -3632,11 +3615,38 @@ void MainWindow::getCenterHandle(int sx, int sy, int* outX, int* outY, int width
     *outY = sy - height / 2;
 }
 
-
+int ooldx, ooldy;
 void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
     int nsx, nsy;
     nsx = sx;
     nsy = sy;
+
+    uint8_t oldSelectedFPenColour = numSelectedPaletteID;
+    uint8_t oldSelectedBPenColour = numSelectedBackPaletteID;
+
+
+    //int cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
+    if(ui->chkCyclePaletteDraw->isChecked()){
+        if((ooldx != sx) || (ooldy != sy)){
+            ooldx = sx;
+            ooldy = sy;
+            //chkCyclePaletteDrawStepping++;
+            cyclePaletteStepping++;
+            if(cyclePaletteStepping > ui->scrCycleStepper->value()){
+                cyclePaletteStepping = 0;
+            }
+
+
+            if(cyclePaletteStepping == 1){
+                cyclePaletteID ++;
+                if(cyclePaletteID >= cyclelength)
+                    cyclePaletteID = 0;
+            }
+
+        };
+        numSelectedPaletteID = cyclefrom + cyclePaletteID;
+    }
+
     switch(currentDrawMode){
         case Plot: {    // this will only work with Motion Drawing (plot)
             if(flags & DrawUIMode_LeftMouseButton) // only when left mouse is down
@@ -3713,6 +3723,10 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
         default:
             return;
     }
+
+
+    numSelectedPaletteID = oldSelectedFPenColour;
+    numSelectedBackPaletteID = oldSelectedBPenColour;
 
 }
 
@@ -4118,6 +4132,9 @@ void MainWindow::renderEditorCanvas(){
 
             }
 
+            int halfPen = iPenShapeSize / 2;
+
+
             if(currentDrawMode == Line || currentDrawMode == FloodFillGradient){
                 auto invertCell = [&](int cellX, int cellY){
                     int startX = cellX * icon_zoom;
@@ -4149,7 +4166,20 @@ void MainWindow::renderEditorCanvas(){
 
                 int x = x0cell, y = y0cell;
                 while(true){
-                    invertCell(x, y);        // invert a full cell instead of 1 pixel
+
+                    // Draw a block around (x, y) for pen thickness
+                    if(currentDrawMode == FloodFillGradient){
+                        invertCell(x, y);
+                    } else {
+                        for(int pxOff = -halfPen; pxOff <= halfPen; pxOff++){
+                            for(int pyOff = -halfPen; pyOff <= halfPen; pyOff++){
+                                invertCell(x + pxOff, y + pyOff);
+                            }
+                        }
+                    }
+
+
+
                     if(x == x1cell && y == y1cell) break;
                     e2 = 2 * err;
                     if(e2 >= dy){ err += dy; x += sx; }
@@ -4187,15 +4217,23 @@ void MainWindow::renderEditorCanvas(){
                 int bottom = std::max(y0, y1);
 
                 // Draw top and bottom edges
+                int drawHeight = std::min(iPenShapeSize, bottom - top + 1);
+                int drawWidth  = std::min(iPenShapeSize, right - left + 1);
+
+                // Top and bottom edges
                 for(int x = left; x <= right; x++){
-                    invertCell(x, top);
-                    invertCell(x, bottom);
+                    for(int py = 0; py < drawHeight; py++){
+                        invertCell(x, top + py);
+                        invertCell(x, bottom - py);
+                    }
                 }
 
-                // Draw left and right edges
+                // Left and right edges
                 for(int y = top; y <= bottom; y++){
-                    invertCell(left, y);
-                    invertCell(right, y);
+                    for(int px = 0; px < drawWidth; px++){
+                        invertCell(left + px, y);
+                        invertCell(right - px, y);
+                    }
                 }
 
                 if(bFillToolIn){
@@ -4218,7 +4256,7 @@ void MainWindow::renderEditorCanvas(){
                         for(int xx = 0; xx < icon_zoom; xx++){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
-                            scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID]; // or invert for ghost
+                            scan[px] = CLUT[bMouseLeftRight ? numSelectedPaletteID : numSelectedBackPaletteID];
                         }
                     }
                 };
@@ -4226,60 +4264,29 @@ void MainWindow::renderEditorCanvas(){
                 int cx = capturedX;
                 int cy = capturedY;
                 int radius = std::max(abs(hoverPixelX - cx), abs(hoverPixelY - cy));
+                int halfPen = iPenShapeSize / 2;
 
-                if(radius <= 3){ // small radius -> distance check
-                    for(int y = cy - radius; y <= cy + radius; y++){
-                        for(int x = cx - radius; x <= cx + radius; x++){
-                            int dx = x - cx;
-                            int dy = y - cy;
-                            float dist = std::sqrt(dx*dx + dy*dy);
-                            if(dist >= radius - 0.5f && dist <= radius + 0.5f){
-                                invertCell(x, y);
-                            }
-                            // Fill: inside the radius
-                            else if(bFillToolIn && dist < radius - 0.5f){
-                                invertCell(x, y);
-                            }
-                        }
-                    }
-                } else { // large radius -> classic Midpoint Circle
-                    int x = radius;
-                    int y = 0;
-                    int err = 0;
-                    while(x >= y){
-                        invertCell(cx + x, cy + y);
-                        invertCell(cx + y, cy + x);
-                        invertCell(cx - y, cy + x);
-                        invertCell(cx - x, cy + y);
-                        invertCell(cx - x, cy - y);
-                        invertCell(cx - y, cy - x);
-                        invertCell(cx + y, cy - x);
-                        invertCell(cx + x, cy - y);
+                int outerRadius = radius + halfPen;
+                int innerRadius = std::max(0, radius - halfPen);
 
+                for(int y = cy - outerRadius; y <= cy + outerRadius; y++){
+                    for(int x = cx - outerRadius; x <= cx + outerRadius; x++){
+                        int dx = x - cx;
+                        int dy = y - cy;
+                        float dist = std::sqrt(dx*dx + dy*dy);
 
-                        if(bFillToolIn){
-                            // Fill horizontal spans between the left/right of the circle
-                            for(int fillX = cx - x + 1; fillX < cx + x; fillX++){
-                                invertCell(fillX, cy + y);
-                                invertCell(fillX, cy - y);
-                            }
-                            for(int fillX = cx - y + 1; fillX < cx + y; fillX++){
-                                invertCell(fillX, cy + x);
-                                invertCell(fillX, cy - x);
-                            }
-                        }
-
-                        y++;
-                        if(err <= 0){
-                            err += 2*y + 1;
-                        }
-                        if(err > 0){
-                            x--;
-                            err -= 2*x + 1;
+                        float epsilon = 0.5f; // small tolerance
+                        if(dist >= innerRadius - epsilon && dist <= outerRadius + epsilon){
+                            // Outline
+                            invertCell(x, y);
+                        } else if(bFillToolIn && dist < innerRadius){
+                            // Fill inside
+                            invertCell(x, y);
                         }
                     }
                 }
             }
+
         } else {
             if(currentDrawMode == DrawText){
                 //int startX = cellX * icon_zoom;

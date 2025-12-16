@@ -1732,7 +1732,7 @@ QPushButton:hover {
         <rect>
          <x>6</x>
          <y>50</y>
-         <width>110</width>
+         <width>93</width>
          <height>16</height>
         </rect>
        </property>
@@ -3698,7 +3698,7 @@ keyboard default: e - rotate clockwise
        <x>4</x>
        <y>325</y>
        <width>430</width>
-       <height>448</height>
+       <height>475</height>
       </rect>
      </property>
      <property name="title">
@@ -3984,7 +3984,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>6</x>
-        <y>353</y>
+        <y>380</y>
         <width>418</width>
         <height>89</height>
        </rect>
@@ -4408,19 +4408,6 @@ HOLD ALT and CLICK the ending colour.</string>
         <string>16 Bit</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="cmdReassignColour">
-       <property name="geometry">
-        <rect>
-         <x>270</x>
-         <y>21</y>
-         <width>80</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>re-assign...</string>
-       </property>
-      </widget>
      </widget>
      <widget class="QPushButton" name="cmdDefaultPalette">
       <property name="geometry">
@@ -4503,7 +4490,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>325</y>
+        <y>349</y>
         <width>70</width>
         <height>24</height>
        </rect>
@@ -4516,7 +4503,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>345</x>
-        <y>325</y>
+        <y>349</y>
         <width>70</width>
         <height>24</height>
        </rect>
@@ -4558,7 +4545,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>270</x>
-        <y>270</y>
+        <y>300</y>
         <width>150</width>
         <height>3</height>
        </rect>
@@ -4571,7 +4558,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>278</x>
-        <y>276</y>
+        <y>303</y>
         <width>80</width>
         <height>16</height>
        </rect>
@@ -4584,7 +4571,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>300</y>
+        <y>323</y>
         <width>70</width>
         <height>24</height>
        </rect>
@@ -4656,6 +4643,81 @@ HOLD ALT and CLICK the ending colour.</string>
       </property>
       <property name="text">
        <string>&lt;something&gt;</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkCyclePaletteDraw">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>332</y>
+        <width>131</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Cycle Palette Draw</string>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="scrCycleStepper">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>354</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>16</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblColourCycle_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>354</y>
+        <width>80</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>step:</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblCycleStepping">
+      <property name="geometry">
+       <rect>
+        <x>160</x>
+        <y>354</y>
+        <width>80</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>1</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdReassignColour">
+      <property name="geometry">
+       <rect>
+        <x>272</x>
+        <y>267</y>
+        <width>146</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>re-assign...</string>
       </property>
      </widget>
     </widget>
@@ -4870,7 +4932,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>232</y>
+        <y>229</y>
         <width>409</width>
         <height>81</height>
        </rect>
