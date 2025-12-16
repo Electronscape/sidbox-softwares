@@ -47,6 +47,11 @@ bool selectingCycle = false;   // true when CTRL is held
 bool waitingForEnd = false;    // true after choosing cycle_from
 int clickedIndex = 256; // way off grid
 
+bool selectingGradientRange = false;    // true when Left ALT is held
+bool waitingForEndGradient = false;
+int  GradientRangeFrom = 80;
+int  GradientRangeTo = 87;
+
 bool bMouseLeftRight    = true; // true if it is left
 
 
@@ -233,6 +238,16 @@ int     iTargetCopyX, iTargetCopyY;
 int     iCopyWidth      = 0;        // nothing in the buffer, so REALLY make sure this is checked
 int     iCopyHeight     = 0;
 
+// flood fill options
+bool bDithered = false;
+bool bNoisyDither = false; // toggle noisy dithering
+
+bool gradientDragging = false;
+int gradStartX = 0;
+int gradStartY = 0;
+float gradAngle = 0.0f;
+
+
 enum DrawMode {
     noDrawing,
     Plot,
@@ -242,6 +257,7 @@ enum DrawMode {
     Rect,
     Circle,
     FloodFill,
+    FloodFillGradient,
     DrawText,
     CopyBrush,  // Copy meaning we're capturing
     PasteBrush, // THEN it will turn to this when we let go of the mouse button
@@ -765,36 +781,37 @@ MainWindow::MainWindow(QWidget *parent)
         clearToolButtons();
         ui->toolButtonPlot->setChecked(true);   // keep this high lighted!
         currentDrawMode = Plot;
+        renderEditorCanvas();
     });
 
     connect(ui->toolButtonLine, &QPushButton::clicked, this, [this](){
         clearToolButtons();
         ui->toolButtonLine->setChecked(true);   // keep this high lighted!
         currentDrawMode = Line;
+        renderEditorCanvas();
     });
 
     connect(ui->toolButtonPen, &QPushButton::clicked, this, [this](){
         clearToolButtons();
         ui->toolButtonPen->setChecked(true);   // keep this high lighted!
         currentDrawMode = Pen;
+        renderEditorCanvas();
     });
 
     connect(ui->toolButtonSprayCan, &QPushButton::clicked, this, [this](){
         clearToolButtons();
         ui->toolButtonSprayCan->setChecked(true);   // keep this high lighted!
         currentDrawMode = SprayCan;
+        renderEditorCanvas();
     });
 
-    connect(ui->toolButtonFloodFill, &QPushButton::clicked, this, [this](){
-        clearToolButtons();
-        ui->toolButtonFloodFill->setChecked(true);   // keep this high lighted!
-        currentDrawMode = FloodFill;
-    });
+
 
     connect(ui->toolButtonText, &QPushButton::clicked, this, [this](){
         clearToolButtons();
         ui->toolButtonText->setChecked(true);   // keep this high lighted!
         currentDrawMode = DrawText;
+        renderEditorCanvas();
     });
 
     ui->toolButtonRect->installEventFilter(this);
@@ -802,6 +819,7 @@ MainWindow::MainWindow(QWidget *parent)
         clearToolButtons();
         ui->toolButtonRect->setChecked(true);   // keep this high lighted!
         currentDrawMode = Rect;
+        renderEditorCanvas();
     });
 
     ui->toolButtonCircle->installEventFilter(this);
@@ -809,6 +827,14 @@ MainWindow::MainWindow(QWidget *parent)
         clearToolButtons();
         ui->toolButtonCircle->setChecked(true);   // keep this high lighted!
         currentDrawMode = Circle;
+        renderEditorCanvas();
+    });
+
+    ui->toolButtonFloodFill->installEventFilter(this);
+    connect(ui->toolButtonFloodFill, &QPushButton::clicked, this, [this](){
+        clearToolButtons();
+        ui->toolButtonFloodFill->setChecked(true);   // keep this high lighted!
+        renderEditorCanvas();
     });
 
     ui->toolButtonCopyArea->installEventFilter(this);
@@ -1001,6 +1027,7 @@ MainWindow::MainWindow(QWidget *parent)
         // Show in the text view
         ui->txtOutputText->setPlainText(output);
         ui->outputTextView->show();
+        ui->outputTextView->raise();
     });
 
     connect(ui->cmdCloseOutputText, &QPushButton::clicked, this, [this](){
@@ -1029,20 +1056,39 @@ MainWindow::MainWindow(QWidget *parent)
         bits += ui->chkExportSBVRAM->isChecked() * ExportSidBoxVRAM;
         //printf("Bits checked: %x\n", bits);
         ExportImageToH("", bits);
+        ui->outputTextView->raise();
     });
 
     ui->outputTextView->hide();
     ui->frmFontWorkbench->hide();
+    ui->frmOptions->hide();
 
     connect(ui->cmdOpenFontWorkbench, &QPushButton::clicked, this, [this](){
         ui->frmFontWorkbench->show();
+        //ui->frmFontWorkbench->topLevelWidget();
+        ui->frmFontWorkbench->raise();
     });
 
     connect(ui->cmdCloseFontWorkbench, &QPushButton::clicked, this, [this](){
         ui->frmFontWorkbench->hide();
     });
 
+    connect(ui->cmdOpenOptions, &QPushButton::clicked, this, [this](){
+        ui->frmOptions->show();
+        ui->frmOptions->raise();
+    });
 
+    connect(ui->cmdOptionsClose, &QPushButton::clicked, this, [this](){
+        ui->frmOptions->hide();
+    });
+
+    connect(ui->chkFloodFillDitherNoise, &QCheckBox::clicked, this, [this](){
+        bNoisyDither = ui->chkFloodFillDitherNoise->isChecked();
+    });
+
+    connect(ui->chkFloodFillDither, &QCheckBox::clicked, this, [this](){
+        bDithered = ui->chkFloodFillDither->isChecked();
+    });
 
     colourCycleSpeed = ui->scrColourCycleSpeed->value() * 22;
     ui->lblColourCycle->setText(QString("%1 ms").arg(colourCycleSpeed));
@@ -1124,7 +1170,8 @@ MainWindow::MainWindow(QWidget *parent)
         fontEditor->ExportFont(ui->txtOutputText);
         //
         ui->outputTextView->show();
-        ui->frmFontWorkbench->hide();
+        //ui->frmFontWorkbench->hide();
+        ui->outputTextView->raise();
     });
 
     connect(ui->cmdExportAmigaILBM, &QPushButton::clicked, this, [this](){
@@ -1299,6 +1346,7 @@ void MainWindow::clearToolButtons(){
     ui->toolButtonRect->setChecked(false);
     ui->toolButtonCircle->setChecked(false);
     ui->toolButtonCopyArea->setChecked(false);
+
 }
 
 void MainWindow::doColourCycle(){
@@ -2654,33 +2702,21 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
     if(event->type() == QEvent::MouseButtonPress) {
         // will need these for the tool buttons that need the left and right bitsies
         if(obj == ui->toolButtonRect){
-            //printf("plot draw mode      ");
             auto *me = static_cast<QMouseEvent*>(event);
             QPoint p = me->pos(); // position INSIDE button
-
-            // Do your region logic here
-            //qDebug() << "Clicked at:" << p;
-
-            // Example: split button
             if (p.x() < ui->toolButtonRect->width() / 2) {
-                //printf("Left side");
                 bFillToolIn = false;
             } else {
-                //printf("Right side");
                 bFillToolIn = true;
             }
         }
         if(obj == ui->toolButtonCopyArea){
             auto *me = static_cast<QMouseEvent*>(event);
             QPoint p = me->pos(); // position INSIDE button
-
-            // Example: split button
             if (p.x() < ui->toolButtonCopyArea->width() / 2) {
-                //printf("Left side");
                 currentDrawMode = CopyBrush;    // a new copy region, anything in the copy buffer is lost.
                 bCapturingCopyArea = true;      // love how we're going to start GRABBING things ;) Yumm yumm.
             } else {
-                //printf("Right side");
                 currentDrawMode = PasteBrush;   // continue drawing what ever is in the copy job
                 bCapturingCopyArea = false;     // abandon the capturing state
                 bGrabbedCopyStart = false;
@@ -2688,22 +2724,24 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
         }
 
         if(obj == ui->toolButtonCircle){
-            //printf("plot draw mode      ");
             auto *me = static_cast<QMouseEvent*>(event);
             QPoint p = me->pos(); // position INSIDE button
-
-            // Do your region logic here
-            //qDebug() << "Clicked at:" << p;
-
-            // Example: split button
             if (p.x() < ui->toolButtonCircle->width() / 2) {
-                //printf("Left side");
                 bFillToolIn = false;
             } else {
-                //printf("Right side");
                 bFillToolIn = true;
             }
+        }
 
+        if(obj == ui->toolButtonFloodFill){
+            auto *me = static_cast<QMouseEvent*>(event);
+            QPoint p = me->pos(); // position INSIDE button
+            if (p.x() < ui->toolButtonCircle->width() / 2) {
+                currentDrawMode = FloodFill;
+            } else {
+                gradientDragging = true;    // initially the floodfill will do nothing right now
+                currentDrawMode = FloodFillGradient;
+            }
         }
     }
 
@@ -2721,6 +2759,13 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 //printf("Cycle Setting Start: Start pos %lu\n", clickedIndex);
                 return true;
             }
+            if (ke->key() == Qt::Key_Alt){
+                clickedIndex = numSelectedPaletteID;
+                selectingGradientRange = true;
+                waitingForEndGradient = false;
+                GradientRangeFrom = clickedIndex;
+                return true;
+            }
         }
 
         if (event->type() == QEvent::KeyRelease){   // finished setting the Colour Cycle range.
@@ -2728,6 +2773,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             if (ke->key() == Qt::Key_Control) {
                 selectingCycle = false;
                 waitingForEnd = false;
+                return true;
+            }
+            if (ke->key() == Qt::Key_Alt) {
+                selectingGradientRange = false;
+                waitingForEndGradient = false;
                 return true;
             }
         }
@@ -2790,6 +2840,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                     //printf("New Cycle Setting From: %lu to: %ld\n", cyclefrom, cycleto);
                 }// else
                    // printf("Cycle Setting End: pos %ld\n", cycleto);
+            }
+            if(selectingGradientRange == true){
+                GradientRangeTo = numSelectedPaletteID;
+                if(GradientRangeTo < GradientRangeFrom)
+                    std::swap(GradientRangeTo, GradientRangeFrom);
             }
 
             // clicked on another colour - ONLY if selected another colour
@@ -2911,6 +2966,21 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                    );
 
             if(!bCapturingCopyArea){
+                if(gradientDragging){
+                    QPoint pos = mouseEvent->pos();
+                    //int mx = pos.x() / icon_zoom + ui->scrEditorH->value();
+                    //int my = pos.y() / icon_zoom + ui->scrEditorV->value();
+
+                    hoverPixelX = int(scenePos.x()) / icon_zoom;
+                    hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+                    float dx = hoverPixelX - gradStartX;
+                    float dy = hoverPixelY - gradStartY;
+
+                    gradAngle = atan2f(dy, dx) * (180.0f / M_PI);
+
+                    printf("Angle TO Grad: %f\n", gradAngle);
+                } else
                 if(grabbing) {
                     if(mouseEvent->buttons() & Qt::LeftButton) {
                         QPointF current = mouseEvent->globalPosition();
@@ -3012,6 +3082,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                 // check if we're in a tool that needs point to point interaction
                 // if() {
+                todo: make the circle tool have long inverted cross hairs in the overlay draw
+
                 if(bCapturingCopyArea){
                     bCapturingCopyArea = false;
                     bGrabbedCopyStart = false;
@@ -3026,6 +3098,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                     if(captureXYStart==true){
                         int xOffset = ui->scrEditorH->value();
                         int yOffset = ui->scrEditorV->value();
+                        if(currentDrawMode == FloodFillGradient){
+                            int x1 = ctcapturedX + xOffset;
+                            int y1 = ctcapturedY + yOffset;
+                            gradientDragging = false;
+                            floodFillGradient(x1, y1, GradientRangeFrom, GradientRangeTo, gradAngle);
+                        }
                         if(currentDrawMode == Line){
                             int x1 = ctcapturedX + xOffset;
                             int y1 = ctcapturedY + yOffset;
@@ -3163,9 +3241,27 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 readToolXY(&capturedX, &capturedY); // process where the capturey point is
                 ltcapturedX = ctcapturedX;
                 ltcapturedY = ctcapturedY;
+
                 //printf("P2P Tool: capture point CX: %d, CY: %d\n", capturedX, capturedY);
                 // }
                 // else //its likely just to a pixel draw
+                if(gradientDragging){
+
+                    QPointF current = mouseEvent->globalPosition();
+                    QPointF scenePos = ui->gfxEditor->mapToScene(mouseEvent->pos());
+                    ui->gfxEditor->setFocus();
+                    int xOffset = ui->scrEditorH->value();
+                    int yOffset = ui->scrEditorV->value();
+
+                    hoverPixelX = int(scenePos.x()) / icon_zoom;
+                    hoverPixelY = int(scenePos.y()) / icon_zoom;
+
+                    gradStartX = hoverPixelX;
+                    gradStartY = hoverPixelY;
+
+
+                    return true;
+                }
 
                 if(bCapturingCopyArea){
                     if(mouseEvent->buttons() & Qt::LeftButton) {
@@ -3467,7 +3563,20 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
                 floodFill(sx, sy, numSelectedPaletteID);
             if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_RightMouseButton))   // only allow this to work on the Initial Mouse Hit
                 floodFill(sx, sy, numSelectedBackPaletteID);
+                //floodFillGradient(sx, sy, 0, 255, 45);
             break;
+
+        // this will trigger on the click down! so commenting out
+        /*
+        case FloodFillGradient:
+            if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_LeftMouseButton))   // only allow this to work on the Initial Mouse Hit
+                //floodFill(sx, sy, numSelectedPaletteID);
+                floodFillGradient(sx, sy, 0, 255, gradAngle);
+            //if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_RightMouseButton))   // only allow this to work on the Initial Mouse Hit
+                //floodFill(sx, sy, numSelectedBackPaletteID);
+                //floodFillGradient(sx, sy, 0, 255, 45);
+            break;
+        */
 
         case DrawText: {
             getTextCenterHandle(sx, sy, &nsx, &nsy);    // source x, source y, return results x, return results y
@@ -3524,6 +3633,116 @@ void MainWindow::readToolXY(int *rx, int *ry){
     *rx = resx;
     *ry = resy;
 }
+
+
+
+
+void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uint8_t colEnd, float angleDegrees){
+    if(startX < 0 || startX >= icon_width || startY < 0 || startY >= icon_height)
+        return;
+
+    uint8_t targetColor = icon_area[startY][startX];
+    if (targetColor == colStart && colStart == colEnd)
+        return;
+
+    // Gradient direction
+    float rad = angleDegrees * (M_PI / 180.0f);
+    float dirX = cosf(rad);
+    float dirY = sinf(rad);
+
+    std::stack<QPoint> s;
+    std::vector<QPoint> filled;
+    s.push(QPoint(startX, startY));
+    const uint8_t VISITED = 0xFF;
+
+    int tick = 0;
+
+    // ---- FLOOD COLLECT ----
+    while(!s.empty()){
+        QPoint p = s.top(); s.pop();
+        int x = p.x(), y = p.y();
+        if(x < 0 || x >= icon_width || y < 0 || y >= icon_height) continue;
+        if(icon_area[y][x] != targetColor) continue;
+
+        icon_area[y][x] = VISITED;
+        filled.push_back(p);
+
+        // neighbors
+        s.push(QPoint(x, y+1));
+        s.push(QPoint(x, y-1));
+        s.push(QPoint(x+1, y));
+        s.push(QPoint(x-1, y));
+    }
+
+    if(filled.empty()){
+        renderEditorCanvas();
+        return;
+    }
+
+    // ---- FIND GRADIENT RANGE ----
+    float minProj = 1e9f, maxProj = -1e9f;
+    for(const QPoint &p : filled){
+        float proj = p.x()*dirX + p.y()*dirY;
+        minProj = std::min(minProj, proj);
+        maxProj = std::max(maxProj, proj);
+    }
+    float range = maxProj - minProj;
+    if(range == 0.0f) range = 1.0f;
+
+    // Optional Bayer matrix for dithering
+    const int ditherMatrix[4][4] = {
+        {0,  8,  2, 10},
+        {12, 4, 14, 6},
+        {3, 11, 1,  9},
+        {15, 7, 13, 5}
+    };
+
+    // ---- APPLY GRADIENT ----
+    for(const QPoint &p : filled){
+        float proj = p.x()*dirX + p.y()*dirY;
+        float t = (proj - minProj)/range;
+        t = std::clamp(t, 0.0f, 1.0f);
+
+        if(!ui->chkInstaFill->isChecked()){
+            tick++;
+            if(tick > 250){
+                renderEditorCanvas();
+                QCoreApplication::processEvents();
+                QThread::msleep(3);
+                tick = 0;
+            }
+        }
+
+        //float rawColor = colStart + t * (colEnd - colStart);
+        float rawColor = colStart + t * (colEnd - colStart); // keep as float
+        uint8_t finalCol = uint8_t(std::round(rawColor));
+
+        if(bDithered){
+            if(bNoisyDither){
+                // Noisy dithering
+                float frac = rawColor - std::floor(rawColor);
+                float noise = (rand() % 1000) / 1000.0f; // 0..1
+                finalCol = (frac > noise) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
+            } else {
+                // Bayer matrix dither
+                int mx = p.x() % 4;
+                int my = p.y() % 4;
+                float threshold = (ditherMatrix[my][mx] + 0.5f) / 16.0f; // normalized 0..1
+                float frac = rawColor - std::floor(rawColor);
+                finalCol = (frac > threshold) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
+            }
+        }
+
+
+
+        finalCol = std::clamp(finalCol, colStart, colEnd);
+
+        icon_area[p.y()][p.x()] = finalCol;
+    }
+
+    renderEditorCanvas();
+}
+
 
 
 void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
@@ -3607,6 +3826,7 @@ void MainWindow::reSize(){
     QWidget *container = ui->verticalLayoutWidget;
     QWidget *vboxh = ui->vboxTextoutputv;
     QWidget *fonteditBox = ui->frmFontWorkbench;
+    QWidget *sysoptions = ui->frmOptions;
 
     WinXW = wincontainer->width() - 2;
     WinXH = wincontainer->height() - 28;
@@ -3621,6 +3841,10 @@ void MainWindow::reSize(){
     if(fonteditBox){
         //ui->frmFontWorkbench->resize((WinXW))
         fonteditBox->resize(WinXW, WinXH);
+    }
+    if(sysoptions){
+        //ui->frmFontWorkbench->resize((WinXW))
+        sysoptions->resize(WinXW, WinXH);
     }
 
     PWinXW = ui->gfxEditor->width()  - 4;
@@ -3720,7 +3944,12 @@ void MainWindow::renderEditorCanvas(){
             //ltcapturedY = ctcapturedY;
             //readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
             //printf("P2P Tool: Target point TX: %d, TY: %d\n", ctcapturedX, ctcapturedY);
-            if(currentDrawMode == Line){
+
+            if(currentDrawMode == FloodFillGradient){
+
+            }
+
+            if(currentDrawMode == Line || currentDrawMode == FloodFillGradient){
                 auto invertCell = [&](int cellX, int cellY){
                     int startX = cellX * icon_zoom;
                     int startY = cellY * icon_zoom;
@@ -3731,8 +3960,10 @@ void MainWindow::renderEditorCanvas(){
                         for(int xx = 0; xx < icon_zoom; xx++){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
-                            //scan[px] = 0xFFFFFFFF - scan[px]; // invert
-                            scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
+                            if(currentDrawMode == Line)
+                                scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
+                            else
+                                scan[px] = 0xFFFFFFFF - scan[px]; // invert
                         }
                     }
                 };
