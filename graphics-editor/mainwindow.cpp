@@ -19,6 +19,11 @@
 #include <stack>
 #include <QPoint>  // for the QPoint objects
 
+// clipboard
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QMimeData>
+
 #include <stdio.h>
 
 #include "projectheader.h"
@@ -62,7 +67,7 @@ int  GradientRangeTo = 87;
 
 bool bMouseLeftRight    = true; // true if it is left
 bool bMouseButtonDown   = false;
-
+bool bShiftKey          = false;    // used for holding brush draw ;)
 
 // for previewing new primatives, lines, circles, rectangles
 bool captureXYStart = false;
@@ -1272,8 +1277,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->cmdHandleBM, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleBM); });
     connect(ui->cmdHandleBR, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleBR); });
 
+    connect(ui->cmdToolBrushSize1, &QPushButton::clicked, this, [this](){ clearBrushSizeButtons(0); });
+    connect(ui->cmdToolBrushSize2, &QPushButton::clicked, this, [this](){ clearBrushSizeButtons(1); });
+    connect(ui->cmdToolBrushSize3, &QPushButton::clicked, this, [this](){ clearBrushSizeButtons(2); });
+    connect(ui->cmdToolBrushSize4, &QPushButton::clicked, this, [this](){ clearBrushSizeButtons(3); });
+    connect(ui->cmdToolBrushSize5, &QPushButton::clicked, this, [this](){ clearBrushSizeButtons(4); });
+
     paletteRangerOffset = 128;
     paletteRangerLength = 16;
+
+    clearBrushSizeButtons(0);
 
     ui->lblPaletteOffset->setText( QString("%1").arg(paletteRangerOffset));
     ui->lblPaletteSizer->setText( QString("%1").arg(paletteRangerLength));
@@ -1306,6 +1319,26 @@ void MainWindow::clearHandlerButtons(char handleMode){
     if(handleMode == cHandleBR) ui->cmdHandleBR->setChecked(true); else ui->cmdHandleBR->setChecked(false);
 }
 
+void MainWindow::clearBrushSizeButtons(char brushSize){
+    ui->cmdToolBrushSize1->setChecked(false);
+    ui->cmdToolBrushSize2->setChecked(false);
+    ui->cmdToolBrushSize3->setChecked(false);
+    ui->cmdToolBrushSize4->setChecked(false);
+    ui->cmdToolBrushSize5->setChecked(false);
+
+    if(brushSize == 0) ui->cmdToolBrushSize1->setChecked(true);
+    if(brushSize == 1) ui->cmdToolBrushSize2->setChecked(true);
+    if(brushSize == 2) ui->cmdToolBrushSize3->setChecked(true);
+    if(brushSize == 3) ui->cmdToolBrushSize4->setChecked(true);
+    if(brushSize == 4) ui->cmdToolBrushSize5->setChecked(true);
+
+    iPenShapeSize = (brushSize * 2) + 1;
+
+    ui->scrPenDrawSize->setValue(iPenShapeSize);
+    ui->lblPenSize->setText(QString("%1").arg(iPenShapeSize));
+
+}
+
 // used for copying the icon_area to the backup
 void CommitIconArea(){
     for(int x = 0; x < icon_width; x++){
@@ -1313,6 +1346,7 @@ void CommitIconArea(){
             icon_area_backup[y][x] = icon_area[y][x];
         }
     }
+
 }
 
 void UndoIconArea(){
@@ -2327,6 +2361,10 @@ void MainWindow::loadProjectIcon(const char *filename){
         CommitIconArea();
         renderEditorCanvas();
         renderPaletteCanvas();
+        ui->outputTextView->hide();
+        ui->frmFontWorkbench->hide();
+        ui->frmOptions->hide();
+
     } else {
         fclose(f);
         QMessageBox::warning(this, "Load Icon - Error", "Not a Sidbox Icon Project file!"); return;
@@ -2709,12 +2747,10 @@ void MainWindow::drawCopyBrushHover(int sx, int sy, QImage *edImg){
     }
 }
 
-void MainWindow::PlaceBrush(int gridX, int gridY)
-{
+void MainWindow::PlaceBrush(int gridX, int gridY){
     if (icon_copy_area.empty() || iCopyWidth <= 0 || iCopyHeight <= 0)
         return;
 
-    icon_area_backup = icon_area;
     for (int y = 0; y < iCopyHeight; y++) {
         int targetY = gridY + y;
         if (targetY < 0 || targetY >= icon_height) continue;
@@ -2722,17 +2758,10 @@ void MainWindow::PlaceBrush(int gridX, int gridY)
         for (int x = 0; x < iCopyWidth; x++) {
             int targetX = gridX + x;
             if (targetX < 0 || targetX >= icon_width) continue;
-
             if(icon_copy_area[y][x]==0) continue;
-
             icon_area[targetY][targetX] = icon_copy_area[y][x];
         }
     }
-
-    // After placing, update backup for undo
-    //
-
-    renderEditorCanvas();
 }
 
 
@@ -2871,6 +2900,34 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 currentDrawMode = CopyBrush;    // a new copy region, anything in the copy buffer is lost.
                 bCapturingCopyArea = true;      // love how we're going to start GRABBING things ;) Yumm yumm.
             } else {
+
+                // we'll get the choice to use the already stored / copied brush OR the one from the clip board
+                if (!clipboardHasImage() && icon_copy_area.empty()) {
+                    QMessageBox::information(
+                        this,
+                        "Paste Brush",
+                        "No brush available and clipboard does not contain an image."
+                        );
+                    return true;
+                }
+
+                if (clipboardHasImage()) {
+
+                    auto reply = QMessageBox::question(
+                        this,
+                        "Paste Brush",
+                        "Clipboard contains an image.\n\nUse it as the brush?",
+                        QMessageBox::Yes | QMessageBox::No,
+                        QMessageBox::Yes
+                        );
+
+                    if (reply == QMessageBox::Yes) {
+                        pasteClipboardAsBrush();
+                    }
+                    // else: fall back to existing stored brush
+                }
+
+
                 currentDrawMode = PasteBrush;   // continue drawing what ever is in the copy job
                 bCapturingCopyArea = false;     // abandon the capturing state
                 bGrabbedCopyStart = false;
@@ -3044,6 +3101,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 setCursor(Qt::ClosedHandCursor);
                 return true;
             }
+            if(ke->key() == Qt::Key_Shift && !ke->isAutoRepeat()){
+                bShiftKey = true;
+            }
         }
         if(event->type() == QEvent::KeyRelease){
             QKeyEvent *ke = static_cast<QKeyEvent*>(event);
@@ -3056,6 +3116,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 UndoIconArea();
                 renderEditorCanvas();
                 return true;
+            }
+
+            if(ke->key() == Qt::Key_Shift){
+                bShiftKey = false;
             }
 
             if(!ke->isAutoRepeat()){
@@ -3126,6 +3190,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                    );
 
             if(!bCapturingCopyArea){
+
+                if(bMouseButtonDown && bShiftKey){
+                    if((currentDrawMode == PasteBrush) || (currentDrawMode == DrawText))
+                        ProcessClickPaint(hoverPixelX + xOffset, hoverPixelY + yOffset, DrawUIMode_InitButton | DrawUIMode_LeftMouseButton); // initial click
+                }
+
                 if(gradientDragging){
                     QPoint pos = mouseEvent->pos();
                     //int mx = pos.x() / icon_zoom + ui->scrEditorH->value();
@@ -3816,13 +3886,13 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
                 setIconAreaPen(sx, sy, iPenShapeSize, false);
         } break;
 
-        case FloodFill:
+        case FloodFill: {
             if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_LeftMouseButton))   // only allow this to work on the Initial Mouse Hit
                 floodFill(sx, sy, numSelectedPaletteID);
             if((flags & DrawUIMode_InitButton) && (flags & DrawUIMode_RightMouseButton))   // only allow this to work on the Initial Mouse Hit
                 floodFill(sx, sy, numSelectedBackPaletteID);
                 //floodFillGradient(sx, sy, 0, 255, 45);
-            break;
+        } break;
 
         // this will trigger on the click down! so commenting out
         /*
@@ -3858,8 +3928,8 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
                     tmrSprayCanTimer->start();
                     //printf("new spray rate: %lu\n", 1000 - (iSprayRate * 10));
                 }
-            } // the handling of the stop spray can, is in the mouse release event in the Editor Window
-        }
+            } // the handling of the stop spray can, is in the mouse release event in the Editor Window  
+        } break;
 
         case PasteBrush:{
             getCenterHandle(sx, sy, &nsx, &nsy, iCopyWidth, iCopyHeight);    // source x, source y, return results x, return results y
@@ -3872,7 +3942,7 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
                     drawText(nsx, nsy, 0);
                 */
             }
-        }
+        } break;
 
         default:
             return;
@@ -3996,9 +4066,6 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
                 t = proj / range;   // Linear
         }
 
-
-
-
         t = std::clamp(t, 0.0f, 1.0f);
 
         if(!ui->chkInstaFill->isChecked()){
@@ -4032,8 +4099,6 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
                 finalCol = (frac > threshold) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
             }
         }
-
-
 
         finalCol = std::clamp(finalCol, colStart, colEnd);
 
@@ -4624,3 +4689,84 @@ void MainWindow::doAlterBrush(int mode){
         } break;
     }
 }
+
+
+/// clip board sys
+
+//#include <QClipboard>
+//#include <QGuiApplication>
+//#include <QMimeData>
+
+void MainWindow::pasteClipboardAsBrush(){
+    QClipboard *clipboard = QGuiApplication::clipboard();
+    const QMimeData *mime = clipboard->mimeData();
+
+    if(!mime->hasImage()){
+        QMessageBox::warning(this, "Paste Brush", "Clipboard does not contain an image.");
+        return;
+    }
+
+    QImage img = qvariant_cast<QImage>(mime->imageData());
+    if(img.isNull()){
+        QMessageBox::warning(this, "Paste Brush", "Failed to read clipboard image.");
+        return;
+    }
+
+    // Convert to a sane format
+    img = img.convertToFormat(QImage::Format_ARGB32);
+
+    // From here → convert to icon_copy_area
+    convertImageToBrush(img);
+}
+
+void MainWindow::convertImageToBrush(const QImage &img){
+    iCopyWidth  = img.width();
+    iCopyHeight = img.height();
+
+    icon_copy_area.assign(iCopyHeight, std::vector<uint8_t>(iCopyWidth, 0));
+
+    for(int y = 0; y < iCopyHeight; y++){
+        const QRgb *scan = reinterpret_cast<const QRgb*>(img.constScanLine(y));
+        for(int x = 0; x < iCopyWidth; x++){
+            QRgb px = scan[x];
+
+            if(qAlpha(px) < 32){
+                icon_copy_area[y][x] = 0; // transparent
+                continue;
+            }
+
+            icon_copy_area[y][x] = findNearestPaletteColor(px);
+        }
+    }
+}
+
+uint8_t MainWindow::findNearestPaletteColor(QRgb rgb){
+    int r = qRed(rgb);
+    int g = qGreen(rgb);
+    int b = qBlue(rgb);
+
+    int best = 0;
+    int bestDist = INT_MAX;
+
+    for(int i = 0; i < 256; i++){
+        QRgb p = CLUT[i];
+        int dr = r - qRed(p);
+        int dg = g - qGreen(p);
+        int db = b - qBlue(p);
+        int dist = dr*dr + dg*dg + db*db;
+
+        if(dist < bestDist){
+            bestDist = dist;
+            best = i;
+        }
+    }
+
+    return uint8_t(best);
+}
+
+bool MainWindow::clipboardHasImage() {
+    const QClipboard* cb = QGuiApplication::clipboard();
+    const QMimeData* md = cb->mimeData();
+    return md->hasImage();
+}
+

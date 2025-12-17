@@ -2190,7 +2190,7 @@ Text Box! $0xCC</string>
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>299</y>
+       <y>328</y>
        <width>160</width>
        <height>170</height>
       </rect>
@@ -2538,7 +2538,7 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>190</y>
+       <y>219</y>
        <width>160</width>
        <height>105</height>
       </rect>
@@ -2686,7 +2686,7 @@ QPushButton:hover {
        <x>3</x>
        <y>0</y>
        <width>160</width>
-       <height>140</height>
+       <height>172</height>
       </rect>
      </property>
      <property name="title">
@@ -3208,14 +3208,259 @@ keyboard default: e - rotate clockwise
        <bool>false</bool>
       </property>
      </widget>
+     <widget class="QToolButton" name="cmdToolBrushSize5">
+      <property name="geometry">
+       <rect>
+        <x>125</x>
+        <y>138</y>
+        <width>28</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Grab Brush:
+Left side: Grab an area
+Right side: Use an already grabbed image
+keyboard default: x - flip left/right
+keyboard default: y - flip up/down
+keyboard default: q - rotate counter clockwise
+keyboard default: e - rotate clockwise
+</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/brush-size5.png</normaloff>
+        <activeon>:/_work/brush-size5a.png</activeon>:/_work/brush-size5.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="cmdToolBrushSize2">
+      <property name="geometry">
+       <rect>
+        <x>38</x>
+        <y>138</y>
+        <width>28</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Grab Brush:
+Left side: Grab an area
+Right side: Use an already grabbed image
+keyboard default: x - flip left/right
+keyboard default: y - flip up/down
+keyboard default: q - rotate counter clockwise
+keyboard default: e - rotate clockwise
+</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/brush-size2.png</normaloff>
+        <activeon>:/_work/brush-size2a.png</activeon>:/_work/brush-size2.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="cmdToolBrushSize4">
+      <property name="geometry">
+       <rect>
+        <x>96</x>
+        <y>138</y>
+        <width>28</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Grab Brush:
+Left side: Grab an area
+Right side: Use an already grabbed image
+keyboard default: x - flip left/right
+keyboard default: y - flip up/down
+keyboard default: q - rotate counter clockwise
+keyboard default: e - rotate clockwise
+</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/brush-size4.png</normaloff>
+        <activeon>:/_work/brush-size4a.png</activeon>:/_work/brush-size4.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="cmdToolBrushSize3">
+      <property name="geometry">
+       <rect>
+        <x>67</x>
+        <y>138</y>
+        <width>28</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Grab Brush:
+Left side: Grab an area
+Right side: Use an already grabbed image
+keyboard default: x - flip left/right
+keyboard default: y - flip up/down
+keyboard default: q - rotate counter clockwise
+keyboard default: e - rotate clockwise
+</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/brush-size3.png</normaloff>
+        <activeon>:/_work/brush-size3a.png</activeon>:/_work/brush-size3.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QToolButton" name="cmdToolBrushSize1">
+      <property name="geometry">
+       <rect>
+        <x>9</x>
+        <y>138</y>
+        <width>28</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Grab Brush:
+Left side: Grab an area
+Right side: Use an already grabbed image
+keyboard default: x - flip left/right
+keyboard default: y - flip up/down
+keyboard default: q - rotate counter clockwise
+keyboard default: e - rotate clockwise
+</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 0px</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="resources.qrc">
+        <normaloff>:/_work/brush-size1.png</normaloff>
+        <activeon>:/_work/brush-size1a.png</activeon>:/_work/brush-size1.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="popupMode">
+       <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
+      </property>
+      <property name="autoRaise">
+       <bool>false</bool>
+      </property>
+     </widget>
     </widget>
     <widget class="QFrame" name="frame">
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>599</y>
+       <y>632</y>
        <width>160</width>
-       <height>160</height>
+       <height>220</height>
       </rect>
      </property>
      <property name="frameShape">
@@ -3281,12 +3526,31 @@ keyboard default: e - rotate clockwise
        <bool>true</bool>
       </property>
      </widget>
+     <widget class="QLabel" name="label_17">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>160</y>
+        <width>151</width>
+        <height>50</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string>hold [Shift] for Brush and Text Drawing when moving mouse</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
     <widget class="QFrame" name="frame_2">
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>143</y>
+       <y>173</y>
        <width>170</width>
        <height>43</height>
       </rect>
@@ -3674,7 +3938,7 @@ keyboard default: e - rotate clockwise
      <property name="geometry">
       <rect>
        <x>4</x>
-       <y>470</y>
+       <y>502</y>
        <width>160</width>
        <height>124</height>
       </rect>

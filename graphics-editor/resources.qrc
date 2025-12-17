@@ -24,5 +24,15 @@
         <file>_work/tool-copy.png</file>
         <file>_work/handle_spot-a.png</file>
         <file>_work/handle_spot.png</file>
+        <file>_work/brush-size1.png</file>
+        <file>_work/brush-size1a.png</file>
+        <file>_work/brush-size2.png</file>
+        <file>_work/brush-size2a.png</file>
+        <file>_work/brush-size3.png</file>
+        <file>_work/brush-size3a.png</file>
+        <file>_work/brush-size4.png</file>
+        <file>_work/brush-size4a.png</file>
+        <file>_work/brush-size5.png</file>
+        <file>_work/brush-size5a.png</file>
     </qresource>
 </RCC>

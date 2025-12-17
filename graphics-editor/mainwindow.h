@@ -99,7 +99,15 @@ private:
     void ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight);
     void clearToolButtons();
     void clearHandlerButtons(char handleMode = cHandleMM);
+    void clearBrushSizeButtons(char brushSize = 1);
     void doAlterBrush(int mode);
+
+    // clipboard brush import
+    bool clipboardHasImage();
+    uint8_t findNearestPaletteColor(QRgb rgb);
+    void pasteClipboardAsBrush();
+    void convertImageToBrush(const QImage &img);
+
 
     FontEditor *fontEditor;
 
