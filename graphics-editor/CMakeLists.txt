@@ -15,6 +15,7 @@ qt_add_executable(graphics-editor
     resources.qrc
     fonteditor.h
     fonteditor.cpp
+    projectheader.h
 )
 
 

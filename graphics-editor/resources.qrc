@@ -22,5 +22,7 @@
         <file>_work/tool-text.png</file>
         <file>_work/tool-copy-a.png</file>
         <file>_work/tool-copy.png</file>
+        <file>_work/handle_spot-a.png</file>
+        <file>_work/handle_spot.png</file>
     </qresource>
 </RCC>

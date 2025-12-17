@@ -12,6 +12,17 @@
 
 
 // basic C
+enum imageHandlerPos {
+    cHandleTL,  // Top left
+    cHandleTM,  // Top Middle
+    cHandleTR,  // Top Right
+    cHandleML,  // Middle Left
+    cHandleMM,  // Middle Middle
+    cHandleMR,  // Middle Right
+    cHandleBL,  // Bottom Left
+    cHandleBM,  // Bottom Middle
+    cHandleBR   // Bottom Right
+};
 
 
 QT_BEGIN_NAMESPACE
@@ -27,6 +38,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
 
 
     // font system
@@ -86,6 +98,7 @@ private:
     void CopySelectionToBrush();
     void ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight);
     void clearToolButtons();
+    void clearHandlerButtons(char handleMode = cHandleMM);
     void doAlterBrush(int mode);
 
     FontEditor *fontEditor;

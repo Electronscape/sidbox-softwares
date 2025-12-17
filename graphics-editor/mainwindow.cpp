@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 
+#include "projectheader.h"
+
 #define PALETTE_BOX_HSIZE   16
 #define PALETTE_BOX_VSIZE   16
 #define PALETTE_WIDTH       PALETTE_BOX_HSIZE
@@ -42,8 +44,10 @@ bool        bSpreadPalette  = false;
 
 QPalette pal;
 QTimer *tmrColourCycle;
+QString ProjectFilename = "untitled.icn";
+QString PaletteFilename = "untitled.pal";
 
-//chkCyclePaletteDraw
+//chkCyclePaletteDraw#include "projectheader.h"
 int cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
 int cyclePaletteStepping = 0;   // used to control the division of steps before next cyclePaletteID increment.
 int cyclefrom, cycleto, cyclelength = 8;
@@ -229,8 +233,8 @@ int     iTextHeight     = 1;        // height of the text
 
 // PEN system is the host for Spray Can and simple primative
 bool    bPenShapeCircle = true;
-int     iPenShapeSize   = 10;        // default pen size for spray and pen actions
-bool    bFillToolIn     = false;     // weather the cirlce/box tool filles in (MINCE PIE'D!)
+int     iPenShapeSize   = 1;        // default pen size for spray and pen actions
+bool    bFillToolIn     = false;    // weather the cirlce/box tool filles in (MINCE PIE'D!)
 
 
 
@@ -241,7 +245,7 @@ bool    bCapturingCopyArea  = false;
 bool    bGrabbedCopyStart = false;
 int     iCapturedCopyX, iCapturedCopyY;
 int     iTargetCopyX, iTargetCopyY;
-
+char    cBrushHandleMode = cHandleMM;
 int     iCopyWidth      = 0;        // nothing in the buffer, so REALLY make sure this is checked
 int     iCopyHeight     = 0;
 
@@ -279,7 +283,8 @@ enum ResizeMode {
 enum FloodFillType {
     FillLinear,
     FillDiamond,
-    FillCircles
+    FillCircles,
+    FillFromBrush
 };
 
 int iFillType = FillLinear;
@@ -685,17 +690,19 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+
     connect(ui->cmdSaveIconProject, &QPushButton::clicked, this, [this](){
         static QString lastDir;
-        QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
+        QSettings settings(SettingsCompanyName, SettingsProjectName);
         lastDir = settings.value("lastProjectDir", QDir::homePath()).toString();
 
-        QString filename = QFileDialog::getSaveFileName(this, "Save Icon", lastDir, "Icon Files (*.icn)");
+        QString filename = QFileDialog::getSaveFileName(this, "Save Icon", lastDir + "/" + ProjectFilename, "Icon Files (*.icn)");
         // saveIcon(filename);
         if(!filename.isEmpty()){
             QFileInfo info(filename);
-            QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-            settings.setValue("lastProjectDir", info.absolutePath());
+            ProjectFilename = info.fileName();
+            QSettings settings(SettingsCompanyName, SettingsProjectName);
+            settings.setValue(SettingsLastFileDirProject, info.absolutePath());
             saveProjectIcon(filename.toUtf8().constData());
         }
 
@@ -703,14 +710,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdLoadIconProject, &QPushButton::clicked, this, [this](){
         static QString lastDir;
-        QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-        lastDir = settings.value("lastProjectDir", QDir::homePath()).toString();
-        QString filename = QFileDialog::getOpenFileName(this, "Load Icon", lastDir, "Icon Files (*.icn)");
+        QSettings settings(SettingsCompanyName, SettingsProjectName);
+        lastDir = settings.value(SettingsLastFileDirProject, QDir::homePath()).toString();
+        QString filename = QFileDialog::getOpenFileName(this, "Load Icon", lastDir + "/" + ProjectFilename, "Icon Files (*.icn)");//ProfileFilename
         if(!filename.isEmpty()) {
             QFileInfo info(filename);
-            QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-            settings.setValue("lastProjectDir", info.absolutePath());
+            QSettings settings(SettingsCompanyName, SettingsProjectName);
+            settings.setValue(SettingsLastFileDirProject, info.absolutePath());
             loadProjectIcon(filename.toUtf8().constData());
+            ProjectFilename = info.fileName();
             // ---- Palette side-load ----
             QString baseName = info.completeBaseName();
             QString paletteFile = info.absolutePath() + "/" + baseName + ".pal";
@@ -719,6 +727,41 @@ MainWindow::MainWindow(QWidget *parent)
             }
         }
     });
+
+
+
+    connect(ui->cmdSavePalette, &QPushButton::clicked, this, [this](){
+        // save de palette!!
+        static QString lastDir;
+        QSettings settings(SettingsCompanyName, SettingsProjectName);
+        lastDir = settings.value(SettingsLastFileDirPalette, QDir::homePath()).toString();
+        QString filename = QFileDialog::getSaveFileName(this, "Save Palette", lastDir + "/" + PaletteFilename, "Paltette Files (*.pal)");
+        // saveIcon(filename);
+        if(!filename.isEmpty()){
+            QFileInfo info(filename);
+            PaletteFilename = info.fileName();
+            QSettings settings(SettingsCompanyName, SettingsProjectName);
+            settings.setValue(SettingsLastFileDirPalette, info.absolutePath());
+            SavePaletteData(filename.toUtf8().constData());
+        }
+    });
+
+    connect(ui->cmdLoadPalette, &QPushButton::clicked, this, [this](){
+        // save de palette!!
+        static QString lastDir;
+        QSettings settings(SettingsCompanyName, "SidBox-GraphicsEditV3");
+        lastDir = settings.value(SettingsLastFileDirPalette, QDir::homePath()).toString();
+        QString filename = QFileDialog::getOpenFileName(this, "Open Palette", lastDir + "/" + PaletteFilename, "Paltette Files (*.pal)");
+        // saveIcon(filename);
+        if(!filename.isEmpty()){
+            QFileInfo info(filename);
+            PaletteFilename = info.fileName();
+            QSettings settings(SettingsCompanyName, "SidBox-GraphicsEditV3");
+            settings.setValue(SettingsLastFileDirPalette, info.absolutePath());
+            LoadPaletteData(filename.toUtf8().constData());
+        }
+    });
+
 
     connect(ui->cmdSetIconAreaSize, &QPushButton::clicked, this, [=](){
         icon_width = ui->txtProjectImageWidth->text().toInt();
@@ -858,6 +901,12 @@ MainWindow::MainWindow(QWidget *parent)
         iFillType = FillCircles;
     });
 
+    //connect(ui->radFillTypeBrush, &QRadioButton::clicked, this, [this](){
+        //iFillType = FillFromBrush;
+    //});
+    //chkFloodFillBrush
+
+
     ui->toolButtonFloodFill->installEventFilter(this);
     connect(ui->toolButtonFloodFill, &QPushButton::clicked, this, [this](){
         clearToolButtons();
@@ -916,8 +965,8 @@ MainWindow::MainWindow(QWidget *parent)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     connect(ui->cmdImportImage, &QPushButton::clicked, this, [this](){
         static QString lastDir;
-        QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-        lastDir = settings.value("lastImportDir", QDir::homePath()).toString();
+        QSettings settings(SettingsCompanyName, SettingsProjectName);
+        lastDir = settings.value(SettingsLastImportDir, QDir::homePath()).toString();
 
 
         QString filename = QFileDialog::getOpenFileName(this, "Import Image...", lastDir,
@@ -926,11 +975,12 @@ MainWindow::MainWindow(QWidget *parent)
         if(!filename.isEmpty()) {
 
             QFileInfo info(filename);
-            QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-            settings.setValue("lastImportDir", info.absolutePath());
-
-
+            QSettings settings(SettingsCompanyName, SettingsProjectName);
+            settings.setValue(SettingsLastImportDir, info.absolutePath());
             importGif(filename);
+            ui->outputTextView->hide();
+            ui->frmFontWorkbench->hide();
+            ui->frmOptions->hide();
         }
     });
 
@@ -1062,22 +1112,6 @@ MainWindow::MainWindow(QWidget *parent)
         ui->outputTextView->hide();
     });
 
-    connect(ui->cmdSavePalette, &QPushButton::clicked, this, [this](){
-        // save de palette!!
-        QString filename = QFileDialog::getSaveFileName(this, "Save Palette", "", "Paltette Files (*.pal)");
-        // saveIcon(filename);
-        if(!filename.isEmpty())
-            SavePaletteData(filename.toUtf8().constData());
-    });
-
-    connect(ui->cmdLoadPalette, &QPushButton::clicked, this, [this](){
-        // save de palette!!
-        QString filename = QFileDialog::getOpenFileName(this, "Open Palette", "", "Paltette Files (*.pal)");
-        // saveIcon(filename);
-        if(!filename.isEmpty())
-            LoadPaletteData(filename.toUtf8().constData());
-    });
-
     connect(ui->cmdExportH, &QPushButton::clicked, this, [this](){
         uint16_t bits;   // collect the config bits
         bits = ui->chkExportRLE->isChecked() * ExportRLE;
@@ -1091,7 +1125,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->scrCycleStepper, &QScrollBar::valueChanged, this, [this](){
         ui->lblCycleStepping->setText(QString("%1").arg(ui->scrCycleStepper->value()));
     });
-
 
     ui->outputTextView->hide();
     ui->frmFontWorkbench->hide();
@@ -1228,6 +1261,17 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
 
+    /// image handler buttons
+    connect(ui->cmdHandleTL, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleTL); });
+    connect(ui->cmdHandleTM, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleTM); });
+    connect(ui->cmdHandleTR, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleTR); });
+    connect(ui->cmdHandleML, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleML); });
+    connect(ui->cmdHandleMM, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleMM); });
+    connect(ui->cmdHandleMR, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleMR); });
+    connect(ui->cmdHandleBL, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleBL); });
+    connect(ui->cmdHandleBM, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleBM); });
+    connect(ui->cmdHandleBR, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleBR); });
+
     paletteRangerOffset = 128;
     paletteRangerLength = 16;
 
@@ -1245,6 +1289,22 @@ MainWindow::MainWindow(QWidget *parent)
 
 }
 
+
+void MainWindow::clearHandlerButtons(char handleMode){
+
+    cBrushHandleMode = handleMode;
+    if(handleMode == cHandleTL) ui->cmdHandleTL->setChecked(true); else ui->cmdHandleTL->setChecked(false);
+    if(handleMode == cHandleTM) ui->cmdHandleTM->setChecked(true); else ui->cmdHandleTM->setChecked(false);
+    if(handleMode == cHandleTR) ui->cmdHandleTR->setChecked(true); else ui->cmdHandleTR->setChecked(false);
+
+    if(handleMode == cHandleML) ui->cmdHandleML->setChecked(true); else ui->cmdHandleML->setChecked(false);
+    if(handleMode == cHandleMM) ui->cmdHandleMM->setChecked(true); else ui->cmdHandleMM->setChecked(false);
+    if(handleMode == cHandleMR) ui->cmdHandleMR->setChecked(true); else ui->cmdHandleMR->setChecked(false);
+
+    if(handleMode == cHandleBL) ui->cmdHandleBL->setChecked(true); else ui->cmdHandleBL->setChecked(false);
+    if(handleMode == cHandleBM) ui->cmdHandleBM->setChecked(true); else ui->cmdHandleBM->setChecked(false);
+    if(handleMode == cHandleBR) ui->cmdHandleBR->setChecked(true); else ui->cmdHandleBR->setChecked(false);
+}
 
 // used for copying the icon_area to the backup
 void CommitIconArea(){
@@ -3592,28 +3652,122 @@ void MainWindow::getTextCenterHandle(int sx, int sy, int* outX, int* outY){
 
     int lineWidth = 0;
     int maxWidth = 0;
-    int totalHeight = 8 * iTextHeight; // start with one line
+    int totalHeight = 8 * iTextHeight; // first line
 
     for (int i = 0; textptr[i] != '\0'; i++) {
         if (textptr[i] == '\n') {
-            totalHeight += 8 * iTextHeight;
             if (lineWidth > maxWidth) maxWidth = lineWidth;
             lineWidth = 0;
-        } else
+            totalHeight += 8 * iTextHeight;
+        } else {
             lineWidth += 8 * iTextWidth;
+        }
     }
     if (lineWidth > maxWidth) maxWidth = lineWidth;
 
-    // Compute center handle
-    *outX = sx - maxWidth / 2;
-    *outY = sy - totalHeight / 2;
+    int x = sx;
+    int y = sy;
+
+    switch (cBrushHandleMode) {
+        case cHandleTL: break;
+
+        case cHandleTM:
+            x -= maxWidth / 2;
+            break;
+
+        case cHandleTR:
+            x -= maxWidth;
+            break;
+
+        case cHandleML:
+            y -= totalHeight / 2;
+            break;
+
+        case cHandleMM:
+            x -= maxWidth / 2;
+            y -= totalHeight / 2;
+            break;
+
+        case cHandleMR:
+            x -= maxWidth;
+            y -= totalHeight / 2;
+            break;
+
+        case cHandleBL:
+            y -= totalHeight;
+            break;
+
+        case cHandleBM:
+            x -= maxWidth / 2;
+            y -= totalHeight;
+            break;
+
+        case cHandleBR:
+            x -= maxWidth;
+            y -= totalHeight;
+            break;
+    }
+
+    *outX = x;
+    *outY = y;
 }
 
 
 void MainWindow::getCenterHandle(int sx, int sy, int* outX, int* outY, int width, int height){
-    *outX = sx - width / 2;
-    *outY = sy - height / 2;
+    //*outX = sx - width / 2;
+    //*outY = sy - height / 2;
+
+    int ox = sx;
+    int oy = sy;
+
+    switch(cBrushHandleMode){
+        case cHandleTL:
+            // no offset
+            break;
+
+        case cHandleTM:
+            ox -= width / 2;
+            break;
+
+        case cHandleTR:
+            ox -= width;
+            break;
+
+        case cHandleML:
+            oy -= height / 2;
+            break;
+
+        case cHandleMM:
+            ox -= width / 2;
+            oy -= height / 2;
+            break;
+
+        case cHandleMR:
+            ox -= width;
+            oy -= height / 2;
+            break;
+
+        case cHandleBL:
+            oy -= height;
+            break;
+
+        case cHandleBM:
+            ox -= width / 2;
+            oy -= height;
+            break;
+
+        case cHandleBR:
+            ox -= width;
+            oy -= height;
+            break;
+    }
+
+    *outX = ox;
+    *outY = oy;
 }
+
+
+
 
 int ooldx, ooldy;
 void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
@@ -3893,7 +4047,7 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
 
 
 void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
-    int tick=0;
+    int tick = 0;
     if(startX < 0 || startX >= icon_width || startY < 0 || startY >= icon_height)
         return;
 
@@ -3903,47 +4057,50 @@ void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
     std::stack<QPoint> s;
     s.push(QPoint(startX, startY));
 
-    while (!s.empty())
-    {
-        QPoint p = s.top();
-        s.pop();
+    // visited mask
+    std::vector<std::vector<bool>> visited(icon_height, std::vector<bool>(icon_width, false));
 
+    while(!s.empty()){
+        QPoint p = s.top(); s.pop();
         int x = p.x();
         int y = p.y();
 
-        if (x < 0 || x >= icon_width || y < 0 || y >= icon_height) continue;
-        if (icon_area[y][x] != targetColor) continue;
+        if(x < 0 || x >= icon_width || y < 0 || y >= icon_height) continue;
+        if(visited[y][x]) continue;
+        if(icon_area[y][x] != targetColor) continue;
 
-        icon_area[y][x] = fillColor;
+        visited[y][x] = true; // mark as visited
+
+        // --- fill with brush or solid ---
+        if(ui->chkFloodFillBrush->isChecked() && !icon_copy_area.empty()){
+            int brushX = x % iCopyWidth;
+            int brushY = y % iCopyHeight;
+            icon_area[y][x] = icon_copy_area[brushY][brushX];
+        } else {
+            icon_area[y][x] = fillColor;
+        }
 
         // --- redraw step ---
         if(!ui->chkInstaFill->isChecked()){
             tick++;
-            if(tick>250){
+            if(tick > 250){
                 renderEditorCanvas();
-                QCoreApplication::processEvents(); // allow GUI to update
-                QThread::msleep(3);               // slow down (ms)
-                tick=0;
+                QCoreApplication::processEvents();
+                QThread::msleep(3);
+                tick = 0;
             }
         }
 
         // push neighbors
-        //s.push(QPoint(x+1, y));
-        //s.push(QPoint(x-1, y));
-        //s.push(QPoint(x, y+1));
-        //s.push(QPoint(x, y-1));
-
-        // push vertical neighbors first (processed later)
-        s.push(QPoint(x, y+1)); // down
-        s.push(QPoint(x, y-1)); // up
-        // push horizontal neighbors last (processed first)
-        s.push(QPoint(x+1, y)); // right
-        s.push(QPoint(x-1, y)); // left
-
+        s.push(QPoint(x, y+1));
+        s.push(QPoint(x, y-1));
+        s.push(QPoint(x+1, y));
+        s.push(QPoint(x-1, y));
     }
 
-    renderEditorCanvas(); // update display after fill
+    renderEditorCanvas();
 }
+
 
 int pendingScrollX = -1;
 int pendingScrollY = -1;

@@ -9,6 +9,9 @@
 
 #include <stdio.h>
 
+#include "projectheader.h"
+
+
 QGraphicsView *gfxSelectorView;
 QGraphicsView *gfxEditorView;
 QLabel        *fontSelectedLabel;
@@ -20,6 +23,7 @@ QObject       *host;
 int FShoverPixelX = -1, FShoverPixelY = -1; // FSelector View
 int FEhoverPixelX = -1, FEhoverPixelY = -1; // FEditor View
 
+QString lastFontFilename = "untitled.pfn";
 
 int selectedFontID = 0;
 
@@ -365,14 +369,15 @@ void FontEditor::handleMouse(const QPointF &pt, QEvent *event){
 void FontEditor::SaveFontAs(){
     // save de palette!!
     static QString lastDir;
-    QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-    lastDir = settings.value("lastFontProjectDir", QDir::homePath()).toString();
+    QSettings settings(SettingsCompanyName, SettingsProjectName);
+    lastDir = settings.value(SettingsLastFileDirFont, QDir::homePath()).toString();
 
-    QString filename = QFileDialog::getSaveFileName(gfxSelectorView, "Save Font", lastDir, "Font Project (*.pfn)");
+    QString filename = QFileDialog::getSaveFileName(gfxSelectorView, "Save Font", lastDir + "/" + lastFontFilename, "Font Project (*.pfn)");
     // saveIcon(filename);
     if(!filename.isEmpty()){
         QFileInfo info(filename);
-        settings.setValue("lastFontProjectDir", info.absolutePath());
+        settings.setValue(SettingsLastFileDirFont, info.absolutePath());
+        lastFontFilename = info.fileName();
 
         FILE *f = fopen(filename.toUtf8().constData(), "wb");
         if(!f) {
@@ -386,13 +391,14 @@ void FontEditor::SaveFontAs(){
 
 void FontEditor::LoadFont(){
     static QString lastDir;
-    QSettings settings("Electronscape", "SidBox-GraphicsEditV3");
-    lastDir = settings.value("lastFontProjectDir", QDir::homePath()).toString();
-    QString filename = QFileDialog::getOpenFileName(gfxSelectorView, "Load Font", lastDir, "Font Project (*.pfn)");
+    QSettings settings(SettingsCompanyName, SettingsProjectName);
+    lastDir = settings.value(SettingsLastFileDirFont, QDir::homePath()).toString();
+    QString filename = QFileDialog::getOpenFileName(gfxSelectorView, "Load Font", lastDir + "/" + lastFontFilename, "Font Project (*.pfn)");
 
     if(!filename.isEmpty()){
         QFileInfo info(filename);
-        settings.setValue("lastFontProjectDir", info.absolutePath());
+        lastFontFilename = info.fileName();
+        settings.setValue(SettingsLastFileDirFont, info.absolutePath());
 
         FILE *f = fopen(filename.toUtf8().constData(), "rb");
         if(!f) {
