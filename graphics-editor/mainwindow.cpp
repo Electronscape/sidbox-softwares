@@ -279,6 +279,7 @@ enum DrawMode {
     CopyBrush,  // Copy meaning we're capturing
     PasteBrush, // THEN it will turn to this when we let go of the mouse button
 } currentDrawMode = Plot;
+DrawMode lastDrawMode = currentDrawMode; // store enum type directly
 
 enum ResizeMode {
     Resample,       // averaging
@@ -919,11 +920,46 @@ MainWindow::MainWindow(QWidget *parent)
         renderEditorCanvas();
     });
 
-    ui->toolButtonCopyArea->installEventFilter(this);
+    //ui->toolButtonCopyArea->installEventFilter(this);
     connect(ui->toolButtonCopyArea, &QPushButton::clicked, this, [this](){
-        clearToolButtons();
-        ui->toolButtonCopyArea->setChecked(true);   // keep this high lighted!
-        //currentDrawMode = noDrawing;    // prevents ANYTHING happening until we start clicking and releasing stuffs
+
+        QPoint cursorPos = ui->toolButtonCopyArea->mapFromGlobal(QCursor::pos());
+
+        if(cursorPos.x() < ui->toolButtonCopyArea->width() / 2){
+            currentDrawMode = CopyBrush;
+            bCapturingCopyArea = true;
+            clearToolButtons();
+            ui->toolButtonCopyArea->setChecked(true);
+        } else {
+            lastDrawMode = currentDrawMode;
+
+            ui->toolButtonCopyArea->blockSignals(true);
+            if (!clipboardHasImage() && icon_copy_area.empty()) {
+                QMessageBox::information(this, "Paste Brush", "No brush available and clipboard does not contain an image.");
+                ui->toolButtonCopyArea->setChecked(false);
+                currentDrawMode = lastDrawMode;
+            } else {
+
+                clearToolButtons();
+                ui->toolButtonCopyArea->setChecked(true);
+
+                if (clipboardHasImage()) {
+                    auto reply = QMessageBox::question(this,
+                        "Paste Brush",
+                        "Clipboard contains an image.\n\nUse it as the brush?",
+                        QMessageBox::Yes | QMessageBox::No,
+                        QMessageBox::Yes
+                        );
+                    if (reply == QMessageBox::Yes)
+                        pasteClipboardAsBrush();
+                }
+
+                currentDrawMode = PasteBrush;
+                bCapturingCopyArea = false;
+                bGrabbedCopyStart = false;
+            }
+            ui->toolButtonCopyArea->blockSignals(false);
+        }
     });
 
     // pen draw modes ----------------------
@@ -2893,46 +2929,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 bFillToolIn = true;
             }
         }
-        if(obj == ui->toolButtonCopyArea){
-            auto *me = static_cast<QMouseEvent*>(event);
-            QPoint p = me->pos(); // position INSIDE button
-            if (p.x() < ui->toolButtonCopyArea->width() / 2) {
-                currentDrawMode = CopyBrush;    // a new copy region, anything in the copy buffer is lost.
-                bCapturingCopyArea = true;      // love how we're going to start GRABBING things ;) Yumm yumm.
-            } else {
-
-                // we'll get the choice to use the already stored / copied brush OR the one from the clip board
-                if (!clipboardHasImage() && icon_copy_area.empty()) {
-                    QMessageBox::information(
-                        this,
-                        "Paste Brush",
-                        "No brush available and clipboard does not contain an image."
-                        );
-                    return true;
-                }
-
-                if (clipboardHasImage()) {
-
-                    auto reply = QMessageBox::question(
-                        this,
-                        "Paste Brush",
-                        "Clipboard contains an image.\n\nUse it as the brush?",
-                        QMessageBox::Yes | QMessageBox::No,
-                        QMessageBox::Yes
-                        );
-
-                    if (reply == QMessageBox::Yes) {
-                        pasteClipboardAsBrush();
-                    }
-                    // else: fall back to existing stored brush
-                }
-
-
-                currentDrawMode = PasteBrush;   // continue drawing what ever is in the copy job
-                bCapturingCopyArea = false;     // abandon the capturing state
-                bGrabbedCopyStart = false;
-            }
-        }
 
         if(obj == ui->toolButtonCircle){
             auto *me = static_cast<QMouseEvent*>(event);
@@ -3094,10 +3090,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             QKeyEvent *ke = static_cast<QKeyEvent*>(event);
             //if (ke->isAutoRepeat()) return true; // ignore repeats
             if(ke->key() == Qt::Key_Space && !grabbing && !ke->isAutoRepeat()){
-
                 grabbing = true;
                 gradientDragging = false;
-
                 setCursor(Qt::ClosedHandCursor);
                 return true;
             }
@@ -3117,7 +3111,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 renderEditorCanvas();
                 return true;
             }
-
             if(ke->key() == Qt::Key_Shift){
                 bShiftKey = false;
             }
@@ -3349,13 +3342,52 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                 }
                             };
 
+                            int prevX = x;
+                            int prevY = y;
+
+                            auto setSoftPixel = [&](int px, int py){
+                                if(px < 0 || px >= icon_width || py < 0 || py >= icon_height)
+                                    return;
+                                setIconArea(px, py);
+                            };
+
+
                             while(true){
                                 setThickPixel(x, y);
 
-                                if(x == x1 && y == y1) break;
+                                if(x == x1 && y == y1)
+                                    break;
+
+                                prevX = x;
+                                prevY = y;
+
                                 e2 = 2 * err;
                                 if(e2 >= dy){ err += dy; x += sx; }
                                 if(e2 <= dx){ err += dx; y += sy; }
+
+                                // --- CHEAP AA (ONLY FOR SMALL PENS) ---
+                                // --- CHEAP AA (pen-thickness aware) ---
+                                if(ui->chkPenDrawAA->isChecked()){
+                                    // for small pens, just do your old single-pixel AA
+                                    if(iPenShapeSize <= 2){
+                                        if(x != prevX && y != prevY){
+                                            setAAPixel(prevX, y, numSelectedPaletteID);
+                                            setAAPixel(x, prevY, numSelectedPaletteID);
+                                        }
+                                    } else {
+                                        // for thicker pens, spread AA around the edges
+                                        for(int yy = -halfPen; yy <= halfPen; yy++){
+                                            for(int xx = -halfPen; xx <= halfPen; xx++){
+                                                int nx1 = prevX + xx;
+                                                int ny1 = y + yy;
+                                                int nx2 = x + xx;
+                                                int ny2 = prevY + yy;
+                                                setAAPixel(nx1, ny1, numSelectedPaletteID);
+                                                setAAPixel(nx2, ny2, numSelectedPaletteID);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -3410,6 +3442,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                             int outerRadius = radius + halfPen;
                             int innerRadius = std::max(0, radius - halfPen);
 
+                            auto setOutlinePixel = [&](int x, int y){
+                                if(x < 0 || x >= icon_width || y < 0 || y >= icon_height)
+                                    return;
+                                setIconArea(x, y);
+                            };
+
                             for(int y = cy - outerRadius; y <= cy + outerRadius; y++){
                                 for(int x = cx - outerRadius; x <= cx + outerRadius; x++){
                                     int dx = x - cx;
@@ -3419,14 +3457,25 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                     float epsilon = 0.5f; // small tolerance
                                     if(dist >= innerRadius - epsilon && dist <= outerRadius + epsilon){
                                         // Outline
-                                        setIconArea(x, y);
+                                        setOutlinePixel(x, y);
+
+                                        // --- CHEAP AA (ONLY FOR SMALL PENS) ---
+                                        if(ui->chkPenDrawAA->isChecked()){// && iPenShapeSize <= 2){
+                                            // touch the neighboring pixels diagonally
+                                            setAAPixel(x+1, y, numSelectedPaletteID);
+                                            setAAPixel(x-1, y, numSelectedPaletteID);
+                                            setAAPixel(x, y+1, numSelectedPaletteID);
+                                            setAAPixel(x, y-1, numSelectedPaletteID);
+                                        }
+
                                     } else if(bFillToolIn && dist < innerRadius){
                                         // Fill inside
-                                        setIconArea(x, y);
+                                        setOutlinePixel(x, y);
                                     }
                                 }
                             }
                         }
+
 
 
                     }
@@ -3653,13 +3702,13 @@ void MainWindow::drawTextHover(int sx, int sy, QImage *edImg){
                 }
             }
         }
-
         x += 8 * scaleX; // advance for next character
     }
 
 }
 
 void MainWindow::drawText(int sx, int sy, bool setPixel){
+    bool outlineDraw = ui->chkTextOutline->isChecked();
     char textptr[128];
     QString src = ui->txtTextDrawText->toPlainText();
     buildTextPtrFromQString(src, textptr, sizeof(textptr));
@@ -3667,9 +3716,9 @@ void MainWindow::drawText(int sx, int sy, bool setPixel){
     int x = sx;
     int y = sy;
 
-    const int zoom = icon_zoom; // editor zoom
-    const int scaleX = iTextWidth;   // horizontal block size
-    const int scaleY = iTextHeight;  // vertical block size
+    const int zoom = icon_zoom;       // editor zoom
+    const int scaleX = iTextWidth;    // horizontal block size
+    const int scaleY = iTextHeight;   // vertical block size
 
     for (int32_t i = 0; textptr[i] != '\0'; ++i){
         if (textptr[i] == '\n') {
@@ -3680,39 +3729,73 @@ void MainWindow::drawText(int sx, int sy, bool setPixel){
 
         const uint8_t* pixeldata = SYSFONT[(uint8_t)textptr[i]];
 
-        // each row
-        for (int row = 0; row < 8; ++row){
-            int py = y + row * scaleY;
-            if (py + scaleY <= 0 || py >= icon_height) // fully off-screen vertically
-                continue;
+        // --- First pass: stroke outline ---
+        if(outlineDraw){
+            for (int row = 0; row < 8; ++row){
+                int py = y + row * scaleY;
+                if (py + scaleY <= 0 || py >= icon_height) continue;
 
-            for (int col = 0; col < 8; ++col){
-                if (pixeldata[col] & (1 << row)){
+                for (int col = 0; col < 8; ++col){
+                    if (!(pixeldata[col] & (1 << row))) continue;
+
                     int px = x + col * scaleX;
-                    if (px + scaleX <= 0 || px >= icon_width) // fully off-screen horizontally
-                        continue;
+                    if (px + scaleX <= 0 || px >= icon_width) continue;
 
-                    // Fill block in icon_area with clipping
-                    for (int dy = 0; dy < scaleY; dy++){
-                        int pycell = py + dy;
-                        if (pycell < 0 || pycell >= icon_height) continue;
+                    // Draw outline around the pixel
+                    for(int dy = -1; dy <= 1; dy++){
+                        for(int dx = -1; dx <= 1; dx++){
+                            if(dx == 0 && dy == 0) continue; // skip center
+                            int nx = px + dx * scaleX;
+                            int ny = py + dy * scaleY;
 
-                        for (int dx = 0; dx < scaleX; dx++){
-                            int pxcell = px + dx;
-                            if (pxcell < 0 || pxcell >= icon_width) continue;
+                            for(int ddy = 0; ddy < scaleY; ddy++){
+                                int pycell = ny + ddy;
+                                if(pycell < 0 || pycell >= icon_height) continue;
 
-                            if(setPixel)
-                                setIconArea(pxcell, pycell);
-                            else
-                                clrIconArea(pxcell, pycell);
+                                for(int ddx = 0; ddx < scaleX; ddx++){
+                                    int pxcell = nx + ddx;
+                                    if(pxcell < 0 || pxcell >= icon_width) continue;
+
+                                    clrIconArea(pxcell, pycell); // back color for outline
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        x += 8 * scaleX; // advance for next character
+        // --- Second pass: main text ---
+        for (int row = 0; row < 8; ++row){
+            int py = y + row * scaleY;
+            if (py + scaleY <= 0 || py >= icon_height) continue;
+
+            for (int col = 0; col < 8; ++col){
+                if (!(pixeldata[col] & (1 << row))) continue;
+
+                int px = x + col * scaleX;
+                if (px + scaleX <= 0 || px >= icon_width) continue;
+
+                for(int dy = 0; dy < scaleY; dy++){
+                    int pycell = py + dy;
+                    if(pycell < 0 || pycell >= icon_height) continue;
+
+                    for(int dx = 0; dx < scaleX; dx++){
+                        int pxcell = px + dx;
+                        if(pxcell < 0 || pxcell >= icon_width) continue;
+
+                        if(setPixel)
+                            setIconArea(pxcell, pycell); // main text color
+                        else
+                            clrIconArea(pxcell, pycell);
+                    }
+                }
+            }
+        }
+
+        x += 8 * scaleX; // advance to next character
     }
+
 }
 
 
@@ -3837,8 +3920,6 @@ void MainWindow::getCenterHandle(int sx, int sy, int* outX, int* outY, int width
 }
 
 
-
-
 int ooldx, ooldy;
 void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
     int nsx, nsy;
@@ -3847,7 +3928,6 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
 
     uint8_t oldSelectedFPenColour = numSelectedPaletteID;
     uint8_t oldSelectedBPenColour = numSelectedBackPaletteID;
-
 
     //int cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
     if(ui->chkCyclePaletteDraw->isChecked()){
@@ -3859,14 +3939,11 @@ void MainWindow::ProcessClickPaint(int sx, int sy, unsigned char flags){
             if(cyclePaletteStepping > ui->scrCycleStepper->value()){
                 cyclePaletteStepping = 0;
             }
-
-
             if(cyclePaletteStepping == 1){
                 cyclePaletteID ++;
                 if(cyclePaletteID >= cyclelength)
                     cyclePaletteID = 0;
             }
-
         };
         numSelectedPaletteID = cyclefrom + cyclePaletteID;
     }
@@ -4162,10 +4239,8 @@ void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
         s.push(QPoint(x+1, y));
         s.push(QPoint(x-1, y));
     }
-
     renderEditorCanvas();
 }
-
 
 int pendingScrollX = -1;
 int pendingScrollY = -1;
@@ -4252,7 +4327,6 @@ void MainWindow::renderEditorCanvas(){
         int imgY = (y) / icon_zoom;
         for(int x = 0; x < visibleWidth; x++) {
             int imgX = (x) / icon_zoom;
-
             QRgb base = colourSqueeze(CLUT[icon_area[imgY + yOffset][imgX + xOffset]]);
             scan[x] = base;
 
@@ -4315,10 +4389,7 @@ void MainWindow::renderEditorCanvas(){
                             }
                         }
                     }
-
-
                 } else {
-
                     if (left >= 0 && right < visibleWidth &&
                         top >= 0 && bottom < visibleHeight){
                         // Invert border color
@@ -4343,20 +4414,15 @@ void MainWindow::renderEditorCanvas(){
             }
         }
 
-
         if(captureXYStart==true){
+            int halfPen = iPenShapeSize / 2;
             //ltcapturedX = ctcapturedX;
             //ltcapturedY = ctcapturedY;
             //readToolXY(&ctcapturedX, &ctcapturedY); // process where the capturey point is
             //printf("P2P Tool: Target point TX: %d, TY: %d\n", ctcapturedX, ctcapturedY);
-
             if(currentDrawMode == FloodFillGradient){
 
             }
-
-            int halfPen = iPenShapeSize / 2;
-
-
             if(currentDrawMode == Line || currentDrawMode == FloodFillGradient){
                 auto invertCell = [&](int cellX, int cellY){
                     int startX = cellX * icon_zoom;
@@ -4763,6 +4829,55 @@ uint8_t MainWindow::findNearestPaletteColor(QRgb rgb){
 
     return uint8_t(best);
 }
+
+inline void unpackRGB(uint32_t c, int &r, int &g, int &b){
+    r = (c >> 16) & 0xFF;
+    g = (c >> 8)  & 0xFF;
+    b = (c)       & 0xFF;
+}
+uint8_t MainWindow::findNearestPaletteIndex(int r, int g, int b){
+    int best = 0;
+    int bestDist = INT_MAX;
+
+    for(int i = 0; i < 256; i++){
+        int pr, pg, pb;
+        unpackRGB(CLUT[i], pr, pg, pb);
+
+        int dr = pr - r;
+        int dg = pg - g;
+        int db = pb - b;
+        int dist = dr*dr + dg*dg + db*db;
+
+        if(dist < bestDist){
+            bestDist = dist;
+            best = i;
+        }
+    }
+    return best;
+}
+
+void MainWindow::setAAPixel(int x, int y, uint8_t fg){
+    if(x < 0 || x >= icon_width || y < 0 || y >= icon_height)
+        return;
+
+    uint8_t bg = icon_area[y][x];
+    if(bg == fg) return;
+
+    int fr, fg_, fb;
+    int br, bg_, bb;
+
+    unpackRGB(CLUT[fg], fr, fg_, fb);
+    unpackRGB(CLUT[bg], br, bg_, bb);
+
+    // 50/50 blend (classic AA)
+    int r = (fr + br) >> 1;
+    int g = (fg_ + bg_) >> 1;
+    int b = (fb + bb) >> 1;
+
+    uint8_t aa = findNearestPaletteIndex(r, g, b);
+    icon_area[y][x] = aa;
+}
+
 
 bool MainWindow::clipboardHasImage() {
     const QClipboard* cb = QGuiApplication::clipboard();

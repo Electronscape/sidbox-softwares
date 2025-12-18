@@ -105,6 +105,8 @@ private:
     // clipboard brush import
     bool clipboardHasImage();
     uint8_t findNearestPaletteColor(QRgb rgb);
+    uint8_t findNearestPaletteIndex(int r, int g, int b);
+    void setAAPixel(int x, int y, uint8_t fg);
     void pasteClipboardAsBrush();
     void convertImageToBrush(const QImage &img);
 

@@ -600,6 +600,9 @@ uint32_t clut[256] = {
         <property name="text">
          <string>Close</string>
         </property>
+        <property name="icon">
+         <iconset theme="QIcon::ThemeIcon::ListRemove"/>
+        </property>
        </widget>
       </item>
      </layout>
@@ -640,12 +643,15 @@ uint32_t clut[256] = {
        <rect>
         <x>10</x>
         <y>300</y>
-        <width>150</width>
+        <width>160</width>
         <height>30</height>
        </rect>
       </property>
       <property name="text">
        <string>close font workbench</string>
+      </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::ListRemove"/>
       </property>
      </widget>
      <widget class="QGraphicsView" name="gfxFontSelector">
@@ -1595,6 +1601,9 @@ QPushButton:hover {
       <property name="text">
        <string>Close</string>
       </property>
+      <property name="icon">
+       <iconset theme="QIcon::ThemeIcon::ListRemove"/>
+      </property>
      </widget>
      <widget class="QGroupBox" name="groupBox_12">
       <property name="geometry">
@@ -1769,6 +1778,22 @@ QPushButton:hover {
         <bool>true</bool>
        </property>
       </widget>
+      <widget class="QCheckBox" name="chkPenDrawAA">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>50</y>
+         <width>180</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Antialiasing</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_14">
       <property name="geometry">
@@ -1911,7 +1936,7 @@ QPushButton:hover {
         <x>270</x>
         <y>30</y>
         <width>320</width>
-        <height>160</height>
+        <height>180</height>
        </rect>
       </property>
       <property name="title">
@@ -2100,9 +2125,30 @@ Text Box! $0xCC</string>
         <string>Size Y:</string>
        </property>
       </widget>
+      <widget class="QCheckBox" name="chkTextOutline">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>150</y>
+         <width>180</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Text Outline</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
      </widget>
     </widget>
    </widget>
+   <zorder>outputTextView</zorder>
+   <zorder>frmFontWorkbench</zorder>
+   <zorder>frmOptions</zorder>
+   <zorder>verticalLayoutWidget</zorder>
+   <zorder>lblCoords</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
