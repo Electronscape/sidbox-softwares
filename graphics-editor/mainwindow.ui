@@ -1290,7 +1290,7 @@ QPushButton:hover {
        <x>10</x>
        <y>10</y>
        <width>800</width>
-       <height>434</height>
+       <height>771</height>
       </rect>
      </property>
      <property name="title">
@@ -1300,7 +1300,7 @@ QPushButton:hover {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>400</y>
+        <y>740</y>
         <width>140</width>
         <height>24</height>
        </rect>
@@ -1849,6 +1849,59 @@ Text Box! $0xCC</string>
        </property>
       </widget>
      </widget>
+     <widget class="QPlainTextEdit" name="plainTextEdit">
+      <property name="geometry">
+       <rect>
+        <x>270</x>
+        <y>240</y>
+        <width>481</width>
+        <height>511</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Sans Serif</family>
+        <pointsize>8</pointsize>
+       </font>
+      </property>
+      <property name="undoRedoEnabled">
+       <bool>false</bool>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="plainText">
+       <string>Key_L    // load project
+Key_S    // save project
+
+Key_J                // switch between both the scratch pad and the main edit screen
+Ctrl + Key_Z    // the undo feature (its not as crap as it sounds!!)
+
+Key_Q    // counter clock rotate Brush
+Key_E    // clockwise rotate Brush
+Key_X    // flip brush Horizontally  (left to right)
+Key_Y    // flip brush Virtially     ( top to bottom)
+
+Key_1    // Set PenSize to x1    // nothing too fancy
+Key_2    // Set PenSize to x2
+Key_3    // Set PenSize to x4
+Key_4    // Set PenSize to x6
+Key_5    // Set PenSize to x8
+
+Key_BracketLeft     // decrease de blending!
+Key_BracketRight   // increase de blending!
+    
+Key_F1           // Plotter
+Key_F2           // Line draw
+Key_F3           // Pen draw
+Key_F4           // Spray Can
+
+Key_Minus    // zoom out screen
+Key_Plus       // zoom in screen
+
+Key_Space    // Pan Zoom area</string>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QFrame" name="frmGraphicEdit">
@@ -2163,11 +2216,11 @@ Text Box! $0xCC</string>
      </layout>
     </widget>
    </widget>
+   <zorder>frmGraphicEdit</zorder>
    <zorder>outputTextView</zorder>
    <zorder>frmFontWorkbench</zorder>
    <zorder>frmOptions</zorder>
    <zorder>lblCoords</zorder>
-   <zorder>frmGraphicEdit</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

@@ -63,6 +63,8 @@ enum class KeyBinding : int {
 
     kscZoomeOut         = Qt::Key_Minus,    // zoom out screen
     kscZoomIn           = Qt::Key_Equal,     // zoom in screen
+
+    kscPanZoom          = Qt::Key_Space,    // Pan Zoom
 };
 
 
@@ -726,15 +728,17 @@ MainWindow::MainWindow(QWidget *parent)
         auto reply = QMessageBox::question(
             this,
             "Clear Icon",
-            "Are you sure you want to clear the icon?\nNOTE: this will clear the icon, NOT the scratch pad",
+            "Are you sure you want to clear the icon?\nNOTE: this will clear the icon, AND the scratch pad",
             QMessageBox::Yes | QMessageBox::No
             );
 
         if(reply == QMessageBox::Yes) {
             // Clear icon_area
             for(int y = 0; y < icon_height; y++)
-                for(int x = 0; x < icon_width; x++)
+                for(int x = 0; x < icon_width; x++) {
                     icon_area_main[y][x] = numSelectedBackPaletteID;
+                    icon_area_scratchpage[y][x] = numSelectedBackPaletteID;
+                }
 
             renderEditorCanvas(); // redraw empty icon
         }
@@ -3267,7 +3271,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
         if (event->type() == QEvent::KeyPress){
             QKeyEvent *ke = static_cast<QKeyEvent*>(event);
             //if (ke->isAutoRepeat()) return true; // ignore repeats
-            if(ke->key() == Qt::Key_Space && !grabbing && !ke->isAutoRepeat()){
+            if(ke->key() == static_cast<int>(KeyBinding::kscPanZoom) && !grabbing && !ke->isAutoRepeat()){
                 grabbing = true;
                 gradientDragging = false;
                 setCursor(Qt::ClosedHandCursor);
@@ -3276,6 +3280,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             if(ke->key() == Qt::Key_Shift && !ke->isAutoRepeat()){
                 bShiftKey = true;
             }
+
             // SWAP BUFFERS (scratch pad or icon_area)
             if(ke->key() == static_cast<int>(KeyBinding::kscSwapScreen) && !ke->isAutoRepeat()){
                 //ui->frmGraphicEdit->bac
@@ -3300,7 +3305,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
         // keyshortcuts
         if(event->type() == QEvent::KeyRelease){
             QKeyEvent *ke = static_cast<QKeyEvent*>(event);
-            if(ke->key() == Qt::Key_Space && grabbing && !ke->isAutoRepeat()){
+            if(ke->key() == static_cast<int>(KeyBinding::kscPanZoom) && grabbing && !ke->isAutoRepeat()){
                 grabbing = false;
                 setCursor(Qt::ArrowCursor);
                 return true;
