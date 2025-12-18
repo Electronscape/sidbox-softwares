@@ -90,15 +90,15 @@ QString PaletteFilename = "untitled.pal";
 //chkCyclePaletteDraw#include "projectheader.h"
 int cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
 int cyclePaletteStepping = 0;   // used to control the division of steps before next cyclePaletteID increment.
-int cyclefrom, cycleto, cyclelength = 8;
+int cyclefrom = 80, cycleto = 87, cyclelength = 8;
 bool selectingCycle = false;   // true when CTRL is held
 bool waitingForEnd = false;    // true after choosing cycle_from
 int clickedIndex = 256; // way off grid
 
 bool selectingGradientRange = false;    // true when Left ALT is held
 bool waitingForEndGradient = false;
-int  GradientRangeFrom = 80;
-int  GradientRangeTo = 87;
+int  GradientRangeFrom = 160;
+int  GradientRangeTo = 165;
 
 bool bMouseLeftRight    = true; // true if it is left
 bool bMouseButtonDown   = false;
@@ -303,6 +303,9 @@ bool    bDithered = false;
 bool    bNoisyDither = false; // toggle noisy dithering
 
 bool    gradientDragging = false;
+bool    bMirroredGradient = false;
+bool    bReversedGradient = false;
+
 int     gradStartX  = 0;
 int     gradStartY  = 0;
 int     gradLength  = 0;
@@ -873,6 +876,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->cmdRotateC90, &QPushButton::clicked, this, [this](){
         rotateIcon(0);
     });
+
+
+    ui->chkFloodFillMirrored->setChecked(bMirroredGradient);
+    ui->chkFloodFillReversed->setChecked(bReversedGradient);
+
 
     // DRAWING MODE SELECTOR ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4339,6 +4347,11 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
     if (targetColor == colStart && colStart == colEnd)
         return;
 
+    bMirroredGradient = ui->chkFloodFillMirrored->isChecked();
+    bReversedGradient = ui->chkFloodFillReversed->isChecked();
+
+
+
     // Gradient direction
     float rad = angleDegrees * (M_PI / 180.0f);
     float dirX = cosf(rad);
@@ -4399,10 +4412,11 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
 
     // ---- APPLY GRADIENT ----
     //for(const QPoint &p : filled){
+    // ---- APPLY GRADIENT ----
     for(const FillNode &n : filled){
         int x = n.x;
         int y = n.y;
-        // OLD feature again the option for use full area instead
+
         float proj = (x - startX) * dirX + (y - startY) * dirY;
 
         float dx = x - startX;
@@ -4412,48 +4426,46 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
         float t;
 
         switch(iFillType){
-            case FillLinear:
-                t = proj / range;   // Linear
-                break;
-            case FillDiamond:
-                t = float(n.dist) / range;  // diamond
-                break;
-            case FillCircles:
-                t = dist / range;   // Circles
-                break;
-            default:
-                t = proj / range;   // Linear
+        case FillLinear:
+            t = proj / range;   // Linear
+            break;
+        case FillDiamond:
+            t = float(n.dist) / range;  // Diamond
+            break;
+        case FillCircles:
+            t = dist / range;   // Circles
+            break;
+        default:
+            t = proj / range;   // Linear
         }
 
         t = std::clamp(t, 0.0f, 1.0f);
 
-        if(!ui->chkInstaFill->isChecked()){
-            tick++;
-            if(tick > 250){
-                renderEditorCanvas();
-                QCoreApplication::processEvents();
-                QThread::msleep(3);
-                tick = 0;
-            }
+        // --- MIRRORED GRADIENT ---
+        if(bMirroredGradient){
+            if(t <= 0.5f)
+                t = t * 2.0f;          // first half: 0 → 1
+            else
+                t = (1.0f - t) * 2.0f; // second half: 1 → 0
+        }
+        // --- REVERSED GRADIENT ---
+        if(bReversedGradient){
+            t = 1.0f - t;
         }
 
-        //float rawColor = colStart + t * (colEnd - colStart);
         float rawColor = colStart + t * (colEnd - colStart); // keep as float
         uint8_t finalCol = uint8_t(std::round(rawColor));
 
+        // ... existing dithering code ...
         if(bDithered){
             if(bNoisyDither){
-                // Noisy dithering
                 float frac = rawColor - std::floor(rawColor);
-                float noise = (rand() % 1000) / 1000.0f; // 0..1
+                float noise = (rand() % 1000) / 1000.0f;
                 finalCol = (frac > noise) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
             } else {
-                // Bayer matrix dither
-                //int mx = p.x() % 4;
-                //int my = p.y() % 4;
                 int mx = x % 4;
                 int my = y % 4;
-                float threshold = (ditherMatrix[my][mx] + 0.5f) / 16.0f; // normalized 0..1
+                float threshold = (ditherMatrix[my][mx] + 0.5f) / 16.0f;
                 float frac = rawColor - std::floor(rawColor);
                 finalCol = (frac > threshold) ? uint8_t(std::ceil(rawColor)) : uint8_t(std::floor(rawColor));
             }
@@ -4461,7 +4473,6 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
 
         finalCol = std::clamp(finalCol, colStart, colEnd);
 
-        //icon_area[p.y()][p.x()] = finalCol;
         (*icon_area)[y][x] = finalCol;
     }
 
@@ -4924,7 +4935,7 @@ void MainWindow::renderEditorCanvas(){
     editorPixmap->setPixmap(QPixmap::fromImage(editorImg));
 }
 
-
+//int cyclefrom, cycleto, cyclelength = 8;
 void MainWindow::renderPaletteCanvas(){
     const int totalWidth  = PALETTE_WIDTH  * PALETTE_BOX_HSIZE;  // 16 * 16 = 256
     const int totalHeight = PALETTE_HEIGHT * PALETTE_BOX_VSIZE;  // 16 * 16 = 256
@@ -4959,23 +4970,143 @@ void MainWindow::renderPaletteCanvas(){
         }
     }
 
-    // TODO: a double thick holow inverted box to show its selected.
-    // Draw double-thick hollow inverted box around selected tile
-    for (int dy = 0; dy < PALETTE_BOX_VSIZE; dy++) {
-        for (int dx = 0; dx < PALETTE_BOX_HSIZE; dx++) {
+    const int thickness = 2;
+    // expand loop to cover surrounding border
+    for (int dy = -thickness; dy < PALETTE_BOX_VSIZE + thickness; dy++) {
+        for (int dx = -thickness; dx < PALETTE_BOX_HSIZE + thickness; dx++) {
             bool onBorder =
-                dx < 2 || dx >= PALETTE_BOX_HSIZE - 2 ||    // left/right border 2px
-                dy < 2 || dy >= PALETTE_BOX_VSIZE - 2;      // top/bottom border 2px
+                dx < 0 || dx >= PALETTE_BOX_HSIZE ||   // left/right outside
+                dy < 0 || dy >= PALETTE_BOX_VSIZE;     // top/bottom outside
 
             if (onBorder) {
                 int px = GridX + dx;
                 int py = GridY + dy;
+
+                // clamp to image bounds
+                if (px < 0 || px >= totalWidth || py < 0 || py >= totalHeight)
+                    continue;
 
                 QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(py));
                 scan[px] = ~scan[px];   // invert the pixel
             }
         }
     }
+
+    // cycle palette selector outlining
+    auto isSelected = [&](int index) {
+        int a = cyclefrom;
+        int b = cycleto;
+        if (a > b) std::swap(a, b);
+        return index >= a && index <= b;
+    };
+
+    for (int idx = cyclefrom; idx <= cycleto; idx++) {
+
+        int tileX = idx % PALETTE_WIDTH;
+        int tileY = idx / PALETTE_WIDTH;
+
+        int px = tileX * PALETTE_BOX_HSIZE;
+        int py = tileY * PALETTE_BOX_VSIZE;
+
+        // Neighbour tests
+        bool left   = (tileX > 0) && isSelected(idx - 1);
+        bool right  = (tileX < PALETTE_WIDTH - 1) && isSelected(idx + 1);
+        bool top    = (tileY > 0) && isSelected(idx - PALETTE_WIDTH);
+        bool bottom = (tileY < PALETTE_HEIGHT - 1) && isSelected(idx + PALETTE_WIDTH);
+
+        for (int t = 0; t < thickness; t++) {
+            // LEFT edge
+            if (!left) {
+                for (int y = 0; y < PALETTE_BOX_VSIZE; y++) {
+                    QRgb *scan = reinterpret_cast<QRgb*>(
+                        paletteImg.scanLine(py + y));
+                    scan[px + t] = qRgb(0,0,0);
+                }
+            }
+
+            // RIGHT edge
+            if (!right) {
+                for (int y = 0; y < PALETTE_BOX_VSIZE; y++) {
+                    QRgb *scan = reinterpret_cast<QRgb*>(
+                        paletteImg.scanLine(py + y));
+                    scan[px + PALETTE_BOX_HSIZE - 1 - t] = qRgb(0,0,0);
+                }
+            }
+
+            // TOP edge
+            if (!top) {
+                QRgb *scan = reinterpret_cast<QRgb*>(
+                    paletteImg.scanLine(py + t));
+                for (int x = 0; x < PALETTE_BOX_HSIZE; x++)
+                    scan[px + x] = qRgb(0,0,0);
+            }
+
+            // BOTTOM edge
+            if (!bottom) {
+                QRgb *scan = reinterpret_cast<QRgb*>(
+                    paletteImg.scanLine(py + PALETTE_BOX_VSIZE - 1 - t));
+                for (int x = 0; x < PALETTE_BOX_HSIZE; x++)
+                    scan[px + x] = qRgb(0,0,0);
+            }
+        }
+    }
+
+    // for the gradient select
+    //int  GradientRangeFrom = 80;
+    //int  GradientRangeTo = 87;
+    auto isGradientSelected = [&](int index) {
+        int a = GradientRangeFrom;
+        int b = GradientRangeTo;
+        if (a > b) std::swap(a, b);
+        return index >= a && index <= b;
+    };
+
+    for (int idx = GradientRangeFrom; idx <= GradientRangeTo; idx++) {
+
+        int tileX = idx % PALETTE_WIDTH;
+        int tileY = idx / PALETTE_WIDTH;
+
+        int px = tileX * PALETTE_BOX_HSIZE;
+        int py = tileY * PALETTE_BOX_VSIZE;
+
+        bool left   = (tileX > 0) && isGradientSelected(idx - 1);
+        bool right  = (tileX < PALETTE_WIDTH - 1) && isGradientSelected(idx + 1);
+        bool top    = (tileY > 0) && isGradientSelected(idx - PALETTE_WIDTH);
+        bool bottom = (tileY < PALETTE_HEIGHT - 1) && isGradientSelected(idx + PALETTE_WIDTH);
+
+        for (int t = 0; t < thickness; t++) {
+            // LEFT edge
+            if (!left) {
+                for (int y = 0; y < PALETTE_BOX_VSIZE; y++) {
+                    QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(py + y));
+                    scan[px + t] = qRgb(255,255,255);
+                }
+            }
+
+            // RIGHT edge
+            if (!right) {
+                for (int y = 0; y < PALETTE_BOX_VSIZE; y++) {
+                    QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(py + y));
+                    scan[px + PALETTE_BOX_HSIZE - 1 - t] = qRgb(255,255,255);
+                }
+            }
+
+            // TOP edge
+            if (!top) {
+                QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(py + t));
+                for (int x = 0; x < PALETTE_BOX_HSIZE; x++)
+                    scan[px + x] = qRgb(255,255,255);
+            }
+
+            // BOTTOM edge
+            if (!bottom) {
+                QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(py + PALETTE_BOX_VSIZE - 1 - t));
+                for (int x = 0; x < PALETTE_BOX_HSIZE; x++)
+                    scan[px + x] = qRgb(255,255,255);
+            }
+        }
+    }
+
     palettePixmap->setPixmap(QPixmap::fromImage(paletteImg));
 }
 
