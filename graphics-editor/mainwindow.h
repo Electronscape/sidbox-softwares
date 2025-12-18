@@ -62,6 +62,7 @@ private:
     void SelectedPaletteID();
     void renderPaletteCanvas();
     void renderEditorCanvas();
+    void reSizeEditorArray(int newWidth, int newHeight);
     void reSize();
     uint32_t colourSqueeze(uint32_t srcColour);
     void saveProjectIcon(const char *filename);
@@ -104,6 +105,9 @@ private:
 
     // clipboard brush import
     bool clipboardHasImage();
+    void buildPaletteCache();
+    void buildBlendLUT();
+    uint8_t findNearestPaletteColorFast(int r, int g, int b);
     uint8_t findNearestPaletteColor(QRgb rgb);
     uint8_t findNearestPaletteIndex(int r, int g, int b);
     void setAAPixel(int x, int y, uint8_t fg);

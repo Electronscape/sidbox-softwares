@@ -33,6 +33,36 @@
 #define PALETTE_WIDTH       PALETTE_BOX_HSIZE
 #define PALETTE_HEIGHT      PALETTE_BOX_VSIZE
 
+
+enum class KeyBinding : int {
+    kscLoadProject      = Qt::Key_L,    // load project
+    kscSaveProject      = Qt::Key_S,    // save project
+
+
+    kscSwapScreen       = Qt::Key_J,    // switch between both the scratch pad and the main edit screen
+    kscUndo             = Qt::Key_Z,    // the undo feature (its not as crap as it sounds!!)
+
+    kscBrushRotateCC    = Qt::Key_Q,    // counter clock rotate Brush
+    kscBrushRotateCW    = Qt::Key_E,    // clockwise rotate Brush
+    kscBrushFlipX       = Qt::Key_X,    // flip brush Horizontally  (left to right)
+    kscBrushFlipY       = Qt::Key_Y,    // flip brush Virtially     ( top to bottom)
+
+    kscPenSize1         = Qt::Key_1,    // Set PenSize to x1    // nothing too fancy
+    kscPenSize2         = Qt::Key_2,    // Set PenSize to x2
+    kscPenSize3         = Qt::Key_3,    // Set PenSize to x4
+    kscPenSize4         = Qt::Key_4,    // Set PenSize to x6
+    kscPenSize5         = Qt::Key_5,    // Set PenSize to x8
+
+    kscBlendDecrease    = Qt::Key_BracketLeft,    // decrease de blending!
+    kscBlendIncrease    = Qt::Key_BracketRight,   // increase de blending!
+
+    kscToolSelectPlot   = Qt::Key_F1,   // Plotter
+    kscToolSelectLine   = Qt::Key_F2,   // Line draw
+    kscToolSelectPen    = Qt::Key_F3,   // Pen draw
+    kscToolSelectSpray  = Qt::Key_F4,   // Spray Can
+};
+
+
 #define PALETTE_VRAM_SIZE   (PALETTE_WIDTH * PALETTE_BOX_HSIZE * PALETTE_HEIGHT * PALETTE_BOX_VSIZE)
 int SelectedX = 1;    // this will be clickable later
 int SelectedY = 0;
@@ -99,9 +129,16 @@ int editorViewPortWidth  = 8;   // editor width grid
 int editorViewPortHeight = 8;
 
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
-std::vector<std::vector<uint8_t>> icon_area;
+bool bEditorPage    = 0;
+std::vector<std::vector<uint8_t>> icon_area_main;   // this is the current edit screen
+std::vector<std::vector<uint8_t>> icon_area_scratchpage;    // this is the scratch page
+std::vector<std::vector<uint8_t>> *icon_area = &icon_area_main;
+
+// undo/redo
 std::vector<std::vector<uint8_t>> icon_area_backup; // this is the one for if we ever "undo"
 std::vector<std::vector<uint8_t>> icon_area_redo;   // basically this is the area to redo things
+
+
 
 // only rastering 8x8 pixel font, nothing advanced
 uint8_t fontedit_area[8][8];
@@ -217,6 +254,7 @@ static unsigned char clut_cycle_index[256] = {
 // this keeps the original colour so can revert the selected palette,
 // commiting the change, simply just click on another colour item
 uint32_t BACKUP_CLUT[256];
+uint8_t  CLUTRGB[3][256];     // ready split colours
 
 uint8_t palleteCanvas[PALETTE_VRAM_SIZE];
 
@@ -242,6 +280,7 @@ int     iPenShapeSize   = 1;        // default pen size for spray and pen action
 bool    bFillToolIn     = false;    // weather the cirlce/box tool filles in (MINCE PIE'D!)
 
 
+int blendopaque = 100;  // 0..100
 
 // Copying and draw brushing
 std::vector<std::vector<uint8_t>> icon_copy_area;   // this is the buffer that holes the copied area
@@ -352,19 +391,7 @@ MainWindow::MainWindow(QWidget *parent)
     fontEditor->RenderFontSelect();
 
 
-    // assume old icon_area
-    // new size
-
-    // resize rows first
-    icon_area.resize(icon_height);
-    icon_area_backup.resize(icon_height);
-    icon_area_redo.resize(icon_height);
-
-    // resize each row (columns)
-    for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-    for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-    for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-
+    reSizeEditorArray(icon_width, icon_height);
 
     //editorImg = QImage(32, 32, QImage::Format_RGB32);
     editorPixmap = editorScene->addPixmap(QPixmap::fromImage(editorImg));
@@ -547,6 +574,13 @@ MainWindow::MainWindow(QWidget *parent)
     allDoneTimer = new QTimer(this);
     allDoneTimer->setSingleShot(true);
 
+    ui->scrBrushBlend->setValue(blendopaque);
+
+    connect(ui->scrBrushBlend, &QScrollBar::valueChanged, this, [this](){
+        blendopaque = ui->scrBrushBlend->value();
+        ui->lblBlendValue->setText(QString("%1%").arg(blendopaque));
+    });
+
     connect(allDoneTimer, &QTimer::timeout, this, &MainWindow::reSize);
     //icon_width
     ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
@@ -608,7 +642,7 @@ MainWindow::MainWindow(QWidget *parent)
         // Temporary copy of the top row
         uint8_t topRow[icon_width];
         for (int x = 0; x < icon_width; x++)
-            topRow[x] = icon_area[0][x];
+            topRow[x] = (*icon_area)[0][x];
 
         // Shift all rows up
         for (int y = 0; y < icon_height - 1; y++)
@@ -617,41 +651,41 @@ MainWindow::MainWindow(QWidget *parent)
 
         // Put the top row at the bottom
         for (int x = 0; x < icon_width; x++)
-            icon_area[icon_height - 1][x] = topRow[x];
+            (*icon_area)[icon_height - 1][x] = topRow[x];
 
         renderEditorCanvas();
     });
 
     connect(ui->cmdPushImageDown, &QPushButton::clicked, this, [this](){
         uint8_t bottomRow[icon_width];
-        for (int x = 0; x < icon_width; x++) bottomRow[x] = icon_area[icon_height - 1][x];
+        for (int x = 0; x < icon_width; x++) bottomRow[x] = (*icon_area)[icon_height - 1][x];
 
         for (int y = icon_height - 1; y > 0; y--)
             for (int x = 0; x < icon_width; x++)
                 icon_area[y][x] = icon_area[y - 1][x];
 
         for (int x = 0; x < icon_width; x++)
-            icon_area[0][x] = bottomRow[x];
+            (*icon_area)[0][x] = bottomRow[x];
 
         renderEditorCanvas();
     });
 
     connect(ui->cmdPushImageLeft, &QPushButton::clicked, this, [this](){
         for (int y = 0; y < icon_height; y++) {
-            uint8_t leftPixel = icon_area[y][0];
+            uint8_t leftPixel = (*icon_area)[y][0];
             for (int x = 0; x < icon_width - 1; x++)
                 icon_area[y][x] = icon_area[y][x + 1];
-            icon_area[y][icon_width - 1] = leftPixel;
+            (*icon_area)[y][icon_width - 1] = leftPixel;
         }
         renderEditorCanvas();
     });
 
     connect(ui->cmdPushImageRight, &QPushButton::clicked, this, [this](){
         for (int y = 0; y < icon_height; y++) {
-            uint8_t rightPixel = icon_area[y][icon_width - 1];
+            uint8_t rightPixel = (*icon_area)[y][icon_width - 1];
             for (int x = icon_width - 1; x > 0; x--)
                 icon_area[y][x] = icon_area[y][x - 1];
-            icon_area[y][0] = rightPixel;
+            (*icon_area)[y][0] = rightPixel;
         }
         renderEditorCanvas();
     });
@@ -659,9 +693,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->cmdFlipH, &QPushButton::clicked, this, [this](){
         for(int y = 0; y < icon_height / 2; y++){
             for(int x = 0; x < icon_width; x++){
-                uint8_t tmp = icon_area[y][x];
+                uint8_t tmp = (*icon_area)[y][x];
                 icon_area[y][x] = icon_area[icon_height - 1 - y][x];
-                icon_area[icon_height - 1 - y][x] = tmp;
+                (*icon_area)[icon_height - 1 - y][x] = tmp;
             }
         }
         renderEditorCanvas();
@@ -670,9 +704,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->cmdFlipV, &QPushButton::clicked, this, [this](){
         for(int y = 0; y < icon_height; y++){
             for(int x = 0; x < icon_width / 2; x++){
-                uint8_t tmp = icon_area[y][x];
+                uint8_t tmp = (*icon_area)[y][x];
                 icon_area[y][x] = icon_area[y][icon_width - 1 - x];
-                icon_area[y][icon_width - 1 - x] = tmp;
+                (*icon_area)[y][icon_width - 1 - x] = tmp;
             }
         }
         renderEditorCanvas();
@@ -682,7 +716,7 @@ MainWindow::MainWindow(QWidget *parent)
         auto reply = QMessageBox::question(
             this,
             "Clear Icon",
-            "Are you sure you want to clear the icon?",
+            "Are you sure you want to clear the icon?\nNOTE: this will clear the icon, NOT the scratch pad",
             QMessageBox::Yes | QMessageBox::No
             );
 
@@ -690,7 +724,7 @@ MainWindow::MainWindow(QWidget *parent)
             // Clear icon_area
             for(int y = 0; y < icon_height; y++)
                 for(int x = 0; x < icon_width; x++)
-                    icon_area[y][x] = numSelectedBackPaletteID;
+                    icon_area_main[y][x] = numSelectedBackPaletteID;
 
             renderEditorCanvas(); // redraw empty icon
         }
@@ -783,19 +817,7 @@ MainWindow::MainWindow(QWidget *parent)
         if(icon_width  < 8)    icon_width = 8;
         if(icon_height < 8)    icon_height = 8;
 
-        ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
-        ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
-
-        // resize rows first
-        icon_area.resize(icon_height);
-        icon_area_backup.resize(icon_height);
-        icon_area_redo.resize(icon_height);
-
-
-        // resize each row (columns)
-        for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-        for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-        for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        reSizeEditorArray(icon_width, icon_height);
 
         reSize();
         renderEditorCanvas();
@@ -1379,7 +1401,7 @@ void MainWindow::clearBrushSizeButtons(char brushSize){
 void CommitIconArea(){
     for(int x = 0; x < icon_width; x++){
         for(int y = 0; y < icon_height; y++){
-            icon_area_backup[y][x] = icon_area[y][x];
+            icon_area_backup[y][x] = (*icon_area)[y][x];
         }
     }
 
@@ -1390,14 +1412,14 @@ void UndoIconArea(){
     // copy whats in the icon_area to the redo buffer
     for(int x = 0; x < icon_width; x++){
         for(int y = 0; y < icon_height; y++){
-            icon_area_redo[y][x] = icon_area[y][x];
+            icon_area_redo[y][x] = (*icon_area)[y][x];
         }
     }
 
     // copy back from the backup to the icon area
     for(int x = 0; x < icon_width; x++){
         for(int y = 0; y < icon_height; y++){
-            icon_area[y][x] = icon_area_backup[y][x];
+            (*icon_area)[y][x] = icon_area_backup[y][x];
         }
     }
 
@@ -1415,12 +1437,9 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
     if (newWidth <= 0 || newHeight <= 0) return;
     int mode = ui->chkResampler->isChecked() ? Resample:NearestNeighbor;
 
-    std::vector<std::vector<uint8_t>> icon_area_tmp = icon_area;
+    std::vector<std::vector<uint8_t>> icon_area_tmp = (*icon_area);
 
-    // Resize icon_area
-    icon_area.resize(newHeight);
-    for (auto &row : icon_area)
-        row.resize(newWidth, 0);
+    reSizeEditorArray(newWidth, newHeight);
 
     double scaleX = (double)oldWidth / newWidth;
     double scaleY = (double)oldHeight / newHeight;
@@ -1434,7 +1453,7 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
                 // same as before
                 if (srcY >= oldHeight) srcY = oldHeight - 1;
                 if (srcX >= oldWidth)  srcX = oldWidth - 1;
-                icon_area[y][x] = icon_area_tmp[srcY][srcX];
+                (*icon_area)[y][x] = icon_area_tmp[srcY][srcX];
             } else {
                 // Color-aware resample
                 double x0 = x * scaleX;
@@ -1481,7 +1500,7 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
                         bestIdx = i;
                     }
                 }
-                icon_area[y][x] = (uint8_t)bestIdx;
+                (*icon_area)[y][x] = (uint8_t)bestIdx;
             }
         }
     }
@@ -1489,14 +1508,10 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
     icon_width  = newWidth;
     icon_height = newHeight;
 
-    icon_area_backup.resize(newHeight);
-    for (auto &row : icon_area_backup) row.resize(newWidth, 0);
-
-    icon_area_redo.resize(newHeight);
-    for (auto &row : icon_area_redo)   row.resize(newWidth, 0);
 
     renderEditorCanvas();
 }
+
 
 
 
@@ -1652,7 +1667,7 @@ void MainWindow::ExportToILBM(const char *filename)
     for (int y = 0; y < height; y++){
         memset(rowBuf, 0, planes * bytesPerRow);
         for (int x = 0; x < width; x++){
-            uint8_t pix = icon_area[y][x];
+            uint8_t pix = (*icon_area)[y][x];
             int byte = x >> 3;
             int bit  = 7 - (x & 7);
             for (int p = 0; p < planes; p++){
@@ -1845,7 +1860,7 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
 
         // TODO: a precompress helper needed i think
         int rleSize;
-        rleData = generateRLE(icon_area, icon_width, icon_height, 16, rleSize);
+        rleData = generateRLE((*icon_area), icon_width, icon_height, 16, rleSize);
 
         il_v0 = (rleSize >> 24) & 0xff;
         il_v1 = (rleSize >> 16) & 0xff;
@@ -1872,7 +1887,7 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
         output += "    ";
         for (uint16_t y = 0; y < icon_height; y++) {
             for (uint16_t x = 0; x < icon_width; x++) {
-                uint8_t colDat = icon_area[y][x];
+                uint8_t colDat = (*icon_area)[y][x];
 
                 // Add comma only if this is NOT the first element
                 if (!(x == 0 && y == 0)) {
@@ -2110,6 +2125,30 @@ bool extractPngPalette(const QString &path, uint32_t CLUT[256])
 }
 
 
+
+void MainWindow::reSizeEditorArray(int newWidth, int newHeight){
+    // Resize icon_area
+
+    //icon_area_main.assign(newHeight, std::vector<uint8_t>(newWidth, 0));
+    //icon_area_scratchpage.assign(newHeight, std::vector<uint8_t>(newWidth, 0));
+
+    icon_area_main.resize(newHeight);
+    icon_area_scratchpage.resize(newHeight);
+    icon_area_backup.resize(newHeight);
+    icon_area_redo.resize(newHeight);
+
+
+    icon_width  = newWidth;
+    icon_height = newHeight;
+    ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+    ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
+
+    for (auto &row : icon_area_main)        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_scratchpage) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_backup)      row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_redo)        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+}
+
 bool MainWindow::importGif(const QString &path){
 
     bool isGIF, isPNG;
@@ -2158,20 +2197,7 @@ bool MainWindow::importGif(const QString &path){
     }
 
 
-    icon_area.assign(h, std::vector<uint8_t>(w, 0));
-    icon_width  = w;
-    icon_height = h;
-    ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
-    ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
-
-    icon_area.resize(icon_height);
-    icon_area_backup.resize(icon_height);
-    icon_area_redo.resize(icon_height);
-
-    // resize each row (columns)
-    for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-    for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-    for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    reSizeEditorArray(w, h);
 
 
     if(paletteRestrictor){
@@ -2219,7 +2245,7 @@ bool MainWindow::importGif(const QString &path){
                     }
                 }
                 colourIndex = bestIndex;
-                icon_area[y][x] = colourIndex;
+                (*icon_area)[y][x] = colourIndex;
             }
         }
 
@@ -2273,7 +2299,7 @@ bool MainWindow::importGif(const QString &path){
                     }
                     colourIndex = bestIndex;
                 }
-                icon_area[y][x] = colourIndex;
+                (*icon_area)[y][x] = colourIndex;
             }
         }
     }
@@ -2312,7 +2338,7 @@ void MainWindow::saveProjectIcon(const char *filename){
     // [ image body ]
 
     for(int y = 0; y < icon_height; y++) {
-        fwrite(icon_area[y].data(), sizeof(uint8_t), icon_width, f);
+        fwrite(icon_area_main[y].data(), sizeof(uint8_t), icon_width, f);
     }
 
     fclose(f);
@@ -2354,22 +2380,9 @@ void MainWindow::loadProjectIcon(const char *filename){
 
         fread(&w, sizeof(uint16_t), 1, f);
         fread(&h, sizeof(uint16_t), 1, f);
-        icon_width = w;
-        icon_height = h;
-
-        ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
-        ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
         // resize rows first
-        icon_area.resize(icon_height);
-        icon_area_backup.resize(icon_height);
-        icon_area_redo.resize(icon_height);
-
-
-        // resize each row (columns)
-        for (auto &row : icon_area) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-        for (auto &row : icon_area_backup) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
-        for (auto &row : icon_area_redo) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+        reSizeEditorArray(w, h);
 
         reSize();
 
@@ -2386,7 +2399,7 @@ void MainWindow::loadProjectIcon(const char *filename){
 
         // [ Image Body ]
         for(int y = 0; y < h; y++) {
-            if(fread(icon_area[y].data(), sizeof(uint8_t), w, f) != w){
+            if(fread(icon_area_main[y].data(), sizeof(uint8_t), w, f) != w){
                 QMessageBox::warning(this, "Load Icon", "Image data corrupted!");
                 fclose(f);
                 return;
@@ -2411,7 +2424,8 @@ void MainWindow::loadProjectIcon(const char *filename){
 // 0 clockwise, 1 = counter-clockwise
 void MainWindow::rotateIcon(int direction){
     if(icon_width == 0 || icon_height == 0) return;
-    std::vector<std::vector<uint8_t>> buffer = icon_area;
+    std::vector<std::vector<uint8_t>> buffer_mn = icon_area_main;
+    std::vector<std::vector<uint8_t>> buffer_sp = icon_area_scratchpage;
     std::vector<std::vector<uint8_t>> buffer_bk = icon_area_backup;
     std::vector<std::vector<uint8_t>> buffer_rd = icon_area_redo;
 
@@ -2420,8 +2434,6 @@ void MainWindow::rotateIcon(int direction){
 
     int newW = oldH;
     int newH = oldW;
-
-
 
     icon_area_backup.assign(newH, std::vector<uint8_t>(newW, 0));
     if(direction == 0) {  // clockwise
@@ -2440,6 +2452,21 @@ void MainWindow::rotateIcon(int direction){
     }
 
 
+    icon_area_scratchpage.assign(newH, std::vector<uint8_t>(newW, 0));
+    if(direction == 0) {  // clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area_scratchpage[y][x] = buffer_sp[oldH - 1 - x][y];
+            }
+        }
+    }
+    else if(direction == 1) { // counter-clockwise
+        for(int y = 0; y < newH; ++y){
+            for(int x = 0; x < newW; ++x){
+                icon_area_scratchpage[y][x] = buffer_sp[x][oldW - 1 - y];
+            }
+        }
+    }
 
     icon_area_redo.assign(newH, std::vector<uint8_t>(newW, 0));
     if(direction == 0) {  // clockwise
@@ -2457,18 +2484,18 @@ void MainWindow::rotateIcon(int direction){
         }
     }
 
-    icon_area.assign(newH, std::vector<uint8_t>(newW, 0));
+    icon_area_main.assign(newH, std::vector<uint8_t>(newW, 0));
     if(direction == 0) {  // clockwise
         for(int y = 0; y < newH; ++y){
             for(int x = 0; x < newW; ++x){
-                icon_area[y][x] = buffer[oldH - 1 - x][y];
+                icon_area_main[y][x] = buffer_mn[oldH - 1 - x][y];
             }
         }
     }
     else if(direction == 1) { // counter-clockwise
         for(int y = 0; y < newH; ++y){
             for(int x = 0; x < newW; ++x){
-                icon_area[y][x] = buffer[x][oldW - 1 - y];
+                icon_area_main[y][x] = buffer_mn[x][oldW - 1 - y];
             }
         }
     }
@@ -2562,9 +2589,9 @@ void MainWindow::doReassignedPalette(uint8_t targetPalID){
     //icon_height = h;
     for(iy = 0; iy < icon_height; iy++){
         for(ix = 0; ix < icon_width; ix++){
-            paletteId = icon_area[iy][ix];
+            paletteId = (*icon_area)[iy][ix];
             if(capturedPaletteIndex == paletteId){
-                icon_area[iy][ix] = targetPalID;
+                (*icon_area)[iy][ix] = targetPalID;
             }
         }
     }
@@ -2592,11 +2619,48 @@ void MainWindow::doSwapPalette(uint8_t targetPalID){
 }
 
 void setIconArea(int x, int y){
-    if(x<0) return;
-    if(y<0) return;
-    if(x > icon_width-1) return;
-    if(y > icon_height-1) return;
-    icon_area[y][x] = numSelectedPaletteID;
+    if(x < 0 || x >= icon_width) return;
+    if(y < 0 || y >= icon_height) return;
+
+    uint8_t &dst = (*icon_area)[y][x];
+    uint8_t src = numSelectedPaletteID;
+
+    if(blendopaque <= 0) return;
+    if(blendopaque >= 100){
+        dst = src;
+        return;
+    }
+
+    int a = blendopaque; // 0..100
+
+    int sr = CLUTRGB[0][src];
+    int sg = CLUTRGB[1][src];
+    int sb = CLUTRGB[2][src];
+
+    int dr = CLUTRGB[0][dst];
+    int dg = CLUTRGB[1][dst];
+    int db = CLUTRGB[2][dst];
+
+    int r = dr + ((sr - dr) * a) / 100;
+    int g = dg + ((sg - dg) * a) / 100;
+    int b = db + ((sb - db) * a) / 100;
+
+    // nearest palette
+    int best = 0;
+    int bestDist = INT_MAX;
+    for(int i = 0; i < 256; i++){
+        int dr2 = r - CLUTRGB[0][i];
+        int dg2 = g - CLUTRGB[1][i];
+        int db2 = b - CLUTRGB[2][i];
+        int dist = dr2*dr2 + dg2*dg2 + db2*db2;
+        if(dist < bestDist){
+            bestDist = dist;
+            best = i;
+        }
+    }
+
+    dst = uint8_t(best);
+
 }
 
 void clrIconArea(int x, int y){
@@ -2604,7 +2668,7 @@ void clrIconArea(int x, int y){
     if(y<0) return;
     if(x > icon_width-1) return;
     if(y > icon_height-1) return;
-    icon_area[y][x] = numSelectedBackPaletteID;
+    (*icon_area)[y][x] = numSelectedBackPaletteID;
 }
 
 void setIconAreaPen(int sx, int sy, int size, bool set){
@@ -2663,9 +2727,6 @@ void setIconAreaPen(int sx, int sy, int size, bool set){
     }
 }
 
-
-//
-
 void drawHoverBox(int sx, int sy, QImage *edImg){
     int scaleY = icon_zoom;
     int scaleX = icon_zoom;
@@ -2683,8 +2744,6 @@ void drawHoverBox(int sx, int sy, QImage *edImg){
             //if (px + dx >= edImg->width()) break;
             int pxcell = px + dx;
             if (pxcell < 0 || pxcell >= edImg->width()) continue;
-
-
             scanLine[px + dx] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
         }
     }
@@ -2740,65 +2799,157 @@ void drawHoverSelectionBox(int sx, int sy, int sw, int sh, QImage *edImg){
                 line[xRight] ^= 0x00FFFFFF;
         }
     }
-
-
 }
-
 
 
 void MainWindow::drawCopyBrushHover(int sx, int sy, QImage *edImg){
     int brush_width  = iCopyWidth;
     int brush_height = iCopyHeight;
 
-    if (icon_copy_area.empty() || brush_width <= 0 || brush_height <= 0)
+    if(icon_copy_area.empty() || brush_width <= 0 || brush_height <= 0)
         return;
 
-    int z = icon_zoom; // zoom factor
+    int a = blendopaque;       // 0..100
+    if(a <= 0) return;
+    int ia = 100 - a;
+    bool fullyOpaque = (a >= 100);
 
-    for (int y = 0; y < brush_height; y++) {
-        for (int x = 0; x < brush_width; x++) {
-            uint8_t pix = icon_copy_area[y][x];
+    int z = icon_zoom;
 
-            if(pix==0) continue;
-            QRgb col = CLUT[pix]; // palette color
+    for(int y = 0; y < iCopyHeight; y++){
+        for(int x = 0; x < iCopyWidth; x++){
+            uint8_t src = icon_copy_area[y][x];
+            if(src == 0) continue;
 
-            // SNAP TO GRID: sx/sy are grid positions
+            int sr = CLUTRGB[0][src];
+            int sg = CLUTRGB[1][src];
+            int sb = CLUTRGB[2][src];
+
             int px0 = (sx + x) * z;
             int py0 = (sy + y) * z;
 
-            for (int dy = 0; dy < z; dy++) {
+            for(int dy = 0; dy < z; dy++){
                 int py = py0 + dy;
-                if (py < 0 || py >= edImg->height()) continue;
+                if(py < 0 || py >= edImg->height()) continue;
 
-                QRgb* scanLine = reinterpret_cast<QRgb*>(edImg->scanLine(py));
+                QRgb *scan = reinterpret_cast<QRgb*>(edImg->scanLine(py));
 
-                for (int dx = 0; dx < z; dx++) {
+                for(int dx = 0; dx < z; dx++){
                     int px = px0 + dx;
-                    if (px < 0 || px >= edImg->width()) continue;
+                    if(px < 0 || px >= edImg->width()) continue;
 
-                    scanLine[px] = col;
+                    if(fullyOpaque){
+                        scan[px] = CLUT[src]; // fast path
+                        continue;
+                    }
+
+                    QRgb dstCol = scan[px];
+                    int dr = qRed(dstCol);
+                    int dg = qGreen(dstCol);
+                    int db = qBlue(dstCol);
+
+                    // --- integer blend ---
+                    int r = (dr * ia + sr * a) / 100;
+                    int g = (dg * ia + sg * a) / 100;
+                    int b = (db * ia + sb * a) / 100;
+
+                    // --- nearest palette ---
+                    int best = 0;
+                    int bestDist = INT_MAX;
+                    for(int i = 0; i < 256; i++){
+                        int dr2 = r - CLUTRGB[0][i];
+                        int dg2 = g - CLUTRGB[1][i];
+                        int db2 = b - CLUTRGB[2][i];
+                        int dist = dr2*dr2 + dg2*dg2 + db2*db2;
+                        if(dist < bestDist){
+                            bestDist = dist;
+                            best = i;
+                        }
+                    }
+
+                    scan[px] = CLUT[best];
                 }
             }
         }
+
     }
 }
 
+
+
+/*
+for(int i = 0; i < 255; i++){
+    CLUTRGB[0][i] = (CLUT[i] >>16) & 0xff;
+    CLUTRGB[1][i] = (CLUT[i] >>8) & 0xff;
+    CLUTRGB[2][i] = (CLUT[i] ) & 0xff;
+}
+*/
 void MainWindow::PlaceBrush(int gridX, int gridY){
-    if (icon_copy_area.empty() || iCopyWidth <= 0 || iCopyHeight <= 0)
+    if(icon_copy_area.empty() || iCopyWidth <= 0 || iCopyHeight <= 0)
         return;
 
-    for (int y = 0; y < iCopyHeight; y++) {
-        int targetY = gridY + y;
-        if (targetY < 0 || targetY >= icon_height) continue;
 
-        for (int x = 0; x < iCopyWidth; x++) {
-            int targetX = gridX + x;
-            if (targetX < 0 || targetX >= icon_width) continue;
-            if(icon_copy_area[y][x]==0) continue;
-            icon_area[targetY][targetX] = icon_copy_area[y][x];
+    if(blendopaque <= 0) return;
+
+    // Map 0..100% to integer alpha math
+    int a = blendopaque;
+    int ia = 100 - a;
+
+    bool fullyOpaque = (blendopaque >= 100);
+
+    for(int y = 0; y < iCopyHeight; y++){
+        int ty = gridY + y;
+        if(ty < 0 || ty >= icon_height) continue;
+
+        for(int x = 0; x < iCopyWidth; x++){
+            int tx = gridX + x;
+            if(tx < 0 || tx >= icon_width) continue;
+
+            uint8_t src = icon_copy_area[y][x];
+            if(src == 0) continue;
+
+            uint8_t &dst = (*icon_area)[ty][tx];
+
+            if(fullyOpaque){
+                dst = src;  // fast path
+                continue;
+            }
+
+            // --- Get precomputed R/G/B ---
+            int sr = CLUTRGB[0][src];
+            int sg = CLUTRGB[1][src];
+            int sb = CLUTRGB[2][src];
+
+            int dr = CLUTRGB[0][dst];
+            int dg = CLUTRGB[1][dst];
+            int db = CLUTRGB[2][dst];
+
+            // --- Integer blend ---
+            int r = (dr * ia + sr * a) / 100;
+            int g = (dg * ia + sg * a) / 100;
+            int b = (db * ia + sb * a) / 100;
+
+            // --- Find nearest palette index (integer only) ---
+            int best = 0;
+            int bestDist = INT_MAX;
+
+            for(int i = 0; i < 256; i++){
+                int dr2 = r - CLUTRGB[0][i];
+                int dg2 = g - CLUTRGB[1][i];
+                int db2 = b - CLUTRGB[2][i];
+                int dist = dr2*dr2 + dg2*dg2 + db2*db2;
+
+                if(dist < bestDist){
+                    bestDist = dist;
+                    best = i;
+                }
+            }
+
+            dst = uint8_t(best);
         }
     }
 }
+
 
 
 void MainWindow::drawIconAreaPenHover(int sx, int sy, int size, QImage *edImg, bool filled){
@@ -2906,7 +3057,6 @@ void MainWindow::onSprayCanTick(){
 
     renderEditorCanvas();
 }
-
 
 
 // in your MainWindow class
@@ -3098,7 +3248,28 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             if(ke->key() == Qt::Key_Shift && !ke->isAutoRepeat()){
                 bShiftKey = true;
             }
+            // SWAP BUFFERS (scratch pad or icon_area)
+            if(ke->key() == static_cast<int>(KeyBinding::kscSwapScreen) && !ke->isAutoRepeat()){
+                //ui->frmGraphicEdit->bac
+                QPalette pal = ui->frmGraphicEdit->palette();
+                bEditorPage = 1 - bEditorPage;  // simple dirty toggle
+                if(bEditorPage){
+                    pal.setColor(QPalette::Window, Qt::green);
+                    ui->frmGraphicEdit->setAutoFillBackground(true);
+                    ui->frmGraphicEdit->setPalette(pal);
+
+                    icon_area = &icon_area_scratchpage;
+
+                } else {
+                    ui->frmGraphicEdit->setPalette(QPalette());
+                    icon_area = &icon_area_main;
+                }
+                renderEditorCanvas();
+                return true;
+
+            }
         }
+        // keyshortcuts
         if(event->type() == QEvent::KeyRelease){
             QKeyEvent *ke = static_cast<QKeyEvent*>(event);
             if(ke->key() == Qt::Key_Space && grabbing && !ke->isAutoRepeat()){
@@ -3106,7 +3277,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                 setCursor(Qt::ArrowCursor);
                 return true;
             }
-            if (ke->key() == Qt::Key_Z && (ke->modifiers() & Qt::ControlModifier) && !ke->isAutoRepeat()){
+            // UNDO
+            if (ke->key() == static_cast<int>(KeyBinding::kscUndo) && (ke->modifiers() & Qt::ControlModifier) && !ke->isAutoRepeat()){
                 UndoIconArea();
                 renderEditorCanvas();
                 return true;
@@ -3116,22 +3288,88 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             }
 
             if(!ke->isAutoRepeat()){
-                if (ke->key() == Qt::Key_X){
+                if (ke->key() == static_cast<int>(KeyBinding::kscBrushFlipX)){
                     doAlterBrush(brushflipX);
                     renderEditorCanvas();
                 }
-                if (ke->key() == Qt::Key_Y){
+                if (ke->key() == static_cast<int>(KeyBinding::kscBrushFlipY)){
                     doAlterBrush(brushflipY);
                     renderEditorCanvas();
                 }
-                if (ke->key() == Qt::Key_Q){
+                if (ke->key() == static_cast<int>(KeyBinding::kscBrushRotateCC)){
                     doAlterBrush(brushrotateL);
                     renderEditorCanvas();
                 }
-                if (ke->key() == Qt::Key_E){
+                if (ke->key() == static_cast<int>(KeyBinding::kscBrushRotateCW)){
                     doAlterBrush(brushrotateR);
                     renderEditorCanvas();
                 }
+
+                if (ke->key() == static_cast<int>(KeyBinding::kscPenSize1)){
+                    clearBrushSizeButtons(0);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == static_cast<int>(KeyBinding::kscPenSize2)){
+                    clearBrushSizeButtons(1);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == static_cast<int>(KeyBinding::kscPenSize3)){
+                    clearBrushSizeButtons(2);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == static_cast<int>(KeyBinding::kscPenSize4)){
+                    clearBrushSizeButtons(3);
+                    renderEditorCanvas();
+                }
+                if (ke->key() == static_cast<int>(KeyBinding::kscPenSize5)){
+                    clearBrushSizeButtons(4);
+                    renderEditorCanvas();
+                }
+
+                if (ke->key() == static_cast<int>(KeyBinding::kscBlendDecrease)){
+                    blendopaque -= 10;// by 10
+                    if(blendopaque<10) blendopaque = 10;
+                    ui->scrBrushBlend->setValue(blendopaque);
+                    ui->lblBlendValue->setText(QString("%1%").arg(blendopaque));
+                }
+                if (ke->key() == static_cast<int>(KeyBinding::kscBlendIncrease)){
+                    blendopaque += 10;// by 10
+                    if(blendopaque>100) blendopaque = 100;
+                    ui->scrBrushBlend->setValue(blendopaque);
+                    ui->lblBlendValue->setText(QString("%1%").arg(blendopaque));
+                }
+
+
+                if (ke->key() == static_cast<int>(KeyBinding::kscToolSelectPlot)){
+                    clearToolButtons();
+                    ui->toolButtonPlot->setChecked(true);   // keep this high lighted!
+                    currentDrawMode = Plot;
+                    renderEditorCanvas();
+                };
+
+                if (ke->key() == static_cast<int>(KeyBinding::kscToolSelectLine)){
+                    clearToolButtons();
+                    ui->toolButtonLine->setChecked(true);   // keep this high lighted!
+                    currentDrawMode = Line;
+                    renderEditorCanvas();
+                };
+
+                if (ke->key() == static_cast<int>(KeyBinding::kscToolSelectPen)){
+                    clearToolButtons();
+                    ui->toolButtonPen->setChecked(true);   // keep this high lighted!
+                    currentDrawMode = Pen;
+                    renderEditorCanvas();
+                };
+
+                if (ke->key() == static_cast<int>(KeyBinding::kscToolSelectSpray)){
+                    clearToolButtons();
+                    ui->toolButtonSprayCan->setChecked(true);   // keep this high lighted!
+                    currentDrawMode = SprayCan;
+                    renderEditorCanvas();
+                };
+
+
+
             }
         }
         return QObject::eventFilter(obj, event);
@@ -3207,7 +3445,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                     gradLength = (int)(dist);
 
 
-                    printf("Angle TO Grad: %f, len:%d\n", gradAngle, gradLength);
+                    //printf("Angle TO Grad: %f, len:%d\n", gradAngle, gradLength);
                 } else
                 if(grabbing) {
                     if(mouseEvent->buttons() & Qt::LeftButton) {
@@ -3276,13 +3514,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                     iTargetCopyX = copyX;
                     iTargetCopyY = copyY;
-
-
                     renderEditorCanvas();
-
-                   // printf("areaLoad Grab Size W:%d, H:%d\n", iCopyWidth, iCopyHeight);
                 }
-
             }
 
             updateTimer->start(1);
@@ -3351,7 +3584,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                 setIconArea(px, py);
                             };
 
-
                             while(true){
                                 setThickPixel(x, y);
 
@@ -3392,46 +3624,39 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                         }
 
                         if(currentDrawMode == Rect){
-                            // Rectangle corners
                             int x0 = capturedX + xOffset;
                             int y0 = capturedY + yOffset;
                             int x1 = hoverPixelX + xOffset;
                             int y1 = hoverPixelY + yOffset;
 
-                            // Ensure top-left -> bottom-right ordering
+                            // Ensure top-left -> bottom-right
                             int left   = std::min(x0, x1);
                             int right  = std::max(x0, x1);
                             int top    = std::min(y0, y1);
                             int bottom = std::max(y0, y1);
 
-                            int drawHeight = std::min(iPenShapeSize, bottom - top + 1);
-                            int drawWidth  = std::min(iPenShapeSize, right - left + 1);
+                            int penW = std::min(iPenShapeSize, right - left + 1);
+                            int penH = std::min(iPenShapeSize, bottom - top + 1);
 
-                            // Top and bottom edges
-                            for(int x = left; x <= right; x++){
-                                for(int py = 0; py < drawHeight; py++){
-                                    setIconArea(x, top + py);
-                                    setIconArea(x, bottom - py);
-                                }
-                            }
-
-                            // Left and right edges
                             for(int y = top; y <= bottom; y++){
-                                for(int px = 0; px < drawWidth; px++){
-                                    setIconArea(left + px, y);
-                                    setIconArea(right - px, y);
-                                }
-                            }
-
-                            // Fill inside if required
-                            if(bFillToolIn){
                                 for(int x = left; x <= right; x++){
-                                    for(int y = top; y <= bottom; y++)
-                                        setIconArea(x, y);
+                                    bool drawPixel = false;
+
+                                    // Top edge
+                                    if(y - top < penH) drawPixel = true;
+                                    // Bottom edge
+                                    else if(bottom - y < penH) drawPixel = true;
+                                    // Left edge
+                                    else if(x - left < penW) drawPixel = true;
+                                    // Right edge
+                                    else if(right - x < penW) drawPixel = true;
+                                    // Fill inside
+                                    else if(bFillToolIn) drawPixel = true;
+
+                                    if(drawPixel) setIconArea(x, y);
                                 }
                             }
                         }
-
 
                         if(currentDrawMode == Circle){
                             int cx = capturedX + xOffset;
@@ -3475,9 +3700,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                                 }
                             }
                         }
-
-
-
                     }
                 }
                 renderPaletteCanvas();
@@ -3514,8 +3736,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                     gradStartX = hoverPixelX;
                     gradStartY = hoverPixelY;
-
-
                     return true;
                 }
 
@@ -3544,10 +3764,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
                         iCopyHeight = 0;
 
                         bGrabbedCopyStart = true;
-
-                        //printf("Start Grab from x:%d, y:%d\n", iCapturedCopyX, iCapturedCopyY);
-
-                        //bCapturingCopyArea = false;// just turn this off for now
                     }
                 } else {
                     if(!grabbing){
@@ -3564,7 +3780,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
             }
             else if (mouseEvent->button() == Qt::MiddleButton){
-                numSelectedPaletteID = icon_area[hoverPixelY + yOffset][hoverPixelX + xOffset];
+                numSelectedPaletteID = (*icon_area)[hoverPixelY + yOffset][hoverPixelX + xOffset];
                 SelectedX = numSelectedPaletteID % PALETTE_WIDTH;
                 SelectedY = (numSelectedPaletteID / PALETTE_WIDTH) % PALETTE_HEIGHT;
 
@@ -4053,7 +4269,7 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
     if(startX < 0 || startX >= icon_width || startY < 0 || startY >= icon_height)
         return;
 
-    uint8_t targetColor = icon_area[startY][startX];
+    uint8_t targetColor = (*icon_area)[startY][startX];
     if (targetColor == colStart && colStart == colEnd)
         return;
 
@@ -4083,10 +4299,10 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
         if(x < 0 || x >= icon_width || y < 0 || y >= icon_height)
             continue;
 
-        if(icon_area[y][x] != targetColor)
+        if((*icon_area)[y][x] != targetColor)
             continue;
 
-        icon_area[y][x] = VISITED;
+        (*icon_area)[y][x] = VISITED;
         filled.push_back(n);
 
         maxDist = std::max(maxDist, n.dist);
@@ -4180,7 +4396,7 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
         finalCol = std::clamp(finalCol, colStart, colEnd);
 
         //icon_area[p.y()][p.x()] = finalCol;
-        icon_area[y][x] = finalCol;
+        (*icon_area)[y][x] = finalCol;
     }
 
     renderEditorCanvas();
@@ -4193,7 +4409,7 @@ void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
     if(startX < 0 || startX >= icon_width || startY < 0 || startY >= icon_height)
         return;
 
-    uint8_t targetColor = icon_area[startY][startX];
+    uint8_t targetColor = (*icon_area)[startY][startX];
     if (targetColor == fillColor) return;
 
     std::stack<QPoint> s;
@@ -4209,7 +4425,7 @@ void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
 
         if(x < 0 || x >= icon_width || y < 0 || y >= icon_height) continue;
         if(visited[y][x]) continue;
-        if(icon_area[y][x] != targetColor) continue;
+        if((*icon_area)[y][x] != targetColor) continue;
 
         visited[y][x] = true; // mark as visited
 
@@ -4217,9 +4433,9 @@ void MainWindow::floodFill(int startX, int startY, uint8_t fillColor){
         if(ui->chkFloodFillBrush->isChecked() && !icon_copy_area.empty()){
             int brushX = x % iCopyWidth;
             int brushY = y % iCopyHeight;
-            icon_area[y][x] = icon_copy_area[brushY][brushX];
+            (*icon_area)[y][x] = icon_copy_area[brushY][brushX];
         } else {
-            icon_area[y][x] = fillColor;
+            (*icon_area)[y][x] = fillColor;
         }
 
         // --- redraw step ---
@@ -4266,17 +4482,22 @@ void MainWindow::reSize(){
     int WinXW, WinXH;
     int PWinXW, PWinXH;
 
-    QWidget *wincontainer = ui->verticalLayoutWidget->parentWidget();
-    QWidget *container = ui->verticalLayoutWidget;
+    QWidget *frmGFXedit = ui->frmGraphicEdit->parentWidget();
+    QWidget *wincontainer = ui->verticalLayoutWidget;
+    QWidget *container = ui->frmGraphicEdit;
     QWidget *vboxh = ui->vboxTextoutputv;
     QWidget *fonteditBox = ui->frmFontWorkbench;
     QWidget *sysoptions = ui->frmOptions;
 
-    WinXW = wincontainer->width() - 2;
-    WinXH = wincontainer->height() - 28;
+    //WinXW = wincontainer->width() - 2;
+    //WinXH = wincontainer->height() - 28;
+    WinXW = frmGFXedit->width() - 2;
+    WinXH = frmGFXedit->height() - 28;
+
 
     if(container){
-        container->resize(WinXW, WinXH);  // or any size you want
+        container->resize(WinXW - 8, WinXH - 8);  // or any size you want
+        wincontainer->resize(WinXW - 18, WinXH - 18);
     }
     if(vboxh){
         ui->outputTextView->resize(WinXW, WinXH);
@@ -4327,7 +4548,7 @@ void MainWindow::renderEditorCanvas(){
         int imgY = (y) / icon_zoom;
         for(int x = 0; x < visibleWidth; x++) {
             int imgX = (x) / icon_zoom;
-            QRgb base = colourSqueeze(CLUT[icon_area[imgY + yOffset][imgX + xOffset]]);
+            QRgb base = colourSqueeze(CLUT[(*icon_area)[imgY + yOffset][imgX + xOffset]]);
             scan[x] = base;
 
             // -------- GRID --------
@@ -4465,9 +4686,6 @@ void MainWindow::renderEditorCanvas(){
                             }
                         }
                     }
-
-
-
                     if(x == x1cell && y == y1cell) break;
                     e2 = 2 * err;
                     if(e2 >= dy){ err += dy; x += sx; }
@@ -4615,6 +4833,8 @@ void MainWindow::renderEditorCanvas(){
         // this is just the area around the graphics box!
         drawHoverSelectionBox(x1cell, y1cell, iCopyWidth, iCopyHeight, &editorImg);
     }
+
+
     if(currentDrawMode == PasteBrush){
         //printf("COX... ");
         int xOffset = ui->scrEditorH->value();
@@ -4648,6 +4868,12 @@ void MainWindow::renderPaletteCanvas(){
 
     const int GridX = SelectedX * PALETTE_BOX_HSIZE;
     const int GridY = SelectedY * PALETTE_BOX_VSIZE;
+
+    for(int i = 0; i < 256; i++){
+        CLUTRGB[0][i] = (CLUT[i] >>16) & 0xff;
+        CLUTRGB[1][i] = (CLUT[i] >>8) & 0xff;
+        CLUTRGB[2][i] = (CLUT[i] ) & 0xff;
+    }
 
     for (int y = 0; y < totalHeight; y++){
         QRgb *scan = reinterpret_cast<QRgb*>(paletteImg.scanLine(y));
@@ -4707,7 +4933,7 @@ void MainWindow::CopySelectionToBrush(){
         for (int x = 0; x < iCopyWidth; x++){
             int srcX = iTargetCopyX + x;
             if (srcX < 0 || srcX >= icon_width) continue;
-            icon_copy_area[y][x] = icon_area[srcY][srcX];
+            icon_copy_area[y][x] = (*icon_area)[srcY][srcX];
         }
     }
 }
@@ -4835,6 +5061,7 @@ inline void unpackRGB(uint32_t c, int &r, int &g, int &b){
     g = (c >> 8)  & 0xFF;
     b = (c)       & 0xFF;
 }
+
 uint8_t MainWindow::findNearestPaletteIndex(int r, int g, int b){
     int best = 0;
     int bestDist = INT_MAX;
@@ -4860,7 +5087,7 @@ void MainWindow::setAAPixel(int x, int y, uint8_t fg){
     if(x < 0 || x >= icon_width || y < 0 || y >= icon_height)
         return;
 
-    uint8_t bg = icon_area[y][x];
+    uint8_t bg = (*icon_area)[y][x];
     if(bg == fg) return;
 
     int fr, fg_, fb;
@@ -4875,7 +5102,7 @@ void MainWindow::setAAPixel(int x, int y, uint8_t fg){
     int b = (fb + bb) >> 1;
 
     uint8_t aa = findNearestPaletteIndex(r, g, b);
-    icon_area[y][x] = aa;
+    (*icon_area)[y][x] = aa;
 }
 
 
