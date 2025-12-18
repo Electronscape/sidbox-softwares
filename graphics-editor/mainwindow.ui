@@ -5771,7 +5771,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QPushButton" name="cmdSetIconAreaSize">
       <property name="geometry">
        <rect>
-        <x>260</x>
+        <x>259</x>
         <y>190</y>
         <width>79</width>
         <height>24</height>
@@ -6002,7 +6002,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QLabel" name="label_10">
       <property name="geometry">
        <rect>
-        <x>260</x>
+        <x>258</x>
         <y>140</y>
         <width>80</width>
         <height>16</height>
@@ -6136,7 +6136,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QPushButton" name="cmdSetIconAreaResize">
       <property name="geometry">
        <rect>
-        <x>343</x>
+        <x>340</x>
         <y>190</y>
         <width>70</width>
         <height>24</height>
@@ -6149,10 +6149,10 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QCheckBox" name="chkResampler">
       <property name="geometry">
        <rect>
-        <x>334</x>
+        <x>332</x>
         <y>138</y>
-        <width>78</width>
-        <height>21</height>
+        <width>80</width>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
