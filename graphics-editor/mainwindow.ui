@@ -74,7 +74,7 @@
     <property name="geometry">
      <rect>
       <x>5</x>
-      <y>3</y>
+      <y>2</y>
       <width>211</width>
       <height>16</height>
      </rect>
@@ -86,7 +86,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Coords: x:0, y:0</string>
+     <string>Coords: X:0, Y:0</string>
     </property>
    </widget>
    <widget class="QFrame" name="outputTextView">
@@ -96,7 +96,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>22</y>
+      <y>17</y>
       <width>820</width>
       <height>731</height>
      </rect>
@@ -319,7 +319,7 @@ uint32_t clut[256] = {
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>22</y>
+      <y>17</y>
       <width>800</width>
       <height>761</height>
      </rect>
@@ -1270,7 +1270,7 @@ QPushButton:hover {
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>22</y>
+      <y>17</y>
       <width>770</width>
       <height>790</height>
      </rect>
@@ -1855,7 +1855,7 @@ Text Box! $0xCC</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>22</y>
+      <y>17</y>
       <width>571</width>
       <height>801</height>
      </rect>
@@ -4551,13 +4551,13 @@ QPushButton:hover {
   <widget class="QDockWidget" name="dockWidget_2">
    <property name="minimumSize">
     <size>
-     <width>439</width>
+     <width>426</width>
      <height>36</height>
     </size>
    </property>
    <property name="maximumSize">
     <size>
-     <width>439</width>
+     <width>426</width>
      <height>524287</height>
     </size>
    </property>
@@ -4576,7 +4576,7 @@ QPushButton:hover {
       <rect>
        <x>4</x>
        <y>325</y>
-       <width>430</width>
+       <width>418</width>
        <height>475</height>
       </rect>
      </property>
@@ -4796,7 +4796,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>272</x>
         <y>53</y>
-        <width>147</width>
+        <width>141</width>
         <height>110</height>
        </rect>
       </property>
@@ -4864,7 +4864,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>6</x>
         <y>380</y>
-        <width>418</width>
+        <width>406</width>
         <height>89</height>
        </rect>
       </property>
@@ -4876,7 +4876,7 @@ HOLD ALT and CLICK the ending colour.</string>
         <rect>
          <x>5</x>
          <y>24</y>
-         <width>44</width>
+         <width>40</width>
          <height>60</height>
         </rect>
        </property>
@@ -5059,7 +5059,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QScrollBar" name="horizontalScrollBarR">
        <property name="geometry">
         <rect>
-         <x>56</x>
+         <x>49</x>
          <y>24</y>
          <width>110</width>
          <height>18</height>
@@ -5079,7 +5079,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QScrollBar" name="horizontalScrollBarG">
        <property name="geometry">
         <rect>
-         <x>56</x>
+         <x>49</x>
          <y>45</y>
          <width>110</width>
          <height>18</height>
@@ -5099,7 +5099,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QScrollBar" name="horizontalScrollBarB">
        <property name="geometry">
         <rect>
-         <x>56</x>
+         <x>49</x>
          <y>66</y>
          <width>110</width>
          <height>18</height>
@@ -5119,7 +5119,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtPaletteR">
        <property name="geometry">
         <rect>
-         <x>170</x>
+         <x>163</x>
          <y>23</y>
          <width>30</width>
          <height>20</height>
@@ -5136,7 +5136,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtPaletteG">
        <property name="geometry">
         <rect>
-         <x>170</x>
+         <x>163</x>
          <y>44</y>
          <width>30</width>
          <height>20</height>
@@ -5153,7 +5153,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtPaletteB">
        <property name="geometry">
         <rect>
-         <x>170</x>
+         <x>163</x>
          <y>65</y>
          <width>30</width>
          <height>20</height>
@@ -5170,7 +5170,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtHEXcolour32Bit">
        <property name="geometry">
         <rect>
-         <x>270</x>
+         <x>258</x>
          <y>44</y>
          <width>70</width>
          <height>20</height>
@@ -5192,7 +5192,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtDECcolour32Bit">
        <property name="geometry">
         <rect>
-         <x>342</x>
+         <x>330</x>
          <y>44</y>
          <width>70</width>
          <height>20</height>
@@ -5209,7 +5209,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtHEXcolour16Bit">
        <property name="geometry">
         <rect>
-         <x>270</x>
+         <x>258</x>
          <y>65</y>
          <width>70</width>
          <height>20</height>
@@ -5231,7 +5231,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QLineEdit" name="txtDECcolour16Bit">
        <property name="geometry">
         <rect>
-         <x>342</x>
+         <x>330</x>
          <y>65</y>
          <width>70</width>
          <height>20</height>
@@ -5248,7 +5248,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QPushButton" name="cmdRevertPalette">
        <property name="geometry">
         <rect>
-         <x>203</x>
+         <x>196</x>
          <y>21</y>
          <width>60</width>
          <height>22</height>
@@ -5261,7 +5261,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QRadioButton" name="rad24BitMode">
        <property name="geometry">
         <rect>
-         <x>208</x>
+         <x>196</x>
          <y>44</y>
          <width>60</width>
          <height>21</height>
@@ -5277,7 +5277,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QRadioButton" name="rad16BitMode">
        <property name="geometry">
         <rect>
-         <x>208</x>
+         <x>196</x>
          <y>65</y>
          <width>60</width>
          <height>21</height>
@@ -5306,7 +5306,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>328</x>
         <y>25</y>
-        <width>47</width>
+        <width>43</width>
         <height>24</height>
        </rect>
       </property>
@@ -5317,9 +5317,9 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QPushButton" name="cmdSavePalette">
       <property name="geometry">
        <rect>
-        <x>377</x>
+        <x>374</x>
         <y>25</y>
-        <width>44</width>
+        <width>40</width>
         <height>24</height>
        </rect>
       </property>
@@ -5332,7 +5332,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>272</x>
         <y>169</y>
-        <width>147</width>
+        <width>141</width>
         <height>26</height>
        </rect>
       </property>
@@ -5351,7 +5351,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>272</x>
         <y>197</y>
-        <width>147</width>
+        <width>141</width>
         <height>26</height>
        </rect>
       </property>
@@ -5396,7 +5396,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>272</x>
         <y>225</y>
-        <width>147</width>
+        <width>141</width>
         <height>26</height>
        </rect>
       </property>
@@ -5412,7 +5412,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>270</x>
         <y>283</y>
-        <width>150</width>
+        <width>143</width>
         <height>3</height>
        </rect>
       </property>
@@ -5578,7 +5578,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>272</x>
         <y>253</y>
-        <width>146</width>
+        <width>141</width>
         <height>26</height>
        </rect>
       </property>
@@ -5592,7 +5592,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <rect>
        <x>4</x>
        <y>0</y>
-       <width>430</width>
+       <width>418</width>
        <height>320</height>
       </rect>
      </property>
@@ -5643,7 +5643,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>260</x>
         <y>70</y>
-        <width>160</width>
+        <width>150</width>
         <height>24</height>
        </rect>
       </property>
@@ -5699,7 +5699,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QLineEdit" name="txtProjectImageWidth">
       <property name="geometry">
        <rect>
-        <x>298</x>
+        <x>288</x>
         <y>162</y>
         <width>50</width>
         <height>20</height>
@@ -5722,7 +5722,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QLabel" name="label_2">
       <property name="geometry">
        <rect>
-        <x>353</x>
+        <x>343</x>
         <y>164</y>
         <width>30</width>
         <height>16</height>
@@ -5735,7 +5735,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
-        <x>278</x>
+        <x>268</x>
         <y>164</y>
         <width>30</width>
         <height>16</height>
@@ -5748,7 +5748,7 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QLineEdit" name="txtProjectImageHeight">
       <property name="geometry">
        <rect>
-        <x>370</x>
+        <x>360</x>
         <y>162</y>
         <width>50</width>
         <height>20</height>
@@ -5799,7 +5799,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>10</x>
         <y>229</y>
-        <width>409</width>
+        <width>400</width>
         <height>81</height>
        </rect>
       </property>
@@ -5825,7 +5825,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QPushButton" name="cmdExportH">
        <property name="geometry">
         <rect>
-         <x>322</x>
+         <x>313</x>
          <y>53</y>
          <width>80</width>
          <height>24</height>
@@ -5851,7 +5851,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QPushButton" name="cmdExportAmigaILBM">
        <property name="geometry">
         <rect>
-         <x>242</x>
+         <x>233</x>
          <y>25</y>
          <width>160</width>
          <height>24</height>
@@ -5865,9 +5865,9 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QPushButton" name="cmdOpenFontWorkbench">
       <property name="geometry">
        <rect>
-        <x>290</x>
+        <x>287</x>
         <y>29</y>
-        <width>130</width>
+        <width>123</width>
         <height>24</height>
        </rect>
       </property>
@@ -5880,7 +5880,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>10</x>
         <y>61</y>
-        <width>410</width>
+        <width>400</width>
         <height>3</height>
        </rect>
       </property>
@@ -6053,7 +6053,7 @@ HOLD ALT and CLICK the ending colour.</string>
        <rect>
         <x>343</x>
         <y>190</y>
-        <width>77</width>
+        <width>70</width>
         <height>24</height>
        </rect>
       </property>
@@ -6064,9 +6064,9 @@ HOLD ALT and CLICK the ending colour.</string>
      <widget class="QCheckBox" name="chkResampler">
       <property name="geometry">
        <rect>
-        <x>340</x>
+        <x>334</x>
         <y>138</y>
-        <width>81</width>
+        <width>78</width>
         <height>21</height>
        </rect>
       </property>

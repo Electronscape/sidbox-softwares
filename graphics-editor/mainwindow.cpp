@@ -60,6 +60,9 @@ enum class KeyBinding : int {
     kscToolSelectLine   = Qt::Key_F2,   // Line draw
     kscToolSelectPen    = Qt::Key_F3,   // Pen draw
     kscToolSelectSpray  = Qt::Key_F4,   // Spray Can
+
+    kscZoomeOut         = Qt::Key_Minus,    // zoom out screen
+    kscZoomIn           = Qt::Key_Equal,     // zoom in screen
 };
 
 
@@ -639,62 +642,69 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(ui->cmdPushImageUp, &QPushButton::clicked, this, [this](){
-        // Temporary copy of the top row
         uint8_t topRow[icon_width];
-        for (int x = 0; x < icon_width; x++)
+
+        for(int x = 0; x < icon_width; x++)
             topRow[x] = (*icon_area)[0][x];
 
-        // Shift all rows up
-        for (int y = 0; y < icon_height - 1; y++)
-            for (int x = 0; x < icon_width; x++)
-                icon_area[y][x] = icon_area[y + 1][x];
+        for(int y = 0; y < icon_height - 1; y++)
+            for(int x = 0; x < icon_width; x++)
+                (*icon_area)[y][x] = (*icon_area)[y + 1][x];
 
-        // Put the top row at the bottom
-        for (int x = 0; x < icon_width; x++)
+        for(int x = 0; x < icon_width; x++)
             (*icon_area)[icon_height - 1][x] = topRow[x];
+
 
         renderEditorCanvas();
     });
 
     connect(ui->cmdPushImageDown, &QPushButton::clicked, this, [this](){
         uint8_t bottomRow[icon_width];
-        for (int x = 0; x < icon_width; x++) bottomRow[x] = (*icon_area)[icon_height - 1][x];
 
-        for (int y = icon_height - 1; y > 0; y--)
-            for (int x = 0; x < icon_width; x++)
-                icon_area[y][x] = icon_area[y - 1][x];
+        for(int x = 0; x < icon_width; x++)
+            bottomRow[x] = (*icon_area)[icon_height - 1][x];
 
-        for (int x = 0; x < icon_width; x++)
+        for(int y = icon_height - 1; y > 0; y--)
+            for(int x = 0; x < icon_width; x++)
+                (*icon_area)[y][x] = (*icon_area)[y - 1][x];
+
+        for(int x = 0; x < icon_width; x++)
             (*icon_area)[0][x] = bottomRow[x];
 
         renderEditorCanvas();
     });
 
     connect(ui->cmdPushImageLeft, &QPushButton::clicked, this, [this](){
-        for (int y = 0; y < icon_height; y++) {
+        for(int y = 0; y < icon_height; y++){
             uint8_t leftPixel = (*icon_area)[y][0];
-            for (int x = 0; x < icon_width - 1; x++)
-                icon_area[y][x] = icon_area[y][x + 1];
+
+            for(int x = 0; x < icon_width - 1; x++)
+                (*icon_area)[y][x] = (*icon_area)[y][x + 1];
+
             (*icon_area)[y][icon_width - 1] = leftPixel;
         }
         renderEditorCanvas();
+
     });
 
     connect(ui->cmdPushImageRight, &QPushButton::clicked, this, [this](){
-        for (int y = 0; y < icon_height; y++) {
+        for(int y = 0; y < icon_height; y++){
             uint8_t rightPixel = (*icon_area)[y][icon_width - 1];
-            for (int x = icon_width - 1; x > 0; x--)
-                icon_area[y][x] = icon_area[y][x - 1];
+
+            for(int x = icon_width - 1; x > 0; x--)
+                (*icon_area)[y][x] = (*icon_area)[y][x - 1];
+
             (*icon_area)[y][0] = rightPixel;
         }
         renderEditorCanvas();
+
     });
 
     connect(ui->cmdFlipH, &QPushButton::clicked, this, [this](){
         for(int y = 0; y < icon_height / 2; y++){
             for(int x = 0; x < icon_width; x++){
                 uint8_t tmp = (*icon_area)[y][x];
-                icon_area[y][x] = icon_area[icon_height - 1 - y][x];
+                (*icon_area)[y][x] = (*icon_area)[icon_height - 1 - y][x];
                 (*icon_area)[icon_height - 1 - y][x] = tmp;
             }
         }
@@ -705,7 +715,7 @@ MainWindow::MainWindow(QWidget *parent)
         for(int y = 0; y < icon_height; y++){
             for(int x = 0; x < icon_width / 2; x++){
                 uint8_t tmp = (*icon_area)[y][x];
-                icon_area[y][x] = icon_area[y][icon_width - 1 - x];
+                (*icon_area)[y][x] = (*icon_area)[y][icon_width - 1 - x];
                 (*icon_area)[y][icon_width - 1 - x] = tmp;
             }
         }
@@ -2170,9 +2180,8 @@ bool MainWindow::importGif(const QString &path){
 
     pal.resize(256);
 
+    bool isGood = false;
     if (ui->chkImportPalette->isChecked()) {
-        bool isGood;
-        isGood = false;
         isGIF = extractGifPalette(path, CLUT);
         if(!isGIF) {
             printf("Not Gif\n");
@@ -2184,6 +2193,7 @@ bool MainWindow::importGif(const QString &path){
         isGood = isGIF + isPNG;
 
         if(!isGood){    // no pallete data good enough, will have to faff for it our selves
+            printf("Palette Faff\n");
             img = img.convertToFormat(QImage::Format_Indexed8);
             ct = img.colorTable();
             for (int i = 0; i < ct.size(); i++) {
@@ -2196,19 +2206,26 @@ bool MainWindow::importGif(const QString &path){
         renderPaletteCanvas();
     }
 
+    printf("Source Image width: %d, Height: %d\n", w, h);
+    printf("Image Pallete Go? %d\n", isGood);
 
     reSizeEditorArray(w, h);
 
+    printf("Done resizing editor\n");
 
     if(paletteRestrictor){
+        printf("in the restrictor mode..\n");
         int palStart = 0;
         int palEnd   = paletteDepth;
 
         if (paletteRestrictor) {
             palStart = paletteRangerOffset;
             palEnd   = paletteRangerOffset + paletteRangerLength;
-            if (palEnd > 256) palEnd = 256;
+            if (palEnd > 255) palEnd = 255;
         }
+
+        printf("Preparing Range\n");
+        printf("Range: from: %d - %d\n", palStart, palEnd);
 
         // ===== PIXELS =====
         for (int y = 0; y < h; y++) {
@@ -2217,16 +2234,30 @@ bool MainWindow::importGif(const QString &path){
 
                 uint8_t colourIndex = row[x];
 
-                ct = img.colorTable();
+                //ct = img.colorTable();
 
-                int rf = (ct[colourIndex] >> 16) & 0xFF;
-                int gf = (ct[colourIndex] >> 8)  & 0xFF;
-                int bf =  ct[colourIndex]        & 0xFF;
+                //if (colourIndex >= ct.size())
+                    //colourIndex = ct.size() - 1;
+
+
+                //int rf = (ct[colourIndex] >> 16) & 0xFF;
+                //int gf = (ct[colourIndex] >> 8)  & 0xFF;
+                //int bf =  ct[colourIndex]        & 0xFF;
+                //int rf = qRed(ct[colourIndex]);
+                //int gf = qGreen(ct[colourIndex]);
+                //int bf = qBlue(ct[colourIndex]);
+
+                QRgb pix = img.pixel(x, y);
+                rf = qRed(pix);
+                gf = qGreen(pix);
+                bf = qBlue(pix);
+
+
 
                 int bestIndex = palStart;
                 int bestDist  = INT_MAX;
 
-                // 🔥 SEARCH ONLY WITHIN RANGE
+                // SEARCH ONLY WITHIN RANGE
                 for (int pi = palStart; pi < palEnd; pi++) {
 
                     int r2 = (CLUT[pi] >> 16) & 0xFF;
@@ -2248,12 +2279,8 @@ bool MainWindow::importGif(const QString &path){
                 (*icon_area)[y][x] = colourIndex;
             }
         }
-
-
-
-
     } else { // not using the restrictor
-
+        printf("Did we end up here in the NON restrictor mode?\n");
         for (int i = 0; i < 256; i++)
             pal[i] = CLUT[i];//qRgb(i, i, i);
 
@@ -2304,6 +2331,7 @@ bool MainWindow::importGif(const QString &path){
         }
     }
 
+    printf("Do we even get this far??\n");
     reSize();
     renderEditorCanvas();
     return true;
@@ -3286,8 +3314,41 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             if(ke->key() == Qt::Key_Shift){
                 bShiftKey = false;
             }
+            if (ke->key() == static_cast<int>(KeyBinding::kscZoomeOut)){
+                int newVal = ui->scrEditorZoomVal->value();
+                //newVal += delta;
+
+                newVal --;
+
+                if(newVal>32) newVal = 32;
+                if(newVal<1) newVal = 1;
+
+                ui->scrEditorZoomVal->setValue(newVal);
+                icon_zoom = ui->scrEditorZoomVal->value();
+                ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));
+                reSize();
+                renderEditorCanvas();
+            }
+            if (ke->key() == static_cast<int>(KeyBinding::kscZoomIn)){
+                int newVal = ui->scrEditorZoomVal->value();
+                //newVal += delta;
+
+                newVal ++;
+
+                if(newVal>32) newVal = 32;
+                if(newVal<1) newVal = 1;
+
+                ui->scrEditorZoomVal->setValue(newVal);
+                icon_zoom = ui->scrEditorZoomVal->value();
+                ui->lblEditorZoomLevel->setText(QString("%1").arg(icon_zoom));
+                reSize();
+                renderEditorCanvas();
+            }
 
             if(!ke->isAutoRepeat()){
+
+
+
                 if (ke->key() == static_cast<int>(KeyBinding::kscBrushFlipX)){
                     doAlterBrush(brushflipX);
                     renderEditorCanvas();
@@ -3415,7 +3476,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             int dx = coordX + xOffset;
             int dy = coordY + yOffset;
 
-            ui->lblCoords->setText(QString("Coords: x:%1, y:%2")
+            ui->lblCoords->setText(QString("Coords: X:%1, Y:%2")
                                        .arg(dx, 4, 10, QChar('0'))
                                        .arg(dy, 4, 10, QChar('0'))
                                    );
@@ -4491,8 +4552,8 @@ void MainWindow::reSize(){
 
     //WinXW = wincontainer->width() - 2;
     //WinXH = wincontainer->height() - 28;
-    WinXW = frmGFXedit->width() - 2;
-    WinXH = frmGFXedit->height() - 28;
+    WinXW = frmGFXedit->width() + 6;
+    WinXH = frmGFXedit->height() - 14;
 
 
     if(container){
