@@ -2308,7 +2308,7 @@ Key_Space    // Pan Zoom area</string>
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>396</y>
+       <y>370</y>
        <width>160</width>
        <height>170</height>
       </rect>
@@ -2656,7 +2656,7 @@ QPushButton:hover {
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>287</y>
+       <y>260</y>
        <width>160</width>
        <height>105</height>
       </rect>
@@ -2804,7 +2804,7 @@ QPushButton:hover {
        <x>3</x>
        <y>0</y>
        <width>160</width>
-       <height>210</height>
+       <height>213</height>
       </rect>
      </property>
      <property name="title">
@@ -3624,7 +3624,7 @@ keyboard default: e - rotate clockwise
      <property name="geometry">
       <rect>
        <x>3</x>
-       <y>710</y>
+       <y>677</y>
        <width>160</width>
        <height>220</height>
       </rect>
@@ -3716,7 +3716,7 @@ keyboard default: e - rotate clockwise
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>230</y>
+       <y>216</y>
        <width>170</width>
        <height>43</height>
       </rect>
@@ -4103,8 +4103,8 @@ keyboard default: e - rotate clockwise
     <widget class="QGroupBox" name="groupBox_16">
      <property name="geometry">
       <rect>
-       <x>4</x>
-       <y>570</y>
+       <x>3</x>
+       <y>545</y>
        <width>160</width>
        <height>124</height>
       </rect>
