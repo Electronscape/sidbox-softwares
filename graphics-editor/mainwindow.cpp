@@ -1128,9 +1128,26 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->scrEditorV, &QScrollBar::valueChanged, this, &MainWindow::onEditorScrollChanged);
 
     connect(ui->cmdRotateCC90, &QPushButton::clicked, this, [this](){
+        if(ui->chkCellDivider->isChecked()){
+            if(icon_width % cell_width != 0 || icon_height % cell_height != 0 || icon_width != icon_height){
+                QMessageBox::warning(this, "Cannot Rotate",
+                                     "This is an irregular cell shape and cannot be rotated!\n"
+                                     "Make sure the icon is square and cells divide evenly.");
+                return;
+            }
+        }
         rotateIcon(1);
     });
+
     connect(ui->cmdRotateC90, &QPushButton::clicked, this, [this](){
+        if(ui->chkCellDivider->isChecked()){
+            if(icon_width % cell_width != 0 || icon_height % cell_height != 0 || icon_width != icon_height){
+                QMessageBox::warning(this, "Cannot Rotate",
+                                     "This is an irregular cell shape and cannot be rotated!\n"
+                                     "Make sure the icon is square and cells divide evenly.");
+                return;
+            }
+        }
         rotateIcon(0);
     });
 
