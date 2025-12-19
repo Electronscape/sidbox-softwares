@@ -747,83 +747,240 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(ui->cmdPushImageUp, &QPushButton::clicked, this, [this](){
+        bool bCellMode = ui->chkCellDivider->isChecked();
+
         uint8_t topRow[icon_width];
 
-        for(int x = 0; x < icon_width; x++)
-            topRow[x] = (*icon_area)[0][x];
 
-        for(int y = 0; y < icon_height - 1; y++)
+        if(!bCellMode){
             for(int x = 0; x < icon_width; x++)
-                (*icon_area)[y][x] = (*icon_area)[y + 1][x];
+                topRow[x] = (*icon_area)[0][x];
 
-        for(int x = 0; x < icon_width; x++)
-            (*icon_area)[icon_height - 1][x] = topRow[x];
+            for(int y = 0; y < icon_height - 1; y++)
+                for(int x = 0; x < icon_width; x++)
+                    (*icon_area)[y][x] = (*icon_area)[y + 1][x];
+
+            for(int x = 0; x < icon_width; x++)
+                (*icon_area)[icon_height - 1][x] = topRow[x];
+        } else {
+
+            // we'll have to do each of these as cells!
+            int cellsPerRow    = icon_width  / cell_width;
+            int cellsPerColumn = icon_height / cell_height;
+
+            // Temporary buffer for one row of a cell
+            std::vector<uint8_t> topRow(cell_width);
+
+            for (int cy = 0; cy < cellsPerColumn; cy++) {
+                for (int cx = 0; cx < cellsPerRow; cx++) {
+
+                    int cellStartX = cx * cell_width;
+                    int cellStartY = cy * cell_height;
+
+                    // Save top row of this cell
+                    for (int x = 0; x < cell_width; x++) {
+                        topRow[x] = (*icon_area)[cellStartY][cellStartX + x];
+                    }
+
+                    // Shift cell pixels up
+                    for (int y = 0; y < cell_height - 1; y++) {
+                        for (int x = 0; x < cell_width; x++) {
+                            (*icon_area)[cellStartY + y][cellStartX + x] =
+                                (*icon_area)[cellStartY + y + 1][cellStartX + x];
+                        }
+                    }
+
+                    // Wrap top row to bottom of this cell
+                    for (int x = 0; x < cell_width; x++) {
+                        (*icon_area)[cellStartY + cell_height - 1][cellStartX + x] =
+                            topRow[x];
+                    }
+                }
+            }
+        }
 
 
         renderEditorCanvas();
     });
 
     connect(ui->cmdPushImageDown, &QPushButton::clicked, this, [this](){
-        uint8_t bottomRow[icon_width];
+        bool bCellMode = ui->chkCellDivider->isChecked();
 
-        for(int x = 0; x < icon_width; x++)
-            bottomRow[x] = (*icon_area)[icon_height - 1][x];
-
-        for(int y = icon_height - 1; y > 0; y--)
+        if(!bCellMode){
+            uint8_t bottomRow[icon_width];
             for(int x = 0; x < icon_width; x++)
-                (*icon_area)[y][x] = (*icon_area)[y - 1][x];
+                bottomRow[x] = (*icon_area)[icon_height - 1][x];
 
-        for(int x = 0; x < icon_width; x++)
-            (*icon_area)[0][x] = bottomRow[x];
+            for(int y = icon_height - 1; y > 0; y--)
+                for(int x = 0; x < icon_width; x++)
+                    (*icon_area)[y][x] = (*icon_area)[y - 1][x];
+
+            for(int x = 0; x < icon_width; x++)
+                (*icon_area)[0][x] = bottomRow[x];
+        } else {
+            int cellsPerRow    = icon_width  / cell_width;
+            int cellsPerColumn = icon_height / cell_height;
+            std::vector<uint8_t> bottomRow(cell_width);
+
+            for (int cy = 0; cy < cellsPerColumn; cy++) {
+                for (int cx = 0; cx < cellsPerRow; cx++) {
+                    int cellStartX = cx * cell_width;
+                    int cellStartY = cy * cell_height;
+
+                    for (int x = 0; x < cell_width; x++)
+                        bottomRow[x] = (*icon_area)[cellStartY + cell_height - 1][cellStartX + x];
+
+                    for (int y = cell_height - 1; y > 0; y--)
+                        for (int x = 0; x < cell_width; x++)
+                            (*icon_area)[cellStartY + y][cellStartX + x] =
+                                (*icon_area)[cellStartY + y - 1][cellStartX + x];
+
+                    for (int x = 0; x < cell_width; x++)
+                        (*icon_area)[cellStartY][cellStartX + x] = bottomRow[x];
+                }
+            }
+        }
 
         renderEditorCanvas();
     });
 
+
     connect(ui->cmdPushImageLeft, &QPushButton::clicked, this, [this](){
-        for(int y = 0; y < icon_height; y++){
-            uint8_t leftPixel = (*icon_area)[y][0];
+        bool bCellMode = ui->chkCellDivider->isChecked();
 
-            for(int x = 0; x < icon_width - 1; x++)
-                (*icon_area)[y][x] = (*icon_area)[y][x + 1];
+        if(!bCellMode){
+            for(int y = 0; y < icon_height; y++){
+                uint8_t leftPixel = (*icon_area)[y][0];
+                for(int x = 0; x < icon_width - 1; x++)
+                    (*icon_area)[y][x] = (*icon_area)[y][x + 1];
+                (*icon_area)[y][icon_width - 1] = leftPixel;
+            }
+        } else {
+            int cellsPerRow    = icon_width  / cell_width;
+            int cellsPerColumn = icon_height / cell_height;
 
-            (*icon_area)[y][icon_width - 1] = leftPixel;
+            for (int cy = 0; cy < cellsPerColumn; cy++) {
+                for (int cx = 0; cx < cellsPerRow; cx++) {
+                    int cellStartX = cx * cell_width;
+                    int cellStartY = cy * cell_height;
+
+                    for (int y = 0; y < cell_height; y++){
+                        uint8_t leftPixel = (*icon_area)[cellStartY + y][cellStartX];
+                        for (int x = 0; x < cell_width - 1; x++)
+                            (*icon_area)[cellStartY + y][cellStartX + x] =
+                                (*icon_area)[cellStartY + y][cellStartX + x + 1];
+                        (*icon_area)[cellStartY + y][cellStartX + cell_width - 1] = leftPixel;
+                    }
+                }
+            }
         }
+
         renderEditorCanvas();
+
 
     });
 
     connect(ui->cmdPushImageRight, &QPushButton::clicked, this, [this](){
-        for(int y = 0; y < icon_height; y++){
-            uint8_t rightPixel = (*icon_area)[y][icon_width - 1];
+        bool bCellMode = ui->chkCellDivider->isChecked();
 
-            for(int x = icon_width - 1; x > 0; x--)
-                (*icon_area)[y][x] = (*icon_area)[y][x - 1];
+        if(!bCellMode){
+            for(int y = 0; y < icon_height; y++){
+                uint8_t rightPixel = (*icon_area)[y][icon_width - 1];
+                for(int x = icon_width - 1; x > 0; x--)
+                    (*icon_area)[y][x] = (*icon_area)[y][x - 1];
+                (*icon_area)[y][0] = rightPixel;
+            }
+        } else {
+            int cellsPerRow    = icon_width  / cell_width;
+            int cellsPerColumn = icon_height / cell_height;
 
-            (*icon_area)[y][0] = rightPixel;
+            for (int cy = 0; cy < cellsPerColumn; cy++) {
+                for (int cx = 0; cx < cellsPerRow; cx++) {
+                    int cellStartX = cx * cell_width;
+                    int cellStartY = cy * cell_height;
+
+                    for (int y = 0; y < cell_height; y++){
+                        uint8_t rightPixel = (*icon_area)[cellStartY + y][cellStartX + cell_width - 1];
+                        for (int x = cell_width - 1; x > 0; x--)
+                            (*icon_area)[cellStartY + y][cellStartX + x] =
+                                (*icon_area)[cellStartY + y][cellStartX + x - 1];
+                        (*icon_area)[cellStartY + y][cellStartX] = rightPixel;
+                    }
+                }
+            }
         }
+
         renderEditorCanvas();
 
     });
 
     connect(ui->cmdFlipH, &QPushButton::clicked, this, [this](){
-        for(int y = 0; y < icon_height / 2; y++){
-            for(int x = 0; x < icon_width; x++){
-                uint8_t tmp = (*icon_area)[y][x];
-                (*icon_area)[y][x] = (*icon_area)[icon_height - 1 - y][x];
-                (*icon_area)[icon_height - 1 - y][x] = tmp;
+        bool bCellMode = ui->chkCellDivider->isChecked();
+
+        if(!bCellMode){
+            for(int y = 0; y < icon_height / 2; y++){
+                for(int x = 0; x < icon_width; x++){
+                    uint8_t tmp = (*icon_area)[y][x];
+                    (*icon_area)[y][x] = (*icon_area)[icon_height - 1 - y][x];
+                    (*icon_area)[icon_height - 1 - y][x] = tmp;
+                }
+            }
+        } else {
+            int cellsPerRow    = icon_width  / cell_width;
+            int cellsPerColumn = icon_height / cell_height;
+
+            for (int cy = 0; cy < cellsPerColumn; cy++) {
+                for (int cx = 0; cx < cellsPerRow; cx++) {
+                    int cellStartX = cx * cell_width;
+                    int cellStartY = cy * cell_height;
+
+                    for(int y = 0; y < cell_height / 2; y++){
+                        for(int x = 0; x < cell_width; x++){
+                            uint8_t tmp = (*icon_area)[cellStartY + y][cellStartX + x];
+                            (*icon_area)[cellStartY + y][cellStartX + x] =
+                                (*icon_area)[cellStartY + cell_height - 1 - y][cellStartX + x];
+                            (*icon_area)[cellStartY + cell_height - 1 - y][cellStartX + x] = tmp;
+                        }
+                    }
+                }
             }
         }
+
         renderEditorCanvas();
     });
 
     connect(ui->cmdFlipV, &QPushButton::clicked, this, [this](){
-        for(int y = 0; y < icon_height; y++){
-            for(int x = 0; x < icon_width / 2; x++){
-                uint8_t tmp = (*icon_area)[y][x];
-                (*icon_area)[y][x] = (*icon_area)[y][icon_width - 1 - x];
-                (*icon_area)[y][icon_width - 1 - x] = tmp;
+        bool bCellMode = ui->chkCellDivider->isChecked();
+
+        if(!bCellMode){
+            for(int y = 0; y < icon_height; y++){
+                for(int x = 0; x < icon_width / 2; x++){
+                    uint8_t tmp = (*icon_area)[y][x];
+                    (*icon_area)[y][x] = (*icon_area)[y][icon_width - 1 - x];
+                    (*icon_area)[y][icon_width - 1 - x] = tmp;
+                }
+            }
+        } else {
+            int cellsPerRow    = icon_width  / cell_width;
+            int cellsPerColumn = icon_height / cell_height;
+
+            for (int cy = 0; cy < cellsPerColumn; cy++) {
+                for (int cx = 0; cx < cellsPerRow; cx++) {
+                    int cellStartX = cx * cell_width;
+                    int cellStartY = cy * cell_height;
+
+                    for(int y = 0; y < cell_height; y++){
+                        for(int x = 0; x < cell_width / 2; x++){
+                            uint8_t tmp = (*icon_area)[cellStartY + y][cellStartX + x];
+                            (*icon_area)[cellStartY + y][cellStartX + x] =
+                                (*icon_area)[cellStartY + y][cellStartX + cell_width - 1 - x];
+                            (*icon_area)[cellStartY + y][cellStartX + cell_width - 1 - x] = tmp;
+                        }
+                    }
+                }
             }
         }
+
         renderEditorCanvas();
     });
 
@@ -2650,88 +2807,122 @@ void MainWindow::loadProjectIcon(const char *filename){
 // 0 clockwise, 1 = counter-clockwise
 void MainWindow::rotateIcon(int direction){
     if(icon_width == 0 || icon_height == 0) return;
-    std::vector<std::vector<uint8_t>> buffer_mn = icon_area_main;
-    std::vector<std::vector<uint8_t>> buffer_sp = icon_area_scratchpage;
-    std::vector<std::vector<uint8_t>> buffer_bk = icon_area_backup;
-    std::vector<std::vector<uint8_t>> buffer_rd = icon_area_redo;
 
-    int oldW = icon_width;
-    int oldH = icon_height;
+    bool bCellMode = ui->chkCellDivider->isChecked();
 
-    int newW = oldH;
-    int newH = oldW;
+    if(!bCellMode){
+        // --- Full image mode (same as before) ---
+        std::vector<std::vector<uint8_t>> buffer_mn = icon_area_main;
+        std::vector<std::vector<uint8_t>> buffer_sp = icon_area_scratchpage;
+        std::vector<std::vector<uint8_t>> buffer_bk = icon_area_backup;
+        std::vector<std::vector<uint8_t>> buffer_rd = icon_area_redo;
 
-    icon_area_backup.assign(newH, std::vector<uint8_t>(newW, 0));
-    if(direction == 0) {  // clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_backup[y][x] = buffer_bk[oldH - 1 - x][y];
+        int oldW = icon_width;
+        int oldH = icon_height;
+
+        int newW = oldH;
+        int newH = oldW;
+
+        auto rotateCW = [](auto &dst, auto &src, int newH, int newW, int oldH, int oldW){
+            for(int y = 0; y < newH; ++y)
+                for(int x = 0; x < newW; ++x)
+                    dst[y][x] = src[oldH - 1 - x][y];
+        };
+
+        auto rotateCCW = [](auto &dst, auto &src, int newH, int newW, int oldH, int oldW){
+            for(int y = 0; y < newH; ++y)
+                for(int x = 0; x < newW; ++x)
+                    dst[y][x] = src[x][oldW - 1 - y];
+        };
+
+        icon_area_backup.assign(newH, std::vector<uint8_t>(newW, 0));
+        icon_area_scratchpage.assign(newH, std::vector<uint8_t>(newW, 0));
+        icon_area_redo.assign(newH, std::vector<uint8_t>(newW, 0));
+        icon_area_main.assign(newH, std::vector<uint8_t>(newW, 0));
+
+        if(direction == 0){ // clockwise
+            rotateCW(icon_area_backup, buffer_bk, newH, newW, oldH, oldW);
+            rotateCW(icon_area_scratchpage, buffer_sp, newH, newW, oldH, oldW);
+            rotateCW(icon_area_redo, buffer_rd, newH, newW, oldH, oldW);
+            rotateCW(icon_area_main, buffer_mn, newH, newW, oldH, oldW);
+        } else { // counter-clockwise
+            rotateCCW(icon_area_backup, buffer_bk, newH, newW, oldH, oldW);
+            rotateCCW(icon_area_scratchpage, buffer_sp, newH, newW, oldH, oldW);
+            rotateCCW(icon_area_redo, buffer_rd, newH, newW, oldH, oldW);
+            rotateCCW(icon_area_main, buffer_mn, newH, newW, oldH, oldW);
+        }
+
+        icon_width  = newW;
+        icon_height = newH;
+    }
+    else {
+        // --- Cell mode ---
+        int cellsPerRow    = icon_width  / cell_width;
+        int cellsPerColumn = icon_height / cell_height;
+
+        for(int cy = 0; cy < cellsPerColumn; cy++){
+            for(int cx = 0; cx < cellsPerRow; cx++){
+                int cellStartX = cx * cell_width;
+                int cellStartY = cy * cell_height;
+
+                // Create temporary cell buffers
+                std::vector<std::vector<uint8_t>> cell_main(cell_height, std::vector<uint8_t>(cell_width));
+                std::vector<std::vector<uint8_t>> cell_sp(cell_height, std::vector<uint8_t>(cell_width));
+                std::vector<std::vector<uint8_t>> cell_bk(cell_height, std::vector<uint8_t>(cell_width));
+                std::vector<std::vector<uint8_t>> cell_rd(cell_height, std::vector<uint8_t>(cell_width));
+
+                for(int y = 0; y < cell_height; y++)
+                    for(int x = 0; x < cell_width; x++){
+                        cell_main[y][x] = icon_area_main[cellStartY + y][cellStartX + x];
+                        cell_sp[y][x]   = icon_area_scratchpage[cellStartY + y][cellStartX + x];
+                        cell_bk[y][x]   = icon_area_backup[cellStartY + y][cellStartX + x];
+                        cell_rd[y][x]   = icon_area_redo[cellStartY + y][cellStartX + x];
+                    }
+
+                auto rotateCellCW = [](auto &dst, auto &src, int W, int H){
+                    std::vector<std::vector<uint8_t>> tmp(H, std::vector<uint8_t>(W));
+                    for(int y = 0; y < H; y++)
+                        for(int x = 0; x < W; x++)
+                            tmp[y][x] = src[H - 1 - x][y];
+                    dst = tmp;
+                };
+
+                auto rotateCellCCW = [](auto &dst, auto &src, int W, int H){
+                    std::vector<std::vector<uint8_t>> tmp(H, std::vector<uint8_t>(W));
+                    for(int y = 0; y < H; y++)
+                        for(int x = 0; x < W; x++)
+                            tmp[y][x] = src[x][W - 1 - y];
+                    dst = tmp;
+                };
+
+                if(direction == 0){ // clockwise
+                    rotateCellCW(cell_main, cell_main, cell_width, cell_height);
+                    rotateCellCW(cell_sp, cell_sp, cell_width, cell_height);
+                    rotateCellCW(cell_bk, cell_bk, cell_width, cell_height);
+                    rotateCellCW(cell_rd, cell_rd, cell_width, cell_height);
+                } else { // counter-clockwise
+                    rotateCellCCW(cell_main, cell_main, cell_width, cell_height);
+                    rotateCellCCW(cell_sp, cell_sp, cell_width, cell_height);
+                    rotateCellCCW(cell_bk, cell_bk, cell_width, cell_height);
+                    rotateCellCCW(cell_rd, cell_rd, cell_width, cell_height);
+                }
+
+                // Copy back rotated cells
+                for(int y = 0; y < cell_height; y++)
+                    for(int x = 0; x < cell_width; x++){
+                        icon_area_main[cellStartY + y][cellStartX + x] = cell_main[y][x];
+                        icon_area_scratchpage[cellStartY + y][cellStartX + x] = cell_sp[y][x];
+                        icon_area_backup[cellStartY + y][cellStartX + x] = cell_bk[y][x];
+                        icon_area_redo[cellStartY + y][cellStartX + x] = cell_rd[y][x];
+                    }
             }
         }
     }
-    else if(direction == 1) { // counter-clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_backup[y][x] = buffer_bk[x][oldW - 1 - y];
-            }
-        }
-    }
-
-
-    icon_area_scratchpage.assign(newH, std::vector<uint8_t>(newW, 0));
-    if(direction == 0) {  // clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_scratchpage[y][x] = buffer_sp[oldH - 1 - x][y];
-            }
-        }
-    }
-    else if(direction == 1) { // counter-clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_scratchpage[y][x] = buffer_sp[x][oldW - 1 - y];
-            }
-        }
-    }
-
-    icon_area_redo.assign(newH, std::vector<uint8_t>(newW, 0));
-    if(direction == 0) {  // clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_redo[y][x] = buffer_rd[oldH - 1 - x][y];
-            }
-        }
-    }
-    else if(direction == 1) { // counter-clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_redo[y][x] = buffer_rd[x][oldW - 1 - y];
-            }
-        }
-    }
-
-    icon_area_main.assign(newH, std::vector<uint8_t>(newW, 0));
-    if(direction == 0) {  // clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_main[y][x] = buffer_mn[oldH - 1 - x][y];
-            }
-        }
-    }
-    else if(direction == 1) { // counter-clockwise
-        for(int y = 0; y < newH; ++y){
-            for(int x = 0; x < newW; ++x){
-                icon_area_main[y][x] = buffer_mn[x][oldW - 1 - y];
-            }
-        }
-    }
-
-    icon_width  = newW;
-    icon_height = newH;
 
     reSize();
     renderEditorCanvas();
 }
+
 
 uint32_t MainWindow::colourSqueeze(uint32_t srcColour){
     if(ui->rad24BitMode->isChecked())
