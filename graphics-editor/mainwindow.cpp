@@ -1129,9 +1129,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdRotateCC90, &QPushButton::clicked, this, [this](){
         if(ui->chkCellDivider->isChecked()){
-            if(icon_width % cell_width != 0 || icon_height % cell_height != 0 || icon_width != icon_height){
+            if(icon_width % cell_width != 0 || icon_height % cell_height != 0 || cell_width != cell_height){
                 QMessageBox::warning(this, "Cannot Rotate",
-                                     "This is an irregular cell shape and cannot be rotated!\n"
+                                     "Cells cannot be rotated!\n"
                                      "Make sure the icon is square and cells divide evenly.");
                 return;
             }
@@ -1141,9 +1141,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdRotateC90, &QPushButton::clicked, this, [this](){
         if(ui->chkCellDivider->isChecked()){
-            if(icon_width % cell_width != 0 || icon_height % cell_height != 0 || icon_width != icon_height){
+            if(icon_width % cell_width != 0 || icon_height % cell_height != 0 || cell_width != cell_height){
                 QMessageBox::warning(this, "Cannot Rotate",
-                                     "This is an irregular cell shape and cannot be rotated!\n"
+                                     "Cells cannot be rotated!\n"
                                      "Make sure the icon is square and cells divide evenly.");
                 return;
             }
@@ -2935,6 +2935,9 @@ void MainWindow::rotateIcon(int direction){
             }
         }
     }
+
+    ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
+    ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
     reSize();
     renderEditorCanvas();
