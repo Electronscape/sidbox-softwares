@@ -1887,7 +1887,7 @@ Text Box! $0xCC</string>
         <x>600</x>
         <y>30</y>
         <width>250</width>
-        <height>470</height>
+        <height>490</height>
        </rect>
       </property>
       <property name="font">
@@ -1934,127 +1934,11 @@ Key_Plus       // zoom in screen
 Key_Space    // Pan Zoom area</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="groupBox_17">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>390</y>
-        <width>251</width>
-        <height>110</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Graphics Cells (animation systems)</string>
-      </property>
-      <widget class="QLineEdit" name="txtCellHeight">
-       <property name="geometry">
-        <rect>
-         <x>100</x>
-         <y>50</y>
-         <width>50</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="acceptDrops">
-        <bool>false</bool>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">border: 1px solid #3c6dc3;
-</string>
-       </property>
-       <property name="text">
-        <string>32</string>
-       </property>
-       <property name="maxLength">
-        <number>5</number>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_19">
-       <property name="geometry">
-        <rect>
-         <x>83</x>
-         <y>52</y>
-         <width>30</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>H:</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="txtCellWidth">
-       <property name="geometry">
-        <rect>
-         <x>28</x>
-         <y>50</y>
-         <width>50</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="acceptDrops">
-        <bool>false</bool>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">border: 1px solid #3c6dc3;
-</string>
-       </property>
-       <property name="text">
-        <string>32</string>
-       </property>
-       <property name="maxLength">
-        <number>5</number>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_20">
-       <property name="geometry">
-        <rect>
-         <x>8</x>
-         <y>52</y>
-         <width>30</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>W:</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_21">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>100</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Cell Dimentions</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="chkCellDivider">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>80</y>
-         <width>140</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Enables the cell divider
-Allows for each cell to be Exported Cell By Sell in sequential order.
-(this also shows a cell grid)</string>
-       </property>
-       <property name="text">
-        <string>Cell Divide Image</string>
-       </property>
-      </widget>
-     </widget>
      <widget class="QGroupBox" name="groupBox_18">
       <property name="geometry">
        <rect>
         <x>600</x>
-        <y>510</y>
+        <y>540</y>
         <width>250</width>
         <height>220</height>
        </rect>
@@ -3064,7 +2948,7 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
        <x>10</x>
        <y>10</y>
        <width>673</width>
-       <height>771</height>
+       <height>402</height>
       </rect>
      </property>
      <property name="title">
@@ -3074,7 +2958,7 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>740</y>
+        <y>370</y>
         <width>140</width>
         <height>24</height>
        </rect>
@@ -3090,9 +2974,9 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>30</y>
+        <y>60</y>
         <width>301</width>
-        <height>220</height>
+        <height>120</height>
        </rect>
       </property>
       <property name="title">
@@ -3233,7 +3117,7 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>390</y>
+        <y>360</y>
         <width>650</width>
         <height>3</height>
        </rect>
@@ -3276,8 +3160,8 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
      <widget class="QLabel" name="label_23">
       <property name="geometry">
        <rect>
-        <x>340</x>
-        <y>360</y>
+        <x>10</x>
+        <y>30</y>
         <width>100</width>
         <height>16</height>
        </rect>
@@ -3289,8 +3173,8 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
      <widget class="QLabel" name="lblCellSize">
       <property name="geometry">
        <rect>
-        <x>450</x>
-        <y>360</y>
+        <x>120</x>
+        <y>30</y>
         <width>150</width>
         <height>16</height>
        </rect>
@@ -3299,12 +3183,128 @@ IF the area is too small, there will be wasted graphic area, your exported .h fi
        <string>32 x 32</string>
       </property>
      </widget>
+     <widget class="QGroupBox" name="groupBox_17">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>190</y>
+        <width>300</width>
+        <height>110</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Graphics Cells (animation systems)</string>
+      </property>
+      <widget class="QLineEdit" name="txtCellHeight">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>50</y>
+         <width>50</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="acceptDrops">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="text">
+        <string>32</string>
+       </property>
+       <property name="maxLength">
+        <number>5</number>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_19">
+       <property name="geometry">
+        <rect>
+         <x>83</x>
+         <y>52</y>
+         <width>30</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>H:</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="txtCellWidth">
+       <property name="geometry">
+        <rect>
+         <x>28</x>
+         <y>50</y>
+         <width>50</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="acceptDrops">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="text">
+        <string>32</string>
+       </property>
+       <property name="maxLength">
+        <number>5</number>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_20">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>52</y>
+         <width>30</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>W:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_21">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>100</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Cell Dimentions</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="chkCellDivider">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>80</y>
+         <width>140</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Enables the cell divider
+Allows for each cell to be Exported Cell By Sell in sequential order.
+(this also shows a cell grid)</string>
+       </property>
+       <property name="text">
+        <string>Cell Divide Image</string>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
-   <zorder>frmGraphicEdit</zorder>
-   <zorder>outputTextView</zorder>
    <zorder>frmFontWorkbench</zorder>
    <zorder>frmOptions</zorder>
+   <zorder>frmGraphicEdit</zorder>
+   <zorder>outputTextView</zorder>
    <zorder>lblCoords</zorder>
    <zorder>lblCellSizeWarning</zorder>
    <zorder>frmCellAnimator</zorder>
