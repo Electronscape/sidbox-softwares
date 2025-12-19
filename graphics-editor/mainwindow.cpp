@@ -82,33 +82,38 @@ bool        bReassignedPaletteIndex = false;
 bool        bSwapColours    = false;
 bool        bSpreadPalette  = false;
 
-QPalette pal;
-QTimer *tmrColourCycle;
-QString ProjectFilename = "untitled.icn";
-QString PaletteFilename = "untitled.pal";
+QPalette    pal;
+QTimer      *tmrColourCycle;
+QString     ProjectFilename = "untitled.icn";
+QString     PaletteFilename = "untitled.pal";
+
+int         currentCellID = 0;
+
+int         iAnimationFPS;
+QTimer      *tmrCellAnimator;
 
 //chkCyclePaletteDraw#include "projectheader.h"
-int cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
-int cyclePaletteStepping = 0;   // used to control the division of steps before next cyclePaletteID increment.
-int cyclefrom = 80, cycleto = 87, cyclelength = 8;
-bool selectingCycle = false;   // true when CTRL is held
-bool waitingForEnd = false;    // true after choosing cycle_from
-int clickedIndex = 256; // way off grid
+int         cyclePaletteID = 0; // used for when drawing the index + numSelectedPaletteID
+int         cyclePaletteStepping = 0;   // used to control the division of steps before next cyclePaletteID increment.
+int         cyclefrom = 80, cycleto = 87, cyclelength = 8;
+bool        selectingCycle = false;   // true when CTRL is held
+bool        waitingForEnd = false;    // true after choosing cycle_from
+int         clickedIndex = 256; // way off grid
 
-bool selectingGradientRange = false;    // true when Left ALT is held
-bool waitingForEndGradient = false;
-int  GradientRangeFrom = 160;
-int  GradientRangeTo = 165;
+bool        selectingGradientRange = false;    // true when Left ALT is held
+bool        waitingForEndGradient = false;
+int         GradientRangeFrom = 160;
+int         GradientRangeTo = 165;
 
-bool bMouseLeftRight    = true; // true if it is left
-bool bMouseButtonDown   = false;
-bool bShiftKey          = false;    // used for holding brush draw ;)
+bool        bMouseLeftRight    = true; // true if it is left
+bool        bMouseButtonDown   = false;
+bool        bShiftKey          = false;    // used for holding brush draw ;)
 
 // for previewing new primatives, lines, circles, rectangles
-bool captureXYStart = false;
-int ctcapturedX = -1, ctcapturedY = -1;  // current location target
-int ltcapturedX = -1, ltcapturedY = -1;  // last location target
-int capturedX = -1, capturedY = -1;
+bool        captureXYStart = false;
+int         ctcapturedX = -1, ctcapturedY = -1;  // current location target
+int         ltcapturedX = -1, ltcapturedY = -1;  // last location target
+int         capturedX = -1, capturedY = -1;
 
 bool paletteRestrictor = false;
 int paletteRangerOffset, paletteRangerLength;
@@ -123,18 +128,24 @@ bool gridEnabled        = false;
 #define gridBlue         128
 
 // default settings at startup
-uint16_t icon_zoom       = 4;
-uint16_t icon_width      = 320; // Sidbox 4.3 Screen dimentions;
-uint16_t icon_height     = 240;
+uint16_t    icon_zoom       = 3;
+// cell divide
+uint16_t    cell_width      = 32;
+uint16_t    cell_height     = 32;
 
-uint16_t icon_old_width  = 320;
-uint16_t icon_old_height = 240;
+uint16_t    icon_width      = cell_width * 10; // Sidbox 4.3 Screen dimentions;
+uint16_t    icon_height     = cell_height * 8;
 
-int editorViewPortWidth  = 8;   // editor width grid
-int editorViewPortHeight = 8;
+uint16_t    icon_old_width  = icon_width;
+uint16_t    icon_old_height = icon_height;
+
+int editorViewPortWidth     = 8;   // editor width grid
+int editorViewPortHeight    = 8;
+
+bool        bPlayAnimations = false;
 
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
-bool bEditorPage    = 0;
+bool bEditorPage            = 0;
 std::vector<std::vector<uint8_t>> icon_area_main;   // this is the current edit screen
 std::vector<std::vector<uint8_t>> icon_area_scratchpage;    // this is the scratch page
 std::vector<std::vector<uint8_t>> *icon_area = &icon_area_main;
@@ -593,6 +604,95 @@ MainWindow::MainWindow(QWidget *parent)
     //icon_width
     ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
     ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
+
+    // CELL SYSTEM STARTUP
+    animationScene = new QGraphicsScene(this);
+    ui->gvAnimFrameView->setScene(animationScene);
+    animationPixmap = animationScene->addPixmap(QPixmap::fromImage(animationImg));
+
+    ui->lblCellSizeWarning->hide();
+    ui->txtCellWidth->setText(QString("%1").arg(cell_width));
+    ui->txtCellHeight->setText(QString("%1").arg(cell_height));
+    connect(ui->txtCellWidth, &QLineEdit::textChanged, this, [this](){
+        cell_width = ui->txtCellWidth->text().toInt();
+        if (cell_width <= 0) return;
+        renderEditorCanvas();
+    });
+    connect(ui->txtCellHeight, &QLineEdit::textChanged, this, [this](){
+        cell_height = ui->txtCellHeight->text().toInt();
+        if (cell_height <= 0) return;
+        renderEditorCanvas();
+    });
+
+    // Cell Animator Setup
+    ui->frmCellAnimator->hide();    // normally hiddeneded
+    connect(ui->cmdOpenCellAnimator, &QPushButton::clicked, this, [this](){
+        ui->frmCellAnimator->show();    // normally hiddeneded
+        ui->frmCellAnimator->raise();
+    });
+
+    connect(ui->cmdAnimatorClose, &QPushButton::clicked, this, [this](){
+        ui->frmCellAnimator->hide();    // normally hiddeneded
+    });
+
+    connect(ui->cmdPlayAnimations, &QPushButton::clicked, this, [this](){
+        renderAnimatorCanvas();
+    });
+
+
+    //currentCellID =
+    ui->scrShowCellID->setMaximum(0);
+    connect(ui->scrShowCellID, &QScrollBar::valueChanged, this, [this](){
+        currentCellID = ui->scrShowCellID->value();
+        renderAnimatorCanvas();
+    });
+
+    //QTimer *allDoneTimer;
+    //allDoneTimer = new QTimer(this);
+
+    tmrCellAnimator = new QTimer(this);
+    tmrCellAnimator->stop();
+
+
+    connect(ui->cmdPlayAnimations, &QPushButton::clicked, this, [this](){
+        bPlayAnimations = true;
+        tmrCellAnimator->start(iAnimationFPS);
+    });
+
+    connect(ui->cmdStopAnimations, &QPushButton::clicked, this, [this](){
+        bPlayAnimations = false;
+        tmrCellAnimator->stop();
+    });
+
+
+    iAnimationFPS = 1000 / 5;
+    connect(ui->scrAnimFPS, &QScrollBar::valueChanged, this, [this](){
+        int fps = ui->scrAnimFPS->value();
+        if (fps <= 0) fps = 1;
+
+        iAnimationFPS = 1000 / fps;
+        ui->lblAnimFPS->setText(QString("%1 fps").arg(fps));
+
+        if (bPlayAnimations) {
+            tmrCellAnimator->start(iAnimationFPS); // restart with new interval
+        }
+
+    });
+
+    renderAnimatorCanvas();
+
+    connect(tmrCellAnimator, &QTimer::timeout, this, [this](){
+        currentCellID++;
+
+        if (currentCellID > ui->scrShowCellID->maximum())
+            currentCellID = 0;
+
+        ui->scrShowCellID->setValue(currentCellID); // keeps UI in sync
+        renderAnimatorCanvas();
+
+    });
+
+
 
     allDoneTimer->start(100);
 
@@ -1375,6 +1475,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->sldPaletteSize->setValue(paletteRangerLength);
 
 
+
+
     loadDefaultFont();
 
     connect(tmrColourCycle, &QTimer::timeout, this, &MainWindow::onColourCycleTick);  // your slot
@@ -1834,6 +1936,8 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
 
     bitDepth = paletteDepth;
     imgLen = icon_width * icon_height;
+    imgW = icon_width;
+    imgH = icon_height;
 
     uint8_t il_v0 = (imgLen >> 24) & 0xff;
     uint8_t il_v1 = (imgLen >> 16) & 0xff;
@@ -1843,17 +1947,35 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
 
     QString output;
     QString rleData;
+    uint8_t isCells = ui->chkCellDivider->isChecked();
+
     output += "#include <stdint.h>\n\n";
     output += "// Image Params //\n";
     if(!(modes & ExportRLE))
         output += "// non compressed \n";
-    else
+    else {
+
         output += "// RLE compressed bytes are now (how-many), (pixel colour index), ...\n";
+        if(isCells) {
+            output += "// !!! NOTE: Cells are enabled but will be ignored because RLE is active\n";
+            isCells = false;
+        }
+    }
+
+    if(isCells){
+        output += "// image is arranged as cells \n";
+        output += "//     Width: " + QString("%1").arg(cell_width) + "px\n";
+        output += "//    Height: " + QString("%1").arg(cell_height) + "px ";
+        output += "\n";
+    }
+
     output += "\n";
     output += "uint8_t image[] = {\n";
 
     uint8_t configbits = 0;
-    configbits = (!!(modes & ExportRLE) << 4);
+
+    configbits = (!!(modes & ExportRLE) << 4) |
+                 ((isCells << 5));
 
     //output += "    0x00,                   // Colour depth (1=2colours, 2=4colours, 4=16colours, 8=256colours\n";   // colour depth 1, 2, 4, 8
     output += QString("    %1,                 // Colour depth (1,2,4,8 bit colour modes) + 0x10 if RLE\n")
@@ -1903,25 +2025,52 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
 
 
     if(!(modes & ExportRLE)){
-        /// Uncompressed, unchanged
-        // the loop of the actual data to be spat out
-        // for now spit out the full byte, no packing bits yet
+        /// Uncompressed, unchanged or cell-divided
         output += "    ";
-        for (uint16_t y = 0; y < icon_height; y++) {
-            for (uint16_t x = 0; x < icon_width; x++) {
-                uint8_t colDat = (*icon_area)[y][x];
+        int columnstep = 0;
+        bool firstElement = true;
 
-                // Add comma only if this is NOT the first element
-                if (!(x == 0 && y == 0)) {
-                    output += ", ";
+        if(!isCells){
+            // Normal row-by-row
+            for (uint16_t y = 0; y < icon_height; y++) {
+                for (uint16_t x = 0; x < icon_width; x++) {
+                    uint8_t colDat = (*icon_area)[y][x];
+
+                    if (!(x == 0 && y == 0)) output += ", ";
+                    if(columnstep >= colWidthMax){
+                        output += "\n    ";
+                        columnstep = 0;
+                    }
+                    output += QString("%1").arg(hex8(colDat));
+                    columnstep++;
                 }
-                // Insert newline+indent when exceeding column width
-                if (columnstep >= colWidthMax) {
-                    output += "\n    ";
-                    columnstep = 0;
+            }
+        } else {
+            // Cell-divided output
+            int cellsX = icon_width / cell_width;
+            int cellsY = icon_height / cell_height;
+
+            for(int cy = 0; cy < cellsY; cy++){
+                for(int cx = 0; cx < cellsX; cx++){
+                    int baseX = cx * cell_width;
+                    int baseY = cy * cell_height;
+
+                    for(int y = 0; y < cell_height; y++){
+                        for(int x = 0; x < cell_width; x++){
+                            uint8_t colDat = (*icon_area)[baseY + y][baseX + x];
+
+                            if(!firstElement) output += ", ";
+                            firstElement = false;
+
+                            if(columnstep >= colWidthMax){
+                                output += "\n    ";
+                                columnstep = 0;
+                            }
+                            output += QString("%1").arg(hex8(colDat));
+                            columnstep++;
+                        }
+                    }
                 }
-                output += QString("%1").arg(hex8(colDat));
-                columnstep++;
             }
         }
     } else {
@@ -1930,6 +2079,33 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
     }
 
     output += "\n};\n";
+
+    if(isCells){
+        output += "\n\n\n";
+        output += "// Cell to image pointer list\n";
+        output += "uint8_t *images[] = {\n";
+
+        int cellsX = icon_width / cell_width;
+        int cellsY = icon_height / cell_height;
+        int cellSize = cell_width * cell_height;
+        int cellIndex = 0;
+
+        for(int cy=0; cy<cellsY; cy++){
+            for(int cx=0; cx<cellsX; cx++){
+                int offset = (cy * cellsX + cx) * cellSize;
+                //output += QString("    image + %1, //    %2\n").arg(offset).arg(cellIndex);
+                output += QString("    image + %1, //    %2\n")
+                              .arg(offset, 6, 10, QLatin1Char(' '))   // offset, width=6, base=10, pad with space
+                              .arg(cellIndex, 3, 10, QLatin1Char(' ')); // cellIndex, width=3
+
+
+                cellIndex ++;
+            }
+        }
+
+        output += "};\n";
+    }
+
 
     // Show in the text view
     ui->txtOutputText->setPlainText(output);
@@ -2368,15 +2544,18 @@ void MainWindow::saveProjectIcon(const char *filename){
     // [width height] image dimentions
     fwrite(&icon_width, sizeof(uint16_t), 1, f);
     fwrite(&icon_height, sizeof(uint16_t), 1, f);
+    fwrite(&cell_width, 1, 1, f);   // cell spacing information
+    fwrite(&cell_height, 1, 1, f);
 
     // [ palette data ]
     fwrite(&CLUT, 4, 256, f);   // 4 byte @ 256 elements
     fwrite(&cyclefrom, 1, 1, f);
     fwrite(&cycleto, 1, 1, f);
     fwrite(&cyclelength, 1, 1, f);
+    fwrite(&GradientRangeFrom, 1, 1, f);
+    fwrite(&GradientRangeTo, 1, 1, f);
 
-    // [ image body ]
-
+    // [ image body ]    
     for(int y = 0; y < icon_height; y++) {
         fwrite(icon_area_main[y].data(), sizeof(uint8_t), icon_width, f);
     }
@@ -2421,6 +2600,11 @@ void MainWindow::loadProjectIcon(const char *filename){
         fread(&w, sizeof(uint16_t), 1, f);
         fread(&h, sizeof(uint16_t), 1, f);
 
+        fread(&cell_width, 1, 1, f);   // cell spacing information
+        fread(&cell_height, 1, 1, f);
+
+        ui->txtCellWidth->setText(QString("%1").arg(cell_width));
+        ui->txtCellHeight->setText(QString("%1").arg(cell_height));
         // resize rows first
         reSizeEditorArray(w, h);
 
@@ -2436,6 +2620,8 @@ void MainWindow::loadProjectIcon(const char *filename){
         fread(&cyclefrom, 1, 1, f);
         fread(&cycleto, 1, 1, f);
         fread(&cyclelength, 1, 1, f);
+        fread(&GradientRangeFrom, 1, 1, f);
+        fread(&GradientRangeTo, 1, 1, f);
 
         // [ Image Body ]
         for(int y = 0; y < h; y++) {
@@ -3489,10 +3675,26 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             int dx = coordX + xOffset;
             int dy = coordY + yOffset;
 
-            ui->lblCoords->setText(QString("Coords: X:%1, Y:%2")
-                                       .arg(dx, 4, 10, QChar('0'))
-                                       .arg(dy, 4, 10, QChar('0'))
-                                   );
+
+            int cWidth = cell_width;
+            int cHeight = cell_height;
+            QString text = "";
+            if(ui->chkCellDivider->isChecked()) {
+                if(cWidth < 1) cWidth = 1;
+                if(cHeight < 1) cHeight = 1;
+                int cellIndex = (dx / cWidth) + ((dy / cHeight) * (icon_width / cWidth));
+                text = QString("Coords: X:%1, Y:%2 / CELL ID: %3")
+                                   .arg(dx, 4, 10, QLatin1Char('0'))
+                                   .arg(dy, 4, 10, QLatin1Char('0'))
+                                   .arg(cellIndex);
+
+            }
+            else
+                text = QString("Coords: X:%1, Y:%2")
+                                   .arg(dx, 4, 10, QChar('0'))
+                                   .arg(dy, 4, 10, QChar('0'));
+
+            ui->lblCoords->setText(text);
 
             if(!bCapturingCopyArea){
 
@@ -4471,6 +4673,17 @@ void MainWindow::floodFillGradient(int startX, int startY, uint8_t colStart, uin
             }
         }
 
+        // --- redraw step ---
+        if(!ui->chkInstaFill->isChecked()){
+            tick++;
+            if(tick > 250){
+                renderEditorCanvas();
+                QCoreApplication::processEvents();
+                QThread::msleep(3);
+                tick = 0;
+            }
+        }
+
         finalCol = std::clamp(finalCol, colStart, colEnd);
 
         (*icon_area)[y][x] = finalCol;
@@ -4561,6 +4774,7 @@ void MainWindow::reSize(){
 
     QWidget *frmGFXedit = ui->frmGraphicEdit->parentWidget();
     QWidget *wincontainer = ui->verticalLayoutWidget;
+    QWidget *animator = ui->frmCellAnimator;
     QWidget *container = ui->frmGraphicEdit;
     QWidget *vboxh = ui->vboxTextoutputv;
     QWidget *fonteditBox = ui->frmFontWorkbench;
@@ -4588,6 +4802,9 @@ void MainWindow::reSize(){
         //ui->frmFontWorkbench->resize((WinXW))
         sysoptions->resize(WinXW, WinXH);
     }
+    if(animator){
+        animator->resize(WinXW, WinXH);
+    }
 
     PWinXW = ui->gfxEditor->width()  - 4;
     PWinXH = ui->gfxEditor->height() - 4;
@@ -4608,6 +4825,69 @@ void MainWindow::resizeEvent(QResizeEvent *event){
     reSize();
 }
 
+void MainWindow::renderAnimatorCanvas(){
+    int CellID = currentCellID; // <-- whatever cell you're previewing
+
+    int cellsPerRow = icon_width / cell_width;
+    int cellsPerColumn = icon_height / cell_height;
+    int maximumCells = cellsPerRow * cellsPerColumn;
+    if (cellsPerRow <= 0) return;
+
+    int cellX = CellID % cellsPerRow;
+    int cellY = CellID / cellsPerRow;
+
+    int srcX = cellX * cell_width;
+    int srcY = cellY * cell_height;
+
+    // Safety check
+    if (srcX + cell_width > icon_width ||
+        srcY + cell_height > icon_height)
+        return;
+
+    ui->scrShowCellID->setMaximum(maximumCells - 1);
+    ui->lblShowCellID->setText(QString("%1").arg(CellID));
+
+    ui->lblCellSize->setText(QString("%1 x %2")
+                                .arg(cell_width)
+                                .arg(cell_height));
+
+    // Create image at cell size
+    animationImg = QImage(cell_width, cell_height, QImage::Format_RGB32);
+
+    for(int y = 0; y < cell_height; y++) {
+        QRgb *scan = reinterpret_cast<QRgb*>(animationImg.scanLine(y));
+        for(int x = 0; x < cell_width; x++) {
+            uint8_t pal = (*icon_area)[srcY + y][srcX + x];
+            scan[x] = colourSqueeze(CLUT[pal]);
+        }
+    }
+
+    // Remove old pixmap
+    if(animationPixmap){
+        animationScene->removeItem(animationPixmap);
+        delete animationPixmap;
+    }
+
+    // Add pixmap
+    animationPixmap = animationScene->addPixmap(QPixmap::fromImage(animationImg));
+
+    // Fixed preview area
+    animationScene->setSceneRect(0, 0, 320, 320);
+
+    // Scale to fit preview
+    double scale = qMin(320.0 / cell_width, 320.0 / cell_height);
+    animationPixmap->setScale(scale);
+
+    // Center it
+    animationPixmap->setPos(
+        (320 - cell_width  * scale) / 2,
+        (320 - cell_height * scale) / 2
+        );
+}
+
+
+
+
 void MainWindow::renderEditorCanvas(){
     int visibleWidth  = editorViewPortWidth * icon_zoom;   // in pixels
     int visibleHeight = editorViewPortHeight * icon_zoom;
@@ -4619,6 +4899,15 @@ void MainWindow::renderEditorCanvas(){
 
     QRgb gridColor = gridEnabled ? QColor(gridRed, gridGreen, gridBlue).rgb() : 0; // choose color
     bool drawGrid = gridEnabled;
+    bool nonInteger = false;
+
+    if((icon_width % cell_width)) nonInteger=true;
+    if((icon_height % cell_height)) nonInteger=true;
+
+    if(nonInteger)
+        ui->lblCellSizeWarning->show();
+    else
+        ui->lblCellSizeWarning->hide();
 
     for(int y = 0; y < visibleHeight; y++) {
         QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(y));
@@ -4897,8 +5186,6 @@ void MainWindow::renderEditorCanvas(){
                 drawIconAreaPenHover(x1cell, y1cell, iPenShapeSize * 2, &editorImg, false);
             }
             //if(currentDrawMode == CopyBrush)
-
-
         }
     }
 
@@ -4930,6 +5217,49 @@ void MainWindow::renderEditorCanvas(){
         //renderEditorCanvas(); // redraw empty icon
     }
 
+    if(ui->chkCellDivider->isChecked()){    // if cell divide is on draw the grid at all times !
+        int cellW = ui->txtCellWidth->text().toInt() * icon_zoom;
+        int cellH = ui->txtCellHeight->text().toInt() * icon_zoom;
+
+        int xOffset = ui->scrEditorH->value() * icon_zoom;
+        int yOffset = ui->scrEditorV->value() * icon_zoom;
+        int colourToggle1 = 0xffffff;
+        int colourToggle2 = 0xffffff;
+
+        for (int y = 0; y < visibleHeight; y++) {
+            QRgb *scan = reinterpret_cast<QRgb*>(editorImg.scanLine(y));
+
+            for (int x = 0; x < visibleWidth; x++) {
+
+                bool onVGrid = ((x + xOffset) % cellW == 0 && x != 0);
+                bool onHGrid = ((y + yOffset) % cellH == 0 && y != 0);
+
+                if (onVGrid) {
+                    // vertical line → dot by Y
+                    if (((y + yOffset) & 3) == 0) {
+                        //scan[x] = colourToggle1;//~scan[x];
+                        //colourToggle1 = 0xffffff - colourToggle1;
+
+                        int phase = ((y + yOffset) >> 2) & 1;
+                        scan[x] = phase ? 0xFFFFFF : 0x000000;
+
+                    }
+                }
+                else if (onHGrid) {
+                    // horizontal line → dot by X
+                    if (((x + xOffset) & 3) == 0) {
+                        //scan[x] = ~scan[x];
+                        //scan[x] = colourToggle2;//~scan[x];
+                        //colourToggle2 = 0xffffff - colourToggle2;
+                        int phase = ((x + xOffset) >> 2) & 1;
+                        scan[x] = phase ? 0xFFFFFF : 0x000000;
+
+                    }
+                }
+            }
+        }
+
+    }
 
 
     editorPixmap->setPixmap(QPixmap::fromImage(editorImg));

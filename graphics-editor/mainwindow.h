@@ -50,18 +50,23 @@ private:
 
     QGraphicsScene *scene;
     QGraphicsScene *editorScene;
+    QGraphicsScene *animationScene;
 
     QGraphicsPixmapItem *palettePixmap;
     QGraphicsPixmapItem *editorPixmap;
+    QGraphicsPixmapItem *animationPixmap;
 
     QImage paletteImg;
     QImage editorImg;
+    QImage animationImg;
 
     void UpdatePrePaletteMixer();
 
     void SelectedPaletteID();
     void renderPaletteCanvas();
     void renderEditorCanvas();
+    void renderAnimatorCanvas();
+
     void reSizeEditorArray(int newWidth, int newHeight);
     void reSize();
     uint32_t colourSqueeze(uint32_t srcColour);
