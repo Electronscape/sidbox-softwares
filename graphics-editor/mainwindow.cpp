@@ -2737,27 +2737,6 @@ void MainWindow::saveProjectIcon(const char *filename){
     fclose(f);
 }
 
-/*
-    // [ header ]
-    fwrite("SBCN", 4, 1, f);// the header type file.
-
-    // [width height] image dimentions
-    fwrite(&icon_width, sizeof(uint16_t), 1, f);
-    fwrite(&icon_height, sizeof(uint16_t), 1, f);
-
-    // [ palette data ]
-    fwrite(&CLUT, 4, 256, f);   // 4 byte @ 256 elements
-    fwrite(&cyclefrom, 1, 1, f);
-    fwrite(&cycleto, 1, 1, f);
-    fwrite(&cyclelength, 1, 1, f);
-
-    // [ image body ]
-
-    for(int y = 0; y < icon_height; y++) {
-        fwrite(icon_area[y].data(), sizeof(uint8_t), icon_width, f);
-    }
-*/
-
 void MainWindow::loadProjectIcon(const char *filename){
     FILE *f = fopen(filename, "rb");
     if(!f) { QMessageBox::warning(this, "Load Icon", "Cannot open file!"); return; }
@@ -5003,7 +4982,7 @@ void MainWindow::reSize(){
     }
     if(vboxh){
         ui->outputTextView->resize(WinXW, WinXH);
-        vboxh->resize(WinXW-16, WinXH-64);
+        vboxh->resize(WinXW-16, WinXH-8);
     }
     if(fonteditBox){
         //ui->frmFontWorkbench->resize((WinXW))
