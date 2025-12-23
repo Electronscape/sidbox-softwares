@@ -833,7 +833,7 @@ uint32_t clut[256] = {
         <x>670</x>
         <y>25</y>
         <width>113</width>
-        <height>180</height>
+        <height>271</height>
        </rect>
       </property>
       <property name="title">
@@ -1235,6 +1235,76 @@ QPushButton:hover {
        </property>
        <property name="icon">
         <iconset theme="QIcon::ThemeIcon::EditRedo"/>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="cmdFlipFontVALL">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>174</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Rotate 90 degrees C-ClockWise</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+       </property>
+       <property name="text">
+        <string>FV</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="cmdFlipFontHALL">
+       <property name="geometry">
+        <rect>
+         <x>76</x>
+         <y>174</y>
+         <width>30</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Rotate 90 degrees C-ClockWise</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+    background-color: #808080;   /* classic grey */
+    border: 2px solid #FFFFFF;   /* top/left highlights */
+    border-right-color: #404040; /* bottom/right shadows */
+    border-bottom-color: #404040;
+    padding: 4px;
+}
+
+QPushButton:pressed {
+    border: 2px solid #808080;   /* swap border to look pressed */
+    border-right-color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+    background-color: #808080;
+}
+QPushButton:hover {
+    background-color: #808080;   /* slightly lighter on hover */
+}</string>
+       </property>
+       <property name="text">
+        <string>FH</string>
        </property>
       </widget>
      </widget>
@@ -3301,13 +3371,13 @@ Allows for each cell to be Exported Cell By Sell in sequential order.
      </widget>
     </widget>
    </widget>
-   <zorder>frmFontWorkbench</zorder>
+   <zorder>frmCellAnimator</zorder>
    <zorder>frmOptions</zorder>
    <zorder>frmGraphicEdit</zorder>
    <zorder>outputTextView</zorder>
    <zorder>lblCoords</zorder>
    <zorder>lblCellSizeWarning</zorder>
-   <zorder>frmCellAnimator</zorder>
+   <zorder>frmFontWorkbench</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

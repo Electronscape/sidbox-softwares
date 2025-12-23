@@ -19,7 +19,9 @@ enum {
     font_rotate_cc_all,
     font_rotate_c_all,
     font_flip_h,
-    font_flip_v
+    font_flip_v,
+    font_flip_hall,
+    font_flip_vall
 };
 
 void clearFontBank();

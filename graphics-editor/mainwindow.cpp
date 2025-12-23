@@ -1572,6 +1572,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdRotateFontsCC90, &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_rotate_cc_all);});
     connect(ui->cmdRotateFontsC90,  &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_rotate_c_all);});
+    connect(ui->cmdFlipFontVALL,    &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_flip_vall);});
+    connect(ui->cmdFlipFontHALL,    &QPushButton::clicked, this, [this](){ fontEditor->MoveFont(font_flip_hall);});
 
 
     connect(ui->cmdClearFontBank,  &QPushButton::clicked, this, [this](){
@@ -1904,7 +1906,7 @@ QString generateRLE(
                 if (runLength > 0) {
                     // line wrap first
                     if (columnstep >= colWidthMax) {
-                        output += "\n    ";
+                        output += ",\n    ";
                         columnstep = 0;
                     }
 

@@ -241,6 +241,34 @@ void FontEditor::MoveFont(char dir){
             }
         } break;
 
+        case font_flip_hall:{
+            for(int fontID = 0; fontID < 256; fontID ++){
+                for (int y = 0; y < 8; ++y){
+                    unsigned char row = SYSFONT[fontID][y];
+                    unsigned char flipped = 0;
+                    for (int x = 0; x < 8; ++x){
+                        if (row & (1 << x))
+                            flipped |= (1 << (7 - x));
+                    }
+                    SYSFONT[fontID][y] = flipped;
+                }
+            }
+        }
+        break;
+
+
+        case font_flip_vall:{
+            for(int fontID = 0; fontID < 256; fontID ++){
+                for (int y = 0; y < 4; ++y){
+                    unsigned char tmp = SYSFONT[fontID][y];
+                    SYSFONT[fontID][y] = SYSFONT[fontID][7 - y];
+                    SYSFONT[fontID][7 - y] = tmp;
+                }
+            }
+        }
+        break;
+
+
         case font_flip_h:{
             for (int y = 0; y < 8; ++y){
                 unsigned char row = SYSFONT[selectedFontID][y];
@@ -421,10 +449,8 @@ QString FontEditor::hex8(uint8_t value){
     return QString("0x%1").arg(QString::number(value, 16).toUpper().rightJustified(2, '0'));
 }
 
-
 void FontEditor::ExportFont(QPlainTextEdit *tb){
-    // this is where we export the font to a text box
-    //txtOutputText
+    // Export the font to a text box as a C initializer with nested braces per glyph.
 
     const char* symbols[] = {
         "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/",
@@ -439,30 +465,34 @@ void FontEditor::ExportFont(QPlainTextEdit *tb){
         "{", "|", "}", "~"
     };
 
-    tb->clear();  // clear previous content
+    tb->clear();
 
     QString output;
     output += "#include <stdint.h>\n\n";
-    output += "uint8_t font[256][8] = {\n";
+    output += "// 8x8 font table: 256 glyphs, 8 rows each\n";
+    output += "static const uint8_t font[256][8] = {\n";
 
     for (int c = 0; c < 256; ++c){
-        output += "    ";  // indent + start of glyph row
+        output += "    { ";
+
         for (int y = 0; y < 8; ++y){
             output += hex8(SYSFONT[c][y]);
             if (y < 7) output += ", ";
         }
 
+        output += " }";
+
         if (c < 255)
             output += ",";  // trailing comma for all but last glyph
 
-        // add tab + comment with index
-        if( c > 32 && c < 92)
+        // Comment block
+        if (c > 32 && c < 92)
             output += "   // (" + QString("%1").arg(c, 3) + ")  [ " + symbols[c-33] + " ]";
-        else if( c > 92 && c < 127)
+        else if (c > 92 && c < 127)
             output += "   // (" + QString("%1").arg(c, 3) + ")  [ " + symbols2[c-93] + " ]";
-        else if( c == 92)
-            output += "   // (" + QString("%1").arg(c, 3) + ")  [BACKSPACE]";
-        else if( c == 32)
+        else if (c == 92)
+            output += "   // (" + QString("%1").arg(c, 3) + ")  [BACKSLASH]";   // 92 is '\'
+        else if (c == 32)
             output += "   // (" + QString("%1").arg(c, 3) + ")  [SPACE]";
         else
             output += "   // (" + QString("%1").arg(c, 3) + ")   0x" + QString("%1").arg(c, 2, 16, QChar('0')).toUpper();
@@ -473,4 +503,3 @@ void FontEditor::ExportFont(QPlainTextEdit *tb){
     output += "};\n";
     tb->setPlainText(output);
 }
-
