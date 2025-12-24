@@ -44,7 +44,7 @@ public:
     void SaveFontAs();
     void LoadFont();
 
-    void ExportFont(QPlainTextEdit *tb);
+    void ExportFont(QTextEdit *tb);
 
 
 private:

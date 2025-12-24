@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QDesktopServices>
+#include <QRegularExpression>
 #include <QThread> // for QThread::msleep
 #include <QIcon>
 #include <QImage>
@@ -18,6 +19,7 @@
 //#include <string.h>
 #include <stack>
 #include <QPoint>  // for the QPoint objects
+#include <QByteArray>
 
 // clipboard
 #include <QClipboard>
@@ -365,6 +367,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
 
 
     loadDefaultFont();
@@ -1431,6 +1434,7 @@ MainWindow::MainWindow(QWidget *parent)
 
         // Show in the text view
         ui->txtOutputText->setPlainText(output);
+        doHighlighter();
         ui->outputTextView->show();
     });
 
@@ -1463,6 +1467,7 @@ MainWindow::MainWindow(QWidget *parent)
 
         // Show in the text view
         ui->txtOutputText->setPlainText(output);
+        doHighlighter();
         ui->outputTextView->show();
         ui->outputTextView->raise();
     });
@@ -1596,6 +1601,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdExportFont, &QPushButton::clicked, this, [this](){
         fontEditor->ExportFont(ui->txtOutputText);
+        doHighlighter();
         //
         ui->outputTextView->show();
         //ui->frmFontWorkbench->hide();
@@ -1607,6 +1613,16 @@ MainWindow::MainWindow(QWidget *parent)
         // saveIcon(filename);
         if(!filename.isEmpty())
             ExportToILBM(filename.toUtf8().constData());
+    });
+
+    connect(ui->cmdExportPixelPictureBitmap, &QPushButton::clicked, this, [this](){
+        uint16_t bits;   // collect the config bits
+        bits = ui->chkExportRLE->isChecked() * ExportRLE;
+        bits += ui->chkExportSBVRAM->isChecked() * ExportSidBoxVRAM;
+        //printf("Bits checked: %x\n", bits);
+        QString filename = QFileDialog::getSaveFileName(this, "Save Pixel Picture Bitmap", "", "Pixel Picture Bitmap (*.ppb)");
+        if(!filename.isEmpty())
+            ExportToPPB(filename.toUtf8().constData(), bits);
     });
 
     connect(ui->sldPaletteOffset, &QScrollBar::valueChanged, this, [this](){
@@ -1942,8 +1958,141 @@ QString generateRLE(
     return output;
 }
 
-void MainWindow::ExportToILBM(const char *filename)
-{
+QByteArray generateRLEBytes(
+    const std::vector<std::vector<uint8_t>>& icon_area,
+    uint16_t width,
+    uint16_t height,
+    int /*colWidthMax*/,   // unused in binary version
+    int& outRLESize        // returns compressed byte count
+){
+    QByteArray output;
+    output.reserve(width * height); // worst case
+
+    uint8_t lastPixel = 0xFF;
+    uint8_t runLength = 0;
+
+    outRLESize = 0;
+
+    for (uint16_t y = 0; y < height; y++) {
+        for (uint16_t x = 0; x < width; x++) {
+            uint8_t pixel = icon_area[y][x];
+
+            if (pixel == lastPixel && runLength < 255) {
+                runLength++;
+            } else {
+                if (runLength > 0) {
+                    // emit RLE pair: (count, value)
+                    output.append(char(runLength));
+                    output.append(char(lastPixel));
+                    outRLESize += 2;
+                }
+
+                lastPixel = pixel;
+                runLength = 1;
+            }
+        }
+    }
+
+    // flush final run
+    if (runLength > 0) {
+        output.append(char(runLength));
+        output.append(char(lastPixel));
+        outRLESize += 2;
+    }
+
+    return output;
+}
+
+
+int MainWindow::ExportToPPB(const char *filename, const uint16_t modes){
+
+
+
+    if (!filename || !icon_area) return 0;
+
+        const uint16_t imgW = (uint16_t)icon_width;
+        const uint16_t imgH = (uint16_t)icon_height;
+
+        // Flags (match your existing meaning)
+        bool useRLE   = !!(modes & ExportRLE);
+        bool isCells  = ui->chkCellDivider->isChecked();
+        if (useRLE) isCells = false; // your existing rule
+
+        // Your configbits: bit4=RLE, bit5=cells. Low bits currently store "paletteDepth".
+        // IMPORTANT: earlier you had a mismatch (bitDepth vs paletteDepth). Decide ONE.
+        // Here we keep your existing behaviour: low bits store paletteDepth value.
+        uint8_t configbits = 0;
+        configbits = (uint8_t)((useRLE ? 1 : 0) << 4) |
+                     (uint8_t)((isCells ? 1 : 0) << 5) |
+                     (uint8_t)(paletteDepth & 0x0F); // or encode 1/2/4/8 explicitly
+
+        // Build payload
+        QByteArray payload;
+        payload.reserve((int)imgW * (int)imgH);
+
+        if (!useRLE) {
+            // RAW pixels, row-major output (matches your existing export)
+            // If you actually want cell ordering in binary too, we can add that,
+            // but simplest is "plain pixels" first.
+            for (uint16_t y = 0; y < imgH; y++) {
+                for (uint16_t x = 0; x < imgW; x++) {
+                    payload.append(char((*icon_area)[y][x]));
+                }
+            }
+        } else {
+            // RLE payload: you already have generateRLE() that returns a QString of hex text.
+            // For binary you want actual bytes, so best is a new helper that outputs QByteArray.
+            // Below assumes you can create something like generateRLEBytes(...).
+            int rleSize = 0;
+            QByteArray rleBytes = generateRLEBytes((*icon_area), imgW, imgH, /*maxRun*/16, rleSize);
+            payload = rleBytes;
+        }
+
+        const uint32_t imgLen = (uint32_t)payload.size();
+
+        // Construct header (big-endian)
+        uint8_t header[9];
+        header[0] = configbits;
+
+        header[1] = (uint8_t)((imgW >> 8) & 0xFF);
+        header[2] = (uint8_t)((imgW >> 0) & 0xFF);
+
+        header[3] = (uint8_t)((imgH >> 8) & 0xFF);
+        header[4] = (uint8_t)((imgH >> 0) & 0xFF);
+
+        header[5] = (uint8_t)((imgLen >> 24) & 0xFF);
+        header[6] = (uint8_t)((imgLen >> 16) & 0xFF);
+        header[7] = (uint8_t)((imgLen >>  8) & 0xFF);
+        header[8] = (uint8_t)((imgLen >>  0) & 0xFF);
+
+        QFile f(QString::fromUtf8(filename));
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            return 0;
+        }
+
+        // Write header + payload as raw bytes
+        //if (f.write((const char*)header, sizeof(header)) != (qint64)sizeof(header)) {
+            //f.close();
+            //return 0;
+        //}
+        if (f.write(payload) != (qint64)payload.size()) {
+            f.close();
+            return 0;
+        }
+
+        f.flush();
+        f.close();
+        return 1;
+
+
+
+
+
+
+}
+
+
+void MainWindow::ExportToILBM(const char *filename){
     bool RLE = true;   // <-- toggle compression here
 
     RLE = ui->chkExportRLE->isChecked();
@@ -2283,9 +2432,35 @@ void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
     }
 
 
+
     // Show in the text view
     ui->txtOutputText->setPlainText(output);
+    //QString html = output.toHtmlEscaped();
+    //html.replace("0x00", "<span style=\"color:#005500;\">0x00</span>");
+    //ui->txtOutputText->setHtml("<pre>" + html + "</pre>");
+
+    doHighlighter();
+
     ui->outputTextView->show();
+}
+
+void MainWindow::doHighlighter()
+{
+    QString html = ui->txtOutputText->toPlainText().toHtmlEscaped();
+
+    // Capture the entire zero hex literal
+    QRegularExpression re(
+        R"(\b(0x0+)\b)",
+        QRegularExpression::CaseInsensitiveOption
+    );
+
+    html.replace(re, "<span style=\"color:#008800;\">\\1</span>");
+
+    ui->txtOutputText->setHtml(
+        "<pre style=\"font-family:monospace; font-size:10pt; white-space:pre;\">"
+        + html +
+        "</pre>"
+    );
 }
 
 

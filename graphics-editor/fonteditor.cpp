@@ -449,7 +449,7 @@ QString FontEditor::hex8(uint8_t value){
     return QString("0x%1").arg(QString::number(value, 16).toUpper().rightJustified(2, '0'));
 }
 
-void FontEditor::ExportFont(QPlainTextEdit *tb){
+void FontEditor::ExportFont(QTextEdit *tb){
     // Export the font to a text box as a C initializer with nested braces per glyph.
 
     const char* symbols[] = {
@@ -502,4 +502,5 @@ void FontEditor::ExportFont(QPlainTextEdit *tb){
 
     output += "};\n";
     tb->setPlainText(output);
+
 }

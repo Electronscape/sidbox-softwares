@@ -86,6 +86,7 @@ private:
     void LoadPaletteData(const char *filename);
 
     void ExportToILBM(const char *filename);
+    int ExportToPPB(const char *filename, const uint16_t modes);
     void ExportImageToH(const char *filename, const uint16_t modes);
 
     void readToolXY(int *rx, int *ry);
@@ -118,6 +119,7 @@ private:
     void setAAPixel(int x, int y, uint8_t fg);
     void pasteClipboardAsBrush();
     void convertImageToBrush(const QImage &img);
+    void doHighlighter();
 
 
     FontEditor *fontEditor;
