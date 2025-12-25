@@ -99,7 +99,7 @@ DirectoryBoss::DirectoryBoss(SerialHandler *sh, QWidget *parent)
             serial->writeData("cd ..\r\n");
             QTimer::singleShot(220, this, [this, dt]() {
                 char senddatestr[128];
-                serial->writeData("dir\r\n");
+                serial->writeData("dir .\r\n"); // dir list current directory
             });
 
         }else
@@ -116,7 +116,7 @@ DirectoryBoss::DirectoryBoss(SerialHandler *sh, QWidget *parent)
     });
 
     connect(ui->cmdGetDir, &QPushButton::clicked, this, [=](){
-        serial->writeData("dir\r\n");
+        serial->writeData("dir .\r\n");
     });
 
 
@@ -461,7 +461,7 @@ void DirectoryBoss::sendNewDirectory(){
         QDateTime dt = QDateTime::currentDateTime();
         QTimer::singleShot(220, this, [this, dt]() {
             char senddatestr[128];
-            serial->writeData("dir\r\n");
+            serial->writeData("dir .\r\n");
         });
     } else
         printf("SerialPort NOT open :(\r\n");
@@ -586,7 +586,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
     serial->writeData(QStringLiteral("cd \"%1\"\r\n").arg(folderName).toUtf8());
 
     // eg: DIR [applets] strip out everything except anything inside the [ and ]
-    QTimer::singleShot(220, this, [this]() { serial->writeData("dir\r\n"); });
+    QTimer::singleShot(220, this, [this]() { serial->writeData("dir .\r\n"); });
 }
 
 void DirectoryBoss::updateEQ()
@@ -691,7 +691,7 @@ void DirectoryBoss::onSerialInput(const QString &text)
                 QDateTime dt = QDateTime::currentDateTime();
                 QTimer::singleShot(220, this, [this, dt]() {
                     char senddatestr[128];
-                    serial->writeData("dir\r\n");
+                    serial->writeData("dir .\r\n");
                 });
             }
             return;

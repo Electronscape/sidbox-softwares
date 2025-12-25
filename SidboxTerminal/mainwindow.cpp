@@ -98,7 +98,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(ui->cmdSendCustomCMDDir, &QPushButton::clicked, this, [=](){
-        sendCustomCommand("dir\r\n");
+        sendCustomCommand("dir .\r\n");
     });
 
     connect(ui->cmdClrRam, &QPushButton::clicked, this, [this](){

@@ -2004,91 +2004,116 @@ QByteArray generateRLEBytes(
 }
 
 
-int MainWindow::ExportToPPB(const char *filename, const uint16_t modes){
+#include <stdio.h>
+#include <stdint.h>
+
+static inline uint32_t swap32(uint32_t v)
+{
+    return ((v >> 24) & 0x000000FF) |
+           ((v >>  8) & 0x0000FF00) |
+           ((v <<  8) & 0x00FF0000) |
+           ((v << 24) & 0xFF000000);
+}
 
 
-
+int MainWindow::ExportToPPB(const char *filename, const uint16_t modes)
+{
     if (!filename || !icon_area) return 0;
 
-        const uint16_t imgW = (uint16_t)icon_width;
-        const uint16_t imgH = (uint16_t)icon_height;
+    const uint16_t imgW = (uint16_t)icon_width;
+    const uint16_t imgH = (uint16_t)icon_height;
 
-        // Flags (match your existing meaning)
-        bool useRLE   = !!(modes & ExportRLE);
-        bool isCells  = ui->chkCellDivider->isChecked();
-        if (useRLE) isCells = false; // your existing rule
+    // Flags
+    bool useRLE  = !!(modes & ExportRLE);
+    bool isCells = ui->chkCellDivider->isChecked();
+    if (useRLE) isCells = false;
 
-        // Your configbits: bit4=RLE, bit5=cells. Low bits currently store "paletteDepth".
-        // IMPORTANT: earlier you had a mismatch (bitDepth vs paletteDepth). Decide ONE.
-        // Here we keep your existing behaviour: low bits store paletteDepth value.
-        uint8_t configbits = 0;
-        configbits = (uint8_t)((useRLE ? 1 : 0) << 4) |
-                     (uint8_t)((isCells ? 1 : 0) << 5) |
-                     (uint8_t)(paletteDepth & 0x0F); // or encode 1/2/4/8 explicitly
+    // configbits: bit4=RLE, bit5=cells, low nibble = paletteDepth
+    uint8_t configbits = 0;
+    configbits =
+        (uint8_t)((useRLE  ? 1 : 0) << 4) |
+        (uint8_t)((isCells ? 1 : 0) << 5) |
+        (uint8_t)(paletteDepth & 0x0F);
 
-        // Build payload
-        QByteArray payload;
-        payload.reserve((int)imgW * (int)imgH);
+    // Build payload (unchanged)
+    QByteArray payload;
+    payload.reserve((int)imgW * (int)imgH);
 
-        if (!useRLE) {
-            // RAW pixels, row-major output (matches your existing export)
-            // If you actually want cell ordering in binary too, we can add that,
-            // but simplest is "plain pixels" first.
-            for (uint16_t y = 0; y < imgH; y++) {
-                for (uint16_t x = 0; x < imgW; x++) {
-                    payload.append(char((*icon_area)[y][x]));
-                }
+    if (!useRLE) {
+        for (uint16_t y = 0; y < imgH; y++) {
+            for (uint16_t x = 0; x < imgW; x++) {
+                payload.append(char((*icon_area)[y][x]));
             }
-        } else {
-            // RLE payload: you already have generateRLE() that returns a QString of hex text.
-            // For binary you want actual bytes, so best is a new helper that outputs QByteArray.
-            // Below assumes you can create something like generateRLEBytes(...).
-            int rleSize = 0;
-            QByteArray rleBytes = generateRLEBytes((*icon_area), imgW, imgH, /*maxRun*/16, rleSize);
-            payload = rleBytes;
         }
+    } else {
+        int rleSize = 0;
+        QByteArray rleBytes = generateRLEBytes((*icon_area), imgW, imgH, /*maxRun*/16, rleSize);
+        payload = rleBytes;
+    }
 
-        const uint32_t imgLen = (uint32_t)payload.size();
+    const uint32_t imgLen = (uint32_t)payload.size();
 
-        // Construct header (big-endian)
-        uint8_t header[9];
-        header[0] = configbits;
+    // Open file (C stdio)
+    FILE *f = fopen(filename, "wb");
+    if (!f) return 0;
 
-        header[1] = (uint8_t)((imgW >> 8) & 0xFF);
-        header[2] = (uint8_t)((imgW >> 0) & 0xFF);
+    // ---- Write header (16 bytes) ----
+    // Layout:
+    // [0] configbits
+    // [1..2] width  (big-endian)
+    // [3..4] height (big-endian)
+    // [5..8] payload length (big-endian)
+    // [9..15] reserved = 0
+    fputc(configbits, f);
 
-        header[3] = (uint8_t)((imgH >> 8) & 0xFF);
-        header[4] = (uint8_t)((imgH >> 0) & 0xFF);
+    fputc((imgW >> 8) & 0xFF, f);
+    fputc((imgW >> 0) & 0xFF, f);
 
-        header[5] = (uint8_t)((imgLen >> 24) & 0xFF);
-        header[6] = (uint8_t)((imgLen >> 16) & 0xFF);
-        header[7] = (uint8_t)((imgLen >>  8) & 0xFF);
-        header[8] = (uint8_t)((imgLen >>  0) & 0xFF);
+    fputc((imgH >> 8) & 0xFF, f);
+    fputc((imgH >> 0) & 0xFF, f);
 
-        QFile f(QString::fromUtf8(filename));
-        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    fputc((imgLen >> 24) & 0xFF, f);
+    fputc((imgLen >> 16) & 0xFF, f);
+    fputc((imgLen >>  8) & 0xFF, f);
+    fputc((imgLen >>  0) & 0xFF, f);
+
+    for (int i = 0; i < 7; i++)
+        fputc(0x00, f);
+
+    // Optional: detect header write failure early
+    if (ferror(f)) { fclose(f); return 0; }
+
+    // ---- Write palette (256 * 4 bytes) ----
+    // IMPORTANT: This writes CLUT as raw uint32_t words in native endianness (little-endian on PC).
+    uint32_t tCLUT[256];
+    for(int i = 0; i < 256; i++){
+        uint32_t v = CLUT[i];
+
+        // Fix alpha
+        if (i == 0)
+            v &= 0x00FFFFFF;   // transparent
+        else
+            v |= 0xFF000000;   // opaque
+
+        tCLUT[i] = v;//swap32(v);
+
+    }
+    if (fwrite(tCLUT, 256u * sizeof(uint32_t), 1, f) != 1) {
+        fclose(f);
+        return 0;
+    }
+
+    // ---- Write payload ----
+    if (imgLen > 0) {
+        if (fwrite(payload.constData(), imgLen, 1, f) != 1) {
+            fclose(f);
             return 0;
         }
+    }
 
-        // Write header + payload as raw bytes
-        //if (f.write((const char*)header, sizeof(header)) != (qint64)sizeof(header)) {
-            //f.close();
-            //return 0;
-        //}
-        if (f.write(payload) != (qint64)payload.size()) {
-            f.close();
-            return 0;
-        }
-
-        f.flush();
-        f.close();
-        return 1;
-
-
-
-
-
-
+    fflush(f);
+    fclose(f);
+    return 1;
 }
 
 
