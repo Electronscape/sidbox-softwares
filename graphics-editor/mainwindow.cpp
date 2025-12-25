@@ -31,7 +31,7 @@
 #include "projectheader.h"
 
 #define PALETTE_BOX_HSIZE   16
-#define PALETTE_BOX_VSIZE   16
+#define PALETTE_BOX_VSIZE   17
 #define PALETTE_WIDTH       PALETTE_BOX_HSIZE
 #define PALETTE_HEIGHT      PALETTE_BOX_VSIZE
 
@@ -148,9 +148,12 @@ bool        bPlayAnimations = false;
 
 //uint8_t icon_area[8][8] = {0};  // all to paletteID 0
 bool bEditorPage            = 0;
-std::vector<std::vector<uint8_t>> icon_area_main;   // this is the current edit screen
+std::vector<std::vector<uint8_t>> icon_area_front;   // this is the current edit screen
+std::vector<std::vector<uint8_t>> icon_area_back;   // this is the current edit screen
 std::vector<std::vector<uint8_t>> icon_area_scratchpage;    // this is the scratch page
-std::vector<std::vector<uint8_t>> *icon_area = &icon_area_main;
+
+std::vector<std::vector<uint8_t>> *active_icon_area = &icon_area_front;
+std::vector<std::vector<uint8_t>> *icon_area = active_icon_area;
 
 // undo/redo
 std::vector<std::vector<uint8_t>> icon_area_backup; // this is the one for if we ever "undo"
@@ -179,7 +182,7 @@ uint16_t    ExportBits  = 0;    // just basic bits
 
 
 
-uint32_t CLUT[256] = {
+uint32_t CLUTF[256] = {
     0x00000000, 0xFFAFAFAF, 0xFFFFFFFF, 0xFF3B67A2, 0xFFAA907C, 0xFF959595, 0xFF7B7B7B, 0xFFFFA997,
     0xFF37A91D, 0xFF7CA9FF, 0xFFBF8112, 0xFFEBBF66, 0xFF78C178, 0xFF3D9318, 0xFFB33418, 0xFFD9311C,
     0xFF000000, 0xFF00000E, 0xFF00001D, 0xFF00002B, 0xFF000139, 0xFF000147, 0xFF000156, 0xFF000164,
@@ -212,6 +215,41 @@ uint32_t CLUT[256] = {
     0xFFA4F600, 0xFFA4F755, 0xFFA4F8AA, 0xFFA4F9FF, 0xFFB6FA00, 0xFFB6FB55, 0xFFB6FCAA, 0xFFB6FEFF,
     0xFFC9FF00, 0xFFC9FF55, 0xFFC9FFAA, 0xFFC9FFFF, 0xFFDBFF00, 0xFFDBFF55, 0xFFDBFFAA, 0xFFDBFFFF,
     0xFFEDFF00, 0xFFEDFF55, 0xFFEDFFAA, 0xFFEDFFFF, 0xFFFFFF00, 0xFFFFFF55, 0xFFFFFFAA, 0xFFFFFFFF,
+};
+
+uint32_t CLUTB[256] = { // back panel palette (NOW we can have TWO sets!!!
+    0x000A0E08, 0xFF0C120A, 0xFF141209, 0xFF11180C, 0xFF141914, 0xFF1D1208, 0xFF1D1D15, 0xFF1E160C,
+    0xFF141E13, 0xFF1F1C0B, 0xFF142214, 0xFF14220B, 0xFF1D2414, 0xFF1F271D, 0xFF1D2A14, 0xFF142A1C,
+    0xFF2C1A0C, 0xFF2D2116, 0xFF2E1506, 0xFF2E291E, 0xFF2F210B, 0xFF222F1C, 0xFF302812, 0xFF243025,
+    0xFF312F14, 0xFF2D3124, 0xFF373723, 0xFF24372C, 0xFF243724, 0xFF2C392D, 0xFF2C3924, 0xFF35392D,
+    0xFF3C1909, 0xFF3C200B, 0xFF3D2911, 0xFF353E2F, 0xFF3E2115, 0xFF383E24, 0xFF3E291D, 0xFF243E2F,
+    0xFF3F3120, 0xFF403012, 0xFF2C432E, 0xFF374324, 0xFF443E23, 0xFF384433, 0xFF444324, 0xFF443821,
+    0xFF443C2D, 0xFF224433, 0xFF444433, 0xFF2C4A34, 0xFF344A35, 0xFF3E4B34, 0xFF2B4C3D, 0xFF414C3D,
+    0xFF4D3926, 0xFF4D3117, 0xFF4D3918, 0xFF4E2812, 0xFF4E493C, 0xFF4E3025, 0xFF4E412D, 0xFF504F32,
+    0xFF50291C, 0xFF502110, 0xFF504830, 0xFF503F22, 0xFF4D513F, 0xFF3F5233, 0xFF523F14, 0xFF295241,
+    0xFF345243, 0xFF43523F, 0xFF534621, 0xFF44573A, 0xFF515733, 0xFF435745, 0xFF4D5843, 0xFF345847,
+    0xFF285945, 0xFF4F594C, 0xFF5C492F, 0xFF5C412D, 0xFF5C5843, 0xFF5C5733, 0xFF5C4220, 0xFF5C4821,
+    0xFF5C513D, 0xFF5C4F2D, 0xFF5E291B, 0xFF515E32, 0xFF445E40, 0xFF5E2F1B, 0xFF4F5F44, 0xFF5C5F43,
+    0xFF40604D, 0xFF52604D, 0xFF603125, 0xFF61382C, 0xFF613721, 0xFF2C614B, 0xFF34644F, 0xFF64491A,
+    0xFF5C6452, 0xFF654A28, 0xFF65513D, 0xFF655023, 0xFF65512F, 0xFF2C664D, 0xFF664936, 0xFF426654,
+    0xFF546651, 0xFF546642, 0xFF674134, 0xFF676652, 0xFF5C6742, 0xFF684024, 0xFF69604D, 0xFF69593F,
+    0xFF6A5724, 0xFF6A6042, 0xFF666B53, 0xFF6B582F, 0xFF526B56, 0xFF696B43, 0xFF5C6B57, 0xFF346B54,
+    0xFF6C5E31, 0xFF656D5C, 0xFF3D6D58, 0xFF6E3526, 0xFF6F3A28, 0xFF5C725C, 0xFF68735C, 0xFF3C735B,
+    0xFF745A3F, 0xFF744A44, 0xFF756032, 0xFF6B7564, 0xFF44755E, 0xFF75472E, 0xFF4E7562, 0xFF755930,
+    0xFF766D5C, 0xFF77614C, 0xFF775144, 0xFF78775B, 0xFF786242, 0xFF797258, 0xFF79502E, 0xFF79664C,
+    0xFF796C4F, 0xFF757965, 0xFF7A3F27, 0xFF7A7241, 0xFF427A60, 0xFF7A6634, 0xFF6C7B65, 0xFF7B6B40,
+    0xFF7B774A, 0xFF7C3A24, 0xFF7C6B34, 0xFF5C7D6C, 0xFF4E7D67, 0xFF757E6A, 0xFF7C7E55, 0xFF6C826C,
+    0xFF4C826C, 0xFF79836C, 0xFF54846D, 0xFF83845A, 0xFF84664D, 0xFF846635, 0xFF846E4D, 0xFF846C3E,
+    0xFF84613A, 0xFF847241, 0xFF5E8572, 0xFF855431, 0xFF7B8674, 0xFF86846A, 0xFF867E65, 0xFF858674,
+    0xFF867965, 0xFF885A35, 0xFF5F8A75, 0xFF7B8A6C, 0xFF6C8A7A, 0xFF848A69, 0xFF8B7856, 0xFF548B73,
+    0xFF7C8B74, 0xFF8B7847, 0xFF8C6E4C, 0xFF8C724D, 0xFF8C6B2F, 0xFF8C7E49, 0xFF8C723B, 0xFF8C8356,
+    0xFF8C662F, 0xFF848D77, 0xFF8D5F3C, 0xFF8D8D77, 0xFF62907A, 0xFF6C917E, 0xFF928B69, 0xFF759280,
+    0xFF8D927C, 0xFF947A44, 0xFF947D5C, 0xFF947E4B, 0xFF948A57, 0xFF947953, 0xFF8D967C, 0xFF649780,
+    0xFF6C9882, 0xFF988450, 0xFF849886, 0xFF789987, 0xFF99866C, 0xFF8F9984, 0xFF9A8562, 0xFF9C6644,
+    0xFF9C6A44, 0xFF9D9984, 0xFF949E84, 0xFF9E8C55, 0xFF6B9F8A, 0xFF7A9F8A, 0xFF94A08C, 0xFF84A08F,
+    0xFFA18E69, 0xFF9CA28C, 0xFFA29F7C, 0xFFA29174, 0xFFA39675, 0xFFA4965C, 0xFFA49259, 0xFFA4966C,
+    0xFFA48664, 0xFF82A692, 0xFF9DA691, 0xFFA3AA94, 0xFF91AA96, 0xFFA0AA8B, 0xFFAC966B, 0xFFAC926B,
+    0xFFACAB8E, 0xFFAC9674, 0xFFAC9274, 0xFFACA285, 0xFFADA68C, 0xFFB0A06B, 0xFFB0A278, 0xFFB4A674
 };
 
 const uint32_t DEFAULT_CLUT[256] = {
@@ -271,7 +309,11 @@ static unsigned char clut_cycle_index[256] = {
 
 // this keeps the original colour so can revert the selected palette,
 // commiting the change, simply just click on another colour item
-uint32_t BACKUP_CLUT[256];
+uint32_t BACKUP_CLUTF[256];
+uint32_t BACKUP_CLUTB[256];
+uint32_t *CBACKUP_CLUT = BACKUP_CLUTF;
+uint32_t *CCLUT = CLUTF;
+
 uint8_t  CLUTRGB[3][256];     // ready split colours
 
 uint8_t palleteCanvas[PALETTE_VRAM_SIZE];
@@ -323,6 +365,11 @@ int     gradStartX  = 0;
 int     gradStartY  = 0;
 int     gradLength  = 0;
 float   gradAngle   = 0.0f;
+
+#define PBankID_Front   0
+#define PBankID_Back    1
+
+int     paletteBankID   = PBankID_Front;    //
 
 
 enum DrawMode {
@@ -420,7 +467,8 @@ MainWindow::MainWindow(QWidget *parent)
     renderEditorCanvas();
 
     for(int i=0; i<256; i++){
-        BACKUP_CLUT[i] = CLUT[i];
+        BACKUP_CLUTF[i] = CLUTF[i];
+        BACKUP_CLUTB[i] = CLUTB[i];
     }
     //
 
@@ -438,8 +486,8 @@ MainWindow::MainWindow(QWidget *parent)
 
         // Sort indices by visual brightness
         std::sort(indices.begin(), indices.end(), [this](int a, int b) {
-            uint32_t ca = CLUT[a];
-            uint32_t cb = CLUT[b];
+            uint32_t ca = CCLUT[a];
+            uint32_t cb = CCLUT[b];
 
             int ra = (ca >> 16) & 0xFF;
             int ga = (ca >> 8) & 0xFF;
@@ -460,10 +508,10 @@ MainWindow::MainWindow(QWidget *parent)
         //std::vector<uint32_t> newCLUT(256);
         uint32_t newCLUT[256];
         for (int i = 0; i < 256; ++i) {
-            newCLUT[i] = CLUT[indices[i]];
+            newCLUT[i] = CCLUT[indices[i]];
         }
         for (int i = 0; i < 256; ++i) {
-            CLUT[i] = newCLUT[i];
+            CCLUT[i] = newCLUT[i];
         }
         //CLUT = newCLUT;
 
@@ -497,7 +545,7 @@ MainWindow::MainWindow(QWidget *parent)
             QMessageBox::warning(this, "Invalid Input", "Enter a valid color number (hex or decimal).\nEG 0xFF1122 or 123456");
             return;
         }
-        CLUT[numSelectedPaletteID] = lngColour;
+        CCLUT[numSelectedPaletteID] = lngColour;
 
         r = lngColour >> 16;
         g = lngColour >> 8;
@@ -517,9 +565,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     int r, g, b;
 
-    r = (CLUT[numSelectedPaletteID] >> 16) & 0xff;
-    g = (CLUT[numSelectedPaletteID] >> 8) & 0xff;
-    b = (CLUT[numSelectedPaletteID]) & 0xff;
+    r = (CCLUT[numSelectedPaletteID] >> 16) & 0xff;
+    g = (CCLUT[numSelectedPaletteID] >> 8) & 0xff;
+    b = (CCLUT[numSelectedPaletteID]) & 0xff;
 
     pal = ui->lblPaletteColour->palette();
     pal.setColor(QPalette::Window, QColor(r, g, b)); // RGB
@@ -529,9 +577,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lblPaletteForeSelect->setAutoFillBackground(true);   // must enable for background
     ui->lblPaletteForeSelect->setPalette(pal);
 
-    r = (CLUT[numSelectedBackPaletteID] >> 16) & 0xff;
-    g = (CLUT[numSelectedBackPaletteID] >> 8) & 0xff;
-    b = (CLUT[numSelectedBackPaletteID]) & 0xff;
+    r = (CCLUT[numSelectedBackPaletteID] >> 16) & 0xff;
+    g = (CCLUT[numSelectedBackPaletteID] >> 8) & 0xff;
+    b = (CCLUT[numSelectedBackPaletteID]) & 0xff;
 
     pal = ui->lblPaletteBackSelect->palette();
     pal.setColor(QPalette::Window, QColor(r, g, b)); // RGB
@@ -561,9 +609,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->cmdRevertPalette, &QPushButton::clicked, this, [=](){
         uint8_t r,g,b;
-        r = BACKUP_CLUT[numSelectedPaletteID] >> 16;
-        g = BACKUP_CLUT[numSelectedPaletteID] >> 8;
-        b = BACKUP_CLUT[numSelectedPaletteID] & 0xff;
+        r = CBACKUP_CLUT[numSelectedPaletteID] >> 16;
+        g = CBACKUP_CLUT[numSelectedPaletteID] >> 8;
+        b = CBACKUP_CLUT[numSelectedPaletteID] & 0xff;
 
         pltColourPreset[0] = r;
         pltColourPreset[1] = g;
@@ -999,7 +1047,8 @@ MainWindow::MainWindow(QWidget *parent)
             // Clear icon_area
             for(int y = 0; y < icon_height; y++)
                 for(int x = 0; x < icon_width; x++) {
-                    icon_area_main[y][x] = numSelectedBackPaletteID;
+                    icon_area_front[y][x] = numSelectedBackPaletteID;
+                    icon_area_back[y][x] = numSelectedBackPaletteID;
                     icon_area_scratchpage[y][x] = numSelectedBackPaletteID;
                 }
 
@@ -1369,13 +1418,37 @@ MainWindow::MainWindow(QWidget *parent)
             // Clear icon_area
 
             for(int i = 0; i < 256; i++){
-                CLUT[i] = DEFAULT_CLUT[i];
-                BACKUP_CLUT[i] = DEFAULT_CLUT[i];
+                CCLUT[i] = DEFAULT_CLUT[i];
+                CBACKUP_CLUT[i] = DEFAULT_CLUT[i];
             }
             renderPaletteCanvas();
             renderEditorCanvas(); // redraw empty icon
         }
     });
+
+    connect(ui->chkPaletteBankFront, &QPushButton::clicked, this, [this](){
+        CCLUT = CLUTF;
+        active_icon_area = &icon_area_front;
+        if(bEditorPage){
+            icon_area = &icon_area_scratchpage;
+        } else {
+            icon_area = active_icon_area;
+        }
+
+        renderPaletteCanvas();
+    });
+
+    connect(ui->chkPaletteBankBack, &QPushButton::clicked, this, [this](){
+        CCLUT = CLUTB;
+        active_icon_area = &icon_area_back;
+        if(bEditorPage){
+            icon_area = &icon_area_scratchpage;
+        } else {
+            icon_area = active_icon_area;
+        }
+        renderPaletteCanvas();
+    });
+
 
     connect(ui->chkColourBits1, &QRadioButton::clicked, this, [this](){ paletteDepth = 2;   });
     connect(ui->chkColourBits2, &QRadioButton::clicked, this, [this](){ paletteDepth = 4;   });
@@ -1413,7 +1486,7 @@ MainWindow::MainWindow(QWidget *parent)
                 int i = y * 8 + x;
                 if (i >= 256) break;        // safety check
 
-                uint32_t rgb = CLUT[i];
+                uint32_t rgb = CCLUT[i];
                 uint8_t r = (rgb >> 16) & 0xFF;
                 uint8_t g = (rgb >> 8)  & 0xFF;
                 uint8_t b = rgb & 0xFF;
@@ -1453,9 +1526,9 @@ MainWindow::MainWindow(QWidget *parent)
                 if (i >= 256) break;        // safety check
 
                 if(i == 0)
-                    rgb = CLUT[i] & 0xFFFFFF; // no alpha on this palette entry
+                    rgb = CCLUT[i] & 0xFFFFFF; // no alpha on this palette entry
                 else
-                    rgb = CLUT[i] | 0xFF000000; // force alpha 255
+                    rgb = CCLUT[i] | 0xFF000000; // force alpha 255
 
                 output += "0x" + QString::number(rgb, 16).rightJustified(8, '0').toUpper();
                 if (i < 255) output += ",";
@@ -1541,7 +1614,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->chkColourCycleEn, &QCheckBox::clicked, this, [this](){
         if(!(ui->chkColourCycleEn->isChecked())){
             for(int i = 0; i < 256; i++){
-                CLUT[i] = BACKUP_CLUT[i];
+                //CCLUT[i] = CBACKUP_CLUT[i];
+                CLUTF[i] = BACKUP_CLUTF[i];
+                CLUTB[i] = BACKUP_CLUTB[i];
                 renderPaletteCanvas();
                 renderEditorCanvas(); // redraw empty icon
             }
@@ -1670,6 +1745,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     loadDefaultFont();
+    icon_area = active_icon_area;
 
     connect(tmrColourCycle, &QTimer::timeout, this, &MainWindow::onColourCycleTick);  // your slot
     tmrColourCycle->start();
@@ -1789,7 +1865,7 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
                 for (int sy = iy0; sy < iy1; sy++) {
                     for (int sx = ix0; sx < ix1; sx++) {
                         uint8_t idx = icon_area_tmp[sy][sx];
-                        uint32_t c = CLUT[idx];
+                        uint32_t c = CCLUT[idx];
                         rSum += (c >> 16) & 0xFF;
                         gSum += (c >> 8) & 0xFF;
                         bSum += c & 0xFF;
@@ -1806,7 +1882,7 @@ void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int o
                 int bestIdx = 0;
                 int bestDist = 256*256*3;
                 for (int i = 0; i < 256; i++) {
-                    uint32_t c = CLUT[i];
+                    uint32_t c = CCLUT[i];
                     int dr = ((c >> 16) & 0xFF) - rAvg;
                     int dg = ((c >> 8) & 0xFF) - gAvg;
                     int db = (c & 0xFF) - bAvg;
@@ -1861,25 +1937,47 @@ void MainWindow::doColourCycle(){
     //cycleto = cyclefrom + (length - 1);
 
     if (bCycleDirection == 0) {
-        tmp = CLUT[cyclefrom];
+        tmp = CLUTF[cyclefrom];
         tmpold = clut_cycle_index[cyclefrom];
         for (i = cyclefrom; i < cycleto; i++) {
-            CLUT[i] = CLUT[i + 1];
+            CLUTF[i] = CLUTF[i + 1];
             clut_cycle_index[i] = clut_cycle_index[i + 1];
         }
-        CLUT[i] = tmp;
+        CLUTF[i] = tmp;
         clut_cycle_index[i] = tmpold;
 
     } else {
-        tmp = CLUT[cycleto];
+        tmp = CLUTF[cycleto];
         tmpold = clut_cycle_index[cycleto];
         for (i = cycleto; i > cyclefrom; i--) {
-            CLUT[i] = CLUT[i - 1];
+            CLUTF[i] = CLUTF[i - 1];
             clut_cycle_index[i] = clut_cycle_index[i - 1];
         }
-        CLUT[i] = tmp;
+        CLUTF[i] = tmp;
         clut_cycle_index[i] = tmpold;
     }
+
+    if (bCycleDirection == 0) {
+        tmp = CLUTB[cyclefrom];
+        tmpold = clut_cycle_index[cyclefrom];
+        for (i = cyclefrom; i < cycleto; i++) {
+            CLUTB[i] = CLUTB[i + 1];
+            clut_cycle_index[i] = clut_cycle_index[i + 1];
+        }
+        CLUTB[i] = tmp;
+        clut_cycle_index[i] = tmpold;
+
+    } else {
+        tmp = CLUTB[cycleto];
+        tmpold = clut_cycle_index[cycleto];
+        for (i = cycleto; i > cyclefrom; i--) {
+            CLUTB[i] = CLUTB[i - 1];
+            clut_cycle_index[i] = clut_cycle_index[i - 1];
+        }
+        CLUTB[i] = tmp;
+        clut_cycle_index[i] = tmpold;
+    }
+
 
     renderPaletteCanvas();
     renderEditorCanvas(); // redraw empty icon
@@ -2087,7 +2185,7 @@ int MainWindow::ExportToPPB(const char *filename, const uint16_t modes)
     // IMPORTANT: This writes CLUT as raw uint32_t words in native endianness (little-endian on PC).
     uint32_t tCLUT[256];
     for(int i = 0; i < 256; i++){
-        uint32_t v = CLUT[i];
+        uint32_t v = CCLUT[i];
 
         // Fix alpha
         if (i == 0)
@@ -2238,7 +2336,7 @@ void MainWindow::ExportToILBM(const char *filename){
     fputc(3, f); fputc(0, f);
 
     for (int i = 0; i < 256; i++){
-        uint32_t c = CLUT[i];
+        uint32_t c = CCLUT[i];
         fputc((c >> 16) & 0xFF, f);
         fputc((c >> 8)  & 0xFF, f);
         fputc(c & 0xFF, f);
@@ -2496,7 +2594,8 @@ void MainWindow::SavePaletteData(const char *filename){
             QMessageBox::warning(this, "Save Palette Fail", "Cannot open file for writing!");
             return;
         }
-        fwrite(CLUT, sizeof(uint32_t), 256, f);
+        fwrite(CLUTF, sizeof(uint32_t), 256, f);
+        fwrite(CLUTB, sizeof(uint32_t), 256, f);
         fclose(f);
 }
 
@@ -2506,7 +2605,8 @@ void MainWindow::LoadPaletteData(const char *filename){
         QMessageBox::warning(this, "Load Palette Fail", "Cannot open file for read!");
         return;
     }
-    fread(CLUT, sizeof(uint32_t), 256, f);
+    fread(CLUTF, sizeof(uint32_t), 256, f);
+    fread(CLUTB, sizeof(uint32_t), 256, f);
     fclose(f);
 
     renderPaletteCanvas();
@@ -2519,8 +2619,8 @@ void MainWindow::doSpreadPalette(uint8_t targetID){
             r2, g2, b2;
 
     int spreadLength;
-    uint32_t fromColour = CLUT[capturedPaletteIndex];
-    uint32_t toColour   = CLUT[targetID];
+    uint32_t fromColour = CCLUT[capturedPaletteIndex];
+    uint32_t toColour   = CCLUT[targetID];
 
     int start = capturedPaletteIndex;
     int end   = targetID;
@@ -2550,7 +2650,7 @@ void MainWindow::doSpreadPalette(uint8_t targetID){
         r = r1 + (int)((r2 - r1) * t);
         g = g1 + (int)((g2 - g1) * t);
         b = b1 + (int)((b2 - b1) * t);
-        CLUT[start + i] = (r << 16) | (g << 8) | b;
+        CCLUT[start + i] = (r << 16) | (g << 8) | b;
     }
     renderPaletteCanvas();
 }
@@ -2706,7 +2806,8 @@ void MainWindow::reSizeEditorArray(int newWidth, int newHeight){
     //icon_area_main.assign(newHeight, std::vector<uint8_t>(newWidth, 0));
     //icon_area_scratchpage.assign(newHeight, std::vector<uint8_t>(newWidth, 0));
 
-    icon_area_main.resize(newHeight);
+    icon_area_back.resize(newHeight);
+    icon_area_front.resize(newHeight);
     icon_area_scratchpage.resize(newHeight);
     icon_area_backup.resize(newHeight);
     icon_area_redo.resize(newHeight);
@@ -2717,7 +2818,8 @@ void MainWindow::reSizeEditorArray(int newWidth, int newHeight){
     ui->txtProjectImageWidth->setText(QString("%1").arg(icon_width));
     ui->txtProjectImageHeight->setText(QString("%1").arg(icon_height));
 
-    for (auto &row : icon_area_main)        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_front)       row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
+    for (auto &row : icon_area_back)        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
     for (auto &row : icon_area_scratchpage) row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
     for (auto &row : icon_area_backup)      row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
     for (auto &row : icon_area_redo)        row.resize(icon_width, 0);  // new cells initialized to 0, existing cells preserved
@@ -2746,10 +2848,10 @@ bool MainWindow::importGif(const QString &path){
 
     bool isGood = false;
     if (ui->chkImportPalette->isChecked()) {
-        isGIF = extractGifPalette(path, CLUT);
+        isGIF = extractGifPalette(path, CCLUT);
         if(!isGIF) {
             printf("Not Gif\n");
-            isPNG = extractPngPalette(path, CLUT);
+            isPNG = extractPngPalette(path, CCLUT);
             if(!isPNG)
                 printf("not png\n");
         }
@@ -2762,8 +2864,8 @@ bool MainWindow::importGif(const QString &path){
             ct = img.colorTable();
             for (int i = 0; i < ct.size(); i++) {
                 int r = qRed(ct[i + ictoffset]), g = qGreen(ct[i + ictoffset]), b = qBlue(ct[i + ictoffset]);
-                CLUT[i] = (r << 16) | (g << 8) | b;
-                BACKUP_CLUT[i] = CLUT[i];
+                CCLUT[i] = (r << 16) | (g << 8) | b;
+                CBACKUP_CLUT[i] = CCLUT[i];
             }
         }
 
@@ -2824,9 +2926,9 @@ bool MainWindow::importGif(const QString &path){
                 // SEARCH ONLY WITHIN RANGE
                 for (int pi = palStart; pi < palEnd; pi++) {
 
-                    int r2 = (CLUT[pi] >> 16) & 0xFF;
-                    int g2 = (CLUT[pi] >> 8)  & 0xFF;
-                    int b2 =  CLUT[pi]        & 0xFF;
+                    int r2 = (CCLUT[pi] >> 16) & 0xFF;
+                    int g2 = (CCLUT[pi] >> 8)  & 0xFF;
+                    int b2 =  CCLUT[pi]        & 0xFF;
 
                     int dr = rf - r2;
                     int dg = gf - g2;
@@ -2846,7 +2948,7 @@ bool MainWindow::importGif(const QString &path){
     } else { // not using the restrictor
         printf("Did we end up here in the NON restrictor mode?\n");
         for (int i = 0; i < 256; i++)
-            pal[i] = CLUT[i];//qRgb(i, i, i);
+            pal[i] = CCLUT[i];//qRgb(i, i, i);
 
         // Apply to palette
         img = img.convertToFormat(QImage::Format_Indexed8, pal, Qt::AvoidDither);
@@ -2873,9 +2975,9 @@ bool MainWindow::importGif(const QString &path){
                     // Compare to *current editor palette* CLUT[]
                     for (int pi = 0; pi < paletteDepth; pi++) {
 
-                        int r2 = (CLUT[pi] >> 16) & 0xFF;
-                        int g2 = (CLUT[pi] >> 8)  & 0xFF;
-                        int b2 =  CLUT[pi]        & 0xFF;
+                        int r2 = (CCLUT[pi] >> 16) & 0xFF;
+                        int g2 = (CCLUT[pi] >> 8)  & 0xFF;
+                        int b2 =  CCLUT[pi]        & 0xFF;
 
                         int dr = rf - r2;
                         int dg = gf - g2;
@@ -2924,16 +3026,23 @@ void MainWindow::saveProjectIcon(const char *filename){
     fwrite(&cell_height, 1, 1, f);
 
     // [ palette data ]
-    fwrite(&CLUT, 4, 256, f);   // 4 byte @ 256 elements
+    fwrite(&CLUTF, 4, 256, f);   // 4 byte @ 256 elements
+    fwrite(&CLUTB, 4, 256, f);   // 4 byte @ 256 elements
+
+    // [ palette cycle infos ]
     fwrite(&cyclefrom, 1, 1, f);
     fwrite(&cycleto, 1, 1, f);
     fwrite(&cyclelength, 1, 1, f);
     fwrite(&GradientRangeFrom, 1, 1, f);
     fwrite(&GradientRangeTo, 1, 1, f);
 
-    // [ image body ]    
+    // [ image body Front]
     for(int y = 0; y < icon_height; y++) {
-        fwrite(icon_area_main[y].data(), sizeof(uint8_t), icon_width, f);
+        fwrite(icon_area_front[y].data(), sizeof(uint8_t), icon_width, f);
+    }
+    // [ image body Back]
+    for(int y = 0; y < icon_height; y++) {
+        fwrite(icon_area_back[y].data(), sizeof(uint8_t), icon_width, f);
     }
 
     fclose(f);
@@ -2954,7 +3063,6 @@ void MainWindow::loadProjectIcon(const char *filename){
 
         fread(&w, sizeof(uint16_t), 1, f);
         fread(&h, sizeof(uint16_t), 1, f);
-
         fread(&cell_width, 1, 1, f);   // cell spacing information
         fread(&cell_height, 1, 1, f);
 
@@ -2962,25 +3070,45 @@ void MainWindow::loadProjectIcon(const char *filename){
         ui->txtCellHeight->setText(QString("%1").arg(cell_height));
         // resize rows first
         reSizeEditorArray(w, h);
-
         reSize();
 
-        // [ palette data ]
-        if(fread(CLUT, sizeof(uint32_t), 256, f) != 256){
+        // [ palette data front ]
+        if(fread(CLUTF, sizeof(uint32_t), 256, f) != 256){
             QMessageBox::warning(this,"Load Icon", "Palette read fail!");
             fclose(f);
             return;
         };
-        for(int c = 0; c < 256; c++) BACKUP_CLUT[c] = CLUT[c];
+
+        // [ palette data back ]
+        if(fread(CLUTB, sizeof(uint32_t), 256, f) != 256){
+            QMessageBox::warning(this,"Load Icon", "Palette read fail!");
+            fclose(f);
+            return;
+        };
+
+        for(int c = 0; c < 256; c++) {
+            BACKUP_CLUTF[c] = CLUTF[c];
+            BACKUP_CLUTB[c] = CLUTB[c];
+        }
+
         fread(&cyclefrom, 1, 1, f);
         fread(&cycleto, 1, 1, f);
         fread(&cyclelength, 1, 1, f);
         fread(&GradientRangeFrom, 1, 1, f);
         fread(&GradientRangeTo, 1, 1, f);
 
-        // [ Image Body ]
+        // [ Image Body front ]
         for(int y = 0; y < h; y++) {
-            if(fread(icon_area_main[y].data(), sizeof(uint8_t), w, f) != w){
+            if(fread(icon_area_front[y].data(), sizeof(uint8_t), w, f) != w){
+                QMessageBox::warning(this, "Load Icon", "Image data corrupted!");
+                fclose(f);
+                return;
+            }
+        }
+
+        // [ Image Body back ]
+        for(int y = 0; y < h; y++) {
+            if(fread(icon_area_back[y].data(), sizeof(uint8_t), w, f) != w){
                 QMessageBox::warning(this, "Load Icon", "Image data corrupted!");
                 fclose(f);
                 return;
@@ -3010,10 +3138,11 @@ void MainWindow::rotateIcon(int direction){
 
     if(!bCellMode){
         // --- Full image mode (same as before) ---
-        std::vector<std::vector<uint8_t>> buffer_mn = icon_area_main;
-        std::vector<std::vector<uint8_t>> buffer_sp = icon_area_scratchpage;
-        std::vector<std::vector<uint8_t>> buffer_bk = icon_area_backup;
-        std::vector<std::vector<uint8_t>> buffer_rd = icon_area_redo;
+        std::vector<std::vector<uint8_t>> buffer_mnf = icon_area_front;
+        std::vector<std::vector<uint8_t>> buffer_mnb = icon_area_back;
+        std::vector<std::vector<uint8_t>> buffer_sp  = icon_area_scratchpage;
+        std::vector<std::vector<uint8_t>> buffer_bk  = icon_area_backup;
+        std::vector<std::vector<uint8_t>> buffer_rd  = icon_area_redo;
 
         int oldW = icon_width;
         int oldH = icon_height;
@@ -3036,18 +3165,21 @@ void MainWindow::rotateIcon(int direction){
         icon_area_backup.assign(newH, std::vector<uint8_t>(newW, 0));
         icon_area_scratchpage.assign(newH, std::vector<uint8_t>(newW, 0));
         icon_area_redo.assign(newH, std::vector<uint8_t>(newW, 0));
-        icon_area_main.assign(newH, std::vector<uint8_t>(newW, 0));
+        icon_area_front.assign(newH, std::vector<uint8_t>(newW, 0));
+        icon_area_back.assign(newH, std::vector<uint8_t>(newW, 0));
 
         if(direction == 0){ // clockwise
             rotateCW(icon_area_backup, buffer_bk, newH, newW, oldH, oldW);
             rotateCW(icon_area_scratchpage, buffer_sp, newH, newW, oldH, oldW);
             rotateCW(icon_area_redo, buffer_rd, newH, newW, oldH, oldW);
-            rotateCW(icon_area_main, buffer_mn, newH, newW, oldH, oldW);
+            rotateCW(icon_area_front, buffer_mnf, newH, newW, oldH, oldW);
+            rotateCW(icon_area_back, buffer_mnb, newH, newW, oldH, oldW);
         } else { // counter-clockwise
             rotateCCW(icon_area_backup, buffer_bk, newH, newW, oldH, oldW);
             rotateCCW(icon_area_scratchpage, buffer_sp, newH, newW, oldH, oldW);
             rotateCCW(icon_area_redo, buffer_rd, newH, newW, oldH, oldW);
-            rotateCCW(icon_area_main, buffer_mn, newH, newW, oldH, oldW);
+            rotateCCW(icon_area_front, buffer_mnf, newH, newW, oldH, oldW);
+            rotateCCW(icon_area_back, buffer_mnb, newH, newW, oldH, oldW);
         }
 
         icon_width  = newW;
@@ -3064,14 +3196,16 @@ void MainWindow::rotateIcon(int direction){
                 int cellStartY = cy * cell_height;
 
                 // Create temporary cell buffers
-                std::vector<std::vector<uint8_t>> cell_main(cell_height, std::vector<uint8_t>(cell_width));
+                std::vector<std::vector<uint8_t>> cell_front(cell_height, std::vector<uint8_t>(cell_width));
+                std::vector<std::vector<uint8_t>> cell_back(cell_height, std::vector<uint8_t>(cell_width));
                 std::vector<std::vector<uint8_t>> cell_sp(cell_height, std::vector<uint8_t>(cell_width));
                 std::vector<std::vector<uint8_t>> cell_bk(cell_height, std::vector<uint8_t>(cell_width));
                 std::vector<std::vector<uint8_t>> cell_rd(cell_height, std::vector<uint8_t>(cell_width));
 
                 for(int y = 0; y < cell_height; y++)
                     for(int x = 0; x < cell_width; x++){
-                        cell_main[y][x] = icon_area_main[cellStartY + y][cellStartX + x];
+                        cell_front[y][x] = icon_area_front[cellStartY + y][cellStartX + x];
+                        cell_back[y][x] = icon_area_back[cellStartY + y][cellStartX + x];
                         cell_sp[y][x]   = icon_area_scratchpage[cellStartY + y][cellStartX + x];
                         cell_bk[y][x]   = icon_area_backup[cellStartY + y][cellStartX + x];
                         cell_rd[y][x]   = icon_area_redo[cellStartY + y][cellStartX + x];
@@ -3094,12 +3228,13 @@ void MainWindow::rotateIcon(int direction){
                 };
 
                 if(direction == 0){ // clockwise
-                    rotateCellCW(cell_main, cell_main, cell_width, cell_height);
+                    rotateCellCW(cell_front, cell_front, cell_width, cell_height);
+                    rotateCellCW(cell_back, cell_back, cell_width, cell_height);
                     rotateCellCW(cell_sp, cell_sp, cell_width, cell_height);
                     rotateCellCW(cell_bk, cell_bk, cell_width, cell_height);
                     rotateCellCW(cell_rd, cell_rd, cell_width, cell_height);
                 } else { // counter-clockwise
-                    rotateCellCCW(cell_main, cell_main, cell_width, cell_height);
+                    rotateCellCCW(cell_back, cell_back, cell_width, cell_height);
                     rotateCellCCW(cell_sp, cell_sp, cell_width, cell_height);
                     rotateCellCCW(cell_bk, cell_bk, cell_width, cell_height);
                     rotateCellCCW(cell_rd, cell_rd, cell_width, cell_height);
@@ -3108,7 +3243,8 @@ void MainWindow::rotateIcon(int direction){
                 // Copy back rotated cells
                 for(int y = 0; y < cell_height; y++)
                     for(int x = 0; x < cell_width; x++){
-                        icon_area_main[cellStartY + y][cellStartX + x] = cell_main[y][x];
+                        icon_area_front[cellStartY + y][cellStartX + x] = cell_front[y][x];
+                        icon_area_back[cellStartY + y][cellStartX + x] = cell_back[y][x];
                         icon_area_scratchpage[cellStartY + y][cellStartX + x] = cell_sp[y][x];
                         icon_area_backup[cellStartY + y][cellStartX + x] = cell_bk[y][x];
                         icon_area_redo[cellStartY + y][cellStartX + x] = cell_rd[y][x];
@@ -3150,11 +3286,11 @@ void MainWindow::UpdatePrePaletteMixer(){
     ui->lblPaletteColour->setPalette(pal);
 
     ui->lblPaletteForeSelect->setPalette(pal);
-    CLUT[numSelectedPaletteID] = (pltColourPreset[0] << 16) | (pltColourPreset[1] << 8) | (pltColourPreset[2]);
+    CCLUT[numSelectedPaletteID] = (pltColourPreset[0] << 16) | (pltColourPreset[1] << 8) | (pltColourPreset[2]);
 
     renderPaletteCanvas();
 
-    bit32col = CLUT[numSelectedPaletteID] | (255 << 24);    // making sure that the alpha channel is full solid
+    bit32col = CCLUT[numSelectedPaletteID] | (255 << 24);    // making sure that the alpha channel is full solid
 
     // ---- RGB888 to RGB565 conversion ---- // TODO: convert the 32bit value (ignoring the alpha channel not important, to a RGB565 format)
     int r = pltColourPreset[0];
@@ -3185,9 +3321,9 @@ void MainWindow::SelectedPaletteID(){
             .arg(QString("%1").arg(numSelectedPaletteID, 2, 16, QChar('0')).toUpper())
         );
 
-    r = CLUT[numSelectedPaletteID] >> 16;
-    g = CLUT[numSelectedPaletteID] >> 8;
-    b = CLUT[numSelectedPaletteID] & 0xff;
+    r = CCLUT[numSelectedPaletteID] >> 16;
+    g = CCLUT[numSelectedPaletteID] >> 8;
+    b = CCLUT[numSelectedPaletteID] & 0xff;
 
     ui->txtPaletteR->setText(QString::number(r));
     ui->txtPaletteG->setText(QString::number(g));
@@ -3225,11 +3361,11 @@ void MainWindow::doSwapPalette(uint8_t targetPalID){
     //bg = (CLUT[capturedPaletteIndex] >> 8) & 0xff;
     //bb = CLUT[capturedPaletteIndex] & 0xff;
 
-    backClut = CLUT[capturedPaletteIndex];
+    backClut = CCLUT[capturedPaletteIndex];
 
-    CLUT[capturedPaletteIndex] = CLUT[targetPalID];
+    CCLUT[capturedPaletteIndex] = CCLUT[targetPalID];
 
-    CLUT[targetPalID] = backClut;
+    CCLUT[targetPalID] = backClut;
 
     ui->cmdSwapColours->setEnabled(true);
     renderPaletteCanvas();
@@ -3362,7 +3498,7 @@ void drawHoverBox(int sx, int sy, QImage *edImg){
             //if (px + dx >= edImg->width()) break;
             int pxcell = px + dx;
             if (pxcell < 0 || pxcell >= edImg->width()) continue;
-            scanLine[px + dx] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
+            scanLine[px + dx] = CCLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
         }
     }
 }
@@ -3457,7 +3593,7 @@ void MainWindow::drawCopyBrushHover(int sx, int sy, QImage *edImg){
                     if(px < 0 || px >= edImg->width()) continue;
 
                     if(fullyOpaque){
-                        scan[px] = CLUT[src]; // fast path
+                        scan[px] = CCLUT[src]; // fast path
                         continue;
                     }
 
@@ -3485,7 +3621,7 @@ void MainWindow::drawCopyBrushHover(int sx, int sy, QImage *edImg){
                         }
                     }
 
-                    scan[px] = CLUT[best];
+                    scan[px] = CCLUT[best];
                 }
             }
         }
@@ -3786,9 +3922,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                 numSelectedBackPaletteID = (tSelectedX + (tSelectedY * PALETTE_WIDTH));
 
-                r = (CLUT[numSelectedBackPaletteID] >> 16) & 0xff;
-                g = (CLUT[numSelectedBackPaletteID] >> 8) & 0xff;
-                b = (CLUT[numSelectedBackPaletteID]) & 0xff;
+                r = (CCLUT[numSelectedBackPaletteID] >> 16) & 0xff;
+                g = (CCLUT[numSelectedBackPaletteID] >> 8) & 0xff;
+                b = (CCLUT[numSelectedBackPaletteID]) & 0xff;
 
                 pal.setColor(QPalette::Window, QColor(r, g, b)); // RGB
                 ui->lblPaletteColour->setAutoFillBackground(true);   // must enable for background
@@ -3825,7 +3961,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             // clicked on another colour - ONLY if selected another colour
             if(numPrevSelectedPaletteID != numSelectedPaletteID){
                 for(int i=0; i<256; i++){
-                    BACKUP_CLUT[i] = CLUT[i];
+                    //CBACKUP_CLUT[i] = CCLUT[i];
+                    BACKUP_CLUTF[i] = CLUTF[i];
+                    BACKUP_CLUTB[i] = CLUTB[i];
                 }
                 //printf("Commited new pallete\n");
             }
@@ -3881,7 +4019,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
 
                 } else {
                     ui->frmGraphicEdit->setPalette(QPalette());
-                    icon_area = &icon_area_main;
+                    icon_area = active_icon_area;
                 }
                 renderEditorCanvas();
                 return true;
@@ -3937,9 +4075,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event){
             }
 
             if(!ke->isAutoRepeat()){
-
-
-
                 if (ke->key() == static_cast<int>(KeyBinding::kscBrushFlipX)){
                     doAlterBrush(brushflipX);
                     renderEditorCanvas();
@@ -4533,7 +4668,7 @@ void MainWindow::drawTextHover(int sx, int sy, QImage *edImg){
     int x = sx;
     int y = sy;
 
-    const QRgb colf = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID]; // foreground color
+    const QRgb colf = CCLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID]; // foreground color
     const int zoom = icon_zoom; // base editor zoom
 
     const int scaleX = zoom * iTextWidth;   // horizontal block size
@@ -5250,7 +5385,7 @@ void MainWindow::renderAnimatorCanvas(){
         QRgb *scan = reinterpret_cast<QRgb*>(animationImg.scanLine(y));
         for(int x = 0; x < cell_width; x++) {
             uint8_t pal = (*icon_area)[srcY + y][srcX + x];
-            scan[x] = colourSqueeze(CLUT[pal]);
+            scan[x] = colourSqueeze(CCLUT[pal]);
         }
     }
 
@@ -5306,8 +5441,25 @@ void MainWindow::renderEditorCanvas(){
         int imgY = (y) / icon_zoom;
         for(int x = 0; x < visibleWidth; x++) {
             int imgX = (x) / icon_zoom;
-            QRgb base = colourSqueeze(CLUT[(*icon_area)[imgY + yOffset][imgX + xOffset]]);
-            scan[x] = base;
+            QRgb base;
+            //QRgb base = colourSqueeze(CCLUT[(*icon_area)[imgY + yOffset][imgX + xOffset]]);
+
+            if(icon_area == &icon_area_scratchpage){
+                base = colourSqueeze(CCLUT[(*icon_area)[imgY + yOffset][imgX + xOffset]]);
+                scan[x] = base; // simple scratch pad area
+            } else {
+
+                int cindexf = (icon_area_front)[imgY + yOffset][imgX + xOffset];
+                int cindexb = (icon_area_back) [imgY + yOffset][imgX + xOffset];
+
+                // rendering front, unless its transparent
+                if(cindexf == 0)    // front is transparent pixel
+                    base = colourSqueeze(CLUTB[cindexb]);
+                else
+                    base = colourSqueeze(CLUTF[cindexf]);
+
+                scan[x] = base; // simple scratch pad area
+            }
 
             // -------- GRID --------
             if(drawGrid) {
@@ -5414,7 +5566,7 @@ void MainWindow::renderEditorCanvas(){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
                             if(currentDrawMode == Line)
-                                scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
+                                scan[px] = CCLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
                             else
                                 scan[px] = 0xFFFFFFFF - scan[px]; // invert
                         }
@@ -5463,7 +5615,7 @@ void MainWindow::renderEditorCanvas(){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
                             //scan[px] = 0xFFFFFFFF - scan[px]; // invert for ghost
-                            scan[px] = CLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
+                            scan[px] = CCLUT[bMouseLeftRight?numSelectedPaletteID:numSelectedBackPaletteID];
                         }
                     }
                 };
@@ -5520,7 +5672,7 @@ void MainWindow::renderEditorCanvas(){
                         for(int xx = 0; xx < icon_zoom; xx++){
                             int px = startX + xx;
                             if(px < 0 || px >= visibleWidth) continue;
-                            scan[px] = CLUT[bMouseLeftRight ? numSelectedPaletteID : numSelectedBackPaletteID];
+                            scan[px] = CCLUT[bMouseLeftRight ? numSelectedPaletteID : numSelectedBackPaletteID];
                         }
                     }
                 };
@@ -5669,9 +5821,9 @@ void MainWindow::renderPaletteCanvas(){
     const int GridY = SelectedY * PALETTE_BOX_VSIZE;
 
     for(int i = 0; i < 256; i++){
-        CLUTRGB[0][i] = (CLUT[i] >>16) & 0xff;
-        CLUTRGB[1][i] = (CLUT[i] >>8) & 0xff;
-        CLUTRGB[2][i] = (CLUT[i] ) & 0xff;
+        CLUTRGB[0][i] = (CCLUT[i] >>16) & 0xff;
+        CLUTRGB[1][i] = (CCLUT[i] >>8) & 0xff;
+        CLUTRGB[2][i] = (CCLUT[i] ) & 0xff;
     }
 
     for (int y = 0; y < totalHeight; y++){
@@ -5688,7 +5840,7 @@ void MainWindow::renderPaletteCanvas(){
             int colorIndex = tileY * PALETTE_WIDTH + tileX;
 
             // draw the pixel
-            scan[x] = colourSqueeze(CLUT[colorIndex]);
+            scan[x] = colourSqueeze(CCLUT[colorIndex]);
         }
     }
 
@@ -5960,7 +6112,7 @@ uint8_t MainWindow::findNearestPaletteColor(QRgb rgb){
     int bestDist = INT_MAX;
 
     for(int i = 0; i < 256; i++){
-        QRgb p = CLUT[i];
+        QRgb p = CCLUT[i];
         int dr = r - qRed(p);
         int dg = g - qGreen(p);
         int db = b - qBlue(p);
@@ -5987,7 +6139,7 @@ uint8_t MainWindow::findNearestPaletteIndex(int r, int g, int b){
 
     for(int i = 0; i < 256; i++){
         int pr, pg, pb;
-        unpackRGB(CLUT[i], pr, pg, pb);
+        unpackRGB(CCLUT[i], pr, pg, pb);
 
         int dr = pr - r;
         int dg = pg - g;
@@ -6012,8 +6164,8 @@ void MainWindow::setAAPixel(int x, int y, uint8_t fg){
     int fr, fg_, fb;
     int br, bg_, bb;
 
-    unpackRGB(CLUT[fg], fr, fg_, fb);
-    unpackRGB(CLUT[bg], br, bg_, bb);
+    unpackRGB(CCLUT[fg], fr, fg_, fb);
+    unpackRGB(CCLUT[bg], br, bg_, bb);
 
     // 50/50 blend (classic AA)
     int r = (fr + br) >> 1;

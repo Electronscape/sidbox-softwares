@@ -102,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(ui->cmdClrRam, &QPushButton::clicked, this, [this](){
-        sendCustomCommand("clear\n");
+        sendCustomCommand("ramclr 0 0\n");
     });
 
     connect(ui->cmdClearLog, &QPushButton::clicked, this, [=]() {

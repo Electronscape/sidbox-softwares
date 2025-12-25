@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1482</width>
-    <height>854</height>
+    <height>930</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -3535,7 +3535,7 @@ QPushButton:hover {
        <bool>true</bool>
       </property>
       <property name="autoRepeatInterval">
-       <number>20</number>
+       <number>5</number>
       </property>
      </widget>
      <widget class="QPushButton" name="cmdPushImageDown">
@@ -3579,7 +3579,7 @@ QPushButton:hover {
        <bool>true</bool>
       </property>
       <property name="autoRepeatInterval">
-       <number>20</number>
+       <number>5</number>
       </property>
      </widget>
      <widget class="QPushButton" name="cmdPushImageLeft">
@@ -3623,7 +3623,7 @@ QPushButton:hover {
        <bool>true</bool>
       </property>
       <property name="autoRepeatInterval">
-       <number>20</number>
+       <number>5</number>
       </property>
      </widget>
      <widget class="QPushButton" name="cmdPushImageRight">
@@ -3667,7 +3667,7 @@ QPushButton:hover {
        <bool>true</bool>
       </property>
       <property name="autoRepeatInterval">
-       <number>20</number>
+       <number>5</number>
       </property>
      </widget>
      <widget class="QPushButton" name="cmdRotateCC90">
@@ -5230,7 +5230,7 @@ keyboard default: e - rotate clockwise
        <x>4</x>
        <y>325</y>
        <width>418</width>
-       <height>475</height>
+       <height>490</height>
       </rect>
      </property>
      <property name="title">
@@ -5245,7 +5245,7 @@ keyboard default: e - rotate clockwise
         <x>4</x>
         <y>25</y>
         <width>260</width>
-        <height>260</height>
+        <height>276</height>
        </rect>
       </property>
       <property name="maximumSize">
@@ -5448,7 +5448,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>53</y>
+        <y>49</y>
         <width>141</width>
         <height>110</height>
        </rect>
@@ -5516,7 +5516,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>6</x>
-        <y>380</y>
+        <y>396</y>
         <width>406</width>
         <height>89</height>
        </rect>
@@ -5984,7 +5984,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>169</y>
+        <y>163</y>
         <width>141</width>
         <height>26</height>
        </rect>
@@ -6003,7 +6003,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>197</y>
+        <y>191</y>
         <width>141</width>
         <height>26</height>
        </rect>
@@ -6018,37 +6018,11 @@ HOLD ALT and CLICK the ending colour.</string>
        <iconset theme="QIcon::ThemeIcon::MailForward"/>
       </property>
      </widget>
-     <widget class="QPushButton" name="cmdExportClut16">
-      <property name="geometry">
-       <rect>
-        <x>267</x>
-        <y>340</y>
-        <width>70</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>clut16.H</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="cmdExportClut32">
-      <property name="geometry">
-       <rect>
-        <x>340</x>
-        <y>340</y>
-        <width>70</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>clut32.h</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="cmdReorgPalette">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>225</y>
+        <y>219</y>
         <width>141</width>
         <height>26</height>
        </rect>
@@ -6064,7 +6038,7 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="geometry">
        <rect>
         <x>270</x>
-        <y>283</y>
+        <y>299</y>
         <width>143</width>
         <height>3</height>
        </rect>
@@ -6073,164 +6047,11 @@ HOLD ALT and CLICK the ending colour.</string>
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="label_5">
-      <property name="geometry">
-       <rect>
-        <x>273</x>
-        <y>294</y>
-        <width>80</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>exporters:</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="cmdExportClutVHDL12">
-      <property name="geometry">
-       <rect>
-        <x>267</x>
-        <y>314</y>
-        <width>70</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>vhdl12.H</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="chkColourCycleEn">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>290</y>
-        <width>160</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Enable Colour Cycling</string>
-      </property>
-     </widget>
-     <widget class="QScrollBar" name="scrColourCycleSpeed">
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>312</y>
-        <width>90</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border: 1px solid #3c6dc3;
-</string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>8</number>
-      </property>
-      <property name="value">
-       <number>6</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_4">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>311</y>
-        <width>40</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Delay</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblColourCycle">
-      <property name="geometry">
-       <rect>
-        <x>147</x>
-        <y>311</y>
-        <width>80</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>&lt;something&gt;</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="chkCyclePaletteDraw">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>332</y>
-        <width>131</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Cycle Palette Draw</string>
-      </property>
-     </widget>
-     <widget class="QScrollBar" name="scrCycleStepper">
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>354</y>
-        <width>100</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border: 1px solid #3c6dc3;
-</string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>16</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblColourCycle_2">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>354</y>
-        <width>80</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>step:</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lblCycleStepping">
-      <property name="geometry">
-       <rect>
-        <x>160</x>
-        <y>354</y>
-        <width>80</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>1</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="cmdReassignColour">
       <property name="geometry">
        <rect>
         <x>272</x>
-        <y>253</y>
+        <y>247</y>
         <width>141</width>
         <height>26</height>
        </rect>
@@ -6238,6 +6059,246 @@ HOLD ALT and CLICK the ending colour.</string>
       <property name="text">
        <string>re-assign...</string>
       </property>
+     </widget>
+     <widget class="QFrame" name="frame">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>307</y>
+        <width>420</width>
+        <height>85</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <widget class="QPushButton" name="cmdExportClut32">
+       <property name="geometry">
+        <rect>
+         <x>334</x>
+         <y>56</y>
+         <width>70</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>clut32.h</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="chkCyclePaletteDraw">
+       <property name="geometry">
+        <rect>
+         <x>5</x>
+         <y>42</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Cycle Palette Draw</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblColourCycle">
+       <property name="geometry">
+        <rect>
+         <x>142</x>
+         <y>21</y>
+         <width>80</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;something&gt;</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="scrCycleStepper">
+       <property name="geometry">
+        <rect>
+         <x>45</x>
+         <y>64</y>
+         <width>100</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>16</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_4">
+       <property name="geometry">
+        <rect>
+         <x>5</x>
+         <y>21</y>
+         <width>40</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Delay</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblCycleStepping">
+       <property name="geometry">
+        <rect>
+         <x>155</x>
+         <y>64</y>
+         <width>80</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_5">
+       <property name="geometry">
+        <rect>
+         <x>263</x>
+         <y>6</y>
+         <width>80</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>exporters:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblColourCycle_2">
+       <property name="geometry">
+        <rect>
+         <x>5</x>
+         <y>64</y>
+         <width>80</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>step:</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="cmdExportClut16">
+       <property name="geometry">
+        <rect>
+         <x>257</x>
+         <y>56</y>
+         <width>70</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>clut16.H</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="scrColourCycleSpeed">
+       <property name="geometry">
+        <rect>
+         <x>45</x>
+         <y>22</y>
+         <width>90</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border: 1px solid #3c6dc3;
+</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>8</number>
+       </property>
+       <property name="value">
+        <number>6</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="chkColourCycleEn">
+       <property name="geometry">
+        <rect>
+         <x>5</x>
+         <y>0</y>
+         <width>160</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Enable Colour Cycling</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="cmdExportClutVHDL12">
+       <property name="geometry">
+        <rect>
+         <x>257</x>
+         <y>27</y>
+         <width>70</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>vhdl12.H</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QFrame" name="frame_5">
+      <property name="geometry">
+       <rect>
+        <x>270</x>
+        <y>274</y>
+        <width>150</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <widget class="QRadioButton" name="chkPaletteBankBack">
+       <property name="geometry">
+        <rect>
+         <x>8</x>
+         <y>2</y>
+         <width>60</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Back</string>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="chkPaletteBankFront">
+       <property name="geometry">
+        <rect>
+         <x>78</x>
+         <y>2</y>
+         <width>60</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Front</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
      </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_7">
@@ -6462,14 +6523,14 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QCheckBox" name="chkExportSBVRAM">
        <property name="geometry">
         <rect>
-         <x>9</x>
+         <x>10</x>
          <y>24</y>
-         <width>221</width>
+         <width>130</width>
          <height>21</height>
         </rect>
        </property>
        <property name="text">
-        <string>Export to Sidbox 5.x VRAM space</string>
+        <string>Export for Sidbox</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -6478,9 +6539,9 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QPushButton" name="cmdExportH">
        <property name="geometry">
         <rect>
-         <x>310</x>
+         <x>320</x>
          <y>50</y>
-         <width>80</width>
+         <width>70</width>
          <height>24</height>
         </rect>
        </property>
@@ -6491,9 +6552,9 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QCheckBox" name="chkExportRLE">
        <property name="geometry">
         <rect>
-         <x>239</x>
+         <x>242</x>
          <y>24</y>
-         <width>160</width>
+         <width>154</width>
          <height>21</height>
         </rect>
        </property>
@@ -6517,9 +6578,9 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QPushButton" name="cmdExportPixelPictureBitmap">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>224</x>
          <y>50</y>
-         <width>100</width>
+         <width>90</width>
          <height>24</height>
         </rect>
        </property>
