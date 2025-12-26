@@ -14,11 +14,11 @@ qt_add_executable(graphics-gui_testing
     graphics.cpp
     font.h
     font.cpp
-    windowex.h
-    windowex.cpp
+    sbxwindowex.h
+    sbxwindowex.cpp
     sbapi_graphics.h
-    sbui_controls.h
-    sbui_controls.c
+    sbxctrlex.h
+    sbxctrlex.c
 )
 
 

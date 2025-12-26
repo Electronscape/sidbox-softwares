@@ -9,7 +9,7 @@
 #include <QPoint>  // for the QPoint objects
 
 #include "sbapi_graphics.h"
-#include "windowex.h"
+#include "sbxwindowex.h"
 
 
 float winScale = 1.0f;
@@ -109,29 +109,40 @@ Dialog::Dialog(QWidget *parent)
     });
     frameTimer->start(16);   // 0ms = run every cycle
 
-
     sbgfx_fill(5);
 
     //sbgfx_drawbox(00,0,320,256, 3);
 
     //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
-    SBWindowId workbench = SBOS_createWindow(0, 0, 480, 320, "Workbench", SBW_ALWAYS_TO_BACK | SBW_VISIBLE | SBW_NOBORDER);
-    SBWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "Main",  SBW_VISIBLE );
+    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
+    SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "NoBorder 1", SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
     //SBWindowId winMain1 = SBOS_createWindow(340, 10, 100, 250, "Main", SBW_VISIBLE | SBW_NOBORDER);
-    SBWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBW_VISIBLE | SBW_TITLE_BAR);
-    SBWindowId winMain2 = SBOS_createWindow(100, 100, 220, 100, "Main2", SBW_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
+    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 220, 100, "Adjustable Drawer window", SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if (winMain2 == SBW_INVALID_ID) {
         // no free window slots — OS politely shrugs
         printf("No more windows left\n");
     } else
         printf("Window ID %d\n", winMain2);
 
-    SBWindow_t *w = SBOS_getWindow(winMain2);
-    SBOS_addButton(w, 1, 6, 6, 70, 26, "OK");
-    SBOS_addButton(w, 2, 80, 6, 70, 26, "Cancel");
-    SBOS_addLabel(w, 3,  6, 36, "LABEL #1");
+    sbx_window_t *w = SBOS_getWindow(winMain2);
+    SBOS_CreateButton(w, 0,  6, 6, 70, 26, "OK");
+    SBOS_CreateButton(w, 1, 80, 6, 70, 26, "Cancel");
+    SBOS_CreateButton(w, 2, 160, 6, 160, 26, "Long button name");
+    SBOS_CreateLabel (w, 3,  6, 36, "LABEL #1");
+
+    SBOS_CreateScrollbar(w, 4, SBX_SB_VERT, SBX_DOCK_RIGHT, 20, 0, 100, 20, 0, 1);
+    SBOS_CreateScrollbar(w, 5, SBX_SB_HORZ, SBX_DOCK_BOTTOM, 20, 0, 100, 20, 0, 1);
 
 
+    SBOS_CreateScrollbar(w, 6, SBX_SB_HORZ, SBX_DOCK_NONE, 20, 0, 100, 20, 0, 1);
+
+    SBOX_MoveScrollbar(w, 6, 10, 60, 100, 16, SBX_SB_HORZ);
+
+
+    w = SBOS_getWindow(workbench);
+    SBOS_CreateButton(w, 0, 6, 6, 100, 26, "Workbench!");
+    SBOS_CreateButton(w, 1, 300, 200, 180, 120, "Workbench!");
 
     SBOS_setFocus(winMain2);
     SBOS_paintAllWindows();
@@ -167,7 +178,7 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
 
             SBOS_MouseInterface(MOUSE_DOWN, mx, my);
             updateGFXScreen();
-            printf("mouse clicked_down x:%d, y:%d\n", mx, my);
+            //printf("mouse clicked_down x:%d, y:%d\n", mx, my);
             bMouseDown = true;
             return true; // stop further processing
         }
@@ -177,6 +188,12 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
             QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
             int16_t mx = (int16_t)scenePt.x();
             int16_t my = (int16_t)scenePt.y();
+
+            if(mx < 0) mx = 0;
+            if(my < 0) my = 0;
+            if(mx > SCR_WIDTH)  mx = SCR_WIDTH;
+            if(my > SCR_HEIGHT) my = SCR_HEIGHT;
+
 
             SBOS_MouseInterface(MOUSE_MOVE, mx, my);
             updateGFXScreen();
@@ -194,7 +211,7 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
 
             SBOS_MouseInterface(MOUSE_UP, mx, my);
             updateGFXScreen();
-            printf("mouse clicked_release x:%d, y:%d\n", mx, my);
+            //printf("mouse clicked_release x:%d, y:%d\n", mx, my);
             bMouseDown = false;
             return true; // stop further processing
         }
@@ -206,7 +223,7 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
             int16_t my = (int16_t)scenePt.y();
 
             updateGFXScreen();
-            printf("mouse double clicked x:%d, y:%d\n", mx, my);
+            //printf("mouse double clicked x:%d, y:%d\n", mx, my);
             bMouseDown = false;
             return true; // stop further processing
         }
