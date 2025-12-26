@@ -5,6 +5,8 @@
 #include <QString>
 #include <QMessageBox>
 #include <QSettings>
+#include <QMouseEvent>
+#include <QPoint>  // for the QPoint objects
 
 #include "sbapi_graphics.h"
 #include "windowex.h"
@@ -48,6 +50,14 @@ Dialog::Dialog(QWidget *parent)
     ui->gfxPort->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
 
+    ui->gfxPort->setMouseTracking(true);
+    ui->gfxPort->viewport()->setMouseTracking(true); // important for QGraphicsView
+    ui->gfxPort->installEventFilter(this);
+    ui->gfxPort->viewport()->installEventFilter(this);
+    ui->gfxPort->setFocusPolicy(Qt::StrongFocus);
+    ui->gfxPort->setFocus();
+
+
     // Add it to the scene
     pixmapItem = scene->addPixmap(QPixmap::fromImage(screenImageF));
     pixmapItem->setTransformationMode(Qt::SmoothTransformation);
@@ -76,13 +86,17 @@ Dialog::Dialog(QWidget *parent)
 
     setScreenScale(1);
 
-/*
+
     QTimer *t = new QTimer(this);
     connect(t, &QTimer::timeout, this, [=](){
-        processAudio();
+
+
+        windowingTest();
+
+
     });
-    t->start(1);   // every 1ms
-*/
+    t->start(22);   // every 22ms/ about 60hz?
+
 
     timer = new QTimer(this);
     QTimer::singleShot(500, this, [=]() {
@@ -95,23 +109,36 @@ Dialog::Dialog(QWidget *parent)
     });
     frameTimer->start(16);   // 0ms = run every cycle
 
-    ui->gfxPort->installEventFilter(this);
-    ui->gfxPort->setFocusPolicy(Qt::StrongFocus);
-    ui->gfxPort->setFocus();
 
     sbgfx_fill(5);
 
     //sbgfx_drawbox(00,0,320,256, 3);
 
-    createWindow(320, 256, "CRAP WINDOW V1.0 - yey");
+    //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
+    SBWindowId workbench = SBOS_createWindow(0, 0, 480, 320, "Workbench", SBW_ALWAYS_TO_BACK | SBW_VISIBLE | SBW_NOBORDER);
+    SBWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "Main",  SBW_VISIBLE );
+    //SBWindowId winMain1 = SBOS_createWindow(340, 10, 100, 250, "Main", SBW_VISIBLE | SBW_NOBORDER);
+    SBWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBW_VISIBLE | SBW_TITLE_BAR);
+    SBWindowId winMain2 = SBOS_createWindow(100, 100, 220, 100, "Main2", SBW_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    if (winMain2 == SBW_INVALID_ID) {
+        // no free window slots — OS politely shrugs
+        printf("No more windows left\n");
+    } else
+        printf("Window ID %d\n", winMain2);
 
-    //gfx_setcolour(1);
-    //draw_text816(10, 10, (const unsigned char *)"Hello world");
+    SBWindow_t *w = SBOS_getWindow(winMain2);
+    SBOS_addButton(w, 1, 6, 6, 70, 26, "OK");
+    SBOS_addButton(w, 2, 80, 6, 70, 26, "Cancel");
+    SBOS_addLabel(w, 3,  6, 36, "LABEL #1");
 
+
+
+    SBOS_setFocus(winMain2);
+    SBOS_paintAllWindows();
     updateGFXScreen();
 }
 
-
+static bool bMouseDown = false;
 bool Dialog::eventFilter(QObject *obj, QEvent *event) {
     if (obj == ui->gfxPort) {
         if (event->type() == QEvent::KeyPress) {
@@ -126,8 +153,65 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
             //handleKeyRelease(keyEvent->key());
             if (!keyEvent->isAutoRepeat()) { // only handle first press
             }
+            printf("key pressed\n");
             return true; // stop further processing
         }
+    }
+    if (obj == ui->gfxPort->viewport()){
+        if(event->type() == QEvent::MouseButtonPress) {
+            // will need these for the tool buttons that need the left and right bitsies
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
+            int16_t mx = (int16_t)scenePt.x();
+            int16_t my = (int16_t)scenePt.y();
+
+            SBOS_MouseInterface(MOUSE_DOWN, mx, my);
+            updateGFXScreen();
+            printf("mouse clicked_down x:%d, y:%d\n", mx, my);
+            bMouseDown = true;
+            return true; // stop further processing
+        }
+        if(event->type() == QEvent::MouseMove) {
+            // will need these for the tool buttons that need the left and right bitsies
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
+            int16_t mx = (int16_t)scenePt.x();
+            int16_t my = (int16_t)scenePt.y();
+
+            SBOS_MouseInterface(MOUSE_MOVE, mx, my);
+            updateGFXScreen();
+            //printf("mouse move x:%d, y:%d\n", mx, my);
+            //printf("mouse move view(%d,%d) scene(%.1f,%.1f)\n",                   viewPt.x(), viewPt.y(), scenePt.x(), scenePt.y());
+
+            return true; // stop further processing
+        }
+        if(event->type() == QEvent::MouseButtonRelease) {
+            // will need these for the tool buttons that need the left and right bitsies
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
+            int16_t mx = (int16_t)scenePt.x();
+            int16_t my = (int16_t)scenePt.y();
+
+            SBOS_MouseInterface(MOUSE_UP, mx, my);
+            updateGFXScreen();
+            printf("mouse clicked_release x:%d, y:%d\n", mx, my);
+            bMouseDown = false;
+            return true; // stop further processing
+        }
+        if(event->type() == QEvent::MouseButtonDblClick) {
+            // will need these for the tool buttons that need the left and right bitsies
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
+            int16_t mx = (int16_t)scenePt.x();
+            int16_t my = (int16_t)scenePt.y();
+
+            updateGFXScreen();
+            printf("mouse double clicked x:%d, y:%d\n", mx, my);
+            bMouseDown = false;
+            return true; // stop further processing
+        }
+
+
     }
     return QDialog::eventFilter(obj, event);
 }
@@ -214,8 +298,8 @@ void Dialog::updateGFXScreen(){
             scan[x] = PROJ_CRAM[*p++];
         }
     }
-    sbgfx_drawbox(476, 0, 479, 320, 63);
-    sbgfx_drawbox(0, 319, 479, 319, 63);
+    //sbgfx_drawbox(476, 0, 479, 320, 63);
+    //sbgfx_drawbox(0, 319, 479, 319, 63);
 
     swapBuffers();
     //processAudio();
@@ -224,7 +308,7 @@ void Dialog::updateGFXScreen(){
 
 
 void Dialog::clearSMSScreen(){
-    sbgfx_fill(0);
+    sbgfx_fill(5);
     uint8_t *p = PROJ_VRAM;
 
     for (int x = 0; x < SCR_WIDTH; x++){
@@ -234,4 +318,18 @@ void Dialog::clearSMSScreen(){
         }
     }
     swapBuffers();
+}
+
+
+
+
+
+
+
+
+/////////////////////////////
+void Dialog::windowingTest(){
+    //clearSMSScreen();
+    //paintAllWindows();
+    //updateGFXScreen();
 }

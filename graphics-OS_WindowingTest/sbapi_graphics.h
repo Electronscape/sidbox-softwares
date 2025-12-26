@@ -25,6 +25,8 @@ void sbgfx_drawbox(int x, int y, int w, int h, uint8_t col);
 void gfx_setcolour(unsigned char col);
 void draw_text816(int x, int y, const unsigned char* textptr);
 
+void sbgfx_ppixel(int16_t x, int16_t y);    // raw pixel draw
+
 void sbgfx_drawhline(int x, int y, int w);
 void sbgfx_drawvline(int x, int y, int w);
 

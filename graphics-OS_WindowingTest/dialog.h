@@ -41,6 +41,9 @@ private:
     void swapBuffers();
     bool eventFilter(QObject *obj, QEvent *event) override;
 
+
+    void windowingTest();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void closeEvent(QCloseEvent *event) override;

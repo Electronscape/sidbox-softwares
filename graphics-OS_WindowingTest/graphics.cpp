@@ -211,43 +211,91 @@ void dopalletecycle() {
 }
 
 
-void draw_text816(int x, int y, const unsigned char* textptr) {
+void draw_text816(int x, int y, const unsigned char* textptr)
+{
     int32_t start_x = x;
     uint8_t colf = current_fr_colour;
 
-
     for (int32_t i = 0; textptr[i] != '\0'; ++i) {
-        if (textptr[i] == '\n') {
+
+        unsigned char ch = textptr[i];
+
+        if (ch == '\n') {
             x = start_x;
             y += 16;
             continue;
         }
 
-        if ((uint32_t)x >= SCR_WIDTH || (uint32_t)y >= SCR_HEIGHT - 14)
-            continue;
+        const uint8_t* pixeldata = DEFAULT_SYSFONT[ch];
 
-        const uint8_t* pixeldata = DEFAULT_SYSFONT[textptr[i]];
-        uint32_t dx = x * SCR_HEIGHT;
-        uint8_t* drawptr = PROJ_VRAM + dx + y;
-
+        // Draw 8 columns per glyph
         for (int j = 0; j < 8; ++j) {
-            if ((uint32_t)x >= SCR_WIDTH)
-                break;
+
+            int xc = x + j;
+            if ((unsigned)xc >= SCR_WIDTH) continue; // column offscreen L/R
 
             uint8_t pixdat = pixeldata[j];
-            uint8_t* dp = PROJ_VRAM + x * SCR_HEIGHT + y;
 
-            // Draw 2 pixels vertically every 2 pixels (H=2)
-            if (pixdat & 0x01) { dp[0] = colf; dp[1] = colf; } //else { dp[0] = colb; dp[1] = colb; }
-            if (pixdat & 0x02) { dp[2] = colf; dp[3] = colf; } //else { dp[2] = colb; dp[3] = colb; }
-            if (pixdat & 0x04) { dp[4] = colf; dp[5] = colf; } //else { dp[4] = colb; dp[5] = colb; }
-            if (pixdat & 0x08) { dp[6] = colf; dp[7] = colf; } //else { dp[6] = colb; dp[7] = colb; }
-            if (pixdat & 0x10) { dp[8] = colf; dp[9] = colf; } //else { dp[8] = colb; dp[9] = colb; }
-            if (pixdat & 0x20) { dp[10] = colf; dp[11] = colf; } //else { dp[10] = colb; dp[11] = colb; }
-            if (pixdat & 0x40) { dp[12] = colf; dp[13] = colf; } //else { dp[12] = colb; dp[13] = colb; }
-            if (pixdat & 0x80) { dp[14] = colf; dp[15] = colf; } //else { dp[14] = colb; dp[15] = colb; }
+            // Base pointer for this column at the glyph's top Y
+            // We'll add row offsets as needed, but only when in-range.
+            // NOTE: VRAM is column-major: x * SCR_HEIGHT + y
+            int base = xc * SCR_HEIGHT;
 
-            x++;
+            // Each bit = 2 vertical pixels (16px tall total)
+            // For each bit set, write dp[row] and dp[row+1]
+            // with proper Y clipping
+            if (pixdat & 0x01) {
+                int yy = y + 0;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 1;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x02) {
+                int yy = y + 2;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 3;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x04) {
+                int yy = y + 4;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 5;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x08) {
+                int yy = y + 6;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 7;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x10) {
+                int yy = y + 8;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 9;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x20) {
+                int yy = y + 10;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 11;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x40) {
+                int yy = y + 12;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 13;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
+            if (pixdat & 0x80) {
+                int yy = y + 14;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+                yy = y + 15;
+                if ((unsigned)yy < SCR_HEIGHT) PROJ_VRAM[base + yy] = colf;
+            }
         }
+
+        // Advance to next character (same as your original behavior)
+        x += 8;
     }
 }
+

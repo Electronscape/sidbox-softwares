@@ -17,6 +17,8 @@ qt_add_executable(graphics-gui_testing
     windowex.h
     windowex.cpp
     sbapi_graphics.h
+    sbui_controls.h
+    sbui_controls.c
 )
 
 
