@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
+/// this is the "hardware level" code.
 #define     SCR_WIDTH   480
 #define     SCR_HEIGHT  320
 #define     SCR_STRIDE  SCR_HEIGHT

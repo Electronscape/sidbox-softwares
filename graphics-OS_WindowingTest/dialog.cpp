@@ -9,7 +9,7 @@
 #include <QPoint>  // for the QPoint objects
 
 #include "sbapi_graphics.h"
-#include "sbxwindowex.h"
+#include "sbx_windowex.h"
 
 
 float winScale = 1.0f;
@@ -113,6 +113,7 @@ Dialog::Dialog(QWidget *parent)
 
     //sbgfx_drawbox(00,0,320,256, 3);
 
+    initWb();
     //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
     SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
     SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "NoBorder 1", SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
@@ -125,7 +126,7 @@ Dialog::Dialog(QWidget *parent)
     } else
         printf("Window ID %d\n", winMain2);
 
-
+/*
     sbx_window_t *w = SBOS_getWindow(workbench);
     SBControlHandle hWorkBench = SBOS_CreateButton(w, 6,  6,  220, 26, "Workbench button");
     SBControlHandle hBigButty  = SBOS_CreateButton(w, 300,  200,  180, 120, "BLOB TEST");
@@ -155,7 +156,7 @@ Dialog::Dialog(QWidget *parent)
 
     // or better: move by handle (if you add it):
     // SBOX_MoveScrollbarH(w, hFree, 10, 60, 100, 16, SBX_SB_HORZ);
-
+*/
     SBOS_setFocus(winMain2);
     SBOS_paintAllWindows();
     updateGFXScreen();

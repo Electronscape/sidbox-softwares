@@ -1,0 +1,1075 @@
+
+#include "stdio.h"
+
+#include "stdint.h"
+
+
+#include "sbx_render.h"
+#include "sbx_windowex.h"
+#include "sbx_gadgets.h"
+
+
+
+
+
+
+
+
+static sbx_window_t     gui_windows[MAX_WINDOWS];
+static uint8_t          gui_used[MAX_WINDOWS];
+
+static SBXWindowId      g_zorder[MAX_WINDOWS];
+static uint8_t          g_zcount = 0;
+
+// globals ONLY for windows!! everything else needs to be in a contained
+static SBXWindowId      g_focusWin   = SBW_INVALID_ID;
+
+typedef struct {
+    uint8_t         mouse_down;
+
+    // what the mouse-down started on (window + region)
+    SBXWindowId     down_win;
+    WHitRegion      down_region;
+
+    // title gadget tracking (close/min/max/zorder)
+    SBXWindowId     title_win;
+    WHitRegion      title_region;
+    uint8_t         title_inside;
+
+    // window drag
+    SBXWindowId     drag_win;
+    int16_t         drag_off_x;
+    int16_t         drag_off_y;
+
+    // resize
+    SBXWindowId     resize_win;
+    int16_t         r_start_mx;
+    int16_t         r_start_my;
+    int16_t         r_start_w;
+    int16_t         r_start_h;
+
+    // then here we will use, REUSABLE start_x, start_y, drag_x, drag_y's
+    // since i HOPE we are going to use the gadget handle as the references later
+    // example: dummy stuff below
+
+    GADGET_BASE_T   *capturedGadget;
+    GADGET_RECT_T   *capturedGadgetRect;    // this is to help with the checking for "are we still inside the button rect" for exmaple
+
+    int16_t         clicked_x, clicked_y;   // starting gadget mouse hit point
+    int16_t         drag_x, drag_y;         // moving mouse point over the gadget (usually for sliders
+} UIInputState;
+
+
+
+static UIInputState g_ui = {
+    .mouse_down   = 0,
+    .down_win     = SBW_INVALID_ID,
+    .down_region  = WH_NONE,
+
+    .title_win    = SBW_INVALID_ID,
+    .title_region = WH_NONE,
+    .title_inside = 0,
+
+    .drag_win     = SBW_INVALID_ID,
+    .resize_win   = SBW_INVALID_ID,
+};
+
+
+static inline void ui_clear_title_latch(void){
+    g_ui.title_win = SBW_INVALID_ID;
+    g_ui.title_region = WH_NONE;
+    g_ui.title_inside = 0;
+}
+
+static inline void ui_clear_drag(void){
+    g_ui.drag_win = SBW_INVALID_ID;
+    g_ui.drag_off_x = 0;
+    g_ui.drag_off_y = 0;
+}
+
+
+
+GADGET_BASE_T   GADGET_RESOURCE_POOL[MAX_GADGETS];
+
+
+
+// graphics glyphs up here out the way
+uint8_t glyph_resize[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02
+};
+
+
+
+/////// prototypes //////////////////
+
+static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock);
+static void normalize_zorder(void);
+
+
+
+
+//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
+//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
+//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
+//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
+
+
+
+
+///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
+///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
+///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
+///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
+///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
+///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
+
+
+// semi macro functions //
+static inline int16_t win_client_x(const sbx_window_t *w, int16_t mx) { return (int16_t)(mx - w->winviewrect.x); }
+static inline int16_t win_client_y(const sbx_window_t *w, int16_t my) { return (int16_t)(my - w->winviewrect.y); }
+
+static inline int16_t i16_min(int16_t a, int16_t b){ return (a < b) ? a : b; }
+static inline int16_t i16_max(int16_t a, int16_t b){ return (a > b) ? a : b; }
+
+
+typedef struct { int16_t x, y, w, h; } Rect16;
+static inline Rect16 r16(int16_t x, int16_t y, int16_t w, int16_t h){ Rect16 r = {x,y,w,h}; return r; }
+static inline uint8_t r16_valid(const Rect16 *r){ return (r->w > 0) && (r->h > 0); }
+
+static inline uint8_t pt_in_r16(int16_t px, int16_t py, const Rect16 *r){
+    return (px >= r->x) && (py >= r->y) && (px < (int16_t)(r->x + r->w)) && (py < (int16_t)(r->y + r->h));
+}
+static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+
+void initWb(void){
+    ui_clear_title_latch();
+    ui_clear_drag();
+    g_ui.mouse_down  = 0;
+    g_ui.down_win    = SBW_INVALID_ID;
+    g_ui.down_region = WH_NONE;
+    g_ui.resize_win  = SBW_INVALID_ID;
+}
+
+
+static inline void ui_clip_disable(void) { g_uiclip.enabled = 0; }
+
+static inline void ui_clip_set(int16_t x, int16_t y, int16_t w, int16_t h){
+    g_uiclip.enabled = 1;
+    g_uiclip.x0 = x;
+    g_uiclip.y0 = y;
+    g_uiclip.x1 = (int16_t)(x + w);
+    g_uiclip.y1 = (int16_t)(y + h);
+}
+
+
+static void enforce_screen_bounds(sbx_window_t *w){
+    if (!w) return;
+    if (!(w->flags & SBX_WF_SCREENBOUND)) return;
+
+    // If window bigger than screen, just pin it to origin (or center it)
+    int16_t max_x = (SCR_WIDTH > w->winrect.w) ? (int16_t)(SCR_WIDTH - w->winrect.w) : 0;
+    int16_t max_y = (SCR_HEIGHT > w->winrect.h) ? (int16_t)(SCR_HEIGHT - w->winrect.h) : 0;
+
+    w->winrect.x = clamp_i16(w->winrect.x, 0, max_x);
+    w->winrect.y = clamp_i16(w->winrect.y, 0, max_y);
+}
+
+
+static inline int16_t win_gutter_right(const sbx_window_t *w){
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
+        return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);  // the strip already draw
+    return 0;
+}
+
+static inline int16_t win_gutter_bottom(const sbx_window_t *w){
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
+        return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
+    return 0;
+}
+
+
+
+static void layoutDockedControls(sbx_window_t *w){
+    if (!w) return;
+
+    // aw/ah are "content/app" size in *pixels*, client-local
+    int16_t aw = w->contentviewrect.w;
+    int16_t ah = w->contentviewrect.h;
+
+    int16_t gr = win_gutter_right(w);
+    int16_t gb = win_gutter_bottom(w);
+/*
+    for (uint8_t i = 0; i < w->ctrl_count; i++){
+        sbx_control_t *c = &w->ctrls[i];
+        if (!c->used) continue;
+        if (!c->visible) continue;
+        if (c->type != CTL_SCROLLBAR) continue;
+
+        int16_t thick = (c->orient == SBX_SB_VERT) ? c->w : c->h;
+        if (thick <= 0) thick = WIN_RESIZE_GLYPH_SIZE;
+
+        switch (c->dock){
+
+        case SBX_DOCK_RIGHT: {
+            int16_t sbw = (gr > 0) ? gr : thick;
+
+            // shrink content first
+            aw = (int16_t)(aw - sbw);
+            if (aw < 0) aw = 0;
+
+            // for doked sliders later
+            c->x = aw;
+            c->y = 0;
+            c->w = sbw + 4;
+            c->h = (gb > 0) ? (int16_t)(ah - gb) : ah;
+            if (c->h < 0) c->h = 0;
+            break;
+        }
+
+        case SBX_DOCK_BOTTOM: {
+            int16_t sbh = (gb > 0) ? gb : thick;
+
+            // shrink content first
+            ah = (int16_t)(ah - sbh);
+            if (ah < 0) ah = 0;
+
+            c->x = 0;
+            c->y = ah;
+            c->w = (gr > 0) ? (int16_t)(aw) : w->cw;   // usually aw is what want here
+            c->h = sbh + 4;
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+*/
+    w->contentviewrect.w = aw ;
+    w->contentviewrect.h = ah;
+}
+
+
+static void layoutWindow(sbx_window_t *w){
+    int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0;
+
+    if (w->flags & SBX_WF_NOBORDER) {
+        //client demensions (basically the whole window
+        w->winviewrect.x = w->winrect.x;
+        w->winviewrect.y = w->winrect.y;
+        w->winviewrect.w = w->winrect.w;
+        w->winviewrect.h = w->winrect.h;
+    } else {
+        w->winviewrect.x = w->winrect.x + WIN_BORDER;
+        w->winviewrect.y = w->winrect.y + WIN_BORDER + title_h;
+        w->winviewrect.w = w->winrect.w - (WIN_BORDER * 2);
+        w->winviewrect.h = w->winrect.h - ((WIN_BORDER * 2) + title_h);
+    }
+
+    // start app area = full client
+    w->contentviewrect.x = w->winviewrect.x;
+    w->contentviewrect.y = w->winviewrect.y;
+    w->contentviewrect.w = w->winviewrect.w;
+    w->contentviewrect.h = w->winviewrect.h;
+
+    layoutDockedControls(w);
+}
+
+
+static inline void ui_end_interaction(void){
+    g_ui.mouse_down  = 0;
+    g_ui.down_win    = SBW_INVALID_ID;
+    g_ui.down_region = WH_NONE;
+
+    ui_clear_title_latch();
+    ui_clear_drag();
+
+    g_ui.resize_win  = SBW_INVALID_ID;
+
+    g_ui.capturedGadget = NULL;
+    g_ui.capturedGadgetRect = NULL;
+}
+
+
+void SBOS_setFocus(SBXWindowId id){
+    if (id >= MAX_WINDOWS || !gui_used[id]) {
+        g_focusWin = SBW_INVALID_ID;
+        return;
+    }
+
+    if (gui_windows[id].flags & SBX_WF_NOFOCUS) return;
+
+    g_focusWin = id;
+}
+/*
+static void ctrl_set_text(sbx_control_t *c, const char *text){
+    if (!c) return;
+    if (!text) { c->text[0] = '\0'; return; }
+
+    int i = 0;
+    for (; text[i] && i < (int)sizeof(c->text) - 1; i++)
+        c->text[i] = text[i];
+    c->text[i] = '\0';
+}
+*/
+
+
+
+SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
+    for (SBXWindowId i = 0; i < MAX_WINDOWS; i++) {
+        if (!gui_used[i]) {
+            gui_used[i] = 1;
+
+            sbx_window_t *w = &gui_windows[i];
+            w->winrect.x = x;
+            w->winrect.y = y;
+            w->winrect.w = (int16_t)width;
+            w->winrect.h = (int16_t)height;
+            w->flags = flags;
+
+            //w->ctrl_count = 0;
+            //w->id = i;
+
+
+            if (title) {
+                size_t n = 0;
+                while (title[n] && n < sizeof(w->title) - 1) {
+                    w->title[n] = title[n];
+                    n++;
+                }
+                w->title[n] = '\0';
+            } else {
+                w->title[0] = '\0';
+            }
+
+            enforce_screen_bounds(w);
+            layoutWindow(w);
+
+            if (g_zcount < MAX_WINDOWS) {
+                g_zorder[g_zcount++] = i;
+            } else {
+                gui_used[i] = 0;
+                return SBW_INVALID_ID;
+            }
+
+            normalize_zorder();
+            SBOS_paintAllWindows();
+
+            return i;
+        }
+    }
+
+    return SBW_INVALID_ID;
+}
+
+sbx_window_t* SBOS_getWindow(SBXWindowId id){
+    if (id >= MAX_WINDOWS || !gui_used[id]) return 0;
+    return &gui_windows[id];
+}
+
+
+
+
+void SBOS_paintWindow(SBXWindowId id){
+    sbx_window_t *w = SBOS_getWindow(id);
+    if (!w) return;
+
+    layoutWindow(w);
+
+    int16_t win_x  = w->winrect.x;
+    int16_t win_y  = w->winrect.y;
+    int16_t win_w  = w->winrect.w;
+    int16_t win_h  = w->winrect.h;
+
+    int16_t win_cx = w->winviewrect.x;
+    int16_t win_cy = w->winviewrect.y;
+    int16_t win_cw = w->winviewrect.w;
+    int16_t win_ch = w->winviewrect.h;
+
+    int16_t win_tx = win_x + (WIN_BORDER + 4);
+    int16_t win_ty = win_y + (WIN_BORDER);
+    int16_t tb_h = 0;
+
+    uint16_t borderPen = (id == g_focusWin) ? WIN_BORDER_ACTIVE_PEN: WIN_BORDER_INACTIVE_PEN;
+
+    // outer frame (outline only)
+    draw_rect_outline_thick(win_x, win_y, win_w, win_h, WIN_BORDER, borderPen);
+
+    uint16_t shadew = WIN_BORDER;
+
+    // client canvas (fill)
+    if ((w->flags & SBX_WF_RESIZABLE)){
+        // this should only happen if there is a scroll bar at the bottom - for now perma do this
+        win_cw = w->contentviewrect.w;
+        win_ch -= (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
+    }
+    // client background
+    sbgfx_drawbox(w->contentviewrect.x, w->contentviewrect.y, w->contentviewrect.w, w->contentviewrect.h, WIN_BG_PEN);
+
+
+    // client only gadgets
+    // draw ONLY gadgets that are NOT docked
+    ui_clip_set(w->winviewrect.x, w->winviewrect.y, w->winviewrect.w, w->winviewrect.h);
+    SBOS_drawControlsFiltered(w, 0);
+    ui_clip_disable();
+
+    // draw the blue gutter bar, we draw this, that paints over the client controls if not clipped properly
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
+        int16_t gx = (int16_t)(w->winrect.x + w->winrect.w - WIN_RESIZE_GLYPH_SIZE);
+        int16_t gy = (int16_t)(w->winrect.y + w->winrect.h - WIN_RESIZE_GLYPH_SIZE);
+        ui_clip_set(win_x, win_y, win_w, win_h);
+
+        // right side --------------
+        sbgfx_drawbox(win_x, gy+1, (int16_t)win_cw + WIN_BORDER, (int16_t)(WIN_RESIZE_GLYPH_SIZE - 2), borderPen);
+        ui_clip_disable();
+
+        // the resize glyph
+        sbgfx_drawbox(gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE, borderPen);
+        draw_bevel(gx, gy,
+                         WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE,
+                         WIN_BEVEL_H, WIN_BEVEL_L,
+                         0);
+
+        sbgfx_glyph(gx, gy, glyph_resize);
+    }
+
+    int16_t gr = win_gutter_right(w);
+    int16_t gb = win_gutter_bottom(w);
+
+    // draw the docked controls AFTER the gutter rendering
+    ui_clip_set(w->winviewrect.x, w->winviewrect.y, (int16_t)(w->winviewrect.w + gr), (int16_t)(w->winviewrect.h + gb));
+    SBOS_drawControlsFiltered(w, 1);
+    ui_clip_disable();
+
+    gfx_setcolour(WIN_BEVEL_L);
+    // keep these as i want them later
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
+        int16_t gx = (int16_t)(w->winrect.x + w->winrect.w - WIN_RESIZE_GLYPH_SIZE);
+        int16_t gy = (int16_t)(w->winrect.y + w->winrect.h - WIN_RESIZE_GLYPH_SIZE);
+    }
+
+
+    if (w->flags & SBX_WF_NOBORDER) return;
+    // frame
+    draw_bevel(win_x, win_y, win_w, win_h, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+    draw_bevel(win_cx-1, win_cy-1, win_cw+2, win_ch+2, WIN_BEVEL_H, WIN_BEVEL_L, 1);
+    //draw_bevel_rect2(win_cx-1, win_cy-1, win_cw, win_ch+2, WIN_BEVEL_H, WIN_BEVEL_L, 1);
+
+
+    if (w->flags & SBX_WF_TITLE_BAR) {
+        int16_t tb_x = win_x;
+        int16_t tb_y = win_y;
+        int16_t tb_w = win_w;
+        tb_h = WIN_TITLE_HEIGHT + 4;
+        fill_rect_pen(tb_x, tb_y, tb_w, tb_h, borderPen);
+
+        gfx_setcolour(WIN_BEVEL_L);
+        //ui_hline(win_x, win_cy - 1, win_w);
+
+        int16_t bx = tb_x + tb_w;   // right edge inside border
+        int16_t by = tb_y;          // top of title bar
+        int16_t twidth = win_w;
+
+        // the ONLY place that deals with the drawing on the window directly!
+        uint8_t downClose = (g_ui.mouse_down && g_ui.title_win == id && g_ui.title_inside && g_ui.title_region == WH_CLOSE);
+        uint8_t downMin   = (g_ui.mouse_down && g_ui.title_win == id && g_ui.title_inside && g_ui.title_region == WH_MINIMISE);
+        uint8_t downMax   = (g_ui.mouse_down && g_ui.title_win == id && g_ui.title_inside && g_ui.title_region == WH_MAXRESTORE);
+        uint8_t downZo    = (g_ui.mouse_down && g_ui.title_win == id && g_ui.title_inside && g_ui.title_region == WH_ZORDER);
+
+        // ZORDER button (before min/max)
+        if (w->flags & SBX_WF_ZORDER) {
+            bx -= WIN_ZORDER_WIDTH;
+            twidth -= (WIN_ZORDER_WIDTH);
+
+            draw_title_button(bx, by, WIN_ZORDER_WIDTH, tb_h, borderPen, downZo);
+            glyph_zorder(bx, by, WIN_ZORDER_WIDTH, tb_h);
+
+        }
+
+        // MAXIMIZE/ RESORE
+        if (w->flags & SBX_WF_MAXRESTORE) {
+            bx -= WIN_MAXRESTORE_WIDTH;
+            twidth -= (WIN_MAXRESTORE_WIDTH);
+            draw_title_button(bx, by, WIN_MAXRESTORE_WIDTH, tb_h, borderPen, downMax);
+            glyph_max_box(bx, by, WIN_MAXRESTORE_WIDTH, tb_h);
+
+        }
+
+        // MINIMISE
+        if (w->flags & SBX_WF_MINIMISE) {
+            bx -= WIN_MINIMISE_WIDTH;
+            twidth -= (WIN_MINIMISE_WIDTH);
+            draw_title_button(bx, by, WIN_MINIMISE_WIDTH, tb_h, borderPen, downMin);
+            glyph_minimise(bx, by, WIN_MINIMISE_WIDTH, tb_h);
+
+        }
+
+        // CLOSE button (top-left)
+        if (w->flags & SBX_WF_CLOSE) {
+            int16_t cx = tb_x; // left inside border
+            int16_t cy = by;
+            draw_title_button(cx, cy, WIN_CLOSE_WIDTH, tb_h, borderPen, downClose);
+            glyph_close_x(cx, cy, WIN_CLOSE_WIDTH, tb_h);
+
+
+            win_tx = cx + WIN_CLOSE_WIDTH + 4;
+            tb_x = cx + WIN_CLOSE_WIDTH;
+            twidth -= (WIN_CLOSE_WIDTH);
+        }
+
+        draw_bevel_rect(tb_x, win_y, twidth, WIN_TITLE_HEIGHT + (WIN_BORDER));
+
+        // Title text
+        uint16_t titlePen = (id == g_focusWin) ? WIN_TITLE_PEN_ACTIVE : WIN_TITLE_PEN_INACTIVE;
+
+        gfx_setcolour(titlePen);
+
+        char tmpTitle[65];
+        int16_t titlewidthclip = twidth;
+
+        // how many characters fit?
+        int16_t max_chars = (titlewidthclip - 8) / 8;
+        if (max_chars < 0) max_chars = 0;
+        if (max_chars > 64) max_chars = 64;
+
+        // copy only what fits
+        uint8_t c = 0;
+        for (; c < max_chars && w->title[c]; c++) {
+            tmpTitle[c] = w->title[c];
+        }
+        tmpTitle[c] = '\0';
+
+        sbx_draw_text816(win_tx, win_ty-2, (const unsigned char *)tmpTitle);
+    }
+
+    // focus
+    if (id == g_focusWin) {
+        gfx_setcolour(WIN_BEVEL_L);
+        ui_vlinedotted(win_x-1, win_y, win_h);
+        ui_hlinedotted(win_x,   win_y-1, win_w);
+        ui_hlinedotted(win_x,   win_y + win_h, win_w);
+        ui_vlinedotted(win_w + win_x, win_y, win_h);
+    }
+}
+
+static void normalize_zorder(void){
+    SBXWindowId back[MAX_WINDOWS];
+    SBXWindowId mid[MAX_WINDOWS];
+    SBXWindowId front[MAX_WINDOWS];
+    uint8_t nb = 0, nm = 0, nf = 0;
+
+    for (uint8_t i = 0; i < g_zcount; i++) {
+        SBXWindowId id = g_zorder[i];
+        if (id >= MAX_WINDOWS || !gui_used[id]) continue;
+
+        uint32_t f = gui_windows[id].flags;
+
+        // If both are set, choose a rule (front wins here)
+        if ((f & SBX_WF_ALWAYS_TO_FRONT) && (f & SBX_WF_ALWAYS_TO_BACK)) {
+            f &= ~SBX_WF_ALWAYS_TO_BACK;
+            gui_windows[id].flags = f;
+        }
+
+        if (f & SBX_WF_ALWAYS_TO_BACK)       back[nb++]  = id;
+        else if (f & SBX_WF_ALWAYS_TO_FRONT) front[nf++] = id;
+        else                                 mid[nm++]   = id;
+    }
+
+    // Rebuild g_zorder: back -> mid -> front
+    uint8_t out = 0;
+    for (uint8_t i = 0; i < nb; i++) g_zorder[out++] = back[i];
+    for (uint8_t i = 0; i < nm; i++) g_zorder[out++] = mid[i];
+    for (uint8_t i = 0; i < nf; i++) g_zorder[out++] = front[i];
+
+    g_zcount = out;
+}
+
+static int z_front_barrier(void){
+    for (int i = 0; i < (int)g_zcount; i++) {
+        SBXWindowId id = g_zorder[i];
+        if (id < MAX_WINDOWS && gui_used[id]) {
+            if (gui_windows[id].flags & SBX_WF_ALWAYS_TO_FRONT)
+                return i; // first always-front window
+        }
+    }
+    return (int)g_zcount;
+}
+
+static int z_find(SBXWindowId id){
+    for (int i = 0; i < (int)g_zcount; i++) {
+        if (g_zorder[i] == id) return i;
+    }
+    return -1;
+}
+
+void SBOS_bringToFront(SBXWindowId id){
+    if (id >= MAX_WINDOWS || !gui_used[id]) return;
+
+    uint32_t f = gui_windows[id].flags;
+    if (f & SBX_WF_ALWAYS_TO_BACK) return; // locked to back
+
+    int pos = z_find(id);
+    if (pos < 0) return;
+
+    int barrier = z_front_barrier();         // index where always-front starts
+    int target  = barrier - 1;               // last slot before always-front
+    if (target < 0) target = 0;
+
+    // If this window is itself always-front, true front is allowed
+    if (f & SBX_WF_ALWAYS_TO_FRONT) target = (int)g_zcount - 1;
+
+    if (pos == target) return;
+
+    SBXWindowId temp = g_zorder[pos];
+
+    if (pos < target) {
+        for (int i = pos; i < target; i++) g_zorder[i] = g_zorder[i + 1];
+    } else {
+        for (int i = pos; i > target; i--) g_zorder[i] = g_zorder[i - 1];
+    }
+    g_zorder[target] = temp;
+
+    normalize_zorder();
+}
+
+
+static void z_remove(SBXWindowId id){
+    int pos = z_find(id);
+    if (pos < 0) return;
+
+    for (int i = pos; i < (int)g_zcount - 1; i++) {
+        g_zorder[i] = g_zorder[i + 1];
+    }
+    g_zcount--;
+}
+
+
+static SBXWindowId findTopFocusable(void){
+    for (int zi = (int)g_zcount - 1; zi >= 0; zi--) {
+        SBXWindowId id = g_zorder[zi];
+        if (id >= MAX_WINDOWS || !gui_used[id]) continue;
+        if (!(gui_windows[id].flags & SBX_WF_VISIBLE)) continue;
+        if (gui_windows[id].flags & SBX_WF_NOFOCUS) continue;
+        return id;
+    }
+    return SBW_INVALID_ID;
+}
+
+void SBOS_destroyWindow(SBXWindowId id){
+    if (id >= MAX_WINDOWS) return;
+    if (!gui_used[id]) return;
+
+    gui_windows[id].flags = 0;
+    gui_windows[id].title[0] = '\0';
+
+    gui_used[id] = 0;
+    z_remove(id);
+
+    if (g_focusWin == id) g_focusWin = findTopFocusable();
+
+    normalize_zorder();
+    SBOS_paintAllWindows();
+}
+
+
+
+void SBOS_sendToBack(SBXWindowId id){
+    if (id >= MAX_WINDOWS || !gui_used[id]) return;
+    if (gui_windows[id].flags & SBX_WF_ALWAYS_TO_FRONT) return;  // cannot sink 😄
+
+    int pos = z_find(id);
+    if (pos < 0) return;
+    if (pos == 0) return;
+
+    SBXWindowId temp = g_zorder[pos];
+    for (int i = pos; i > 0; i--) g_zorder[i] = g_zorder[i - 1];
+    g_zorder[0] = temp;
+
+    normalize_zorder();
+}
+
+void SBOS_paintAllWindows(void){
+    for (int zi = 0; zi < (int)g_zcount; zi++) {
+        SBXWindowId id = g_zorder[zi];
+        if (id >= MAX_WINDOWS) continue;
+        if (!gui_used[id]) continue;
+
+        if (gui_windows[id].flags & SBX_WF_VISIBLE) {
+            SBOS_paintWindow(id);
+        }
+    }
+}
+
+static inline uint8_t is_title_gadget_region(WHitRegion r){
+    return (r == WH_CLOSE) || (r == WH_MINIMISE) || (r == WH_MAXRESTORE) || (r == WH_ZORDER);
+}
+
+static inline uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h){
+    Rect16 r = r16(x,y,w,h);
+    return pt_in_r16(px,py,&r);
+}
+
+
+
+
+
+
+
+static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
+    WHitResult r = { SBW_INVALID_ID, WH_NONE };
+
+    sbx_window_t *w = SBOS_getWindow(id);
+    if (!w) return r;
+    if (!(w->flags & SBX_WF_VISIBLE)) return r;
+
+    layoutWindow(w);
+
+    // 1) overall window bounds (for quick reject)
+    if (!mousept_in_rect(mx, my, w->winrect.x, w->winrect.y, w->winrect.w, w->winrect.h)) return r;
+
+    r.id = id;
+
+    // Borderless window: everything is client
+    if (w->flags & SBX_WF_NOBORDER) {
+        r.region = WH_CLIENT;
+        return r;
+    }
+
+    // Title bar geometry
+    uint8_t hasTitle = (w->flags & SBX_WF_TITLE_BAR) != 0;
+    int16_t tb_h = hasTitle ? (WIN_TITLE_HEIGHT + 4) : 0;
+
+    // 2) If inside title band, check buttons
+    if (hasTitle && mousept_in_rect(mx, my, w->winrect.x, w->winrect.y, w->winrect.w, tb_h)) {
+
+        int16_t bx = w->winrect.x + w->winrect.w;   // right edge
+        int16_t by = w->winrect.y;          // top
+        // IMPORTANT: draw_title_button makes height = WIN_TITLE_HEIGHT + WIN_BORDER
+
+        int16_t bh = tb_h;
+
+        // Right side: MAXRESTORE then ZORDER (same order paint)
+        if (w->flags & SBX_WF_ZORDER) {
+            bx -= WIN_ZORDER_WIDTH;
+            if (mousept_in_rect(mx, my, bx, by, WIN_ZORDER_WIDTH, bh)) {
+                r.region = WH_ZORDER;
+
+                return r;
+            }
+        }
+
+        if (w->flags & SBX_WF_MAXRESTORE) {
+            bx -= WIN_MAXRESTORE_WIDTH;
+            if (mousept_in_rect(mx, my, bx, by, WIN_MAXRESTORE_WIDTH, bh)) {
+                r.region = WH_MAXRESTORE;
+
+                return r;
+            }
+        }
+
+        if (w->flags & SBX_WF_MINIMISE) {
+            bx -= WIN_MINIMISE_WIDTH;
+            if (mousept_in_rect(mx, my, bx, by, WIN_MINIMISE_WIDTH, bh)) {
+                r.region = WH_MINIMISE;
+
+                return r;
+            }
+        }
+
+        // Left side: CLOSE
+        if (w->flags & SBX_WF_CLOSE) {
+            int16_t cx = w->winrect.x;
+            if (mousept_in_rect(mx, my, cx, by, WIN_CLOSE_WIDTH, bh)) {
+                r.region = WH_CLOSE;
+                return r;
+            }
+        }
+        // Otherwise it’s the title bar
+        r.region = WH_TITLE;
+        return r;
+    }
+
+
+    // Resize glyph hit (bottom-right)
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
+        int16_t gx = (int16_t)(w->winrect.x + w->winrect.w - WIN_RESIZE_GLYPH_SIZE);
+        int16_t gy = (int16_t)(w->winrect.y + w->winrect.h - WIN_RESIZE_GLYPH_SIZE);
+        if (mousept_in_rect(mx, my, gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE)) {
+            r.region = WH_RESIZE;
+            return r;
+        }
+    }
+
+    // 3) Otherwise, check client area INCLUDING gutters (for docked controls)
+    int16_t gr = win_gutter_right(w);
+    int16_t gb = win_gutter_bottom(w);
+
+    if (mousept_in_rect(mx, my, w->winviewrect.x, w->winviewrect.y, (int16_t)(w->winviewrect.w + gr), (int16_t)(w->winviewrect.h + gb))) {
+        r.region = WH_CLIENT;
+        return r;
+    }
+
+
+    // 4) Inside window but not title/client => border
+    // add WH_BORDER laterwant resize hit zones.
+    r.region = WH_CLIENT; // or WH_NONE
+    return r;
+}
+
+void windowHittest(int16_t mx, int16_t my){
+    // scan front->back so topmost window wins
+    for (int zi = (int)g_zcount - 1; zi >= 0; zi--) {
+        SBXWindowId id = g_zorder[zi];
+        if (id >= MAX_WINDOWS) continue;
+        if (!gui_used[id]) continue;
+
+        WHitResult hit = hittest_window(id, mx, my);
+        if (hit.region == WH_NONE) continue;
+
+        // topmost hit window found: act on it
+        switch (hit.region) {
+        case WH_CLOSE:
+            // dont kill it yet, we'll probably want to send this message our selves in the software,
+            // realistically this should send a message that this windows close glyph was hit
+            //SBOS_destroyWindow(hit.id);
+            break;
+
+        case WH_ZORDER:
+            // send to back (or toggle behaviour)
+            SBOS_sendToBack(hit.id);
+            break;
+
+        case WH_MAXRESTORE:
+            // TODO: implement maximize toggle
+            // for now just bring to front so it feels responsive
+            break;
+
+        case WH_TITLE:
+
+            // TODO: start dragging (store drag offset)
+            break;
+
+        case WH_CLIENT:
+            // TODO: route click to window/app
+            // unless we have a flag that says "dont take focus"
+            //SBOS_sendToFront(hit.id);
+            break;
+
+        default:
+            break;
+        }
+
+        return; // IMPORTANT: stop after first (topmost) hit
+    }
+}
+
+
+void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
+    if (evt == MOUSE_DOWN) {
+        g_ui.mouse_down = 1;
+        g_ui.resize_win = SBW_INVALID_ID;
+
+        // hit-test once on press
+        for (int zi = (int)g_zcount - 1; zi >= 0; zi--) {
+            SBXWindowId id = g_zorder[zi];
+            if (id >= MAX_WINDOWS || !gui_used[id]) continue;
+
+            WHitResult hit = hittest_window(id, mx, my);
+            if (hit.region == WH_NONE) continue;
+            sbx_window_t *w = SBOS_getWindow(hit.id);
+
+            if(!(w->flags & SBX_WF_NOAUTOZORDER)) SBOS_bringToFront(hit.id);
+            SBOS_setFocus(hit.id);  // if(!(w->flags & SBX_WF_NOFOCUS))      checked inside setFocus
+
+
+            g_ui.down_region = hit.region;
+            g_ui.down_win = hit.id;
+
+
+            //// WINDOW FRAME LATCHES //////////////////////////////////
+            // latch title gadget press
+            if (is_title_gadget_region(hit.region)) {
+                g_ui.title_win    = hit.id;
+                g_ui.title_region = hit.region;
+                g_ui.title_inside = 1; // currently inside by definition
+            } else {
+                g_ui.title_win    = SBW_INVALID_ID;
+                g_ui.title_region = WH_NONE;
+                g_ui.title_inside = 0;
+            }
+
+            if (hit.region == WH_RESIZE) {
+                if (w && (w->flags & SBX_WF_RESIZABLE)) {
+                    g_ui.resize_win = hit.id;
+                    g_ui.r_start_mx  = mx;
+                    g_ui.r_start_my  = my;
+                    g_ui.r_start_w   = w->winrect.w;
+                    g_ui.r_start_h   = w->winrect.h;
+                }
+                break;
+            }
+
+
+
+
+
+            // start drag if title hit
+            if (hit.region == WH_TITLE) {
+                if(w->flags & SBX_WF_MOVEABLE){
+                    g_ui.drag_win = hit.id;
+                    g_ui.drag_off_x = mx - w->winrect.x;
+                    g_ui.drag_off_y = my - w->winrect.y;
+                }
+            }
+
+            ////////// THEN do the hits inside the program window view port //////////////////
+            /// Likely the gadgets /// will need to figure out the docked window frame gadgets later
+            /// KEEP FOR NOW will ned them for later
+            if (hit.region == WH_CLIENT) {
+                if (w) {
+                    int16_t cx = win_client_x(w, mx);
+                    int16_t cy = win_client_y(w, my);
+                }
+            }
+            break;
+        }
+
+        SBOS_paintAllWindows();
+        return;
+    }
+    if (evt == MOUSE_MOVE) {
+
+        // resize window -------- resize window gadget
+        if (g_ui.mouse_down && g_ui.resize_win != SBW_INVALID_ID) {
+            sbx_window_t *w = SBOS_getWindow(g_ui.resize_win);
+            if (w) {
+                int16_t dx = (int16_t)(mx - g_ui.r_start_mx);
+                int16_t dy = (int16_t)(my - g_ui.r_start_my);
+
+                int16_t nw = (int16_t)(g_ui.r_start_w + dx);
+                int16_t nh = (int16_t)(g_ui.r_start_h + dy);
+
+                // Optional: keep window inside screen when growing
+                if (w->flags & SBX_WF_SCREENBOUND) {
+                    if (w->winrect.x + nw > SCR_WIDTH)  nw = (int16_t)(SCR_WIDTH - w->winrect.x);
+                    if (w->winrect.y + nh > SCR_HEIGHT) nh = (int16_t)(SCR_HEIGHT - w->winrect.y);
+                    // enforce minimum window size
+                    if (nw < 100) nw = 100;
+                    if (nh < 100) nh = 100;
+                }
+
+                w->winrect.w = nw;
+                w->winrect.h = nh;
+
+                layoutWindow(w);
+                SBOS_paintAllWindows();
+            }
+            return;
+        }
+
+
+        // dragging the window about the place
+        if (g_ui.mouse_down && g_ui.drag_win != SBW_INVALID_ID) {
+            sbx_window_t *w = SBOS_getWindow(g_ui.drag_win);
+            if (w) {
+                w->winrect.x = mx - g_ui.drag_off_x;
+                w->winrect.y = my - g_ui.drag_off_y;
+                // keep layout consistent
+                enforce_screen_bounds(w);
+
+                layoutWindow(w);
+                SBOS_paintAllWindows();
+            }
+            return;
+        }
+
+        // when mouse is held down and a gadget is captured
+        if (g_ui.mouse_down && g_ui.title_win != SBW_INVALID_ID && is_title_gadget_region(g_ui.title_region)) {
+            WHitResult ht = hittest_window(g_ui.title_win, mx, my);
+            uint8_t inside = (ht.region == g_ui.title_region);
+            if (inside != g_ui.title_inside) {
+                g_ui.title_inside = inside;
+                SBOS_paintAllWindows();
+            }
+        }
+        return;
+    }
+
+    if (evt == MOUSE_UP) {
+
+        // stop resize no matter what
+        g_ui.resize_win = SBW_INVALID_ID;
+
+        // 1) TITLE GADGET RELEASE (latched)
+        if (g_ui.title_win != SBW_INVALID_ID && is_title_gadget_region(g_ui.title_region)) {
+
+            SBXWindowId wclick = g_ui.title_win;
+            WHitRegion  rclick = g_ui.title_region;
+
+            // pop visual first
+            g_ui.title_win    = SBW_INVALID_ID;
+            g_ui.title_region = WH_NONE;
+            g_ui.title_inside = 0;
+
+            // click only if released inside same gadget
+            WHitResult ht = hittest_window(wclick, mx, my);
+            if (ht.region == rclick) {
+                if (rclick == WH_CLOSE){
+                    //SBOS_destroyWindow(wclick);
+                    printf("GLYPH HIT - Close Window\r\n");
+                }
+                else if (rclick == WH_ZORDER){
+                    SBOS_sendToBack(wclick);
+                    printf("GLYPH HIT - Zorder\r\n");
+                }
+                else if (rclick == WH_MINIMISE) {
+                    printf("GLYPH HIT - Minimised\r\n");
+                    /* TODO */
+                }
+                else if (rclick == WH_MAXRESTORE) {
+                    printf("GLYPH HIT - MaxRestore\r\n");
+                /* TODO */
+                }
+            }
+
+            SBOS_paintAllWindows();
+
+            // common cleanup
+            ui_end_interaction();
+            return;
+        }
+
+        // 4 OTHERWISE: just cleanup (end drag etc)
+        SBOS_paintAllWindows();
+        ui_end_interaction();
+        return;
+    }
+
+}
+
+
+
+static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
+    // doesnt do anything yet
+    return;
+}
