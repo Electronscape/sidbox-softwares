@@ -26,10 +26,12 @@ qt_add_executable(graphics-gui_testing
 
     sbx_render.h
     sbx_render.cpp
-    sbx_gadgets.c
+    sbx_gadgets.cpp
+
+    sbx_input.h
+    sbx_input.cpp
 
 )
-
 
 find_package(
     ALSA REQUIRED

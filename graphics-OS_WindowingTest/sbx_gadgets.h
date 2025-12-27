@@ -13,9 +13,10 @@
 // --------- HANDLE TYPE (index + generation) ----------
 typedef uint32_t SBControlHandle;
 #define SBCTL_INVALID           ((SBControlHandle)0xFFFFFFFF)
-#define SBCTL_MAKE(gen, idx)    ((SBControlHandle)((((uint16_t)(gen)) << 16) | ((uint16_t)(idx) & 0xFFFF)))
-#define SBCTL_IDX(h)            ((uint8_t)((h) & 0xFFFF))
-#define SBCTL_GEN(h)            ((uint8_t)((h) >> 16))
+#define SBCTL_MAKE(gen, idx)    ((SBControlHandle)((((uint32_t)(gen) & 0xFFFFu) << 16) | ((uint32_t)(idx) & 0xFFFFu)))
+#define SBCTL_IDX(h)            ((uint16_t)((h) & 0xFFFFu))
+#define SBCTL_GEN(h)            ((uint16_t)(((h) >> 16) & 0xFFFFu))
+
 
 // -----------------------------------------------------
 

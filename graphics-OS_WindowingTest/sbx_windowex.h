@@ -81,8 +81,9 @@ typedef enum {
 } WHitRegion;
 
 typedef struct {
-    SBXWindowId  id;
-    WHitRegion   region;
+    SBXWindowId     id;
+    WHitRegion      region;
+    SBControlHandle ctrl;   // optional, SBCTL_INVALID if none
 } WHitResult;
 
 typedef enum {
@@ -105,8 +106,7 @@ void            SBOS_bringToFront(SBXWindowId id);
 void            SBOS_setFocus(SBXWindowId id);
 
 
-//  UI INTERFACING //
-void            SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my);
+
 
 
 

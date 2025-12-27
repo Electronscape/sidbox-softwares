@@ -5,74 +5,20 @@
 
 
 #include "sbx_render.h"
+#include "sbx_input.h"
 #include "sbx_windowex.h"
 #include "sbx_gadgets.h"
 
+sbx_window_t     gui_windows[MAX_WINDOWS];
+uint8_t          gui_used[MAX_WINDOWS];
 
+SBXWindowId      g_winZorder[MAX_WINDOWS];
+uint8_t          g_winZcount = 0;
 
-
-
-
-
-
-static sbx_window_t     gui_windows[MAX_WINDOWS];
-static uint8_t          gui_used[MAX_WINDOWS];
-
-static SBXWindowId      g_winZorder[MAX_WINDOWS];
-static uint8_t          g_winZcount = 0;
 
 // globals ONLY for windows!! everything else needs to be in a contained
 static SBXWindowId      g_focusWin   = SBW_INVALID_ID;
 
-typedef struct {
-    uint8_t         mouse_down;
-
-    // what the mouse-down started on (window + region)
-    SBXWindowId     down_win;
-    WHitRegion      down_region;
-
-    // title gadget tracking (close/min/max/zorder)
-    SBXWindowId     title_win;
-    WHitRegion      title_region;
-    uint8_t         title_inside;
-
-    // window drag
-    SBXWindowId     drag_win;
-    int16_t         drag_off_x;
-    int16_t         drag_off_y;
-
-    // resize
-    SBXWindowId     resize_win;
-    int16_t         r_start_mx;
-    int16_t         r_start_my;
-    int16_t         r_start_w;
-    int16_t         r_start_h;
-
-    // then here we will use, REUSABLE start_x, start_y, drag_x, drag_y's
-    // since i HOPE we are going to use the gadget handle as the references later
-    // example: dummy stuff below
-
-    GADGET_BASE_T   *capturedGadget;
-    GADGET_RECT_T   *capturedGadgetRect;    // this is to help with the checking for "are we still inside the button rect" for exmaple
-
-    int16_t         clicked_x, clicked_y;   // starting gadget mouse hit point
-    int16_t         drag_x, drag_y;         // moving mouse point over the gadget (usually for sliders
-} UIInputState;
-
-
-
-static UIInputState g_ui = {
-    .mouse_down   = 0,
-    .down_win     = SBW_INVALID_ID,
-    .down_region  = WH_NONE,
-
-    .title_win    = SBW_INVALID_ID,
-    .title_region = WH_NONE,
-    .title_inside = 0,
-
-    .drag_win     = SBW_INVALID_ID,
-    .resize_win   = SBW_INVALID_ID,
-};
 
 
 static inline void ui_clear_title_latch(void){
@@ -120,24 +66,9 @@ uint8_t glyph_resize[] = {
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock);
 static void normalize_zorder(void);
 
-
-
-
-//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
-//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
-//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
-//////////// GRAPHICS ROUTINES FOR RENDERING THE UI ////////////////////////////////////////////
-
-
-
-
-///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
-///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
-///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
-///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
-///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
-///////////////////////// FUNCTIONS FOR THE UI ARE LISTED BELOW ///////////////////////////////////////
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/// FUNCTIONALITY BELOW //////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // semi macro functions //
 static inline int16_t win_client_x(const sbx_window_t *w, int16_t mx) { return (int16_t)(mx - w->winviewrect.x); }
@@ -374,6 +305,10 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
 
             normalize_zorder();
             SBOS_paintAllWindows();
+
+            w->self = i;
+            for (int k = 0; k < MAX_GADGETS_PER_WINDOW; k++) w->GADGETS[k] = NULL;
+
 
             return i;
         }
@@ -726,12 +661,8 @@ static inline uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t
 
 
 
-
-
-
-
 static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
-    WHitResult r = { SBW_INVALID_ID, WH_NONE };
+    WHitResult r = { SBW_INVALID_ID, WH_NONE, SBCTL_INVALID };
 
     sbx_window_t *w = SBOS_getWindow(id);
     if (!w) return r;
@@ -879,6 +810,35 @@ void windowHittest(int16_t mx, int16_t my){
 }
 
 
+
+
+static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
+    // doesnt do anything yet
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
     if (evt == MOUSE_DOWN) {
         g_ui.mouse_down = 1;
@@ -958,6 +918,9 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         if (g_ui.mouse_down && g_ui.resize_win != SBW_INVALID_ID) {
             sbx_window_t *w = SBOS_getWindow(g_ui.resize_win);
             if (w) {
+
+                enforce_screen_bounds(w);
+
                 int16_t dx = (int16_t)(mx - g_ui.r_start_mx);
                 int16_t dy = (int16_t)(my - g_ui.r_start_my);
 
@@ -1044,7 +1007,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                 }
                 else if (rclick == WH_MAXRESTORE) {
                     printf("GLYPH HIT - MaxRestore\r\n");
-                /* TODO */
+                    /* TODO */
                 }
             }
 
@@ -1061,11 +1024,4 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         return;
     }
 
-}
-
-
-
-static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
-    // doesnt do anything yet
-    return;
 }

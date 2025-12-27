@@ -10,6 +10,7 @@
 
 #include "sbapi_graphics.h"
 #include "sbx_windowex.h"
+#include "sbx_input.h"
 
 
 float winScale = 1.0f;
