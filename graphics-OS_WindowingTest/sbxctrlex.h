@@ -31,7 +31,7 @@ typedef enum {
 typedef struct {
     int16_t min;
     int16_t max;
-    int16_t page;     // visible amount (aka "page size")
+    //int16_t page;     // visible amount (aka "page size")
     int16_t value;    // current scroll position
     int16_t step;     // arrow/button step (small increment)
 } sbx_scroll_props_t;

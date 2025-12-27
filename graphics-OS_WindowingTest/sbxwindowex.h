@@ -24,6 +24,7 @@
 #define     WIN_BORDER_PEN          3
 #define     WIN_BG_PEN              1
 #define     WIN_TITLE_PEN           16
+#define     WIN_SCROLLER_PROP_PEN   4
 
 #define     WIN_BEVEL_H             2
 #define     WIN_BEVEL_L             16      // actual black
@@ -123,6 +124,8 @@ typedef enum { MOUSE_DOWN, MOUSE_UP, MOUSE_MOVE } MouseEvt;
 
 
 void          SBOX_MoveScrollbar(sbx_window_t *win, uint16_t id, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient);
+int16_t       SBOS_getScrollX(sbx_window_t *w, uint16_t ctrl_id);
+int16_t       SBOS_getScrollY(sbx_window_t *w, uint16_t ctrl_id);
 int           SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id, uint8_t orient, uint8_t dock, int16_t thickness, int16_t min, int16_t max, int16_t page, int16_t value, int16_t step);
 SBXWindowId   SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 sbx_window_t* SBOS_getWindow(SBXWindowId id);

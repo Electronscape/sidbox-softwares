@@ -41,7 +41,7 @@ Dialog::Dialog(QWidget *parent)
     screenImageF = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
     screenImageB = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
 
-    ui->gfxPort->setRenderHint(QPainter::SmoothPixmapTransform, true);
+    ui->gfxPort->setRenderHint(QPainter::SmoothPixmapTransform, false);
     ui->gfxPort->setRenderHint(QPainter::Antialiasing, false); // don't need antialias for pixels
 
     //ui->gfxPort->setResizeAnchor(QGraphicsView::AnchorViewCenter);
@@ -131,9 +131,8 @@ Dialog::Dialog(QWidget *parent)
     SBOS_CreateButton(w, 2, 160, 6, 160, 26, "Long button name");
     SBOS_CreateLabel (w, 3,  6, 36, "LABEL #1");
 
-    SBOS_CreateScrollbar(w, 4, SBX_SB_VERT, SBX_DOCK_RIGHT, 20, 0, 100, 20, 0, 1);
-    SBOS_CreateScrollbar(w, 5, SBX_SB_HORZ, SBX_DOCK_BOTTOM, 20, 0, 100, 20, 0, 1);
-
+    SBOS_CreateScrollbar(w, 4, SBX_SB_VERT, SBX_DOCK_RIGHT, 20, 0, 100, 1, 0, 20);
+    SBOS_CreateScrollbar(w, 5, SBX_SB_HORZ, SBX_DOCK_BOTTOM, 20, 0, 100, 1, 0, 20);
 
     SBOS_CreateScrollbar(w, 6, SBX_SB_HORZ, SBX_DOCK_NONE, 20, 0, 100, 20, 0, 1);
 

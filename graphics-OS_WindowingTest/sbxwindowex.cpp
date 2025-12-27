@@ -114,9 +114,17 @@ static inline void ui_ppixel(int16_t x, int16_t y){
         if (x < g_uiclip.x0 || x >= g_uiclip.x1 || y < g_uiclip.y0 || y >= g_uiclip.y1)
             return;
     }
-
     sbgfx_ppixel(x, y);
 }
+
+static void ui_fill_dots(int16_t x, int16_t y, int16_t w, int16_t h, int16_t step){
+    for (int16_t yy = 0; yy < h; yy++){
+        for (int16_t xx = ((yy & 1) ? 1 : 0); xx < w; xx += step){
+            ui_ppixel((int16_t)(x + xx), (int16_t)(y + yy));
+        }
+    }
+}
+
 
 // Uses ui_ppixel() so drawing respects g_uiclip (and screen bounds).
 // Assumes 8x16 fixed font in DEFAULT_SYSFONT[ch][8] (1 byte per column, 8 bits -> 16 rows via 2px-per-bit packing in your current format).
@@ -197,7 +205,7 @@ static void ui_fillrect(int16_t x, int16_t y, int16_t w, int16_t h){
 
 static inline int16_t win_gutter_right(const sbx_window_t *w){
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
-        return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);  // the strip you already draw
+        return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);  // the strip already draw
     return 0;
 }
 
@@ -253,7 +261,7 @@ static void layoutDockedControls(sbx_window_t *w){
 
             c->x = 0;
             c->y = ah;
-            c->w = (gr > 0) ? (int16_t)(aw) : w->cw;   // usually aw is what you want here
+            c->w = (gr > 0) ? (int16_t)(aw) : w->cw;   // usually aw is what want here
             c->h = sbh + 4;
             break;
         }
@@ -478,103 +486,137 @@ static inline int16_t i16_min(int16_t a, int16_t b){ return (a < b) ? a : b; }
 static inline int16_t i16_max(int16_t a, int16_t b){ return (a > b) ? a : b; }
 
 
+
+static uint8_t sb_calc_thumb_rect(const sbx_control_t *c,
+                                  int16_t *outx, int16_t *outy, int16_t *outw, int16_t *outh)
+{
+    if (!c || !outx || !outy || !outw || !outh) return 0;
+
+    // inner track rect (ix/iy/iw/ih) in *control-local* coords
+    int16_t ix = 2, iy = 2;
+    int16_t iw = (int16_t)(c->w - 4);
+    int16_t ih = (int16_t)(c->h - 4);
+    if (iw <= 0 || ih <= 0) return 0;
+
+    // Track WELL: inside bevel by 1px on all sides
+    int16_t tx0 = (int16_t)(ix + 1);
+    int16_t ty0 = (int16_t)(iy + 1);
+    int16_t tw0 = (int16_t)(iw - 2);
+    int16_t th0 = (int16_t)(ih - 2);
+    if (tw0 <= 0 || th0 <= 0) return 0;
+
+    int16_t minv  = c->sb.min;
+    int16_t maxv  = c->sb.max;
+    int16_t value = c->sb.value;
+
+    if (maxv < minv) { int16_t t = minv; minv = maxv; maxv = t; }
+
+    int16_t range = (int16_t)(maxv - minv);
+
+    // clamp to full range (0..100 etc)
+    value = clamp_i16(value, minv, maxv);
+
+    // Thumb sizing uses step (as "amount")
+    int16_t amt = c->sb.step;
+    if (amt <= 0) amt = 1;
+
+    if (c->orient == SBX_SB_VERT) {
+        int16_t trackLen = th0;
+        int16_t minThumb = 6;
+
+        int32_t denom = (int32_t)range + (int32_t)amt;
+        int16_t th = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
+        th = clamp_i16(th, minThumb, trackLen);
+
+        int16_t travel = (int16_t)(trackLen - th);
+        int16_t ty = ty0;
+
+        if (travel > 0 && range > 0) {
+            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
+            //ty = (int16_t)(ty0 + (int16_t)(num / range));
+            ty = (int16_t)(ty0 + (int16_t)((num + (range/2)) / range));
+
+        }
+
+        *outx = tx0; *outy = ty; *outw = tw0; *outh = th;
+        return 1;
+    } else {
+        int16_t trackLen = tw0;
+        int16_t minThumb = 6;
+
+        int32_t denom = (int32_t)range + (int32_t)amt;
+        int16_t tw = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
+        tw = clamp_i16(tw, minThumb, trackLen);
+
+        int16_t travel = (int16_t)(trackLen - tw);
+        int16_t tx = tx0;
+
+        if (travel > 0 && range > 0) {
+            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
+            //tx = (int16_t)(tx0 + (int16_t)(num / range));
+            tx = (int16_t)(tx0 + (int16_t)((num + (range/2)) / range));
+
+        }
+
+        *outx = tx; *outy = ty0; *outw = tw; *outh = th0;
+        return 1;
+    }
+}
+
 static void draw_scrollbar(sbx_window_t *w, const sbx_control_t *c){
     if (!w || !c || !c->visible) return;
 
     int16_t ax = (int16_t)(w->cx + c->x);
     int16_t ay = (int16_t)(w->cy + c->y);
 
-    uint16_t borderPen = (w->id == g_focusWin) ? WIN_BORDER_ACTIVE_PEN: WIN_BORDER_INACTIVE_PEN;
+    uint16_t borderPen = (w->id == g_focusWin) ? WIN_BORDER_ACTIVE_PEN : WIN_BORDER_INACTIVE_PEN;
 
-    // Outer box
-    if(!c->dock)
+    // Outer box / background
+    if (!c->dock)
         draw_bevel_rect2(ax, ay, c->w, c->h, WIN_BEVEL_H, WIN_BEVEL_L, 0);
     else
         fill_rect_pen(ax, ay, c->w, c->h, borderPen);
 
-    // Track inner
+    // Track inner (visual well)
     int16_t ix = (int16_t)(ax + 2);
     int16_t iy = (int16_t)(ay + 2);
     int16_t iw = (int16_t)(c->w - 4);
     int16_t ih = (int16_t)(c->h - 4);
     if (iw <= 0 || ih <= 0) return;
 
-    if(c->dock) fill_rect_pen(ix, iy, iw, ih, borderPen);
+    if (c->dock) fill_rect_pen(ix, iy, iw, ih, borderPen);
+
+    // “Pressed in” track bevel
+    // Track inner (visual well)
+
+    // WELL inside bevel:
+    int16_t tx0 = ix + 1;
+    int16_t ty0 = iy + 1;
+    int16_t tw0 = iw - 2;
+    int16_t th0 = ih - 2;
+    gfx_setcolour(WIN_BEVEL_L);                 // your dot colour
+    ui_fill_dots(tx0, ty0, tw0, th0, 2);        // step 3 is a nice density
+
+
 
     draw_bevel_rect2(ix, iy, iw, ih, WIN_BEVEL_H, WIN_BEVEL_L, 1);
 
-    // -----------------------------
-    // Thumb (VALUE-BASED) — BUT INSIDE THE TRACK WELL (no bevel overlap)
-    // -----------------------------
-    int16_t minv  = c->sb.min;
-    int16_t maxv  = c->sb.max;
-    int16_t page  = c->sb.page;
-    int16_t value = c->sb.value;
+    // ---- Thumb (STEP-SIZED, value spans full min..max) ----
+    // Use the SAME math as mouse-drag uses (sb_calc_thumb_rect).
+    int16_t tlx, tly, tlw, tlh;
+    if (sb_calc_thumb_rect(c, &tlx, &tly, &tlw, &tlh)) {
 
-    if (maxv < minv) { int16_t t = minv; minv = maxv; maxv = t; }
+        // sb_calc_thumb_rect returns CONTROL-LOCAL coords (it assumes ix=2,iy=2 inside the control),
+        // so convert to SCREEN coords by adding the control's screen origin (ax,ay).
+        int16_t sx = (int16_t)(ax + tlx);
+        int16_t sy = (int16_t)(ay + tly);
 
-    int16_t total = (int16_t)(maxv - minv);
-    if (total < 0) total = 0;
-
-    if (page <= 0) page = 1;
-    if (total == 0) value = minv;
-
-    int16_t maxPos = (int16_t)(maxv - page);
-    if (maxPos < minv) maxPos = minv;
-    value = clamp_i16(value, minv, maxPos);
-
-    // Track WELL: inside the bevel by 1px on all sides
-    int16_t tx0 = (int16_t)(ix + 1);
-    int16_t ty0 = (int16_t)(iy + 1);
-    int16_t tw0 = (int16_t)(iw - 2);
-    int16_t th0 = (int16_t)(ih - 2);
-    if (tw0 <= 0 || th0 <= 0) return;
-
-    if (c->orient == SBX_SB_VERT) {
-
-        int16_t trackLen = th0;
-        int16_t minThumb = 6;
-
-        int32_t denom = (int32_t)total + (int32_t)page;
-        int16_t th = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)page) / denom) : trackLen;
-        th = clamp_i16(th, minThumb, trackLen);
-
-        int16_t travel = (int16_t)(trackLen - th);
-        int16_t ty = ty0;
-
-        if (travel > 0 && maxPos > minv) {
-            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
-            int32_t den = (int32_t)(maxPos - minv);
-            ty = (int16_t)(ty0 + (int16_t)(num / den));
-        }
-
-        // draw thumb fully inside the well
-        fill_rect_pen(tx0, ty, tw0, th, WIN_BORDER_INACTIVE_PEN);
-        draw_bevel_rect2(tx0, ty, tw0, th, WIN_BEVEL_H, WIN_BEVEL_L, c->thumb_down);
-
-    } else {
-
-        int16_t trackLen = tw0;
-        int16_t minThumb = 6;
-
-        int32_t denom = (int32_t)total + (int32_t)page;
-        int16_t tw = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)page) / denom) : trackLen;
-        tw = clamp_i16(tw, minThumb, trackLen);
-
-        int16_t travel = (int16_t)(trackLen - tw);
-        int16_t tx = tx0;
-
-        if (travel > 0 && maxPos > minv) {
-            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
-            int32_t den = (int32_t)(maxPos - minv);
-            tx = (int16_t)(tx0 + (int16_t)(num / den));
-        }
-
-        fill_rect_pen(tx, ty0, tw, th0, WIN_BORDER_INACTIVE_PEN);
-        draw_bevel_rect2(tx, ty0, tw, th0, WIN_BEVEL_H, WIN_BEVEL_L, c->thumb_down);
+        // prop gadget draw (the nob)
+        fill_rect_pen(sx, sy, tlw, tlh, WIN_SCROLLER_PROP_PEN);
+        draw_bevel_rect2(sx, sy, tlw, tlh, WIN_BEVEL_H, WIN_BEVEL_L, c->thumb_down);
     }
-
 }
+
 
 
 
@@ -826,7 +868,7 @@ void SBOS_paintWindow(SBXWindowId id){
 
     // focus
     if (id == g_focusWin) {
-        gfx_setcolour(WIN_BEVEL_L); // or whatever pen you want for focus dots
+        gfx_setcolour(WIN_BEVEL_L);
         ui_vlinedotted(win_x-1, win_y, win_h);
         ui_hlinedotted(win_x,   win_y-1, win_w);
         ui_hlinedotted(win_x,   win_y + win_h, win_w);
@@ -1034,133 +1076,57 @@ static int16_t find_scrollbar_at(sbx_window_t *w, int16_t cx, int16_t cy){
         }
 
         return -1;
-
 }
 
 
-static uint8_t sb_calc_thumb_rect(const sbx_control_t *c,
-                                  int16_t *outx, int16_t *outy, int16_t *outw, int16_t *outh)
+
+
+
+static void sb_set_value_from_mouse(sbx_control_t *c, int16_t mouseAlong, int16_t grabOffset)
 {
-    if (!c || !outx || !outy || !outw || !outh) return 0;
-
-    // inner track rect (ix/iy/iw/ih) in *control-local* coords
-    int16_t ix = 2, iy = 2;
-    int16_t iw = (int16_t)(c->w - 4);
-    int16_t ih = (int16_t)(c->h - 4);
-    if (iw <= 0 || ih <= 0) return 0;
-
-    // Track WELL: inside bevel by 1px on all sides
-    int16_t tx0 = (int16_t)(ix + 1);
-    int16_t ty0 = (int16_t)(iy + 1);
-    int16_t tw0 = (int16_t)(iw - 2);
-    int16_t th0 = (int16_t)(ih - 2);
-    if (tw0 <= 0 || th0 <= 0) return 0;
-
-    int16_t minv  = c->sb.min;
-    int16_t maxv  = c->sb.max;
-    int16_t page  = c->sb.page;
-    int16_t value = c->sb.value;
-
-    if (maxv < minv) { int16_t t = minv; minv = maxv; maxv = t; }
-
-    int16_t total = (int16_t)(maxv - minv);
-    if (total < 0) total = 0;
-    if (page <= 0) page = 1;
-
-    int16_t maxPos = (int16_t)(maxv - page);
-    if (maxPos < minv) maxPos = minv;
-    value = clamp_i16(value, minv, maxPos);
-
-    if (c->orient == SBX_SB_VERT) {
-        int16_t trackLen = th0;
-        int16_t minThumb = 6;
-
-        int32_t denom = (int32_t)total + (int32_t)page;
-        int16_t th = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)page) / denom) : trackLen;
-        th = clamp_i16(th, minThumb, trackLen);
-
-        int16_t travel = (int16_t)(trackLen - th);
-        int16_t ty = ty0;
-
-        if (travel > 0 && maxPos > minv) {
-            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
-            int32_t den = (int32_t)(maxPos - minv);
-            ty = (int16_t)(ty0 + (int16_t)(num / den));
-        }
-
-        *outx = tx0; *outy = ty; *outw = tw0; *outh = th;
-        return 1;
-
-    } else {
-        int16_t trackLen = tw0;
-        int16_t minThumb = 6;
-
-        int32_t denom = (int32_t)total + (int32_t)page;
-        int16_t tw = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)page) / denom) : trackLen;
-        tw = clamp_i16(tw, minThumb, trackLen);
-
-        int16_t travel = (int16_t)(trackLen - tw);
-        int16_t tx = tx0;
-
-        if (travel > 0 && maxPos > minv) {
-            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
-            int32_t den = (int32_t)(maxPos - minv);
-            tx = (int16_t)(tx0 + (int16_t)(num / den));
-        }
-
-        *outx = tx; *outy = ty0; *outw = tw; *outh = th0;
-        return 1;
-    }
-}
-
-static void sb_set_value_from_mouse(sbx_control_t *c, int16_t mouseAlong, int16_t grabOffset){
     int16_t minv = c->sb.min;
     int16_t maxv = c->sb.max;
-    int16_t page = c->sb.page;
 
     if (maxv < minv) { int16_t t = minv; minv = maxv; maxv = t; }
-    if (page <= 0) page = 1;
 
-    int16_t total = (int16_t)(maxv - minv);
-    if (total < 0) total = 0;
-
-    int16_t maxPos = (int16_t)(maxv - page);
-    if (maxPos < minv) maxPos = minv;
+    int16_t range = (int16_t)(maxv - minv);
+    if (range < 0) range = 0;
 
     // same track well as draw:
-    int16_t ix = 2, iy = 2;
     int16_t iw = (int16_t)(c->w - 4);
     int16_t ih = (int16_t)(c->h - 4);
-    int16_t tx0 = (int16_t)(ix + 1);
-    int16_t ty0 = (int16_t)(iy + 1);
     int16_t tw0 = (int16_t)(iw - 2);
     int16_t th0 = (int16_t)(ih - 2);
-
     if (tw0 <= 0 || th0 <= 0) return;
 
-    // compute thumb size (same as draw)
     int16_t trackLen = (c->orient == SBX_SB_VERT) ? th0 : tw0;
     int16_t minThumb = 6;
 
-    int32_t denom = (int32_t)total + (int32_t)page;
-    int16_t thumbLen = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)page) / denom) : trackLen;
+    // Thumb sizing uses step (as "amount")
+    int16_t amt = c->sb.step;
+    if (amt <= 0) amt = 1;
+
+    int32_t denom = (int32_t)range + (int32_t)amt;
+    int16_t thumbLen = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
     thumbLen = clamp_i16(thumbLen, minThumb, trackLen);
 
     int16_t travel = (int16_t)(trackLen - thumbLen);
-    if (travel <= 0 || maxPos <= minv) {
+    if (travel <= 0 || range <= 0) {
         c->sb.value = minv;
         return;
     }
 
-    // desired thumb top/left inside track well
+    // desired thumb top/left inside track well (0..travel)
     int16_t desired = (int16_t)(mouseAlong - grabOffset);
     desired = clamp_i16(desired, 0, travel);
 
-    int32_t num = (int32_t)desired * (int32_t)(maxPos - minv);
-    int32_t den = (int32_t)travel;
+    // map desired position to full value range
+    //c->sb.value = (int16_t)(minv + (int32_t)desired * (int32_t)range / (int32_t)travel);
+    c->sb.value = (int16_t)(minv + ((int32_t)desired * range + (travel/2)) / travel);
 
-    c->sb.value = (int16_t)(minv + (int16_t)(num / den));
+    c->sb.value = clamp_i16(c->sb.value, minv, maxv);
 }
+
 
 
 static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
@@ -1193,10 +1159,10 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
         int16_t bx = w->x + w->w;   // right edge
         int16_t by = w->y;          // top
         // IMPORTANT: draw_title_button makes height = WIN_TITLE_HEIGHT + WIN_BORDER
-        // but in paint you use tb_h = WIN_TITLE_HEIGHT + 4. Use tb_h consistently here.
+
         int16_t bh = tb_h;
 
-        // Right side: MAXRESTORE then ZORDER (same order you paint)
+        // Right side: MAXRESTORE then ZORDER (same order paint)
         if (w->flags & SBX_WF_ZORDER) {
             bx -= WIN_ZORDER_WIDTH;
             if (mousept_in_rect(mx, my, bx, by, WIN_ZORDER_WIDTH, bh)) {
@@ -1259,7 +1225,7 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
 
 
     // 4) Inside window but not title/client => border
-    // add WH_BORDER later if you want resize hit zones.
+    // add WH_BORDER laterwant resize hit zones.
     r.region = WH_CLIENT; // or WH_NONE
     return r;
 }
@@ -1297,6 +1263,8 @@ void windowHittest(int16_t mx, int16_t my){
 
         case WH_CLIENT:
             // TODO: route click to window/app
+            // unless we have a flag that says "dont take focus"
+            //SBOS_sendToFront(hit.id);
             break;
 
         default:
@@ -1324,6 +1292,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             WHitResult hit = hittest_window(id, mx, my);
             if (hit.region == WH_NONE) continue;
             SBOS_bringToFront(hit.id);
+            SBOS_setFocus(hit.id);
 
             // latch title gadget press
             if (is_title_gadget_region(hit.region)) {
@@ -1342,8 +1311,8 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             if (hit.region == WH_RESIZE) {
                 sbx_window_t *w = SBOS_getWindow(hit.id);
                 if (w && (w->flags & SBX_WF_RESIZABLE)) {
-                    SBOS_bringToFront(hit.id);
-                    SBOS_setFocus(hit.id);
+                    //SBOS_bringToFront(hit.id);
+                    //SBOS_setFocus(hit.id);
 
                     g_resizeWin = hit.id;
                     g_rStartMX  = mx;
@@ -1389,19 +1358,28 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                                 int16_t clickAlong = (sc->orient == SBX_SB_VERT) ? ly : lx;
                                 int16_t thumbAlong = (sc->orient == SBX_SB_VERT) ? ty : tx;
 
-                                if (clickAlong < thumbAlong) sc->sb.value = (int16_t)(sc->sb.value - sc->sb.page);
-                                else                         sc->sb.value = (int16_t)(sc->sb.value + sc->sb.page);
+                                if (clickAlong < thumbAlong) sc->sb.value -= sc->sb.step;
+                                else                         sc->sb.value += sc->sb.step;
+
+
+
 
                                 // clamp like draw does
                                 int16_t minv = sc->sb.min;
                                 int16_t maxv = sc->sb.max;
-                                int16_t page = sc->sb.page;
+                                //int16_t page = sc->sb.page;
+
+                                sc->sb.value = clamp_i16(sc->sb.value, minv, maxv);
+
                                 if (maxv < minv) { int16_t t=minv; minv=maxv; maxv=t; }
-                                if (page <= 0) page = 1;
-                                int16_t maxPos = (int16_t)(maxv - page);
+                                //if (page <= 0) page = 1;
+                                int16_t maxPos = (int16_t)(maxv);// - page);
                                 if (maxPos < minv) maxPos = minv;
                                 sc->sb.value = clamp_i16(sc->sb.value, minv, maxPos);
                             }
+
+                            //SBOS_bringToFront(hit.id);
+                            //SBOS_setFocus(hit.id);
 
                             SBOS_paintAllWindows();
                             return; // IMPORTANT: swallow click (don’t also click buttons)
@@ -1438,8 +1416,8 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             }
 
             if (hit.region == WH_TITLE || hit.region == WH_CLIENT) {
-                SBOS_bringToFront(hit.id);
-                SBOS_setFocus(hit.id);
+                //SBOS_bringToFront(hit.id);
+                //SBOS_setFocus(hit.id);
             }
 
             if (hit.region == WH_RESIZE) {
@@ -1482,6 +1460,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             return;
         }
 
+        // scrollbar interfasing
         if (g_mouseDown && g_sbDownWin != SBW_INVALID_ID && g_sbDownIx >= 0 && g_sbDragging) {
             sbx_window_t *w = SBOS_getWindow(g_sbDownWin);
             sbx_control_t *sc = get_ctrl(w, g_sbDownIx);
@@ -1495,6 +1474,12 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
 
                 int16_t along = (sc->orient == SBX_SB_VERT) ? (int16_t)(ly - (2+1)) : (int16_t)(lx - (2+1));
                 sb_set_value_from_mouse(sc, along, g_sbDragGrab);
+
+
+                int16_t valx, valy;
+                valx = SBOS_getScrollX(w, g_sbDownIx);
+                valy = SBOS_getScrollY(w, g_sbDownIx);
+                printf("SCROLL VALUE: X=%d, Y=%d\n", valx, valy);
 
                 SBOS_paintAllWindows();
             }
@@ -1879,7 +1864,7 @@ int SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id,
 
     c->sb.min   = min;
     c->sb.max   = max;
-    c->sb.page  = (page < 0) ? 0 : page;
+    //c->sb.page  = (page < 0) ? 0 : page;
     c->sb.value = value;
     c->sb.step  = (step <= 0) ? 1 : step;
 
@@ -1898,4 +1883,37 @@ int SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id,
 
     w->ctrl_count++;
     return (int)(w->ctrl_count - 1);
+}
+
+static sbx_control_t* SBOS_getControlById(sbx_window_t *w, uint16_t ctrl_id)
+{
+    if (!w) return NULL;
+
+    for (uint8_t i = 0; i < w->ctrl_count; i++) {
+        sbx_control_t *c = &w->ctrls[i];
+        if (c->id == ctrl_id)
+            return c;
+    }
+    return NULL;
+}
+
+
+int16_t SBOS_getScrollX(sbx_window_t *w, uint16_t ctrl_id)
+{
+    sbx_control_t *c = SBOS_getControlById(w, ctrl_id);
+    if (!c) return 0;
+    if (c->type != CTL_SCROLLBAR) return 0;
+    if (c->orient != SBX_SB_HORZ) return 0;
+
+    return c->sb.value;
+}
+
+int16_t SBOS_getScrollY(sbx_window_t *w, uint16_t ctrl_id)
+{
+    sbx_control_t *c = SBOS_getControlById(w, ctrl_id);
+    if (!c) return 0;
+    if (c->type != CTL_SCROLLBAR) return 0;
+    if (c->orient != SBX_SB_VERT) return 0;
+
+    return c->sb.value;
 }
