@@ -46,6 +46,8 @@ void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen);
 
 void ui_hlinedotted(int16_t x, int16_t y, int16_t w);
 void ui_vlinedotted(int16_t x, int16_t y, int16_t w);
+void ui_hline(int16_t x, int16_t y, int16_t h);
+void ui_vline(int16_t x, int16_t y, int16_t h);
 
 void draw_title_button(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill_pen, uint8_t pressed);
 void draw_rect_outline_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t, uint16_t pen);

@@ -18,8 +18,8 @@
 static sbx_window_t     gui_windows[MAX_WINDOWS];
 static uint8_t          gui_used[MAX_WINDOWS];
 
-static SBXWindowId      g_zorder[MAX_WINDOWS];
-static uint8_t          g_zcount = 0;
+static SBXWindowId      g_winZorder[MAX_WINDOWS];
+static uint8_t          g_winZcount = 0;
 
 // globals ONLY for windows!! everything else needs to be in a contained
 static SBXWindowId      g_focusWin   = SBW_INVALID_ID;
@@ -216,8 +216,8 @@ static void layoutDockedControls(sbx_window_t *w){
     int16_t aw = w->contentviewrect.w;
     int16_t ah = w->contentviewrect.h;
 
-    int16_t gr = win_gutter_right(w);
-    int16_t gb = win_gutter_bottom(w);
+    //int16_t gr = win_gutter_right(w);
+    //int16_t gb = win_gutter_bottom(w);
 /*
     for (uint8_t i = 0; i < w->ctrl_count; i++){
         sbx_control_t *c = &w->ctrls[i];
@@ -365,8 +365,8 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
             enforce_screen_bounds(w);
             layoutWindow(w);
 
-            if (g_zcount < MAX_WINDOWS) {
-                g_zorder[g_zcount++] = i;
+            if (g_winZcount < MAX_WINDOWS) {
+                g_winZorder[g_winZcount++] = i;
             } else {
                 gui_used[i] = 0;
                 return SBW_INVALID_ID;
@@ -409,6 +409,7 @@ void SBOS_paintWindow(SBXWindowId id){
     int16_t win_tx = win_x + (WIN_BORDER + 4);
     int16_t win_ty = win_y + (WIN_BORDER);
     int16_t tb_h = 0;
+    int16_t fr = 0;
 
     uint16_t borderPen = (id == g_focusWin) ? WIN_BORDER_ACTIVE_PEN: WIN_BORDER_INACTIVE_PEN;
 
@@ -433,23 +434,22 @@ void SBOS_paintWindow(SBXWindowId id){
     SBOS_drawControlsFiltered(w, 0);
     ui_clip_disable();
 
-    // draw the blue gutter bar, we draw this, that paints over the client controls if not clipped properly
-    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
-        int16_t gx = (int16_t)(w->winrect.x + w->winrect.w - WIN_RESIZE_GLYPH_SIZE);
-        int16_t gy = (int16_t)(w->winrect.y + w->winrect.h - WIN_RESIZE_GLYPH_SIZE);
-        ui_clip_set(win_x, win_y, win_w, win_h);
+    int16_t gcx = (int16_t)(w->winrect.x + w->winrect.w) - WIN_BORDER;
+    int16_t gx = (int16_t)(gcx - WIN_RESIZE_GLYPH_SIZE) + WIN_BORDER;
 
+    int16_t gy = (int16_t)(w->winrect.y + w->winrect.h - WIN_RESIZE_GLYPH_SIZE);
+    // draw the blue gutter bar, we draw this, that paints over the client controls if not clipped properly
+
+    fr = WIN_BORDER;
+
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
+        ui_clip_set(win_x, win_y, win_w, win_h);
         // right side --------------
-        sbgfx_drawbox(win_x, gy+1, (int16_t)win_cw + WIN_BORDER, (int16_t)(WIN_RESIZE_GLYPH_SIZE - 2), borderPen);
+        sbgfx_drawbox(win_x, gy+1, (int16_t)win_cw, (int16_t)(WIN_RESIZE_GLYPH_SIZE - 2), borderPen);
         ui_clip_disable();
 
-        // the resize glyph
         sbgfx_drawbox(gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE, borderPen);
-        draw_bevel(gx, gy,
-                         WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE,
-                         WIN_BEVEL_H, WIN_BEVEL_L,
-                         0);
-
+        draw_bevel(gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE, WIN_BEVEL_H, WIN_BEVEL_L, 0);
         sbgfx_glyph(gx, gy, glyph_resize);
     }
 
@@ -461,19 +461,20 @@ void SBOS_paintWindow(SBXWindowId id){
     SBOS_drawControlsFiltered(w, 1);
     ui_clip_disable();
 
-    gfx_setcolour(WIN_BEVEL_L);
-    // keep these as i want them later
-    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
-        int16_t gx = (int16_t)(w->winrect.x + w->winrect.w - WIN_RESIZE_GLYPH_SIZE);
-        int16_t gy = (int16_t)(w->winrect.y + w->winrect.h - WIN_RESIZE_GLYPH_SIZE);
-    }
 
 
-    if (w->flags & SBX_WF_NOBORDER) return;
-    // frame
+    if (w->flags & SBX_WF_NOBORDER) return; // no window frame around THIS one
+
+
+    // frame for the window
     draw_bevel(win_x, win_y, win_w, win_h, WIN_BEVEL_H, WIN_BEVEL_L, 0);
     draw_bevel(win_cx-1, win_cy-1, win_cw+2, win_ch+2, WIN_BEVEL_H, WIN_BEVEL_L, 1);
-    //draw_bevel_rect2(win_cx-1, win_cy-1, win_cw, win_ch+2, WIN_BEVEL_H, WIN_BEVEL_L, 1);
+
+    if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
+        gfx_setcolour(WIN_BEVEL_L);
+        ui_vline(gx-1, gy, WIN_RESIZE_GLYPH_SIZE);  // left edge of the glyph
+        ui_hline(gcx, gy-1, fr);
+    }
 
 
     if (w->flags & SBX_WF_TITLE_BAR) {
@@ -500,10 +501,8 @@ void SBOS_paintWindow(SBXWindowId id){
         if (w->flags & SBX_WF_ZORDER) {
             bx -= WIN_ZORDER_WIDTH;
             twidth -= (WIN_ZORDER_WIDTH);
-
             draw_title_button(bx, by, WIN_ZORDER_WIDTH, tb_h, borderPen, downZo);
             glyph_zorder(bx, by, WIN_ZORDER_WIDTH, tb_h);
-
         }
 
         // MAXIMIZE/ RESORE
@@ -512,7 +511,6 @@ void SBOS_paintWindow(SBXWindowId id){
             twidth -= (WIN_MAXRESTORE_WIDTH);
             draw_title_button(bx, by, WIN_MAXRESTORE_WIDTH, tb_h, borderPen, downMax);
             glyph_max_box(bx, by, WIN_MAXRESTORE_WIDTH, tb_h);
-
         }
 
         // MINIMISE
@@ -521,7 +519,6 @@ void SBOS_paintWindow(SBXWindowId id){
             twidth -= (WIN_MINIMISE_WIDTH);
             draw_title_button(bx, by, WIN_MINIMISE_WIDTH, tb_h, borderPen, downMin);
             glyph_minimise(bx, by, WIN_MINIMISE_WIDTH, tb_h);
-
         }
 
         // CLOSE button (top-left)
@@ -530,8 +527,6 @@ void SBOS_paintWindow(SBXWindowId id){
             int16_t cy = by;
             draw_title_button(cx, cy, WIN_CLOSE_WIDTH, tb_h, borderPen, downClose);
             glyph_close_x(cx, cy, WIN_CLOSE_WIDTH, tb_h);
-
-
             win_tx = cx + WIN_CLOSE_WIDTH + 4;
             tb_x = cx + WIN_CLOSE_WIDTH;
             twidth -= (WIN_CLOSE_WIDTH);
@@ -565,10 +560,10 @@ void SBOS_paintWindow(SBXWindowId id){
     // focus
     if (id == g_focusWin) {
         gfx_setcolour(WIN_BEVEL_L);
-        ui_vlinedotted(win_x-1, win_y, win_h);
+        ui_vlinedotted(win_x-1, win_y,   win_h);
         ui_hlinedotted(win_x,   win_y-1, win_w);
-        ui_hlinedotted(win_x,   win_y + win_h, win_w);
-        ui_vlinedotted(win_w + win_x, win_y, win_h);
+        ui_hlinedotted(win_x,   win_y +  win_h, win_w);
+        ui_vlinedotted(win_w +  win_x,   win_y, win_h);
     }
 }
 
@@ -578,8 +573,8 @@ static void normalize_zorder(void){
     SBXWindowId front[MAX_WINDOWS];
     uint8_t nb = 0, nm = 0, nf = 0;
 
-    for (uint8_t i = 0; i < g_zcount; i++) {
-        SBXWindowId id = g_zorder[i];
+    for (uint8_t i = 0; i < g_winZcount; i++) {
+        SBXWindowId id = g_winZorder[i];
         if (id >= MAX_WINDOWS || !gui_used[id]) continue;
 
         uint32_t f = gui_windows[id].flags;
@@ -597,27 +592,27 @@ static void normalize_zorder(void){
 
     // Rebuild g_zorder: back -> mid -> front
     uint8_t out = 0;
-    for (uint8_t i = 0; i < nb; i++) g_zorder[out++] = back[i];
-    for (uint8_t i = 0; i < nm; i++) g_zorder[out++] = mid[i];
-    for (uint8_t i = 0; i < nf; i++) g_zorder[out++] = front[i];
+    for (uint8_t i = 0; i < nb; i++) g_winZorder[out++] = back[i];
+    for (uint8_t i = 0; i < nm; i++) g_winZorder[out++] = mid[i];
+    for (uint8_t i = 0; i < nf; i++) g_winZorder[out++] = front[i];
 
-    g_zcount = out;
+    g_winZcount = out;
 }
 
 static int z_front_barrier(void){
-    for (int i = 0; i < (int)g_zcount; i++) {
-        SBXWindowId id = g_zorder[i];
+    for (int i = 0; i < (int)g_winZcount; i++) {
+        SBXWindowId id = g_winZorder[i];
         if (id < MAX_WINDOWS && gui_used[id]) {
             if (gui_windows[id].flags & SBX_WF_ALWAYS_TO_FRONT)
                 return i; // first always-front window
         }
     }
-    return (int)g_zcount;
+    return (int)g_winZcount;
 }
 
 static int z_find(SBXWindowId id){
-    for (int i = 0; i < (int)g_zcount; i++) {
-        if (g_zorder[i] == id) return i;
+    for (int i = 0; i < (int)g_winZcount; i++) {
+        if (g_winZorder[i] == id) return i;
     }
     return -1;
 }
@@ -636,18 +631,18 @@ void SBOS_bringToFront(SBXWindowId id){
     if (target < 0) target = 0;
 
     // If this window is itself always-front, true front is allowed
-    if (f & SBX_WF_ALWAYS_TO_FRONT) target = (int)g_zcount - 1;
+    if (f & SBX_WF_ALWAYS_TO_FRONT) target = (int)g_winZcount - 1;
 
     if (pos == target) return;
 
-    SBXWindowId temp = g_zorder[pos];
+    SBXWindowId temp = g_winZorder[pos];
 
     if (pos < target) {
-        for (int i = pos; i < target; i++) g_zorder[i] = g_zorder[i + 1];
+        for (int i = pos; i < target; i++) g_winZorder[i] = g_winZorder[i + 1];
     } else {
-        for (int i = pos; i > target; i--) g_zorder[i] = g_zorder[i - 1];
+        for (int i = pos; i > target; i--) g_winZorder[i] = g_winZorder[i - 1];
     }
-    g_zorder[target] = temp;
+    g_winZorder[target] = temp;
 
     normalize_zorder();
 }
@@ -657,16 +652,16 @@ static void z_remove(SBXWindowId id){
     int pos = z_find(id);
     if (pos < 0) return;
 
-    for (int i = pos; i < (int)g_zcount - 1; i++) {
-        g_zorder[i] = g_zorder[i + 1];
+    for (int i = pos; i < (int)g_winZcount - 1; i++) {
+        g_winZorder[i] = g_winZorder[i + 1];
     }
-    g_zcount--;
+    g_winZcount--;
 }
 
 
 static SBXWindowId findTopFocusable(void){
-    for (int zi = (int)g_zcount - 1; zi >= 0; zi--) {
-        SBXWindowId id = g_zorder[zi];
+    for (int zi = (int)g_winZcount - 1; zi >= 0; zi--) {
+        SBXWindowId id = g_winZorder[zi];
         if (id >= MAX_WINDOWS || !gui_used[id]) continue;
         if (!(gui_windows[id].flags & SBX_WF_VISIBLE)) continue;
         if (gui_windows[id].flags & SBX_WF_NOFOCUS) continue;
@@ -701,16 +696,16 @@ void SBOS_sendToBack(SBXWindowId id){
     if (pos < 0) return;
     if (pos == 0) return;
 
-    SBXWindowId temp = g_zorder[pos];
-    for (int i = pos; i > 0; i--) g_zorder[i] = g_zorder[i - 1];
-    g_zorder[0] = temp;
+    SBXWindowId temp = g_winZorder[pos];
+    for (int i = pos; i > 0; i--) g_winZorder[i] = g_winZorder[i - 1];
+    g_winZorder[0] = temp;
 
     normalize_zorder();
 }
 
 void SBOS_paintAllWindows(void){
-    for (int zi = 0; zi < (int)g_zcount; zi++) {
-        SBXWindowId id = g_zorder[zi];
+    for (int zi = 0; zi < (int)g_winZcount; zi++) {
+        SBXWindowId id = g_winZorder[zi];
         if (id >= MAX_WINDOWS) continue;
         if (!gui_used[id]) continue;
 
@@ -838,8 +833,8 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
 
 void windowHittest(int16_t mx, int16_t my){
     // scan front->back so topmost window wins
-    for (int zi = (int)g_zcount - 1; zi >= 0; zi--) {
-        SBXWindowId id = g_zorder[zi];
+    for (int zi = (int)g_winZcount - 1; zi >= 0; zi--) {
+        SBXWindowId id = g_winZorder[zi];
         if (id >= MAX_WINDOWS) continue;
         if (!gui_used[id]) continue;
 
@@ -890,8 +885,8 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         g_ui.resize_win = SBW_INVALID_ID;
 
         // hit-test once on press
-        for (int zi = (int)g_zcount - 1; zi >= 0; zi--) {
-            SBXWindowId id = g_zorder[zi];
+        for (int zi = (int)g_winZcount - 1; zi >= 0; zi--) {
+            SBXWindowId id = g_winZorder[zi];
             if (id >= MAX_WINDOWS || !gui_used[id]) continue;
 
             WHitResult hit = hittest_window(id, mx, my);
@@ -973,10 +968,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                 if (w->flags & SBX_WF_SCREENBOUND) {
                     if (w->winrect.x + nw > SCR_WIDTH)  nw = (int16_t)(SCR_WIDTH - w->winrect.x);
                     if (w->winrect.y + nh > SCR_HEIGHT) nh = (int16_t)(SCR_HEIGHT - w->winrect.y);
-                    // enforce minimum window size
-                    if (nw < 100) nw = 100;
-                    if (nh < 100) nh = 100;
                 }
+
+                // enforce minimum window size
+                if (nw < 100) nw = 100;
+                if (nh < 100) nh = 100;
 
                 w->winrect.w = nw;
                 w->winrect.h = nh;

@@ -78,26 +78,30 @@ void sbx_draw_text816(int x, int y, const unsigned char* textptr){
     }
 }
 
-static void ui_hline(int16_t x, int16_t y, int16_t w){
-    for (int16_t i = 0; i < w; i++)
-        ui_ppixel((int16_t)(x + i), y);
-}
 
 void ui_hlinedotted(int16_t x, int16_t y, int16_t w){
     for (int16_t i = 0; i < w; i+=2)
         ui_ppixel((int16_t)(x + i), y);
 }
 
-static void ui_vline(int16_t x, int16_t y, int16_t h){
-    for (int16_t i = 0; i < h; i++)
-        ui_ppixel(x, (int16_t)(y + i));
-}
 void ui_vlinedotted(int16_t x, int16_t y, int16_t h){
     for (int16_t i = 0; i < h; i+=2)
         ui_ppixel(x, (int16_t)(y + i));
 }
 
-static void ui_fillrect(int16_t x, int16_t y, int16_t w, int16_t h){
+void ui_hline(int16_t x, int16_t y, int16_t w){
+    for (int16_t i = 0; i < w; i++)
+        ui_ppixel((int16_t)(x + i), y);
+}
+
+
+void ui_vline(int16_t x, int16_t y, int16_t h){
+    for (int16_t i = 0; i < h; i++)
+        ui_ppixel(x, (int16_t)(y + i));
+}
+
+
+void ui_fillrect(int16_t x, int16_t y, int16_t w, int16_t h){
     for (int16_t yy = 0; yy < h; yy++)
         ui_hline(x, (int16_t)(y + yy), w);
 }
