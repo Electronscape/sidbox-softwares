@@ -64,15 +64,40 @@ uint8_t glyph_resize[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02
 };
 
+///////////////////////////////////////////////////////////////////////
+/// COMPACTION ////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+
+typedef struct { int16_t x, y, w, h; } R16;
+
+static inline R16 r16(int16_t x, int16_t y, int16_t w, int16_t h){ R16 r = {x,y,w,h}; return r; }
+static inline uint8_t r16_valid(const R16 *r){ return (r->w > 0) && (r->h > 0); }
+
+static inline uint8_t pt_in_r16(int16_t px, int16_t py, const R16 *r){
+    return (px >= r->x) && (py >= r->y) && (px < (int16_t)(r->x + r->w)) && (py < (int16_t)(r->y + r->h));
+}
+
+static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
 
 
 
 
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+/// END: COMPACTION ///////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 
 
 /////// prototypes //////////////////
-static void SBOS_drawControls(sbx_window_t *w);
-static void SBOS_drawDockedControls(sbx_window_t *w);
+static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock);
 static UIClip g_uiclip = {0,0,0,0,0};
 
 static void normalize_zorder(void);
@@ -88,12 +113,6 @@ static inline void ui_clip_set(int16_t x, int16_t y, int16_t w, int16_t h){
 }
 
 
-static inline int16_t clampi16(int16_t v, int16_t lo, int16_t hi){
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
-
 static void enforce_screen_bounds(sbx_window_t *w, int16_t screen_w, int16_t screen_h){
     if (!w) return;
     if (!(w->flags & SBX_WF_SCREENBOUND)) return;
@@ -102,8 +121,8 @@ static void enforce_screen_bounds(sbx_window_t *w, int16_t screen_w, int16_t scr
     int16_t max_x = (screen_w > w->w) ? (int16_t)(screen_w - w->w) : 0;
     int16_t max_y = (screen_h > w->h) ? (int16_t)(screen_h - w->h) : 0;
 
-    w->x = clampi16(w->x, 0, max_x);
-    w->y = clampi16(w->y, 0, max_y);
+    w->x = clamp_i16(w->x, 0, max_x);
+    w->y = clamp_i16(w->y, 0, max_y);
 }
 
 
@@ -125,11 +144,7 @@ static void ui_fill_dots(int16_t x, int16_t y, int16_t w, int16_t h, int16_t ste
     }
 }
 
-
-// Uses ui_ppixel() so drawing respects g_uiclip (and screen bounds).
-// Assumes 8x16 fixed font in DEFAULT_SYSFONT[ch][8] (1 byte per column, 8 bits -> 16 rows via 2px-per-bit packing in your current format).
-void sbx_draw_text816(int x, int y, const unsigned char* textptr)
-{
+void sbx_draw_text816(int x, int y, const unsigned char* textptr){
     if (!textptr) return;
 
     int start_x = x;
@@ -150,7 +165,7 @@ void sbx_draw_text816(int x, int y, const unsigned char* textptr)
             int xc = x + j;
             uint8_t pixdat = pixeldata[j];
 
-            // Each bit represents a 2-pixel-tall segment (your current font packing)
+            // Each bit represents a 2-pixel-tall segment
             if (pixdat & 0x01) { ui_ppixel((int16_t)xc, (int16_t)(y + 0));  ui_ppixel((int16_t)xc, (int16_t)(y + 1));  }
             if (pixdat & 0x02) { ui_ppixel((int16_t)xc, (int16_t)(y + 2));  ui_ppixel((int16_t)xc, (int16_t)(y + 3));  }
             if (pixdat & 0x04) { ui_ppixel((int16_t)xc, (int16_t)(y + 4));  ui_ppixel((int16_t)xc, (int16_t)(y + 5));  }
@@ -445,7 +460,8 @@ __attribute__((weak)) void SBOS_onButtonClick(SBXWindowId win, uint16_t button_i
 }
 
 static inline uint8_t pt_in_ctrl(const sbx_control_t *c, int16_t cx, int16_t cy){
-    return (cx >= c->x) && (cy >= c->y) && (cx < (int16_t)(c->x + c->w)) && (cy < (int16_t)(c->y + c->h));
+    R16 rc = r16(c->x, c->y, c->w, c->h);
+    return pt_in_r16(cx, cy, &rc);
 }
 
 static int16_t find_button_at(sbx_window_t *w, int16_t cx, int16_t cy){
@@ -471,96 +487,149 @@ static inline sbx_control_t* get_ctrl(sbx_window_t *w, int16_t ix){
 }
 
 
+static void ctrl_set_text(sbx_control_t *c, const char *text){
+    if (!c) return;
+    if (!text) { c->text[0] = '\0'; return; }
+
+    int i = 0;
+    for (; text[i] && i < (int)sizeof(c->text) - 1; i++)
+        c->text[i] = text[i];
+    c->text[i] = '\0';
+}
+
+static sbx_control_t* ctrl_alloc(sbx_window_t *w, uint16_t id, CtlType type){
+    if (!w) return 0;
+    if (w->ctrl_count >= MAX_CONTROLS) return 0;
+
+    sbx_control_t *c = &w->ctrls[w->ctrl_count++];
+
+    // Minimal init (preserve your defaults)
+    c->type       = type;
+    c->id         = id;
+    c->x = c->y   = 0;
+    c->w = c->h   = 0;
+    c->visible    = 1;
+    c->down       = 0;
+    c->dock       = 0;
+    c->orient     = 0;
+    c->thumb_down = 0;
+    c->text[0]    = '\0';
+
+    // Preserve sb defaults
+    c->sb.min   = 0;
+    c->sb.max   = 0;
+    c->sb.value = 0;
+    c->sb.step  = 1;
+
+    return c;
+}
+
+
+
 void initWb(){
     //SBCtrl  ctrls[MAX_CONTROLS];
     //uint8_t ctrl_count;
     //ctrl_count = 0;
 }
 
-static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
 static inline int16_t i16_min(int16_t a, int16_t b){ return (a < b) ? a : b; }
 static inline int16_t i16_max(int16_t a, int16_t b){ return (a > b) ? a : b; }
 
+
+typedef struct {
+    int16_t minv, maxv, range;
+    int16_t trackLen;
+    int16_t thumbLen;
+    int16_t travel;
+} SBMetrics;
+
+
+static uint8_t sb_metrics(const sbx_control_t *c, int16_t trackLen, SBMetrics *m){
+    if (!c || !m) return 0;
+
+    int16_t minv = c->sb.min;
+    int16_t maxv = c->sb.max;
+    if (maxv < minv) { int16_t t=minv; minv=maxv; maxv=t; }
+
+    int16_t range = (int16_t)(maxv - minv);
+    if (range < 0) range = 0;
+
+    int16_t amt = c->sb.step;
+    if (amt <= 0) amt = 1;
+
+    int16_t minThumb = 6;
+
+    int32_t denom = (int32_t)range + (int32_t)amt;
+    int16_t thumbLen = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
+    thumbLen = clamp_i16(thumbLen, minThumb, trackLen);
+
+    int16_t travel = (int16_t)(trackLen - thumbLen);
+    if (travel < 0) travel = 0;
+
+    m->minv=minv; m->maxv=maxv; m->range=range;
+    m->trackLen=trackLen; m->thumbLen=thumbLen; m->travel=travel;
+    return 1;
+}
+
+// Returns CONTROL-LOCAL rects (like your original sb_calc_thumb_rect assumed)
+static uint8_t sb_get_track_well_local(const sbx_control_t *c, R16 *outWell){
+    if (!c || !outWell) return 0;
+
+    // your original: ix/iy = 2, inner = w-4/h-4, well inset by 1
+    int16_t iw = (int16_t)(c->w - 4);
+    int16_t ih = (int16_t)(c->h - 4);
+    if (iw <= 0 || ih <= 0) return 0;
+
+    R16 track = r16(2, 2, iw, ih);
+    R16 well  = r16((int16_t)(track.x + 1), (int16_t)(track.y + 1),
+                   (int16_t)(track.w - 2), (int16_t)(track.h - 2));
+    if (!r16_valid(&well)) return 0;
+
+    *outWell = well;
+    return 1;
+}
+
+static uint8_t sb_calc_thumb_rect2(const sbx_control_t *c, R16 *outThumb){
+    if (!c || !outThumb) return 0;
+
+    R16 well;
+    if (!sb_get_track_well_local(c, &well)) return 0;
+
+    int16_t minv  = c->sb.min;
+    int16_t maxv  = c->sb.max;
+    if (maxv < minv) { int16_t t=minv; minv=maxv; maxv=t; }
+
+    int16_t value = clamp_i16(c->sb.value, minv, maxv);
+
+    int16_t trackLen = (c->orient == SBX_SB_VERT) ? well.h : well.w;
+    SBMetrics m;
+    if (!sb_metrics(c, trackLen, &m)) return 0;
+
+    int16_t pos = 0;
+    if (m.travel > 0 && m.range > 0) {
+        int32_t num = (int32_t)(value - m.minv) * (int32_t)m.travel;
+        // your rounding style (nice!)
+        pos = (int16_t)((num + (m.range/2)) / m.range);
+        pos = clamp_i16(pos, 0, m.travel);
+    }
+
+    if (c->orient == SBX_SB_VERT) {
+        *outThumb = r16(well.x, (int16_t)(well.y + pos), well.w, m.thumbLen);
+    } else {
+        *outThumb = r16((int16_t)(well.x + pos), well.y, m.thumbLen, well.h);
+    }
+
+    return 1;
+}
 
 
 static uint8_t sb_calc_thumb_rect(const sbx_control_t *c,
                                   int16_t *outx, int16_t *outy, int16_t *outw, int16_t *outh)
 {
-    if (!c || !outx || !outy || !outw || !outh) return 0;
-
-    // inner track rect (ix/iy/iw/ih) in *control-local* coords
-    int16_t ix = 2, iy = 2;
-    int16_t iw = (int16_t)(c->w - 4);
-    int16_t ih = (int16_t)(c->h - 4);
-    if (iw <= 0 || ih <= 0) return 0;
-
-    // Track WELL: inside bevel by 1px on all sides
-    int16_t tx0 = (int16_t)(ix + 1);
-    int16_t ty0 = (int16_t)(iy + 1);
-    int16_t tw0 = (int16_t)(iw - 2);
-    int16_t th0 = (int16_t)(ih - 2);
-    if (tw0 <= 0 || th0 <= 0) return 0;
-
-    int16_t minv  = c->sb.min;
-    int16_t maxv  = c->sb.max;
-    int16_t value = c->sb.value;
-
-    if (maxv < minv) { int16_t t = minv; minv = maxv; maxv = t; }
-
-    int16_t range = (int16_t)(maxv - minv);
-
-    // clamp to full range (0..100 etc)
-    value = clamp_i16(value, minv, maxv);
-
-    // Thumb sizing uses step (as "amount")
-    int16_t amt = c->sb.step;
-    if (amt <= 0) amt = 1;
-
-    if (c->orient == SBX_SB_VERT) {
-        int16_t trackLen = th0;
-        int16_t minThumb = 6;
-
-        int32_t denom = (int32_t)range + (int32_t)amt;
-        int16_t th = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
-        th = clamp_i16(th, minThumb, trackLen);
-
-        int16_t travel = (int16_t)(trackLen - th);
-        int16_t ty = ty0;
-
-        if (travel > 0 && range > 0) {
-            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
-            //ty = (int16_t)(ty0 + (int16_t)(num / range));
-            ty = (int16_t)(ty0 + (int16_t)((num + (range/2)) / range));
-
-        }
-
-        *outx = tx0; *outy = ty; *outw = tw0; *outh = th;
-        return 1;
-    } else {
-        int16_t trackLen = tw0;
-        int16_t minThumb = 6;
-
-        int32_t denom = (int32_t)range + (int32_t)amt;
-        int16_t tw = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
-        tw = clamp_i16(tw, minThumb, trackLen);
-
-        int16_t travel = (int16_t)(trackLen - tw);
-        int16_t tx = tx0;
-
-        if (travel > 0 && range > 0) {
-            int32_t num = (int32_t)(value - minv) * (int32_t)travel;
-            //tx = (int16_t)(tx0 + (int16_t)(num / range));
-            tx = (int16_t)(tx0 + (int16_t)((num + (range/2)) / range));
-
-        }
-
-        *outx = tx; *outy = ty0; *outw = tw; *outh = th0;
-        return 1;
-    }
+    R16 t;
+    if (!sb_calc_thumb_rect2(c, &t)) return 0;
+    *outx = t.x; *outy = t.y; *outw = t.w; *outh = t.h;
+    return 1;
 }
 
 static void draw_scrollbar(sbx_window_t *w, const sbx_control_t *c){
@@ -571,51 +640,39 @@ static void draw_scrollbar(sbx_window_t *w, const sbx_control_t *c){
 
     uint16_t borderPen = (w->id == g_focusWin) ? WIN_BORDER_ACTIVE_PEN : WIN_BORDER_INACTIVE_PEN;
 
-    // Outer box / background
-    if (!c->dock)
-        draw_bevel_rect2(ax, ay, c->w, c->h, WIN_BEVEL_H, WIN_BEVEL_L, 0);
-    else
-        fill_rect_pen(ax, ay, c->w, c->h, borderPen);
+    // background
+    if (!c->dock) draw_bevel_rect2(ax, ay, c->w, c->h, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+    else          fill_rect_pen(ax, ay, c->w, c->h, borderPen);
 
-    // Track inner (visual well)
-    int16_t ix = (int16_t)(ax + 2);
-    int16_t iy = (int16_t)(ay + 2);
-    int16_t iw = (int16_t)(c->w - 4);
-    int16_t ih = (int16_t)(c->h - 4);
-    if (iw <= 0 || ih <= 0) return;
+    // Track inner (screen coords)
+    R16 track = r16((int16_t)(ax + 2), (int16_t)(ay + 2), (int16_t)(c->w - 4), (int16_t)(c->h - 4));
+    if (!r16_valid(&track)) return;
 
-    if (c->dock) fill_rect_pen(ix, iy, iw, ih, borderPen);
+    if (c->dock) fill_rect_pen(track.x, track.y, track.w, track.h, borderPen);
 
-    // “Pressed in” track bevel
-    // Track inner (visual well)
+    // Well inside bevel
+    R16 well = r16((int16_t)(track.x + 1), (int16_t)(track.y + 1), (int16_t)(track.w - 2), (int16_t)(track.h - 2));
+    if (!r16_valid(&well)) return;
 
-    // WELL inside bevel:
-    int16_t tx0 = ix + 1;
-    int16_t ty0 = iy + 1;
-    int16_t tw0 = iw - 2;
-    int16_t th0 = ih - 2;
-    gfx_setcolour(WIN_BEVEL_L);                 // your dot colour
-    ui_fill_dots(tx0, ty0, tw0, th0, 2);        // step 3 is a nice density
+    // dots (your vibe 😄)
+    gfx_setcolour(WIN_BEVEL_L);
+    ui_fill_dots(well.x, well.y, well.w, well.h, 2);
 
+    // pressed-in track bevel
+    draw_bevel_rect2(track.x, track.y, track.w, track.h, WIN_BEVEL_H, WIN_BEVEL_L, 1);
 
+    // Thumb (use compact calc)
+    R16 tLocal;
+    if (sb_calc_thumb_rect2(c, &tLocal)) {
+        // control-local -> screen
+        int16_t sx = (int16_t)(ax + tLocal.x);
+        int16_t sy = (int16_t)(ay + tLocal.y);
 
-    draw_bevel_rect2(ix, iy, iw, ih, WIN_BEVEL_H, WIN_BEVEL_L, 1);
-
-    // ---- Thumb (STEP-SIZED, value spans full min..max) ----
-    // Use the SAME math as mouse-drag uses (sb_calc_thumb_rect).
-    int16_t tlx, tly, tlw, tlh;
-    if (sb_calc_thumb_rect(c, &tlx, &tly, &tlw, &tlh)) {
-
-        // sb_calc_thumb_rect returns CONTROL-LOCAL coords (it assumes ix=2,iy=2 inside the control),
-        // so convert to SCREEN coords by adding the control's screen origin (ax,ay).
-        int16_t sx = (int16_t)(ax + tlx);
-        int16_t sy = (int16_t)(ay + tly);
-
-        // prop gadget draw (the nob)
-        fill_rect_pen(sx, sy, tlw, tlh, WIN_SCROLLER_PROP_PEN);
-        draw_bevel_rect2(sx, sy, tlw, tlh, WIN_BEVEL_H, WIN_BEVEL_L, c->thumb_down);
+        fill_rect_pen(sx, sy, tLocal.w, tLocal.h, WIN_SCROLLER_PROP_PEN);
+        draw_bevel_rect2(sx, sy, tLocal.w, tLocal.h, WIN_BEVEL_H, WIN_BEVEL_L, c->thumb_down);
     }
 }
+
 
 
 
@@ -735,7 +792,7 @@ void SBOS_paintWindow(SBXWindowId id){
     // client only gadgets
     // draw ONLY gadgets that are NOT docked
     ui_clip_set(w->cx, w->cy, w->cw, w->ch);
-    SBOS_drawControls(w);
+    SBOS_drawControlsFiltered(w, 0);
     ui_clip_disable();
 
     // draw the blue gutter bar, we draw this, that paints over the client controls if not clipped properly
@@ -763,7 +820,7 @@ void SBOS_paintWindow(SBXWindowId id){
 
     // draw the docked controls AFTER the gutter rendering
     ui_clip_set(w->cx, w->cy, (int16_t)(w->cw + gr), (int16_t)(w->ch + gb));
-    SBOS_drawDockedControls(w);
+    SBOS_drawControlsFiltered(w, 1);
     ui_clip_disable();
 
     gfx_setcolour(WIN_BEVEL_L);
@@ -1030,8 +1087,10 @@ static inline uint8_t is_title_gadget_region(WHitRegion r){
 }
 
 static inline uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h){
-    return (px >= x) && (py >= y) && (px < (int16_t)(x + w)) && (py < (int16_t)(y + h));
+    R16 r = r16(x,y,w,h);
+    return pt_in_r16(px,py,&r);
 }
+
 
 
 static SBXWindowId  g_sbDownWin   = SBW_INVALID_ID;
@@ -1080,52 +1139,39 @@ static int16_t find_scrollbar_at(sbx_window_t *w, int16_t cx, int16_t cy){
 
 
 
-
-
 static void sb_set_value_from_mouse(sbx_control_t *c, int16_t mouseAlong, int16_t grabOffset)
 {
+    if (!c) return;
+
     int16_t minv = c->sb.min;
     int16_t maxv = c->sb.max;
-
-    if (maxv < minv) { int16_t t = minv; minv = maxv; maxv = t; }
+    if (maxv < minv) { int16_t t=minv; minv=maxv; maxv=t; }
 
     int16_t range = (int16_t)(maxv - minv);
     if (range < 0) range = 0;
 
-    // same track well as draw:
-    int16_t iw = (int16_t)(c->w - 4);
-    int16_t ih = (int16_t)(c->h - 4);
-    int16_t tw0 = (int16_t)(iw - 2);
-    int16_t th0 = (int16_t)(ih - 2);
-    if (tw0 <= 0 || th0 <= 0) return;
+    R16 well;
+    if (!sb_get_track_well_local(c, &well)) return;
 
-    int16_t trackLen = (c->orient == SBX_SB_VERT) ? th0 : tw0;
-    int16_t minThumb = 6;
+    int16_t trackLen = (c->orient == SBX_SB_VERT) ? well.h : well.w;
 
-    // Thumb sizing uses step (as "amount")
-    int16_t amt = c->sb.step;
-    if (amt <= 0) amt = 1;
+    SBMetrics m;
+    if (!sb_metrics(c, trackLen, &m)) return;
 
-    int32_t denom = (int32_t)range + (int32_t)amt;
-    int16_t thumbLen = (denom > 0) ? (int16_t)(((int32_t)trackLen * (int32_t)amt) / denom) : trackLen;
-    thumbLen = clamp_i16(thumbLen, minThumb, trackLen);
-
-    int16_t travel = (int16_t)(trackLen - thumbLen);
-    if (travel <= 0 || range <= 0) {
-        c->sb.value = minv;
+    if (m.travel <= 0 || m.range <= 0) {
+        c->sb.value = m.minv;
         return;
     }
 
-    // desired thumb top/left inside track well (0..travel)
+    // mouseAlong is already "inside well" space in your caller
     int16_t desired = (int16_t)(mouseAlong - grabOffset);
-    desired = clamp_i16(desired, 0, travel);
+    desired = clamp_i16(desired, 0, m.travel);
 
-    // map desired position to full value range
-    //c->sb.value = (int16_t)(minv + (int32_t)desired * (int32_t)range / (int32_t)travel);
-    c->sb.value = (int16_t)(minv + ((int32_t)desired * range + (travel/2)) / travel);
-
-    c->sb.value = clamp_i16(c->sb.value, minv, maxv);
+    // rounded mapping (same feel as thumb calc)
+    c->sb.value = (int16_t)(m.minv + (((int32_t)desired * m.range) + (m.travel/2)) / m.travel);
+    c->sb.value = clamp_i16(c->sb.value, m.minv, m.maxv);
 }
+
 
 
 
@@ -1149,7 +1195,7 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
         return r;
     }
 
-    // Title bar geometry (matches your paintWindow)
+    // Title bar geometry
     uint8_t hasTitle = (w->flags & SBX_WF_TITLE_BAR) != 0;
     int16_t tb_h = hasTitle ? (WIN_TITLE_HEIGHT + 4) : 0;
 
@@ -1361,19 +1407,14 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                                 if (clickAlong < thumbAlong) sc->sb.value -= sc->sb.step;
                                 else                         sc->sb.value += sc->sb.step;
 
-
-
-
                                 // clamp like draw does
                                 int16_t minv = sc->sb.min;
                                 int16_t maxv = sc->sb.max;
-                                //int16_t page = sc->sb.page;
 
                                 sc->sb.value = clamp_i16(sc->sb.value, minv, maxv);
 
                                 if (maxv < minv) { int16_t t=minv; minv=maxv; maxv=t; }
-                                //if (page <= 0) page = 1;
-                                int16_t maxPos = (int16_t)(maxv);// - page);
+                                int16_t maxPos = (int16_t)(maxv);
                                 if (maxPos < minv) maxPos = minv;
                                 sc->sb.value = clamp_i16(sc->sb.value, minv, maxPos);
                             }
@@ -1582,7 +1623,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             return;
         }
 
-        // 2) CLIENT CONTROL RELEASE (your existing code)
+        // 2) CLIENT CONTROL RELEASE
         if (g_btnDownWin != SBW_INVALID_ID && g_btnDownIx >= 0) {
 
             sbx_window_t *w = SBOS_getWindow(g_btnDownWin);
@@ -1706,184 +1747,51 @@ static void draw_button(sbx_window_t *w, const sbx_control_t *c){
 }
 
 
-static void SBOS_drawControls(sbx_window_t *w){
+
+static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
     if (!w) return;
+
     for (uint8_t i = 0; i < w->ctrl_count; i++) {
         const sbx_control_t *c = &w->ctrls[i];
         if (!c->visible) continue;
-        if (c->dock) continue;
+        if (!!c->dock != !!wantDock) continue;
 
         switch (c->type) {
-        case CTL_BUTTON:
-            draw_button(w, c);
-            break;
-
-        case CTL_LABEL:
-            draw_label(w, c);
-            break;
-
-        case CTL_SCROLLBAR:
-            draw_scrollbar(w, c);
-            break;
-
-
-        default:
-            break;
+        case CTL_BUTTON:    draw_button(w, c);    break;
+        case CTL_LABEL:     draw_label(w, c);     break;
+        case CTL_SCROLLBAR: draw_scrollbar(w, c); break;
+        default: break;
         }
     }
 }
 
 
-static void SBOS_drawDockedControls(sbx_window_t *w){
-    if (!w) return;
-    for (uint8_t i = 0; i < w->ctrl_count; i++) {
-        const sbx_control_t *c = &w->ctrls[i];
-        if (!c->visible) continue;
-        if (!c->dock) continue;
-
-        switch (c->type) {
-        case CTL_BUTTON:
-            draw_button(w, c);
-            break;
-
-        case CTL_LABEL:
-            draw_label(w, c);
-            break;
-
-        case CTL_SCROLLBAR:
-            draw_scrollbar(w, c);
-            break;
-
-
-        default:
-            break;
-        }
-    }
-}
-
-
-
-int SBOS_CreateButton(sbx_window_t *w,  uint16_t id,
-                   int16_t x, int16_t y,
-                   int16_t bw, int16_t bh,
-                   const char *text){
-    if (!w) return -1;
-
-    // no space left
-    if (w->ctrl_count >= MAX_CONTROLS)
-        return -1;
-
-    // grab next free slot
-    sbx_control_t *c = &w->ctrls[w->ctrl_count];
-
-    // fill it
-    c->type    = CTL_BUTTON;
-    c->id      = id;
-    c->x       = x;
-    c->y       = y;
-    c->w       = bw;
-    c->h       = bh;
-    c->visible = 1;
-    c->down    = 0;
-
-    // copy text safely
-    if (text) {
-        int i = 0;
-        for (; text[i] && i < (int)sizeof(c->text) - 1; i++)
-            c->text[i] = text[i];
-        c->text[i] = '\0';
-    } else {
-        c->text[0] = '\0';
-    }
-
-    // claim the slot
-    w->ctrl_count++;
-
-    // return index of control (useful later)
-    return (int)(w->ctrl_count - 1);
-}
-
-
-int SBOS_CreateLabel(sbx_window_t *w, uint16_t id, int16_t x, int16_t y, const char *text){
-    if (!w) return -1;
-    if (w->ctrl_count >= MAX_CONTROLS) return -1;
-
-    sbx_control_t *c = &w->ctrls[w->ctrl_count];
-
-    c->type    = CTL_LABEL;
-    c->id      = id;
-    c->x       = x;
-    c->y       = y;
-    c->w       = 0;
-    c->h       = 0;
-    c->visible = 1;
-    c->down    = 0;
-
-    if (text) {
-        int i = 0;
-        for (; text[i] && i < (int)sizeof(c->text) - 1; i++)
-            c->text[i] = text[i];
-        c->text[i] = '\0';
-    } else {
-        c->text[0] = '\0';
-    }
-
-    w->ctrl_count++;
-    return (int)(w->ctrl_count - 1);
-}
-
-void SBOX_MoveScrollbar(sbx_window_t *win, uint16_t id, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient){
-    sbx_control_t *c = &win->ctrls[id];
-    c->x = x;
-    c->y = y;
-    c->w = w;
-    c->h = h;
-    c->orient = orient;
-}
-
-int SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id,
-                         uint8_t orient, uint8_t dock,
-                         int16_t thickness,
-                         int16_t min, int16_t max,
-                         int16_t page, int16_t value,
-                         int16_t step)
+int SBOS_CreateButton(sbx_window_t *w, uint16_t id,
+                      int16_t x, int16_t y,
+                      int16_t bw, int16_t bh,
+                      const char *text)
 {
-    if (!w) return -1;
-    if (w->ctrl_count >= MAX_CONTROLS) return -1;
+    sbx_control_t *c = ctrl_alloc(w, id, CTL_BUTTON);
+    if (!c) return -1;
 
-    sbx_control_t *c = &w->ctrls[w->ctrl_count];
+    c->x = x; c->y = y; c->w = bw; c->h = bh;
+    ctrl_set_text(c, text);
 
-    c->type    = CTL_SCROLLBAR;
-    c->id      = id;
-    c->visible = 1;
-    c->down    = 0;
-
-    c->orient  = orient;
-    c->dock    = dock;
-    c->thumb_down = 0;
-
-    c->sb.min   = min;
-    c->sb.max   = max;
-    //c->sb.page  = (page < 0) ? 0 : page;
-    c->sb.value = value;
-    c->sb.step  = (step <= 0) ? 1 : step;
-
-    // We'll set x/y/w/h during layout (next step),
-    // but store thickness in w/h for now as a hint.
-    if (orient == SBX_SB_VERT) {
-        c->w = thickness;
-        c->h = 0;
-    } else {
-        c->h = thickness;
-        c->w = 0;
-    }
-
-    c->x = 0;
-    c->y = 0;
-
-    w->ctrl_count++;
     return (int)(w->ctrl_count - 1);
 }
+
+int SBOS_CreateLabel(sbx_window_t *w, uint16_t id, int16_t x, int16_t y, const char *text)
+{
+    sbx_control_t *c = ctrl_alloc(w, id, CTL_LABEL);
+    if (!c) return -1;
+
+    c->x = x; c->y = y;
+    c->w = 0; c->h = 0; // label uses text only
+    ctrl_set_text(c, text);
+
+    return (int)(w->ctrl_count - 1);
+}
+
 
 static sbx_control_t* SBOS_getControlById(sbx_window_t *w, uint16_t ctrl_id)
 {
@@ -1896,6 +1804,48 @@ static sbx_control_t* SBOS_getControlById(sbx_window_t *w, uint16_t ctrl_id)
     }
     return NULL;
 }
+
+void SBOX_MoveScrollbar(sbx_window_t *win, uint16_t id,
+                        int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient)
+{
+    sbx_control_t *c = SBOS_getControlById(win, id);
+    if (!c) return;
+    if (c->type != CTL_SCROLLBAR) return;
+
+    c->x = x; c->y = y; c->w = w; c->h = h;
+    c->orient = orient;
+}
+
+
+
+int SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id,
+                         uint8_t orient, uint8_t dock,
+                         int16_t thickness,
+                         int16_t min, int16_t max,
+                         int16_t page, int16_t value,
+                         int16_t step)
+{
+    (void)page; // keeping fidelity: you weren't using page in math anymore
+
+    sbx_control_t *c = ctrl_alloc(w, id, CTL_SCROLLBAR);
+    if (!c) return -1;
+
+    c->orient = orient;
+    c->dock   = dock;
+
+    c->sb.min   = min;
+    c->sb.max   = max;
+    c->sb.value = value;
+    c->sb.step  = (step <= 0) ? 1 : step;
+
+    // Store thickness hint like you did
+    if (orient == SBX_SB_VERT) { c->w = thickness; c->h = 0; }
+    else                      { c->h = thickness; c->w = 0; }
+
+    return (int)(w->ctrl_count - 1);
+}
+
+
 
 
 int16_t SBOS_getScrollX(sbx_window_t *w, uint16_t ctrl_id)
