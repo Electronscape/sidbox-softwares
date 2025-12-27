@@ -33,7 +33,11 @@ typedef enum {
     CTL_BUTTON,
 } CtlType;
 
-
+typedef enum {
+    GAD_TOOL_DEFAULT        = (1 << 0),
+    GAD_TOOL_DOCKED_RIGHT   = (1 << 1),     // right dock used
+    GAD_TOOL_DOCKED_BOTTOM  = (1 << 2),     // bottom dock used
+} GAD_TOOL_FLAGS;
 
 
 
@@ -73,7 +77,7 @@ typedef struct {
     // control data
     GADGET_CLASS_T  gadgetType; // what type of gadget are we going with;
     GADGET_RECT_T   rect;       // the actionable area (container hit area, basic rectangle info)
-    uint32_t        flags;      // flags for this gadget
+    GAD_TOOL_FLAGS  flags;      // flags for this gadget
     uint8_t         enabled;    // enabled/disabled gadget, sort of like if NOT clickable ;)
     uint8_t         visible;    //
     uint8_t         down;       // might need to remove this soon

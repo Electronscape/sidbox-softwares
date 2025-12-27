@@ -37,11 +37,11 @@
 typedef struct {
     SBXWindowId     self;               // self id  // we'll keep this so its much quicker to find the window (findWindowEx(winhandle *hnd) for example
     uint32_t        flags;
+    uint8_t         hasDockedGadget;    // this is set as soon as a gadget requests to be docked, changes the way this window will work
     char            title[WINDOW_TITLE_MAX_LEN];
 
-    GADGET_RECT_T   winrect;            // geometry
-    GADGET_RECT_T   winviewrect;        // the area inside border + below titlebar
-    GADGET_RECT_T   contentviewrect;    // the area inside the border, title, (the window frame basically)
+    GADGET_RECT_T   winrect;            // window geometry (the actual area of the window)
+    GADGET_RECT_T   clientrect;         // this is the inner view port, which will adjust according to what things will be there
 
     GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
 } sbx_window_t;
@@ -98,6 +98,7 @@ void            initWb(void);
 
 SBXWindowId     SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 void            SBOS_destroyWindow(SBXWindowId id);
+sbx_window_t*   SBOS_getWindow(SBXWindowId id);
 
 void            SBOS_paintWindow(SBXWindowId id);
 void            SBOS_paintAllWindows(void);
@@ -105,6 +106,9 @@ void            SBOS_paintAllWindows(void);
 void            SBOS_bringToFront(SBXWindowId id);
 void            SBOS_setFocus(SBXWindowId id);
 
+
+// gadgets
+SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 
 
 

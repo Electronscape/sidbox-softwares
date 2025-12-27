@@ -40,7 +40,7 @@ extern UIClipRect g_uiclip;
 
 
 // protoypes
-void sbx_draw_text816(int x, int y, const unsigned char* textptr);
+void ui_draw_text816(int x, int y, const unsigned char* textptr);
 
 void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen);
 

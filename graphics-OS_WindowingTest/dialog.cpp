@@ -127,6 +127,12 @@ Dialog::Dialog(QWidget *parent)
     } else
         printf("Window ID %d\n", winMain2);
 
+
+    //sbx_window_t w = SBOS_getWindow(winMain2);
+
+    SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addButton(winMain2, -6,  66,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_BOTTOM
+
 /*
     sbx_window_t *w = SBOS_getWindow(workbench);
     SBControlHandle hWorkBench = SBOS_CreateButton(w, 6,  6,  220, 26, "Workbench button");
