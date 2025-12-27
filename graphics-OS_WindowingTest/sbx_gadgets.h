@@ -4,8 +4,15 @@
 #include <stdint.h>
 
 
-#define     MAX_GADGETS             16  // change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
+#define     MAX_GADGETS             16  // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
+#define     MAX_BUTTONS             16
+#define     MAX_CHECKBOXES          16
+
+
+
 #define     MAX_GADGETS_PER_WINDOW  4   // this is low, but its for testing. WILL increase this for a normal size
+
+
 #define     DEF_GADGET_TEXT_SIZE    32
 
 
@@ -27,12 +34,6 @@ typedef struct GADGET_RECT_T {  // this is likely going to be used for things li
 
 typedef uint8_t SBXWindowId;
 
-// add more as we add more gadgets
-typedef enum {
-    CTL_LABEL,
-    CTL_BUTTON,
-} CtlType;
-
 typedef enum {
     GAD_TOOL_DEFAULT        = (1 << 0),
     GAD_TOOL_DOCKED_RIGHT   = (1 << 1),     // right dock used
@@ -40,51 +41,82 @@ typedef enum {
 } GAD_TOOL_FLAGS;
 
 
-
 // control types
 typedef enum GADGET_CLASS_T {
+    GAD_NULL        = 0,
     GAD_BUTTON,
-    GAD_SCROLLBAR,
-    GAD_RADIO,
     GAD_CHECKBOX,
-    GAD_LABEL
 } GADGET_CLASS_T;
 
-
-// create types for each gadget
-typedef struct GAD_BUTTON_T{
-    uint8_t         nothing;    // just here to stop empty type // will remove when something useful can be stored here.
-} GAD_BUTTON_T;
-
-
-typedef struct GET_SCROLLBAR_T {
-
-} GET_SCROLLBAR_T;
-
-
-typedef struct {
-    /// GADGET HOST ///
-    /// ** GLOBALE CONTROL HOST STUFF, SYSTEM NEEDS TO KNOW THE GADGET DIMENTIONS AND TYPE, EVERYTHING WELL WILL POINT TO THE ACTUAL GADGET LATER.
-    // info about the host, hosting this control
-    SBXWindowId     winhnd;     // the window ID, the handler number for the window - useful to "peek at a control cross programs and see who it belongs too"
-
-    // lifetime handles
-    // i doubt anyone would ever need more than 1000 gadgets, BUT this allows for scalability later, also keeps with in the 32bit realms of the M7-CPU
-    // elaborate naming for easy to read later
-    uint16_t        gadgetSlotUsed;    // 0 free, 1 used
-    uint16_t        handleGen;         // generation for stale-handle detection
-
-    // control data
-    GADGET_CLASS_T  gadgetType; // what type of gadget are we going with;
+typedef struct GAD_HDR_T {
     GADGET_RECT_T   rect;       // the actionable area (container hit area, basic rectangle info)
     GAD_TOOL_FLAGS  flags;      // flags for this gadget
     uint8_t         enabled;    // enabled/disabled gadget, sort of like if NOT clickable ;)
     uint8_t         visible;    //
     uint8_t         down;       // might need to remove this soon
+} GAD_HDR_T;
 
+// create types for each gadget
+typedef struct GAD_BUTTON_T{
+    //-------------- common parts to the GADGET -----------------
+    GAD_HDR_T       h;
+    uint8_t         used;
+    //-----------------------------------------------------------
+    // here is the bits that are specific to the gadget /////////
     char            text[DEF_GADGET_TEXT_SIZE];   // common gadget text
+} GAD_BUTTON_T;
+
+typedef struct GAD_CHECKBOX_T{
+    //-------------- common parts to the GADGET -----------------
+    GAD_HDR_T       h;
+    uint8_t         used;
+    //-----------------------------------------------------------
+
+    uint8_t         checked;    // 0/1
+    char            text[DEF_GADGET_TEXT_SIZE]; // optional label
+} GAD_CHECKBOX_T;
+
+
+typedef struct {
+    /// GADGET HOST ///
+    /// ** GLOBALE CONTROL HOST STUFF, SYSTEM NEEDS TO KNOW THE GADGET DIMENTIONS AND TYPE, EVERYTHING WELL WILL POINT TO THE ACTUAL GADGET LATER.
+
+    SBXWindowId     winhnd;     // the window ID, the handler number for the window - useful to "peek at a control cross programs and see who it belongs too"
+
+    // lifetime handles
+    uint16_t        gadgetSlotUsed;    // 0 free, 1 used
+    uint16_t        handleGen;         // generation for stale-handle detection
+
+    // control data
+    GADGET_CLASS_T  gadgetType; // what type of gadget are we going with;
+    void            *gadget;    // the gadget host (what ever the gadget is assigned here)
 
 } GADGET_BASE_T;
+
+
+
+
+
+
+
+void SBOS_gadgetsInit(void);
+
+SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
+SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
+
+
+
+GADGET_BASE_T* SBOS_gadgetFromHandle(SBControlHandle h);
+GAD_HDR_T*     SBOS_gadgetHdr(GADGET_BASE_T *g);
+void           SBOS_destroyGadget(SBControlHandle h);
+
+
+
+
+
+
+
+
 
 
 #endif // SBX_GADGETS_H

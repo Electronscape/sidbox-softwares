@@ -108,10 +108,6 @@ void            SBOS_setFocus(SBXWindowId id);
 
 
 // gadgets
-SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
-
-
-
 
 
 

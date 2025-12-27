@@ -130,8 +130,15 @@ Dialog::Dialog(QWidget *parent)
 
     //sbx_window_t w = SBOS_getWindow(winMain2);
 
+    SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+
+    SBOS_addButton(winMain3, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+
     SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
-    SBOS_addButton(winMain2, -6,  66,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_BOTTOM
+    SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+    SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+
+    //SBOS_addButton(winMain2, -6,  66,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_BOTTOM
 
 /*
     sbx_window_t *w = SBOS_getWindow(workbench);

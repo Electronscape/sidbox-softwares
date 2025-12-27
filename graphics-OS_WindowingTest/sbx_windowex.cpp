@@ -1,3 +1,5 @@
+//// SBX_WINDOWEX.CPP //////
+
 
 #include "stdio.h"
 
@@ -99,6 +101,8 @@ void initWb(void){
     g_ui.down_win    = SBW_INVALID_ID;
     g_ui.down_region = WH_NONE;
     g_ui.resize_win  = SBW_INVALID_ID;
+    SBOS_gadgetsInit();
+
 }
 
 
@@ -351,7 +355,6 @@ void SBOS_paintWindow(SBXWindowId id){
 
         if(w->hasDockedGadget & GAD_TOOL_DOCKED_RIGHT)
             sbgfx_drawbox(gx, win_y, WIN_RESIZE_GLYPH_SIZE, win_h, borderPen);
-
 
         // bottom bar
         sbgfx_drawbox(inner_x, (int16_t)(gy + 1), inner_w, (int16_t)(WIN_RESIZE_GLYPH_SIZE - 2), borderPen);
@@ -785,7 +788,7 @@ void windowHittest(int16_t mx, int16_t my){
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g);
-
+static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g);
 
 
 
@@ -800,63 +803,141 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         GADGET_BASE_T *g = w->GADGETS[i];
         if (!g) continue;
-        if (!g->visible) continue;
 
         switch (g->gadgetType){
-        case GAD_BUTTON: draw_button(w, g); break;
-        default: break;
+            case GAD_BUTTON:   draw_button(w, g);   break;
+            case GAD_CHECKBOX: draw_checkbox(w, g); break;
+            default: break;
         }
     }
-
-
     return;
 }
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 ////  RENDERING THE GUI  ////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// gadget renderer
+
 static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
-    int16_t ax = (int16_t)(w->clientrect.x + g->rect.x);
-    int16_t ay = (int16_t)(w->clientrect.y + g->rect.y);
+    if (!w || !g || !g->gadget) return;
+
+    GAD_BUTTON_T *b = (GAD_BUTTON_T*)g->gadget;
+    if (!b->h.visible) return;
+
+    int16_t ax = (int16_t)(w->clientrect.x + b->h.rect.x);
+    int16_t ay = (int16_t)(w->clientrect.y + b->h.rect.y);
 
     // face
-    fill_rect_pen(ax, ay, g->rect.w, g->rect.h, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(ax, ay, g->rect.w, g->rect.h, WIN_BEVEL_H, WIN_BEVEL_L, g->down);
+    fill_rect_pen(ax, ay, b->h.rect.w, b->h.rect.h, WIN_BORDER_INACTIVE_PEN);
+    draw_bevel(ax, ay, b->h.rect.w, b->h.rect.h, WIN_BEVEL_H, WIN_BEVEL_L, b->h.down);
 
-    // --- centered text ---
-    const int16_t char_w = 8;
-    const int16_t char_h = 16;
-
-    // count chars (cheap strlen)
+    // centered text
+    const int16_t char_w = 8, char_h = 16;
     int16_t len = 0;
-    while (g->text[len] && len < DEF_GADGET_TEXT_SIZE) len++;
+    while (b->text[len] && len < (DEF_GADGET_TEXT_SIZE - 1)) len++;
 
     int16_t text_w = (int16_t)(len * char_w);
-    int16_t text_h = char_h;
+    int16_t tx = (int16_t)(ax + (b->h.rect.w - text_w) / 2);
+    int16_t ty = (int16_t)(ay + (b->h.rect.h - char_h) / 2);
 
-    // center inside button rect
-    int16_t tx = (int16_t)(ax + (g->rect.w - text_w) / 2);
-    int16_t ty = (int16_t)(ay + (g->rect.h - text_h) / 2);
-
-    // pressed offset (classic 1px nudge)
-    if (g->down) {
-        tx++;
-        ty++;
-    }
+    if (b->h.down) { tx++; ty++; }
 
     gfx_setcolour(WIN_TITLE_PEN);
-    ui_draw_text816(tx, ty, (const unsigned char*)g->text);
+    ui_draw_text816(tx, ty, (const unsigned char*)b->text);
+}
+
+static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
+    if (!w || !g || !g->gadget) return;
+
+    GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*)g->gadget;
+    if (!c->h.visible) return;
+
+    const int16_t ax = (int16_t)(w->clientrect.x + c->h.rect.x);
+    const int16_t ay = (int16_t)(w->clientrect.y + c->h.rect.y);
+
+    // background for the whole control rect (optional, but consistent look)
+    // If you want it transparent, remove this.
+    //fill_rect_pen(ax, ay, c->h.rect.w, c->h.rect.h, WIN_BG_PEN);
+
+    // checkbox square size: 16x16 centered vertically in control height
+    const int16_t box = 16;
+    int16_t box_x = ax;
+    int16_t box_y = (int16_t)(ay + (c->h.rect.h - box) / 2);
+
+    // face + bevel
+    fill_rect_pen(box_x, box_y, box, box, WIN_BORDER_INACTIVE_PEN);
+    draw_bevel(box_x, box_y, box, box, WIN_BEVEL_H, WIN_BEVEL_L, c->h.down);
+
+    // check mark
+    if (c->checked) {
+        gfx_setcolour(WIN_BEVEL_L);
+
+        // simple “tick” using pixels/lines (cheap + readable)
+        // adjust offsets for your font/pixel vibe
+        int16_t cx = (int16_t)(box_x + 4);
+        int16_t cy = (int16_t)(box_y + 8);
+
+        // down-left to center
+        ui_ppixel(cx,     cy);
+        ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
+        ui_ppixel((int16_t)(cx+2), (int16_t)(cy+2));
+
+        // center to up-right
+        ui_ppixel((int16_t)(cx+3), (int16_t)(cy+1));
+        ui_ppixel((int16_t)(cx+4), cy);
+        ui_ppixel((int16_t)(cx+5), (int16_t)(cy-1));
+        ui_ppixel((int16_t)(cx+6), (int16_t)(cy-2));
+    }
+
+    // label text (optional)
+    if (c->text[0]) {
+        gfx_setcolour(WIN_TITLE_PEN);
+
+        // text baseline centered-ish
+        int16_t tx = (int16_t)(box_x + box + 6);
+        int16_t ty = (int16_t)(ay + (c->h.rect.h - 16) / 2);
+
+        if (c->h.down) { tx++; ty++; }
+
+        ui_draw_text816(tx, ty, (const unsigned char*)c->text);
+    }
 }
 
 
+//////////////////////////////////
+
+static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
+    if (!w) return NULL;
+
+    int16_t lx = (int16_t)(mx - w->clientrect.x);
+    int16_t ly = (int16_t)(my - w->clientrect.y);
+
+    for (int i = MAX_GADGETS_PER_WINDOW - 1; i >= 0; i--){
+        GADGET_BASE_T *g = w->GADGETS[i];
+        if (!g || !g->gadget) continue;
+
+        GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+        if (!h->visible || !h->enabled) continue;
+
+        Rect16 r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
+        if (pt_in_r16(lx, ly, &r)) return g;
+    }
+    return NULL;
+}
 
 
+static uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my){
+    if (!w || !g || !g->gadget) return 0;
 
+    int16_t lx = (int16_t)(mx - w->clientrect.x);
+    int16_t ly = (int16_t)(my - w->clientrect.y);
 
-
-
+    GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+    Rect16 r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
+    return pt_in_r16(lx, ly, &r);
+}
 
 
 
@@ -868,32 +949,6 @@ static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 ////  WINDOW INTERFACE WITH MOUSE  //////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
-    if (!w) return NULL;
-
-    // mouse in content-local coords
-    int16_t lx = (int16_t)(mx - w->clientrect.x);
-    int16_t ly = (int16_t)(my - w->clientrect.y);
-
-    // topmost gadget wins (reverse draw order)
-    for (int i = MAX_GADGETS_PER_WINDOW - 1; i >= 0; i--){
-        GADGET_BASE_T *g = w->GADGETS[i];
-        if (!g) continue;
-        if (!g->visible || !g->enabled) continue;
-
-        Rect16 r = r16(g->rect.x, g->rect.y, g->rect.w, g->rect.h);
-        if (pt_in_r16(lx, ly, &r)) return g;
-    }
-    return NULL;
-}
-
-static uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my){
-    if (!w || !g) return 0;
-    int16_t lx = (int16_t)(mx - w->clientrect.x);
-    int16_t ly = (int16_t)(my - w->clientrect.y);
-    Rect16 r = r16(g->rect.x, g->rect.y, g->rect.w, g->rect.h);
-    return pt_in_r16(lx, ly, &r);
-}
 
 
 void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
@@ -962,11 +1017,15 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     g_ui.down_region = WH_CLIENT;
 
                     g_ui.capturedGadget = g;
-                    g->down = 1;
+
+                    // press it
+                    GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+                    h->down = 1;
 
                     SBOS_paintAllWindows();
                     return;
                 }
+
             }
 
             break;
@@ -1025,21 +1084,24 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             return;
         }
 
-
-
-        // gadget system
+        /// GADGET HANDLING
         if (g_ui.mouse_down && g_ui.capturedGadget) {
             sbx_window_t *gw = SBOS_getWindow(g_ui.capturedGadget->winhnd);
             if (gw) {
                 uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget, mx, my);
+                GAD_HDR_T *h = (GAD_HDR_T*)g_ui.capturedGadget->gadget;
+
                 uint8_t newDown = inside ? 1 : 0;
-                if (newDown != g_ui.capturedGadget->down) {
-                    g_ui.capturedGadget->down = newDown;
+                if (newDown != h->down) {
+                    h->down = newDown;
                     SBOS_paintAllWindows();
                 }
             }
             return;
         }
+
+
+
 
         // when mouse is held down and a gadget is captured
         if (g_ui.mouse_down && g_ui.title_win != SBW_INVALID_ID && is_title_gadget_region(g_ui.title_region)) {
@@ -1089,7 +1151,6 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     /* TODO */
                 }
             }
-
             SBOS_paintAllWindows();
 
             // common cleanup
@@ -1097,26 +1158,41 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             return;
         }
 
-        /// gadget interaction
+        /// the gadget was released
         if (g_ui.capturedGadget) {
-            GADGET_BASE_T *g = g_ui.capturedGadget;
-            sbx_window_t *gw = SBOS_getWindow(g->winhnd);
+        GADGET_BASE_T *g = g_ui.capturedGadget;
+        sbx_window_t *gw = SBOS_getWindow(g->winhnd);
 
-            uint8_t inside = 0;
-            if (gw) inside = gadget_mouse_inside(gw, g, mx, my);
+        uint8_t inside = 0;
+        if (gw) inside = gadget_mouse_inside(gw, g, mx, my);
 
-            g_ui.capturedGadget = NULL;
-            g->down = 0;
+        // pop visual
+        GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+        h->down = 0;
 
-            if (inside) {
-                printf("BUTTON CLICK: %s\r\n", g->text);
-                // later: send event/callback
+        g_ui.capturedGadget = NULL;
+
+        if (inside) {
+            switch(g->gadgetType){
+                case GAD_BUTTON:{
+                    GAD_BUTTON_T *b = (GAD_BUTTON_T*)g->gadget;
+                    printf("BUTTON CLICK: %s\r\n", b->text);
+                } break;
+                case GAD_CHECKBOX:{
+                    GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*)g->gadget;
+                    c->checked ^= 1;
+                    printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
+                } break;
             }
 
-            SBOS_paintAllWindows();
-            ui_end_interaction();
-            return;
+
         }
+
+        SBOS_paintAllWindows();
+        ui_end_interaction();
+        return;
+    }
+
 
 
         // 4 OTHERWISE: just cleanup (end drag etc)
