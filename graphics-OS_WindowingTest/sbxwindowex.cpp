@@ -26,9 +26,21 @@ static int16_t      g_dragOffX   = 0;
 static int16_t      g_dragOffY   = 0;
 static WHitRegion   g_downRegion = WH_NONE;
 
+
+
+
+static SBXWindowId  g_sbDownWin   = SBW_INVALID_ID;
+//static int16_t      g_sbDownIx    = -1;
+static SBControlHandle g_sbDownH  = SBCTL_INVALID;
+static uint8_t      g_sbDragging  = 0;
+static int16_t      g_sbDragGrab  = 0;   // offset inside thumb (px)
+
+
+
 static SBXWindowId  g_focusWin   = SBW_INVALID_ID;
 static SBXWindowId  g_btnDownWin = SBW_INVALID_ID;
-static int16_t      g_btnDownIx  = -1;   // index into w->ctrls[]
+//static int16_t      g_btnDownIx  = -1;   // index into w->ctrls[]
+static SBControlHandle g_btnDownH = SBCTL_INVALID;
 
 static SBXWindowId  g_resizeWin  = SBW_INVALID_ID;
 static int16_t      g_rStartMX   = 0;
@@ -84,20 +96,82 @@ static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
     return v;
 }
 
-
-
-
-
-
-
-
 ///////////////////////////////////////////////////////////////////////
 /// END: COMPACTION ///////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
 
+
+
+static inline sbx_control_t* ctrl_from_handle(sbx_window_t *w, SBControlHandle h){
+    if (!w || h == SBCTL_INVALID) return 0;
+
+    uint8_t ix  = SBCTL_IDX(h);
+    uint8_t gen = SBCTL_GEN(h);
+
+    if (ix >= w->ctrl_count) return 0;
+
+    sbx_control_t *c = &w->ctrls[ix];
+    if (!c->used) return 0;
+    if (c->gen != gen) return 0;
+
+    return c;
+}
+
+static inline SBControlHandle ctrl_handle_of(const sbx_control_t *c, uint8_t ix){
+    return SBCTL_MAKE(c->gen, ix);
+}
+
+
+void SBOS_DestroyControl(sbx_window_t *w, SBControlHandle h){
+    sbx_control_t *c = ctrl_from_handle(w, h);
+    if (!c) return;
+    c->used = 0;
+    c->down = 0;
+    c->thumb_down = 0;
+    c->gen = (uint8_t)(c->gen + 1);
+    if (c->gen == 0) c->gen = 1;
+}
+
+
+static void ctrl_set_text(sbx_control_t *c, const char *text);      // <<------------------ prototype
+
+void SBOS_CtrlSetText(sbx_window_t *w, SBControlHandle h, const char *text){
+    sbx_control_t *c = ctrl_from_handle(w, h);
+    if (!c) return;
+    ctrl_set_text(c, text);
+}
+
+void SBOS_CtrlSetVisible(sbx_window_t *w, SBControlHandle h, uint8_t visible){
+    sbx_control_t *c = ctrl_from_handle(w, h);
+    if (!c) return;
+    c->visible = visible ? 1 : 0;
+}
+
+
+
+
+
+
+//********************************************************************//
+//********************************************************************//
+//********************************************************************//
+
+
+
 /////// prototypes //////////////////
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock);
+
+// radio buttons
+static SBControlHandle find_radio_at(sbx_window_t *w, int16_t cx, int16_t cy);
+static void radio_select(sbx_window_t *w, SBControlHandle h);
+static void draw_radio(sbx_window_t *w, const sbx_control_t *c);
+
+// check boxes
+static SBControlHandle find_checkbox_at(sbx_window_t *w, int16_t cx, int16_t cy);
+static void draw_checkbox(sbx_window_t *w, const sbx_control_t *c);
+
+
 static UIClip g_uiclip = {0,0,0,0,0};
 
 static void normalize_zorder(void);
@@ -243,6 +317,7 @@ static void layoutDockedControls(sbx_window_t *w){
 
     for (uint8_t i = 0; i < w->ctrl_count; i++){
         sbx_control_t *c = &w->ctrls[i];
+        if (!c->used) continue;
         if (!c->visible) continue;
         if (c->type != CTL_SCROLLBAR) continue;
 
@@ -286,7 +361,7 @@ static void layoutDockedControls(sbx_window_t *w){
         }
     }
 
-    w->aw = aw;
+    w->aw = aw ;
     w->ah = ah;
 }
 
@@ -453,38 +528,33 @@ static void draw_title_button(int16_t x, int16_t y, int16_t w, int16_t h, uint16
 }
 
 
-__attribute__((weak)) void SBOS_onButtonClick(SBXWindowId win, uint16_t button_id){
-    (void)win; (void)button_id;
+__attribute__((weak)) void SBOS_onButtonClick(SBXWindowId win, SBControlHandle h){
+    (void)win; (void)h;
     // default: do nothing
-    printf("output click: window: %d = button: %d\n", win, button_id);
+    printf("output click: window: %d = button handle: 0x%04X\n", win, (unsigned)h);
 }
+
 
 static inline uint8_t pt_in_ctrl(const sbx_control_t *c, int16_t cx, int16_t cy){
     R16 rc = r16(c->x, c->y, c->w, c->h);
     return pt_in_r16(cx, cy, &rc);
 }
 
-static int16_t find_button_at(sbx_window_t *w, int16_t cx, int16_t cy){
-    if (!w) return -1;
+static SBControlHandle find_button_at(sbx_window_t *w, int16_t cx, int16_t cy){
+    if (!w) return SBCTL_INVALID;
 
-    // last-added wins (front-most)
     for (int16_t i = (int16_t)w->ctrl_count - 1; i >= 0; i--){
         sbx_control_t *c = &w->ctrls[i];
-        if (!c->visible) continue;
+        if (!c->used || !c->visible) continue;
         if (c->type != CTL_BUTTON) continue;
-        if (pt_in_ctrl(c, cx, cy)) return i;
+        if (pt_in_ctrl(c, cx, cy)) return ctrl_handle_of(c, (uint8_t)i);
     }
-    return -1;
+    return SBCTL_INVALID;
 }
 
 static inline int16_t win_client_x(const sbx_window_t *w, int16_t mx) { return (int16_t)(mx - w->cx); }
 static inline int16_t win_client_y(const sbx_window_t *w, int16_t my) { return (int16_t)(my - w->cy); }
 
-static inline sbx_control_t* get_ctrl(sbx_window_t *w, int16_t ix){
-    if (!w) return 0;
-    if (ix < 0 || ix >= (int16_t)w->ctrl_count) return 0;
-    return &w->ctrls[ix];
-}
 
 
 static void ctrl_set_text(sbx_control_t *c, const char *text){
@@ -497,34 +567,63 @@ static void ctrl_set_text(sbx_control_t *c, const char *text){
     c->text[i] = '\0';
 }
 
-static sbx_control_t* ctrl_alloc(sbx_window_t *w, uint16_t id, CtlType type){
-    if (!w) return 0;
-    if (w->ctrl_count >= MAX_CONTROLS) return 0;
+static SBControlHandle ctrl_alloc(sbx_window_t *w, CtlType type, sbx_control_t **out){
+    if (out) *out = 0;
+    if (!w) return SBCTL_INVALID;
 
-    sbx_control_t *c = &w->ctrls[w->ctrl_count++];
+    uint8_t ix = 0xFF;
 
-    // Minimal init (preserve your defaults)
-    c->type       = type;
-    c->id         = id;
-    c->x = c->y   = 0;
-    c->w = c->h   = 0;
-    c->visible    = 1;
-    c->down       = 0;
-    c->dock       = 0;
-    c->orient     = 0;
+    // reuse free slot
+    for (uint8_t i = 0; i < w->ctrl_count; i++){
+        if (!w->ctrls[i].used) { ix = i; break; }
+    }
+
+    // append new slot
+    if (ix == 0xFF) {
+        if (w->ctrl_count >= MAX_CONTROLS) return SBCTL_INVALID;
+        ix = w->ctrl_count++;
+    }
+
+    sbx_control_t *c = &w->ctrls[ix];
+
+    // bump generation when (re)allocating this slot
+    c->gen = (uint8_t)(c->gen + 1);
+    if (c->gen == 0) c->gen = 1;
+
+    c->used = 1;
+    c->type = type;
+
+    c->x = c->y = 0;
+    c->w = c->h = 0;
+
+    c->visible = 1;
+    c->down = 0;
+
+    c->orient = 0;
+    c->dock = 0;
     c->thumb_down = 0;
-    c->text[0]    = '\0';
 
-    // Preserve sb defaults
-    c->sb.min   = 0;
-    c->sb.max   = 0;
+    c->text[0] = '\0';
+
+    // scroll bar
+    c->sb.min = 0;
+    c->sb.max = 0;
     c->sb.value = 0;
-    c->sb.step  = 1;
+    c->sb.step = 1;
 
-    return c;
+    // radio button
+    c->radio_group   = 0;
+    c->radio_checked = 0;
+
+    // check box
+    c->cb_checked = 0;
+
+
+
+    if (out) *out = c;
+
+    return SBCTL_MAKE(c->gen, ix);
 }
-
-
 
 void initWb(){
     //SBCtrl  ctrls[MAX_CONTROLS];
@@ -1092,49 +1191,29 @@ static inline uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t
 }
 
 
+static SBControlHandle find_scrollbar_at(sbx_window_t *w, int16_t cx, int16_t cy){
+    if (!w) return SBCTL_INVALID;
 
-static SBXWindowId  g_sbDownWin   = SBW_INVALID_ID;
-static int16_t      g_sbDownIx    = -1;
-static uint8_t      g_sbDragging  = 0;
-static int16_t      g_sbDragGrab  = 0;   // offset inside thumb (px)
+    uint8_t inDockZone = (cx >= w->aw) || (cy >= w->ah);
 
-static int16_t find_scrollbar_at(sbx_window_t *w, int16_t cx, int16_t cy){
-        if (!w) return -1;
-
-        // If mouse is in dock gutter space, prefer docked scrollbars.
-        uint8_t inDockZone = (cx >= w->aw) || (cy >= w->ah);
-
-        // PASS 1: preferred set
+    for (int16_t pass = 0; pass < 2; pass++){
         for (int16_t i = (int16_t)w->ctrl_count - 1; i >= 0; i--){
             sbx_control_t *c = &w->ctrls[i];
-            if (!c->visible) continue;
+            if (!c->used || !c->visible) continue;
             if (c->type != CTL_SCROLLBAR) continue;
 
-            if (inDockZone) {
-                if (!c->dock) continue;      // only docked first
+            uint8_t wantDock = inDockZone ? 1 : 0;
+            if (pass == 0) {
+                if (!!c->dock != wantDock) continue;
             } else {
-                if (c->dock) continue;       // only non-docked first
+                if (!!c->dock == wantDock) continue;
             }
 
-            if (pt_in_ctrl(c, cx, cy)) return i;
+            if (pt_in_ctrl(c, cx, cy)) return ctrl_handle_of(c, (uint8_t)i);
         }
+    }
 
-        // PASS 2: fallback set
-        for (int16_t i = (int16_t)w->ctrl_count - 1; i >= 0; i--){
-            sbx_control_t *c = &w->ctrls[i];
-            if (!c->visible) continue;
-            if (c->type != CTL_SCROLLBAR) continue;
-
-            if (inDockZone) {
-                if (c->dock) continue;       // now try non-docked
-            } else {
-                if (!c->dock) continue;      // now try docked
-            }
-
-            if (pt_in_ctrl(c, cx, cy)) return i;
-        }
-
-        return -1;
+    return SBCTL_INVALID;
 }
 
 
@@ -1289,7 +1368,9 @@ void windowHittest(int16_t mx, int16_t my){
         // topmost hit window found: act on it
         switch (hit.region) {
         case WH_CLOSE:
-            SBOS_destroyWindow(hit.id);
+            // dont kill it yet, we'll probably want to send this message our selves in the software,
+            // realistically this should send a message that this windows close glyph was hit
+            //SBOS_destroyWindow(hit.id);
             break;
 
         case WH_ZORDER:
@@ -1326,7 +1407,6 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
     if (evt == MOUSE_DOWN) {
         g_mouseDown = 1;
         g_btnDownWin = SBW_INVALID_ID;
-        g_btnDownIx  = -1;
         g_resizeWin = SBW_INVALID_ID;
 
 
@@ -1378,10 +1458,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
 
 
                     // 1 scrollbars
-                    int16_t six = find_scrollbar_at(w, cx, cy);
-                    if (six >= 0) {
-                        sbx_control_t *sc = get_ctrl(w, six);
+                    SBControlHandle sh = find_scrollbar_at(w, cx, cy);
+                    if (sh != SBCTL_INVALID) {
+                        sbx_control_t *sc = ctrl_from_handle(w, sh);
                         if (sc) {
+
                             // mouse position in scrollbar-local coords
                             int16_t lx = (int16_t)(cx - sc->x);
                             int16_t ly = (int16_t)(cy - sc->y);
@@ -1390,9 +1471,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                             uint8_t hasThumb = sb_calc_thumb_rect(sc, &tx, &ty, &tw, &th);
 
                             g_sbDownWin  = hit.id;
-                            g_sbDownIx   = six;
                             g_sbDragging = 0;
                             g_sbDragGrab = 0;
+
+                            g_sbDownWin = hit.id;
+                            g_sbDownH   = sh;
 
                             if (hasThumb && mousept_in_rect(lx, ly, tx, ty, tw, th)) {
                                 // start dragging thumb
@@ -1427,21 +1510,40 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                         }
                     }
 
+                    // 2 radio buttons
+                    SBControlHandle rh = find_radio_at(w, cx, cy);
+                    if (rh != SBCTL_INVALID) {
+                        sbx_control_t *rc = ctrl_from_handle(w, rh);
+                        if (rc) rc->down = 1;
+                        g_btnDownWin = hit.id;     // reuse the same latch vars
+                        g_btnDownH   = rh;         // yes reuse, it’s just “pressed control handle”
+                        SBOS_paintAllWindows();
+                        return;
+                    }
 
-
-                    // 2 Buttons
-                    int16_t bix = find_button_at(w, cx, cy);
-                    if (bix >= 0) {
-                        // press visual
-                        sbx_control_t *bc = get_ctrl(w, bix);
-                        if (bc) bc->down = 1;
-
+                    // 3) Checkboxes
+                    SBControlHandle ch = find_checkbox_at(w, cx, cy);
+                    if (ch != SBCTL_INVALID) {
+                        sbx_control_t *cc = ctrl_from_handle(w, ch);
+                        if (cc) cc->down = 1;
                         g_btnDownWin = hit.id;
-                        g_btnDownIx  = bix;
+                        g_btnDownH   = ch;
+                        SBOS_paintAllWindows();
+                        return;
+                    }
+
+                    // 4 Buttons
+                    SBControlHandle bh = find_button_at(w, cx, cy);
+                    if (bh != SBCTL_INVALID) {
+                        sbx_control_t *bc = ctrl_from_handle(w, bh);
+                        if (bc) bc->down = 1;
+                        g_btnDownWin = hit.id;
+                        g_btnDownH   = bh;
                     } else {
                         g_btnDownWin = SBW_INVALID_ID;
-                        g_btnDownIx  = -1;
+                        g_btnDownH   = SBCTL_INVALID;
                     }
+
                 }
             }
 
@@ -1502,9 +1604,9 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         }
 
         // scrollbar interfasing
-        if (g_mouseDown && g_sbDownWin != SBW_INVALID_ID && g_sbDownIx >= 0 && g_sbDragging) {
+        if (g_mouseDown && g_sbDownWin != SBW_INVALID_ID && g_sbDownH != SBCTL_INVALID && g_sbDragging) {
             sbx_window_t *w = SBOS_getWindow(g_sbDownWin);
-            sbx_control_t *sc = get_ctrl(w, g_sbDownIx);
+            sbx_control_t *sc = ctrl_from_handle(w, g_sbDownH);
             if (w && sc) {
                 int16_t cx = win_client_x(w, mx);
                 int16_t cy = win_client_y(w, my);
@@ -1517,10 +1619,10 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                 sb_set_value_from_mouse(sc, along, g_sbDragGrab);
 
 
-                int16_t valx, valy;
-                valx = SBOS_getScrollX(w, g_sbDownIx);
-                valy = SBOS_getScrollY(w, g_sbDownIx);
-                printf("SCROLL VALUE: X=%d, Y=%d\n", valx, valy);
+                //int16_t valx, valy;
+                //valx = SBOS_getScrollX(w, g_sbDownIx);
+                //valy = SBOS_getScrollY(w, g_sbDownIx);
+                //printf("SCROLL VALUE: X=%d, Y=%d\n", valx, valy);
 
                 SBOS_paintAllWindows();
             }
@@ -1552,9 +1654,9 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         }
 
         // If a button is currently held, update "down" depending on hover
-        if (g_mouseDown && g_btnDownWin != SBW_INVALID_ID && g_btnDownIx >= 0) {
+        if (g_mouseDown && g_btnDownWin != SBW_INVALID_ID && g_btnDownH != SBCTL_INVALID) {
             sbx_window_t *w = SBOS_getWindow(g_btnDownWin);
-            sbx_control_t *bc = get_ctrl(w, g_btnDownIx);
+            sbx_control_t *bc = ctrl_from_handle(w, g_btnDownH);
             if (w && bc) {
                 int16_t cx = win_client_x(w, mx);
                 int16_t cy = win_client_y(w, my);
@@ -1597,7 +1699,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             WHitResult ht = hittest_window(wclick, mx, my);
             if (ht.region == rclick) {
                 if (rclick == WH_CLOSE){
-                    SBOS_destroyWindow(wclick);
+                    //SBOS_destroyWindow(wclick);
                     printf("GLYPH HIT - Close Window\r\n");
                 }
                 else if (rclick == WH_ZORDER){
@@ -1624,31 +1726,41 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         }
 
         // 2) CLIENT CONTROL RELEASE
-        if (g_btnDownWin != SBW_INVALID_ID && g_btnDownIx >= 0) {
-
+        if (g_btnDownWin != SBW_INVALID_ID && g_btnDownH != SBCTL_INVALID) {
             sbx_window_t *w = SBOS_getWindow(g_btnDownWin);
-            sbx_control_t *bc = get_ctrl(w, g_btnDownIx);
+            sbx_control_t *bc = ctrl_from_handle(w, g_btnDownH);
 
             uint8_t doClick = 0;
-            uint16_t btn_id = 0;
+            SBControlHandle clickH = g_btnDownH;
 
             if (w && bc) {
                 int16_t cx = win_client_x(w, mx);
                 int16_t cy = win_client_y(w, my);
-
                 doClick = pt_in_ctrl(bc, cx, cy);
-                btn_id  = bc->id;
                 bc->down = 0;
             }
 
             SBXWindowId clickWin = g_btnDownWin;
             g_btnDownWin = SBW_INVALID_ID;
-            g_btnDownIx  = -1;
+            g_btnDownH   = SBCTL_INVALID;
 
             SBOS_paintAllWindows();
 
             if (doClick) {
-                SBOS_onButtonClick(clickWin, btn_id);
+                sbx_control_t *c = ctrl_from_handle(w, clickH);
+                if (c) {
+                    if (c->type == CTL_CHECKBOX) {
+                        c->cb_checked ^= 1;   // toggle
+                        SBOS_paintAllWindows();
+                        // optional future callback: SBOS_onCheckboxChange(clickWin, clickH, c->cb_checked);
+                    } else if (c->type == CTL_RADIO) {
+                        radio_select(w, clickH);
+                        SBOS_paintAllWindows();
+                        // optional callback later
+                    } else {
+                        SBOS_onButtonClick(clickWin, clickH);
+                    }
+                }
             }
 
             g_mouseDown  = 0;
@@ -1657,14 +1769,15 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             return;
         }
 
+
         // 3 scroll bar release
-        if (g_sbDownWin != SBW_INVALID_ID && g_sbDownIx >= 0) {
+        if (g_sbDownWin != SBW_INVALID_ID && g_sbDownH != SBCTL_INVALID) {
             sbx_window_t *w = SBOS_getWindow(g_sbDownWin);
-            sbx_control_t *sc = get_ctrl(w, g_sbDownIx);
+            sbx_control_t *sc = ctrl_from_handle(w, g_sbDownH);
             if (sc) sc->thumb_down = 0;
 
             g_sbDownWin  = SBW_INVALID_ID;
-            g_sbDownIx   = -1;
+            g_sbDownH    = SBCTL_INVALID;
             g_sbDragging = 0;
             g_sbDragGrab = 0;
 
@@ -1753,82 +1866,67 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
 
     for (uint8_t i = 0; i < w->ctrl_count; i++) {
         const sbx_control_t *c = &w->ctrls[i];
+        if (!c->used) continue;
         if (!c->visible) continue;
         if (!!c->dock != !!wantDock) continue;
 
         switch (c->type) {
-        case CTL_BUTTON:    draw_button(w, c);    break;
-        case CTL_LABEL:     draw_label(w, c);     break;
-        case CTL_SCROLLBAR: draw_scrollbar(w, c); break;
+        case CTL_BUTTON:    draw_button(w, c);      break;
+        case CTL_LABEL:     draw_label(w, c);       break;
+        case CTL_SCROLLBAR: draw_scrollbar(w, c);   break;
+        case CTL_RADIO:     draw_radio(w, c);       break;
+        case CTL_CHECKBOX:  draw_checkbox(w, c);    break;
+
+
         default: break;
         }
     }
 }
 
 
-int SBOS_CreateButton(sbx_window_t *w, uint16_t id,
-                      int16_t x, int16_t y,
-                      int16_t bw, int16_t bh,
-                      const char *text)
-{
-    sbx_control_t *c = ctrl_alloc(w, id, CTL_BUTTON);
-    if (!c) return -1;
+SBControlHandle SBOS_CreateButton(sbx_window_t *w, int16_t x, int16_t y, int16_t bw, int16_t bh, const char *text){
+    sbx_control_t *c = 0;
+    SBControlHandle h = ctrl_alloc(w, CTL_BUTTON, &c);
+    if (h == SBCTL_INVALID) return SBCTL_INVALID;
 
     c->x = x; c->y = y; c->w = bw; c->h = bh;
     ctrl_set_text(c, text);
-
-    return (int)(w->ctrl_count - 1);
+    return h;
 }
 
-int SBOS_CreateLabel(sbx_window_t *w, uint16_t id, int16_t x, int16_t y, const char *text)
-{
-    sbx_control_t *c = ctrl_alloc(w, id, CTL_LABEL);
-    if (!c) return -1;
+
+
+SBControlHandle SBOS_CreateLabel(sbx_window_t *w, int16_t x, int16_t y, const char *text){
+    sbx_control_t *c = 0;
+    SBControlHandle h = ctrl_alloc(w, CTL_LABEL, &c);
+    if (h == SBCTL_INVALID) return SBCTL_INVALID;
 
     c->x = x; c->y = y;
-    c->w = 0; c->h = 0; // label uses text only
+    c->w = 0; c->h = 0;
     ctrl_set_text(c, text);
-
-    return (int)(w->ctrl_count - 1);
+    return h;
 }
 
 
-static sbx_control_t* SBOS_getControlById(sbx_window_t *w, uint16_t ctrl_id)
-{
-    if (!w) return NULL;
 
-    for (uint8_t i = 0; i < w->ctrl_count; i++) {
-        sbx_control_t *c = &w->ctrls[i];
-        if (c->id == ctrl_id)
-            return c;
-    }
-    return NULL;
-}
-
-void SBOX_MoveScrollbar(sbx_window_t *win, uint16_t id,
-                        int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient)
+void SBOS_MoveScrollbar(sbx_window_t *w, SBControlHandle h,
+                         int16_t x, int16_t y, int16_t wpx, int16_t hpx,
+                         uint8_t orient)
 {
-    sbx_control_t *c = SBOS_getControlById(win, id);
+    sbx_control_t *c = ctrl_from_handle(w, h);
     if (!c) return;
     if (c->type != CTL_SCROLLBAR) return;
 
-    c->x = x; c->y = y; c->w = w; c->h = h;
+    c->x = x; c->y = y; c->w = wpx; c->h = hpx;
     c->orient = orient;
 }
 
 
-
-int SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id,
-                         uint8_t orient, uint8_t dock,
-                         int16_t thickness,
-                         int16_t min, int16_t max,
-                         int16_t page, int16_t value,
-                         int16_t step)
+SBControlHandle SBOS_CreateScrollbar(sbx_window_t *w, uint8_t orient, uint8_t dock, int16_t thickness, int16_t min, int16_t max, int16_t value, int16_t step)
 {
-    (void)page; // keeping fidelity: you weren't using page in math anymore
-
-    sbx_control_t *c = ctrl_alloc(w, id, CTL_SCROLLBAR);
-    if (!c) return -1;
+    sbx_control_t *c = 0;
+    SBControlHandle h = ctrl_alloc(w, CTL_SCROLLBAR, &c);
+    if (h == SBCTL_INVALID) return SBCTL_INVALID;
 
     c->orient = orient;
     c->dock   = dock;
@@ -1838,32 +1936,192 @@ int SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id,
     c->sb.value = value;
     c->sb.step  = (step <= 0) ? 1 : step;
 
-    // Store thickness hint like you did
     if (orient == SBX_SB_VERT) { c->w = thickness; c->h = 0; }
     else                      { c->h = thickness; c->w = 0; }
 
-    return (int)(w->ctrl_count - 1);
+    return h;
 }
 
 
 
-
-int16_t SBOS_getScrollX(sbx_window_t *w, uint16_t ctrl_id)
+int16_t SBOS_getScrollXH(sbx_window_t *w, SBControlHandle h)
 {
-    sbx_control_t *c = SBOS_getControlById(w, ctrl_id);
+    sbx_control_t *c = ctrl_from_handle(w, h);
     if (!c) return 0;
     if (c->type != CTL_SCROLLBAR) return 0;
     if (c->orient != SBX_SB_HORZ) return 0;
-
     return c->sb.value;
 }
 
-int16_t SBOS_getScrollY(sbx_window_t *w, uint16_t ctrl_id)
+int16_t SBOS_getScrollYH(sbx_window_t *w, SBControlHandle h)
 {
-    sbx_control_t *c = SBOS_getControlById(w, ctrl_id);
+    sbx_control_t *c = ctrl_from_handle(w, h);
     if (!c) return 0;
     if (c->type != CTL_SCROLLBAR) return 0;
     if (c->orient != SBX_SB_VERT) return 0;
-
     return c->sb.value;
 }
+
+
+/// radio button
+SBControlHandle SBOS_CreateRadioButton(sbx_window_t *w, int16_t x, int16_t y, uint8_t groupid, const char *text, uint8_t checked){
+    sbx_control_t *c = 0;
+    SBControlHandle h = ctrl_alloc(w, CTL_RADIO, &c);
+    if (h == SBCTL_INVALID) return SBCTL_INVALID;
+
+    c->x = x;
+    c->y = y;
+
+    // size: circle + gap + text width (8px per char), height ~16
+    int16_t len = 0;
+    if (text) while (text[len]) len++;
+
+    c->w = (int16_t)(RADIO_DIAM + RADIO_GAP + (len * 8));
+    c->h = RADIO_H;
+
+    c->radio_group = groupid;
+    c->radio_checked = checked;
+
+    ctrl_set_text(c, text);
+    return h;
+}
+
+static void radio_select(sbx_window_t *w, SBControlHandle h){
+    sbx_control_t *c = ctrl_from_handle(w, h);
+    if (!c) return;
+    if (c->type != CTL_RADIO) return;
+
+    uint8_t g = c->radio_group;
+
+    // uncheck everyone else in group
+    for (uint8_t i = 0; i < w->ctrl_count; i++){
+        sbx_control_t *o = &w->ctrls[i];
+        if (!o->used || !o->visible) continue;
+        if (o->type != CTL_RADIO) continue;
+        if (o->radio_group != g) continue;
+        o->radio_checked = 0;
+    }
+
+    c->radio_checked = 1;
+}
+
+static SBControlHandle find_radio_at(sbx_window_t *w, int16_t cx, int16_t cy){
+    if (!w) return SBCTL_INVALID;
+
+    for (int16_t i = (int16_t)w->ctrl_count - 1; i >= 0; i--){
+        sbx_control_t *c = &w->ctrls[i];
+        if (!c->used || !c->visible) continue;
+        if (c->type != CTL_RADIO) continue;
+        if (pt_in_ctrl(c, cx, cy)) return ctrl_handle_of(c, (uint8_t)i);
+    }
+    return SBCTL_INVALID;
+}
+
+static void draw_radio(sbx_window_t *w, const sbx_control_t *c){
+    if (!w || !c || !c->visible) return;
+
+    int16_t ax = (int16_t)(w->cx + c->x);
+    int16_t ay = (int16_t)(w->cy + c->y);
+
+    // circle box area
+    int16_t cx = ax;
+    int16_t cy = (int16_t)(ay + (c->h - RADIO_DIAM)/2);
+
+    // outer “circle” (fake it with bevel box – looks retro and matches your UI)
+    fill_rect_pen(cx, cy, RADIO_DIAM, RADIO_DIAM, WIN_BORDER_INACTIVE_PEN);
+    draw_bevel_rect2(cx, cy, RADIO_DIAM, RADIO_DIAM, WIN_BEVEL_H, WIN_BEVEL_L, c->down);
+
+    // inner dot if selected
+    if (c->radio_checked) {
+        int16_t dx = cx + 4;
+        int16_t dy = cy + 4;
+        fill_rect_pen(dx, dy, RADIO_DIAM - 8, RADIO_DIAM - 8, WIN_TITLE_PEN);
+    }
+
+    // label
+    gfx_setcolour(WIN_TITLE_PEN);
+    sbx_draw_text816(cx + RADIO_DIAM + RADIO_GAP, ay, (const unsigned char*)c->text);
+}
+
+
+void SBOS_RadioSetChecked(sbx_window_t *w, SBControlHandle h, uint8_t checked)
+{
+    sbx_control_t *c = ctrl_from_handle(w, h);
+    if (!w || !c) return;
+    if (c->type != CTL_RADIO) return;
+
+    if (checked) radio_select(w, h);
+    else c->radio_checked = 0;
+}
+
+uint8_t SBOS_RadioGetChecked(sbx_window_t *w, SBControlHandle h)
+{
+    sbx_control_t *c = ctrl_from_handle(w, h);
+    if (!c) return 0;
+    if (c->type != CTL_RADIO) return 0;
+    return c->radio_checked ? 1 : 0;
+}
+
+
+
+
+/// check boxes
+SBControlHandle SBOS_CreateCheckbox(sbx_window_t *w, int16_t x, int16_t y, const char *text, uint8_t checked){
+    sbx_control_t *c = 0;
+    SBControlHandle h = ctrl_alloc(w, CTL_CHECKBOX, &c);
+    if (h == SBCTL_INVALID) return SBCTL_INVALID;
+
+    c->x = x;
+    c->y = y;
+
+    int16_t len = 0;
+    if (text) while (text[len]) len++;
+
+    c->w = (int16_t)(CB_BOX + CB_GAP + (len * 8));
+    c->h = CB_H;
+
+    c->cb_checked = checked ? 1 : 0;
+    ctrl_set_text(c, text);
+    return h;
+}
+
+static SBControlHandle find_checkbox_at(sbx_window_t *w, int16_t cx, int16_t cy){
+    if (!w) return SBCTL_INVALID;
+
+    for (int16_t i = (int16_t)w->ctrl_count - 1; i >= 0; i--){
+        sbx_control_t *c = &w->ctrls[i];
+        if (!c->used || !c->visible) continue;
+        if (c->type != CTL_CHECKBOX) continue;
+        if (pt_in_ctrl(c, cx, cy)) return ctrl_handle_of(c, (uint8_t)i);
+    }
+    return SBCTL_INVALID;
+}
+
+
+static void draw_checkbox(sbx_window_t *w, const sbx_control_t *c){
+    if (!w || !c || !c->visible) return;
+
+    int16_t ax = (int16_t)(w->cx + c->x);
+    int16_t ay = (int16_t)(w->cy + c->y);
+
+    // box aligned vertically
+    int16_t bx = ax;
+    int16_t by = (int16_t)(ay + (c->h - CB_BOX)/2);
+
+    // box face
+    fill_rect_pen(bx, by, CB_BOX, CB_BOX, WIN_BORDER_INACTIVE_PEN);
+    draw_bevel_rect2(bx, by, CB_BOX, CB_BOX, WIN_BEVEL_H, WIN_BEVEL_L, c->down);
+
+    // check mark (simple filled inner square)
+    if (c->cb_checked) {
+        fill_rect_pen((int16_t)(bx + 3), (int16_t)(by + 3), (int16_t)(CB_BOX - 6), (int16_t)(CB_BOX - 6), WIN_TITLE_PEN);
+        //gfx_setcolour(WIN_TITLE_PEN);
+        //sbx_draw_text816((int16_t)(bx + 2), (int16_t)(by - 2), (const unsigned char*)"X");
+    }
+
+    // label
+    gfx_setcolour(WIN_TITLE_PEN);
+    sbx_draw_text816((int16_t)(bx + CB_BOX + CB_GAP), ay,
+                     (const unsigned char*)c->text);
+}
+

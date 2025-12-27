@@ -33,7 +33,16 @@
 #define     MAX_WINDOWS             16      // anymore then the user should probably use a real PC
 
 
+// radio button things
+#define RADIO_DIAM      12
+#define RADIO_GAP       6
+#define RADIO_H         16
 
+
+// check boxes
+#define CB_BOX          12
+#define CB_GAP          6
+#define CB_H            16
 
 
 
@@ -47,9 +56,6 @@ typedef uint8_t SBXWindowId;
 #define SBW_INVALID_ID ((SBXWindowId)0xFF)
 
 // keep these all 32bits
-
-//typedef int16_t SBXCtrlHdl;         // index into global pool, -1 = none
-#define SBCTL_NONE ((SBControlHandle)-1)
 
 typedef struct __attribute__((aligned(8))) {
     // geometry
@@ -123,11 +129,8 @@ typedef enum { MOUSE_DOWN, MOUSE_UP, MOUSE_MOVE } MouseEvt;
 #define     WIN_DEFAULT_FLAGS   (SBX_WF_VISIBLE | SBX_WF_MOVEABLE | (SBX_WF_CLOSE | SBX_WF_TITLE_BAR | SBX_WF_MINIMISE | SBX_WF_MAXRESTORE | SBX_WF_ZORDER) )
 
 
-void          SBOX_MoveScrollbar(sbx_window_t *win, uint16_t id, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient);
 int16_t       SBOS_getScrollX(sbx_window_t *w, uint16_t ctrl_id);
 int16_t       SBOS_getScrollY(sbx_window_t *w, uint16_t ctrl_id);
-int           SBOS_CreateScrollbar(sbx_window_t *w, uint16_t id, uint8_t orient, uint8_t dock, int16_t thickness, int16_t min, int16_t max, int16_t page, int16_t value, int16_t step);
-SBXWindowId   SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 sbx_window_t* SBOS_getWindow(SBXWindowId id);
 void          SBOS_destroyWindow(SBXWindowId id);
 void          SBOS_paintWindow(SBXWindowId id);
@@ -139,8 +142,14 @@ void          SBOS_setFocus(SBXWindowId id);
 void          SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my);
 
 
+SBXWindowId   SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 
 
+// API access
+void SBOS_DestroyControl(sbx_window_t *w, SBControlHandle h);
+void SBOS_CtrlSetText(sbx_window_t *w, SBControlHandle h, const char *text);
+void SBOS_CtrlSetVisible(sbx_window_t *w, SBControlHandle h, uint8_t visible);
+void SBOS_MoveScrollbar(sbx_window_t *w, SBControlHandle h, int16_t x, int16_t y, int16_t ww, int16_t hh, uint8_t orient);
 
 
 
@@ -149,10 +158,17 @@ void          SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my);
 ////////// controls ///////////////
 // call back
 
+SBControlHandle SBOS_CreateScrollbar(sbx_window_t *w, uint8_t orient, uint8_t dock, int16_t thickness, int16_t min, int16_t max, int16_t value, int16_t step);
+SBControlHandle SBOS_CreateButton(sbx_window_t *w, int16_t x, int16_t y, int16_t bw, int16_t bh, const char *text);
+SBControlHandle SBOS_CreateLabel(sbx_window_t *w, int16_t x, int16_t y, const char *text);
 
-int SBOS_CreateButton(sbx_window_t *w, uint16_t id, int16_t x, int16_t y, int16_t bw, int16_t bh, const char *text);
-int SBOS_CreateLabel(sbx_window_t  *w, uint16_t id, int16_t x, int16_t y, const char *text);
+// radio buttons
+SBControlHandle SBOS_CreateRadioButton(sbx_window_t *w, int16_t x, int16_t y, uint8_t groupid, const char *text, uint8_t checked);
+void SBOS_RadioSetChecked(sbx_window_t *w, SBControlHandle h, uint8_t checked);
+uint8_t SBOS_RadioGetChecked(sbx_window_t *w, SBControlHandle h);
 
+// check boxs
+SBControlHandle SBOS_CreateCheckbox(sbx_window_t *w, int16_t x, int16_t y, const char *text, uint8_t checked);
 
 
 

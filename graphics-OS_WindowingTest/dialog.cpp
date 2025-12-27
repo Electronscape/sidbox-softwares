@@ -125,23 +125,36 @@ Dialog::Dialog(QWidget *parent)
     } else
         printf("Window ID %d\n", winMain2);
 
-    sbx_window_t *w = SBOS_getWindow(winMain2);
-    SBOS_CreateButton(w, 0,  6, 6, 70, 26, "OK");
-    SBOS_CreateButton(w, 1, 80, 6, 70, 26, "Cancel");
-    SBOS_CreateButton(w, 2, 160, 6, 160, 26, "Long button name");
-    SBOS_CreateLabel (w, 3,  6, 36, "LABEL #1");
 
-    SBOS_CreateScrollbar(w, 4, SBX_SB_VERT, SBX_DOCK_RIGHT, 20, 0, 100, 1, 0, 20);
-    SBOS_CreateScrollbar(w, 5, SBX_SB_HORZ, SBX_DOCK_BOTTOM, 20, 0, 100, 1, 0, 20);
-
-    SBOS_CreateScrollbar(w, 6, SBX_SB_HORZ, SBX_DOCK_NONE, 20, 0, 100, 20, 0, 1);
-
-    SBOX_MoveScrollbar(w, 6, 10, 60, 100, 16, SBX_SB_HORZ);
+    sbx_window_t *w = SBOS_getWindow(workbench);
+    SBControlHandle hWorkBench = SBOS_CreateButton(w, 6,  6,  220, 26, "Workbench button");
+    SBControlHandle hBigButty  = SBOS_CreateButton(w, 300,  200,  180, 120, "BLOB TEST");
 
 
-    w = SBOS_getWindow(workbench);
-    SBOS_CreateButton(w, 0, 6, 6, 100, 26, "Workbench!");
-    SBOS_CreateButton(w, 1, 300, 200, 180, 120, "Workbench!");
+
+    w = SBOS_getWindow(winMain2);
+
+    SBControlHandle hOk     = SBOS_CreateButton(w, 6,  6,  70, 26, "OK");
+    SBControlHandle hCancel = SBOS_CreateButton(w, 80,  6,  70, 26, "Cancel");
+    SBControlHandle hLong   = SBOS_CreateButton(w, 160, 6, 160, 26, "Long button name");
+    SBControlHandle hLab    = SBOS_CreateLabel (w, 6, 36, "LABEL #1");
+
+    SBControlHandle hV      = SBOS_CreateScrollbar(w, SBX_SB_VERT, SBX_DOCK_RIGHT,  20, 0, 100, 0, 20);
+    SBControlHandle hH      = SBOS_CreateScrollbar(w, SBX_SB_HORZ, SBX_DOCK_BOTTOM, 20, 0, 100, 0, 20);
+
+    SBControlHandle rad1    = SBOS_CreateRadioButton(w, 16, 80, 0, "Test1", 1);
+    SBControlHandle rad2    = SBOS_CreateRadioButton(w, 16, 110, 0, "Test2", 0);
+    SBControlHandle check1  = SBOS_CreateCheckbox(w, 100, 110, "SIDBOX OS!", 0);
+
+    SBControlHandle hFree = SBOS_CreateScrollbar(w, SBX_SB_HORZ, SBX_DOCK_NONE, 20, 0, 100, 0, 1);
+
+    // move by USER ID still works:
+    SBOS_MoveScrollbar(w, hFree, 10, 60, 100, 16, SBX_SB_HORZ);
+    printf("Scroll is: %hu\n", hFree);
+    printf("Scroll Docked is: %hu\n", hV);
+
+    // or better: move by handle (if you add it):
+    // SBOX_MoveScrollbarH(w, hFree, 10, 60, 100, 16, SBX_SB_HORZ);
 
     SBOS_setFocus(winMain2);
     SBOS_paintAllWindows();
