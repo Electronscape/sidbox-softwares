@@ -19,6 +19,7 @@ qt_add_executable(graphics-gui_testing
     sbapi_graphics.h
     sbxctrlex.h
     sbxctrlex.c
+    sbxguisbw.h
 )
 
 

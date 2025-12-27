@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+
+#include "sbxguisbw.h"
 #include "sbxctrlex.h"
 
 
@@ -51,7 +53,7 @@
 
 
 
-typedef uint8_t SBXWindowId;
+
 
 #define SBW_INVALID_ID ((SBXWindowId)0xFF)
 
