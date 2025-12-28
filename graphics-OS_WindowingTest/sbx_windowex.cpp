@@ -1077,6 +1077,7 @@ static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
         sbgfx_glyph(gx+2, gy, glyph_cycle);
     }
 
+    // love this! //
     // ---- centered text, but centered within the "remaining" width ----
     int16_t len = 0;
     while (displaytext[len] && len < (DEF_GADGET_TEXT_SIZE - 1)) len++;
