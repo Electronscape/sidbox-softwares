@@ -129,7 +129,8 @@ static GAD_SCROLLBAR_T* sb_alloc(void){
             g_sbPool[i].min = 0;
             g_sbPool[i].max = 100;
             g_sbPool[i].step = 1;
-            g_sbPool[i].pct = 0;
+
+            g_sbPool[i].value = 0;
 
             g_sbPool[i].dragging = 0;
             g_sbPool[i].drag_off = 0;
@@ -268,9 +269,9 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
     W->GADGETS[slot] = g;
 
     // window might need to know about docking later
-    if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
-        W->hasDockedGadget |= flags;
-    }
+    //if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
+        //W->flags |= flags;
+    //}
 
     return base_to_handle(g);
 }
@@ -311,9 +312,9 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
 
     W->GADGETS[slot] = g;
 
-    if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
-        W->hasDockedGadget |= flags;
-    }
+    //if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
+        //W->hasDockedGadget |= flags;
+    //}
 
     return base_to_handle(g);
 }
@@ -339,8 +340,10 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
     g->gadgetType = GAD_RADIO;
     g->gadget = r;
 
+
     r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
     r->h.flags = flags;
+
 
     r->group = group;
     r->checked = checked ? 1 : 0;
@@ -355,9 +358,9 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
 
     W->GADGETS[slot] = g;
 
-    if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
-        W->hasDockedGadget |= flags;
-    }
+    //if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
+        //W->hasDockedGadget |= flags;
+    //}
 
     // Optional “only one checked per group” policy on add:
     if (r->checked) {
@@ -407,13 +410,14 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
     s->min = min;
     s->max = max;
     s->step = (step <= 0) ? 1 : step;
-    s->pct  = clamp_i16_local(initial_pct, 0, 100);
+    s->value = 0;
 
     W->GADGETS[slot] = g;
 
-    if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
-        W->hasDockedGadget |= flags;
-    }
+    // propagate dock flags into window flags so layoutWindow/layoutDockedControls knows
+    if (flags & GAD_TOOL_DOCKED_RIGHT)  W->flags |= SBX_WF_DOCKRIGHT;
+    if (flags & GAD_TOOL_DOCKED_BOTTOM) W->flags |= SBX_WF_DOCKBOTTOM;
+
 
     return base_to_handle(g);
 }

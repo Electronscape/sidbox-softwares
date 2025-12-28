@@ -120,7 +120,9 @@ Dialog::Dialog(QWidget *parent)
     SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "NoBorder 1", SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
     //SBWindowId winMain1 = SBOS_createWindow(340, 10, 100, 250, "Main", SBW_VISIBLE | SBW_NOBORDER);
     SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
-    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 300, 200, "Adjustable Drawer window", SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+
+
+    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 300, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if (winMain2 == SBW_INVALID_ID) {
         // no free window slots — OS politely shrugs
         printf("No more windows left\n");
@@ -154,15 +156,23 @@ Dialog::Dialog(QWidget *parent)
                       0,
                       GAD_TOOL_DEFAULT);
 
-    /*
+
+    SBOS_addScrollbar(winMain2,
+                      0,0,0,0,                // ignored if docked
+                      SB_ORIENT_HORZ,
+                      0, 100,                // “meaning range” just for thumb sizing + app mapping
+                      25,                     // step in value units (thumb size + step pct)
+                      0,                      // initial percent
+                      GAD_TOOL_DOCKED_BOTTOM);
+
     SBOS_addScrollbar(winMain2,
                       0,0,0,0,                // ignored if docked
                       SB_ORIENT_VERT,
-                      0, 1000,                // “meaning range” just for thumb sizing + app mapping
+                      0, 100,                // “meaning range” just for thumb sizing + app mapping
                       25,                     // step in value units (thumb size + step pct)
                       0,                      // initial percent
                       GAD_TOOL_DOCKED_RIGHT);
-    */
+
 
 
     //SBOS_addButton(winMain2, -6,  66,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_BOTTOM

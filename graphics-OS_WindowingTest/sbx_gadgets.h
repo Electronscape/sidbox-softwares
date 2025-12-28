@@ -11,7 +11,7 @@
 #define     MAX_SCROLLBARS          16
 
 
-#define     SB_SCROLL_THICK 16
+#define     SB_SCROLL_THICK         16
 
 
 
@@ -114,7 +114,8 @@ typedef struct GAD_SCROLLBAR_T{
     int16_t     min;         // used for thumb sizing + optional conversion
     int16_t     max;
     int16_t     step;        // affects thumb size + step in percent
-    int16_t     pct;         // 0..100 ALWAYS (this is the scrollbar value)
+    //int16_t     pct;         // 0..100 ALWAYS (this is the scrollbar value)
+    int16_t     value;      // the actual value between min and max
 
     // interaction
     uint8_t     dragging;

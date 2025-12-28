@@ -29,6 +29,13 @@
 #define     WIN_BORDER              4       // border around the window frame
 
 
+#define SB_BDOCK_OFFSET_X   (-2 )
+#define SB_BDOCK_OFFSET_Y   ( 2 )
+
+#define SB_RDOCK_OFFSET_X   ( 2 )
+#define SB_RDOCK_OFFSET_Y   ( 1 )
+
+
 
 #define     SBW_INVALID_ID          ((SBXWindowId)0xFF)
 
@@ -37,7 +44,6 @@
 typedef struct {
     SBXWindowId     self;               // self id  // we'll keep this so its much quicker to find the window (findWindowEx(winhandle *hnd) for example
     uint32_t        flags;
-    uint8_t         hasDockedGadget;    // this is set as soon as a gadget requests to be docked, changes the way this window will work
     char            title[WINDOW_TITLE_MAX_LEN];
 
     GADGET_RECT_T   winrect;            // window geometry (the actual area of the window)
@@ -66,6 +72,8 @@ typedef enum {
     SBX_WF_NOAUTOZORDER     = 1u << 11,
     SBX_WF_ALWAYS_TO_BACK   = 1u << 12,
     SBX_WF_ALWAYS_TO_FRONT  = 1u << 13,
+    SBX_WF_DOCKRIGHT        = 1u << 14,
+    SBX_WF_DOCKBOTTOM       = 1u << 15,
 } sbx_window_flags_t;
 
 

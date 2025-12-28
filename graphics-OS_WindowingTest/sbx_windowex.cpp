@@ -131,12 +131,14 @@ static void enforce_screen_bounds(sbx_window_t *w){
 
 
 static inline int16_t win_gutter_right(const sbx_window_t *w){
+    if ((w->flags & SBX_WF_DOCKRIGHT)) return 0; // dock band owns this edge
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
-        return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);  // the strip already draw
+        return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
     return 0;
 }
 
 static inline int16_t win_gutter_bottom(const sbx_window_t *w){
+    if ((w->flags & SBX_WF_DOCKBOTTOM)) return 0; // dock band owns this edge
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
         return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
     return 0;
@@ -153,68 +155,65 @@ static void layoutDockedControls(sbx_window_t *w){
 
     w->clientrect.w = aw ;
     w->clientrect.h = ah;
+}
 
 
-    // shrink client area if docked scrollbars exist
-    if (w->hasDockedGadget & GAD_TOOL_DOCKED_RIGHT) {
-        if (w->clientrect.w >= SB_SCROLL_THICK)
-            w->clientrect.w = (int16_t)(w->clientrect.w - SB_SCROLL_THICK);
-        else
-            w->clientrect.w = 0;
+
+static inline Rect16 win_inner_rect(const sbx_window_t *w){
+    int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0;
+
+    Rect16 r;
+    if (w->flags & SBX_WF_NOBORDER) {
+        r.x = w->winrect.x;
+        r.y = w->winrect.y;
+        r.w = w->winrect.w;
+        r.h = w->winrect.h;
+    } else {
+        r.x = (int16_t)(w->winrect.x + WIN_BORDER);
+        r.y = (int16_t)(w->winrect.y + WIN_BORDER + title_h);
+        r.w = (int16_t)(w->winrect.w - (WIN_BORDER * 2));
+        r.h = (int16_t)(w->winrect.h - ((WIN_BORDER * 2) + title_h));
     }
-
-    if (w->hasDockedGadget & GAD_TOOL_DOCKED_BOTTOM) {
-        if (w->clientrect.h >= SB_SCROLL_THICK)
-            w->clientrect.h = (int16_t)(w->clientrect.h - SB_SCROLL_THICK);
-        else
-            w->clientrect.h = 0;
-    }
-
-
-
+    if (r.w < 0) r.w = 0;
+    if (r.h < 0) r.h = 0;
+    return r;
 }
 
 
 static void layoutWindow(sbx_window_t *w){
     if (!w) return;
 
-    int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0;
+    Rect16 inner = win_inner_rect(w);
 
-    // Start with "clientrect = usable app area"
-    if (w->flags & SBX_WF_NOBORDER) {
-        // Borderless: entire window is client
-        w->clientrect.x = w->winrect.x;
-        w->clientrect.y = w->winrect.y;
-        w->clientrect.w = w->winrect.w;
-        w->clientrect.h = w->winrect.h;
-    } else {
-        w->clientrect.x = (int16_t)(w->winrect.x + WIN_BORDER);
-        w->clientrect.y = (int16_t)(w->winrect.y + WIN_BORDER + title_h);
-        w->clientrect.w = (int16_t)(w->winrect.w - (WIN_BORDER * 2));
-        w->clientrect.h = (int16_t)(w->winrect.h - ((WIN_BORDER * 2) + title_h));
-    }
+    // Start with client = inner
+    w->clientrect.x = inner.x;
+    w->clientrect.y = inner.y;
+    w->clientrect.w = inner.w;
+    w->clientrect.h = inner.h;
 
-    // Safety clamp (avoid negative sizes)
-    if (w->clientrect.w < 0) w->clientrect.w = 0;
-    if (w->clientrect.h < 0) w->clientrect.h = 0;
-
-    // If resizable, reserve the bottom/right gutter area (so gadgets don't draw under it)
-    int16_t gr = win_gutter_right(w);
-    int16_t gb = win_gutter_bottom(w);
-
+    // reserve resize gutter (keep gadgets out of the resize zone)
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
-        w->clientrect.h = (int16_t)(w->clientrect.h - gb);
+        int16_t gb = win_gutter_bottom(w);
+        if (w->clientrect.h >= gb) w->clientrect.h = (int16_t)(w->clientrect.h - gb);
+        else w->clientrect.h = 0;
     }
-    if(w->hasDockedGadget & GAD_TOOL_DOCKED_RIGHT){
-        w->clientrect.w = (int16_t)(w->clientrect.w - gr); // <-- this should only happen if there is a docked slider - for now turn it off
-    }
-    if (w->clientrect.w < 0) w->clientrect.w = 0;
-    if (w->clientrect.h < 0) w->clientrect.h = 0;
 
-    // Later: docked controls (scrollbars etc) should shrink clientrect further.
-    // layoutDockedControls(w);  // keep, but update it to use clientrect now
-    layoutDockedControls(w);
+    // reserve docked bands (these live in INNER, not in CLIENT)
+    if (w->flags & SBX_WF_DOCKRIGHT) {
+        if (w->clientrect.w >= SB_SCROLL_THICK)
+            w->clientrect.w = (int16_t)(w->clientrect.w - SB_SCROLL_THICK);
+        else
+            w->clientrect.w = 0;
+    }
+
+    if (w->flags & SBX_WF_DOCKBOTTOM) {
+        if (w->clientrect.h >= SB_SCROLL_THICK)
+            w->clientrect.h = (int16_t)(w->clientrect.h - SB_SCROLL_THICK);
+        else
+            w->clientrect.h = 0;
+    }
 }
+
 
 
 
@@ -268,7 +267,6 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
             w->winrect.w = (int16_t)width;
             w->winrect.h = (int16_t)height;
             w->flags = flags;
-            w->hasDockedGadget = 0;
 
             //w->ctrl_count = 0;
             //w->id = i;
@@ -372,7 +370,7 @@ void SBOS_paintWindow(SBXWindowId id){
 
 
 
-        if(w->hasDockedGadget & GAD_TOOL_DOCKED_RIGHT)
+        if(w->flags & SBX_WF_DOCKRIGHT)
             sbgfx_drawbox(gx, win_y, WIN_RESIZE_GLYPH_SIZE, win_h, borderPen);
 
         // bottom bar
@@ -388,7 +386,7 @@ void SBOS_paintWindow(SBXWindowId id){
         gfx_setcolour(WIN_BEVEL_L);
         ui_vline((int16_t)(gx - 1), gy, WIN_RESIZE_GLYPH_SIZE);
 
-        if(w->hasDockedGadget & GAD_TOOL_DOCKED_RIGHT)
+        if(w->flags & SBX_WF_DOCKRIGHT)
             //ui_hline((int16_t)(gx), (int16_t)(WIN_RESIZE_GLYPH_SIZE), WIN_BORDER);
             ui_hline((int16_t)(gx), (int16_t)(gy - 1), WIN_RESIZE_GLYPH_SIZE);
         else
@@ -398,13 +396,14 @@ void SBOS_paintWindow(SBXWindowId id){
     // --- docked controls (if you later put scrollbars in the non-client inner band) ---
     // For now, simplest: clip to the inner band (client + potential gutter regions)
     {
-        const int16_t inner_x = (int16_t)(win_x + WIN_BORDER);
-        const int16_t inner_y = (int16_t)(win_y + WIN_BORDER + ((w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0));
-        const int16_t inner_w = (int16_t)(win_w - (WIN_BORDER * 2));
-        const int16_t inner_h = (int16_t)(win_h - (WIN_BORDER * 2) - ((w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0));
+        //const int16_t inner_x = (int16_t)(win_x + WIN_BORDER);
+        //const int16_t inner_y = (int16_t)(win_y + WIN_BORDER + ((w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0));
+        //const int16_t inner_w = (int16_t)(win_w - (WIN_BORDER * 2));
+        //const int16_t inner_h = (int16_t)(win_h - (WIN_BORDER * 2) - ((w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0));
 
-        ui_clip_set(inner_x, inner_y, inner_w, inner_h);
-        //SBOS_drawControlsFiltered(w, 1);
+        //ui_clip_set(inner_x, inner_y, inner_w, inner_h);
+        ui_clip_set(win_x, win_y, win_w, win_h);   // <-- was inner rect
+        SBOS_drawControlsFiltered(w, 1);
         ui_clip_disable();
     }
 
@@ -653,6 +652,13 @@ static inline uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t
 
 
 
+
+
+
+
+
+
+
 static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     WHitResult r = { SBW_INVALID_ID, WH_NONE, SBCTL_INVALID };
 
@@ -742,10 +748,21 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     int16_t gr = win_gutter_right(w);
     int16_t gb = win_gutter_bottom(w);
 
+    /*
     if (mousept_in_rect(mx, my, w->clientrect.x, w->clientrect.y, (int16_t)(w->clientrect.w + gr), (int16_t)(w->clientrect.h + gb))) {
         r.region = WH_CLIENT;
         return r;
     }
+    */
+
+    Rect16 inner = win_inner_rect(w);
+
+    // include the whole inner region so docked bands are clickable
+    if (mousept_in_rect(mx, my, inner.x, inner.y, inner.w, inner.h)) {
+        r.region = WH_CLIENT;
+        return r;
+    }
+
 
 
     // 4) Inside window but not title/client => border
@@ -807,13 +824,37 @@ void windowHittest(int16_t mx, int16_t my){
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 ////  SCROLLBAR HELPER FEATURES  ////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+// ===================== SCROLLBAR MATH (VALUE-BASED) =====================
 
+static inline int16_t win_resize_overlap_inner(const sbx_window_t *w){
+    if (!w) return 0;
+    if (!(w->flags & SBX_WF_RESIZABLE)) return 0;
+    if (w->flags & SBX_WF_NOBORDER) return 0;
+    return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
+}
+
+// How much width to reserve on the RIGHT edge of INNER
+static inline int16_t win_inner_reserve_right(const sbx_window_t *w){
+    // If you have a dock-right band, that band owns the right edge (not the resize overlap).
+    //if (w->flags & SBX_WF_DOCKRIGHT) return 0;
+    return win_resize_overlap_inner(w);
+}
+
+// How much height to reserve on the BOTTOM edge of INNER
+static inline int16_t win_inner_reserve_bottom(const sbx_window_t *w){
+    // If you have a dock-bottom band, that band owns the bottom edge (not the resize overlap).
+    //if (w->flags & SBX_WF_DOCKBOTTOM) return 0;
+    return win_resize_overlap_inner(w) +3;
+}
+
+
+// Thumb length derived from step relative to (max-min)
 static inline int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step){
     const int16_t MIN_THUMB = 8;
     int32_t range = (int32_t)max - (int32_t)min;
 
     if (track_len <= 0) return 0;
-    if (range <= 0) return track_len;
+    if (range <= 0) return track_len; // no scroll range => thumb fills track
 
     if (step <= 0) step = 1;
     if ((int32_t)step > range) step = (int16_t)range;
@@ -824,47 +865,60 @@ static inline int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int
     return (int16_t)len;
 }
 
-static inline int16_t sb_thumb_pos_from_pct(int16_t pct, int16_t travel){
-    pct = clamp_i16(pct, 0, 100);
+// Map VALUE -> thumb position (0..travel)
+static inline int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel){
     if (travel <= 0) return 0;
-    return (int16_t)(((int32_t)pct * (int32_t)travel + 50) / 100); // rounded
+    if (max <= min) return 0;
+
+    value = clamp_i16(value, min, max);
+
+    int32_t range = (int32_t)max - (int32_t)min;
+    int32_t v     = (int32_t)value - (int32_t)min;
+
+    // rounded
+    return (int16_t)((v * (int32_t)travel + range/2) / range);
 }
 
-static inline int16_t sb_pct_from_thumb_pos(int16_t pos, int16_t travel){
-    if (travel <= 0) return 0;
+// Map thumb position (0..travel) -> VALUE (min..max)
+static inline int16_t sb_value_from_thumb_pos(int16_t pos, int16_t min, int16_t max, int16_t travel){
+    if (travel <= 0) return min;
+    if (max <= min) return min;
+
     if (pos < 0) pos = 0;
     if (pos > travel) pos = travel;
-    return (int16_t)(((int32_t)pos * 100 + travel/2) / travel);
-}
 
-// step in percent derived from step in value units
-static inline int16_t sb_step_pct(int16_t min, int16_t max, int16_t step){
     int32_t range = (int32_t)max - (int32_t)min;
-    if (range <= 0) return 1;
-    if (step <= 0) step = 1;
-    int32_t sp = ((int32_t)step * 100 + range/2) / range;
-    if (sp < 1) sp = 1;
-    if (sp > 100) sp = 100;
-    return (int16_t)sp;
+    int32_t v = ((int32_t)pos * range + travel/2) / travel;
+
+    return (int16_t)(min + (int16_t)v);
 }
 
+// ===================== HITTEST (VALUE-BASED) =====================
 
-static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s, int16_t mx, int16_t my,
-                                     int16_t *out_thumb_axis_start, int16_t *out_thumb_len,
+static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s,
+                                     int16_t mx, int16_t my,
+                                     int16_t *out_thumb_axis_start,
+                                     int16_t *out_thumb_len,
                                      int16_t *out_track_axis_start)
 {
     // Compute abs rect same way draw does
     int16_t ax, ay, aw, ah;
 
+    Rect16 inner = win_inner_rect(w);
+
+    int16_t reserveR = win_inner_reserve_right(w);
+    int16_t reserveB = win_inner_reserve_bottom(w);
+
+
     if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
-        ax = (int16_t)(w->clientrect.x + w->clientrect.w);
-        ay = w->clientrect.y;
+        ax = (int16_t)(inner.x + inner.w - SB_SCROLL_THICK + SB_RDOCK_OFFSET_X);
+        ay = inner.y + SB_RDOCK_OFFSET_Y;
         aw = SB_SCROLL_THICK;
-        ah = w->clientrect.h;
+        ah = (int16_t)(inner.h - reserveB);
     } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM) && (s->orient == SB_ORIENT_HORZ)) {
-        ax = w->clientrect.x;
-        ay = (int16_t)(w->clientrect.y + w->clientrect.h);
-        aw = w->clientrect.w;
+        ax = inner.x + SB_BDOCK_OFFSET_X;
+        ay = (int16_t)(inner.y + inner.h - SB_SCROLL_THICK + SB_BDOCK_OFFSET_Y);
+        aw = (int16_t)(inner.w - reserveR);
         ah = SB_SCROLL_THICK;
     } else {
         ax = (int16_t)(w->clientrect.x + s->h.rect.x);
@@ -873,19 +927,26 @@ static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_
         ah = s->h.rect.h;
     }
 
+
     if (!mousept_in_rect(mx, my, ax, ay, aw, ah)) return SB_PART_NONE;
 
+    // Track axis length + thumb geometry
     int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
     int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
-    int16_t travel = (int16_t)(track_len - thumb_len);
-    int16_t tpos = sb_thumb_pos_from_pct(s->pct, travel);
 
-    int16_t thumb_axis_start = (int16_t)(((s->orient == SB_ORIENT_VERT) ? ay : ax) + tpos);
+    int16_t travel = (int16_t)(track_len - thumb_len);
+    if (travel < 0) travel = 0;
+
+    // *** VALUE-BASED thumb position ***
+    int16_t tpos = sb_thumb_pos_from_value(s->value, s->min, s->max, travel);
+
+    int16_t track_axis_start = (s->orient == SB_ORIENT_VERT) ? ay : ax;
+    int16_t thumb_axis_start = (int16_t)(track_axis_start + tpos);
 
     // output for drag math
     if (out_thumb_axis_start) *out_thumb_axis_start = thumb_axis_start;
     if (out_thumb_len) *out_thumb_len = thumb_len;
-    if (out_track_axis_start) *out_track_axis_start = (s->orient == SB_ORIENT_VERT) ? ay : ax;
+    if (out_track_axis_start) *out_track_axis_start = track_axis_start;
 
     // Thumb rect test
     if (s->orient == SB_ORIENT_VERT) {
@@ -896,6 +957,7 @@ static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_
 
     return SB_PART_TRACK;
 }
+
 
 
 
@@ -912,21 +974,33 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
+static inline uint8_t gadget_is_docked(const GAD_HDR_T *h){
+    return (h->flags & (GAD_TOOL_DOCKED_RIGHT | GAD_TOOL_DOCKED_BOTTOM)) != 0;
+}
 
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
-    (void)wantDock; // ignore for now
+    //(void)wantDock; // ignore for now
 
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         GADGET_BASE_T *g = w->GADGETS[i];
-        if (!g) continue;
+        if (!g || !g->gadget) continue;
+
+        GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+
+        // wantDock=0 => draw non-docked only
+        // wantDock=1 => draw docked only
+        if (wantDock) {
+            if (!gadget_is_docked(h)) continue;
+        } else {
+            if (gadget_is_docked(h)) continue;
+        }
 
         switch (g->gadgetType){
-            case GAD_BUTTON:    draw_button(w, g);      break;
-            case GAD_CHECKBOX:  draw_checkbox(w, g);    break;
-            case GAD_RADIO:     draw_radio(w, g);       break;
-            case GAD_SCROLLBAR: draw_scrollbar(w, g);   break;
-            default: break;
+            case GAD_BUTTON:    draw_button(w, g);   break;
+            case GAD_CHECKBOX:  draw_checkbox(w, g); break;
+            case GAD_SCROLLBAR: draw_scrollbar(w, g); break;
+            case GAD_RADIO:     draw_radio(w, g); break;
+        default: break;
         }
     }
     return;
@@ -1070,25 +1144,32 @@ static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 }
 
+#define SB_TRACK_PEN        (16)   // <-- change later to your chosen track colour
+#define SB_TRACK_INSET      2
+
 static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
 
     GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
     if (!s->h.visible) return;
 
-    // Determine absolute rect.
-    // If docked, override position to window edge.
+    // Determine absolute rect (outer frame rect)
     int16_t ax, ay, aw, ah;
 
+    Rect16 inner = win_inner_rect(w);
+
+    int16_t reserveR = win_inner_reserve_right(w);
+    int16_t reserveB = win_inner_reserve_bottom(w);
+
     if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
-        ax = (int16_t)(w->clientrect.x + w->clientrect.w);
-        ay = w->clientrect.y;
+        ax = (int16_t)(inner.x + inner.w - SB_SCROLL_THICK + SB_RDOCK_OFFSET_X);
+        ay = inner.y  + SB_RDOCK_OFFSET_Y;
         aw = SB_SCROLL_THICK;
-        ah = w->clientrect.h;
+        ah = (int16_t)(inner.h - reserveB);   // <-- NEW (avoid resizer overlap / bottom stuff)
     } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM) && (s->orient == SB_ORIENT_HORZ)) {
-        ax = w->clientrect.x;
-        ay = (int16_t)(w->clientrect.y + w->clientrect.h);
-        aw = w->clientrect.w;
+        ax = inner.x + SB_BDOCK_OFFSET_X;
+        ay = (int16_t)(inner.y + inner.h - SB_SCROLL_THICK + SB_BDOCK_OFFSET_Y);
+        aw = (int16_t)(inner.w - reserveR);   // <-- NEW (avoid resizer overlap on right)
         ah = SB_SCROLL_THICK;
     } else {
         ax = (int16_t)(w->clientrect.x + s->h.rect.x);
@@ -1097,22 +1178,58 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
         ah = s->h.rect.h;
     }
 
-    // Track fill
-    fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
 
-    // Track axis length
-    int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
+    if (aw <= 0 || ah <= 0) return;
+
+    // ------------------------------------------------------------------
+    // 1) Outer frame (border + bevel)
+    // ------------------------------------------------------------------
+    if (!(s->h.flags & (GAD_TOOL_DOCKED_BOTTOM | GAD_TOOL_DOCKED_RIGHT)))
+    {
+        fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
+        draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+    }
+
+    // ------------------------------------------------------------------
+    // 2) Inner "track well" inset
+    // ------------------------------------------------------------------
+    int16_t ix = (int16_t)(ax + SB_TRACK_INSET);
+    int16_t iy = (int16_t)(ay + SB_TRACK_INSET);
+    int16_t iw = (int16_t)(aw - SB_TRACK_INSET * 2);
+    int16_t ih = (int16_t)(ah - SB_TRACK_INSET * 2);
+
+    if (iw <= 0 || ih <= 0) return;
+
+    // Fill the well with a different pen (change SB_TRACK_PEN later)
+    //fill_rect_pen(ix, iy, iw, ih, SB_TRACK_PEN);
+    gfx_setcolour(SB_TRACK_PEN);
+    ui_fill_dots(ix, iy, iw, ih, 2);
+
+    // Draw the well bevel "inset" look:
+    // pressed=1 flips bevel, giving a recessed channel vibe.
+    draw_bevel(ix, iy, iw, ih, WIN_BEVEL_H, WIN_BEVEL_L, 1);
+
+    // ------------------------------------------------------------------
+    // 3) Thumb geometry inside the inner well
+    // ------------------------------------------------------------------
+    int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ih : iw;
+
     int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
+
     int16_t travel = (int16_t)(track_len - thumb_len);
-    int16_t tpos = sb_thumb_pos_from_pct(s->pct, travel);
+    if (travel < 0) travel = 0;
 
-    // Thumb rect
-    int16_t tx = ax, ty = ay, tw = aw, th = ah;
-    if (s->orient == SB_ORIENT_VERT) { ty = (int16_t)(ay + tpos); th = thumb_len; }
-    else                            { tx = (int16_t)(ax + tpos); tw = thumb_len; }
+    int16_t tpos = sb_thumb_pos_from_value(s->value, s->min, s->max, travel);
 
-    // Thumb face + bevel (pressed if dragging or down)
+    // Thumb rect is based on the inner well, not the outer frame
+    int16_t tx = ix, ty = iy, tw = iw, th = ih;
+    if (s->orient == SB_ORIENT_VERT) { ty = (int16_t)(iy + tpos); th = thumb_len; }
+    else                            { tx = (int16_t)(ix + tpos); tw = thumb_len; }
+
+    if (tw > 2) { tx++; tw -= 2; }
+    if (th > 2) { ty++; th -= 2; }
+
+    // Thumb face + bevel (your "perfect" thumb look stays)
     uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
     fill_rect_pen(tx, ty, tw, th, WIN_BORDER_ACTIVE_PEN);
     draw_bevel(tx, ty, tw, th, WIN_BEVEL_H, WIN_BEVEL_L, pressed);
@@ -1134,6 +1251,18 @@ static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
 
         GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
         if (!h->visible || !h->enabled) continue;
+
+        if (g->gadgetType == GAD_SCROLLBAR) {
+            GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
+            if (s->h.flags & (GAD_TOOL_DOCKED_RIGHT | GAD_TOOL_DOCKED_BOTTOM)) {
+                int16_t ts=0, tl=0, tr=0;
+                SBPart part = hittest_scrollbar_part(w, s, mx, my, &ts, &tl, &tr);
+                if (part != SB_PART_NONE) return g;
+                continue;
+            }
+        }
+
+
 
         Rect16 r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
         if (pt_in_r16(lx, ly, &r)) return g;
@@ -1238,10 +1367,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
 
                     // scrollbar interaction check
 
+                    // scrollbar interaction check (VALUE-BASED)
                     if (g->gadgetType == GAD_SCROLLBAR) {
                         GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
 
-                        int16_t thumb_start=0, thumb_len=0, track_start=0;
+                        int16_t thumb_start = 0, thumb_len = 0, track_start = 0;
                         SBPart part = hittest_scrollbar_part(w, s, mx, my, &thumb_start, &thumb_len, &track_start);
 
                         if (part == SB_PART_THUMB) {
@@ -1251,30 +1381,53 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
 
                             // Cache drag offset (mouse position relative to thumb start)
                             g_ui.sb_drag_off = (int16_t)(m_axis - thumb_start);
-                            s->drag_off      = g_ui.sb_drag_off;
+                            s->drag_off      = g_ui.sb_drag_off; // optional
 
                             // Cache track start (axis start of the track in screen coords)
                             g_ui.sb_track_start = track_start;
 
                             // Compute track_len using the same geometry logic
-                            int16_t track_len;
-                            if (s->orient == SB_ORIENT_VERT) {
-                                track_len = (s->h.flags & GAD_TOOL_DOCKED_RIGHT) ? w->clientrect.h : s->h.rect.h;
+
+                            Rect16 inner = win_inner_rect(w);
+                            int16_t reserveR = win_inner_reserve_right(w);
+                            int16_t reserveB = win_inner_reserve_bottom(w);
+
+                            int16_t ax, ay, aw, ah;
+
+                            if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
+                                ax = (int16_t)(inner.x + inner.w - SB_SCROLL_THICK);
+                                ay = inner.y;
+                                aw = SB_SCROLL_THICK;
+                                ah = (int16_t)(inner.h - reserveB);
+                            } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM) && (s->orient == SB_ORIENT_HORZ)) {
+                                ax = inner.x;
+                                ay = (int16_t)(inner.y + inner.h - SB_SCROLL_THICK);
+                                aw = (int16_t)(inner.w - reserveR);
+                                ah = SB_SCROLL_THICK;
                             } else {
-                                track_len = (s->h.flags & GAD_TOOL_DOCKED_BOTTOM) ? w->clientrect.w : s->h.rect.w;
+                                ax = (int16_t)(w->clientrect.x + s->h.rect.x);
+                                ay = (int16_t)(w->clientrect.y + s->h.rect.y);
+                                aw = s->h.rect.w;
+                                ah = s->h.rect.h;
                             }
 
+                            int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
                             int16_t travel = (int16_t)(track_len - thumb_len);
                             if (travel < 0) travel = 0;
                             g_ui.sb_travel = travel;
 
+
                         } else if (part == SB_PART_TRACK) {
-                            // track step click
-                            int16_t sp = sb_step_pct(s->min, s->max, s->step);
+                            // Track step click (VALUE-BASED)
                             int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
 
-                            if (m_axis < thumb_start) s->pct = clamp_i16((int16_t)(s->pct - sp), 0, 100);
-                            else                     s->pct = clamp_i16((int16_t)(s->pct + sp), 0, 100);
+                            // ensure sane step
+                            int16_t step = (s->step <= 0) ? 1 : s->step;
+
+                            if (m_axis < thumb_start)
+                                s->value = clamp_i16((int16_t)(s->value - step), s->min, s->max);
+                            else
+                                s->value = clamp_i16((int16_t)(s->value + step), s->min, s->max);
 
                             // IMPORTANT: not dragging
                             s->dragging = 0;
@@ -1283,8 +1436,8 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                             g_ui.sb_travel = 0;
                             g_ui.sb_drag_off = 0;
                         }
-
                     }
+
 
 
                     SBOS_paintAllWindows();
@@ -1354,26 +1507,25 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             sbx_window_t *gw = SBOS_getWindow(g_ui.capturedGadget->winhnd);
             if (gw) {
                 GAD_HDR_T *h = (GAD_HDR_T*)g_ui.capturedGadget->gadget;
-
-
                 if (g_ui.capturedGadget->gadgetType == GAD_SCROLLBAR) {
                     GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g_ui.capturedGadget->gadget;
-
                     if (s->dragging) {
                         int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
-
                         int16_t new_thumb_pos = (int16_t)(m_axis - g_ui.sb_track_start - g_ui.sb_drag_off);
-                        int16_t new_pct       = sb_pct_from_thumb_pos(new_thumb_pos, g_ui.sb_travel);
+                        int16_t new_val = sb_value_from_thumb_pos(
+                            new_thumb_pos,
+                            s->min,
+                            s->max,
+                            g_ui.sb_travel
+                            );
 
-                        if (new_pct != s->pct) {
-                            s->pct = new_pct;
+                        if (new_val != s->value) {
+                            s->value = new_val;
                             SBOS_paintAllWindows();
                         }
                     }
-
                     return;
                 }
-
 
                 // non-scrollbar default "down if inside" behaviour
                 uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget, mx, my);
@@ -1385,9 +1537,6 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             }
             return;
         }
-
-
-
 
         // when mouse is held down and a gadget is captured
         if (g_ui.mouse_down && g_ui.title_win != SBW_INVALID_ID && is_title_gadget_region(g_ui.title_region)) {
@@ -1467,7 +1616,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             g_ui.sb_drag_off = 0;
 
             if(gw){
-                printf("SCROLLBAR USED: %d\r\n", s->pct);
+                printf("SCROLLBAR USED: %d\r\n", s->value);
             }
 
         }
