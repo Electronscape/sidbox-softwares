@@ -5,9 +5,11 @@
 #include "sbx_windowex.h"
 
 // ---------------- POOLS ----------------
-static GADGET_BASE_T   g_basePool[MAX_GADGETS];
-static GAD_BUTTON_T    g_btnPool [MAX_BUTTONS];
-static GAD_CHECKBOX_T  g_chkPool[MAX_CHECKBOXES];
+static GADGET_BASE_T    g_basePool[MAX_GADGETS];
+static GAD_BUTTON_T     g_btnPool [MAX_BUTTONS];
+static GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
+static GAD_RADIO_T      g_radPool [MAX_RADIOS];
+
 
 
 // ---------------- INTERNAL HELPERS ----------------
@@ -40,6 +42,9 @@ static void base_free(GADGET_BASE_T *g){
     g->winhnd = 0;
 }
 
+////////////////// allocations area /////////////////////////
+
+// ---------- button ---------------------
 static GAD_BUTTON_T* btn_alloc(void){
     for (int i = 0; i < MAX_BUTTONS; i++){
         if (!g_btnPool[i].used){
@@ -57,9 +62,6 @@ static GAD_BUTTON_T* btn_alloc(void){
     }
     return NULL;
 }
-
-
-
 
 static GAD_CHECKBOX_T* chk_alloc(void){
     for (int i = 0; i < MAX_CHECKBOXES; i++){
@@ -79,16 +81,25 @@ static GAD_CHECKBOX_T* chk_alloc(void){
     return NULL;
 }
 
-static void chk_free(GAD_CHECKBOX_T *c){
-    if (!c) return;
-    c->used = 0;
+
+static GAD_RADIO_T* rad_alloc(void){
+    for (int i = 0; i < MAX_RADIOS; i++){
+        if (!g_radPool[i].used){
+            g_radPool[i].used = 1;
+
+            g_radPool[i].h.enabled = 1;
+            g_radPool[i].h.visible = 1;
+            g_radPool[i].h.down    = 0;
+            g_radPool[i].h.flags   = GAD_TOOL_DEFAULT;
+
+            g_radPool[i].group   = 0;
+            g_radPool[i].checked = 0;
+            g_radPool[i].text[0] = '\0';
+            return &g_radPool[i];
+        }
+    }
+    return NULL;
 }
-
-
-
-
-
-
 
 
 
@@ -96,15 +107,26 @@ static void chk_free(GAD_CHECKBOX_T *c){
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
+// free gadget types
 
 
-
+static void chk_free(GAD_CHECKBOX_T *c){
+    if (!c) return;
+    c->used = 0;
+}
 
 static void btn_free(GAD_BUTTON_T *b){
     if (!b) return;
     b->used = 0;
 }
 
+static void rad_free(GAD_RADIO_T *r){
+    if (!r) return;
+    r->used = 0;
+}
+
+
+//
 // Convert a base pointer to stable handle (idx+gen)
 static SBControlHandle base_to_handle(GADGET_BASE_T *g){
     uint16_t idx = (uint16_t)(g - &g_basePool[0]);
@@ -156,13 +178,12 @@ GAD_HDR_T* SBOS_gadgetHdr(GADGET_BASE_T *g){
 
 void SBOS_gadgetsInit(void){
     memset(g_basePool, 0, sizeof(g_basePool));
-    memset(g_btnPool, 0, sizeof(g_btnPool));
+    memset(g_btnPool,  0, sizeof(g_btnPool));
     memset(g_chkPool,  0, sizeof(g_chkPool));
+    memset(g_radPool,  0, sizeof(g_radPool));
 }
 
-SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
-                               const char *text, GAD_TOOL_FLAGS flags)
-{
+SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags) {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
@@ -208,11 +229,7 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
 }
 
 
-SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y,
-                                 int16_t w, int16_t h,
-                                 const char *text, uint8_t initial_checked,
-                                 GAD_TOOL_FLAGS flags)
-{
+SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags) {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
@@ -256,9 +273,60 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y,
 
 
 
+SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
+                                    const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
 
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
 
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
 
+    GAD_RADIO_T *r = rad_alloc();
+    if (!r){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    g->winhnd = win;
+    g->gadgetType = GAD_RADIO;
+    g->gadget = r;
+
+    r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
+    r->h.flags = flags;
+
+    r->group = group;
+    r->checked = checked ? 1 : 0;
+
+    if (text){
+        int i = 0;
+        for (; text[i] && i < (DEF_GADGET_TEXT_SIZE - 1); i++) r->text[i] = text[i];
+        r->text[i] = '\0';
+    } else {
+        r->text[0] = '\0';
+    }
+
+    W->GADGETS[slot] = g;
+
+    if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
+        W->hasDockedGadget |= flags;
+    }
+
+    // Optional “only one checked per group” policy on add:
+    if (r->checked) {
+        for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+            GADGET_BASE_T *og = W->GADGETS[i];
+            if (!og || og == g || og->gadgetType != GAD_RADIO) continue;
+            GAD_RADIO_T *ort = (GAD_RADIO_T*)og->gadget;
+            if (ort && ort->group == group) ort->checked = 0;
+        }
+    }
+
+    return base_to_handle(g);
+}
 
 
 
@@ -286,9 +354,9 @@ void SBOS_destroyGadget(SBControlHandle h){
     }
 
     // free payload by type
-    if (g->gadgetType == GAD_BUTTON)   btn_free((GAD_BUTTON_T*)g->gadget);
-    if (g->gadgetType == GAD_CHECKBOX) chk_free((GAD_CHECKBOX_T*)g->gadget);
-
+    if (g->gadgetType == GAD_BUTTON)    btn_free((GAD_BUTTON_T*)g->gadget);
+    if (g->gadgetType == GAD_CHECKBOX)  chk_free((GAD_CHECKBOX_T*)g->gadget);
+    if (g->gadgetType == GAD_RADIO)     rad_free((GAD_RADIO_T*)g->gadget);
 
 
     base_free(g);

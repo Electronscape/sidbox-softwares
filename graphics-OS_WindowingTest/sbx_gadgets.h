@@ -4,13 +4,14 @@
 #include <stdint.h>
 
 
-#define     MAX_GADGETS             16  // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
+#define     MAX_GADGETS             32  // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
 #define     MAX_BUTTONS             16
 #define     MAX_CHECKBOXES          16
+#define     MAX_RADIOS              16
 
 
 
-#define     MAX_GADGETS_PER_WINDOW  4   // this is low, but its for testing. WILL increase this for a normal size
+#define     MAX_GADGETS_PER_WINDOW  16   // this is low, but its for testing. WILL increase this for a normal size
 
 
 #define     DEF_GADGET_TEXT_SIZE    32
@@ -46,6 +47,7 @@ typedef enum GADGET_CLASS_T {
     GAD_NULL        = 0,
     GAD_BUTTON,
     GAD_CHECKBOX,
+    GAD_RADIO,
 } GADGET_CLASS_T;
 
 typedef struct GAD_HDR_T {
@@ -76,6 +78,18 @@ typedef struct GAD_CHECKBOX_T{
     char            text[DEF_GADGET_TEXT_SIZE]; // optional label
 } GAD_CHECKBOX_T;
 
+typedef struct GAD_RADIO_T{
+    //-------------- common parts -----------------
+    GAD_HDR_T       h;
+    uint8_t         used;
+    //------------------------------------------------
+
+    uint8_t         group;      // group id: 0..255 (per-window grouping)
+    uint8_t         checked;    // 0/1
+    char            text[DEF_GADGET_TEXT_SIZE];
+} GAD_RADIO_T;
+
+
 
 typedef struct {
     /// GADGET HOST ///
@@ -101,6 +115,8 @@ typedef struct {
 
 void SBOS_gadgetsInit(void);
 
+
+SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
 

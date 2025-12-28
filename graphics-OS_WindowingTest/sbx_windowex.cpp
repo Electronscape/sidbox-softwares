@@ -789,7 +789,7 @@ void windowHittest(int16_t mx, int16_t my){
 
 static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g);
 static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g);
-
+static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g);
 
 
 
@@ -805,8 +805,9 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
         if (!g) continue;
 
         switch (g->gadgetType){
-            case GAD_BUTTON:   draw_button(w, g);   break;
-            case GAD_CHECKBOX: draw_checkbox(w, g); break;
+            case GAD_BUTTON:    draw_button(w, g);   break;
+            case GAD_CHECKBOX:  draw_checkbox(w, g); break;
+            case GAD_RADIO:     draw_radio(w, g); break;
             default: break;
         }
     }
@@ -902,6 +903,52 @@ static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         if (c->h.down) { tx++; ty++; }
 
         ui_draw_text816(tx, ty, (const unsigned char*)c->text);
+    }
+}
+
+static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
+    if (!w || !g || !g->gadget) return;
+
+    GAD_RADIO_T *r = (GAD_RADIO_T*)g->gadget;
+    if (!r->h.visible) return;
+
+    const int16_t ax = (int16_t)(w->clientrect.x + r->h.rect.x);
+    const int16_t ay = (int16_t)(w->clientrect.y + r->h.rect.y);
+
+    // circle-ish box (16x16 like checkbox)
+    const int16_t box = 16;
+    int16_t box_x = ax;
+    int16_t box_y = (int16_t)(ay + (r->h.rect.h - box) / 2);
+
+    fill_rect_pen(box_x, box_y, box, box, WIN_BORDER_INACTIVE_PEN);
+    draw_bevel(box_x, box_y, box, box, WIN_BEVEL_H, WIN_BEVEL_L, r->h.down);
+
+    // “radio dot” when checked
+    if (r->checked) {
+        gfx_setcolour(WIN_BEVEL_L);
+
+        // cheap filled center blob (looks fine at 8x16 font scale)
+        int16_t cx = (int16_t)(box_x + 6);
+        int16_t cy = (int16_t)(box_y + 6);
+
+        ui_ppixel(cx, cy);
+        ui_ppixel((int16_t)(cx+1), cy);
+        ui_ppixel(cx, (int16_t)(cy+1));
+        ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
+
+        ui_ppixel((int16_t)(cx-1), cy);
+        ui_ppixel((int16_t)(cx+2), cy);
+        ui_ppixel(cx, (int16_t)(cy-1));
+        ui_ppixel(cx, (int16_t)(cy+2));
+    }
+
+    // label
+    if (r->text[0]) {
+        gfx_setcolour(WIN_TITLE_PEN);
+        int16_t tx = (int16_t)(box_x + box + 6);
+        int16_t ty = (int16_t)(ay + (r->h.rect.h - 16) / 2);
+        if (r->h.down) { tx++; ty++; }
+        ui_draw_text816(tx, ty, (const unsigned char*)r->text);
     }
 }
 
@@ -1183,9 +1230,23 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     c->checked ^= 1;
                     printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
                 } break;
+                case GAD_RADIO:{
+                    GAD_RADIO_T *r = (GAD_RADIO_T*)g->gadget;
+                    if (gw) {
+                        // clear all radios in same group in this window
+                        for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+                            GADGET_BASE_T *og = gw->GADGETS[i];
+                            if (!og || og->gadgetType != GAD_RADIO || !og->gadget) continue;
+
+                            GAD_RADIO_T *ort = (GAD_RADIO_T*)og->gadget;
+                            if (ort->group == r->group) ort->checked = 0;
+                        }
+                        r->checked = 1;
+                    }
+                    printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
+                } break;
+                default: break;
             }
-
-
         }
 
         SBOS_paintAllWindows();
