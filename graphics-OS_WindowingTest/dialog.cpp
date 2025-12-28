@@ -23,6 +23,7 @@ char frame_db = 0;
 char EmuReady = 0;
 
 extern uint8_t testpix[];
+extern uint8_t backdrop[];
 
 void sms_keydown(int keycode);
 void sms_keyup(int keycode);
@@ -119,18 +120,23 @@ Dialog::Dialog(QWidget *parent)
     initWb();
     //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
     SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
+
+    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+
+
+
     SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "NoBorder 1", SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
 
     // a bitmap viewable window ;) lets see if this works!!
     SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
 
 
-    SBOS_addBitmapView(winMain3, 0, 0, 100, 100, testpix, 320, 240, 320, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+    SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+
+    SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
 
 
-
-
-    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 300, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if (winMain2 == SBW_INVALID_ID) {
         // no free window slots — OS politely shrugs
         printf("No more windows left\n");
@@ -165,9 +171,9 @@ Dialog::Dialog(QWidget *parent)
                       GAD_TOOL_SCROLLARROWS);
 
     SBOS_addScrollbar(winMain2,
-                      10, 140, 20, 80,
+                      260, 6, 20, 150,
                       SB_ORIENT_VERT,
-                      0, 100,
+                      0, 150,
                       50,
                       0,
                       GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
