@@ -134,7 +134,7 @@ Dialog::Dialog(QWidget *parent)
 
     SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
 
-    SBOS_addButton(winMain3, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addButton(winMain3, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|FAT", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
     SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
@@ -155,6 +155,15 @@ Dialog::Dialog(QWidget *parent)
                       100,
                       0,
                       GAD_TOOL_DEFAULT);
+
+    SBOS_addScrollbar(winMain2,
+                      10, 140, 20, 80,
+                      SB_ORIENT_VERT,
+                      0, 100,
+                      50,
+                      0,
+                      GAD_TOOL_DEFAULT);
+
 
 
     SBOS_addScrollbar(winMain2,

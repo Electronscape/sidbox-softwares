@@ -16,7 +16,7 @@
 
 
 #define     MAX_GADGETS_PER_WINDOW  16   // this is low, but its for testing. WILL increase this for a normal size
-#define     DEF_GADGET_TEXT_SIZE    32
+#define     DEF_GADGET_TEXT_SIZE    128
 
 
 
@@ -41,6 +41,7 @@ typedef enum {
     GAD_TOOL_DEFAULT        = (1 << 0),
     GAD_TOOL_DOCKED_RIGHT   = (1 << 1),     // right dock used
     GAD_TOOL_DOCKED_BOTTOM  = (1 << 2),     // bottom dock used
+    GAD_TOOL_CYCLEBUTTON    = (1 << 3),     // button cycle flag
 } GAD_TOOL_FLAGS;
 
 
@@ -61,14 +62,24 @@ typedef struct GAD_HDR_T {
     uint8_t         down;       // might need to remove this soon
 } GAD_HDR_T;
 
+
+//__attribute__((section(".bsram")))
+typedef struct GAD_TEXT_T{
+    char            text[DEF_GADGET_TEXT_SIZE];   // common gadget text
+} GAD_TEXT_T;
+
 // create types for each gadget
 typedef struct GAD_BUTTON_T{
     //-------------- common parts to the GADGET -----------------
     GAD_HDR_T       h;
     uint8_t         used;
     //-----------------------------------------------------------
-    // here is the bits that are specific to the gadget /////////
+
     char            text[DEF_GADGET_TEXT_SIZE];   // common gadget text
+    // cycle button stuff
+    char            *options[32];                 // pointer to the text location its smaller and faster
+    int             current_option;               // index of the currently displayed option
+    int             max_options;                  // maximum options found
 } GAD_BUTTON_T;
 
 typedef struct GAD_CHECKBOX_T{
@@ -92,7 +103,11 @@ typedef struct GAD_RADIO_T{
     char            text[DEF_GADGET_TEXT_SIZE];
 } GAD_RADIO_T;
 
-// scroll bar needs extra bits
+
+
+
+
+// scroll bar needs extra bits -------------------------------------------
 typedef enum {
     SB_ORIENT_VERT = 0,
     SB_ORIENT_HORZ = 1
@@ -121,7 +136,7 @@ typedef struct GAD_SCROLLBAR_T{
     uint8_t     dragging;
     int16_t     drag_off;    // mouse offset inside thumb (in track axis)
 } GAD_SCROLLBAR_T;
-
+//------------------------------------------------------------------------
 
 
 
@@ -155,7 +170,7 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t
 
 
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
-SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
+SBControlHandle SBOS_addButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
 
 

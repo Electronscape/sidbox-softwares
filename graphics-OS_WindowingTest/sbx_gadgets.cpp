@@ -1,5 +1,6 @@
 //// SBX_GADGETS.CPP //////
 
+#include <stdio.h>
 #include <string.h>
 #include "sbx_gadgets.h"
 #include "sbx_windowex.h"
@@ -264,6 +265,25 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
     } else {
         b->text[0] = '\0';
     }
+
+    b->current_option = 0;      // for now init the value to 0
+    b->options[0] = b->text;    // first text;
+    if (flags & GAD_TOOL_CYCLEBUTTON) {
+        int scanIdx = 0;
+        int optionCount = 1;  // Start counting from 1 because the first option is already set
+
+        int strinLen = strlen(b->text); // Get the length of the text
+
+        for (scanIdx = 0; scanIdx < strinLen; scanIdx++) {
+            if (b->text[scanIdx] == '|') {  // Found a pipe (|)
+                b->text[scanIdx] = '\0';    // Replace pipe with null terminator
+                b->options[optionCount++] = &b->text[scanIdx + 1];  // Store pointer to the next option
+            }
+        }
+        b->max_options = optionCount;
+        printf("Found options; %d\n", optionCount);
+    }
+
 
     // attach to window
     W->GADGETS[slot] = g;
