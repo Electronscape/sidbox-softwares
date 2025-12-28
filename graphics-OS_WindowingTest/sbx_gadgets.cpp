@@ -11,6 +11,8 @@ static GAD_BUTTON_T     g_btnPool [MAX_BUTTONS];
 static GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
 static GAD_RADIO_T      g_radPool [MAX_RADIOS];
 static GAD_SCROLLBAR_T  g_sbPool[MAX_SCROLLBARS];
+static GAD_BITMAPVIEW_T g_bvPool[MAX_BITMAPVIEWS];
+
 
 
 
@@ -57,6 +59,39 @@ static void base_free(GADGET_BASE_T *g){
 }
 
 ////////////////// allocations area /////////////////////////
+
+static GAD_BITMAPVIEW_T* bv_alloc(void){
+    for (int i = 0; i < MAX_BITMAPVIEWS; i++){
+        if (!g_bvPool[i].used){
+            g_bvPool[i].used = 1;
+
+            g_bvPool[i].h.enabled = 1;
+            g_bvPool[i].h.visible = 1;
+            g_bvPool[i].h.down    = 0;
+            g_bvPool[i].h.flags   = GAD_TOOL_DEFAULT;
+
+            // sensible defaults
+            g_bvPool[i].pixels = NULL;
+            g_bvPool[i].bmp_w = g_bvPool[i].bmp_h = 0;
+            g_bvPool[i].bmp_stride = 0;
+            g_bvPool[i].scroll_x = g_bvPool[i].scroll_y = 0;
+            g_bvPool[i].panning = 0;
+            g_bvPool[i].bv_flags = 0;
+
+            return &g_bvPool[i];
+        }
+    }
+    return NULL;
+}
+
+static void bv_free(GAD_BITMAPVIEW_T *bv){
+    if (!bv) return;
+    bv->used = 0;
+}
+
+
+
+
 
 // ---------- button ---------------------
 static GAD_BUTTON_T* btn_alloc(void){
@@ -175,11 +210,10 @@ static void sb_free(GAD_SCROLLBAR_T *s){
 
 //
 // Convert a base pointer to stable handle (idx+gen)
-static SBControlHandle base_to_handle(GADGET_BASE_T *g){
+SBControlHandle base_to_handle(GADGET_BASE_T *g){
     uint16_t idx = (uint16_t)(g - &g_basePool[0]);
     return SBCTL_MAKE(g->handleGen, idx);
 }
-
 
 
 
@@ -224,12 +258,12 @@ GAD_HDR_T* SBOS_gadgetHdr(GADGET_BASE_T *g){
 // ---------------- PUBLIC API ----------------
 
 void SBOS_gadgetsInit(void){
-    memset(g_basePool, 0, sizeof(g_basePool));
-    memset(g_btnPool,  0, sizeof(g_btnPool));
-    memset(g_chkPool,  0, sizeof(g_chkPool));
-    memset(g_radPool,  0, sizeof(g_radPool));
-    memset(g_sbPool,   0, sizeof(g_sbPool));
-
+    memset(g_basePool, 0, sizeof(g_basePool));  // base gadgets
+    memset(g_btnPool,  0, sizeof(g_btnPool));   // button gadgets
+    memset(g_chkPool,  0, sizeof(g_chkPool));   // check box gadgets
+    memset(g_radPool,  0, sizeof(g_radPool));   // radio buttons gadgets
+    memset(g_sbPool,   0, sizeof(g_sbPool));    // scrollbar gadgets
+    memset(g_bvPool,   0, sizeof(g_bvPool));    // bitmapview gadgets (THIS one is adventureous)
 }
 
 SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags) {
@@ -450,6 +484,57 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
 
 
 
+SBControlHandle SBOS_addBitmapView(
+    SBXWindowId win,
+    int16_t x, int16_t y, int16_t w, int16_t h,
+    const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride,
+    uint32_t bv_flags,
+    uint32_t flags
+    ){
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_BITMAPVIEW_T *bv = bv_alloc();
+    if (!bv){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    // base host
+    g->winhnd = win;
+    g->gadgetType = GAD_BITMAPVIEW;
+    g->gadget = bv;
+
+    // header
+    bv->h.rect.x = x; bv->h.rect.y = y; bv->h.rect.w = w; bv->h.rect.h = h;
+    bv->h.flags = flags;
+
+    // payload
+    bv->pixels = pixels;
+    bv->bmp_w = bmp_w;
+    bv->bmp_h = bmp_h;
+    bv->bmp_stride = bmp_stride;
+
+    bv->scroll_x = 0;
+    bv->scroll_y = 0;
+    bv->panning = 0;
+    bv->bv_flags = bv_flags;
+
+    // attach
+    W->GADGETS[slot] = g;
+
+    // (optional) docking propagation if you want it, same as scrollbar:
+    if (flags & GAD_TOOL_DOCKED_RIGHT)  W->flags |= SBX_WF_DOCKRIGHT;
+    if (flags & GAD_TOOL_DOCKED_BOTTOM) W->flags |= SBX_WF_DOCKBOTTOM;
+
+    return base_to_handle(g);
+}
 
 
 
@@ -477,10 +562,12 @@ void SBOS_destroyGadget(SBControlHandle h){
     }
 
     // free payload by type
-    if (g->gadgetType == GAD_BUTTON)    btn_free((GAD_BUTTON_T*)g->gadget);
-    if (g->gadgetType == GAD_CHECKBOX)  chk_free((GAD_CHECKBOX_T*)g->gadget);
-    if (g->gadgetType == GAD_RADIO)     rad_free((GAD_RADIO_T*)g->gadget);
-    if (g->gadgetType == GAD_SCROLLBAR) sb_free((GAD_SCROLLBAR_T*)g->gadget);
+    if (g->gadgetType == GAD_BUTTON)        btn_free((GAD_BUTTON_T*)     g->gadget);
+    if (g->gadgetType == GAD_CHECKBOX)      chk_free((GAD_CHECKBOX_T*)   g->gadget);
+    if (g->gadgetType == GAD_RADIO)         rad_free((GAD_RADIO_T*)      g->gadget);
+    if (g->gadgetType == GAD_SCROLLBAR)     sb_free ((GAD_SCROLLBAR_T*)  g->gadget);
+    if (g->gadgetType == GAD_BITMAPVIEW)    bv_free ((GAD_BITMAPVIEW_T*) g->gadget);
+
 
 
 

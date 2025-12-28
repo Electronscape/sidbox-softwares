@@ -22,6 +22,8 @@ Dialog *g_dialog = nullptr;
 char frame_db = 0;
 char EmuReady = 0;
 
+extern uint8_t testpix[];
+
 void sms_keydown(int keycode);
 void sms_keyup(int keycode);
 
@@ -118,8 +120,14 @@ Dialog::Dialog(QWidget *parent)
     //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
     SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
     SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "NoBorder 1", SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
-    //SBWindowId winMain1 = SBOS_createWindow(340, 10, 100, 250, "Main", SBW_VISIBLE | SBW_NOBORDER);
-    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
+
+    // a bitmap viewable window ;) lets see if this works!!
+    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
+
+
+    SBOS_addBitmapView(winMain3, 0, 0, 100, 100, testpix, 320, 240, 320, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+
+
 
 
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 300, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
@@ -134,7 +142,7 @@ Dialog::Dialog(QWidget *parent)
 
     SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
 
-    SBOS_addButton(winMain3, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|FAT", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|FAT", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
     SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);

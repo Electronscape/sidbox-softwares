@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing_autogen.dir/AutogenUsed.txt"
   "CMakeFiles/graphics-gui_testing_autogen.dir/ParseCache.txt"
   "graphics-gui_testing_autogen"
+  "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/font.cpp.o"

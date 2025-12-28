@@ -30,6 +30,7 @@ qt_add_executable(graphics-gui_testing
 
     sbx_input.h
     sbx_input.cpp
+    bitmaps_src.cpp
 
 )
 

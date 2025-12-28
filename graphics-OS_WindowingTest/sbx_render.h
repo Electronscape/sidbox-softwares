@@ -13,6 +13,8 @@
 
 
 // defines//
+#define     WIN_CLIENT_PEN              1
+
 #define     WIN_TITLE_PEN_ACTIVE        16
 #define     WIN_TITLE_PEN_INACTIVE      16
 

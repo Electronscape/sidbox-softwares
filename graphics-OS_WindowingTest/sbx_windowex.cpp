@@ -715,23 +715,36 @@ static SBXWindowId findTopFocusable(void){
     return SBW_INVALID_ID;
 }
 
+static void destroy_window_gadgets(sbx_window_t *w){
+    if (!w) return;
+    for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+        GADGET_BASE_T *g = w->GADGETS[i];
+        if (!g) continue;
+        SBOS_destroyGadget(base_to_handle(g));
+        w->GADGETS[i] = NULL;
+    }
+}
+
+
 void SBOS_destroyWindow(SBXWindowId id){
     if (id >= MAX_WINDOWS) return;
     if (!gui_used[id]) return;
 
-    gui_windows[id].flags = 0;
-    gui_windows[id].title[0] = '\0';
+    sbx_window_t *w = &gui_windows[id];
+    destroy_window_gadgets(w);
+
+    w->flags = 0;
+    w->title[0] = '\0';
 
     gui_used[id] = 0;
     z_remove(id);
 
-    if (g_focusWin == id) g_focusWin = findTopFocusable();
+    if (g_focusWin == id)
+        g_focusWin = findTopFocusable();
 
     normalize_zorder();
     SBOS_paintAllWindows();
 }
-
-
 
 void SBOS_sendToBack(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) return;
@@ -888,53 +901,6 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     // add WH_BORDER laterwant resize hit zones.
     r.region = WH_CLIENT; // or WH_NONE
     return r;
-}
-
-void windowHittest(int16_t mx, int16_t my){
-    // scan front->back so topmost window wins
-    for (int zi = (int)g_winZcount - 1; zi >= 0; zi--) {
-        SBXWindowId id = g_winZorder[zi];
-        if (id >= MAX_WINDOWS) continue;
-        if (!gui_used[id]) continue;
-
-        WHitResult hit = hittest_window(id, mx, my);
-        if (hit.region == WH_NONE) continue;
-
-        // topmost hit window found: act on it
-        switch (hit.region) {
-        case WH_CLOSE:
-            // dont kill it yet, we'll probably want to send this message our selves in the software,
-            // realistically this should send a message that this windows close glyph was hit
-            //SBOS_destroyWindow(hit.id);
-            break;
-
-        case WH_ZORDER:
-            // send to back (or toggle behaviour)
-            SBOS_sendToBack(hit.id);
-            break;
-
-        case WH_MAXRESTORE:
-            // TODO: implement maximize toggle
-            // for now just bring to front so it feels responsive
-            break;
-
-        case WH_TITLE:
-
-            // TODO: start dragging (store drag offset)
-            break;
-
-        case WH_CLIENT:
-            // TODO: route click to window/app
-            // unless we have a flag that says "dont take focus"
-            //SBOS_sendToFront(hit.id);
-            break;
-
-        default:
-            break;
-        }
-
-        return; // IMPORTANT: stop after first (topmost) hit
-    }
 }
 
 
@@ -1141,6 +1107,8 @@ static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g);
 static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g);
 static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g);
 static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g);
+static void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g);
+
 
 
 
@@ -1168,11 +1136,13 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
         }
 
         switch (g->gadgetType){
-            case GAD_BUTTON:    draw_button(w, g);   break;
-            case GAD_CHECKBOX:  draw_checkbox(w, g); break;
-            case GAD_SCROLLBAR: draw_scrollbar(w, g); break;
-            case GAD_RADIO:     draw_radio(w, g); break;
-        default: break;
+            case GAD_BUTTON:     draw_button(w, g);     break;
+            case GAD_CHECKBOX:   draw_checkbox(w, g);   break;
+            case GAD_SCROLLBAR:  draw_scrollbar(w, g);  break;
+            case GAD_RADIO:      draw_radio(w, g);      break;
+            case GAD_BITMAPVIEW: draw_bitmapview(w, g); break;
+
+            default: break;     // if we got here, then the GUI is BARFING UP randomness, so stop it here ;)
         }
     }
     return;
@@ -1490,8 +1460,124 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
 }
 
 
+static inline int16_t clamp_scroll(int16_t v, int16_t maxv){
+    if (v < 0) return 0;
+    if (v > maxv) return maxv;
+    return v;
+}
 
-//////////////////////////////////
+static void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
+    if (!w || !g || !g->gadget) return;
+
+    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)g->gadget;
+    if (!bv->h.visible) return;
+
+    // Absolute rect in screen coords
+    int16_t ax = (int16_t)(w->clientrect.x + bv->h.rect.x);
+    int16_t ay = (int16_t)(w->clientrect.y + bv->h.rect.y);
+    int16_t aw = bv->h.rect.w;
+    int16_t ah = bv->h.rect.h;
+    if (aw <= 0 || ah <= 0) return;
+
+    // Frame + inner area
+    int16_t ix = ax, iy = ay, iw = aw, ih = ah;
+    if (bv->bv_flags & BVF_SHOW_FRAME) {
+        fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
+        draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+
+        // inset client area
+        ix = (int16_t)(ax + 2);
+        iy = (int16_t)(ay + 2);
+        iw = (int16_t)(aw - 4);
+        ih = (int16_t)(ah - 4);
+        if (iw <= 0 || ih <= 0) return;
+    }
+
+    // Clear background of the view area
+    fill_rect_pen(ix, iy, iw, ih, WIN_CLIENT_PEN);
+
+    // No source? done
+    if (!bv->pixels || bv->bmp_w <= 0 || bv->bmp_h <= 0) return;
+
+    // Clamp scroll so we never read past bitmap edges
+    int16_t maxx = (int16_t)(bv->bmp_w - iw);
+    int16_t maxy = (int16_t)(bv->bmp_h - ih);
+    if (maxx < 0) maxx = 0;
+    if (maxy < 0) maxy = 0;
+    bv->scroll_x = clamp_scroll(bv->scroll_x, maxx);
+    bv->scroll_y = clamp_scroll(bv->scroll_y, maxy);
+
+    // Compute unclipped visible blit size (within bitmap)
+    int16_t blit_w = iw;
+    int16_t blit_h = ih;
+    if (blit_w > (int16_t)(bv->bmp_w - bv->scroll_x)) blit_w = (int16_t)(bv->bmp_w - bv->scroll_x);
+    if (blit_h > (int16_t)(bv->bmp_h - bv->scroll_y)) blit_h = (int16_t)(bv->bmp_h - bv->scroll_y);
+    if (blit_w <= 0 || blit_h <= 0) return;
+
+    // ---- HARD CLIP (screen + ui clip), then adjust source offsets ----
+    int16_t dx0 = ix;
+    int16_t dy0 = iy;
+    int16_t dx1 = (int16_t)(ix + blit_w);
+    int16_t dy1 = (int16_t)(iy + blit_h);
+
+    // Screen clip
+    if (dx0 < 0) dx0 = 0;
+    if (dy0 < 0) dy0 = 0;
+    if (dx1 > SCR_WIDTH)  dx1 = SCR_WIDTH;
+    if (dy1 > SCR_HEIGHT) dy1 = SCR_HEIGHT;
+
+    // UI clip (same semantics as ui_ppixel: x in [x0,x1), y in [y0,y1))
+    if (g_uiclip.enabled) {
+        if (dx0 < g_uiclip.x0) dx0 = g_uiclip.x0;
+        if (dy0 < g_uiclip.y0) dy0 = g_uiclip.y0;
+        if (dx1 > g_uiclip.x1) dx1 = g_uiclip.x1;
+        if (dy1 > g_uiclip.y1) dy1 = g_uiclip.y1;
+    }
+
+    if (dx1 <= dx0 || dy1 <= dy0) return;
+
+    // Source start offset based on how much we clipped off the left/top
+    int16_t src_x0 = (int16_t)(bv->scroll_x + (dx0 - ix));
+    int16_t src_y0 = (int16_t)(bv->scroll_y + (dy0 - iy));
+
+    int16_t out_w = (int16_t)(dx1 - dx0);
+    int16_t out_h = (int16_t)(dy1 - dy0);
+
+    // ---- BLIT (safe) ----
+    if (bv->bv_flags & BVF_SRC_ROWMAJOR) {
+        // src[y*stride + x]
+        for (int16_t dx = 0; dx < out_w; dx++) {
+            int16_t sx = (int16_t)(src_x0 + dx);
+            int16_t dst_x = (int16_t)(dx0 + dx);
+
+            int32_t dst = (int32_t)dst_x * SCR_STRIDE + dy0;
+            const uint8_t *src = bv->pixels + (int32_t)src_y0 * bv->bmp_stride + sx;
+
+            for (int16_t dy = 0; dy < out_h; dy++) {
+                PROJ_VRAM[dst + dy] = src[(int32_t)dy * bv->bmp_stride];
+            }
+        }
+    } else {
+        // src[x*stride + y] (x-major)
+        for (int16_t dx = 0; dx < out_w; dx++) {
+            int16_t sx = (int16_t)(src_x0 + dx);
+            int16_t dst_x = (int16_t)(dx0 + dx);
+
+            const uint8_t *src_col = bv->pixels + (int32_t)sx * bv->bmp_stride + src_y0;
+            int32_t dst = (int32_t)dst_x * SCR_STRIDE + dy0;
+
+            for (int16_t dy = 0; dy < out_h; dy++) {
+                PROJ_VRAM[dst + dy] = src_col[dy];
+            }
+        }
+    }
+
+
+    ui_clip_disable();
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
     if (!w) return NULL;
@@ -1619,7 +1705,19 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
                     h->down = 1;
 
-                    // scrollbar interaction check
+
+
+                    if (g->gadgetType == GAD_BITMAPVIEW) {
+                        GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)g->gadget;
+                        if (bv->bv_flags & BVF_PAN) {
+                            bv->panning = 1;
+                            bv->pan_start_mx = mx;
+                            bv->pan_start_my = my;
+                            bv->pan_start_x  = bv->scroll_x;
+                            bv->pan_start_y  = bv->scroll_y;
+                        }
+                    }
+
 
                     // scrollbar interaction check (VALUE-BASED)
                     if (g->gadgetType == GAD_SCROLLBAR) {
@@ -1733,9 +1831,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         if (g_ui.mouse_down && g_ui.resize_win != SBW_INVALID_ID) {
             sbx_window_t *w = SBOS_getWindow(g_ui.resize_win);
             if (w) {
-
                 enforce_screen_bounds(w);
-
                 int16_t dx = (int16_t)(mx - g_ui.r_start_mx);
                 int16_t dy = (int16_t)(my - g_ui.r_start_my);
 
@@ -1759,6 +1855,21 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                 SBOS_paintAllWindows();
             }
             return;
+        }
+
+        if (g_ui.mouse_down && g_ui.capturedGadget && g_ui.capturedGadget->gadgetType == GAD_BITMAPVIEW) {
+            GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)g_ui.capturedGadget->gadget;
+            if (bv && bv->panning) {
+                int16_t dx = (int16_t)(mx - bv->pan_start_mx);
+                int16_t dy = (int16_t)(my - bv->pan_start_my);
+
+                // "grab and drag" feel
+                bv->scroll_x = (int16_t)(bv->pan_start_x - dx);
+                bv->scroll_y = (int16_t)(bv->pan_start_y - dy);
+
+                SBOS_paintAllWindows();
+                return;
+            }
         }
 
 
@@ -1841,7 +1952,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             WHitResult ht = hittest_window(wclick, mx, my);
             if (ht.region == rclick) {
                 if (rclick == WH_CLOSE){
-                    //SBOS_destroyWindow(wclick);
+                    SBOS_destroyWindow(wclick);
                     printf("GLYPH HIT - Close Window\r\n");
                 }
                 else if (rclick == WH_ZORDER){
@@ -1891,6 +2002,12 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
             }
 
         }
+
+        if (g_ui.capturedGadget && g_ui.capturedGadget->gadgetType == GAD_BITMAPVIEW) {
+            GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)g_ui.capturedGadget->gadget;
+            if (bv) bv->panning = 0;
+        }
+
 
         g_ui.capturedGadget = NULL;
 

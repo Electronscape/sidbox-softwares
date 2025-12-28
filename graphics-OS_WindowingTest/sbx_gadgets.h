@@ -9,6 +9,8 @@
 #define     MAX_CHECKBOXES          16
 #define     MAX_RADIOS              16
 #define     MAX_SCROLLBARS          16
+#define     MAX_BITMAPVIEWS         16
+
 
 
 #define     SB_SCROLL_THICK         16      // default track thickness
@@ -52,6 +54,13 @@ typedef enum {
     GAD_TOOL_SCROLLARROWS   = (1 << 4),     // enable the arrows on the scrollbars
 } GAD_TOOL_FLAGS;
 
+typedef enum BMV_FLAGS_T {
+    BVF_SHOW_FRAME          = (1 << 0),
+    BVF_PAN                 = (1 << 1),
+    BVF_SRC_ROWMAJOR        = (1 << 2),     // src = pixels[y*stride + x]
+    BVF_SRC_XMAJOR          = (1 << 3)      // src = pixels[x*stride + y] (optional)
+
+} BMV_FLAGS_T;
 
 // control types
 typedef enum GADGET_CLASS_T {
@@ -60,6 +69,7 @@ typedef enum GADGET_CLASS_T {
     GAD_CHECKBOX,
     GAD_RADIO,
     GAD_SCROLLBAR,
+    GAD_BITMAPVIEW,
 } GADGET_CLASS_T;
 
 typedef struct GAD_HDR_T {
@@ -75,6 +85,33 @@ typedef struct GAD_HDR_T {
 typedef struct GAD_TEXT_T{
     char            text[DEF_GADGET_TEXT_SIZE];   // common gadget text
 } GAD_TEXT_T;
+
+typedef struct GAD_BITMAPVIEW_T {
+    //-------------- common parts to the GADGET -----------------
+    GAD_HDR_T       h;
+    uint8_t         used;
+    //-----------------------------------------------------------
+    // Bitmap source
+    const uint8_t  *pixels;      // 8bpp indexed, x-major
+    int16_t         bmp_w;
+    int16_t         bmp_h;
+    int16_t         bmp_stride;  // usually == bmp_h
+
+    // View state (top-left of bitmap in view coords)
+    int16_t         scroll_x;
+    int16_t         scroll_y;
+
+    // Interaction state (for panning)
+    int16_t         pan_start_mx;
+    int16_t         pan_start_my;
+    int16_t         pan_start_x;
+    int16_t         pan_start_y;
+    uint8_t         panning;
+
+    // Behaviour flags
+    uint32_t        bv_flags;
+
+} GAD_BITMAPVIEW_T;
 
 // create types for each gadget
 typedef struct GAD_BUTTON_T{
@@ -186,13 +223,17 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t
 
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
-SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
+SBControlHandle SBOS_addCheckbox   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
+
+// big function!!
+SBControlHandle SBOS_addBitmapView (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags);
 
 
+SBControlHandle base_to_handle(GADGET_BASE_T *g);
 
-GADGET_BASE_T* SBOS_gadgetFromHandle(SBControlHandle h);
-GAD_HDR_T*     SBOS_gadgetHdr(GADGET_BASE_T *g);
-void           SBOS_destroyGadget(SBControlHandle h);
+GADGET_BASE_T*  SBOS_gadgetFromHandle(SBControlHandle h);
+GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
+void            SBOS_destroyGadget(SBControlHandle h);
 
 
 

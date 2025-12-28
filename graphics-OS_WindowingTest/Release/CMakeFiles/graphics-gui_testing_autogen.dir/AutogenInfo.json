@@ -531,6 +531,11 @@
 	"SOURCES" : 
 	[
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp",
+			"MU",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp",
 			"MU",
 			null
