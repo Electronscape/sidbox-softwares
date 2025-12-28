@@ -40,6 +40,7 @@ extern UIClipRect g_uiclip;
 
 
 // protoypes
+void ui_draw_glyph(int16_t x, int16_t y, uint8_t *glyph);
 void ui_ppixel(int16_t x, int16_t y);
 void ui_draw_text816(int x, int y, const unsigned char* textptr);
 

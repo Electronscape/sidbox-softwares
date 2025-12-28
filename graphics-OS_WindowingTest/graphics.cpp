@@ -106,6 +106,19 @@ void sbgfx_ppixel(int16_t x, int16_t y){
     *dp = current_fr_colour;
 }
 
+
+void sbgfx_pixel(int16_t x, int16_t y, uint8_t col){
+    // shouldnt need this stuff below since this routine SHOULD be handled view the clip system
+    //if(x < 0 || y < 0) return;
+    //if (x >= SCR_WIDTH || y >= SCR_HEIGHT) return;
+
+
+    uint8_t* dp = PROJ_VRAM + x * SCR_HEIGHT + y;
+    //uint8_t *vmem = PROJ_VRAM + (y * SCR_WIDTH + x);
+    *dp = col;
+}
+
+
 void sbgfx_glyph(int16_t x, int16_t y, uint8_t *src){
     int bw, bh;
     bw = x + 16;

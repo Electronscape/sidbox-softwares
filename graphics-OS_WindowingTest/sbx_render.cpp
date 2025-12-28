@@ -33,7 +33,44 @@ void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen){
     }
 }
 
+void ui_draw_glyph(int16_t x, int16_t y, uint8_t *glyph) {
+    int16_t x0 = x;
+    int16_t y0 = y;
+    int16_t x1 = x + 16;
+    int16_t y1 = y + 16;
 
+    // Global clip
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 > SCR_WIDTH)  x1 = SCR_WIDTH;
+    if (y1 > SCR_HEIGHT) y1 = SCR_HEIGHT;
+
+    // UI clip
+    if (g_uiclip.enabled) {
+        if (x0 < g_uiclip.x0) x0 = g_uiclip.x0;
+        if (y0 < g_uiclip.y0) y0 = g_uiclip.y0;
+        if (x1 > g_uiclip.x1) x1 = g_uiclip.x1;
+        if (y1 > g_uiclip.y1) y1 = g_uiclip.y1;
+    }
+
+    if (x1 <= x0 || y1 <= y0)
+        return;
+
+    const int16_t yoff = y0 - y;
+    uint8_t *col = glyph + (x0 - x) * 16 + yoff;
+
+    for (int16_t dx = x0; dx < x1; dx++) {
+        uint8_t *dat = col;
+
+        for (int16_t dy = y0; dy < y1; dy++) {
+            uint8_t c = *dat++;
+            if (c)
+                sbgfx_pixel(dx, dy, c);
+        }
+
+        col += 16; // next glyph column
+    }
+}
 
 
 

@@ -149,7 +149,7 @@ Dialog::Dialog(QWidget *parent)
     SBOS_addRadioButton(winMain2, 180, 120, 100, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
 
     SBOS_addScrollbar(winMain2,
-                      10, 120, 150, 20,
+                      10, 120, 150, 16,
                       SB_ORIENT_HORZ,
                       0, 1000,
                       100,
@@ -162,7 +162,7 @@ Dialog::Dialog(QWidget *parent)
                       0, 100,
                       50,
                       0,
-                      GAD_TOOL_DEFAULT);
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
 
 
 
