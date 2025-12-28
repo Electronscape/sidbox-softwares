@@ -356,6 +356,13 @@ void SBOS_paintWindow(SBXWindowId id){
     const int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? (WIN_TITLE_HEIGHT + 4) : 0;
 
     // --- draw resize gutter + glyph (chrome, not part of client) ---
+
+
+    if(w->flags & SBX_WF_DOCKRIGHT){
+        const int16_t gx = (int16_t)(win_x + win_w - WIN_RESIZE_GLYPH_SIZE);
+        sbgfx_drawbox(gx, win_y, WIN_RESIZE_GLYPH_SIZE, win_h, borderPen);
+    }
+
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
 
         // bottom-right glyph box (DO NOT subtract WIN_BORDER here)
@@ -370,8 +377,6 @@ void SBOS_paintWindow(SBXWindowId id){
 
 
 
-        if(w->flags & SBX_WF_DOCKRIGHT)
-            sbgfx_drawbox(gx, win_y, WIN_RESIZE_GLYPH_SIZE, win_h, borderPen);
 
         // bottom bar
         sbgfx_drawbox(inner_x, (int16_t)(gy + 1), inner_w, (int16_t)(WIN_RESIZE_GLYPH_SIZE - 2), borderPen);
