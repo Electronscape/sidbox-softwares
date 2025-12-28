@@ -9,10 +9,23 @@ static GADGET_BASE_T    g_basePool[MAX_GADGETS];
 static GAD_BUTTON_T     g_btnPool [MAX_BUTTONS];
 static GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
 static GAD_RADIO_T      g_radPool [MAX_RADIOS];
+static GAD_SCROLLBAR_T  g_sbPool[MAX_SCROLLBARS];
 
 
 
 // ---------------- INTERNAL HELPERS ----------------
+static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+
+
+
+
+
+
 static int find_free_window_slot(sbx_window_t *w){
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         if (w->GADGETS[i] == NULL) return i;
@@ -102,6 +115,33 @@ static GAD_RADIO_T* rad_alloc(void){
 }
 
 
+static GAD_SCROLLBAR_T* sb_alloc(void){
+    for (int i = 0; i < MAX_SCROLLBARS; i++){
+        if (!g_sbPool[i].used){
+            g_sbPool[i].used = 1;
+
+            g_sbPool[i].h.enabled = 1;
+            g_sbPool[i].h.visible = 1;
+            g_sbPool[i].h.down    = 0;
+            g_sbPool[i].h.flags   = GAD_TOOL_DEFAULT;
+
+            g_sbPool[i].orient = SB_ORIENT_VERT;
+            g_sbPool[i].min = 0;
+            g_sbPool[i].max = 100;
+            g_sbPool[i].step = 1;
+            g_sbPool[i].pct = 0;
+
+            g_sbPool[i].dragging = 0;
+            g_sbPool[i].drag_off = 0;
+
+            return &g_sbPool[i];
+        }
+    }
+    return NULL;
+}
+
+
+
 
 
 
@@ -125,6 +165,11 @@ static void rad_free(GAD_RADIO_T *r){
     r->used = 0;
 }
 
+
+static void sb_free(GAD_SCROLLBAR_T *s){
+    if (!s) return;
+    s->used = 0;
+}
 
 //
 // Convert a base pointer to stable handle (idx+gen)
@@ -181,6 +226,8 @@ void SBOS_gadgetsInit(void){
     memset(g_btnPool,  0, sizeof(g_btnPool));
     memset(g_chkPool,  0, sizeof(g_chkPool));
     memset(g_radPool,  0, sizeof(g_radPool));
+    memset(g_sbPool,   0, sizeof(g_sbPool));
+
 }
 
 SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags) {
@@ -271,11 +318,8 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
     return base_to_handle(g);
 }
 
-
-
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
-                                    const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
-{
+                                    const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags){
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
@@ -329,6 +373,55 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
 }
 
 
+SBControlHandle SBOS_addScrollbar(SBXWindowId win,
+                                  int16_t x, int16_t y, int16_t w, int16_t h,
+                                  uint8_t orient,
+                                  int16_t min, int16_t max,
+                                  int16_t step,
+                                  int16_t initial_pct,
+                                  GAD_TOOL_FLAGS flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_SCROLLBAR_T *s = sb_alloc();
+    if (!s){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    g->winhnd = win;
+    g->gadgetType = GAD_SCROLLBAR;
+    g->gadget = s;
+
+    s->h.rect.x = x; s->h.rect.y = y; s->h.rect.w = w; s->h.rect.h = h;
+    s->h.flags = flags;
+
+    s->orient = orient;
+    s->min = min;
+    s->max = max;
+    s->step = (step <= 0) ? 1 : step;
+    s->pct  = clamp_i16_local(initial_pct, 0, 100);
+
+    W->GADGETS[slot] = g;
+
+    if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
+        W->hasDockedGadget |= flags;
+    }
+
+    return base_to_handle(g);
+}
+
+
+
+
+
 
 
 //////////////////// destroy gadgets ///////////////////////////////////////////////
@@ -357,6 +450,8 @@ void SBOS_destroyGadget(SBControlHandle h){
     if (g->gadgetType == GAD_BUTTON)    btn_free((GAD_BUTTON_T*)g->gadget);
     if (g->gadgetType == GAD_CHECKBOX)  chk_free((GAD_CHECKBOX_T*)g->gadget);
     if (g->gadgetType == GAD_RADIO)     rad_free((GAD_RADIO_T*)g->gadget);
+    if (g->gadgetType == GAD_SCROLLBAR) sb_free((GAD_SCROLLBAR_T*)g->gadget);
+
 
 
     base_free(g);

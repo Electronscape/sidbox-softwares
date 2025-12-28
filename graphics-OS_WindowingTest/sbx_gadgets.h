@@ -8,12 +8,14 @@
 #define     MAX_BUTTONS             16
 #define     MAX_CHECKBOXES          16
 #define     MAX_RADIOS              16
+#define     MAX_SCROLLBARS          16
+
+
+#define     SB_SCROLL_THICK 16
 
 
 
 #define     MAX_GADGETS_PER_WINDOW  16   // this is low, but its for testing. WILL increase this for a normal size
-
-
 #define     DEF_GADGET_TEXT_SIZE    32
 
 
@@ -48,6 +50,7 @@ typedef enum GADGET_CLASS_T {
     GAD_BUTTON,
     GAD_CHECKBOX,
     GAD_RADIO,
+    GAD_SCROLLBAR,
 } GADGET_CLASS_T;
 
 typedef struct GAD_HDR_T {
@@ -89,6 +92,36 @@ typedef struct GAD_RADIO_T{
     char            text[DEF_GADGET_TEXT_SIZE];
 } GAD_RADIO_T;
 
+// scroll bar needs extra bits
+typedef enum {
+    SB_ORIENT_VERT = 0,
+    SB_ORIENT_HORZ = 1
+} SB_ORIENT;
+
+typedef enum {
+    SB_PART_NONE = 0,
+    SB_PART_THUMB,
+    SB_PART_TRACK
+} SBPart;
+
+typedef struct GAD_SCROLLBAR_T{
+    // common
+    GAD_HDR_T   h;
+    uint8_t     used;
+
+    // behaviour
+    uint8_t     orient;      // SB_ORIENT_*
+    int16_t     min;         // used for thumb sizing + optional conversion
+    int16_t     max;
+    int16_t     step;        // affects thumb size + step in percent
+    int16_t     pct;         // 0..100 ALWAYS (this is the scrollbar value)
+
+    // interaction
+    uint8_t     dragging;
+    int16_t     drag_off;    // mouse offset inside thumb (in track axis)
+} GAD_SCROLLBAR_T;
+
+
 
 
 typedef struct {
@@ -114,6 +147,10 @@ typedef struct {
 
 
 void SBOS_gadgetsInit(void);
+
+SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
+                                  uint8_t orient,  int16_t min, int16_t max,
+                                  int16_t step,    int16_t initial_pct,  GAD_TOOL_FLAGS flags);
 
 
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);

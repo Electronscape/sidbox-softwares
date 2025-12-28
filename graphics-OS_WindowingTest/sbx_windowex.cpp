@@ -153,6 +153,25 @@ static void layoutDockedControls(sbx_window_t *w){
 
     w->clientrect.w = aw ;
     w->clientrect.h = ah;
+
+
+    // shrink client area if docked scrollbars exist
+    if (w->hasDockedGadget & GAD_TOOL_DOCKED_RIGHT) {
+        if (w->clientrect.w >= SB_SCROLL_THICK)
+            w->clientrect.w = (int16_t)(w->clientrect.w - SB_SCROLL_THICK);
+        else
+            w->clientrect.w = 0;
+    }
+
+    if (w->hasDockedGadget & GAD_TOOL_DOCKED_BOTTOM) {
+        if (w->clientrect.h >= SB_SCROLL_THICK)
+            w->clientrect.h = (int16_t)(w->clientrect.h - SB_SCROLL_THICK);
+        else
+            w->clientrect.h = 0;
+    }
+
+
+
 }
 
 
@@ -783,6 +802,103 @@ void windowHittest(int16_t mx, int16_t my){
 }
 
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+////  SCROLLBAR HELPER FEATURES  ////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static inline int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step){
+    const int16_t MIN_THUMB = 8;
+    int32_t range = (int32_t)max - (int32_t)min;
+
+    if (track_len <= 0) return 0;
+    if (range <= 0) return track_len;
+
+    if (step <= 0) step = 1;
+    if ((int32_t)step > range) step = (int16_t)range;
+
+    int32_t len = ((int32_t)step * (int32_t)track_len + range/2) / range;
+    if (len < MIN_THUMB) len = MIN_THUMB;
+    if (len > track_len) len = track_len;
+    return (int16_t)len;
+}
+
+static inline int16_t sb_thumb_pos_from_pct(int16_t pct, int16_t travel){
+    pct = clamp_i16(pct, 0, 100);
+    if (travel <= 0) return 0;
+    return (int16_t)(((int32_t)pct * (int32_t)travel + 50) / 100); // rounded
+}
+
+static inline int16_t sb_pct_from_thumb_pos(int16_t pos, int16_t travel){
+    if (travel <= 0) return 0;
+    if (pos < 0) pos = 0;
+    if (pos > travel) pos = travel;
+    return (int16_t)(((int32_t)pos * 100 + travel/2) / travel);
+}
+
+// step in percent derived from step in value units
+static inline int16_t sb_step_pct(int16_t min, int16_t max, int16_t step){
+    int32_t range = (int32_t)max - (int32_t)min;
+    if (range <= 0) return 1;
+    if (step <= 0) step = 1;
+    int32_t sp = ((int32_t)step * 100 + range/2) / range;
+    if (sp < 1) sp = 1;
+    if (sp > 100) sp = 100;
+    return (int16_t)sp;
+}
+
+
+static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s, int16_t mx, int16_t my,
+                                     int16_t *out_thumb_axis_start, int16_t *out_thumb_len,
+                                     int16_t *out_track_axis_start)
+{
+    // Compute abs rect same way draw does
+    int16_t ax, ay, aw, ah;
+
+    if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
+        ax = (int16_t)(w->clientrect.x + w->clientrect.w);
+        ay = w->clientrect.y;
+        aw = SB_SCROLL_THICK;
+        ah = w->clientrect.h;
+    } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM) && (s->orient == SB_ORIENT_HORZ)) {
+        ax = w->clientrect.x;
+        ay = (int16_t)(w->clientrect.y + w->clientrect.h);
+        aw = w->clientrect.w;
+        ah = SB_SCROLL_THICK;
+    } else {
+        ax = (int16_t)(w->clientrect.x + s->h.rect.x);
+        ay = (int16_t)(w->clientrect.y + s->h.rect.y);
+        aw = s->h.rect.w;
+        ah = s->h.rect.h;
+    }
+
+    if (!mousept_in_rect(mx, my, ax, ay, aw, ah)) return SB_PART_NONE;
+
+    int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
+    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
+    int16_t travel = (int16_t)(track_len - thumb_len);
+    int16_t tpos = sb_thumb_pos_from_pct(s->pct, travel);
+
+    int16_t thumb_axis_start = (int16_t)(((s->orient == SB_ORIENT_VERT) ? ay : ax) + tpos);
+
+    // output for drag math
+    if (out_thumb_axis_start) *out_thumb_axis_start = thumb_axis_start;
+    if (out_thumb_len) *out_thumb_len = thumb_len;
+    if (out_track_axis_start) *out_track_axis_start = (s->orient == SB_ORIENT_VERT) ? ay : ax;
+
+    // Thumb rect test
+    if (s->orient == SB_ORIENT_VERT) {
+        if (mousept_in_rect(mx, my, ax, thumb_axis_start, aw, thumb_len)) return SB_PART_THUMB;
+    } else {
+        if (mousept_in_rect(mx, my, thumb_axis_start, ay, thumb_len, ah)) return SB_PART_THUMB;
+    }
+
+    return SB_PART_TRACK;
+}
+
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 ////  DECLARATION OF DRAW FUNCTIONS  ////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -790,6 +906,7 @@ void windowHittest(int16_t mx, int16_t my){
 static void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g);
 static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g);
 static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g);
+static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g);
 
 
 
@@ -805,9 +922,10 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
         if (!g) continue;
 
         switch (g->gadgetType){
-            case GAD_BUTTON:    draw_button(w, g);   break;
-            case GAD_CHECKBOX:  draw_checkbox(w, g); break;
-            case GAD_RADIO:     draw_radio(w, g); break;
+            case GAD_BUTTON:    draw_button(w, g);      break;
+            case GAD_CHECKBOX:  draw_checkbox(w, g);    break;
+            case GAD_RADIO:     draw_radio(w, g);       break;
+            case GAD_SCROLLBAR: draw_scrollbar(w, g);   break;
             default: break;
         }
     }
@@ -952,6 +1070,55 @@ static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 }
 
+static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
+    if (!w || !g || !g->gadget) return;
+
+    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
+    if (!s->h.visible) return;
+
+    // Determine absolute rect.
+    // If docked, override position to window edge.
+    int16_t ax, ay, aw, ah;
+
+    if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
+        ax = (int16_t)(w->clientrect.x + w->clientrect.w);
+        ay = w->clientrect.y;
+        aw = SB_SCROLL_THICK;
+        ah = w->clientrect.h;
+    } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM) && (s->orient == SB_ORIENT_HORZ)) {
+        ax = w->clientrect.x;
+        ay = (int16_t)(w->clientrect.y + w->clientrect.h);
+        aw = w->clientrect.w;
+        ah = SB_SCROLL_THICK;
+    } else {
+        ax = (int16_t)(w->clientrect.x + s->h.rect.x);
+        ay = (int16_t)(w->clientrect.y + s->h.rect.y);
+        aw = s->h.rect.w;
+        ah = s->h.rect.h;
+    }
+
+    // Track fill
+    fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
+    draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+
+    // Track axis length
+    int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
+    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
+    int16_t travel = (int16_t)(track_len - thumb_len);
+    int16_t tpos = sb_thumb_pos_from_pct(s->pct, travel);
+
+    // Thumb rect
+    int16_t tx = ax, ty = ay, tw = aw, th = ah;
+    if (s->orient == SB_ORIENT_VERT) { ty = (int16_t)(ay + tpos); th = thumb_len; }
+    else                            { tx = (int16_t)(ax + tpos); tw = thumb_len; }
+
+    // Thumb face + bevel (pressed if dragging or down)
+    uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
+    fill_rect_pen(tx, ty, tw, th, WIN_BORDER_ACTIVE_PEN);
+    draw_bevel(tx, ty, tw, th, WIN_BEVEL_H, WIN_BEVEL_L, pressed);
+}
+
+
 
 //////////////////////////////////
 
@@ -1069,6 +1236,57 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
                     h->down = 1;
 
+                    // scrollbar interaction check
+
+                    if (g->gadgetType == GAD_SCROLLBAR) {
+                        GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
+
+                        int16_t thumb_start=0, thumb_len=0, track_start=0;
+                        SBPart part = hittest_scrollbar_part(w, s, mx, my, &thumb_start, &thumb_len, &track_start);
+
+                        if (part == SB_PART_THUMB) {
+                            s->dragging = 1;
+
+                            int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
+
+                            // Cache drag offset (mouse position relative to thumb start)
+                            g_ui.sb_drag_off = (int16_t)(m_axis - thumb_start);
+                            s->drag_off      = g_ui.sb_drag_off;
+
+                            // Cache track start (axis start of the track in screen coords)
+                            g_ui.sb_track_start = track_start;
+
+                            // Compute track_len using the same geometry logic
+                            int16_t track_len;
+                            if (s->orient == SB_ORIENT_VERT) {
+                                track_len = (s->h.flags & GAD_TOOL_DOCKED_RIGHT) ? w->clientrect.h : s->h.rect.h;
+                            } else {
+                                track_len = (s->h.flags & GAD_TOOL_DOCKED_BOTTOM) ? w->clientrect.w : s->h.rect.w;
+                            }
+
+                            int16_t travel = (int16_t)(track_len - thumb_len);
+                            if (travel < 0) travel = 0;
+                            g_ui.sb_travel = travel;
+
+                        } else if (part == SB_PART_TRACK) {
+                            // track step click
+                            int16_t sp = sb_step_pct(s->min, s->max, s->step);
+                            int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
+
+                            if (m_axis < thumb_start) s->pct = clamp_i16((int16_t)(s->pct - sp), 0, 100);
+                            else                     s->pct = clamp_i16((int16_t)(s->pct + sp), 0, 100);
+
+                            // IMPORTANT: not dragging
+                            s->dragging = 0;
+                            s->drag_off = 0;
+                            g_ui.sb_track_start = 0;
+                            g_ui.sb_travel = 0;
+                            g_ui.sb_drag_off = 0;
+                        }
+
+                    }
+
+
                     SBOS_paintAllWindows();
                     return;
                 }
@@ -1135,9 +1353,30 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         if (g_ui.mouse_down && g_ui.capturedGadget) {
             sbx_window_t *gw = SBOS_getWindow(g_ui.capturedGadget->winhnd);
             if (gw) {
-                uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget, mx, my);
                 GAD_HDR_T *h = (GAD_HDR_T*)g_ui.capturedGadget->gadget;
 
+
+                if (g_ui.capturedGadget->gadgetType == GAD_SCROLLBAR) {
+                    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g_ui.capturedGadget->gadget;
+
+                    if (s->dragging) {
+                        int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
+
+                        int16_t new_thumb_pos = (int16_t)(m_axis - g_ui.sb_track_start - g_ui.sb_drag_off);
+                        int16_t new_pct       = sb_pct_from_thumb_pos(new_thumb_pos, g_ui.sb_travel);
+
+                        if (new_pct != s->pct) {
+                            s->pct = new_pct;
+                            SBOS_paintAllWindows();
+                        }
+                    }
+
+                    return;
+                }
+
+
+                // non-scrollbar default "down if inside" behaviour
+                uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget, mx, my);
                 uint8_t newDown = inside ? 1 : 0;
                 if (newDown != h->down) {
                     h->down = newDown;
@@ -1217,6 +1456,22 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
         GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
         h->down = 0;
 
+        // scroller importance
+        // If scrollbar, ALWAYS stop dragging (regardless of inside)
+        if (g->gadgetType == GAD_SCROLLBAR) {
+            GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
+            s->dragging = 0;
+            s->drag_off = 0;
+            g_ui.sb_track_start = 0;
+            g_ui.sb_travel = 0;
+            g_ui.sb_drag_off = 0;
+
+            if(gw){
+                printf("SCROLLBAR USED: %d\r\n", s->pct);
+            }
+
+        }
+
         g_ui.capturedGadget = NULL;
 
         if (inside) {
@@ -1245,6 +1500,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     }
                     printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
                 } break;
+
                 default: break;
             }
         }

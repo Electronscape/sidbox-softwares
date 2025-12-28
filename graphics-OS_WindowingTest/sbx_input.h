@@ -44,6 +44,12 @@ typedef struct UIInputState {
 
     int16_t         clicked_x, clicked_y;   // starting gadget mouse hit point
     int16_t         drag_x, drag_y;         // moving mouse point over the gadget (usually for sliders
+
+    // scrollbar drag cache (axis coords)
+    int16_t     sb_track_start;   // screen axis start of track (x or y)
+    int16_t     sb_travel;        // pixels thumb can travel (track_len - thumb_len)
+    int16_t     sb_drag_off;      // cached offset inside thumb (axis)
+
 } UIInputState;
 
 
