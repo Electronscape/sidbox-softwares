@@ -119,8 +119,9 @@ Dialog::Dialog(QWidget *parent)
 
     initWb();
     //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
-    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
 
+    // DESKTOP WINDOW (yes it IS a window)
+    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
     SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
 
 
