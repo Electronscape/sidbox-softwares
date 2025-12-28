@@ -355,8 +355,7 @@ void SBOS_paintWindow(SBXWindowId id){
     // --- compute title bar height used by frame chrome ---
     const int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? (WIN_TITLE_HEIGHT + 4) : 0;
 
-    // --- draw resize gutter + glyph (chrome, not part of client) ---
-
+    // --- draw resize gutter + glyph (chrome, not part of client) -----
 
     if(w->flags & SBX_WF_DOCKRIGHT){
         const int16_t gx = (int16_t)(win_x + win_w - WIN_RESIZE_GLYPH_SIZE);
