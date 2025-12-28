@@ -1231,7 +1231,7 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // Thumb face + bevel (your "perfect" thumb look stays)
     uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
-    fill_rect_pen(tx, ty, tw, th, WIN_BORDER_ACTIVE_PEN);
+    fill_rect_pen(tx, ty, tw, th, WIN_SCROLLER_PROP_PEN);
     draw_bevel(tx, ty, tw, th, WIN_BEVEL_H, WIN_BEVEL_L, pressed);
 }
 

@@ -174,6 +174,21 @@ Dialog::Dialog(QWidget *parent)
                       GAD_TOOL_DOCKED_RIGHT);
 
 
+    SBOS_addScrollbar(winMain3,
+                      0,0,0,0,                // ignored if docked
+                      SB_ORIENT_VERT,
+                      0, 100,                // “meaning range” just for thumb sizing + app mapping
+                      25,                     // step in value units (thumb size + step pct)
+                      0,                      // initial percent
+                      GAD_TOOL_DOCKED_RIGHT);
+
+    SBOS_addScrollbar(winMain,
+                      0,0,0,0,                // ignored if docked
+                      SB_ORIENT_VERT,
+                      0, 100,                // “meaning range” just for thumb sizing + app mapping
+                      25,                     // step in value units (thumb size + step pct)
+                      0,                      // initial percent
+                          GAD_TOOL_DOCKED_RIGHT);
 
     //SBOS_addButton(winMain2, -6,  66,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_BOTTOM
 
