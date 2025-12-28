@@ -182,6 +182,7 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
             return true; // stop further processing
         }
         if(event->type() == QEvent::MouseMove) {
+
             // will need these for the tool buttons that need the left and right bitsies
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
