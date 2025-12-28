@@ -13,6 +13,7 @@ UIClipRect g_uiclip = {0,0,0,0,0};
 
 
 void ui_ppixel(int16_t x, int16_t y){
+    if ((unsigned)x < 0 || (unsigned)y < 0) return;
     if ((unsigned)x >= SCR_WIDTH || (unsigned)y >= SCR_HEIGHT) return;
 
     if (g_uiclip.enabled) {

@@ -402,7 +402,7 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
                                   int16_t min, int16_t max,
                                   int16_t step,
                                   int16_t initial_pct,
-                                  GAD_TOOL_FLAGS flags)
+                                  uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -419,18 +419,24 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
         return SBCTL_INVALID;
     }
 
+    // host base
     g->winhnd = win;
     g->gadgetType = GAD_SCROLLBAR;
     g->gadget = s;
 
+    // containment field
     s->h.rect.x = x; s->h.rect.y = y; s->h.rect.w = w; s->h.rect.h = h;
     s->h.flags = flags;
+
 
     s->orient = orient;
     s->min = min;
     s->max = max;
     s->step = (step <= 0) ? 1 : step;
-    s->value = 0;
+    s->value = initial_pct;
+
+    // Set flag for arrows based on the provided flags
+    s->show_arrows = (flags & GAD_TOOL_SCROLLARROWS) ? 1 : 0;
 
     W->GADGETS[slot] = g;
 

@@ -928,11 +928,10 @@ static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_
     int16_t ax, ay, aw, ah;
 
     Rect16 inner = win_inner_rect(w);
-
     int16_t reserveR = win_inner_reserve_right(w);
     int16_t reserveB = win_inner_reserve_bottom(w);
 
-
+    // If docked, adjust the position accordingly
     if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
         ax = (int16_t)(inner.x + inner.w - SB_SCROLL_THICK + SB_RDOCK_OFFSET_X);
         ay = inner.y + SB_RDOCK_OFFSET_Y;
@@ -950,28 +949,81 @@ static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_
         ah = s->h.rect.h;
     }
 
-
+    // Check if the mouse is within the scrollbar area
     if (!mousept_in_rect(mx, my, ax, ay, aw, ah)) return SB_PART_NONE;
 
-    // Track axis length + thumb geometry
+    // Shrink the track area if arrows are enabled
+
+    if (s->show_arrows) {
+        if (s->orient == SB_ORIENT_VERT) {
+            ah -= SB_ARROW_SHRINK * 2;  // Shrink the height for the top and bottom arrows
+            ay += SB_ARROW_SHRINK;      // Move the track down to fit arrows
+        } else {
+            aw -= SB_ARROW_SHRINK * 2;  // Shrink the width for the left and right arrows
+            ax += SB_ARROW_SHRINK;      // Move the track right to fit arrows
+        }
+    }
+
+
+    // Calculate track length (reduced by arrows)
     int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
+
+    // Ensure the track length doesn't go negative
+    if (track_len < 0) track_len = 0;
+
+    // Calculate the thumb length
     int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
 
+    // Calculate the available space (travel distance) for the thumb
     int16_t travel = (int16_t)(track_len - thumb_len);
     if (travel < 0) travel = 0;
 
-    // *** VALUE-BASED thumb position ***
+    // Calculate the thumb position based on the value
     int16_t tpos = sb_thumb_pos_from_value(s->value, s->min, s->max, travel);
 
+    // Start position of the track
     int16_t track_axis_start = (s->orient == SB_ORIENT_VERT) ? ay : ax;
     int16_t thumb_axis_start = (int16_t)(track_axis_start + tpos);
 
-    // output for drag math
+    // Output the thumb's start position and length
     if (out_thumb_axis_start) *out_thumb_axis_start = thumb_axis_start;
     if (out_thumb_len) *out_thumb_len = thumb_len;
     if (out_track_axis_start) *out_track_axis_start = track_axis_start;
 
-    // Thumb rect test
+    // Handle arrow clicks
+    if (s->show_arrows) {
+        if (s->orient == SB_ORIENT_VERT) {
+            // Vertical scrollbar arrows
+
+            // FIX: Subtract SB_ARROW_SHRINK because 'ay' is currently the track start
+            if (mousept_in_rect(mx, my, ax, ay - SB_ARROW_SHRINK, aw, SB_ARROW_SHRINK)) {
+                printf("SCROLL-BAR-BUTTON!! -- {UP}\n");
+                return SB_PART_ARROW_UP;
+            }
+
+            // Bottom arrow (this actually works fine with current ax/ay/ah values)
+            if (mousept_in_rect(mx, my, ax, ay + ah, aw, SB_ARROW_SHRINK)) {
+                printf("SCROLL-BAR-BUTTON!! -- {DOWN}\n");
+                return SB_PART_ARROW_DOWN;
+            }
+        } else {
+            // Horizontal scrollbar arrows
+
+            // FIX: Subtract SB_ARROW_SHRINK because 'ax' is currently the track start
+            if (mousept_in_rect(mx, my, ax - SB_ARROW_SHRINK, ay, SB_ARROW_SHRINK, ah)) {
+                printf("SCROLL-BAR-BUTTON!! -- {LEFT}\n");
+                return SB_PART_ARROW_LEFT;
+            }
+
+            // Right arrow
+            if (mousept_in_rect(mx, my, ax + aw, ay, SB_ARROW_SHRINK, ah)) {
+                printf("SCROLL-BAR-BUTTON!! -- {RIGHT}\n");
+                return SB_PART_ARROW_RIGHT;
+            }
+        }
+    }
+
+    // Check if the mouse is over the thumb
     if (s->orient == SB_ORIENT_VERT) {
         if (mousept_in_rect(mx, my, ax, thumb_axis_start, aw, thumb_len)) return SB_PART_THUMB;
     } else {
@@ -980,6 +1032,7 @@ static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_
 
     return SB_PART_TRACK;
 }
+
 
 
 
@@ -1201,8 +1254,8 @@ static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 }
 
-#define SB_TRACK_PEN        (16)   // <-- change later to your chosen track colour
-#define SB_TRACK_INSET      2
+
+
 
 static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
@@ -1214,7 +1267,6 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t ax, ay, aw, ah;
 
     Rect16 inner = win_inner_rect(w);
-
     int16_t reserveR = win_inner_reserve_right(w);
     int16_t reserveB = win_inner_reserve_bottom(w);
 
@@ -1235,7 +1287,6 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
         ah = s->h.rect.h;
     }
 
-
     if (aw <= 0 || ah <= 0) return;
 
     // ------------------------------------------------------------------
@@ -1248,29 +1299,60 @@ static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 
     // ------------------------------------------------------------------
-    // 2) Inner "track well" inset
+    // 2) Adjust inner "track well" inset based on arrows
     // ------------------------------------------------------------------
     int16_t ix = (int16_t)(ax + SB_TRACK_INSET);
     int16_t iy = (int16_t)(ay + SB_TRACK_INSET);
     int16_t iw = (int16_t)(aw - SB_TRACK_INSET * 2);
     int16_t ih = (int16_t)(ah - SB_TRACK_INSET * 2);
 
+    // Shrink the inner well area if arrows are enabled
+    if (s->show_arrows) {
+        if (s->orient == SB_ORIENT_VERT) {
+            ih -= (SB_ARROW_SHRINK * 2);  // Reduce height to accommodate top and bottom arrows (8 each)
+            iy += SB_ARROW_SHRINK;   // Move the track down a little
+        } else {
+            iw -= (SB_ARROW_SHRINK * 2);  // Reduce width to accommodate left and right arrows (8 each)
+            ix += SB_ARROW_SHRINK;   // Move the track right a little
+        }
+    }
+
+    // Check for invalid track area
     if (iw <= 0 || ih <= 0) return;
 
     // Fill the well with a different pen (change SB_TRACK_PEN later)
-    //fill_rect_pen(ix, iy, iw, ih, SB_TRACK_PEN);
     gfx_setcolour(SB_TRACK_PEN);
     ui_fill_dots(ix, iy, iw, ih, 2);
 
     // Draw the well bevel "inset" look:
-    // pressed=1 flips bevel, giving a recessed channel vibe.
     draw_bevel(ix, iy, iw, ih, WIN_BEVEL_H, WIN_BEVEL_L, 1);
 
     // ------------------------------------------------------------------
-    // 3) Thumb geometry inside the inner well
+    // 3) Draw the arrows if enabled
+    // ------------------------------------------------------------------
+    if (s->show_arrows) {
+        // Vertical scrollbar arrows (Top and Bottom)
+        if (s->orient == SB_ORIENT_VERT) {
+            // Top Arrow (pointing up)
+            draw_bevel_rect(ax + s->h.rect.w / 2 - 4, ay, 8, 8);    // these will be glyphs later
+
+            // Bottom Arrow (pointing down)
+            draw_bevel_rect(ax + s->h.rect.w / 2 - 4, ay + s->h.rect.h - 8, 8, 8);  // these will be glyphs later
+        }
+        // Horizontal scrollbar arrows (Left and Right)
+        else {
+            // Left Arrow (pointing left)
+            draw_bevel_rect(ax, ay + s->h.rect.h / 2 - 4, 8, 8);  // these will be glyphs later
+
+            // Right Arrow (pointing right)
+            draw_bevel_rect(ax + s->h.rect.w - 8, ay + s->h.rect.h / 2 - 4, 8, 8); // these will be glyphs later
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 4) Thumb geometry inside the inner well (after shrinking for arrows)
     // ------------------------------------------------------------------
     int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ih : iw;
-
     int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
 
     int16_t travel = (int16_t)(track_len - thumb_len);
@@ -1431,7 +1513,17 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                         int16_t thumb_start = 0, thumb_len = 0, track_start = 0;
                         SBPart part = hittest_scrollbar_part(w, s, mx, my, &thumb_start, &thumb_len, &track_start);
 
-                        if (part == SB_PART_THUMB) {
+                        if (part == SB_PART_ARROW_UP) {
+                            s->value = clamp_i16(s->value - s->step, s->min, s->max);
+                        } else if (part == SB_PART_ARROW_DOWN) {
+                            s->value = clamp_i16(s->value + s->step, s->min, s->max);
+                        } else if (part == SB_PART_ARROW_LEFT) {
+                            s->value = clamp_i16(s->value - s->step, s->min, s->max);
+                        } else if (part == SB_PART_ARROW_RIGHT) {
+                            s->value = clamp_i16(s->value + s->step, s->min, s->max);
+
+
+                        } else if (part == SB_PART_THUMB) {
                             s->dragging = 1;
 
                             int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
@@ -1468,6 +1560,16 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                                 ah = s->h.rect.h;
                             }
 
+                            if (s->show_arrows) {
+                                if (s->orient == SB_ORIENT_VERT) {
+                                    ah -= SB_ARROW_SHRINK * 2;
+                                    ay += SB_ARROW_SHRINK; // Not strictly needed for length calc, but good for consistency
+                                } else {
+                                    aw -= SB_ARROW_SHRINK * 2;
+                                    ax += SB_ARROW_SHRINK;
+                                }
+                            }
+
                             int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
                             int16_t travel = (int16_t)(track_len - thumb_len);
                             if (travel < 0) travel = 0;
@@ -1492,6 +1594,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                             g_ui.sb_track_start = 0;
                             g_ui.sb_travel = 0;
                             g_ui.sb_drag_off = 0;
+                            //SBOS_paintAllWindows();
                         }
                     }
 
@@ -1569,15 +1672,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my){
                     if (s->dragging) {
                         int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? my : mx;
                         int16_t new_thumb_pos = (int16_t)(m_axis - g_ui.sb_track_start - g_ui.sb_drag_off);
-                        int16_t new_val = sb_value_from_thumb_pos(
-                            new_thumb_pos,
-                            s->min,
-                            s->max,
-                            g_ui.sb_travel
-                            );
+                        int16_t new_val = sb_value_from_thumb_pos(new_thumb_pos, s->min, s->max, g_ui.sb_travel);
 
                         if (new_val != s->value) {
                             s->value = new_val;
+                            printf("SCROLLING: %d\n", s->value);
                             SBOS_paintAllWindows();
                         }
                     }

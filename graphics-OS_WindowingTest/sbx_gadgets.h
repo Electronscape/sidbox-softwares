@@ -11,7 +11,14 @@
 #define     MAX_SCROLLBARS          16
 
 
-#define     SB_SCROLL_THICK         16
+#define     SB_SCROLL_THICK         16      // default track thickness
+#define     SB_ARROW_SHRINK         16      // arrow sizes
+
+// colour defines
+#define     SB_TRACK_PEN        (16)   // <-- change later to your chosen track colour
+#define     SB_TRACK_INSET      2
+
+
 
 
 
@@ -42,6 +49,7 @@ typedef enum {
     GAD_TOOL_DOCKED_RIGHT   = (1 << 1),     // right dock used
     GAD_TOOL_DOCKED_BOTTOM  = (1 << 2),     // bottom dock used
     GAD_TOOL_CYCLEBUTTON    = (1 << 3),     // button cycle flag
+    GAD_TOOL_SCROLLARROWS   = (1 << 4),     // enable the arrows on the scrollbars
 } GAD_TOOL_FLAGS;
 
 
@@ -56,7 +64,7 @@ typedef enum GADGET_CLASS_T {
 
 typedef struct GAD_HDR_T {
     GADGET_RECT_T   rect;       // the actionable area (container hit area, basic rectangle info)
-    GAD_TOOL_FLAGS  flags;      // flags for this gadget
+    uint32_t        flags;      // flags for this gadget
     uint8_t         enabled;    // enabled/disabled gadget, sort of like if NOT clickable ;)
     uint8_t         visible;    //
     uint8_t         down;       // might need to remove this soon
@@ -116,7 +124,11 @@ typedef enum {
 typedef enum {
     SB_PART_NONE = 0,
     SB_PART_THUMB,
-    SB_PART_TRACK
+    SB_PART_TRACK,
+    SB_PART_ARROW_UP,
+    SB_PART_ARROW_DOWN,
+    SB_PART_ARROW_LEFT,
+    SB_PART_ARROW_RIGHT
 } SBPart;
 
 typedef struct GAD_SCROLLBAR_T{
@@ -135,6 +147,9 @@ typedef struct GAD_SCROLLBAR_T{
     // interaction
     uint8_t     dragging;
     int16_t     drag_off;    // mouse offset inside thumb (in track axis)
+
+    // arrows
+    uint8_t     show_arrows;    // needed for if we're using arrows
 } GAD_SCROLLBAR_T;
 //------------------------------------------------------------------------
 
@@ -166,7 +181,7 @@ void SBOS_gadgetsInit(void);
 
 SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
                                   uint8_t orient,  int16_t min, int16_t max,
-                                  int16_t step,    int16_t initial_pct,  GAD_TOOL_FLAGS flags);
+                                  int16_t step,    int16_t initial_pct,  uint32_t flags);
 
 
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);

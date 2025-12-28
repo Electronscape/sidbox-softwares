@@ -138,7 +138,7 @@ Dialog::Dialog(QWidget *parent)
 
     SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
-    SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+    SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable gerbils", 0, GAD_TOOL_DEFAULT);
 
 
     SBOS_addRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
@@ -154,7 +154,7 @@ Dialog::Dialog(QWidget *parent)
                       0, 1000,
                       100,
                       0,
-                      GAD_TOOL_DEFAULT);
+                      GAD_TOOL_SCROLLARROWS);
 
     SBOS_addScrollbar(winMain2,
                       10, 140, 20, 80,
@@ -172,7 +172,7 @@ Dialog::Dialog(QWidget *parent)
                       0, 100,                // “meaning range” just for thumb sizing + app mapping
                       25,                     // step in value units (thumb size + step pct)
                       0,                      // initial percent
-                      GAD_TOOL_DOCKED_BOTTOM);
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
 
     SBOS_addScrollbar(winMain2,
                       0,0,0,0,                // ignored if docked
@@ -180,7 +180,7 @@ Dialog::Dialog(QWidget *parent)
                       0, 100,                // “meaning range” just for thumb sizing + app mapping
                       25,                     // step in value units (thumb size + step pct)
                       0,                      // initial percent
-                      GAD_TOOL_DOCKED_RIGHT);
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
 
 
     SBOS_addScrollbar(winMain3,

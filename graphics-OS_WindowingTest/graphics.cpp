@@ -98,8 +98,7 @@ void sbgfx_pset(int16_t x, int16_t y, uint8_t cindex){
 
 void sbgfx_ppixel(int16_t x, int16_t y){
     if(x < 0 || y < 0) return;
-    if ((unsigned)x >= SCR_WIDTH || (unsigned)y >= SCR_HEIGHT)
-        return;
+    if (x >= SCR_WIDTH || y >= SCR_HEIGHT) return;
 
 
     uint8_t* dp = PROJ_VRAM + x * SCR_HEIGHT + y;
@@ -109,23 +108,15 @@ void sbgfx_ppixel(int16_t x, int16_t y){
 
 void sbgfx_glyph(int16_t x, int16_t y, uint8_t *src){
     int bw, bh;
-
     bw = x + 16;
     bh = y + 16;
 
-    //x = 0;
-    //x = 0;
-    //bw = 16;
-    //bh = 16;
-
     for( int16_t px = x; px < bw; px ++){
         for( int16_t py = y; py < bh; py ++){
-            //sbgfx(px, py)
-            //if(x < 0 || y < 0) continue;
-            //if ((unsigned)x >= SCR_WIDTH || (unsigned)y >= SCR_HEIGHT) continue;
-
             uint8_t* dp = PROJ_VRAM + px * SCR_HEIGHT + py;
             uint8_t pix = *(src++);
+            if(py < 0 || py >= SCR_HEIGHT) continue;
+            if(px < 0 || px >= SCR_WIDTH) continue;
             if(pix) *dp = pix;
         }
     }
