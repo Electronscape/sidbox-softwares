@@ -43,7 +43,7 @@ typedef enum {
 
 extern GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
 
-
+uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 
 #endif // CG_GAD_SCROLLBAR_H

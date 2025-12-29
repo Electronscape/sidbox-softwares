@@ -281,5 +281,43 @@ void draw_title_button(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill
 
 
 
+void ui_dotted_rect_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t){
+    if (w <= 0 || h <= 0 || t <= 0) return;
+    w++;
+    h++;
+
+    // Expand outwards "t" pixels around the rect
+    for (int16_t i = 0; i < t; i++){
+        int16_t x0 = (int16_t)(x - i);
+        int16_t y0 = (int16_t)(y - i);
+        int16_t x1 = (int16_t)(x + w - 1 + i);
+        int16_t y1 = (int16_t)(y + h - 1 + i);
+
+        // Top + bottom
+        for (int16_t xx = x0; xx <= x1; xx++){
+            // global-phase dotted pattern; choose one you like:
+            // uint8_t on = (((xx + y0) & 1) == 0);
+            uint8_t on = (((xx ^ y0) & 1) == 0);
+            if (on) ui_ppixel(xx, y0);
+
+            // uint8_t on2 = (((xx + y1) & 1) == 0);
+            uint8_t on2 = (((xx ^ y1) & 1) == 0);
+            if (on2) ui_ppixel(xx, y1);
+        }
+
+        // Left + right (skip corners so they don't get double-painted)
+        for (int16_t yy = (int16_t)(y0 + 1); yy <= (int16_t)(y1 - 1); yy++){
+            // uint8_t on = (((x0 + yy) & 1) == 0);
+            uint8_t on = (((x0 ^ yy) & 1) == 0);
+            if (on) ui_ppixel(x0, yy);
+
+            // uint8_t on2 = (((x1 + yy) & 1) == 0);
+            uint8_t on2 = (((x1 ^ yy) & 1) == 0);
+            if (on2) ui_ppixel(x1, yy);
+        }
+    }
+}
+
+
 ///////////// the window call to paint though will have to be on the sbx_windowex.c
 // these are WHERE the gadget renders will be for now

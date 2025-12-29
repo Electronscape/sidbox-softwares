@@ -145,7 +145,13 @@ void            SBOS_setFocus(SBXWindowId id);
 
 
 // gadgets
-
+Rect16 win_inner_rect(const sbx_window_t *w);
+int16_t win_gutter_right(const sbx_window_t *w);
+int16_t win_gutter_bottom(const sbx_window_t *w);
+int16_t win_inner_reserve_right(const sbx_window_t *w);
+int16_t win_inner_reserve_bottom(const sbx_window_t *w);
+int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step);
+int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel);
 
 
 

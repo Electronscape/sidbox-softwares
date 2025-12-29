@@ -33,4 +33,10 @@ typedef struct GAD_BITMAPVIEW_T {
 extern GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
 
 
+
+
+uint32_t onMouseDownCaptureBitmapview(GADGET_BASE_T *gadget, int16_t *mx, int16_t *my);
+uint32_t onMouseUpBitmapView(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
+
+
 #endif // CG_GAD_BITMAPVIEW_H

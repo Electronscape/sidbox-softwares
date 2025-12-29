@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "stdint.h"
 #include "cg_renderer.h"
 #include "cg_windowex.h"

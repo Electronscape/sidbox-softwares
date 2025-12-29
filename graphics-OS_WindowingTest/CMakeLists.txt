@@ -54,6 +54,11 @@ qt_add_executable(graphics-gui_testing
     codergirl/cg_gad_listbox.h
 
     codergirl/cg_gadgetrender.h
+    codergirl/cg_gad_checkbox.cpp
+    codergirl/cg_gad_radio.cpp
+    codergirl/cg_gad_scrollbar.cpp
+    codergirl/cg_gad_bitmapview.cpp
+    codergirl/cg_gad_listbox.cpp
 
 )
 

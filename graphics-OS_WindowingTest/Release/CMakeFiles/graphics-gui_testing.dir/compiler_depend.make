@@ -39,11 +39,171 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o: /mnt/LinuxDatas/work/sidb
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.cpp \
   /usr/include/stdc-predef.h
 
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.cpp \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
+  /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/long-double.h \
+  /usr/include/bits/stdint-intn.h \
+  /usr/include/bits/stdint-least.h \
+  /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/time64.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/bits/types.h \
+  /usr/include/bits/typesizes.h \
+  /usr/include/bits/wchar.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/include/gnu/stubs.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.cpp \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
+  /usr/include/bits/floatn-common.h \
+  /usr/include/bits/floatn.h \
+  /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/long-double.h \
+  /usr/include/bits/stdint-intn.h \
+  /usr/include/bits/stdint-least.h \
+  /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/stdio.h \
+  /usr/include/bits/stdio_lim.h \
+  /usr/include/bits/time64.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/bits/types.h \
+  /usr/include/bits/types/FILE.h \
+  /usr/include/bits/types/__FILE.h \
+  /usr/include/bits/types/__fpos64_t.h \
+  /usr/include/bits/types/__fpos_t.h \
+  /usr/include/bits/types/__mbstate_t.h \
+  /usr/include/bits/types/cookie_io_functions_t.h \
+  /usr/include/bits/types/struct_FILE.h \
+  /usr/include/bits/typesizes.h \
+  /usr/include/bits/wchar.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/include/gnu/stubs.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/stdio.h \
+  /usr/include/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.cpp \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
+  /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/long-double.h \
+  /usr/include/bits/stdint-intn.h \
+  /usr/include/bits/stdint-least.h \
+  /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/time64.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/bits/types.h \
+  /usr/include/bits/typesizes.h \
+  /usr/include/bits/wchar.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/include/gnu/stubs.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.cpp \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
+  /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/long-double.h \
+  /usr/include/bits/stdint-intn.h \
+  /usr/include/bits/stdint-least.h \
+  /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/time64.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/bits/types.h \
+  /usr/include/bits/typesizes.h \
+  /usr/include/bits/wchar.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/include/gnu/stubs.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.cpp \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
+  /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/long-double.h \
+  /usr/include/bits/stdint-intn.h \
+  /usr/include/bits/stdint-least.h \
+  /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/time64.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/bits/types.h \
+  /usr/include/bits/typesizes.h \
+  /usr/include/bits/wchar.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/include/gnu/stubs.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.cpp \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
@@ -333,6 +493,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o: /mnt/LinuxDatas/wo
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp \
   graphics-gui_testing_autogen/include/ui_dialog.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h \
@@ -2042,8 +2203,12 @@ graphics-gui_testing: /lib64/ld-linux-x86-64.so.2 \
   /usr/lib64/libzstd.so.1 \
   CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgetrender.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o \
@@ -2067,15 +2232,17 @@ CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o:
 
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o:
+
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o:
-
-CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgetrender.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o:
 
@@ -2219,6 +2386,16 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/qt6/QtGui/qpalette.h:
 
+/usr/include/qt6/QtGui/qpainter.h:
+
+/usr/include/qt6/QtGui/qpaintdevice.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o:
+
+/usr/include/qt6/QtGui/qkeysequence.h:
+
+/usr/include/qt6/QtGui/qinputmethod.h:
+
 /usr/include/qt6/QtGui/qpen.h:
 
 /usr/include/c++/15/bits/unordered_set.h:
@@ -2291,17 +2468,21 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15/bits/ios_base.h:
 
-/usr/include/c++/15/bits/uses_allocator.h:
-
 /usr/include/c++/15/bits/new_allocator.h:
 
 /usr/include/bits/cpu-set.h:
+
+/usr/include/qt6/QtGui/qinputdevice.h:
+
+/usr/include/c++/15/bits/hashtable_policy.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.cpp:
 
 /lib64/libmvec.so.1:
 
 /usr/include/c++/15/ext/string_conversions.h:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o:
 
 /usr/include/c++/15/bits/locale_classes.tcc:
 
@@ -2317,7 +2498,7 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/c++/15/bits/erase_if.h:
 
-/usr/include/qt6/QtGui/qpaintdevice.h:
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.cpp:
 
 /usr/include/qt6/QtCore/qdebug.h:
 
@@ -2349,10 +2530,6 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgetrender.h:
 
-/usr/include/c++/15/bits/uses_allocator_args.h:
-
-/usr/include/c++/15/bits/chrono.h:
-
 /usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h:
 
 /usr/include/c++/15/bits/streambuf.tcc:
@@ -2374,8 +2551,6 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 /usr/include/c++/15/bits/allocator.h:
 
 /usr/include/asm-generic/posix_types.h:
-
-/usr/include/qt6/QtCore/qcompare.h:
 
 /lib64/ld-linux-x86-64.so.2:
 
@@ -2399,9 +2574,9 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/bits/uio_lim.h:
 
-/usr/include/c++/15/bits/concept_check.h:
-
 /usr/include/bits/math-vector.h:
+
+/usr/include/c++/15/bits/concept_check.h:
 
 /usr/include/c++/15/bits/fs_ops.h:
 
@@ -2435,17 +2610,11 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/bits/mathcalls-narrow.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o:
+/usr/include/c++/15/bits/unordered_map.h:
 
-/usr/include/qt6/QtGui/qkeysequence.h:
+/usr/include/bits/locale.h:
 
 /usr/include/bits/types/locale_t.h:
-
-/usr/lib/gcc/x86_64-redhat-linux/15/include/limits.h:
-
-/usr/include/qt6/QtGui/qvectornd.h:
-
-/usr/include/bits/types/__locale_t.h:
 
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
@@ -2453,11 +2622,19 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/qt6/QtCore/qtversionchecks.h:
 
+/usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h:
+
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.h:
 
 /usr/include/qt6/QtCore/qnativeinterface.h:
+
+/usr/include/bits/mathcalls-helper-functions.h:
+
+/usr/include/c++/15/bits/stl_tree.h:
+
+/usr/include/string.h:
 
 /usr/include/c++/15/bits/atomic_base.h:
 
@@ -2483,6 +2660,8 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/qt6/QtGui/qguiapplication.h:
 
+/usr/include/c++/15/bits/stl_list.h:
+
 /usr/include/c++/15/bits/exception.h:
 
 /usr/include/strings.h:
@@ -2492,8 +2671,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 /usr/include/c++/15/ostream:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.h:
-
-/usr/include/c++/15/bits/stl_list.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.h:
 
@@ -2524,8 +2701,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 /usr/include/bits/wordsize.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.cpp:
-
-/usr/include/qt6/QtCore/q20functional.h:
 
 /usr/include/qt6/QtWidgets/qapplication.h:
 
@@ -2571,19 +2746,7 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/bits/libc-header-start.h:
 
-/usr/include/bits/posix2_lim.h:
-
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp:
-
-/usr/include/c++/15/istream:
-
-/usr/include/c++/15/x86_64-redhat-linux/bits/ctype_base.h:
-
-/usr/lib64/libXau.so.6:
-
-/usr/include/bits/stdlib-float.h:
-
-/usr/include/c++/15/x86_64-redhat-linux/bits/gthr-default.h:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o:
 
 /usr/include/bits/floatn.h:
 
@@ -2599,15 +2762,13 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/c++/15/bits/stl_numeric.h:
 
-/usr/include/qt6/QtCore/qdir.h:
-
-/usr/include/bits/iscanonical.h:
-
 /usr/include/qt6/QtCore/qdatastream.h:
 
 /usr/include/asm/errno.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.h:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.cpp:
 
 /usr/include/bits/waitflags.h:
 
@@ -2641,31 +2802,23 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 /usr/include/c++/15/bits/locale_facets_nonio.tcc:
 
+/usr/lib/gcc/x86_64-redhat-linux/15/include/limits.h:
+
+/usr/include/qt6/QtGui/qvectornd.h:
+
+/usr/include/bits/types/__locale_t.h:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.cpp:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp:
+
+/usr/include/qt6/QtCore/qurl.h:
+
 /usr/include/c++/15/bits/basic_string.tcc:
 
 /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h:
 
 /usr/include/qt6/QtCore/qassert.h:
-
-/usr/include/bits/mathcalls.h:
-
-/usr/include/bits/types/clock_t.h:
-
-/usr/include/c++/15/bits/charconv.h:
-
-/usr/include/qt6/QtCore/qexceptionhandling.h:
-
-/usr/include/c++/15/pstl/glue_algorithm_defs.h:
-
-/usr/include/c++/15/tr1/poly_laguerre.tcc:
-
-/usr/include/qt6/QtGui/qvector2d.h:
-
-/usr/include/c++/15/bits/specfun.h:
-
-/usr/include/bits/types/__fpos_t.h:
-
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.cpp:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h:
 
@@ -2681,9 +2834,23 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 /usr/include/qt6/QtCore/q17memory.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h:
-
 /usr/include/qt6/QtGui/qfontmetrics.h:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp:
+
+/usr/include/c++/15/istream:
+
+/usr/include/c++/15/x86_64-redhat-linux/bits/ctype_base.h:
+
+/usr/include/c++/15/bits/requires_hosted.h:
+
+/usr/include/bits/time64.h:
+
+/usr/lib64/libXau.so.6:
+
+/usr/include/bits/stdlib-float.h:
+
+/usr/include/c++/15/x86_64-redhat-linux/bits/gthr-default.h:
 
 /usr/include/bits/types/cookie_io_functions_t.h:
 
@@ -2705,6 +2872,10 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 /usr/include/qt6/QtCore/qlist.h:
 
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.cpp:
+
+/usr/include/bits/posix2_lim.h:
+
 graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/bits/endian.h:
@@ -2716,6 +2887,26 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 /usr/lib64/libfreetype.so.6:
 
 /usr/include/bits/pthreadtypes-arch.h:
+
+/usr/include/bits/mathcalls.h:
+
+/usr/include/qt6/QtGui/qvector2d.h:
+
+/usr/include/c++/15/bits/specfun.h:
+
+/usr/include/bits/types/__fpos_t.h:
+
+/usr/include/bits/types/clock_t.h:
+
+/usr/include/c++/15/bits/charconv.h:
+
+/usr/include/qt6/QtCore/qexceptionhandling.h:
+
+/usr/include/c++/15/pstl/glue_algorithm_defs.h:
+
+/usr/include/c++/15/tr1/poly_laguerre.tcc:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.cpp:
 
 /usr/include/alloca.h:
 
@@ -2739,6 +2930,8 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/qt6/QtCore/qdeadlinetimer.h:
 
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.cpp:
+
 /usr/include/bits/struct_mutex.h:
 
 /usr/include/c++/15/bits/stl_function.h:
@@ -2753,21 +2946,23 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/qt6/QtCore/q20type_traits.h:
 
+/usr/include/c++/15/bits/uses_allocator.h:
+
 /usr/include/c++/15/bits/stl_algo.h:
 
 /usr/include/bits/types/time_t.h:
-
-/usr/include/c++/15/bits/stl_tree.h:
-
-/usr/include/string.h:
-
-/usr/include/bits/mathcalls-helper-functions.h:
 
 /usr/include/bits/thread-shared-types.h:
 
 /usr/include/bits/types/__sigset_t.h:
 
 /usr/include/qt6/QtGui/qguiapplication_platform.h:
+
+/usr/include/qt6/QtCore/qtmochelpers.h:
+
+graphics-gui_testing_autogen/include/ui_dialog.h:
+
+/usr/include/bits/types/sigset_t.h:
 
 /usr/include/c++/15/stdexcept:
 
@@ -2787,14 +2982,6 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o:
 
 /usr/include/asm-generic/types.h:
 
-/usr/include/bits/time64.h:
-
-/usr/include/c++/15/bits/requires_hosted.h:
-
-/usr/include/qt6/QtCore/qtmochelpers.h:
-
-graphics-gui_testing_autogen/include/ui_dialog.h:
-
 /usr/lib64/libpcre2-16.so.0:
 
 /usr/include/c++/15/ctime:
@@ -2804,8 +2991,6 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 /usr/include/c++/15/debug/debug.h:
 
 /usr/include/qt6/QtCore/qbytearrayview.h:
-
-/usr/include/qt6/QtGui/qinputmethod.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp:
 
@@ -2829,10 +3014,6 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.cpp:
 
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp:
-
-/usr/include/qt6/QtCore/qurl.h:
-
 /usr/include/c++/15/bits/fs_path.h:
 
 /usr/include/sys/types.h:
@@ -2851,25 +3032,21 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /usr/include/qt6/QtCore/qxptype_traits.h:
 
-/usr/include/bits/types/sigset_t.h:
-
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h:
 
 /usr/include/c++/15/cstddef:
 
 /usr/include/qt6/QtCore/qtcoreglobal.h:
 
-/usr/include/qt6/QtGui/qpainter.h:
-
 /usr/include/asm-generic/errno-base.h:
-
-/usr/include/bits/struct_rwlock.h:
 
 /usr/include/qt6/QtCore/qshareddata_impl.h:
 
 /usr/include/bits/sched.h:
 
 /usr/include/c++/15/filesystem:
+
+/usr/include/bits/struct_rwlock.h:
 
 /usr/include/qt6/QtCore/qconfig.h:
 
@@ -2919,9 +3096,17 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /usr/include/qt6/QtCore/QTimer:
 
-/usr/include/c++/15/bits/unordered_map.h:
+/usr/include/c++/15/bits/chrono.h:
 
-/usr/include/bits/locale.h:
+/usr/include/c++/15/bits/uses_allocator_args.h:
+
+/usr/include/qt6/QtCore/qcompare.h:
+
+/usr/include/bits/iscanonical.h:
+
+/usr/include/qt6/QtCore/qdir.h:
+
+/usr/include/qt6/QtCore/q20functional.h:
 
 /usr/include/c++/15/cassert:
 
@@ -3197,6 +3382,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o:
 
 /usr/include/qt6/QtCore/qutf8stringview.h:
 
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o:
+
 /usr/include/qt6/QtCore/qcontainerfwd.h:
 
 /usr/include/qt6/QtCore/qcontiguouscache.h:
@@ -3306,10 +3493,6 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o:
 /usr/include/qt6/QtCore/qsize.h:
 
 /usr/include/qt6/QtCore/qtnoop.h:
-
-/usr/include/c++/15/bits/hashtable_policy.h:
-
-/usr/include/qt6/QtGui/qinputdevice.h:
 
 /usr/include/qt6/QtCore/qspan.h:
 

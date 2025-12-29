@@ -54,10 +54,12 @@ void ui_vlinedotted(int16_t x, int16_t y, int16_t w);
 void ui_hline(int16_t x, int16_t y, int16_t h);
 void ui_vline(int16_t x, int16_t y, int16_t h);
 
-void draw_title_button(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill_pen, uint8_t pressed);
+void draw_title_button      (int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill_pen, uint8_t pressed);
 void draw_rect_outline_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t, uint16_t pen);
-void draw_bevel_rect(int16_t x, int16_t y, int16_t w, int16_t h);
-void draw_bevel(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen_hi, uint16_t pen_lo, uint8_t pressed);
+void draw_bevel_rect        (int16_t x, int16_t y, int16_t w, int16_t h);
+void draw_bevel             (int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen_hi, uint16_t pen_lo, uint8_t pressed);
+void ui_dotted_rect_thick   (int16_t x, int16_t y, int16_t w, int16_t h, int16_t t);
+
 
 void glyph_zorder(int16_t x, int16_t y, int16_t w, int16_t h);
 void glyph_minimise(int16_t x, int16_t y, int16_t w, int16_t h);

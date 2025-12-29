@@ -66,18 +66,21 @@ static void normalize_zorder(void);
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // semi macro functions //
-typedef struct { int16_t x, y, w, h; } Rect16;
+
 static inline Rect16 r16(int16_t x, int16_t y, int16_t w, int16_t h){ Rect16 r = {x,y,w,h}; return r; }
 static inline uint8_t r16_valid(const Rect16 *r){ return (r->w > 0) && (r->h > 0); }
 
 static inline uint8_t pt_in_r16(int16_t px, int16_t py, const Rect16 *r){
     return (px >= r->x) && (py >= r->y) && (px < (int16_t)(r->x + r->w)) && (py < (int16_t)(r->y + r->h));
 }
+
+
 static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
 }
+
 
 typedef struct {
     size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool;
@@ -90,8 +93,7 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void);
 #define SBOS_UI_BUDGET_BYTES (64u * 1024u)
 
 
-static void SBOS_print_reserved_ui_memory(void)
-{
+static void SBOS_print_reserved_ui_memory(void){
     SBOS_GadgetPoolBytes gb = SBOS_get_gadget_pool_bytes();
 
     // These must be visible in this translation unit (not static elsewhere).
@@ -152,9 +154,7 @@ static void SBOS_print_reserved_ui_memory(void)
 
 
 void initWb(void){
-
     SBOS_print_reserved_ui_memory();
-
     ui_clear_title_latch();
     ui_clear_drag();
     g_ui.mouse_down  = 0;
@@ -166,8 +166,7 @@ void initWb(void){
 
 uint32_t SBOS_GetBasePoolSize();
 
-void SBOS_print_ui_usage(void)
-{
+void SBOS_print_ui_usage(void){
     SBOS_GadgetPoolBytes rb = SBOS_get_gadget_pool_bytes();
     SBOS_UiUsageCounts   uc = SBOS_get_ui_usage_counts();
 
@@ -233,10 +232,7 @@ void SBOS_print_ui_usage(void)
     printf("Free in pools      : %zu bytes (%.1f KB)\n",
            (r_total > u_total) ? (r_total - u_total) : 0,
            (double)((r_total > u_total) ? (r_total - u_total) : 0) / 1024.0);
-
-
 }
-
 
 static inline void ui_clip_disable(void) { g_uiclip.enabled = 0; }
 
@@ -262,22 +258,21 @@ static void enforce_screen_bounds(sbx_window_t *w){
 }
 
 
-static inline int16_t win_gutter_right(const sbx_window_t *w){
+int16_t win_gutter_right(const sbx_window_t *w){
     if ((w->flags & SBX_WF_DOCKRIGHT)) return 0; // dock band owns this edge
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
         return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
     return 0;
 }
 
-static inline int16_t win_gutter_bottom(const sbx_window_t *w){
+int16_t win_gutter_bottom(const sbx_window_t *w){
     if ((w->flags & SBX_WF_DOCKBOTTOM)) return 0; // dock band owns this edge
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER))
         return (WIN_RESIZE_GLYPH_SIZE - WIN_BORDER);
     return 0;
 }
 
-
-static inline Rect16 win_inner_rect(const sbx_window_t *w){
+Rect16 win_inner_rect(const sbx_window_t *w){
     int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? WIN_TITLE_HEIGHT : 0;
 
     Rect16 r;
@@ -332,9 +327,6 @@ static void layoutWindow(sbx_window_t *w){
     }
 }
 
-
-
-
 static inline void ui_end_interaction(void){
     g_ui.mouse_down  = 0;
     g_ui.down_win    = SBW_INVALID_ID;
@@ -349,7 +341,6 @@ static inline void ui_end_interaction(void){
     g_ui.capturedGadgetRect = NULL;
 }
 
-
 void SBOS_setFocus(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) {
         g_focusWin = SBW_INVALID_ID;
@@ -360,19 +351,6 @@ void SBOS_setFocus(SBXWindowId id){
 
     g_focusWin = id;
 }
-/*
-static void ctrl_set_text(sbx_control_t *c, const char *text){
-    if (!c) return;
-    if (!text) { c->text[0] = '\0'; return; }
-
-    int i = 0;
-    for (; text[i] && i < (int)sizeof(c->text) - 1; i++)
-        c->text[i] = text[i];
-    c->text[i] = '\0';
-}
-*/
-
-
 
 SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
     for (SBXWindowId i = 0; i < MAX_WINDOWS; i++) {
@@ -428,44 +406,6 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
 sbx_window_t* SBOS_getWindow(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) return 0;
     return &gui_windows[id];
-}
-
-
-static void ui_dotted_rect_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t){
-    if (w <= 0 || h <= 0 || t <= 0) return;
-    w++;
-    h++;
-
-    // Expand outwards "t" pixels around the rect
-    for (int16_t i = 0; i < t; i++){
-        int16_t x0 = (int16_t)(x - i);
-        int16_t y0 = (int16_t)(y - i);
-        int16_t x1 = (int16_t)(x + w - 1 + i);
-        int16_t y1 = (int16_t)(y + h - 1 + i);
-
-        // Top + bottom
-        for (int16_t xx = x0; xx <= x1; xx++){
-            // global-phase dotted pattern; choose one you like:
-            // uint8_t on = (((xx + y0) & 1) == 0);
-            uint8_t on = (((xx ^ y0) & 1) == 0);
-            if (on) ui_ppixel(xx, y0);
-
-            // uint8_t on2 = (((xx + y1) & 1) == 0);
-            uint8_t on2 = (((xx ^ y1) & 1) == 0);
-            if (on2) ui_ppixel(xx, y1);
-        }
-
-        // Left + right (skip corners so they don't get double-painted)
-        for (int16_t yy = (int16_t)(y0 + 1); yy <= (int16_t)(y1 - 1); yy++){
-            // uint8_t on = (((x0 + yy) & 1) == 0);
-            uint8_t on = (((x0 ^ yy) & 1) == 0);
-            if (on) ui_ppixel(x0, yy);
-
-            // uint8_t on2 = (((x1 + yy) & 1) == 0);
-            uint8_t on2 = (((x1 ^ yy) & 1) == 0);
-            if (on2) ui_ppixel(x1, yy);
-        }
-    }
 }
 
 
@@ -932,14 +872,6 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     return r;
 }
 
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-////  SCROLLBAR HELPER FEATURES  ////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// ===================== SCROLLBAR MATH (VALUE-BASED) =====================
-
 static inline int16_t win_resize_overlap_inner(const sbx_window_t *w){
     if (!w) return 0;
     if (!(w->flags & SBX_WF_RESIZABLE)) return 0;
@@ -948,49 +880,17 @@ static inline int16_t win_resize_overlap_inner(const sbx_window_t *w){
 }
 
 // How much width to reserve on the RIGHT edge of INNER
-static inline int16_t win_inner_reserve_right(const sbx_window_t *w){
+int16_t win_inner_reserve_right(const sbx_window_t *w){
     // If you have a dock-right band, that band owns the right edge (not the resize overlap).
     //if (w->flags & SBX_WF_DOCKRIGHT) return 0;
     return win_resize_overlap_inner(w);
 }
 
 // How much height to reserve on the BOTTOM edge of INNER
-static inline int16_t win_inner_reserve_bottom(const sbx_window_t *w){
+int16_t win_inner_reserve_bottom(const sbx_window_t *w){
     // If you have a dock-bottom band, that band owns the bottom edge (not the resize overlap).
     //if (w->flags & SBX_WF_DOCKBOTTOM) return 0;
     return win_resize_overlap_inner(w) +3;
-}
-
-
-// Thumb length derived from step relative to (max-min)
-static inline int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step){
-    const int16_t MIN_THUMB = 8;
-    int32_t range = (int32_t)max - (int32_t)min;
-
-    if (track_len <= 0) return 0;
-    if (range <= 0) return track_len; // no scroll range => thumb fills track
-
-    if (step <= 0) step = 1;
-    if ((int32_t)step > range) step = (int16_t)range;
-
-    int32_t len = ((int32_t)step * (int32_t)track_len + range/2) / range;
-    if (len < MIN_THUMB) len = MIN_THUMB;
-    if (len > track_len) len = track_len;
-    return (int16_t)len;
-}
-
-// Map VALUE -> thumb position (0..travel)
-static inline int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel){
-    if (travel <= 0) return 0;
-    if (max <= min) return 0;
-
-    value = clamp_i16(value, min, max);
-
-    int32_t range = (int32_t)max - (int32_t)min;
-    int32_t v     = (int32_t)value - (int32_t)min;
-
-    // rounded
-    return (int16_t)((v * (int32_t)travel + range/2) / range);
 }
 
 // Map thumb position (0..travel) -> VALUE (min..max)
@@ -1006,6 +906,7 @@ static inline int16_t sb_value_from_thumb_pos(int16_t pos, int16_t min, int16_t 
 
     return (int16_t)(min + (int16_t)v);
 }
+
 
 // ===================== HITTEST (VALUE-BASED) =====================
 
@@ -1124,33 +1025,11 @@ static SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_
     return SB_PART_TRACK;
 }
 
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-////  DECLARATION OF DRAW FUNCTIONS  ////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//void draw_button    (const sbx_window_t *w, const GADGET_BASE_T *g);
-static void draw_checkbox  (const sbx_window_t *w, const GADGET_BASE_T *g);
-static void draw_radio     (const sbx_window_t *w, const GADGET_BASE_T *g);
-static void draw_scrollbar (const sbx_window_t *w, const GADGET_BASE_T *g);
-static void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g);
-static void draw_listbox   (const sbx_window_t *w, const GADGET_BASE_T *g);
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 static inline uint8_t gadget_is_docked(const GAD_HDR_T *h){
     return (h->flags & (GAD_TOOL_DOCKED_RIGHT | GAD_TOOL_DOCKED_BOTTOM)) != 0;
 }
 
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
-    //(void)wantDock; // ignore for now
-
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         GADGET_BASE_T *g = w->GADGETS[i];
         if (!g || !g->gadget) continue;
@@ -1173,493 +1052,11 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
             case GAD_BITMAPVIEW: draw_bitmapview(w, g); break;
             case GAD_LISTBOX:    draw_listbox(w, g);    break;
 
-
             default: break;     // if we got here, then the GUI is BARFING UP randomness, so stop it here ;)
         }
     }
     return;
 }
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-////  RENDERING THE GUI  ////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-static void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
-    if (!w || !g || !g->gadget) return;
-
-    GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*)g->gadget;
-    if (!c->h.visible) return;
-
-    const int16_t ax = (int16_t)(w->clientrect.x + c->h.rect.x);
-    const int16_t ay = (int16_t)(w->clientrect.y + c->h.rect.y);
-
-    // background for the whole control rect (optional, but consistent look)
-    // If you want it transparent, remove this.
-    //fill_rect_pen(ax, ay, c->h.rect.w, c->h.rect.h, WIN_BG_PEN);
-
-    // checkbox square size: 16x16 centered vertically in control height
-    const int16_t box = 16;
-    int16_t box_x = ax;
-    int16_t box_y = (int16_t)(ay + (c->h.rect.h - box) / 2);
-
-    // face + bevel
-    fill_rect_pen(box_x, box_y, box, box, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(box_x, box_y, box, box, WIN_BEVEL_H, WIN_BEVEL_L, c->h.down);
-
-    // check mark
-    if (c->checked) {
-        gfx_setcolour(WIN_BEVEL_L);
-
-        // simple “tick” using pixels/lines (cheap + readable)
-        // adjust offsets for your font/pixel vibe
-        int16_t cx = (int16_t)(box_x + 4);
-        int16_t cy = (int16_t)(box_y + 8);
-
-        // down-left to center
-        ui_ppixel(cx,     cy);
-        ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
-        ui_ppixel((int16_t)(cx+2), (int16_t)(cy+2));
-
-        // center to up-right
-        ui_ppixel((int16_t)(cx+3), (int16_t)(cy+1));
-        ui_ppixel((int16_t)(cx+4), cy);
-        ui_ppixel((int16_t)(cx+5), (int16_t)(cy-1));
-        ui_ppixel((int16_t)(cx+6), (int16_t)(cy-2));
-    }
-
-    // label text (optional)
-    if (c->text[0]) {
-        gfx_setcolour(WIN_TITLE_PEN);
-
-        // text baseline centered-ish
-        int16_t tx = (int16_t)(box_x + box + 6);
-        int16_t ty = (int16_t)(ay + (c->h.rect.h - 16) / 2);
-
-        if (c->h.down) { tx++; ty++; }
-
-        ui_draw_text816(tx, ty, (const unsigned char*)c->text);
-    }
-}
-
-static void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
-    if (!w || !g || !g->gadget) return;
-
-    GAD_RADIO_T *r = (GAD_RADIO_T*)g->gadget;
-    if (!r->h.visible) return;
-
-    const int16_t ax = (int16_t)(w->clientrect.x + r->h.rect.x);
-    const int16_t ay = (int16_t)(w->clientrect.y + r->h.rect.y);
-
-    // circle-ish box (16x16 like checkbox)
-    const int16_t box = 16;
-    int16_t box_x = ax;
-    int16_t box_y = (int16_t)(ay + (r->h.rect.h - box) / 2);
-
-    fill_rect_pen(box_x, box_y, box, box, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(box_x, box_y, box, box, WIN_BEVEL_H, WIN_BEVEL_L, r->h.down);
-
-    // “radio dot” when checked
-    if (r->checked) {
-        gfx_setcolour(WIN_BEVEL_L);
-
-        // cheap filled center blob (looks fine at 8x16 font scale)
-        int16_t cx = (int16_t)(box_x + 6);
-        int16_t cy = (int16_t)(box_y + 6);
-
-        ui_ppixel(cx, cy);
-        ui_ppixel((int16_t)(cx+1), cy);
-        ui_ppixel(cx, (int16_t)(cy+1));
-        ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
-
-        ui_ppixel((int16_t)(cx-1), cy);
-        ui_ppixel((int16_t)(cx+2), cy);
-        ui_ppixel(cx, (int16_t)(cy-1));
-        ui_ppixel(cx, (int16_t)(cy+2));
-    }
-
-    // label
-    if (r->text[0]) {
-        gfx_setcolour(WIN_TITLE_PEN);
-        int16_t tx = (int16_t)(box_x + box + 6);
-        int16_t ty = (int16_t)(ay + (r->h.rect.h - 16) / 2);
-        if (r->h.down) { tx++; ty++; }
-        ui_draw_text816(tx, ty, (const unsigned char*)r->text);
-    }
-}
-
-static void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
-    if (!w || !g || !g->gadget) return;
-
-    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
-    if (!s->h.visible) return;
-
-    // Determine absolute rect (outer frame rect)
-    int16_t ax, ay, aw, ah;
-
-    Rect16 inner = win_inner_rect(w);
-    int16_t reserveR = win_inner_reserve_right(w);
-    int16_t reserveB = win_inner_reserve_bottom(w);
-
-    if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
-        ax = (int16_t)(inner.x + inner.w - SB_SCROLL_THICK + SB_RDOCK_OFFSET_X);
-        ay = inner.y  + SB_RDOCK_OFFSET_Y;
-        aw = SB_SCROLL_THICK;
-        ah = (int16_t)(inner.h - reserveB);   // <-- NEW (avoid resizer overlap / bottom stuff)
-    } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM) && (s->orient == SB_ORIENT_HORZ)) {
-        ax = inner.x + SB_BDOCK_OFFSET_X;
-        ay = (int16_t)(inner.y + inner.h - SB_SCROLL_THICK + SB_BDOCK_OFFSET_Y);
-        aw = (int16_t)(inner.w - reserveR);   // <-- NEW (avoid resizer overlap on right)
-        ah = SB_SCROLL_THICK;
-    } else {
-        ax = (int16_t)(w->clientrect.x + s->h.rect.x);
-        ay = (int16_t)(w->clientrect.y + s->h.rect.y);
-        aw = s->h.rect.w;
-        ah = s->h.rect.h;
-    }
-
-    if (aw <= 0 || ah <= 0) return;
-
-    // ------------------------------------------------------------------
-    // 1) Outer frame (border + bevel)
-    // ------------------------------------------------------------------
-    if (!(s->h.flags & (GAD_TOOL_DOCKED_BOTTOM | GAD_TOOL_DOCKED_RIGHT)))
-    {
-        fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
-        draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
-    }
-
-    // ------------------------------------------------------------------
-    // 2) Adjust inner "track well" inset based on arrows
-    // ------------------------------------------------------------------
-    int16_t ix = (int16_t)(ax + SB_TRACK_INSET);
-    int16_t iy = (int16_t)(ay + SB_TRACK_INSET);
-    int16_t iw = (int16_t)(aw - SB_TRACK_INSET * 2);
-    int16_t ih = (int16_t)(ah - SB_TRACK_INSET * 2);
-
-    // Shrink the inner well area if arrows are enabled
-    if (s->show_arrows) {
-        if (s->orient == SB_ORIENT_VERT) {
-            ih -= (SB_ARROW_SHRINK * 2);  // Reduce height to accommodate top and bottom arrows (8 each)
-            iy += SB_ARROW_SHRINK;   // Move the track down a little
-        } else {
-            iw -= (SB_ARROW_SHRINK * 2);  // Reduce width to accommodate left and right arrows (8 each)
-            ix += SB_ARROW_SHRINK;   // Move the track right a little
-        }
-    }
-
-    // Check for invalid track area
-    if (iw <= 0 || ih <= 0) return;
-
-    // Fill the well with a different pen (change SB_TRACK_PEN later)
-    gfx_setcolour(SB_TRACK_PEN);
-    ui_fill_dots(ix, iy, iw, ih, 2);
-
-    // Draw the well bevel "inset" look:
-    draw_bevel(ix, iy, iw, ih, WIN_BEVEL_H, WIN_BEVEL_L, 1);
-
-    // ------------------------------------------------------------------
-    // 3) Draw the arrows if enabled
-    // ------------------------------------------------------------------
-    #define ARROW_BUTTON_SIZE_TMP   16
-    if (s->show_arrows) {
-        // Vertical scrollbar arrows (Top and Bottom)
-        if (s->orient == SB_ORIENT_VERT) {
-            // Top Arrow: Centered horizontally in 'aw', at the very top 'ay'
-            // We use (aw - 8) / 2 to perfectly center the 8px box
-            draw_bevel_rect(ax, ay, aw, ARROW_BUTTON_SIZE_TMP);
-
-            ui_draw_glyph(ax + (aw - ARROW_BUTTON_SIZE_TMP) / 2, ay, glyph_arrow_up);
-
-            // Bottom Arrow: At the very bottom of the scrollbar (ay + ah - 8)
-            draw_bevel_rect(ax, ay + ah - ARROW_BUTTON_SIZE_TMP, aw, ARROW_BUTTON_SIZE_TMP);
-
-            ui_draw_glyph(ax + (aw - ARROW_BUTTON_SIZE_TMP) / 2 , ay + (ah - ARROW_BUTTON_SIZE_TMP) , glyph_arrow_down);
-
-        }
-        // Horizontal scrollbar arrows (Left and Right)
-        else {
-            int ht = ah; // The thickness of the bar
-
-            // --- LEFT ARROW ---
-            // Button is at 'ax'
-            draw_bevel_rect(ax, ay, ARROW_BUTTON_SIZE_TMP, ht);
-
-            // Glyph is at 'ax', vertically centered in 'ht'
-            ui_draw_glyph(ax, ay + (ht - ARROW_BUTTON_SIZE_TMP) / 2, glyph_arrow_left);
-
-            // --- RIGHT ARROW ---
-            // Button is at the far right: ax + total_width - button_width
-            int16_t right_btn_x = ax + aw - ARROW_BUTTON_SIZE_TMP;
-            draw_bevel_rect(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht);
-
-            // Glyph is at the same 'right_btn_x', vertically centered
-            ui_draw_glyph(right_btn_x, ay + (ht - ARROW_BUTTON_SIZE_TMP) / 2, glyph_arrow_right);
-
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // 4) Thumb geometry inside the inner well (after shrinking for arrows)
-    // ------------------------------------------------------------------
-    int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ih : iw;
-    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
-
-    int16_t travel = (int16_t)(track_len - thumb_len);
-    if (travel < 0) travel = 0;
-
-    int16_t tpos = sb_thumb_pos_from_value(s->value, s->min, s->max, travel);
-
-    // Thumb rect is based on the inner well, not the outer frame
-    int16_t tx = ix, ty = iy, tw = iw, th = ih;
-    if (s->orient == SB_ORIENT_VERT) { ty = (int16_t)(iy + tpos); th = thumb_len; }
-    else                            { tx = (int16_t)(ix + tpos); tw = thumb_len; }
-
-    if (tw > 2) { tx++; tw -= 2; }
-    if (th > 2) { ty++; th -= 2; }
-
-    // Thumb face + bevel (your "perfect" thumb look stays)
-    uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
-    fill_rect_pen(tx, ty, tw, th, WIN_SCROLLER_PROP_PEN);
-    draw_bevel(tx, ty, tw, th, WIN_BEVEL_H, WIN_BEVEL_L, pressed);
-}
-
-static inline int16_t clamp_scroll(int16_t v, int16_t maxv){
-    if (v < 0) return 0;
-    if (v > maxv) return maxv;
-    return v;
-}
-
-static void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
-    if (!w || !g || !g->gadget) return;
-
-    //// for practice really - any global changes to the clip must be stored and restored after you're done with it ////
-    //UIClipRect old = g_uiclip;  // <<--- make a copy of the current clip! BELIVE ME you'll need this!!
-    //ui_clip_set(0,0,0,0);       // <<--- demo set clip, wont do anything fancy but REMEMBER HOW HERE
-    //g_uiclip = old;             // <<--- RESTORE old clip
-
-
-    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)g->gadget;
-    if (!bv->h.visible) return;
-
-    // Absolute rect in screen coords
-    int16_t ax = (int16_t)(w->clientrect.x + bv->h.rect.x);
-    int16_t ay = (int16_t)(w->clientrect.y + bv->h.rect.y);
-    int16_t aw = bv->h.rect.w;
-    int16_t ah = bv->h.rect.h;
-    if (aw <= 0 || ah <= 0) return;
-
-    // Frame + inner area
-    int16_t ix = ax, iy = ay, iw = aw, ih = ah;
-    if (bv->bv_flags & BVF_SHOW_FRAME) {
-        fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
-        draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
-
-        // inset client area
-        ix = (int16_t)(ax + 2);
-        iy = (int16_t)(ay + 2);
-        iw = (int16_t)(aw - 4);
-        ih = (int16_t)(ah - 4);
-        if (iw <= 0 || ih <= 0) return;
-    }
-
-    // Clear background of the view area
-    fill_rect_pen(ix, iy, iw, ih, WIN_CLIENT_PEN);
-
-    // No source? done
-    if (!bv->pixels || bv->bmp_w <= 0 || bv->bmp_h <= 0) return;
-
-    // Clamp scroll so we never read past bitmap edges
-    int16_t maxx = (int16_t)(bv->bmp_w - iw);
-    int16_t maxy = (int16_t)(bv->bmp_h - ih);
-    if (maxx < 0) maxx = 0;
-    if (maxy < 0) maxy = 0;
-    bv->scroll_x = clamp_scroll(bv->scroll_x, maxx);
-    bv->scroll_y = clamp_scroll(bv->scroll_y, maxy);
-
-    // Compute unclipped visible blit size (within bitmap)
-    int16_t blit_w = iw;
-    int16_t blit_h = ih;
-    if (blit_w > (int16_t)(bv->bmp_w - bv->scroll_x)) blit_w = (int16_t)(bv->bmp_w - bv->scroll_x);
-    if (blit_h > (int16_t)(bv->bmp_h - bv->scroll_y)) blit_h = (int16_t)(bv->bmp_h - bv->scroll_y);
-    if (blit_w <= 0 || blit_h <= 0) return;
-
-    // ---- HARD CLIP (screen + ui clip), then adjust source offsets ----
-    int16_t dx0 = ix;
-    int16_t dy0 = iy;
-    int16_t dx1 = (int16_t)(ix + blit_w);
-    int16_t dy1 = (int16_t)(iy + blit_h);
-
-    // Screen clip
-    if (dx0 < 0) dx0 = 0;
-    if (dy0 < 0) dy0 = 0;
-    if (dx1 > SCR_WIDTH)  dx1 = SCR_WIDTH;
-    if (dy1 > SCR_HEIGHT) dy1 = SCR_HEIGHT;
-
-    // UI clip (same semantics as ui_ppixel: x in [x0,x1), y in [y0,y1))
-    if (g_uiclip.enabled) {
-        if (dx0 < g_uiclip.x0) dx0 = g_uiclip.x0;
-        if (dy0 < g_uiclip.y0) dy0 = g_uiclip.y0;
-        if (dx1 > g_uiclip.x1) dx1 = g_uiclip.x1;
-        if (dy1 > g_uiclip.y1) dy1 = g_uiclip.y1;
-    }
-
-    if (dx1 <= dx0 || dy1 <= dy0) return;
-
-    // Source start offset based on how much we clipped off the left/top
-    int16_t src_x0 = (int16_t)(bv->scroll_x + (dx0 - ix));
-    int16_t src_y0 = (int16_t)(bv->scroll_y + (dy0 - iy));
-
-    int16_t out_w = (int16_t)(dx1 - dx0);
-    int16_t out_h = (int16_t)(dy1 - dy0);
-
-    // ---- BLIT (safe) ----
-    if (bv->bv_flags & BVF_SRC_ROWMAJOR) {
-        // src[y*stride + x]
-        for (int16_t dx = 0; dx < out_w; dx++) {
-            int16_t sx = (int16_t)(src_x0 + dx);
-            int16_t dst_x = (int16_t)(dx0 + dx);
-
-            int32_t dst = (int32_t)dst_x * SCR_STRIDE + dy0;
-            const uint8_t *src = bv->pixels + (int32_t)src_y0 * bv->bmp_stride + sx;
-
-            for (int16_t dy = 0; dy < out_h; dy++) {
-                PROJ_VRAM[dst + dy] = src[(int32_t)dy * bv->bmp_stride];
-            }
-        }
-    } else {
-        // src[x*stride + y] (x-major)
-        for (int16_t dx = 0; dx < out_w; dx++) {
-            int16_t sx = (int16_t)(src_x0 + dx);
-            int16_t dst_x = (int16_t)(dx0 + dx);
-
-            const uint8_t *src_col = bv->pixels + (int32_t)sx * bv->bmp_stride + src_y0;
-            int32_t dst = (int32_t)dst_x * SCR_STRIDE + dy0;
-
-            for (int16_t dy = 0; dy < out_h; dy++) {
-                PROJ_VRAM[dst + dy] = src_col[dy];
-            }
-        }
-    }
-
-
-    //ui_clip_disable();
-}
-
-static void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
-    if (!w || !g || !g->gadget) return;
-
-    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g->gadget;
-    if (!lb->h.visible) return;
-
-    // Absolute rect in screen coords
-    int16_t ax = (int16_t)(w->clientrect.x + lb->h.rect.x);
-    int16_t ay = (int16_t)(w->clientrect.y + lb->h.rect.y);
-    int16_t aw = lb->h.rect.w;
-    int16_t ah = lb->h.rect.h;
-    if (aw <= 0 || ah <= 0) return;
-
-    // Defaults if caller left them 0
-    int16_t row_h = (lb->row_h > 0) ? lb->row_h : 16;
-    int16_t pad_x = (lb->padding_x > 0) ? lb->padding_x : 4;
-    int16_t pad_y = (lb->padding_y > 0) ? lb->padding_y : 2;
-
-    // Outer frame
-    fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
-
-    // Inner client area (inset)
-    int16_t ix = (int16_t)(ax + 2);
-    int16_t iy = (int16_t)(ay + 2);
-    int16_t iw = (int16_t)(aw - 4);
-    int16_t ih = (int16_t)(ah - 4);
-    if (iw <= 0 || ih <= 0) return;
-
-    fill_rect_pen(ix, iy, iw, ih, WIN_CLIENT_PEN);
-
-
-    // No model? still draw empty box
-    ItemLists_t *list = lb->items;
-    if (!list) return;
-
-    // Compute visible rows
-    int16_t usable_h = (int16_t)(ih - pad_y * 2 + 2);
-    if (usable_h <= 0) return;
-
-    int16_t rows = (int16_t)(usable_h / row_h);
-    if (rows <= 0) return;
-
-    // Clamp top so we don't scroll into the void
-    int16_t count = (int16_t)list->count;
-    int16_t maxTop = (int16_t)(count - rows);
-    if (maxTop < 0) maxTop = 0;
-    if (list->sel < list->top) list->top = list->sel;
-    if (list->sel >= list->top + rows) list->top = (int16_t)(list->sel - rows + 1);
-
-    if (list->top < 0) list->top = 0;
-    if (list->top > maxTop) list->top = maxTop;
-
-
-
-    // How many chars fit per row (8x16 font)
-    const int16_t char_w = 8;
-    int16_t max_chars = (int16_t)((iw - pad_x * 2) / char_w);
-    if (max_chars < 0) max_chars = 0;
-    if (max_chars > (DEF_GADGET_TEXT_SIZE - 1)) max_chars = (DEF_GADGET_TEXT_SIZE - 1);
-
-    // Draw rows
-
-    gfx_setcolour(WIN_TITLE_PEN);
-
-    int16_t tx;
-    int16_t ty;
-
-    for (int16_t r = 0; r < rows; r++){
-        int16_t idx = (int16_t)(list->top + r);
-        if (idx >= count) break;
-
-        int16_t ry = (int16_t)(iy + pad_y + r * row_h);
-
-        uint8_t selected = (idx == list->sel);
-        // Selected highlight
-        if (selected) {
-            fill_rect_pen(ix, ry-2, iw, row_h+2, WIN_SCROLLER_PROP_PEN);
-
-            // Focus rectangle inside the row (clipped by listbox clip already)
-            //gfx_setcolour(WIN_BEVEL_L);
-            //ui_hline((int16_t)(ix), (int16_t)(ry-2), (int16_t)(iw));
-            //ui_hline((int16_t)(ix), (int16_t)(ry+row_h), (int16_t)(iw));
-        }
-
-        const char *s = listitem_get(list, (uint16_t)idx);
-        if (!s) s = "";
-
-
-        // Truncate to visible width (cheap + cheerful)
-        char tmp[DEF_GADGET_TEXT_SIZE];
-        int16_t n = 0;
-        while (s[n] && n < max_chars) { tmp[n] = s[n]; n++; }
-        tmp[n] = 0;
-
-        tx = (int16_t)(ix + pad_x);
-        ty = ry; // row_h assumed 16; if you later change row_h, you can center text
-
-        // If you want text vertically centered when row_h != 16:
-        // ty = (int16_t)(ry + (row_h - 16) / 2);
-
-        //gfx_setcolour(selected ? WIN_CLIENT_PEN : WIN_TITLE_PEN);
-        //ui_draw_text816(tx, ty, (const unsigned char*)tmp);
-
-        gfx_setcolour(WIN_TITLE_PEN);
-        ui_draw_text816(tx, ty, (const unsigned char*)tmp);
-    }
-}
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
     if (!w) return NULL;
@@ -1684,8 +1081,6 @@ static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
             }
         }
 
-
-
         Rect16 r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
         if (pt_in_r16(lx, ly, &r)) return g;
     }
@@ -1703,10 +1098,6 @@ static uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g
     return pt_in_r16(lx, ly, &r);
 }
 
-
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 ////  WINDOW INTERFACE WITH MOUSE  //////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1714,8 +1105,8 @@ static uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g
 //// introducing a very function pointer way of doing things, instead of a branch of IF ELSE Types,
 
 
-static uint32_t (*callMouseMoveEvt)(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
-static uint32_t (*callMouseReleaseEvt)(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
+static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
+static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
 
 // function calls for MouseMoves ____
 // __BITMAPVIEW BOX__
@@ -1756,17 +1147,7 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
 }
 
 /// MOUSE CAPTURE FEATURES -----------------
-uint32_t onMouseDownCaptureBitmapview(GADGET_BASE_T *gadget, int16_t *mx, int16_t *my){
-    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) gadget->gadget;
-    if (bv->bv_flags & BVF_PAN) {
-        bv->panning = 1;        // dragging mode
-        bv->pan_start_mx = *mx;
-        bv->pan_start_my = *my;
-        bv->pan_start_x = bv->scroll_x;
-        bv->pan_start_y = bv->scroll_y;
-    }
-    return 0x00;
-}
+
 
 uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
@@ -1869,28 +1250,8 @@ uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t 
     return 0x00;    // always ok FOR NOW
 }
 
-uint32_t onMouseReleaseScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
-    (void)win; (void)evt; (void)mx; (void)my;
 
-    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
-    if (!s) return 1;   // panic
 
-    s->dragging = 0;
-    s->drag_off = 0;
-    g_ui.sb_track_start = 0;
-    g_ui.sb_travel = 0;
-    g_ui.sb_drag_off = 0;
-    return 0;   // all good 0 as in 0k :)
-}
-
-uint32_t onMouseUpBitmapView(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
-    (void)win; (void)evt; (void)mx; (void)my;
-    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;
-    if (!bv) return 1;  // panic status
-
-    bv->panning = 0;
-    return 0;   // all good 0 as in 0k :)
-}
 
 static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX_T *lb,
                                         int16_t mx, int16_t my,
@@ -2353,7 +1714,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                 uint32_t handled = 0;
                 if(callMouseReleaseEvt && gw){
-                    handled = callMouseReleaseEvt(gw, g, &evt, &mx, &my);
+                    handled = callMouseReleaseEvt(g, &mx, &my);
                     //if(cres) return;
                 }
 

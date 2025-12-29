@@ -15,6 +15,8 @@
 #include "fastram.h"
 #include "codergirl/cg_itemlist.h"
 
+#include "codergirl/cg_gad_button.h"
+
 #include "codergirl/cg_gad_scrollbar.h"
 
 

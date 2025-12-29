@@ -52,6 +52,13 @@ typedef uint32_t SBControlHandle;
 
 // -----------------------------------------------------
 
+typedef struct {
+    int16_t x,
+        y,
+        w,
+        h;
+} Rect16;
+
 // GADGET TYPES
 typedef struct GADGET_RECT_T {  // this is likely going to be used for things like scrollbars, with more than one hit regions
     int16_t     x, y, w, h;
@@ -138,11 +145,6 @@ SBControlHandle base_to_handle(GADGET_BASE_T *g);
 GADGET_BASE_T*  SBOS_gadgetFromHandle(SBControlHandle h);
 GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
 void            SBOS_destroyGadget(SBControlHandle h);
-
-
-
-
-
 
 
 

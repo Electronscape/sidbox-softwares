@@ -18,6 +18,11 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -121,6 +126,16 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o:
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 
