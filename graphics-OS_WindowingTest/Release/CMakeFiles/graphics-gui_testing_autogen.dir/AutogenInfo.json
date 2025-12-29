@@ -431,9 +431,105 @@
 	"HEADERS" : 
 	[
 		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.h",
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.h",
 			"MU",
-			"5AAQOGTO22/moc_cgroot.cpp",
+			"5AAQOGTO22/moc_cg_aroot.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_bitmapview.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_button.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_checkbox.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_listbox.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_radio.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_scrollbar.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgetrender.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gadgetrender.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gadgets.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_glyphs.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_input.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_itemlist.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_renderer.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_resources.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_type.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_type.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_windowex.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.h",
+			"MU",
+			"5AAQOGTO22/moc_sys_font.cpp",
 			null
 		],
 		[
@@ -449,45 +545,9 @@
 			null
 		],
 		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.h",
-			"MU",
-			"EWIEGA46WW/moc_font.cpp",
-			null
-		],
-		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h",
 			"MU",
 			"EWIEGA46WW/moc_sbapi_graphics.cpp",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h",
-			"MU",
-			"EWIEGA46WW/moc_sbos_itemlist.cpp",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h",
-			"MU",
-			"EWIEGA46WW/moc_sbx_gadgets.cpp",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h",
-			"MU",
-			"EWIEGA46WW/moc_sbx_input.cpp",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h",
-			"MU",
-			"EWIEGA46WW/moc_sbx_render.cpp",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h",
-			"MU",
-			"EWIEGA46WW/moc_sbx_windowex.cpp",
 			null
 		]
 	],
@@ -554,7 +614,52 @@
 			null
 		],
 		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.cpp",
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.cpp",
 			"MU",
 			null
 		],
@@ -569,42 +674,12 @@
 			null
 		],
 		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp",
-			"MU",
-			null
-		],
-		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/graphics.cpp",
 			"MU",
 			null
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/main.cpp",
-			"MU",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp",
-			"MU",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.cpp",
-			"MU",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.cpp",
-			"MU",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.cpp",
-			"MU",
-			null
-		],
-		[
-			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.cpp",
 			"MU",
 			null
 		]

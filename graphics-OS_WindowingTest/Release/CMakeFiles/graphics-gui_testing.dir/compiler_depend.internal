@@ -37,21 +37,323 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
-CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.cpp
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.cpp
  /usr/include/stdc-predef.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.cpp
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/sys/cdefs.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.cpp
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h
+ /usr/include/bits/floatn-common.h
+ /usr/include/bits/floatn.h
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/stdio.h
+ /usr/include/bits/stdio_lim.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/types/FILE.h
+ /usr/include/bits/types/__FILE.h
+ /usr/include/bits/types/__fpos64_t.h
+ /usr/include/bits/types/__fpos_t.h
+ /usr/include/bits/types/__locale_t.h
+ /usr/include/bits/types/__mbstate_t.h
+ /usr/include/bits/types/cookie_io_functions_t.h
+ /usr/include/bits/types/locale_t.h
+ /usr/include/bits/types/struct_FILE.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/stdio.h
+ /usr/include/string.h
+ /usr/include/strings.h
+ /usr/include/sys/cdefs.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.cpp
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/sys/cdefs.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.cpp
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/sys/cdefs.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h
+ /usr/include/alloca.h
+ /usr/include/bits/atomic_wide_counter.h
+ /usr/include/bits/byteswap.h
+ /usr/include/bits/endian.h
+ /usr/include/bits/endianness.h
+ /usr/include/bits/floatn-common.h
+ /usr/include/bits/floatn.h
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/pthreadtypes-arch.h
+ /usr/include/bits/pthreadtypes.h
+ /usr/include/bits/select.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/stdio.h
+ /usr/include/bits/stdio_lim.h
+ /usr/include/bits/stdlib-bsearch.h
+ /usr/include/bits/stdlib-float.h
+ /usr/include/bits/struct_mutex.h
+ /usr/include/bits/struct_rwlock.h
+ /usr/include/bits/thread-shared-types.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/types/FILE.h
+ /usr/include/bits/types/__FILE.h
+ /usr/include/bits/types/__fpos64_t.h
+ /usr/include/bits/types/__fpos_t.h
+ /usr/include/bits/types/__locale_t.h
+ /usr/include/bits/types/__mbstate_t.h
+ /usr/include/bits/types/__sigset_t.h
+ /usr/include/bits/types/clock_t.h
+ /usr/include/bits/types/clockid_t.h
+ /usr/include/bits/types/cookie_io_functions_t.h
+ /usr/include/bits/types/locale_t.h
+ /usr/include/bits/types/sigset_t.h
+ /usr/include/bits/types/struct_FILE.h
+ /usr/include/bits/types/struct_timespec.h
+ /usr/include/bits/types/struct_timeval.h
+ /usr/include/bits/types/time_t.h
+ /usr/include/bits/types/timer_t.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/uintn-identity.h
+ /usr/include/bits/waitflags.h
+ /usr/include/bits/waitstatus.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/c++/15/bits/std_abs.h
+ /usr/include/c++/15/cstdlib
+ /usr/include/c++/15/pstl/pstl_config.h
+ /usr/include/c++/15/stdlib.h
+ /usr/include/c++/15/x86_64-redhat-linux/bits/c++config.h
+ /usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h
+ /usr/include/c++/15/x86_64-redhat-linux/bits/os_defines.h
+ /usr/include/endian.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/stdio.h
+ /usr/include/stdlib.h
+ /usr/include/string.h
+ /usr/include/strings.h
+ /usr/include/sys/cdefs.h
+ /usr/include/sys/select.h
+ /usr/include/sys/types.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.cpp
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.h
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/sys/cdefs.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp
+ /usr/include/stdc-predef.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.cpp
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgetrender.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h
+ /usr/include/bits/floatn-common.h
+ /usr/include/bits/floatn.h
+ /usr/include/bits/libc-header-start.h
+ /usr/include/bits/long-double.h
+ /usr/include/bits/stdint-intn.h
+ /usr/include/bits/stdint-least.h
+ /usr/include/bits/stdint-uintn.h
+ /usr/include/bits/stdio.h
+ /usr/include/bits/stdio_lim.h
+ /usr/include/bits/time64.h
+ /usr/include/bits/timesize.h
+ /usr/include/bits/types.h
+ /usr/include/bits/types/FILE.h
+ /usr/include/bits/types/__FILE.h
+ /usr/include/bits/types/__fpos64_t.h
+ /usr/include/bits/types/__fpos_t.h
+ /usr/include/bits/types/__mbstate_t.h
+ /usr/include/bits/types/cookie_io_functions_t.h
+ /usr/include/bits/types/struct_FILE.h
+ /usr/include/bits/typesizes.h
+ /usr/include/bits/wchar.h
+ /usr/include/bits/wordsize.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/gnu/stubs-64.h
+ /usr/include/gnu/stubs.h
+ /usr/include/stdc-predef.h
+ /usr/include/stdint.h
+ /usr/include/stdio.h
+ /usr/include/sys/cdefs.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.cpp
+ /usr/include/stdc-predef.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
 
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/graphics-gui_testing_autogen/include/ui_dialog.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h
  /usr/include/alloca.h
  /usr/include/asm-generic/bitsperlong.h
  /usr/include/asm-generic/errno-base.h
@@ -662,12 +964,6 @@ CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
-CMakeFiles/graphics-gui_testing.dir/font.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp
- /usr/include/stdc-predef.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
-
 CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/graphics-gui_testing_autogen/mocs_compilation.cpp
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h
@@ -1177,7 +1473,7 @@ CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilatio
 
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/graphics.cpp
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.h
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
@@ -1706,230 +2002,6 @@ CMakeFiles/graphics-gui_testing.dir/main.cpp.o
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
  /usr/lib/gcc/x86_64-redhat-linux/15/include/syslimits.h
 
-CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h
- /usr/include/alloca.h
- /usr/include/bits/atomic_wide_counter.h
- /usr/include/bits/byteswap.h
- /usr/include/bits/endian.h
- /usr/include/bits/endianness.h
- /usr/include/bits/floatn-common.h
- /usr/include/bits/floatn.h
- /usr/include/bits/libc-header-start.h
- /usr/include/bits/long-double.h
- /usr/include/bits/pthreadtypes-arch.h
- /usr/include/bits/pthreadtypes.h
- /usr/include/bits/select.h
- /usr/include/bits/stdint-intn.h
- /usr/include/bits/stdint-least.h
- /usr/include/bits/stdint-uintn.h
- /usr/include/bits/stdio.h
- /usr/include/bits/stdio_lim.h
- /usr/include/bits/stdlib-bsearch.h
- /usr/include/bits/stdlib-float.h
- /usr/include/bits/struct_mutex.h
- /usr/include/bits/struct_rwlock.h
- /usr/include/bits/thread-shared-types.h
- /usr/include/bits/time64.h
- /usr/include/bits/timesize.h
- /usr/include/bits/types.h
- /usr/include/bits/types/FILE.h
- /usr/include/bits/types/__FILE.h
- /usr/include/bits/types/__fpos64_t.h
- /usr/include/bits/types/__fpos_t.h
- /usr/include/bits/types/__locale_t.h
- /usr/include/bits/types/__mbstate_t.h
- /usr/include/bits/types/__sigset_t.h
- /usr/include/bits/types/clock_t.h
- /usr/include/bits/types/clockid_t.h
- /usr/include/bits/types/cookie_io_functions_t.h
- /usr/include/bits/types/locale_t.h
- /usr/include/bits/types/sigset_t.h
- /usr/include/bits/types/struct_FILE.h
- /usr/include/bits/types/struct_timespec.h
- /usr/include/bits/types/struct_timeval.h
- /usr/include/bits/types/time_t.h
- /usr/include/bits/types/timer_t.h
- /usr/include/bits/typesizes.h
- /usr/include/bits/uintn-identity.h
- /usr/include/bits/waitflags.h
- /usr/include/bits/waitstatus.h
- /usr/include/bits/wchar.h
- /usr/include/bits/wordsize.h
- /usr/include/c++/15/bits/std_abs.h
- /usr/include/c++/15/cstdlib
- /usr/include/c++/15/pstl/pstl_config.h
- /usr/include/c++/15/stdlib.h
- /usr/include/c++/15/x86_64-redhat-linux/bits/c++config.h
- /usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h
- /usr/include/c++/15/x86_64-redhat-linux/bits/os_defines.h
- /usr/include/endian.h
- /usr/include/features-time64.h
- /usr/include/features.h
- /usr/include/gnu/stubs-64.h
- /usr/include/gnu/stubs.h
- /usr/include/stdc-predef.h
- /usr/include/stdint.h
- /usr/include/stdio.h
- /usr/include/stdlib.h
- /usr/include/string.h
- /usr/include/strings.h
- /usr/include/sys/cdefs.h
- /usr/include/sys/select.h
- /usr/include/sys/types.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
-
-CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.cpp
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h
- /usr/include/bits/floatn-common.h
- /usr/include/bits/floatn.h
- /usr/include/bits/libc-header-start.h
- /usr/include/bits/long-double.h
- /usr/include/bits/stdint-intn.h
- /usr/include/bits/stdint-least.h
- /usr/include/bits/stdint-uintn.h
- /usr/include/bits/stdio.h
- /usr/include/bits/stdio_lim.h
- /usr/include/bits/time64.h
- /usr/include/bits/timesize.h
- /usr/include/bits/types.h
- /usr/include/bits/types/FILE.h
- /usr/include/bits/types/__FILE.h
- /usr/include/bits/types/__fpos64_t.h
- /usr/include/bits/types/__fpos_t.h
- /usr/include/bits/types/__locale_t.h
- /usr/include/bits/types/__mbstate_t.h
- /usr/include/bits/types/cookie_io_functions_t.h
- /usr/include/bits/types/locale_t.h
- /usr/include/bits/types/struct_FILE.h
- /usr/include/bits/typesizes.h
- /usr/include/bits/wchar.h
- /usr/include/bits/wordsize.h
- /usr/include/features-time64.h
- /usr/include/features.h
- /usr/include/gnu/stubs-64.h
- /usr/include/gnu/stubs.h
- /usr/include/stdc-predef.h
- /usr/include/stdint.h
- /usr/include/stdio.h
- /usr/include/string.h
- /usr/include/strings.h
- /usr/include/sys/cdefs.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
-
-CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.cpp
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h
- /usr/include/bits/libc-header-start.h
- /usr/include/bits/long-double.h
- /usr/include/bits/stdint-intn.h
- /usr/include/bits/stdint-least.h
- /usr/include/bits/stdint-uintn.h
- /usr/include/bits/time64.h
- /usr/include/bits/timesize.h
- /usr/include/bits/types.h
- /usr/include/bits/typesizes.h
- /usr/include/bits/wchar.h
- /usr/include/bits/wordsize.h
- /usr/include/features-time64.h
- /usr/include/features.h
- /usr/include/gnu/stubs-64.h
- /usr/include/gnu/stubs.h
- /usr/include/stdc-predef.h
- /usr/include/stdint.h
- /usr/include/sys/cdefs.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
-
-CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.cpp
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h
- /usr/include/bits/libc-header-start.h
- /usr/include/bits/long-double.h
- /usr/include/bits/stdint-intn.h
- /usr/include/bits/stdint-least.h
- /usr/include/bits/stdint-uintn.h
- /usr/include/bits/time64.h
- /usr/include/bits/timesize.h
- /usr/include/bits/types.h
- /usr/include/bits/typesizes.h
- /usr/include/bits/wchar.h
- /usr/include/bits/wordsize.h
- /usr/include/features-time64.h
- /usr/include/features.h
- /usr/include/gnu/stubs-64.h
- /usr/include/gnu/stubs.h
- /usr/include/stdc-predef.h
- /usr/include/stdint.h
- /usr/include/sys/cdefs.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
-
-CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.cpp
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h
- /usr/include/bits/floatn-common.h
- /usr/include/bits/floatn.h
- /usr/include/bits/libc-header-start.h
- /usr/include/bits/long-double.h
- /usr/include/bits/stdint-intn.h
- /usr/include/bits/stdint-least.h
- /usr/include/bits/stdint-uintn.h
- /usr/include/bits/stdio.h
- /usr/include/bits/stdio_lim.h
- /usr/include/bits/time64.h
- /usr/include/bits/timesize.h
- /usr/include/bits/types.h
- /usr/include/bits/types/FILE.h
- /usr/include/bits/types/__FILE.h
- /usr/include/bits/types/__fpos64_t.h
- /usr/include/bits/types/__fpos_t.h
- /usr/include/bits/types/__mbstate_t.h
- /usr/include/bits/types/cookie_io_functions_t.h
- /usr/include/bits/types/struct_FILE.h
- /usr/include/bits/typesizes.h
- /usr/include/bits/wchar.h
- /usr/include/bits/wordsize.h
- /usr/include/features-time64.h
- /usr/include/features.h
- /usr/include/gnu/stubs-64.h
- /usr/include/gnu/stubs.h
- /usr/include/stdc-predef.h
- /usr/include/stdint.h
- /usr/include/stdio.h
- /usr/include/sys/cdefs.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
-
 graphics-gui_testing
  /lib64/ld-linux-x86-64.so.2
  /lib64/libc.so.6
@@ -1986,16 +2058,20 @@ graphics-gui_testing
  /usr/lib64/libz.so.1
  /usr/lib64/libzstd.so.1
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgetrender.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/font.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/main.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o
 

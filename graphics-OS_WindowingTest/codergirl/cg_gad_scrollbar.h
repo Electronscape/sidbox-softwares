@@ -1,0 +1,49 @@
+#ifndef CG_GAD_SCROLLBAR_H
+#define CG_GAD_SCROLLBAR_H
+
+#include "cg_gadgets.h"
+
+typedef struct GAD_SCROLLBAR_T{
+    // common
+    GAD_HDR_T   h;
+    uint8_t     used;
+
+    // behaviour
+    uint8_t     orient;      // SB_ORIENT_*
+    int16_t     min;         // used for thumb sizing + optional conversion
+    int16_t     max;
+    int16_t     step;        // affects thumb size + step in percent
+    int16_t     value;      // the actual value between min and max
+
+    // interaction
+    uint8_t     dragging;
+    int16_t     drag_off;    // mouse offset inside thumb (in track axis)
+
+    // arrows
+    uint8_t     show_arrows;    // needed for if we're using arrows
+} GAD_SCROLLBAR_T;
+
+
+// scroll bar needs extra bits -------------------------------------------
+typedef enum {
+    SB_ORIENT_VERT = 0,
+    SB_ORIENT_HORZ = 1
+} SB_ORIENT;
+
+typedef enum {
+    SB_PART_NONE = 0,
+    SB_PART_THUMB,
+    SB_PART_TRACK,
+    SB_PART_ARROW_UP,
+    SB_PART_ARROW_DOWN,
+    SB_PART_ARROW_LEFT,
+    SB_PART_ARROW_RIGHT
+} SBPart;
+
+
+extern GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
+
+
+
+
+#endif // CG_GAD_SCROLLBAR_H

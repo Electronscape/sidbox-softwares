@@ -9,12 +9,13 @@
 #include <QPoint>  // for the QPoint objects
 
 #include "sbapi_graphics.h"
-#include "sbx_windowex.h"
-#include "sbx_input.h"
+#include "codergirl/cg_windowex.h"
+#include "codergirl/cg_input.h"
 
 #include "fastram.h"
-#include "sbos_itemlist.h"
+#include "codergirl/cg_itemlist.h"
 
+#include "codergirl/cg_gad_scrollbar.h"
 
 
 float winScale = 1.0f;

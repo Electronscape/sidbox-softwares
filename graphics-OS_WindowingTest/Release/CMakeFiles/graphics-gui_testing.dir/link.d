@@ -6,15 +6,18 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/main.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/font.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o \
-  CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -95,23 +98,29 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/font.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o:
 
-CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o:
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 

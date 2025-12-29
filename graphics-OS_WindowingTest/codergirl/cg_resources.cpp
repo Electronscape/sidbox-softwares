@@ -1,0 +1,4 @@
+#ifndef CG_RESOURCES_CPP
+#define CG_RESOURCES_CPP
+
+#endif // CG_RESOURCES_CPP

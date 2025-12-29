@@ -12,31 +12,48 @@ qt_add_executable(graphics-gui_testing
     dialog.h
     dialog.ui
     graphics.cpp
-    font.h
-    font.cpp
+
+
+    codergirl/sys_font.h
+    codergirl/sys_font.cpp
     sbapi_graphics.h
 
-    sbx_windowex.h
-    sbx_windowex.cpp
+    codergirl/cg_windowex.h
+    codergirl/cg_windowex.cpp
 
+    codergirl/cg_gadgets.h
+    codergirl/cg_gadgets.cpp
 
+    codergirl/cg_renderer.h
+    codergirl/cg_renderer.cpp
 
+    sbapi_graphics.h
 
-    sbx_gadgets.h
+    codergirl/cg_input.h
+    codergirl/cg_input.cpp
 
-    sbx_render.h
-    sbx_render.cpp
-    sbx_gadgets.cpp
-
-    sbx_input.h
-    sbx_input.cpp
     bitmaps_src.cpp
     fastram.cpp
     fastram.h
-    sbos_itemlist.cpp
-    sbos_itemlist.h
-    codergirl/cgroot.cpp
-    codergirl/cgroot.h
+
+    codergirl/cg_itemlist.cpp
+    codergirl/cg_itemlist.h
+    codergirl/cg_aroot.cpp
+    codergirl/cg_aroot.h
+    codergirl/cg_resources.cpp
+    codergirl/cg_resources.h
+    codergirl/cg_gad_button.cpp
+    codergirl/cg_gad_button.h
+    codergirl/cg_glyphs.h
+    codergirl/cg_glyphs.cpp
+    codergirl/cg_type.h
+    codergirl/cg_gad_checkbox.h
+    codergirl/cg_gad_radio.h
+    codergirl/cg_gad_bitmapview.h
+    codergirl/cg_gad_scrollbar.h
+    codergirl/cg_gad_listbox.h
+
+    codergirl/cg_gadgetrender.h
 
 )
 
