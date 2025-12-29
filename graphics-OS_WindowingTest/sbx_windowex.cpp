@@ -409,6 +409,8 @@ sbx_window_t* SBOS_getWindow(SBXWindowId id){
 
 static void ui_dotted_rect_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t){
     if (w <= 0 || h <= 0 || t <= 0) return;
+    w++;
+    h++;
 
     // Expand outwards "t" pixels around the rect
     for (int16_t i = 0; i < t; i++){
@@ -1472,6 +1474,12 @@ static inline int16_t clamp_scroll(int16_t v, int16_t maxv){
 static void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
 
+    //// for practice really - any global changes to the clip must be stored and restored after you're done with it ////
+    UIClipRect old = g_uiclip;  // <<--- make a copy of the current clip! BELIVE ME you'll need this!!
+    ui_clip_set(0,0,0,0);       // <<--- demo set clip, wont do anything fancy but REMEMBER HOW HERE
+    g_uiclip = old;             // <<--- RESTORE old clip
+
+
     GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)g->gadget;
     if (!bv->h.visible) return;
 
@@ -1576,7 +1584,7 @@ static void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 
 
-    ui_clip_disable();
+    //ui_clip_disable();
 }
 
 
@@ -1636,456 +1644,515 @@ static uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g
 ////  WINDOW INTERFACE WITH MOUSE  //////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
-    if (evt == MOUSE_DOWN) {
-        g_ui.mouse_down = 1;
-        g_ui.resize_win = SBW_INVALID_ID;
+//// introducing a very function pointer way of doing things, instead of a branch of IF ELSE Types,
 
-        // hit-test once on press
-        for (int zi = (int) g_winZcount - 1; zi >= 0; zi--) {
-            SBXWindowId id = g_winZorder[zi];
-            if (id >= MAX_WINDOWS || !gui_used[id])
-                continue;
 
-            WHitResult hit = hittest_window(id, mx, my);
-            if (hit.region == WH_NONE)
-                continue;
-            sbx_window_t *w = SBOS_getWindow(hit.id);
+static uint32_t (*callMouseMoveEvt)(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
+static uint32_t (*callMouseReleaseEvt)(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
 
-            if (!(w->flags & SBX_WF_NOAUTOZORDER))
-                SBOS_bringToFront(hit.id);
-            SBOS_setFocus(hit.id); // if(!(w->flags & SBX_WF_NOFOCUS))      checked inside setFocus
+// function calls for MouseMoves ____
+// __BITMAPVIEW BOX__
 
-            g_ui.down_region = hit.region;
-            g_ui.down_win = hit.id;
+uint32_t onMouseMoveBitmapView(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
+    // the bitmap view system is more or less simples
+    (void)win; (void)evt;
 
-            //// WINDOW FRAME LATCHES //////////////////////////////////
-            // latch title gadget press
-            if (is_title_gadget_region(hit.region)) {
-                g_ui.title_win = hit.id;
-                g_ui.title_region = hit.region;
-                g_ui.title_inside = 1; // currently inside by definition
+    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;
+    if (bv && bv->panning && (bv->bv_flags & BVF_PAN)) {
+        int16_t dx = (int16_t) (*mx - bv->pan_start_mx);
+        int16_t dy = (int16_t) (*my - bv->pan_start_my);
+        bv->scroll_x = (int16_t) (bv->pan_start_x - dx);
+        bv->scroll_y = (int16_t) (bv->pan_start_y - dy);
+        SBOS_paintAllWindows();
+        return(1);
+    }
+    return 0;
+}
+
+uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
+    (void)win; (void)evt;
+    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
+    if (s->dragging) {
+        int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? *my : *mx;
+        int16_t new_thumb_pos = (int16_t) (m_axis - g_ui.sb_track_start - g_ui.sb_drag_off);
+        int16_t new_val = sb_value_from_thumb_pos(new_thumb_pos, s->min, s->max, g_ui.sb_travel);
+
+        if (new_val != s->value) {
+            s->value = new_val;
+            printf("SCROLLING: %d\n", s->value);
+            SBOS_paintAllWindows();
+        }
+    }
+    if (!s || !s->dragging) return 1;
+
+    return 0;   // this is happening all the time
+}
+
+/// MOUSE CAPTURE FEATURES -----------------
+uint32_t onMouseDownCaptureBitmapview(GADGET_BASE_T *gadget, int16_t *mx, int16_t *my){
+    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) gadget->gadget;
+    if (bv->bv_flags & BVF_PAN) {
+        bv->panning = 1;        // dragging mode
+        bv->pan_start_mx = *mx;
+        bv->pan_start_my = *my;
+        bv->pan_start_x = bv->scroll_x;
+        bv->pan_start_y = bv->scroll_y;
+    }
+    return 0x00;
+}
+
+uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my){
+    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
+
+    int16_t thumb_start = 0, thumb_len = 0, track_start = 0;
+    SBPart part = hittest_scrollbar_part(w, s, *mx, *my, &thumb_start, &thumb_len, &track_start);
+
+    s->dragging = 0;
+
+    if (part == SB_PART_ARROW_UP) {
+        s->value = clamp_i16(s->value - s->step, s->min, s->max);
+    } else if (part == SB_PART_ARROW_DOWN) {
+        s->value = clamp_i16(s->value + s->step, s->min, s->max);
+    } else if (part == SB_PART_ARROW_LEFT) {
+        s->value = clamp_i16(s->value - s->step, s->min, s->max);
+    } else if (part == SB_PART_ARROW_RIGHT) {
+        s->value = clamp_i16(s->value + s->step, s->min, s->max);
+
+    } else if (part == SB_PART_THUMB) {
+        s->dragging = 1;
+
+        int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? *my : *mx;
+
+        // Cache drag offset (mouse position relative to thumb start)
+        g_ui.sb_drag_off = (int16_t) (m_axis - thumb_start);
+        s->drag_off = g_ui.sb_drag_off; // optional
+
+        // Cache track start (axis start of the track in screen coords)
+        g_ui.sb_track_start = track_start;
+
+        // Compute track_len using the same geometry logic
+
+        Rect16 inner = win_inner_rect(w);
+        int16_t reserveR = win_inner_reserve_right(w);
+        int16_t reserveB = win_inner_reserve_bottom(w);
+
+        int16_t ax, ay, aw, ah;
+
+        if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT)
+            && (s->orient == SB_ORIENT_VERT)) {
+            ax = (int16_t) (inner.x + inner.w
+                            - SB_SCROLL_THICK);
+            ay = inner.y;
+            aw = SB_SCROLL_THICK;
+            ah = (int16_t) (inner.h - reserveB);
+        } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM)
+                   && (s->orient == SB_ORIENT_HORZ)) {
+            ax = inner.x;
+            ay = (int16_t) (inner.y + inner.h
+                            - SB_SCROLL_THICK);
+            aw = (int16_t) (inner.w - reserveR);
+            ah = SB_SCROLL_THICK;
+        } else {
+            ax = (int16_t) (w->clientrect.x + s->h.rect.x);
+            ay = (int16_t) (w->clientrect.y + s->h.rect.y);
+            aw = s->h.rect.w;
+            ah = s->h.rect.h;
+        }
+
+        if (s->show_arrows) {
+            if (s->orient == SB_ORIENT_VERT) {
+                ah -= SB_ARROW_SHRINK * 2;
+                ay += SB_ARROW_SHRINK; // Not strictly needed for length calc, but good for consistency
             } else {
-                g_ui.title_win = SBW_INVALID_ID;
-                g_ui.title_region = WH_NONE;
-                g_ui.title_inside = 0;
+                aw -= SB_ARROW_SHRINK * 2;
+                ax += SB_ARROW_SHRINK;
             }
+        }
 
-            if (hit.region == WH_RESIZE) {
-                if (w && (w->flags & SBX_WF_RESIZABLE)) {
-                    g_ui.resize_win = hit.id;
-                    g_ui.r_start_mx = mx;
-                    g_ui.r_start_my = my;
-                    g_ui.r_start_w = w->winrect.w;
-                    g_ui.r_start_h = w->winrect.h;
+        int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ah : aw;
+        int16_t travel = (int16_t) (track_len - thumb_len);
+        if (travel < 0)
+            travel = 0;
+        g_ui.sb_travel = travel;
+
+    } else if (part == SB_PART_TRACK) {
+        // Track step click (VALUE-BASED)
+        int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? *my : *mx;
+
+        // ensure sane step
+        int16_t step = (s->step <= 0) ? 1 : s->step;
+
+        if (m_axis < thumb_start)
+            s->value = clamp_i16( (int16_t) (s->value - step), s->min, s->max);
+        else
+            s->value = clamp_i16(
+                (int16_t) (s->value + step), s->min,
+                s->max);
+
+        // IMPORTANT: not dragging
+        s->dragging = 0;
+        s->drag_off = 0;
+        g_ui.sb_track_start = 0;
+        g_ui.sb_travel = 0;
+        g_ui.sb_drag_off = 0;
+        //SBOS_paintAllWindows();
+    }
+
+    //if (!s->dragging) return 1; // not dragging,
+    return 0x00;    // always ok FOR NOW
+}
+
+uint32_t onMouseReleaseScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
+    (void)win; (void)evt; (void)mx; (void)my;
+
+    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
+    if (!s) return 1;   // panic
+
+    s->dragging = 0;
+    s->drag_off = 0;
+    g_ui.sb_track_start = 0;
+    g_ui.sb_travel = 0;
+    g_ui.sb_drag_off = 0;
+    return 0;   // all good 0 as in 0k :)
+}
+
+uint32_t onMouseUpBitmapView(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
+    (void)win; (void)evt; (void)mx; (void)my;
+    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;
+    if (!bv) return 1;  // panic status
+
+    bv->panning = 0;
+    return 0;   // all good 0 as in 0k :)
+}
+
+uint32_t doCancellables(sbx_window_t *gw, GADGET_BASE_T *g){
+    switch (g->gadgetType) {
+        case GAD_BUTTON: {
+            GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;
+
+            b->current_option++;
+            if (b->current_option > b->max_options - 1)
+                b->current_option = 0;
+
+            printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
+                   b->current_option);
+        }
+        break;
+        case GAD_CHECKBOX: {
+            GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
+            c->checked ^= 1;
+            printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
+        }
+        break;
+        case GAD_RADIO: {
+            GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
+            if (gw) {
+                // clear all radios in same group in this window
+                for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
+                    GADGET_BASE_T *og = gw->GADGETS[i];
+                    if (!og || og->gadgetType != GAD_RADIO
+                        || !og->gadget)
+                        continue;
+
+                    GAD_RADIO_T *ort = (GAD_RADIO_T*) og->gadget;
+                    if (ort->group == r->group)
+                        ort->checked = 0;
+                }
+                r->checked = 1;
+            }
+            printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
+        }
+        break;
+
+        default:
+            break;
+    }
+    return (0x00);/// this doesnt really need to worry about anything
+}
+
+
+void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
+
+    uint8_t repaint = 0;
+    uint8_t cleanups = 0;
+
+
+    switch(evt){
+        ///////////////////////////////////// MOUSE DOWN ////////////////////////////////////////
+        case MOUSE_DOWN:{
+            g_ui.mouse_down = 1;
+            g_ui.resize_win = SBW_INVALID_ID;
+            callMouseMoveEvt = NULL;    // clear the call event (will move this to the mouse up tho later
+
+            // hit-test once on press
+            for (int zi = (int) g_winZcount - 1; zi >= 0; zi--) {
+                SBXWindowId id = g_winZorder[zi];
+                if (id >= MAX_WINDOWS || !gui_used[id])
+                    continue;
+
+                WHitResult hit = hittest_window(id, mx, my);
+                if (hit.region == WH_NONE)
+                    continue;
+                sbx_window_t *w = SBOS_getWindow(hit.id);
+
+                if (!(w->flags & SBX_WF_NOAUTOZORDER))
+                    SBOS_bringToFront(hit.id);
+                SBOS_setFocus(hit.id); // if(!(w->flags & SBX_WF_NOFOCUS))      checked inside setFocus
+                repaint = 1;
+
+                g_ui.down_region = hit.region;
+                g_ui.down_win = hit.id;
+
+                //// WINDOW FRAME LATCHES //////////////////////////////////
+                // latch title gadget press
+                if (is_title_gadget_region(hit.region)) {
+                    g_ui.title_win = hit.id;
+                    g_ui.title_region = hit.region;
+                    g_ui.title_inside = 1; // currently inside by definition
+                } else {
+                    g_ui.title_win = SBW_INVALID_ID;
+                    g_ui.title_region = WH_NONE;
+                    g_ui.title_inside = 0;
+                }
+
+                if (hit.region == WH_RESIZE) {
+                    if (w && (w->flags & SBX_WF_RESIZABLE)) {
+                        g_ui.resize_win = hit.id;
+                        g_ui.r_start_mx = mx;
+                        g_ui.r_start_my = my;
+                        g_ui.r_start_w = w->winrect.w;
+                        g_ui.r_start_h = w->winrect.h;
+                    }
+                    break;
+                }
+
+                // start drag if title hit
+                if (hit.region == WH_TITLE) {
+                    if (w->flags & SBX_WF_MOVEABLE) {
+                        g_ui.drag_win = hit.id;
+                        g_ui.drag_off_x = mx - w->winrect.x;
+                        g_ui.drag_off_y = my - w->winrect.y;
+                    }
+                }
+
+                ////////// THEN do the hits inside the program window view port //////////////////
+                /// Likely the gadgets /// will need to figure out the docked window frame gadgets later
+                /// KEEP FOR NOW will ned them for later
+                if (hit.region == WH_CLIENT && w) {
+                    GADGET_BASE_T *g = hittest_gadget(w, mx, my);
+                    if (g) {
+                        ui_clear_title_latch();
+                        ui_clear_drag();
+                        g_ui.resize_win = SBW_INVALID_ID;
+                        g_ui.down_win = hit.id;
+                        g_ui.down_region = WH_CLIENT;
+                        g_ui.capturedGadget = g;
+
+                        GAD_HDR_T *h = (GAD_HDR_T*) g->gadget;
+                        h->down = 1;
+
+                        callMouseMoveEvt    = NULL;
+                        callMouseReleaseEvt = NULL;
+
+                        // keep this here for now, but eventually i'll change this to just be "onmouseDownCapture(a bunch of fields)" and let taht be the switch gate
+                        switch(g->gadgetType){
+                            case GAD_BITMAPVIEW:{
+                                if(!onMouseDownCaptureBitmapview(g, &mx, &my)){   // capture success
+                                    callMouseMoveEvt = onMouseMoveBitmapView;
+                                    callMouseReleaseEvt = onMouseUpBitmapView;
+                                }
+                            } break;
+                            case GAD_SCROLLBAR:{
+                                if(!onMouseDownCaptureScrollBar(w, g, &mx, &my)){ // capture success
+                                    callMouseMoveEvt = onMouseMoveScrollbar;
+                                    callMouseReleaseEvt = onMouseReleaseScrollbar;
+                                }
+                            } break;
+                            default: break;
+                        }
+                    }
+                }
+                break;
+            }
+        } break;
+
+        ///////////////////////////////////// MOUSE MOVE ////////////////////////////////////////
+        case MOUSE_MOVE:{
+            // ######################### RESIZE WINDOW #############################
+            if (g_ui.mouse_down && g_ui.resize_win != SBW_INVALID_ID) {
+                sbx_window_t *w = SBOS_getWindow(g_ui.resize_win);
+                if (w) {
+                    enforce_screen_bounds(w);
+                    int16_t dx = (int16_t) (mx - g_ui.r_start_mx);
+                    int16_t dy = (int16_t) (my - g_ui.r_start_my);
+
+                    int16_t nw = (int16_t) (g_ui.r_start_w + dx);
+                    int16_t nh = (int16_t) (g_ui.r_start_h + dy);
+
+                    // Optional: keep window inside screen when growing
+                    if (w->flags & SBX_WF_SCREENBOUND) {
+                        if (w->winrect.x + nw > SCR_WIDTH)
+                            nw = (int16_t) (SCR_WIDTH - w->winrect.x);
+                        if (w->winrect.y + nh > SCR_HEIGHT)
+                            nh = (int16_t) (SCR_HEIGHT - w->winrect.y);
+                    }
+
+                    // enforce minimum window size
+                    if (nw < 100)
+                        nw = 100;
+                    if (nh < 100)
+                        nh = 100;
+
+                    w->winrect.w = nw;
+                    w->winrect.h = nh;
+
+                    layoutWindow(w);
+                    repaint = 1;
                 }
                 break;
             }
 
-            // start drag if title hit
-            if (hit.region == WH_TITLE) {
-                if (w->flags & SBX_WF_MOVEABLE) {
-                    g_ui.drag_win = hit.id;
-                    g_ui.drag_off_x = mx - w->winrect.x;
-                    g_ui.drag_off_y = my - w->winrect.y;
+            // ######################### MOVE WINDOW #############################
+            if (g_ui.mouse_down && g_ui.drag_win != SBW_INVALID_ID) {
+                sbx_window_t *w = SBOS_getWindow(g_ui.drag_win);
+                if (w) {
+                    w->winrect.x = mx - g_ui.drag_off_x;
+                    w->winrect.y = my - g_ui.drag_off_y;
+                    // keep layout consistent
+                    enforce_screen_bounds(w);
+
+                    layoutWindow(w);
+                    repaint = 1;
                 }
+                break;
             }
 
-            ////////// THEN do the hits inside the program window view port //////////////////
-            /// Likely the gadgets /// will need to figure out the docked window frame gadgets later
-            /// KEEP FOR NOW will ned them for later
-            if (hit.region == WH_CLIENT && w) {
-                GADGET_BASE_T *g = hittest_gadget(w, mx, my);
-                if (g) {
-                    ui_clear_title_latch();
-                    ui_clear_drag();
-                    g_ui.resize_win = SBW_INVALID_ID;
-
-                    g_ui.down_win = hit.id;
-                    g_ui.down_region = WH_CLIENT;
-
-                    g_ui.capturedGadget = g;
-
-                    // press it
-                    GAD_HDR_T *h = (GAD_HDR_T*) g->gadget;
-                    h->down = 1;
-
-                    if (g->gadgetType == GAD_BITMAPVIEW) {
-                        GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;
-                        if (bv->bv_flags & BVF_PAN) {
-                            bv->panning = 1;
-                            bv->pan_start_mx = mx;
-                            bv->pan_start_my = my;
-                            bv->pan_start_x = bv->scroll_x;
-                            bv->pan_start_y = bv->scroll_y;
-                        }
-                    }
-
-                    // scrollbar interaction check (VALUE-BASED)
-                    if (g->gadgetType == GAD_SCROLLBAR) {
-                        GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
-
-                        int16_t thumb_start = 0, thumb_len = 0, track_start = 0;
-                        SBPart part = hittest_scrollbar_part(w, s, mx, my,
-                                                             &thumb_start, &thumb_len, &track_start);
-
-                        if (part == SB_PART_ARROW_UP) {
-                            s->value = clamp_i16(s->value - s->step, s->min,
-                                                 s->max);
-                        } else if (part == SB_PART_ARROW_DOWN) {
-                            s->value = clamp_i16(s->value + s->step, s->min,
-                                                 s->max);
-                        } else if (part == SB_PART_ARROW_LEFT) {
-                            s->value = clamp_i16(s->value - s->step, s->min,
-                                                 s->max);
-                        } else if (part == SB_PART_ARROW_RIGHT) {
-                            s->value = clamp_i16(s->value + s->step, s->min,
-                                                 s->max);
-
-                        } else if (part == SB_PART_THUMB) {
-                            s->dragging = 1;
-
-                            int16_t m_axis =
-                                (s->orient == SB_ORIENT_VERT) ? my : mx;
-
-                            // Cache drag offset (mouse position relative to thumb start)
-                            g_ui.sb_drag_off = (int16_t) (m_axis - thumb_start);
-                            s->drag_off = g_ui.sb_drag_off; // optional
-
-                            // Cache track start (axis start of the track in screen coords)
-                            g_ui.sb_track_start = track_start;
-
-                            // Compute track_len using the same geometry logic
-
-                            Rect16 inner = win_inner_rect(w);
-                            int16_t reserveR = win_inner_reserve_right(w);
-                            int16_t reserveB = win_inner_reserve_bottom(w);
-
-                            int16_t ax, ay, aw, ah;
-
-                            if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT)
-                                && (s->orient == SB_ORIENT_VERT)) {
-                                ax = (int16_t) (inner.x + inner.w
-                                                - SB_SCROLL_THICK);
-                                ay = inner.y;
-                                aw = SB_SCROLL_THICK;
-                                ah = (int16_t) (inner.h - reserveB);
-                            } else if ((s->h.flags & GAD_TOOL_DOCKED_BOTTOM)
-                                       && (s->orient == SB_ORIENT_HORZ)) {
-                                ax = inner.x;
-                                ay = (int16_t) (inner.y + inner.h
-                                                - SB_SCROLL_THICK);
-                                aw = (int16_t) (inner.w - reserveR);
-                                ah = SB_SCROLL_THICK;
-                            } else {
-                                ax = (int16_t) (w->clientrect.x + s->h.rect.x);
-                                ay = (int16_t) (w->clientrect.y + s->h.rect.y);
-                                aw = s->h.rect.w;
-                                ah = s->h.rect.h;
-                            }
-
-                            if (s->show_arrows) {
-                                if (s->orient == SB_ORIENT_VERT) {
-                                    ah -= SB_ARROW_SHRINK * 2;
-                                    ay += SB_ARROW_SHRINK; // Not strictly needed for length calc, but good for consistency
-                                } else {
-                                    aw -= SB_ARROW_SHRINK * 2;
-                                    ax += SB_ARROW_SHRINK;
-                                }
-                            }
-
-                            int16_t track_len =
-                                (s->orient == SB_ORIENT_VERT) ? ah : aw;
-                            int16_t travel = (int16_t) (track_len - thumb_len);
-                            if (travel < 0)
-                                travel = 0;
-                            g_ui.sb_travel = travel;
-
-                        } else if (part == SB_PART_TRACK) {
-                            // Track step click (VALUE-BASED)
-                            int16_t m_axis =
-                                (s->orient == SB_ORIENT_VERT) ? my : mx;
-
-                            // ensure sane step
-                            int16_t step = (s->step <= 0) ? 1 : s->step;
-
-                            if (m_axis < thumb_start)
-                                s->value = clamp_i16(
-                                    (int16_t) (s->value - step), s->min,
-                                    s->max);
-                            else
-                                s->value = clamp_i16(
-                                    (int16_t) (s->value + step), s->min,
-                                    s->max);
-
-                            // IMPORTANT: not dragging
-                            s->dragging = 0;
-                            s->drag_off = 0;
-                            g_ui.sb_track_start = 0;
-                            g_ui.sb_travel = 0;
-                            g_ui.sb_drag_off = 0;
-                            //SBOS_paintAllWindows();
-                        }
-                    }
-                    SBOS_paintAllWindows();
-                    return;
-                }
-            }
-            break;
-        }
-        SBOS_paintAllWindows();
-        return;
-    }
-
-    if (evt == MOUSE_MOVE) {
-        // resize window -------- resize window gadget
-        if (g_ui.mouse_down && g_ui.resize_win != SBW_INVALID_ID) {
-            sbx_window_t *w = SBOS_getWindow(g_ui.resize_win);
-            if (w) {
-                enforce_screen_bounds(w);
-                int16_t dx = (int16_t) (mx - g_ui.r_start_mx);
-                int16_t dy = (int16_t) (my - g_ui.r_start_my);
-
-                int16_t nw = (int16_t) (g_ui.r_start_w + dx);
-                int16_t nh = (int16_t) (g_ui.r_start_h + dy);
-
-                // Optional: keep window inside screen when growing
-                if (w->flags & SBX_WF_SCREENBOUND) {
-                    if (w->winrect.x + nw > SCR_WIDTH)
-                        nw = (int16_t) (SCR_WIDTH - w->winrect.x);
-                    if (w->winrect.y + nh > SCR_HEIGHT)
-                        nh = (int16_t) (SCR_HEIGHT - w->winrect.y);
-                }
-
-                // enforce minimum window size
-                if (nw < 100)
-                    nw = 100;
-                if (nh < 100)
-                    nh = 100;
-
-                w->winrect.w = nw;
-                w->winrect.h = nh;
-
-                layoutWindow(w);
-                SBOS_paintAllWindows();
-            }
-            return;
-        }
-
-        if (g_ui.mouse_down && g_ui.capturedGadget
-            && g_ui.capturedGadget->gadgetType == GAD_BITMAPVIEW) {
-            GAD_BITMAPVIEW_T *bv =
-                (GAD_BITMAPVIEW_T*) g_ui.capturedGadget->gadget;
-            if (bv && bv->panning && (bv->bv_flags & BVF_PAN)) {
-                int16_t dx = (int16_t) (mx - bv->pan_start_mx);
-                int16_t dy = (int16_t) (my - bv->pan_start_my);
-
-                // "grab and drag" feel
-                bv->scroll_x = (int16_t) (bv->pan_start_x - dx);
-                bv->scroll_y = (int16_t) (bv->pan_start_y - dy);
-
-                SBOS_paintAllWindows();
-                return;
-            }
-        }
-
-        // dragging the window about the place
-        if (g_ui.mouse_down && g_ui.drag_win != SBW_INVALID_ID) {
-            sbx_window_t *w = SBOS_getWindow(g_ui.drag_win);
-            if (w) {
-                w->winrect.x = mx - g_ui.drag_off_x;
-                w->winrect.y = my - g_ui.drag_off_y;
-                // keep layout consistent
-                enforce_screen_bounds(w);
-
-                layoutWindow(w);
-                SBOS_paintAllWindows();
-            }
-            return;
-        }
-
-        /// GADGET HANDLING
-        if (g_ui.mouse_down && g_ui.capturedGadget) {
-            sbx_window_t *gw = SBOS_getWindow(g_ui.capturedGadget->winhnd);
-            if (gw) {
-                GAD_HDR_T *h = (GAD_HDR_T*) g_ui.capturedGadget->gadget;
-                if (g_ui.capturedGadget->gadgetType == GAD_SCROLLBAR) {
-                    GAD_SCROLLBAR_T *s =
-                        (GAD_SCROLLBAR_T*) g_ui.capturedGadget->gadget;
-                    if (s->dragging) {
-                        int16_t m_axis =
-                            (s->orient == SB_ORIENT_VERT) ? my : mx;
-                        int16_t new_thumb_pos = (int16_t) (m_axis
-                                                           - g_ui.sb_track_start - g_ui.sb_drag_off);
-                        int16_t new_val = sb_value_from_thumb_pos(new_thumb_pos,
-                                                                  s->min, s->max, g_ui.sb_travel);
-
-                        if (new_val != s->value) {
-                            s->value = new_val;
-                            printf("SCROLLING: %d\n", s->value);
-                            SBOS_paintAllWindows();
-                        }
-                    }
-                    return;
-                }
-
-                // non-scrollbar default "down if inside" behaviour
-                uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget,
-                                                     mx, my);
-                uint8_t newDown = inside ? 1 : 0;
-                if (newDown != h->down) {
-                    h->down = newDown;
-                    SBOS_paintAllWindows();
-                }
-            }
-            return;
-        }
-
-        // when mouse is held down and a gadget is captured
-        if (g_ui.mouse_down && g_ui.title_win != SBW_INVALID_ID
-            && is_title_gadget_region(g_ui.title_region)) {
-            WHitResult ht = hittest_window(g_ui.title_win, mx, my);
-            uint8_t inside = (ht.region == g_ui.title_region);
-            if (inside != g_ui.title_inside) {
-                g_ui.title_inside = inside;
-                SBOS_paintAllWindows();
-            }
-        }
-
-        return;
-    }
-
-    if (evt == MOUSE_UP) {
-        // stop resize no matter what
-        g_ui.resize_win = SBW_INVALID_ID;
-
-        // 1) TITLE GADGET RELEASE (latched)
-        if (g_ui.title_win != SBW_INVALID_ID
-            && is_title_gadget_region(g_ui.title_region)) {
-            SBXWindowId wclick = g_ui.title_win;
-            WHitRegion rclick = g_ui.title_region;
-
-            // pop visual first
-            g_ui.title_win = SBW_INVALID_ID;
-            g_ui.title_region = WH_NONE;
-            g_ui.title_inside = 0;
-
-            // click only if released inside same gadget
-            WHitResult ht = hittest_window(wclick, mx, my);
-            if (ht.region == rclick) {
-                if (rclick == WH_CLOSE) {
-                    SBOS_destroyWindow(wclick);
-                    printf("GLYPH HIT - Close Window\r\n");
-                } else if (rclick == WH_ZORDER) {
-                    SBOS_sendToBack(wclick);
-                    printf("GLYPH HIT - Zorder\r\n");
-                } else if (rclick == WH_MINIMISE) {
-                    printf("GLYPH HIT - Minimised\r\n");
-                    /* TODO */
-                } else if (rclick == WH_MAXRESTORE) {
-                    printf("GLYPH HIT - MaxRestore\r\n");
-                    /* TODO */
-                }
-            }
-            SBOS_paintAllWindows();
-
-            // common cleanup
-            ui_end_interaction();
-            return;
-        }
-
-        /// the gadget was released
-        if (g_ui.capturedGadget) {
-            GADGET_BASE_T *g = g_ui.capturedGadget;
-            sbx_window_t *gw = SBOS_getWindow(g->winhnd);
-
-            uint8_t inside = 0;
-            if (gw)
-                inside = gadget_mouse_inside(gw, g, mx, my);
-
-            // pop visual
-            GAD_HDR_T *h = (GAD_HDR_T*) g->gadget;
-            h->down = 0;
-
-            // scroller importance
-            // If scrollbar, ALWAYS stop dragging (regardless of inside)
-            if (g->gadgetType == GAD_SCROLLBAR) {
-                GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
-                s->dragging = 0;
-                s->drag_off = 0;
-                g_ui.sb_track_start = 0;
-                g_ui.sb_travel = 0;
-                g_ui.sb_drag_off = 0;
-
+            // ######################### GADGETS IN WINDOW #########################
+            if (g_ui.mouse_down && g_ui.capturedGadget) {
+                sbx_window_t *gw = SBOS_getWindow(g_ui.capturedGadget->winhnd);
                 if (gw) {
-                    printf("SCROLLBAR USED: %d\r\n", s->value);
+                    // this handles the last gadget that was click mouse down'd (this is NOT a multi-point OS so thank GOD!)
+                    if(callMouseMoveEvt) {
+                        uint32_t stop = callMouseMoveEvt(gw, g_ui.capturedGadget, &evt, &mx, &my);
+                        if (stop) { repaint = 1; break; }  // skip default inside/down behavior
+                    }
+
+                    // non-scrollbar default "down if inside" behaviour
+                    // this is default when something can be cancelled just by moving out the gadget.
+                    GAD_HDR_T *h = (GAD_HDR_T*) g_ui.capturedGadget->gadget;
+                    uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget, mx, my);
+                    uint8_t newDown = inside ? 1 : 0;
+                    if (newDown != h->down) {
+                        h->down = newDown;
+                        repaint = 1;
+                    }
                 }
-
+                break;
             }
 
-            if (g_ui.capturedGadget
-                && g_ui.capturedGadget->gadgetType == GAD_BITMAPVIEW) {
-                GAD_BITMAPVIEW_T *bv =
-                    (GAD_BITMAPVIEW_T*) g_ui.capturedGadget->gadget;
-                if (bv)
-                    bv->panning = 0;
-            }
-
-            g_ui.capturedGadget = NULL;
-
-            if (inside) {
-                switch (g->gadgetType) {
-                    case GAD_BUTTON: {
-                        GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;
-
-                        b->current_option++;
-                        if (b->current_option > b->max_options - 1)
-                            b->current_option = 0;
-
-                        printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
-                               b->current_option);
-                    }
-                    break;
-                    case GAD_CHECKBOX: {
-                        GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
-                        c->checked ^= 1;
-                        printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text,
-                               c->checked);
-                    }
-                    break;
-                    case GAD_RADIO: {
-                        GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
-                        if (gw) {
-                            // clear all radios in same group in this window
-                            for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
-                                GADGET_BASE_T *og = gw->GADGETS[i];
-                                if (!og || og->gadgetType != GAD_RADIO
-                                    || !og->gadget)
-                                    continue;
-
-                                GAD_RADIO_T *ort = (GAD_RADIO_T*) og->gadget;
-                                if (ort->group == r->group)
-                                    ort->checked = 0;
-                            }
-                            r->checked = 1;
-                        }
-                        printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
-                    }
-                    break;
-
-                    default:
-                        break;
+            // ######################### CANCEL MOTIONS ############################
+            // when mouse is held down and a gadget is captured
+            if (g_ui.mouse_down && g_ui.title_win != SBW_INVALID_ID
+                && is_title_gadget_region(g_ui.title_region)) {
+                WHitResult ht = hittest_window(g_ui.title_win, mx, my);
+                uint8_t inside = (ht.region == g_ui.title_region);
+                if (inside != g_ui.title_inside) {
+                    g_ui.title_inside = inside;
+                    repaint = 1;
                 }
             }
+        } break;
 
-            SBOS_paintAllWindows();
-            ui_end_interaction();
-            return;
-        }
-        // 4 OTHERWISE: just cleanup (end drag etc)
-        SBOS_paintAllWindows();
-        ui_end_interaction();
-        return;
+        ///////////////////////////////////// MOUSE UP //////////////////////////////////////////
+        case MOUSE_UP:{
+            g_ui.resize_win = SBW_INVALID_ID;
+
+            // 1) TITLE GADGET RELEASE (latched)
+            if (g_ui.title_win != SBW_INVALID_ID && is_title_gadget_region(g_ui.title_region)) {
+                SBXWindowId wclick = g_ui.title_win;
+                WHitRegion rclick = g_ui.title_region;
+
+                // pop visual first
+                g_ui.title_win = SBW_INVALID_ID;
+                g_ui.title_region = WH_NONE;
+                g_ui.title_inside = 0;
+
+                // click only if released inside same gadget
+                WHitResult ht = hittest_window(wclick, mx, my);
+                if (ht.region == rclick) {
+                    if (rclick == WH_CLOSE) {
+                        SBOS_destroyWindow(wclick);
+                        printf("GLYPH HIT - Close Window\r\n");
+                    } else if (rclick == WH_ZORDER) {
+                        SBOS_sendToBack(wclick);
+                        printf("GLYPH HIT - Zorder\r\n");
+                    } else if (rclick == WH_MINIMISE) {
+                        printf("GLYPH HIT - Minimised\r\n");
+                        /* TODO */
+                    } else if (rclick == WH_MAXRESTORE) {
+                        printf("GLYPH HIT - MaxRestore\r\n");
+                        /* TODO */
+                    }
+                }
+                repaint = 1;
+                cleanups = 1;
+                break;
+            }
+
+            /// the gadget was released
+            if (g_ui.capturedGadget) {
+                GADGET_BASE_T *g = g_ui.capturedGadget;
+                sbx_window_t *gw = SBOS_getWindow(g->winhnd);
+
+                uint8_t inside = 0;
+                if (gw)
+                    inside = gadget_mouse_inside(gw, g, mx, my);
+
+                // pop visual
+                GAD_HDR_T *h = (GAD_HDR_T*) g->gadget;
+                h->down = 0;
+
+                uint32_t handled = 0;
+                if(callMouseReleaseEvt && gw){
+                    handled = callMouseReleaseEvt(gw, g, &evt, &mx, &my);
+                    //if(cres) return;
+                }
+
+                g_ui.capturedGadget = NULL;
+
+                bool clickActivate =
+                    (g->gadgetType == GAD_BUTTON) ||
+                    (g->gadgetType == GAD_CHECKBOX) ||
+                    (g->gadgetType == GAD_RADIO);
+
+
+                if (clickActivate && inside) {
+                    doCancellables(gw, g);
+
+                }
+
+                repaint = 1;
+                cleanups = 1;
+                break;
+            }
+            // 4 OTHERWISE: just cleanup (end drag etc)
+            repaint = 1;
+            cleanups = 1;
+        } break;
+
+        default:
+            break;
     }
+
+    if(repaint)
+        SBOS_paintAllWindows();
+
+    if(cleanups){
+        cleanups = 0;
+        callMouseMoveEvt = NULL;    // clear the call event (will move this to the mouse up tho later
+        callMouseReleaseEvt = NULL;
+        ui_end_interaction();
+    }
+
 }
 

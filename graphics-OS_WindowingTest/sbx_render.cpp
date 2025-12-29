@@ -224,23 +224,24 @@ void glyph_minimise(int16_t x, int16_t y, int16_t w, int16_t h){
 }
 
 void glyph_max_box(int16_t x, int16_t y, int16_t w, int16_t h){
-    int16_t bx = x + 4;
-    int16_t by = y + 4;
-    int16_t bw = w - 8;
-    int16_t bh = h - 8;
+    int16_t bx = x + 5;
+    int16_t by = y + 5;
+    int16_t bw = w - 10;
+    int16_t bh = h - 10;
     if (bw <= 0 || bh <= 0) return;
 
     gfx_setcolour(WIN_BEVEL_L);
     ui_hline(bx, by, bw);
+    ui_hline(bx, by+1, bw);
     ui_hline(bx, by + bh - 1, bw);
     ui_vline(bx, by, bh);
     ui_vline(bx + bw - 1, by, bh);
 }
 
 void glyph_zorder(int16_t x, int16_t y, int16_t w, int16_t h){
-    int16_t ix = x + 4;
+    int16_t ix = x + 5;
     int16_t iy = y + 5;
-    int16_t iw = w - 8;
+    int16_t iw = w - 10;
     if (iw <= 0) return;
 
     gfx_setcolour(WIN_BEVEL_L);

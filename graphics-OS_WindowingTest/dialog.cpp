@@ -126,7 +126,7 @@ Dialog::Dialog(QWidget *parent)
 
 
 
-    SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "NoBorder 1", SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+    SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
 
     // a bitmap viewable window ;) lets see if this works!!
     SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
@@ -139,13 +139,10 @@ Dialog::Dialog(QWidget *parent)
 
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if (winMain2 == SBW_INVALID_ID) {
-        // no free window slots — OS politely shrugs
         printf("No more windows left\n");
     } else
         printf("Window ID %d\n", winMain2);
 
-
-    //sbx_window_t w = SBOS_getWindow(winMain2);
 
     SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
 
@@ -167,7 +164,7 @@ Dialog::Dialog(QWidget *parent)
                       10, 120, 150, 16,
                       SB_ORIENT_HORZ,
                       0, 1000,
-                      100,
+                      250,
                       0,
                       GAD_TOOL_SCROLLARROWS);
 
@@ -214,39 +211,7 @@ Dialog::Dialog(QWidget *parent)
                       0,                      // initial percent
                           GAD_TOOL_DOCKED_RIGHT);
 
-    //SBOS_addButton(winMain2, -6,  66,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_BOTTOM
 
-/*
-    sbx_window_t *w = SBOS_getWindow(workbench);
-    SBControlHandle hWorkBench = SBOS_CreateButton(w, 6,  6,  220, 26, "Workbench button");
-    SBControlHandle hBigButty  = SBOS_CreateButton(w, 300,  200,  180, 120, "BLOB TEST");
-
-
-
-    w = SBOS_getWindow(winMain2);
-
-    SBControlHandle hOk     = SBOS_CreateButton(w, 6,  6,  70, 26, "OK");
-    SBControlHandle hCancel = SBOS_CreateButton(w, 80,  6,  70, 26, "Cancel");
-    SBControlHandle hLong   = SBOS_CreateButton(w, 160, 6, 160, 26, "Long button name");
-    SBControlHandle hLab    = SBOS_CreateLabel (w, 6, 36, "LABEL #1");
-
-    SBControlHandle hV      = SBOS_CreateScrollbar(w, SBX_SB_VERT, SBX_DOCK_RIGHT,  20, 0, 100, 0, 20);
-    SBControlHandle hH      = SBOS_CreateScrollbar(w, SBX_SB_HORZ, SBX_DOCK_BOTTOM, 20, 0, 100, 0, 20);
-
-    SBControlHandle rad1    = SBOS_CreateRadioButton(w, 16, 80, 0, "Test1", 1);
-    SBControlHandle rad2    = SBOS_CreateRadioButton(w, 16, 110, 0, "Test2", 0);
-    SBControlHandle check1  = SBOS_CreateCheckbox(w, 100, 110, "SIDBOX OS!", 0);
-
-    SBControlHandle hFree = SBOS_CreateScrollbar(w, SBX_SB_HORZ, SBX_DOCK_NONE, 20, 0, 100, 0, 1);
-
-    // move by USER ID still works:
-    SBOS_MoveScrollbar(w, hFree, 10, 60, 100, 16, SBX_SB_HORZ);
-    printf("Scroll is: %hu\n", hFree);
-    printf("Scroll Docked is: %hu\n", hV);
-
-    // or better: move by handle (if you add it):
-    // SBOX_MoveScrollbarH(w, hFree, 10, 60, 100, 16, SBX_SB_HORZ);
-*/
     SBOS_setFocus(winMain2);
     SBOS_paintAllWindows();
     updateGFXScreen();
@@ -272,7 +237,7 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
         }
     }
     if (obj == ui->gfxPort->viewport()){
-        if(event->type() == QEvent::MouseButtonPress) {
+        if(event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick) {
             // will need these for the tool buttons that need the left and right bitsies
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
@@ -294,8 +259,8 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
 
             if(mx < 0) mx = 0;
             if(my < 0) my = 0;
-            if(mx > SCR_WIDTH)  mx = SCR_WIDTH;
-            if(my > SCR_HEIGHT) my = SCR_HEIGHT;
+            if(mx > SCR_WIDTH-1)  mx = SCR_WIDTH-1;
+            if(my > SCR_HEIGHT-1) my = SCR_HEIGHT-1;
 
 
             SBOS_MouseInterface(MOUSE_MOVE, mx, my);
@@ -318,20 +283,6 @@ bool Dialog::eventFilter(QObject *obj, QEvent *event) {
             bMouseDown = false;
             return true; // stop further processing
         }
-        if(event->type() == QEvent::MouseButtonDblClick) {
-            // will need these for the tool buttons that need the left and right bitsies
-            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-            QPointF scenePt = ui->gfxPort->mapToScene(mouseEvent->pos());
-            int16_t mx = (int16_t)scenePt.x();
-            int16_t my = (int16_t)scenePt.y();
-
-            updateGFXScreen();
-            //printf("mouse double clicked x:%d, y:%d\n", mx, my);
-            bMouseDown = false;
-            return true; // stop further processing
-        }
-
-
     }
     return QDialog::eventFilter(obj, event);
 }
