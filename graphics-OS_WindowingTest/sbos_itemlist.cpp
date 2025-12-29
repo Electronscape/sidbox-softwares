@@ -15,7 +15,6 @@
 
 
 
-
 static char* fastStrdup(const char *s) {
     uint32_t len = 0;
     while (s[len]) len++;
@@ -35,13 +34,13 @@ static int cmp_strptr(const void *a, const void *b){
 }
 
 static int listitem_ensure_cap(ItemLists_t *list, uint16_t need){
-    if (need <= list->cap) return 1;
+    if (need <= list->cap) return fastAllocOK;
 
     uint16_t newCap = (list->cap == 0) ? 8 : list->cap;
     while (newCap < need) newCap = (uint16_t)(newCap * 2);
 
     void *np = fastRealloc(list->items, (uint32_t)newCap * sizeof(void*));
-    if (!np) return 0;
+    if (!np) return fastAllocFail;
 
     if (newCap > list->cap) {
         memset((void**)np + list->cap, 0, (newCap - list->cap) * sizeof(void*));
@@ -49,16 +48,16 @@ static int listitem_ensure_cap(ItemLists_t *list, uint16_t need){
 
     list->items = (void **)np;
     list->cap = newCap;
-    return 1;
+    return fastAllocOK;
 }
 
 
 int listitem_insert(ItemLists_t *list, uint16_t idx, const char *text){
     if (idx > list->count) idx = list->count;
-    if (!listitem_ensure_cap(list, (uint16_t)(list->count + 1))) return 0;
+    if (!listitem_ensure_cap(list, (uint16_t)(list->count + 1))) return fastAllocFail;
 
     char *dup = fastStrdup(text);
-    if (!dup) return 0;
+    if (!dup) return fastAllocFail;
 
     // shift right
     for (int i = list->count; i > (int)idx; --i)
@@ -69,7 +68,7 @@ int listitem_insert(ItemLists_t *list, uint16_t idx, const char *text){
 
     if (list->sel >= (int16_t)idx) list->sel++;
     if (list->top >= (int16_t)idx) list->top++;
-    return 1;
+    return fastAllocOK;
 }
 
 int listitem_add(ItemLists_t *list, const char *text){
@@ -186,6 +185,10 @@ void listitem_free(ItemLists_t *list){
 const char* listitem_get(const ItemLists_t *list, uint16_t idx){
     if (idx >= list->count) return NULL;
     return (const char *)list->items[idx];
+}
+
+uint32_t listitem_count(const ItemLists_t *list){
+    return (list->count);
 }
 
 

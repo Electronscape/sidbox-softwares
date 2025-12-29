@@ -39,6 +39,7 @@ int  listitem_add_first(ItemLists_t *list, const char *text);
 
 void listitem_sort(ItemLists_t *list);
 const char* listitem_get(const ItemLists_t *list, uint16_t idx);
+uint32_t listitem_count(const ItemLists_t *list);
 
 
 

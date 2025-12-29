@@ -6,7 +6,9 @@
 
 #include "fastram.h"
 
-#define FASTRAM_SIZE ((1024u * 1024u) * 4u) // 4 MB
+#define RAMBANK_SIZE (32)      // Kbytes
+#define FASTRAM_SIZE (1024u * RAMBANK_SIZE)
+
 static uint8_t FAUXRAM[FASTRAM_SIZE];
 
 
@@ -17,14 +19,8 @@ static inline uint32_t align_up_u32(uint32_t v, uint32_t a) {
     return (v + (a - 1u)) & ~(a - 1u);
 }
 
-typedef struct FastBlk {
-    uint32_t size;      // payload size in bytes (aligned)
-    uint32_t next;      // offset of next block header from FAUXRAM base, 0 = end
-    uint32_t flags;     // 0 = free, 1 = used
-    uint32_t magic;     // debug / sanity
-} FastBlk;
 
-//_Static_assert(sizeof(FastBlk) == 16, "FastBlk must be 16 bytes");
+static_assert(sizeof(FastBlk) == 16, "FastBlk must be 16 bytes");
 
 static uint32_t g_fast_head = 0; // offset of first block header
 
@@ -173,11 +169,6 @@ void fastFree(void* p) {
     }
 }
 
-
-
-
-
-
 void* fastRealloc(void* p, uint32_t newSize) {
     if (!p) {
         return fastAlloc(newSize);
@@ -238,34 +229,22 @@ void* fastRealloc(void* p, uint32_t newSize) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Stats: free bytes + largest free block + used bytes.
-
 FastStats fastStats(void) {
     FastStats s = {0};
     s.total = FASTRAM_SIZE;
-
+    memset(&s, 0x00, sizeof(FastStats));
     uint32_t off = g_fast_head;
-    while (off != 0 || off == g_fast_head) {
+    for (;;) {
         FastBlk* b = blk_from_off(off);
         if (b->magic != FAST_MAGIC) break;
 
         s.blocks++;
-        if (b->flags) s.used_bytes += b->size;
+        s.overhead_bytes += sizeof(FastBlk);
+
+        if (b->flags) s.used_payload += b->size;
         else {
-            s.free_bytes += b->size;
+            s.free_payload += b->size;
             if (b->size > s.largest_free) s.largest_free = b->size;
         }
 
@@ -275,23 +254,36 @@ FastStats fastStats(void) {
     return s;
 }
 
-
+static void print_kb(uint32_t bytes) {
+    uint32_t kb_x100 = (bytes * 100u) / 1024u;
+    printf("%u.%02uKB", kb_x100 / 100u, kb_x100 % 100u);
+}
 
 void fastDump(void) {
     FastStats s = fastStats();
-    printf("\n\n-------------------------------------------------------------\n");
-    printf("[FASTRAM] total=%u used=%u free=%u largest_free=%u blocks=%u\n",
-           s.total, s.used_bytes, s.free_bytes, s.largest_free, s.blocks);
+
+    uint32_t used_total = s.used_payload + (s.blocks ? (s.blocks * sizeof(FastBlk)) : 0); // optional
+    uint32_t ptc = (used_total * 100u) / (FASTRAM_SIZE);
+
+    printf("\n-------------------------------------------------------------\n");
+    printf("[FASTRAM] %u%% payload used\n", ptc);
+    //printf("used: %ukb, total=%ukb\n", used_total, s.total);
+
+    printf("used: ");    print_kb(used_total);
+    printf(", total: "); print_kb(s.total);
+    printf("\n");
+
+    printf("used_payload=%u free_payload=%u largest_free=%u\n", s.used_payload, s.free_payload, s.largest_free);
+    printf("overhead(headers)=%u blocks=%u\n", s.overhead_bytes, s.blocks);
+    printf("-------------------------------------------------------------\n");
 }
 
 
-void fastDumpHex(void){
+void fastDumpHex(uint32_t showsize){
     const uint32_t width = 32;
-    for (uint32_t off = 0; off < 1024; off += width) {
-
+    for (uint32_t off = 0; off < showsize; off += width) {
         // Offset
         printf("%08X  ", off);
-
         // Hex bytes
         for (uint32_t i = 0; i < width; i++) {
             if (off + i < FASTRAM_SIZE)
@@ -299,9 +291,7 @@ void fastDumpHex(void){
             else
                 printf("   ");
         }
-
         printf(" |");
-
         // ASCII view
         for (uint32_t i = 0; i < width; i++) {
             if (off + i < FASTRAM_SIZE) {
@@ -309,7 +299,16 @@ void fastDumpHex(void){
                 printf("%c", isprint(c) ? c : '.');
             }
         }
-
         printf("|\n");
     }
+}
+
+uint32_t getMemAvail(){
+    FastStats s = fastStats();
+    uint32_t used_total = s.used_payload + (s.blocks ? (s.blocks * sizeof(FastBlk)) : 0); // optional
+    return used_total;
+}
+
+uint32_t getMemTotal(){
+    return (FASTRAM_SIZE);
 }

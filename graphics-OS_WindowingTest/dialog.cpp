@@ -226,37 +226,66 @@ Dialog::Dialog(QWidget *parent)
 
     // FAUX FAST RAM TESTING //
 
-    initFastRam();
+    initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
 
 
-    char *txt5 = (char *)fastAlloc(512);
+    char *txt5 = (char *)fastAlloc(200);
+    if(txt5)// it was given a pointer so lets do this
     strcpy(txt5, "Hello world");
 
+
+    int32_t isok;
 
     ItemLists_t listbox;
 
     listitem_init(&listbox);
 
-    listitem_insert(&listbox, 0, "hello host LISTBOX one!");
-    listitem_add(&listbox, "random text 2");
-    listitem_add(&listbox, "CAMMELS!");
-    listitem_add(&listbox, "I still don't have my lasers!!");
-    listitem_add(&listbox, "GERBILS EVERYWHERE!!!! HELP!!!");
-
+    isok = listitem_insert(&listbox, 0, "hello host LISTBOX one!");
+    isok = listitem_add(&listbox, "random text 2");
+    isok = listitem_add(&listbox, "CAMMELS!");
+    isok = listitem_add(&listbox, "I still don't have my lasers!!");
+    isok = listitem_add(&listbox, "GERBILS EVERYWHERE!!!! HELP!!!");
 
     listitem_dump(&listbox);
-
     listitem_delete(&listbox, 2);
-
     listitem_dump(&listbox);
 
+
+    ItemLists_t demolist;
+    char txt[64];
+
+    listitem_init(&demolist);
+    for(int i = 0; i < 32; i++){
+        sprintf(txt, "Listbox test %d", i);
+        listitem_add(&demolist, txt);
+    }
+
+
+
+
+    fastDumpHex(0x800);
     fastDump();
 
-    fastDumpHex();
+    int ls;
+    char *text;
+
+    ls = listitem_count(&demolist);
+    for(int i = 0; i < ls; i++){
+        text = (char *)listitem_get(&demolist, i);
+        printf("RETURNED: %s\n", text);
+    }
+
+    ls = listitem_count(&listbox);
+    for(int i = 0; i < ls; i++){
+        text = (char *)listitem_get(&listbox, i);
+        printf("RETURNED: %s\n", text);
+    }
+
 
     printf("In memory: %s\n", txt5);
 
     listitem_free(&listbox);
+    listitem_free(&demolist);
 
 
 
