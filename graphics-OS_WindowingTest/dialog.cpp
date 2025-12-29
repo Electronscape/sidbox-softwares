@@ -34,6 +34,10 @@ void sms_keyup(int keycode);
 
 void SBOS_print_ui_usage(void);
 
+static ItemLists_t listbox;
+static ItemLists_t demolist;
+
+
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Dialog)
@@ -124,6 +128,7 @@ Dialog::Dialog(QWidget *parent)
     //sbgfx_drawbox(00,0,320,256, 3);
 
     initWb();
+    initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
     //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
 
     // DESKTOP WINDOW (yes it IS a window)
@@ -219,14 +224,15 @@ Dialog::Dialog(QWidget *parent)
 
 
     SBOS_print_ui_usage();
-    SBOS_setFocus(winMain2);
-    SBOS_paintAllWindows();
-    updateGFXScreen();
+    SBOS_setFocus(winMain);
+    SBOS_bringToFront(winMain);
+    //SBOS_paintAllWindows();
+    //updateGFXScreen();
 
 
     // FAUX FAST RAM TESTING //
 
-    initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
+
 
 
     char *txt5 = (char *)fastAlloc(200);
@@ -236,7 +242,6 @@ Dialog::Dialog(QWidget *parent)
 
     int32_t isok;
 
-    ItemLists_t listbox;
 
     listitem_init(&listbox);
 
@@ -251,7 +256,6 @@ Dialog::Dialog(QWidget *parent)
     listitem_dump(&listbox);
 
 
-    ItemLists_t demolist;
     char txt[64];
 
     listitem_init(&demolist);
@@ -260,6 +264,8 @@ Dialog::Dialog(QWidget *parent)
         listitem_add(&demolist, txt);
     }
 
+
+    SBOS_addListBox(winMain, 6, 40, 200, 198, &demolist, GAD_TOOL_DEFAULT );
 
 
 
@@ -284,18 +290,14 @@ Dialog::Dialog(QWidget *parent)
 
     printf("In memory: %s\n", txt5);
 
-    listitem_free(&listbox);
-    listitem_free(&demolist);
+    //listitem_free(&listbox);
+    //listitem_free(&demolist);
 
 
 
 
-
-
-
-
-
-
+    SBOS_paintAllWindows();
+    updateGFXScreen();
 
 }
 

@@ -23,6 +23,7 @@ CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o: \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
  /usr/include/bits/stdint-least.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \

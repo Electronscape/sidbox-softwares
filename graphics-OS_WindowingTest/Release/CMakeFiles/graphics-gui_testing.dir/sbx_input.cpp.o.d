@@ -17,4 +17,5 @@ CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o: \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h

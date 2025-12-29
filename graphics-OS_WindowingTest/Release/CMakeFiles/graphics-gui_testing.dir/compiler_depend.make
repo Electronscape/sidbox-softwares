@@ -1773,6 +1773,7 @@ CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o: /mnt/LinuxDatas/work/si
 
 CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.cpp \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h \
@@ -1817,6 +1818,7 @@ CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o: /mnt/LinuxDatas/work/sidb
 
 CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.cpp \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \
@@ -1870,7 +1872,9 @@ CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o: /mnt/LinuxDatas/work/sidbo
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
 CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.cpp \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \

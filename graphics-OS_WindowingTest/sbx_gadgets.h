@@ -2,7 +2,7 @@
 #define SBX_GADGETS_H
 
 #include <stdint.h>
-
+#include "sbos_itemlist.h"
 
 
 #define     MAX_BUTTONS             32
@@ -10,6 +10,7 @@
 #define     MAX_RADIOS              32
 #define     MAX_SCROLLBARS          32
 #define     MAX_BITMAPVIEWS         8
+#define     MAX_LISTBOXES           16
 
 
 // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
@@ -17,7 +18,8 @@
                                     MAX_CHECKBOXES +    \
                                     MAX_RADIOS +        \
                                     MAX_SCROLLBARS +    \
-                                    MAX_BITMAPVIEWS     )
+                                    MAX_BITMAPVIEWS +   \
+                                    MAX_LISTBOXES       )
 
 
 
@@ -79,6 +81,7 @@ typedef enum GADGET_CLASS_T {
     GAD_RADIO,
     GAD_SCROLLBAR,
     GAD_BITMAPVIEW,
+    GAD_LISTBOX,
 } GADGET_CLASS_T;
 
 typedef struct GAD_HDR_T {
@@ -158,7 +161,20 @@ typedef struct GAD_RADIO_T{
 } GAD_RADIO_T;
 
 
+typedef struct GAD_LISTBOX_T {
+    //-------------- common parts -----------------
+    GAD_HDR_T       h;
+    uint8_t         used;
+    //------------------------------------------------
 
+    // model pointer (does NOT own it)
+    ItemLists_t     *items;
+
+    // view
+    int16_t         row_h;       // 16 by default (glyph height)
+    int16_t         padding_x;   // 2..4 is nice
+    int16_t         padding_y;   // 2
+} GAD_LISTBOX_T;
 
 
 // scroll bar needs extra bits -------------------------------------------
@@ -233,10 +249,8 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addCheckbox   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
-
-// big function!!
 SBControlHandle SBOS_addBitmapView (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags);
-
+SBControlHandle SBOS_addListBox    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags);
 
 SBControlHandle base_to_handle(GADGET_BASE_T *g);
 

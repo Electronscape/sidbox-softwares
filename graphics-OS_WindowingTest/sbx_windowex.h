@@ -104,28 +104,20 @@ extern sbx_window_t     gui_windows[MAX_WINDOWS];
 extern uint8_t          gui_used[MAX_WINDOWS];
 
 typedef struct {
-    uint16_t win_used;
+    uint16_t win_used;  // windows!
 
-    uint16_t base_used;
+    uint16_t base_used; // BASE gadgets
 
-    uint16_t btn_used;
-    uint16_t chk_used;
-    uint16_t rad_used;
-    uint16_t sb_used;
-    uint16_t bv_used;
+    uint16_t btn_used;  // buttons
+    uint16_t chk_used;  // checkbox
+    uint16_t rad_used;  // radio buttons
+    uint16_t sb_used;   // scrollbars
+    uint16_t bv_used;   // bitmap views
+    uint16_t lb_used;   // list box
 } SBOS_UiUsageCounts;
 
 SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);
 //SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void);
-
-
-
-
-
-
-
-
-
 
 
 

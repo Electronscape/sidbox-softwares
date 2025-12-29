@@ -411,6 +411,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h \
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h \
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h

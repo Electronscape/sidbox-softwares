@@ -9,7 +9,11 @@
 #define RAMBANK_SIZE (32)      // Kbytes
 #define FASTRAM_SIZE (1024u * RAMBANK_SIZE)
 
-static uint8_t FAUXRAM[FASTRAM_SIZE];
+static uint8_t FAUXRAM[FASTRAM_SIZE];   // eventually will move this to an actual memory location 0xD0000000 stm32 EXT RAM area xD
+
+
+
+static uint8_t *OSRAM = FAUXRAM;    // assign this to real ram!
 
 
 #define FAST_ALIGN  8u
@@ -25,11 +29,11 @@ static_assert(sizeof(FastBlk) == 16, "FastBlk must be 16 bytes");
 static uint32_t g_fast_head = 0; // offset of first block header
 
 static inline FastBlk* blk_from_off(uint32_t off) {
-    return (FastBlk*)(void*)(FAUXRAM + off);
+    return (FastBlk*)(void*)(OSRAM + off);
 }
 
 static inline uint32_t off_from_blk(FastBlk* b) {
-    return (uint32_t)((uint8_t*)(void*)b - FAUXRAM);
+    return (uint32_t)((uint8_t*)(void*)b - OSRAM);
 }
 
 static inline void* payload_from_blk(FastBlk* b) {
