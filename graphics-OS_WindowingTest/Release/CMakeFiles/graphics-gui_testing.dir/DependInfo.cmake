@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp" "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o.d"
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp" "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp" "CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp" "CMakeFiles/graphics-gui_testing.dir/font.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/font.cpp.o.d"

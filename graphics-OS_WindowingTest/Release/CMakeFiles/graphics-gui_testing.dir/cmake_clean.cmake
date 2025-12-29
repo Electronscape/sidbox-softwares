@@ -5,6 +5,8 @@ file(REMOVE_RECURSE
   "graphics-gui_testing_autogen"
   "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o"

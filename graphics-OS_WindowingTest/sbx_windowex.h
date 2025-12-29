@@ -1,6 +1,9 @@
 #ifndef SBX_WINDOWEX_H
 #define SBX_WINDOWEX_H
 
+// NAME OF SYSTEM:
+// CODERGIRL -- named as such cos this is the windowing system for any coder :) and have to be gentle with the os :)
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>

@@ -431,6 +431,12 @@
 	"HEADERS" : 
 	[
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.h",
+			"MU",
+			"5AAQOGTO22/moc_cgroot.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h",
 			"MU",
 			"EWIEGA46WW/moc_dialog.cpp",
@@ -544,6 +550,11 @@
 	[
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.cpp",
 			"MU",
 			null
 		],

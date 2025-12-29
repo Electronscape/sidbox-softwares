@@ -35,6 +35,8 @@ qt_add_executable(graphics-gui_testing
     fastram.h
     sbos_itemlist.cpp
     sbos_itemlist.h
+    codergirl/cgroot.cpp
+    codergirl/cgroot.h
 
 )
 

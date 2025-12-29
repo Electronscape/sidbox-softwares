@@ -36,6 +36,9 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o: /mnt/LinuxDatas/work/sidb
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
+CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.cpp \
+  /usr/include/stdc-predef.h
+
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp \
   graphics-gui_testing_autogen/include/ui_dialog.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h \
@@ -1969,6 +1972,7 @@ graphics-gui_testing: /lib64/ld-linux-x86-64.so.2 \
   /usr/lib64/libz.so.1 \
   /usr/lib64/libzstd.so.1 \
   CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/font.cpp.o \
@@ -2260,8 +2264,6 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /usr/include/qt6/QtCore/qcontainertools_impl.h:
 
-/usr/include/asm/posix_types_64.h:
-
 /usr/include/c++/15/ext/type_traits.h:
 
 /usr/include/c++/15/bits/functional_hash.h:
@@ -2298,12 +2300,6 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /usr/include/c++/15/bits/stl_iterator_base_funcs.h:
 
-/usr/include/c++/15/bits/uses_allocator_args.h:
-
-/usr/include/c++/15/bits/chrono.h:
-
-/usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h:
-
 /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h:
 
 /usr/include/c++/15/bits/basic_string.tcc:
@@ -2319,6 +2315,8 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 /usr/include/c++/15/bits/basic_string.h:
 
 /usr/include/bits/atomic_wide_counter.h:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cgroot.cpp:
 
 /usr/include/c++/15/cassert:
 
@@ -2348,6 +2346,12 @@ CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o:
 
 /usr/include/asm/errno.h:
 
+/usr/include/c++/15/bits/uses_allocator_args.h:
+
+/usr/include/c++/15/bits/chrono.h:
+
+/usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h:
+
 graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/bits/endian.h:
@@ -2365,6 +2369,8 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 /usr/include/c++/15/tr1/poly_laguerre.tcc:
 
 /usr/include/bits/setjmp.h:
+
+/usr/include/asm/posix_types_64.h:
 
 /usr/include/asm-generic/types.h:
 
@@ -2582,6 +2588,20 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/c++/15/stdexcept:
 
+/usr/include/qt6/QtGui/qfontmetrics.h:
+
+/usr/include/stdint.h:
+
+CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
+
+/usr/include/endian.h:
+
+/usr/include/qt6/QtCore/qstringbuilder.h:
+
+/usr/include/c++/15/bits/stl_construct.h:
+
+/usr/include/qt6/QtGui/qregion.h:
+
 /usr/include/c++/15/bits/requires_hosted.h:
 
 /usr/include/bits/time64.h:
@@ -2678,6 +2698,10 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/bits/mathcalls-helper-functions.h:
 
+/usr/include/qt6/QtWidgets/QGraphicsPixmapItem:
+
+/usr/include/c++/15/bits/hashtable.h:
+
 /usr/include/qt6/QtCore/q20type_traits.h:
 
 /usr/include/c++/15/bits/stl_algo.h:
@@ -2740,20 +2764,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/bits/types/sigset_t.h:
 
-/usr/include/stdint.h:
-
-CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
-
-/usr/include/endian.h:
-
-/usr/include/qt6/QtCore/qstringbuilder.h:
-
-/usr/include/c++/15/bits/stl_construct.h:
-
-/usr/include/qt6/QtGui/qregion.h:
-
-/usr/include/qt6/QtGui/qfontmetrics.h:
-
 /usr/include/c++/15/bits/shared_ptr_atomic.h:
 
 /usr/include/bits/types/struct_sched_param.h:
@@ -2786,9 +2796,9 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 /usr/include/c++/15/array:
 
-/usr/include/c++/15/iomanip:
-
 /usr/include/c++/15/bits/shared_ptr.h:
+
+/usr/include/c++/15/iomanip:
 
 /usr/include/qt6/QtCore/qobjectdefs_impl.h:
 
@@ -3150,6 +3160,8 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 /usr/include/qt6/QtCore/qsettings.h:
 
+CMakeFiles/graphics-gui_testing.dir/codergirl/cgroot.cpp.o:
+
 /usr/include/c++/15/bits/stl_map.h:
 
 /usr/include/c++/15/ratio:
@@ -3291,7 +3303,3 @@ CMakeFiles/graphics-gui_testing.dir/font.cpp.o:
 /usr/include/qt6/QtGui/qtguiglobal.h:
 
 /usr/include/qt6/QtWidgets/QDialog:
-
-/usr/include/c++/15/bits/hashtable.h:
-
-/usr/include/qt6/QtWidgets/QGraphicsPixmapItem:
