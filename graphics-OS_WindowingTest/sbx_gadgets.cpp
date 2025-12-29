@@ -10,11 +10,54 @@ static GADGET_BASE_T    g_basePool[MAX_GADGETS];
 static GAD_BUTTON_T     g_btnPool [MAX_BUTTONS];
 static GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
 static GAD_RADIO_T      g_radPool [MAX_RADIOS];
-static GAD_SCROLLBAR_T  g_sbPool[MAX_SCROLLBARS];
-static GAD_BITMAPVIEW_T g_bvPool[MAX_BITMAPVIEWS];
+static GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
+static GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
+
+typedef struct {
+    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool;
+} SBOS_GadgetPoolBytes;
+
+SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void)
+{
+    SBOS_GadgetPoolBytes b;
+    b.basePool = sizeof(g_basePool);
+    b.btnPool  = sizeof(g_btnPool);
+    b.chkPool  = sizeof(g_chkPool);
+    b.radPool  = sizeof(g_radPool);
+    b.sbPool   = sizeof(g_sbPool);
+    b.bvPool   = sizeof(g_bvPool);
+    return b;
+}
+
+uint32_t SBOS_GetBasePoolSize(){
+    return sizeof(g_basePool[0]);
+}
 
 
+SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void)
+{
+    SBOS_UiUsageCounts c = {0};
 
+    // Windows in use
+    for (int i = 0; i < MAX_WINDOWS; i++) {
+        if (gui_used[i]) c.win_used++;
+    }
+
+    // Base gadget handles in use (depends on your base pool layout)
+    // If GADGET_BASE_T has a "used" field, count it; otherwise skip.
+    for (int i = 0; i < MAX_GADGETS; i++) {
+        if (g_basePool[i].gadget != NULL) c.base_used++;   // <-- only if this exists
+    }
+
+    // Per-type gadget pools
+    for (int i = 0; i < MAX_BUTTONS; i++)    if (g_btnPool[i].used) c.btn_used++;
+    for (int i = 0; i < MAX_CHECKBOXES; i++) if (g_chkPool[i].used) c.chk_used++;
+    for (int i = 0; i < MAX_RADIOS; i++)     if (g_radPool[i].used) c.rad_used++;
+    for (int i = 0; i < MAX_SCROLLBARS; i++) if (g_sbPool[i].used)  c.sb_used++;
+    for (int i = 0; i < MAX_BITMAPVIEWS; i++)if (g_bvPool[i].used)  c.bv_used++;
+
+    return c;
+}
 
 // ---------------- INTERNAL HELPERS ----------------
 static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
@@ -23,12 +66,7 @@ static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
     return v;
 }
 
-
-
-
-
-
-
+/////// internal supports
 static int find_free_window_slot(sbx_window_t *w){
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         if (w->GADGETS[i] == NULL) return i;

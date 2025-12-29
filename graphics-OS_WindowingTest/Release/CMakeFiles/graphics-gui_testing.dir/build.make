@@ -212,6 +212,34 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.s"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp -o CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.s
 
+CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
+CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp
+CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp
+
+CMakeFiles/graphics-gui_testing.dir/fastram.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/graphics-gui_testing.dir/fastram.cpp.i"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp > CMakeFiles/graphics-gui_testing.dir/fastram.cpp.i
+
+CMakeFiles/graphics-gui_testing.dir/fastram.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/graphics-gui_testing.dir/fastram.cpp.s"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp -o CMakeFiles/graphics-gui_testing.dir/fastram.cpp.s
+
+CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
+CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp
+CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp
+
+CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.i"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp > CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.i
+
+CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.s"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp -o CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.s
+
 # Object files for target graphics-gui_testing
 graphics__gui_testing_OBJECTS = \
 "CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o" \
@@ -223,7 +251,9 @@ graphics__gui_testing_OBJECTS = \
 "CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o" \
 "CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o" \
 "CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o" \
-"CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o"
+"CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o" \
+"CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o" \
+"CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o"
 
 # External object files for target graphics-gui_testing
 graphics__gui_testing_EXTERNAL_OBJECTS =
@@ -238,6 +268,8 @@ graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o
+graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o
+graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/build.make
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
 graphics-gui_testing: /usr/lib64/libQt6Widgets.so.6.10.1
@@ -246,7 +278,7 @@ graphics-gui_testing: /usr/lib64/libGLX.so
 graphics-gui_testing: /usr/lib64/libOpenGL.so
 graphics-gui_testing: /usr/lib64/libQt6Core.so.6.10.1
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable graphics-gui_testing"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable graphics-gui_testing"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/graphics-gui_testing.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

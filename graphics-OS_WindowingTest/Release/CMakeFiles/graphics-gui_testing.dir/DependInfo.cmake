@@ -10,10 +10,12 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp" "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp" "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o.d"
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp" "CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp" "CMakeFiles/graphics-gui_testing.dir/font.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/font.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/graphics-gui_testing_autogen/mocs_compilation.cpp" "CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/graphics.cpp" "CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/main.cpp" "CMakeFiles/graphics-gui_testing.dir/main.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/main.cpp.o.d"
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp" "CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.cpp" "CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.cpp" "CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.cpp" "CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o.d"

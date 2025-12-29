@@ -7,11 +7,15 @@ graphics-gui_testing_autogen/timestamp: \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h \
+	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp \
+	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/graphics.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/main.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp \
+	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.cpp \

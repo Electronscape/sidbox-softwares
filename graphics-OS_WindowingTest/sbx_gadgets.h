@@ -4,12 +4,21 @@
 #include <stdint.h>
 
 
-#define     MAX_GADGETS             32  // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
-#define     MAX_BUTTONS             16
-#define     MAX_CHECKBOXES          16
-#define     MAX_RADIOS              16
-#define     MAX_SCROLLBARS          16
-#define     MAX_BITMAPVIEWS         16
+
+#define     MAX_BUTTONS             32
+#define     MAX_CHECKBOXES          32
+#define     MAX_RADIOS              32
+#define     MAX_SCROLLBARS          32
+#define     MAX_BITMAPVIEWS         8
+
+
+// MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
+#define     MAX_GADGETS         (   MAX_BUTTONS +       \
+                                    MAX_CHECKBOXES +    \
+                                    MAX_RADIOS +        \
+                                    MAX_SCROLLBARS +    \
+                                    MAX_BITMAPVIEWS     )
+
 
 
 

@@ -12,6 +12,8 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -103,6 +105,10 @@ CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o:
 CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/sbos_itemlist.cpp.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 

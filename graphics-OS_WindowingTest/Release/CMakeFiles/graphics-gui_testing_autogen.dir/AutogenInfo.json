@@ -437,6 +437,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.h",
+			"MU",
+			"EWIEGA46WW/moc_fastram.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.h",
 			"MU",
 			"EWIEGA46WW/moc_font.cpp",
@@ -446,6 +452,12 @@
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h",
 			"MU",
 			"EWIEGA46WW/moc_sbapi_graphics.cpp",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.h",
+			"MU",
+			"EWIEGA46WW/moc_sbos_itemlist.cpp",
 			null
 		],
 		[
@@ -541,6 +553,11 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp",
+			"MU",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp",
 			"MU",
 			null
@@ -552,6 +569,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/main.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbos_itemlist.cpp",
 			"MU",
 			null
 		],

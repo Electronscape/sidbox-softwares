@@ -100,6 +100,40 @@ typedef enum {
     MOUSE_MOVE }
 MouseEvt;
 
+extern sbx_window_t     gui_windows[MAX_WINDOWS];
+extern uint8_t          gui_used[MAX_WINDOWS];
+
+typedef struct {
+    uint16_t win_used;
+
+    uint16_t base_used;
+
+    uint16_t btn_used;
+    uint16_t chk_used;
+    uint16_t rad_used;
+    uint16_t sb_used;
+    uint16_t bv_used;
+} SBOS_UiUsageCounts;
+
+SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);
+//SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define         WIN_DEFAULT_FLAGS   (SBX_WF_VISIBLE | SBX_WF_MOVEABLE | (SBX_WF_CLOSE | SBX_WF_TITLE_BAR | SBX_WF_MINIMISE | SBX_WF_MAXRESTORE | SBX_WF_ZORDER) )
 
 void            initWb(void);

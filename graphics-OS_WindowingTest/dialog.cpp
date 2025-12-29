@@ -12,6 +12,10 @@
 #include "sbx_windowex.h"
 #include "sbx_input.h"
 
+#include "fastram.h"
+#include "sbos_itemlist.h"
+
+
 
 float winScale = 1.0f;
 int currentScale = 1;
@@ -27,6 +31,8 @@ extern uint8_t backdrop[];
 
 void sms_keydown(int keycode);
 void sms_keyup(int keycode);
+
+void SBOS_print_ui_usage(void);
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
@@ -146,7 +152,7 @@ Dialog::Dialog(QWidget *parent)
 
     SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
 
-    SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|FAT", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
     SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
@@ -212,9 +218,56 @@ Dialog::Dialog(QWidget *parent)
                           GAD_TOOL_DOCKED_RIGHT);
 
 
+    SBOS_print_ui_usage();
     SBOS_setFocus(winMain2);
     SBOS_paintAllWindows();
     updateGFXScreen();
+
+
+    // FAUX FAST RAM TESTING //
+
+    initFastRam();
+
+
+    char *txt5 = (char *)fastAlloc(512);
+    strcpy(txt5, "Hello world");
+
+
+    ItemLists_t listbox;
+
+    listitem_init(&listbox);
+
+    listitem_insert(&listbox, 0, "hello host LISTBOX one!");
+    listitem_add(&listbox, "random text 2");
+    listitem_add(&listbox, "CAMMELS!");
+    listitem_add(&listbox, "I still don't have my lasers!!");
+    listitem_add(&listbox, "GERBILS EVERYWHERE!!!! HELP!!!");
+
+
+    listitem_dump(&listbox);
+
+    listitem_delete(&listbox, 2);
+
+    listitem_dump(&listbox);
+
+    fastDump();
+
+    fastDumpHex();
+
+    printf("In memory: %s\n", txt5);
+
+    listitem_free(&listbox);
+
+
+
+
+
+
+
+
+
+
+
 }
 
 static bool bMouseDown = false;
