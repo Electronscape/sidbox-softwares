@@ -3,6 +3,7 @@
 
 // gadget root file
 
+#include "cg_type.h"
 #include <stdint.h>
 #include "cg_itemlist.h"
 
@@ -52,19 +53,7 @@ typedef uint32_t SBControlHandle;
 
 // -----------------------------------------------------
 
-typedef struct {
-    int16_t x,
-        y,
-        w,
-        h;
-} Rect16;
 
-// GADGET TYPES
-typedef struct GADGET_RECT_T {  // this is likely going to be used for things like scrollbars, with more than one hit regions
-    int16_t     x, y, w, h;
-} GADGET_RECT_T;
-
-typedef uint8_t SBXWindowId;
 
 typedef enum {
     GAD_TOOL_DEFAULT        = (1 << 0),

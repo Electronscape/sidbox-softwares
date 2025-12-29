@@ -1,6 +1,7 @@
 #ifndef CG_GAD_SCROLLBAR_H
 #define CG_GAD_SCROLLBAR_H
 
+#include "cg_type.h"
 #include "cg_gadgets.h"
 
 typedef struct GAD_SCROLLBAR_T{
@@ -42,6 +43,17 @@ typedef enum {
 
 
 extern GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
+
+SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s,
+                              int16_t mx, int16_t my,
+                              int16_t *out_thumb_axis_start,
+                              int16_t *out_thumb_len,
+                              int16_t *out_track_axis_start);
+
+uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my);
+
+uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my);
+
 
 uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 

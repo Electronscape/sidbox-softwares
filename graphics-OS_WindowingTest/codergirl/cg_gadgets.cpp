@@ -294,6 +294,17 @@ SBControlHandle base_to_handle(GADGET_BASE_T *g){
 
 
 
+uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my){
+    if (!w || !g || !g->gadget) return 0;
+
+    int16_t lx = (int16_t)(mx - w->clientrect.x);
+    int16_t ly = (int16_t)(my - w->clientrect.y);
+
+    GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+    GADGET_RECT_T r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
+    return pt_in_r16(lx, ly, &r);
+}
+
 
 
 

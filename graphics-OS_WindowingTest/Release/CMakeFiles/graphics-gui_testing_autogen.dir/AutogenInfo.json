@@ -527,6 +527,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_wintype.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_wintype.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.h",
 			"MU",
 			"5AAQOGTO22/moc_sys_font.cpp",

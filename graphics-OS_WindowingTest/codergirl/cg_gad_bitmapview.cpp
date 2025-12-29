@@ -136,6 +136,24 @@ uint32_t onMouseDownCaptureBitmapview(GADGET_BASE_T *gadget, int16_t *mx, int16_
     return 0x00;
 }
 
+uint32_t onMouseMoveBitmapView(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
+    // the bitmap view system is more or less simples
+    (void)win; (void)evt;
+
+    GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;
+    if (bv && bv->panning && (bv->bv_flags & BVF_PAN)) {
+        int16_t dx = (int16_t) (*mx - bv->pan_start_mx);
+        int16_t dy = (int16_t) (*my - bv->pan_start_my);
+        bv->scroll_x = (int16_t) (bv->pan_start_x - dx);
+        bv->scroll_y = (int16_t) (bv->pan_start_y - dy);
+        SBOS_paintAllWindows();
+        return(1);
+    }
+    return 0;
+}
+
+
+
 uint32_t onMouseUpBitmapView(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     (void)mx; (void)my;
     GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;

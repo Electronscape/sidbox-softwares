@@ -1,6 +1,7 @@
 #ifndef CG_GAD_BITMAPVIEW_H
 #define CG_GAD_BITMAPVIEW_H
 
+#include "cg_type.h"
 #include "cg_gadgets.h"
 
 typedef struct GAD_BITMAPVIEW_T {
@@ -36,6 +37,7 @@ extern GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
 
 
 uint32_t onMouseDownCaptureBitmapview(GADGET_BASE_T *gadget, int16_t *mx, int16_t *my);
+uint32_t onMouseMoveBitmapView(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my);
 uint32_t onMouseUpBitmapView(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 

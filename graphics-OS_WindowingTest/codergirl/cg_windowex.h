@@ -9,13 +9,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "cg_renderer.h"
+#include "cg_wintype.h"
+//#include "cg_renderer.h"
 #include "cg_gadgets.h"
 
 #define     MAX_WINDOWS             16      // anymore then the user should probably use a real PC
 
 
-#define     WINDOW_TITLE_MAX_LEN    64
+
 
 // Window FRAME definition
 #define     WIN_TITLE_HEIGHT        16      // title bar height
@@ -43,17 +44,7 @@
 #define     SBW_INVALID_ID          ((SBXWindowId)0xFF)
 
 
-// keep these all 32bits
-typedef struct {
-    SBXWindowId     self;               // self id  // we'll keep this so its much quicker to find the window (findWindowEx(winhandle *hnd) for example
-    uint32_t        flags;
-    char            title[WINDOW_TITLE_MAX_LEN];
 
-    GADGET_RECT_T   winrect;            // window geometry (the actual area of the window)
-    GADGET_RECT_T   clientrect;         // this is the inner view port, which will adjust according to what things will be there
-
-    GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
-} sbx_window_t;
 
 typedef enum {
     // system cosmetic
@@ -122,7 +113,7 @@ typedef struct {
 SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);
 //SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void);
 
-
+uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my);
 
 
 
@@ -144,16 +135,17 @@ void            SBOS_bringToFront(SBXWindowId id);
 void            SBOS_setFocus(SBXWindowId id);
 
 
-// gadgets
-Rect16 win_inner_rect(const sbx_window_t *w);
-int16_t win_gutter_right(const sbx_window_t *w);
-int16_t win_gutter_bottom(const sbx_window_t *w);
-int16_t win_inner_reserve_right(const sbx_window_t *w);
-int16_t win_inner_reserve_bottom(const sbx_window_t *w);
-int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step);
-int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel);
+// gadgets interactions from window host
+GADGET_RECT_T   win_inner_rect(const sbx_window_t *w);
+int16_t         win_gutter_right(const sbx_window_t *w);
+int16_t         win_gutter_bottom(const sbx_window_t *w);
+int16_t         win_inner_reserve_right(const sbx_window_t *w);
+int16_t         win_inner_reserve_bottom(const sbx_window_t *w);
+int16_t         sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step);
+int16_t         sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel);
 
-
-
+uint8_t         mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h);
+uint8_t         pt_in_r16(int16_t px, int16_t py, const GADGET_RECT_T *r);
+GADGET_RECT_T   r16(int16_t x, int16_t y, int16_t w, int16_t h);
 
 #endif // CG_WINDOWEX_H
