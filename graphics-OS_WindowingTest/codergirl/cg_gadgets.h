@@ -3,6 +3,7 @@
 
 // gadget root file
 
+
 #include "cg_type.h"
 #include <stdint.h>
 #include "cg_itemlist.h"
@@ -134,7 +135,6 @@ SBControlHandle base_to_handle(GADGET_BASE_T *g);
 GADGET_BASE_T*  SBOS_gadgetFromHandle(SBControlHandle h);
 GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
 void            SBOS_destroyGadget(SBControlHandle h);
-
 
 
 

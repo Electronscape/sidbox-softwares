@@ -291,7 +291,14 @@ SBControlHandle base_to_handle(GADGET_BASE_T *g){
     return SBCTL_MAKE(g->handleGen, idx);
 }
 
+GADGET_RECT_T r16(int16_t x, int16_t y, int16_t w, int16_t h){
+    GADGET_RECT_T r = {x,y,w,h};
+    return r;
+}
 
+uint8_t pt_in_r16(int16_t px, int16_t py, const GADGET_RECT_T *r){
+    return (px >= r->x) && (py >= r->y) && (px < (int16_t)(r->x + r->w)) && (py < (int16_t)(r->y + r->h));
+}
 
 
 uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my){
@@ -306,8 +313,39 @@ uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16
 }
 
 
+uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h){
+    GADGET_RECT_T r = r16(x,y,w,h);
+    return pt_in_r16(px,py,&r);
+}
 
+GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
+    if (!w) return NULL;
 
+    int16_t lx = (int16_t)(mx - w->clientrect.x);
+    int16_t ly = (int16_t)(my - w->clientrect.y);
+
+    for (int i = MAX_GADGETS_PER_WINDOW - 1; i >= 0; i--){
+        GADGET_BASE_T *g = w->GADGETS[i];
+        if (!g || !g->gadget) continue;
+
+        GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
+        if (!h->visible || !h->enabled) continue;
+
+        if (g->gadgetType == GAD_SCROLLBAR) {
+            GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
+            if (s->h.flags & (GAD_TOOL_DOCKED_RIGHT | GAD_TOOL_DOCKED_BOTTOM)) {
+                int16_t ts=0, tl=0, tr=0;
+                SBPart part = hittest_scrollbar_part(w, s, mx, my, &ts, &tl, &tr);
+                if (part != SB_PART_NONE) return g;
+                continue;
+            }
+        }
+
+        GADGET_RECT_T r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
+        if (pt_in_r16(lx, ly, &r)) return g;
+    }
+    return NULL;
+}
 
 
 

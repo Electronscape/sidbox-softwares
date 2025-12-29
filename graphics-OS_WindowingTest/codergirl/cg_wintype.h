@@ -25,6 +25,11 @@ typedef struct {
     GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
 } sbx_window_t;
 
+typedef enum {
+    MOUSE_DOWN,
+    MOUSE_UP,
+    MOUSE_MOVE }
+MouseEvt;
 
 
 #endif // CG_WINTYPE_H

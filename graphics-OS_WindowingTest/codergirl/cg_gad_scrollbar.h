@@ -1,8 +1,10 @@
 #ifndef CG_GAD_SCROLLBAR_H
 #define CG_GAD_SCROLLBAR_H
 
-#include "cg_type.h"
+//#include "cg_type.h"
 #include "cg_gadgets.h"
+
+#include "cg_wintype.h"
 
 typedef struct GAD_SCROLLBAR_T{
     // common

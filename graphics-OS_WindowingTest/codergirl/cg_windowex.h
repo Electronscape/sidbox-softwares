@@ -88,14 +88,11 @@ typedef struct {
     SBControlHandle ctrl;   // optional, SBCTL_INVALID if none
 } WHitResult;
 
-typedef enum {
-    MOUSE_DOWN,
-    MOUSE_UP,
-    MOUSE_MOVE }
-MouseEvt;
 
 extern sbx_window_t     gui_windows[MAX_WINDOWS];
 extern uint8_t          gui_used[MAX_WINDOWS];
+extern SBXWindowId      g_winZorder[MAX_WINDOWS];
+extern uint8_t          g_winZcount;
 
 typedef struct {
     uint16_t win_used;  // windows!
@@ -115,6 +112,7 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);
 
 uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my);
 
+GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my);
 
 
 

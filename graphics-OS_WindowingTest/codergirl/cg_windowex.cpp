@@ -24,12 +24,8 @@
 #include "cg_gad_scrollbar.h"
 #include "cg_gad_listbox.h"
 
+#include "cg_resources.h"
 
-sbx_window_t     gui_windows[MAX_WINDOWS];
-uint8_t          gui_used[MAX_WINDOWS];
-
-SBXWindowId      g_winZorder[MAX_WINDOWS];
-uint8_t          g_winZcount = 0;
 
 
 // globals ONLY for windows!! everything else needs to be in a contained
@@ -50,12 +46,6 @@ static inline void ui_clear_drag(void){
 }
 
 
-
-
-
-
-
-
 /////// prototypes //////////////////
 
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock);
@@ -65,94 +55,10 @@ static void normalize_zorder(void);
 /// FUNCTIONALITY BELOW //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// semi macro functions //
-
-GADGET_RECT_T r16(int16_t x, int16_t y, int16_t w, int16_t h){
-    GADGET_RECT_T r = {x,y,w,h};
-    return r;
-}
-
-static inline uint8_t r16_valid(const GADGET_RECT_T *r){ return (r->w > 0) && (r->h > 0); }
-
-uint8_t pt_in_r16(int16_t px, int16_t py, const GADGET_RECT_T *r){
-    return (px >= r->x) && (py >= r->y) && (px < (int16_t)(r->x + r->w)) && (py < (int16_t)(r->y + r->h));
-}
-
-
 static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
-}
-
-
-typedef struct {
-    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool;
-} SBOS_GadgetPoolBytes;
-
-SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void);
-
-#define BYTES_OF(x) ((size_t)sizeof(x))
-
-#define SBOS_UI_BUDGET_BYTES (64u * 1024u)
-
-
-static void SBOS_print_reserved_ui_memory(void){
-    SBOS_GadgetPoolBytes gb = SBOS_get_gadget_pool_bytes();
-
-    // These must be visible in this translation unit (not static elsewhere).
-    size_t bytes_ui        = BYTES_OF(g_ui);
-
-    size_t bytes_windows   = BYTES_OF(gui_windows);
-    size_t bytes_used      = BYTES_OF(gui_used);
-
-    size_t bytes_zorder    = BYTES_OF(g_winZorder);
-    size_t bytes_zcount    = BYTES_OF(g_winZcount);
-
-    size_t bytes_gadgets_total =
-        gb.basePool + gb.btnPool + gb.chkPool + gb.radPool + gb.sbPool + gb.bvPool;
-
-    size_t bytes_windowing_total =
-        bytes_windows + bytes_used + bytes_zorder + bytes_zcount;
-
-    size_t total =
-        bytes_ui +
-        bytes_windowing_total +
-        bytes_gadgets_total;
-
-    printf("\n[SBOS] Reserved UI memory (static pools)\n");
-    printf("--------------------------------------------------\n");
-
-    printf("Core\n");
-    printf("  g_ui              : %zu bytes\n", bytes_ui);
-
-    printf("\nWindows + Z-order\n");
-    printf("  gui_windows       : %zu bytes (%zu each x %zu)\n",
-           bytes_windows, sizeof(gui_windows[0]),
-           bytes_windows / sizeof(gui_windows[0]));
-    printf("  gui_used          : %zu bytes\n", bytes_used);
-    printf("  g_winZorder       : %zu bytes\n", bytes_zorder);
-    printf("  g_winZcount       : %zu bytes\n", bytes_zcount);
-    printf("  Subtotal          : %zu bytes (%.1f KB)\n",
-           bytes_windowing_total, (double)bytes_windowing_total / 1024.0);
-
-    printf("\nGadget pools\n");
-    printf("  basePool          : %zu bytes\n", gb.basePool);
-    printf("  btnPool           : %zu bytes\n", gb.btnPool);
-    printf("  chkPool           : %zu bytes\n", gb.chkPool);
-    printf("  radPool           : %zu bytes\n", gb.radPool);
-    printf("  sbPool            : %zu bytes\n", gb.sbPool);
-    printf("  bvPool            : %zu bytes\n", gb.bvPool);
-    printf("  Subtotal          : %zu bytes (%.1f KB)\n",
-           bytes_gadgets_total, (double)bytes_gadgets_total / 1024.0);
-
-    printf("UI budget           : %u bytes (%.1f%% used)\n",
-           SBOS_UI_BUDGET_BYTES, 100.0 * (double)total / (double)SBOS_UI_BUDGET_BYTES);
-
-    printf("--------------------------------------------------\n");
-    printf("TOTAL RESERVED UI   : %zu bytes (%.1f KB)\n",
-           total, (double)total / 1024.0);
-    printf("--------------------------------------------------\n\n");
 }
 
 
@@ -168,75 +74,6 @@ void initWb(void){
     SBOS_gadgetsInit();
 }
 
-uint32_t SBOS_GetBasePoolSize();
-
-void SBOS_print_ui_usage(void){
-    SBOS_GadgetPoolBytes rb = SBOS_get_gadget_pool_bytes();
-    SBOS_UiUsageCounts   uc = SBOS_get_ui_usage_counts();
-
-    // Reserved bytes (from real arrays)
-    size_t r_windows = sizeof(gui_windows);
-    size_t r_used    = sizeof(gui_used);
-    size_t r_zorder  = sizeof(g_winZorder);
-    size_t r_zcount  = sizeof(g_winZcount);
-    size_t r_ui      = sizeof(g_ui);
-
-    size_t r_gadgets = rb.basePool + rb.btnPool + rb.chkPool + rb.radPool + rb.sbPool + rb.bvPool;
-
-    size_t r_total = r_ui + r_windows + r_used + r_zorder + r_zcount + r_gadgets;
-
-    // Used bytes (counts * sizeof element)
-    size_t u_windows = (size_t)uc.win_used * sizeof(gui_windows[0]);
-
-    // base_used only if meaningful; else set to 0
-    size_t u_base    = (size_t)uc.base_used * SBOS_GetBasePoolSize();
-
-    size_t u_btn     = (size_t)uc.btn_used * sizeof(GAD_BUTTON_T);
-    size_t u_chk     = (size_t)uc.chk_used * sizeof(GAD_CHECKBOX_T);
-    size_t u_rad     = (size_t)uc.rad_used * sizeof(GAD_RADIO_T);
-    size_t u_sb      = (size_t)uc.sb_used  * sizeof(GAD_SCROLLBAR_T);
-    size_t u_bv      = (size_t)uc.bv_used  * sizeof(GAD_BITMAPVIEW_T);
-
-    size_t u_gadgets = u_base + u_btn + u_chk + u_rad + u_sb + u_bv;
-
-    // Note: zorder tables are always reserved+used; same for gui_used[].
-    size_t u_total = sizeof(g_ui) + u_windows + r_used + r_zorder + r_zcount + u_gadgets;
-
-    printf("\n[SBOS] UI memory usage (live)\n");
-    printf("--------------------------------------------------\n");
-    printf("Reserved total     : %zu bytes (%.1f KB)\n", r_total, (double)r_total/1024.0);
-    printf("Used total         : %zu bytes (%.1f KB)\n", u_total, (double)u_total/1024.0);
-    printf("Free in pools      : %zu bytes (%.1f KB)\n",
-           (r_total > u_total) ? (r_total - u_total) : 0,
-           (double)((r_total > u_total) ? (r_total - u_total) : 0)/1024.0);
-
-    printf("\nWindows            : %u / %u (used/reserved)\n", uc.win_used, (unsigned)(sizeof(gui_windows)/sizeof(gui_windows[0])));
-    printf("Buttons            : %u / %u\n", uc.btn_used, (unsigned)(rb.btnPool / sizeof(GAD_BUTTON_T)));
-    printf("Checkboxes         : %u / %u\n", uc.chk_used, (unsigned)(rb.chkPool / sizeof(GAD_CHECKBOX_T)));
-    printf("Radios             : %u / %u\n", uc.rad_used, (unsigned)(rb.radPool / sizeof(GAD_RADIO_T)));
-    printf("Scrollbars         : %u / %u\n", uc.sb_used,  (unsigned)(rb.sbPool  / sizeof(GAD_SCROLLBAR_T)));
-    printf("BitmapViews        : %u / %u\n", uc.bv_used,  (unsigned)(rb.bvPool  / sizeof(GAD_BITMAPVIEW_T)));
-    printf("--------------------------------------------------\n\n");
-
-    double usage_pct = 0.0;
-    if (r_total > 0) {
-        usage_pct = ((double)u_total / (double)r_total) * 100.0;
-    }
-
-    if (usage_pct > 100.0) usage_pct = 100.0;
-
-    printf("\n[SBOS] UI memory usage (live)\n");
-    printf("--------------------------------------------------\n");
-    printf("Reserved total     : %zu bytes (%.1f KB)\n",
-           r_total, (double)r_total / 1024.0);
-    printf("Used total         : %zu bytes (%.1f KB)\n",
-           u_total, (double)u_total / 1024.0);
-    printf("Usage              : %zu / %zu bytes (%.2f%%)\n",
-           u_total, r_total, usage_pct);
-    printf("Free in pools      : %zu bytes (%.1f KB)\n",
-           (r_total > u_total) ? (r_total - u_total) : 0,
-           (double)((r_total > u_total) ? (r_total - u_total) : 0) / 1024.0);
-}
 
 static inline void ui_clip_disable(void) { g_uiclip.enabled = 0; }
 
@@ -767,10 +604,7 @@ static inline uint8_t is_title_gadget_region(WHitRegion r){
     return (r == WH_CLOSE) || (r == WH_MINIMISE) || (r == WH_MAXRESTORE) || (r == WH_ZORDER);
 }
 
-uint8_t mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h){
-    GADGET_RECT_T r = r16(x,y,w,h);
-    return pt_in_r16(px,py,&r);
-}
+
 
 static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     WHitResult r = { SBW_INVALID_ID, WH_NONE, SBCTL_INVALID };
@@ -846,7 +680,6 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
         return r;
     }
 
-
     // Resize glyph hit (bottom-right)
     if ((w->flags & SBX_WF_RESIZABLE) && !(w->flags & SBX_WF_NOBORDER)) {
         int16_t gx = (int16_t)(w->winrect.x + w->winrect.w - WIN_RESIZE_GLYPH_SIZE);
@@ -858,8 +691,6 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     }
 
     // 3) Otherwise, check client area INCLUDING gutters (for docked controls)
-    int16_t gr = win_gutter_right(w);
-    int16_t gb = win_gutter_bottom(w);
     GADGET_RECT_T inner = win_inner_rect(w);
 
     // include the whole inner region so docked bands are clickable
@@ -867,8 +698,6 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
         r.region = WH_CLIENT;
         return r;
     }
-
-
 
     // 4) Inside window but not title/client => border
     // add WH_BORDER laterwant resize hit zones.
@@ -936,34 +765,6 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
     return;
 }
 
-static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
-    if (!w) return NULL;
-
-    int16_t lx = (int16_t)(mx - w->clientrect.x);
-    int16_t ly = (int16_t)(my - w->clientrect.y);
-
-    for (int i = MAX_GADGETS_PER_WINDOW - 1; i >= 0; i--){
-        GADGET_BASE_T *g = w->GADGETS[i];
-        if (!g || !g->gadget) continue;
-
-        GAD_HDR_T *h = (GAD_HDR_T*)g->gadget;
-        if (!h->visible || !h->enabled) continue;
-
-        if (g->gadgetType == GAD_SCROLLBAR) {
-            GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g->gadget;
-            if (s->h.flags & (GAD_TOOL_DOCKED_RIGHT | GAD_TOOL_DOCKED_BOTTOM)) {
-                int16_t ts=0, tl=0, tr=0;
-                SBPart part = hittest_scrollbar_part(w, s, mx, my, &ts, &tl, &tr);
-                if (part != SB_PART_NONE) return g;
-                continue;
-            }
-        }
-
-        GADGET_RECT_T r = r16(h->rect.x, h->rect.y, h->rect.w, h->rect.h);
-        if (pt_in_r16(lx, ly, &r)) return g;
-    }
-    return NULL;
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -975,172 +776,6 @@ static GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
 
 static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
 static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
-
-// function calls for MouseMoves ____
-// __BITMAPVIEW BOX__
-
-
-
-/// MOUSE CAPTURE FEATURES -----------------
-
-
-
-
-
-
-static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX_T *lb,
-                                        int16_t mx, int16_t my,
-                                        int16_t *out_rows_visible)
-{
-    if (!w || !lb || !lb->items) return -1;
-
-    ItemLists_t *list = lb->items;
-
-    // Gadget absolute rect (screen coords)
-    int16_t ax = (int16_t)(w->clientrect.x + lb->h.rect.x);
-    int16_t ay = (int16_t)(w->clientrect.y + lb->h.rect.y);
-    int16_t aw = lb->h.rect.w;
-    int16_t ah = lb->h.rect.h;
-    if (aw <= 0 || ah <= 0) return -1;
-
-    // Inner matches draw_listbox inset
-    int16_t ix = (int16_t)(ax + 2);
-    int16_t iy = (int16_t)(ay + 2);
-    int16_t iw = (int16_t)(aw - 4);
-    int16_t ih = (int16_t)(ah - 4);
-    if (iw <= 0 || ih <= 0) return -1;
-
-    // Defaults
-    int16_t row_h = (lb->row_h > 0) ? lb->row_h : 16;
-    int16_t pad_y = (lb->padding_y > 0) ? lb->padding_y : 2;
-
-    // Visible rows (match your draw fix: 2px less sensitive)
-    int16_t usable_h = (int16_t)(ih - pad_y * 2 + 2);
-    if (usable_h <= 0) return -1;
-
-    int16_t rows = (int16_t)(usable_h / row_h);
-    if (rows <= 0) return -1;
-
-    if (out_rows_visible) *out_rows_visible = rows;
-
-    int16_t count = (int16_t)list->count;
-    if (count <= 0) return -1;
-
-    // Mouse -> local y inside the list rows band
-    int16_t ly = (int16_t)(my - iy - pad_y);
-
-    // Clamp row when mouse is above/below the band (this is the key change)
-    int16_t row;
-    if (ly < 0) {
-        row = 0;
-    } else {
-        int16_t band_h = (int16_t)(rows * row_h);
-        if (ly >= band_h) row = (int16_t)(rows - 1);
-        else              row = (int16_t)(ly / row_h);
-    }
-
-    // Convert to model index and clamp
-    int16_t idx = (int16_t)(list->top + row);
-    if (idx < 0) idx = 0;
-    if (idx >= count) idx = (int16_t)(count - 1);
-
-    return idx;
-}
-
-uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my){
-    (void)evt;
-    if (!w || !g || !g->gadget) return 1;
-
-    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g->gadget;
-    if (!lb->items) return 1;
-
-    ItemLists_t *list = lb->items;
-
-    int16_t rows = 0;
-    int16_t idx = listbox_index_from_mouse(w, lb, *mx, *my, &rows);
-    if (idx < 0) return 0;
-
-    // Recompute the same inner band to detect “outside above/below”
-    int16_t ax = (int16_t)(w->clientrect.x + lb->h.rect.x);
-    int16_t ay = (int16_t)(w->clientrect.y + lb->h.rect.y);
-    int16_t aw = lb->h.rect.w;
-    int16_t ah = lb->h.rect.h;
-
-    int16_t ix = (int16_t)(ax + 2);
-    int16_t iy = (int16_t)(ay + 2);
-    int16_t ih = (int16_t)(ah - 4);
-
-    int16_t row_h = (lb->row_h > 0) ? lb->row_h : 16;
-    int16_t pad_y = (lb->padding_y > 0) ? lb->padding_y : 2;
-
-    // Same band height used by listbox_index_from_mouse()
-    int16_t usable_h = (int16_t)(ih - pad_y * 2 + 2);
-    if (usable_h <= 0) return 0;
-
-    int16_t band_h = (int16_t)(rows * row_h);
-
-    // Mouse position relative to first row
-    int16_t ly = (int16_t)(*my - iy - pad_y);
-
-    // Auto-scroll when dragging outside above/below
-    int16_t count = (int16_t)list->count;
-    int16_t maxTop = (int16_t)(count - rows);
-    if (maxTop < 0) maxTop = 0;
-
-    uint8_t changed = 0;
-
-    if (ly < 0) {
-        if (list->top > 0) { list->top--; changed = 1; }
-    } else if (ly >= band_h) {
-        if (list->top < maxTop) { list->top++; changed = 1; }
-    }
-
-    // Update selection (now keeps working even outside)
-    if (list->sel != idx) {
-        list->sel = idx;
-        changed = 1;
-    }
-
-    // Keep selection visible (nice behavior even when not outside)
-    if (list->sel < list->top) { list->top = list->sel; changed = 1; }
-    if (list->sel >= list->top + rows) { list->top = (int16_t)(list->sel - rows + 1); changed = 1; }
-
-    // Clamp top
-    if (list->top < 0) list->top = 0;
-    if (list->top > maxTop) list->top = maxTop;
-
-    if (changed) SBOS_paintAllWindows();
-    return 0;
-}
-
-
-uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my){
-    if (!w || !g || !g->gadget) return 1;
-
-    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g->gadget;
-    if (!lb->items) return 1;
-
-    int16_t rows = 0;
-    int16_t idx = listbox_index_from_mouse(w, lb, *mx, *my, &rows);
-    if (idx < 0) return 0; // clicked inside gadget but not on a row: ignore
-
-    ItemLists_t *list = lb->items;
-
-    if (list->sel != idx) {
-        list->sel = idx;
-
-        // keep selection visible (nice UX)
-        if (list->sel < list->top) list->top = list->sel;
-        if (list->sel >= list->top + rows) list->top = (int16_t)(list->sel - rows + 1);
-
-        SBOS_paintAllWindows();
-    }
-
-    return 0;
-}
-
-
-
 
 
 uint32_t doCancellables(sbx_window_t *gw, GADGET_BASE_T *g){

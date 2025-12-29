@@ -1,8 +1,11 @@
 #ifndef CG_GAD_BITMAPVIEW_H
 #define CG_GAD_BITMAPVIEW_H
 
-#include "cg_type.h"
+//#include "cg_type.h"
 #include "cg_gadgets.h"
+
+//#include "cg_windowex.h"
+#include "cg_wintype.h"
 
 typedef struct GAD_BITMAPVIEW_T {
     //-------------- common parts to the GADGET -----------------

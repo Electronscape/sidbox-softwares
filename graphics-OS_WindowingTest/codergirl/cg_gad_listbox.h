@@ -1,9 +1,11 @@
 #ifndef CG_GAD_LISTBOX_H
 #define CG_GAD_LISTBOX_H
 
+//#include "cg_type.h"
 #include "cg_itemlist.h"
 #include "cg_gadgets.h"
 
+#include "cg_wintype.h"
 
 typedef struct GAD_LISTBOX_T {
     //-------------- common parts -----------------
@@ -22,6 +24,8 @@ typedef struct GAD_LISTBOX_T {
 
 extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
 
+uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my);
+uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my);
 
 
 #endif // CG_GAD_LISTBOX_H
