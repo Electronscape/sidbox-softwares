@@ -40,6 +40,10 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: /mnt/LinuxDatas/work/sidbox-so
   graphics-gui_testing_autogen/include/ui_dialog.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.h \
   /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h \
+  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -604,10 +608,7 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: /mnt/LinuxDatas/work/sidbox-so
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
-  /usr/lib/gcc/x86_64-redhat-linux/15/include/syslimits.h \
-  <<<<<<< \
-  Updated \
-  upstream
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/syslimits.h
 
 CMakeFiles/graphics-gui_testing.dir/font.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp \
   /usr/include/stdc-predef.h \
@@ -1788,30 +1789,145 @@ CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o: /mnt/LinuxDatas/work/sid
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
-graphics-gui_testing: /usr/lib64/crt1.o \
+graphics-gui_testing: /lib64/ld-linux-x86-64.so.2 \
+  /lib64/libc.so.6 \
+  /lib64/libgcc_s.so.1 \
+  /lib64/libm.so.6 \
+  /lib64/libmvec.so.1 \
+  /usr/lib64/crt1.o \
   /usr/lib64/crti.o \
+  /usr/lib64/crtn.o \
+  /usr/lib64/libc.so \
+  /usr/lib64/libm.so \
   /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o \
-  <<<<<<< \
+  /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o \
+  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a \
+  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/15/libstdc++.so \
+  /usr/lib64/libEGL.so.1 \
+  /usr/lib64/libGLX.so \
+  /usr/lib64/libGLdispatch.so.0 \
+  /usr/lib64/libOpenGL.so \
+  /usr/lib64/libQt6Core.so.6.10.1 \
+  /usr/lib64/libQt6DBus.so.6 \
+  /usr/lib64/libQt6Gui.so.6.10.1 \
+  /usr/lib64/libQt6Widgets.so.6.10.1 \
+  /usr/lib64/libX11.so.6 \
+  /usr/lib64/libXau.so.6 \
+  /usr/lib64/libXext.so.6 \
+  /usr/lib64/libb2.so.1 \
+  /usr/lib64/libbrotlicommon.so.1 \
+  /usr/lib64/libbrotlidec.so.1 \
+  /usr/lib64/libbz2.so.1 \
+  /usr/lib64/libc_nonshared.a \
+  /usr/lib64/libcap.so.2 \
+  /usr/lib64/libcrypto.so.3 \
+  /usr/lib64/libdbus-1.so.3 \
+  /usr/lib64/libdouble-conversion.so.3 \
+  /usr/lib64/libfontconfig.so.1 \
+  /usr/lib64/libfreetype.so.6 \
+  /usr/lib64/libglib-2.0.so.0 \
+  /usr/lib64/libgomp.so.1 \
+  /usr/lib64/libgraphite2.so.3 \
+  /usr/lib64/libharfbuzz.so.0 \
+  /usr/lib64/libicudata.so.77 \
+  /usr/lib64/libicui18n.so.77 \
+  /usr/lib64/libicuuc.so.77 \
+  /usr/lib64/liblzma.so.5 \
+  /usr/lib64/libpcre2-16.so.0 \
+  /usr/lib64/libpcre2-8.so.0 \
+  /usr/lib64/libpng16.so.16 \
+  /usr/lib64/libsystemd.so.0 \
+  /usr/lib64/libxcb.so.1 \
+  /usr/lib64/libxkbcommon.so.0 \
+  /usr/lib64/libxml2.so.2 \
+  /usr/lib64/libz.so.1 \
+  /usr/lib64/libzstd.so.1 \
+  CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/font.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/main.cpp.o \
-  Updated \
-  upstream
+  CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o
 
+
+CMakeFiles/graphics-gui_testing.dir/sbx_render.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/sbx_input.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/sbx_gadgets.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/main.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o:
 
+/usr/lib64/libzstd.so.1:
+
+/usr/lib64/libz.so.1:
+
+/usr/lib64/libxml2.so.2:
+
+/usr/lib64/libxkbcommon.so.0:
+
+/usr/lib64/libpcre2-8.so.0:
+
+/usr/lib64/liblzma.so.5:
+
+/usr/lib64/libicui18n.so.77:
+
+/usr/lib64/libicudata.so.77:
+
+/usr/lib64/libgraphite2.so.3:
+
+/usr/lib64/libglib-2.0.so.0:
+
+/usr/lib64/libcrypto.so.3:
+
+/usr/lib64/libcap.so.2:
+
+/usr/lib64/libbz2.so.1:
+
+/usr/lib64/libbrotlidec.so.1:
+
+/usr/lib64/libxcb.so.1:
+
+/usr/lib64/libb2.so.1:
+
+/usr/lib64/libX11.so.6:
+
+/usr/lib64/libQt6Widgets.so.6.10.1:
+
+/usr/lib64/libQt6DBus.so.6:
+
+/usr/lib64/libQt6Core.so.6.10.1:
+
+/usr/lib64/libOpenGL.so:
+
+/usr/lib64/libGLdispatch.so.0:
+
+/usr/lib64/libGLX.so:
+
+/usr/lib64/libEGL.so.1:
+
+/usr/lib/gcc/x86_64-redhat-linux/15/libstdc++.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a:
+
+/usr/lib/gcc/x86_64-redhat-linux/15/crtend.o:
+
+/usr/lib64/libm.so:
+
+/usr/lib64/crtn.o:
+
+/lib64/libgcc_s.so.1:
+
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.cpp:
-
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h:
-
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h:
-
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_gadgets.cpp:
 
@@ -1828,8 +1944,6 @@ CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o:
 graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/font.cpp:
-
-<<<<<<<:
 
 /usr/lib/gcc/x86_64-redhat-linux/15/include/syslimits.h:
 
@@ -1857,6 +1971,8 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/qt6/QtWidgets/qpushbutton.h:
 
+/usr/lib64/libdbus-1.so.3:
+
 /usr/include/qt6/QtWidgets/qgraphicsview.h:
 
 /usr/include/qt6/QtWidgets/qgraphicsscene.h:
@@ -1867,19 +1983,15 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/qt6/QtWidgets/qdialogbuttonbox.h:
 
-/usr/include/c++/15/limits:
+/usr/include/qt6/QtWidgets/qabstractscrollarea.h:
 
-/usr/include/qt6/QtCore/qmalloc.h:
-
-/usr/include/qt6/QtGui/qrgba64.h:
+/usr/include/qt6/QtWidgets/QMessageBox:
 
 /usr/include/c++/15/iosfwd:
 
 /usr/include/c++/15/functional:
 
 /usr/include/qt6/QtCore/QList:
-
-/usr/include/qt6/QtWidgets/qabstractscrollarea.h:
 
 /usr/include/c++/15/ext/alloc_traits.h:
 
@@ -1889,6 +2001,8 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 
 /usr/include/qt6/QtGui/qtguiexports.h:
 
+/usr/lib64/libpcre2-16.so.0:
+
 /usr/include/c++/15/ctime:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.cpp:
@@ -1896,10 +2010,6 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 /usr/include/c++/15/cmath:
 
 /usr/include/qt6/QtCore/qline.h:
-
-/usr/include/qt6/QtGui/qpen.h:
-
-/usr/include/c++/15/bits/unordered_set.h:
 
 /usr/include/c++/15/cwctype:
 
@@ -1916,8 +2026,6 @@ graphics-gui_testing_autogen/mocs_compilation.cpp:
 /usr/include/bits/wchar.h:
 
 /usr/include/bits/types/struct___jmp_buf_tag.h:
-
-Updated:
 
 /usr/include/bits/waitstatus.h:
 
@@ -1939,11 +2047,11 @@ Updated:
 
 /usr/include/qt6/QtGui/qbrush.h:
 
-/usr/include/c++/15/bits/stl_list.h:
-
 /usr/include/c++/15/bits/stl_iterator_base_types.h:
 
 /usr/include/qt6/QtCore/qstringconverter.h:
+
+/usr/lib64/libsystemd.so.0:
 
 /usr/include/bits/types/struct_tm.h:
 
@@ -1983,6 +2091,8 @@ Updated:
 
 /usr/include/c++/15/bits/ostream.tcc:
 
+/usr/lib64/libfontconfig.so.1:
+
 /usr/include/linux/sched/types.h:
 
 /usr/include/c++/15/backward/binders.h:
@@ -1995,6 +2105,10 @@ Updated:
 
 graphics-gui_testing_autogen/include/ui_dialog.h:
 
+/usr/include/qt6/QtWidgets/qabstractbutton.h:
+
+/usr/include/bits/types/wint_t.h:
+
 /usr/include/qt6/QtGui/qguiapplication.h:
 
 /usr/include/c++/15/bits/ios_base.h:
@@ -2004,6 +2118,8 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 /usr/include/c++/15/bits/new_allocator.h:
 
 /usr/include/bits/cpu-set.h:
+
+/lib64/libmvec.so.1:
 
 /usr/include/c++/15/ext/string_conversions.h:
 
@@ -2043,20 +2159,6 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp:
 
-/usr/include/c++/15/bits/predefined_ops.h:
-
-/usr/include/c++/15/optional:
-
-/usr/include/c++/15/bits/exception_defines.h:
-
-/usr/include/c++/15/bits/stl_heap.h:
-
-/usr/include/bits/types/timer_t.h:
-
-/usr/include/c++/15/backward/auto_ptr.h:
-
-/usr/include/qt6/QtCore/qvariant.h:
-
 /usr/include/c++/15/initializer_list:
 
 /usr/include/c++/15/bits/exception.h:
@@ -2067,15 +2169,19 @@ graphics-gui_testing_autogen/include/ui_dialog.h:
 
 /usr/include/c++/15/bits/stl_iterator_base_funcs.h:
 
-/usr/include/bits/fp-fast.h:
+/usr/include/c++/15/bits/uses_allocator_args.h:
 
-/usr/include/qt6/QtCore/qforeach.h:
+/usr/include/c++/15/bits/chrono.h:
 
-/usr/include/c++/15/cerrno:
+/usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h:
 
-/usr/include/bits/posix1_lim.h:
+/usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h:
 
-/usr/include/c++/15/sstream:
+/usr/include/c++/15/bits/basic_string.tcc:
+
+/usr/include/c++/15/bits/streambuf.tcc:
+
+/usr/include/qt6/QtCore/qcontainerinfo.h:
 
 graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
@@ -2087,21 +2193,19 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/c++/15/cassert:
 
+/usr/lib64/libicuuc.so.77:
+
 /usr/include/qt6/QtCore/qobject_impl.h:
-
-/usr/include/c++/15/bits/streambuf.tcc:
-
-/usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h:
-
-/usr/include/c++/15/bits/basic_string.tcc:
-
-/usr/include/qt6/QtCore/qcontainerinfo.h:
 
 /usr/include/bits/types/clockid_t.h:
 
 /usr/include/c++/15/typeinfo:
 
+CMakeFiles/graphics-gui_testing.dir/sbx_windowex.cpp.o:
+
 /usr/include/qt6/QtCore/qassert.h:
+
+/usr/lib64/libQt6Gui.so.6.10.1:
 
 /usr/include/asm/types.h:
 
@@ -2109,11 +2213,19 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/c++/15/bits/node_handle.h:
 
-/usr/include/c++/15/bits/uses_allocator_args.h:
+/usr/include/c++/15/bits/charconv.h:
 
-/usr/include/c++/15/bits/chrono.h:
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.cpp:
 
-/usr/include/c++/15/x86_64-redhat-linux/bits/cpu_defines.h:
+/usr/include/bits/types/clock_t.h:
+
+/usr/include/qt6/QtCore/qexceptionhandling.h:
+
+/usr/include/c++/15/pstl/glue_algorithm_defs.h:
+
+/usr/include/c++/15/tr1/poly_laguerre.tcc:
+
+/usr/include/bits/setjmp.h:
 
 /usr/include/asm-generic/types.h:
 
@@ -2121,15 +2233,13 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/asm-generic/errno-base.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h:
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.h:
 
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h:
+/usr/include/c++/15/bits/stl_list.h:
 
-/usr/include/c++/15/locale:
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_input.h:
 
-/usr/include/bits/endianness.h:
-
-/usr/include/libintl.h:
+/usr/include/bits/types/cookie_io_functions_t.h:
 
 /usr/include/c++/15/filesystem:
 
@@ -2143,25 +2253,37 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 
 /usr/include/bits/types/__FILE.h:
 
-/usr/include/c++/15/bits/ostream_insert.h:
+/usr/include/c++/15/bits/predefined_ops.h:
 
-/usr/include/bits/types/error_t.h:
+/usr/include/c++/15/optional:
 
-/usr/include/qt6/QtCore/qstringalgorithms.h:
+/usr/include/c++/15/bits/exception_defines.h:
 
-/usr/include/qt6/QtGui/qfontinfo.h:
+/usr/include/bits/types/timer_t.h:
 
-/usr/include/bits/errno.h:
+/usr/include/c++/15/backward/auto_ptr.h:
 
-/usr/include/qt6/QtCore/qstdlibdetection.h:
+/usr/lib64/libc_nonshared.a:
 
-/usr/include/bits/timex.h:
+/usr/include/c++/15/bits/stl_heap.h:
+
+/usr/include/qt6/QtCore/qvariant.h:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_render.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h:
+
+/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h:
+
+/usr/include/c++/15/locale:
 
 /usr/include/c++/15/bits/sstream.tcc:
 
 /usr/include/c++/15/bits/stl_raw_storage_iter.h:
 
 /usr/include/c++/15/bits/ostream.h:
+
+/lib64/ld-linux-x86-64.so.2:
 
 /usr/include/c++/15/bits/istream.tcc:
 
@@ -2194,6 +2316,8 @@ graphics-gui_testing_autogen/EWIEGA46WW/moc_dialog.cpp:
 /usr/include/bits/math-vector.h:
 
 /usr/include/bits/uio_lim.h:
+
+/usr/lib64/libbrotlicommon.so.1:
 
 /usr/include/c++/15/bits/align.h:
 
@@ -2231,13 +2355,21 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/qt6/QtCore/qtaggedpointer.h:
 
+/usr/include/qt6/QtCore/qconfig-64.h:
+
+/usr/include/c++/15/bits/utility.h:
+
+/usr/include/bits/types/error_t.h:
+
+/usr/include/c++/15/bits/ostream_insert.h:
+
+/usr/include/qt6/QtCore/qstringalgorithms.h:
+
+/usr/include/qt6/QtGui/qfontinfo.h:
+
 /usr/include/c++/15/list:
 
 /usr/include/bits/types/struct_timeval.h:
-
-/usr/include/c++/15/istream:
-
-/usr/include/c++/15/x86_64-redhat-linux/bits/ctype_base.h:
 
 /usr/include/qt6/QtCore/qtresource.h:
 
@@ -2266,8 +2398,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 /usr/include/c++/15/codecvt:
 
 /usr/include/qt6/QtCore/qdatastream.h:
-
-/usr/include/bits/types/cookie_io_functions_t.h:
 
 /usr/include/c++/15/bits/locale_facets_nonio.tcc:
 
@@ -2299,19 +2429,11 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/c++/15/stdexcept:
 
-/usr/include/bits/flt-eval-method.h:
-
-/usr/include/bits/types/FILE.h:
-
-/usr/include/linux/posix_types.h:
-
-/usr/include/qt6/QtCore/QObject:
-
-/usr/include/qt6/QtCore/q23utility.h:
-
 /usr/include/c++/15/bits/requires_hosted.h:
 
 /usr/include/bits/time64.h:
+
+/usr/lib64/libXau.so.6:
 
 /usr/include/bits/stdlib-float.h:
 
@@ -2339,7 +2461,43 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/sys/cdefs.h:
 
+/usr/include/qt6/QtWidgets/QPushButton:
+
+/usr/include/c++/15/debug/assertions.h:
+
+/usr/lib64/libfreetype.so.6:
+
 /usr/include/bits/pthreadtypes-arch.h:
+
+/usr/include/bits/endianness.h:
+
+/usr/include/libintl.h:
+
+/usr/include/bits/timex.h:
+
+/usr/include/bits/errno.h:
+
+/usr/include/qt6/QtCore/qstdlibdetection.h:
+
+/usr/include/bits/types/FILE.h:
+
+/usr/include/linux/posix_types.h:
+
+/usr/include/qt6/QtCore/QObject:
+
+/usr/include/qt6/QtCore/q23utility.h:
+
+/usr/include/bits/flt-eval-method.h:
+
+/usr/include/bits/fp-fast.h:
+
+/usr/include/qt6/QtCore/qforeach.h:
+
+/usr/include/c++/15/cerrno:
+
+/usr/include/bits/posix1_lim.h:
+
+/usr/include/c++/15/sstream:
 
 /usr/include/sys/single_threaded.h:
 
@@ -2360,10 +2518,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 /usr/include/c++/15/cwchar:
 
 /usr/include/bits/mathcalls-helper-functions.h:
-
-/usr/include/c++/15/iterator:
-
-/usr/include/qt6/QtCore/qbasicatomic.h:
 
 /usr/include/qt6/QtCore/q20type_traits.h:
 
@@ -2401,8 +2555,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/qt6/QtGui/qevent.h:
 
-/usr/include/bits/setjmp.h:
-
 /usr/include/c++/15/climits:
 
 /usr/include/c++/15/bits/vector.tcc:
@@ -2433,18 +2585,6 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/bits/mathcalls.h:
 
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbx_windowex.cpp:
-
-/usr/include/bits/types/clock_t.h:
-
-/usr/include/c++/15/bits/charconv.h:
-
-/usr/include/qt6/QtCore/qexceptionhandling.h:
-
-/usr/include/c++/15/pstl/glue_algorithm_defs.h:
-
-/usr/include/c++/15/tr1/poly_laguerre.tcc:
-
 /usr/include/bits/types/locale_t.h:
 
 /usr/include/c++/15/bits/alloc_traits.h:
@@ -2456,6 +2596,8 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 /usr/include/bits/types/sigset_t.h:
 
 /usr/include/stdint.h:
+
+CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o:
 
 /usr/include/endian.h:
 
@@ -2513,6 +2655,10 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/qt6/QtGui/QImage:
 
+/usr/include/asm/bitsperlong.h:
+
+/usr/include/c++/15/bits/algorithmfwd.h:
+
 /usr/include/bits/stdio.h:
 
 /usr/include/qt6/QtCore/qfloat16.h:
@@ -2533,6 +2679,8 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/c++/15/set:
 
+/usr/lib64/libgomp.so.1:
+
 /usr/include/c++/15/x86_64-redhat-linux/bits/c++locale.h:
 
 /usr/include/qt6/QtCore/qnamespace.h:
@@ -2543,9 +2691,25 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/c++/15/bits/basic_string.h:
 
-/usr/include/c++/15/bits/algorithmfwd.h:
+/usr/include/c++/15/istream:
 
-/usr/include/asm/bitsperlong.h:
+/usr/include/c++/15/x86_64-redhat-linux/bits/ctype_base.h:
+
+/usr/include/c++/15/iterator:
+
+/usr/include/qt6/QtCore/qbasicatomic.h:
+
+/usr/include/c++/15/limits:
+
+/usr/lib64/libc.so:
+
+/usr/include/qt6/QtCore/qmalloc.h:
+
+/usr/include/c++/15/bits/unordered_set.h:
+
+/usr/include/qt6/QtGui/qpen.h:
+
+/usr/include/qt6/QtGui/qrgba64.h:
 
 /usr/include/c++/15/bits/refwrap.h:
 
@@ -2570,6 +2734,8 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 /usr/include/c++/15/pstl/execution_defs.h:
 
 /usr/include/c++/15/pstl/glue_memory_defs.h:
+
+/lib64/libm.so.6:
 
 /usr/include/c++/15/bits/basic_ios.tcc:
 
@@ -2631,9 +2797,9 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
 
 /usr/include/c++/15/x86_64-redhat-linux/bits/c++allocator.h:
 
-upstream:
-
 /usr/include/qt6/QtGui/qinputmethod.h:
+
+/lib64/libc.so.6:
 
 /usr/include/c++/15/bits/stl_uninitialized.h:
 
@@ -2665,10 +2831,6 @@ upstream:
 
 /usr/include/qt6/QtCore/QRect:
 
-/usr/include/bits/types/wint_t.h:
-
-/usr/include/qt6/QtWidgets/qabstractbutton.h:
-
 /usr/include/c++/15/bits/list.tcc:
 
 /usr/include/c++/15/x86_64-redhat-linux/bits/messages_members.h:
@@ -2679,7 +2841,11 @@ upstream:
 
 /usr/include/qt6/QtCore/qtformat_impl.h:
 
+/usr/lib64/libXext.so.6:
+
 /usr/include/qt6/QtCore/QSizeF:
+
+/usr/lib64/libpng16.so.16:
 
 /usr/include/qt6/QtCore/QVariant:
 
@@ -2735,10 +2901,6 @@ upstream:
 
 /usr/include/qt6/QtCore/qcompare_impl.h:
 
-/usr/include/c++/15/bits/utility.h:
-
-/usr/include/qt6/QtCore/qconfig-64.h:
-
 /usr/include/qt6/QtCore/qconstructormacros.h:
 
 /usr/include/qt6/QtCore/qutf8stringview.h:
@@ -2778,6 +2940,8 @@ upstream:
 /usr/include/qt6/QtGui/QMouseEvent:
 
 /usr/include/qt6/QtCore/qhash.h:
+
+/usr/lib64/libharfbuzz.so.0:
 
 /usr/include/qt6/QtCore/qiodevicebase.h:
 
@@ -2831,6 +2995,8 @@ upstream:
 
 /usr/include/qt6/QtCore/qscopeguard.h:
 
+/usr/lib64/libdouble-conversion.so.3:
+
 /usr/include/qt6/QtWidgets/QApplication:
 
 /usr/include/c++/15/bits/enable_special_members.h:
@@ -2876,8 +3042,6 @@ upstream:
 /usr/include/c++/15/bits/memoryfwd.h:
 
 /usr/include/qt6/QtCore/qsysinfo.h:
-
-/usr/include/qt6/QtWidgets/QMessageBox:
 
 /usr/include/qt6/QtCore/qsystemdetection.h:
 
@@ -2992,7 +3156,3 @@ CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilatio
 /usr/include/c++/15/bits/hashtable.h:
 
 /usr/include/qt6/QtWidgets/QGraphicsPixmapItem:
-
-/usr/include/c++/15/debug/assertions.h:
-
-/usr/include/qt6/QtWidgets/QPushButton:
