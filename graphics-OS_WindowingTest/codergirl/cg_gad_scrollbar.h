@@ -2,12 +2,10 @@
 #define CG_GAD_SCROLLBAR_H
 
 //#include "cg_type.h"
+#include "cg_wintype.h"
 #include "cg_gadgets.h"
 
-#include "cg_wintype.h"
-
 typedef void (*fnSBCallBack)(void *sb);
-
 
 typedef struct GAD_SCROLLBAR_T{
     // common
@@ -29,7 +27,6 @@ typedef struct GAD_SCROLLBAR_T{
     uint8_t     show_arrows;    // needed for if we're using arrows
 
     // function callback systems
-    //void (*onScrollCallBack)(void *scrollerPtr);    // <-- since we should be able to peek at the scrollers internal anyway?
     fnSBCallBack onScrollCallBack;
 
     uint8_t suppress_cb; // prevents recursion

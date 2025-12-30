@@ -533,6 +533,11 @@ static void destroy_window_gadgets(sbx_window_t *w){
     }
 }
 
+SBXWindowId SBOS_getWindowByGadget(const GADGET_BASE_T *b){
+    if (!b || !b->gadget) return SBW_INVALID_ID;
+    const GAD_HDR_T *h = (const GAD_HDR_T*)b->gadget; // header-first rule
+    return h->winhnd;
+}
 
 void SBOS_destroyWindow(SBXWindowId id){
     if (id >= MAX_WINDOWS) return;
@@ -540,9 +545,10 @@ void SBOS_destroyWindow(SBXWindowId id){
 
     sbx_window_t *w = &gui_windows[id];
 
-    if (g_ui.capturedGadget && g_ui.capturedGadget->winhnd == id) {
+    if (g_ui.capturedGadget && SBOS_getWindowByGadget(g_ui.capturedGadget) == id) {
         g_ui.capturedGadget = NULL;
     }
+
     if (g_ui.drag_win == id) ui_clear_drag();
     if (g_ui.resize_win == id) g_ui.resize_win = SBW_INVALID_ID;
     if (g_ui.title_win == id) ui_clear_title_latch();
@@ -562,6 +568,8 @@ void SBOS_destroyWindow(SBXWindowId id){
     normalize_zorder();
     SBOS_paintAllWindows();
 }
+
+
 
 void SBOS_sendToBack(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) return;
@@ -765,56 +773,6 @@ static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, Mous
 static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
 
 
-uint32_t doCancellables(sbx_window_t *gw, GADGET_BASE_T *g){
-    switch (g->gadgetType) {
-        case GAD_BUTTON: {
-            GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;
-
-            b->current_option++;
-            if (b->current_option > b->max_options - 1)
-                b->current_option = 0;
-
-            printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
-                   b->current_option);
-        }
-        break;
-        case GAD_CHECKBOX: {
-            GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
-            c->checked ^= 1;
-            printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
-        }
-        break;
-        case GAD_RADIO: {
-            GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
-            if (gw) {
-                // clear all radios in same group in this window
-                for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
-                    GADGET_BASE_T *og = gw->GADGETS[i];
-                    if (!og || og->gadgetType != GAD_RADIO
-                        || !og->gadget)
-                        continue;
-
-                    GAD_RADIO_T *ort = (GAD_RADIO_T*) og->gadget;
-                    if (ort->group == r->group)
-                        ort->checked = 0;
-                }
-                r->checked = 1;
-            }
-            printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
-        }
-        break;
-
-        case GAD_LISTBOX: {
-            // this should be handled on the onMouseReleaseListBox
-        }
-        break;
-
-
-        default:
-            break;
-    }
-    return (0x00);/// this doesnt really need to worry about anything
-}
 
 void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
     uint8_t repaint = 0;
@@ -912,7 +870,6 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                             } break;
 
                             case GAD_LISTBOX: {
-
                                 if (!onMouseDownCaptureListBox(w, g, &mx, &my)) {
                                     callMouseMoveEvt    = onMouseMoveListBox;   // optional
                                     callMouseReleaseEvt = onMouseReleaseListBox;                 // you can add onMouseUpListBox later
@@ -980,7 +937,9 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
             // ######################### GADGETS IN WINDOW #########################
             if (g_ui.mouse_down && g_ui.capturedGadget) {
-                sbx_window_t *gw = SBOS_getWindow(g_ui.capturedGadget->winhnd);
+
+                SBXWindowId wid = SBOS_getWindowByGadget(g_ui.capturedGadget);
+                sbx_window_t *gw = SBOS_getWindow(wid);
                 if (gw) {
                     // this handles the last gadget that was click mouse down'd (this is NOT a multi-point OS so thank GOD!)
                     if(callMouseMoveEvt) {
@@ -1053,7 +1012,8 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
             /// the gadget was released
             if (g_ui.capturedGadget) {
                 GADGET_BASE_T *g = g_ui.capturedGadget;
-                sbx_window_t *gw = SBOS_getWindow(g->winhnd);
+                SBXWindowId wid = SBOS_getWindowByGadget(g);
+                sbx_window_t *gw = SBOS_getWindow(wid);
 
                 uint8_t inside = 0;
                 if (gw)
@@ -1079,7 +1039,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
 
                 if (clickActivate && inside) {
-                    doCancellables(gw, g);
+                    commitGadgetRelease(gw, g);
 
                 }
 
@@ -1106,10 +1066,6 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
         ui_end_interaction();
     }
 }
-
-
-
-
 
 void initWb(void){
     SBOS_print_reserved_ui_memory();

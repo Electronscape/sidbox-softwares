@@ -5,6 +5,9 @@
 #include "cg_glyphs.h"
 #include "cg_gadgets.h"
 
+
+#include "cg_input.h"
+
 #include "cg_gad_button.h"
 
 
@@ -43,10 +46,10 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
         int16_t gy = (int16_t)(ay + (bh - char_h) / 2);
 
         gfx_setcolour(PEN_WIN_BEVEL_L);
-        ui_vline(gx+22, gy-2, bh-6);
+        ui_vline(gx+21, gy-2, bh-6);
 
         gfx_setcolour(PEN_WIN_BEVEL_H);
-        ui_vline(gx+23, gy-2, bh-6);
+        ui_vline(gx+22, gy-2, bh-6);
         sbgfx_glyph(gx+2, gy, glyph_cycle);
     }
 
@@ -73,5 +76,17 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------
+
+
+uint32_t onMouseReleaseButton(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
+    (void)mx; (void)my;
+
+    GAD_BUTTON_T *btn = (GAD_BUTTON_T*) g->gadget;
+    if (!btn) return 1;   // panic
+
+    if(btn->onButtonClickCallBack)
+        btn->onButtonClickCallBack(btn);
+    return 0;   // all good 0 as in 0k :)
+}
 
 // API INTERFACES -------------------------------------------------------------------------------------------------

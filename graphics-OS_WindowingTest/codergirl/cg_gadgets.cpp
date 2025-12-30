@@ -71,17 +71,28 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     return c;
 }
 
-// --------------- DEFAULT EventSubmitters -----------------------
+
+
+/////// DEFAULT EventEmitters /////////////////////////////////////////////////////////////////
 
 
 void onScrollEmitEvent(void *s){
     GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
     if (!sb) return;
-
-    printf("From ScrB CB: %d\n", sb->value);
+    printf("From ScrB Win_id:%d, CB_Value: %d\n", sb->h.winhnd, sb->value);
 }
 
+void onButtonClickEmitEvent(void *g){
+    GAD_BUTTON_T *button = (GAD_BUTTON_T *)g;   // get the button
+    if(!button) return;
 
+    //GADGET_BASE_T *g = SBOS_gadgetFromHandle(button);
+
+    printf("Button Click: text:'%s' Win_id: %d, index:%d\n",
+           button->text,
+           button->h.winhnd,
+           button->current_option);
+}
 
 
 
@@ -118,6 +129,7 @@ static GADGET_BASE_T* base_alloc(void){
 }
 
 
+
 // BITS FOR THE GADGETS //////////// the helpers /////////////
 
 static void base_free(GADGET_BASE_T *g){
@@ -125,7 +137,7 @@ static void base_free(GADGET_BASE_T *g){
     g->gadgetSlotUsed = 0;
     g->gadgetType = GAD_NULL;
     g->gadget = NULL;
-    g->winhnd = 0;
+    //g->winhnd = 0;
 }
 
 ////////////////// allocations area /////////////////////////
@@ -281,6 +293,62 @@ static GAD_SCROLLBAR_T* sb_alloc(void){
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
+uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
+{
+    switch (g->gadgetType) {
+    case GAD_BUTTON: {
+        GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;
+
+        b->current_option++;
+        if (b->current_option > b->max_options - 1)
+            b->current_option = 0;
+
+        //printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
+        //b->current_option);
+        b->onButtonClickCallBack(b);
+    }
+    break;
+    case GAD_CHECKBOX: {
+        GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
+        c->checked ^= 1;
+        printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
+    }
+    break;
+    case GAD_RADIO: {
+        GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
+        if (gw) {
+            // clear all radios in same group in this window
+            for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
+                GADGET_BASE_T *og = gw->GADGETS[i];
+                if (!og || og->gadgetType != GAD_RADIO
+                    || !og->gadget)
+                    continue;
+
+                GAD_RADIO_T *ort = (GAD_RADIO_T*) og->gadget;
+                if (ort->group == r->group)
+                    ort->checked = 0;
+            }
+            r->checked = 1;
+        }
+        printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
+    }
+    break;
+
+    case GAD_LISTBOX: {
+        // this should be handled on the onMouseReleaseListBox
+    }
+    break;
+
+
+    default:
+        break;
+    }
+    return (0x00);/// this doesnt really need to worry about anything
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
 // free gadget types
 
 
@@ -413,7 +481,8 @@ void SBOS_gadgetsInit(void){
     memset(g_lbPool,   0, sizeof(g_lbPool));    // listbox gadgets
 }
 
-SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags) {
+SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
+{
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
@@ -430,9 +499,11 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
     }
 
     // base host
-    g->winhnd = win;
+    //g->winhnd = win;
     g->gadgetType = GAD_BUTTON;
     g->gadget = b;
+    b->onButtonClickCallBack = onButtonClickEmitEvent;  // basic button clicky
+    b->h.winhnd = win;
 
     // payload header
     b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;
@@ -477,8 +548,8 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
     return base_to_handle(g);
 }
 
-
-SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags) {
+SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
+{
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
@@ -494,12 +565,13 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
         return SBCTL_INVALID;
     }
 
-    g->winhnd = win;
+    //g->winhnd = win;
     g->gadgetType = GAD_CHECKBOX;
     g->gadget = c;
 
     c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
     c->h.flags = flags;
+    c->h.winhnd = win;
 
     c->checked = initial_checked ? 1 : 0;
 
@@ -520,8 +592,7 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
     return base_to_handle(g);
 }
 
-SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
-                                    const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
+SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -538,11 +609,12 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
         return SBCTL_INVALID;
     }
 
-    g->winhnd = win;
+    //g->winhnd = win;
     g->gadgetType = GAD_RADIO;
     g->gadget = r;
 
 
+    r->h.winhnd = win;
     r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
     r->h.flags = flags;
 
@@ -577,14 +649,7 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
     return base_to_handle(g);
 }
 
-
-SBControlHandle SBOS_addScrollbar(SBXWindowId win,
-                                  int16_t x, int16_t y, int16_t w, int16_t h,
-                                  uint8_t orient,
-                                  int16_t min, int16_t max,
-                                  int16_t step,
-                                  int16_t initial_pct,
-                                  uint32_t flags)
+SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step, int16_t initial_pct, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -602,14 +667,14 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
     }
 
     // host base
-    g->winhnd = win;
+    //g->winhnd = win;
     g->gadgetType = GAD_SCROLLBAR;
     g->gadget = s;
 
     // containment field
     s->h.rect.x = x; s->h.rect.y = y; s->h.rect.w = w; s->h.rect.h = h;
     s->h.flags = flags;
-
+    s->h.winhnd = win;
 
     s->orient = orient;
     s->min = min;
@@ -631,12 +696,7 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
     return base_to_handle(g);
 }
 
-SBControlHandle SBOS_addBitmapView(
-    SBXWindowId win,
-    int16_t x, int16_t y, int16_t w, int16_t h,
-    const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride,
-    uint32_t bv_flags,
-    uint32_t flags)
+SBControlHandle SBOS_addBitmapView(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -654,13 +714,14 @@ SBControlHandle SBOS_addBitmapView(
     }
 
     // base host
-    g->winhnd = win;
+    //g->winhnd = win;
     g->gadgetType = GAD_BITMAPVIEW;
     g->gadget = bv;
 
     // header
     bv->h.rect.x = x; bv->h.rect.y = y; bv->h.rect.w = w; bv->h.rect.h = h;
     bv->h.flags = flags;
+    bv->h.winhnd = win;
 
     // payload
     bv->pixels = pixels;
@@ -683,10 +744,7 @@ SBControlHandle SBOS_addBitmapView(
     return base_to_handle(g);
 }
 
-SBControlHandle SBOS_addListBox(SBXWindowId win,
-                                int16_t x, int16_t y, int16_t w, int16_t h,
-                                ItemLists_t *items,
-                                uint32_t flags)
+SBControlHandle SBOS_addListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -700,13 +758,13 @@ SBControlHandle SBOS_addListBox(SBXWindowId win,
     GAD_LISTBOX_T *lb = lb_alloc();
     if (!lb){ base_free(g); return SBCTL_INVALID; }
 
-    g->winhnd = win;
+    //g->winhnd = win;
     g->gadgetType = GAD_LISTBOX;
     g->gadget = lb;
 
     lb->h.rect.x = x; lb->h.rect.y = y; lb->h.rect.w = w; lb->h.rect.h = h;
     lb->h.flags = flags;
-
+    lb->h.winhnd = win;
     lb->items = items;
 
     W->GADGETS[slot] = g;
@@ -721,19 +779,23 @@ SBControlHandle SBOS_addListBox(SBXWindowId win,
 //////////////////// destroy gadgets ///////////////////////////////////////////////
 
 
+static inline GAD_HDR_T* gad_hdr(GADGET_BASE_T *b){
+    return (b && b->gadget) ? (GAD_HDR_T*)b->gadget : NULL;
+}
 
 
 
-// Optional: destroy gadget by handle
 void SBOS_destroyGadget(SBControlHandle h){
-    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
-    if (!g) return;
+    GADGET_BASE_T *b = SBOS_gadgetFromHandle(h);
+    if (!b || !b->gadget) return;
+
+    GAD_HDR_T *hdr = (GAD_HDR_T*)b->gadget;   // requires "header is first field" rule
+    sbx_window_t *W = SBOS_getWindow(hdr->winhnd);
 
     // detach from window slots
-    sbx_window_t *W = SBOS_getWindow(g->winhnd);
     if (W){
         for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
-            if (W->GADGETS[i] == g){
+            if (W->GADGETS[i] == b){
                 W->GADGETS[i] = NULL;
                 break;
             }
@@ -741,20 +803,18 @@ void SBOS_destroyGadget(SBControlHandle h){
     }
 
     // free payload by type
-    if (g->gadgetType == GAD_BUTTON)        btn_free((GAD_BUTTON_T*)     g->gadget);
-    if (g->gadgetType == GAD_CHECKBOX)      chk_free((GAD_CHECKBOX_T*)   g->gadget);
-    if (g->gadgetType == GAD_RADIO)         rad_free((GAD_RADIO_T*)      g->gadget);
-    if (g->gadgetType == GAD_SCROLLBAR)     sb_free ((GAD_SCROLLBAR_T*)  g->gadget);
-    if (g->gadgetType == GAD_BITMAPVIEW)    bv_free ((GAD_BITMAPVIEW_T*) g->gadget);
-    if (g->gadgetType == GAD_LISTBOX)       lb_free((GAD_LISTBOX_T*)     g->gadget);
+    switch (b->gadgetType){
+        case GAD_BUTTON:     btn_free((GAD_BUTTON_T*     )b->gadget); break;
+        case GAD_CHECKBOX:   chk_free((GAD_CHECKBOX_T*   )b->gadget); break;
+        case GAD_RADIO:      rad_free((GAD_RADIO_T*      )b->gadget); break;
+        case GAD_SCROLLBAR:  sb_free ((GAD_SCROLLBAR_T*  )b->gadget); break;
+        case GAD_BITMAPVIEW: bv_free ((GAD_BITMAPVIEW_T* )b->gadget); break;
+        case GAD_LISTBOX:    lb_free ((GAD_LISTBOX_T*    )b->gadget); break;
+        default: break;
+    }
 
-
-
-
-
-    base_free(g);
+    base_free(b);
 }
-
 
 
 

@@ -93,13 +93,14 @@ typedef struct GAD_HDR_T {
     uint8_t         enabled;    // enabled/disabled gadget, sort of like if NOT clickable ;)
     uint8_t         visible;    //
     uint8_t         down;       // might need to remove this soon
+    SBXWindowId     winhnd;     // the window ID, the handler number
 } GAD_HDR_T;
 
 typedef struct {
     /// GADGET HOST ///
     /// ** GLOBALE CONTROL HOST STUFF, SYSTEM NEEDS TO KNOW THE GADGET DIMENTIONS AND TYPE, EVERYTHING WELL WILL POINT TO THE ACTUAL GADGET LATER.
 
-    SBXWindowId     winhnd;     // the window ID, the handler number for the window - useful to "peek at a control cross programs and see who it belongs too"
+    //SBXWindowId     winhnd;     // the window ID, the handler number for the window - useful to "peek at a control cross programs and see who it belongs too"
 
     // lifetime handles
     uint16_t        gadgetSlotUsed;    // 0 free, 1 used

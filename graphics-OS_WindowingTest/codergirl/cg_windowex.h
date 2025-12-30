@@ -134,6 +134,8 @@ void            SBOS_paintAllWindows(void);
 void            SBOS_bringToFront(SBXWindowId id);
 void            SBOS_setFocus(SBXWindowId id);
 
+SBXWindowId     SBOS_getWindowByGadget(const GADGET_BASE_T *b);
+
 
 // gadgets interactions from window host
 GADGET_RECT_T   win_inner_rect(const sbx_window_t *w);
@@ -147,5 +149,9 @@ int16_t         sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max,
 uint8_t         mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h);
 uint8_t         pt_in_r16(int16_t px, int16_t py, const GADGET_RECT_T *r);
 GADGET_RECT_T   r16(int16_t x, int16_t y, int16_t w, int16_t h);
+
+
+// EVENT HANDLING ///////////////////////////////////////////////////////////////////
+uint32_t        commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g);
 
 #endif // CG_WINDOWEX_H
