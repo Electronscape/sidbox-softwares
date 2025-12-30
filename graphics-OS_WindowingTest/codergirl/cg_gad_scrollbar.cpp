@@ -455,3 +455,18 @@ uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     g_ui.sb_drag_off = 0;
     return 0;   // all good 0 as in 0k :)
 }
+
+
+
+
+uint32_t SBOS_setScrollBarCallBack(SBControlHandle h, fnSBCallBack func)
+{
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
+    if (!g) return 1;
+    if (g->gadgetType != GAD_SCROLLBAR) return 2;
+    if (!g->gadget) return 3;
+
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g->gadget;
+    sb->onScrollCallBack = func;
+    return 0;
+}

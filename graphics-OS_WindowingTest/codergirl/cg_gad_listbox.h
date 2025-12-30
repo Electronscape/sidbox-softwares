@@ -21,7 +21,7 @@ typedef struct GAD_LISTBOX_T {
     int16_t         padding_x;   // 2..4 is nice
     int16_t         padding_y;   // 2
 
-
+    int8_t          selecting;
     int16_t         sel;         // selected index (-1 if none)
     int16_t         top;         // first visible row (scroll)
     int16_t         visablerows; // a count of how many are shown on box
@@ -32,5 +32,6 @@ extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
 uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my);
 
+void SBOS_setListbox_top(GADGET_BASE_T *g, int top);
 
 #endif // CG_GAD_LISTBOX_H

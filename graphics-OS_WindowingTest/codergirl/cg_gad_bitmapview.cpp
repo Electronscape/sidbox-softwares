@@ -34,21 +34,22 @@ void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t ix = ax, iy = ay, iw = aw, ih = ah;
     if (!(bv->h.flags & GAD_TOOL_NOBORDER)) {
         fill_rect_pen(ax, ay, aw, ah, PEN_WIN_BORDER_INACTIVE);
-        if(bv->h.flags && GAD_TOOL_INSET)
+        if(bv->h.flags & GAD_TOOL_INSET)
             draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_L, PEN_WIN_BEVEL_H, 0);
         else
             draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 0);
 
         // inset client area
-        ix = (int16_t)(ax + 2);
-        iy = (int16_t)(ay + 2);
-        iw = (int16_t)(aw - 4);
-        ih = (int16_t)(ah - 4);
+        ix = (int16_t)(ax + 1);
+        iy = (int16_t)(ay + 1);
+        iw = (int16_t)(aw - 2);
+        ih = (int16_t)(ah - 2);
         if (iw <= 0 || ih <= 0) return;
     }
 
     // Clear background of the view area
-    fill_rect_pen(ix, iy, iw, ih, PEN_WIN_BG);
+    if(!bv->pixels) // if NO pixels attached, black it
+        fill_rect_pen(ix, iy, iw, ih, PEN_WIN_BG);
 
     // No source? done
     if (!bv->pixels || bv->bmp_w <= 0 || bv->bmp_h <= 0) return;

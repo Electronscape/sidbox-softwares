@@ -6,6 +6,7 @@
 
 #include "cg_wintype.h"
 
+typedef void (*fnSBCallBack)(void *sb);
 
 
 typedef struct GAD_SCROLLBAR_T{
@@ -28,7 +29,8 @@ typedef struct GAD_SCROLLBAR_T{
     uint8_t     show_arrows;    // needed for if we're using arrows
 
     // function callback systems
-    void (*onScrollCallBack)(void *scrollerPtr);    // <-- since we should be able to peek at the scrollers internal anyway?
+    //void (*onScrollCallBack)(void *scrollerPtr);    // <-- since we should be able to peek at the scrollers internal anyway?
+    fnSBCallBack onScrollCallBack;
 
     uint8_t suppress_cb; // prevents recursion
 
@@ -67,5 +69,7 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
 
 uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
+
+uint32_t SBOS_setScrollBarCallBack(SBControlHandle h, fnSBCallBack func);
 
 #endif // CG_GAD_SCROLLBAR_H

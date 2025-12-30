@@ -13,10 +13,10 @@
 #include "codergirl/cg_input.h"
 
 #include "fastram.h"
+
+#include "codergirl/cg_gad_listbox.h"
 #include "codergirl/cg_itemlist.h"
-
 #include "codergirl/cg_gad_button.h"
-
 #include "codergirl/cg_gad_scrollbar.h"
 
 
@@ -39,6 +39,29 @@ void SBOS_print_ui_usage(void);
 
 static ItemLists_t listbox;
 static ItemLists_t demolist;
+
+static SBControlHandle    theListBox;
+
+
+void BitDemoScrolly1(void *s){
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
+    if (!sb) return;
+
+    printf("Custom Function!: %d\n", sb->value);
+}
+
+void ListBoxTopSet(void *s){
+    GAD_SCROLLBAR_T *src_sb = (GAD_SCROLLBAR_T*)s;
+    if (!src_sb) return;
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(theListBox);
+    if (!g) return;
+    if (!g->gadget) return;
+    SBOS_setListbox_top(g, src_sb->value);
+
+
+}
+
+
 
 
 Dialog::Dialog(QWidget *parent)
@@ -140,7 +163,8 @@ Dialog::Dialog(QWidget *parent)
 
 
 
-    SBXWindowId winMain =  SBOS_createWindow(10, 20, 320, 200, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+    SBXWindowId winMain =  SBOS_createWindow(10, 20, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+
 
     // a bitmap viewable window ;) lets see if this works!!
     SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
@@ -182,14 +206,17 @@ Dialog::Dialog(QWidget *parent)
                       0,
                       GAD_TOOL_SCROLLARROWS);
 
-    SBOS_addScrollbar(winMain2,
+
+    SBControlHandle scrrb = SBOS_addScrollbar(winMain2,
                       260, 6, 20, 150,
                       SB_ORIENT_VERT,
-                      0, 150,
+                      0, 120,
                       50,
                       0,
                       GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
 
+    // attach this scrollbar to the function
+    SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1);
 
 
     SBOS_addScrollbar(winMain2,
@@ -226,7 +253,7 @@ Dialog::Dialog(QWidget *parent)
                           GAD_TOOL_DOCKED_RIGHT);
 
 
-    SBOS_setFocus(winMain3);
+    SBOS_setFocus(winMain);
     SBOS_bringToFront(winMain);
     //SBOS_paintAllWindows();
     //updateGFXScreen();
@@ -267,8 +294,21 @@ Dialog::Dialog(QWidget *parent)
     }
 
 
-    SBOS_addListBox(winMain, 6, 40, 200, 198, &demolist, GAD_TOOL_INSET );
+    theListBox = SBOS_addListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
+    SBControlHandle ListBoxScroll =
+        SBOS_addScrollbar(winMain,
+                          206, 40, 16, 196,
+                          SB_ORIENT_VERT,
+                          0, 31 - 11,
+                          5,
+                          0,
+                          GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
 
+    SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
+
+
+    printf("theListBox handle = %u (0x%08x)\n",    (uint32_t)theListBox,    (uint32_t)theListBox);
+    printf("ListBoxScroll handle = %u (0x%08x)\n", (uint32_t)ListBoxScroll, (uint32_t)ListBoxScroll);
 
 
     //fastDumpHex(0x800);
@@ -277,21 +317,7 @@ Dialog::Dialog(QWidget *parent)
     int ls;
     char *text;
 
-    /*
-    ls = listitem_count(&demolist);
-    for(int i = 0; i < ls; i++){
-        text = (char *)listitem_get(&demolist, i);
-        printf("RETURNED: %s\n", text);
-    }
-
-    ls = listitem_count(&listbox);
-    for(int i = 0; i < ls; i++){
-        text = (char *)listitem_get(&listbox, i);
-        printf("RETURNED: %s\n", text);
-    }
-*/
-
-    SBOS_print_ui_usage();
+    //SBOS_print_ui_usage();
     printf("In memory: %s\n", txt5);
 
     //listitem_free(&listbox);
@@ -304,6 +330,7 @@ Dialog::Dialog(QWidget *parent)
     updateGFXScreen();
 
 }
+
 
 static bool bMouseDown = false;
 bool Dialog::eventFilter(QObject *obj, QEvent *event) {

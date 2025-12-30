@@ -8,6 +8,7 @@
 #include "cg_gad_listbox.h"
 
 
+
 void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
 
@@ -29,23 +30,25 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     // Outer frame
 
 
+    fill_rect_pen(ax, ay, aw, ah, PEN_WIN_BG);
     if(!(lb->h.flags & GAD_TOOL_NOBORDER)) {
-        fill_rect_pen(ax, ay, aw, ah, PEN_WIN_BORDER_INACTIVE);
-        if(lb->h.flags && GAD_TOOL_INSET)
+        //fill_rect_pen(ax, ay, aw, ah, PEN_WIN_BORDER_INACTIVE);
+        if(lb->h.flags & GAD_TOOL_INSET)
             draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_L, PEN_WIN_BEVEL_H, 0);
         else
             draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 0);
     }
 
     // Inner client area (inset)
-    int16_t ix = (int16_t)(ax + 2);
-    int16_t iy = (int16_t)(ay + 2);
-    int16_t iw = (int16_t)(aw - 4);
-    int16_t ih = (int16_t)(ah - 4);
+
+    int16_t ix = (int16_t)(ax + 1);
+    int16_t iy = (int16_t)(ay + 1);
+    int16_t iw = (int16_t)(aw - 2);
+    int16_t ih = (int16_t)(ah);
     if (iw <= 0 || ih <= 0) return;
 
 
-    fill_rect_pen(ix, iy, iw, ih, PEN_WIN_BG);
+    //fill_rect_pen(ix, iy, iw, ih, PEN_WIN_BG);
 
 
     // No model? still draw empty box
@@ -63,9 +66,12 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t count = (int16_t)list->count;
     int16_t maxTop = (int16_t)(count - rows);
     if (maxTop < 0) maxTop = 0;
-    if (lb->sel < lb->top) lb->top = lb->sel;
-    if (lb->sel >= lb->top + rows) lb->top = (int16_t)(lb->sel - rows + 1);
 
+    if(lb->selecting){
+        if (lb->sel < lb->top) lb->top = lb->sel;
+        if (lb->sel >= lb->top + rows) lb->top = (int16_t)(lb->sel - rows + 1);
+
+    }
     if (lb->top < 0) lb->top = 0;
     if (lb->top > maxTop) lb->top = maxTop;
 
@@ -173,7 +179,7 @@ static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX
     int16_t ix = (int16_t)(ax + 2);
     int16_t iy = (int16_t)(ay + 2);
     int16_t iw = (int16_t)(aw - 4);
-    int16_t ih = (int16_t)(ah - 4);
+    int16_t ih = (int16_t)(ah);
     if (iw <= 0 || ih <= 0) return -1;
 
     // Defaults
@@ -225,6 +231,8 @@ uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *m
 
     ItemLists_t *list = lb->items;
 
+    //listboxSelecting = true;
+    //lb->selecting = true;
     if (lb->sel != idx) {
         lb->sel = idx;
 
@@ -323,22 +331,24 @@ uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, in
     }
 
     // Keep selection visible (even if mouse not outside)
-    if (lb->sel < lb->top) { lb->top = lb->sel; changed = 1; }
-    if (lb->sel >= lb->top + rows) { lb->top = (int16_t)(lb->sel - rows + 1); changed = 1; }
+    if(lb->selecting){
+        if (lb->sel < lb->top) { lb->top = lb->sel; changed = 1; }
+        if (lb->sel >= lb->top + rows) { lb->top = (int16_t)(lb->sel - rows + 1); changed = 1; }
+        // Clamp top again after adjustments
+        if (lb->top < 0) lb->top = 0;
+        if (lb->top > maxTop) lb->top = (int16_t)maxTop;
+        // Sanity clamp selection in case model changed mid-drag
+        listbox_tidyup(lb);
 
-    // Clamp top again after adjustments
-    if (lb->top < 0) lb->top = 0;
-    if (lb->top > maxTop) lb->top = (int16_t)maxTop;
+    }
 
-    // Sanity clamp selection in case model changed mid-drag
-    listbox_tidyup(lb);
+
 
     if (changed) SBOS_paintAllWindows();
     return 0;
 }
 
-void cg_listbox_set_top(GADGET_BASE_T *g, int top)
-{
+void SBOS_setListbox_top(GADGET_BASE_T *g, int top){
     if (!g || !g->gadget) return;
 
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g->gadget;
@@ -356,6 +366,8 @@ void cg_listbox_set_top(GADGET_BASE_T *g, int top)
 
     // optional: keep selection valid if data shrank
     listbox_tidyup(lb);
+
+    //SBOS_paintAllWindows();
 
     // invalidate listbox rect (recommended)
     // cg_invalidate_gadget(g);
