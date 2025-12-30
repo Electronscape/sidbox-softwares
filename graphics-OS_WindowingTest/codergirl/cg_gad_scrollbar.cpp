@@ -10,15 +10,26 @@
 #include "cg_gad_scrollbar.h"
 
 // place holder function - but will later use this to submit to the event queue BY DEFAULT
-
+// INTERNALS ------------------------------------------------------------------------------------------------------
 static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
 }
 
+static inline int16_t sb_value_from_thumb_pos(int16_t pos, int16_t min, int16_t max, int16_t travel){
+    if (travel <= 0) return min;
+    if (max <= min) return min;
 
-// Thumb length derived from step relative to (max-min)
+    if (pos < 0) pos = 0;
+    if (pos > travel) pos = travel;
+
+    int32_t range = (int32_t)max - (int32_t)min;
+    int32_t v = ((int32_t)pos * range + travel/2) / travel;
+
+    return (int16_t)(min + (int16_t)v);
+}
+
 int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step){
     const int16_t MIN_THUMB = 8;
     int32_t range = (int32_t)max - (int32_t)min;
@@ -35,7 +46,6 @@ int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int1
     return (int16_t)len;
 }
 
-// Map VALUE -> thumb position (0..travel)
 int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel){
     if (travel <= 0) return 0;
     if (max <= min) return 0;
@@ -48,8 +58,6 @@ int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t
     // rounded
     return (int16_t)((v * (int32_t)travel + range/2) / range);
 }
-
-
 
 void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
@@ -187,27 +195,7 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     draw_bevel(tx, ty, tw, th, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
 }
 
-
-// Map thumb position (0..travel) -> VALUE (min..max)
-static inline int16_t sb_value_from_thumb_pos(int16_t pos, int16_t min, int16_t max, int16_t travel){
-    if (travel <= 0) return min;
-    if (max <= min) return min;
-
-    if (pos < 0) pos = 0;
-    if (pos > travel) pos = travel;
-
-    int32_t range = (int32_t)max - (int32_t)min;
-    int32_t v = ((int32_t)pos * range + travel/2) / travel;
-
-    return (int16_t)(min + (int16_t)v);
-}
-
-
-SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s,
-                              int16_t mx, int16_t my,
-                              int16_t *out_thumb_axis_start,
-                              int16_t *out_thumb_len,
-                              int16_t *out_track_axis_start)
+SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s, int16_t mx, int16_t my, int16_t *out_thumb_axis_start, int16_t *out_thumb_len, int16_t *out_track_axis_start)
 {
     // Compute abs rect same way draw does
     int16_t ax, ay, aw, ah;
@@ -319,6 +307,7 @@ SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s,
 }
 
 
+// MOUSE EVENTS ---------------------------------------------------------------------------------------------------
 uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
 
@@ -441,7 +430,6 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
     return 0;   // this is happening all the time
 }
 
-
 uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     (void)mx; (void)my;
 
@@ -466,3 +454,10 @@ uint32_t SBOS_setScrollBarCallBack(SBControlHandle h, fnSBCallBack func){
     sb->onScrollCallBack = func;
     return 0;
 }
+
+
+// API INTERFACES -------------------------------------------------------------------------------------------------
+
+
+
+

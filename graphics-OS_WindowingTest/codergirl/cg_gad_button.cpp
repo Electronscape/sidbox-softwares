@@ -8,7 +8,7 @@
 #include "cg_gad_button.h"
 
 
-
+// INTERNALS ------------------------------------------------------------------------------------------------------
 void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
 
@@ -71,3 +71,7 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
     ui_draw_text816(tx, ty, (const unsigned char*)displaytext);
 }
 
+
+// MOUSE EVENTS ---------------------------------------------------------------------------------------------------
+
+// API INTERFACES -------------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@
 #include "cg_gad_listbox.h"
 
 
-
+// INTERNALS ------------------------------------------------------------------------------------------------------
 void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
 
@@ -136,28 +136,6 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 }
 
-/*
-void cg_listbox_set_top(GADGET_BASE_T *g, int top)
-{
-    if (!g || !g->gadget) return;
-    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g->gadget;
-    ItemLists_t *list = lb->items;
-
-    int max_top = lb->item_count - lb->visible_rows;
-    if (max_top < 0) max_top = 0;
-
-    if (top < 0) top = 0;
-    if (top > max_top) top = max_top;
-
-    if (lb->top == top) return;
-    lb->top = top;
-
-    // request redraw / invalidate region
-    cg_invalidate_gadget(g); // whatever your system uses
-}
-
-*/
-
 static void listbox_tidyup(GAD_LISTBOX_T *lb){
     int count = (lb && lb->items) ? (int)lb->items->count : 0;
 
@@ -167,10 +145,7 @@ static void listbox_tidyup(GAD_LISTBOX_T *lb){
     if (lb->top < 0) lb->top = 0;
 }
 
-
-static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX_T *lb,
-                                        int16_t mx, int16_t my,
-                                        int16_t *out_rows_visible)
+static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX_T *lb, int16_t mx, int16_t my, int16_t *out_rows_visible)
 {
     if (!w || !lb || !lb->items) return -1;
 
@@ -227,6 +202,8 @@ static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX
     return idx;
 }
 
+
+// MOUSE EVENTS ---------------------------------------------------------------------------------------------------
 uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     if (!w || !g || !g->gadget) return 1;
 
@@ -356,8 +333,10 @@ uint32_t onMouseReleaseListBox(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     return 0;   // all good 0 as in 0k :)
 }
 
-void SBOS_setListbox_top(GADGET_BASE_T *g, int top){
-    if (!g || !g->gadget) return;
+
+// API INTERFACES -------------------------------------------------------------------------------------------------
+uint32_t SBOS_setListbox_top(GADGET_BASE_T *g, int top){
+    if (!g || !g->gadget) return 0;
 
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g->gadget;
     ItemLists_t *items = lb->items;
@@ -369,7 +348,7 @@ void SBOS_setListbox_top(GADGET_BASE_T *g, int top){
     if (top < 0) top = 0;
     if (top > max_top) top = max_top;
 
-    if (lb->top == top) return;
+    if (lb->top == top) return 0;
     lb->top = (int16_t)top;
 
     // optional: keep selection valid if data shrank
@@ -379,5 +358,9 @@ void SBOS_setListbox_top(GADGET_BASE_T *g, int top){
 
     // invalidate listbox rect (recommended)
     // cg_invalidate_gadget(g);
+    return(1);
 }
+
+
+
 

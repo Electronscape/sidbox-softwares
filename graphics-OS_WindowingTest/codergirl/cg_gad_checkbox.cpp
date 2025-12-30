@@ -8,6 +8,7 @@
 #include "cg_gad_checkbox.h"
 
 
+// INTERNALS ------------------------------------------------------------------------------------------------------
 void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!w || !g || !g->gadget) return;
 
@@ -66,3 +67,6 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
 }
 
 
+// MOUSE EVENTS ---------------------------------------------------------------------------------------------------
+
+// API INTERFACES -------------------------------------------------------------------------------------------------

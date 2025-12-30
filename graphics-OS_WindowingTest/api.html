@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CODERGIRL / SBOS UI API Cheat Sheet</title>
+
+<style>
+:root{
+  --bg0:#0b0e14;
+  --bg1:#0e1116;
+  --panel:#121722;
+  --panel2:#0c111a;
+  --ink:#e6edf3;
+  --muted:#9aa4b2;
+  --border:#273043;
+  --accent:#58a6ff;
+  --accent2:#7ee787;
+  --warn:#f85149;
+  --code:#070a10;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --line: 1px solid var(--border);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Arial, sans-serif;
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+
+body{
+  margin:0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--bg1), var(--bg0));
+}
+
+/* Layout */
+.shell{
+  display:grid;
+  grid-template-columns: 280px 1fr;
+  min-height:100vh;
+}
+
+/* Sidebar */
+aside{
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  border-right: var(--line);
+  background: linear-gradient(180deg, #0e1420, #0a0e16);
+  padding: 18px 14px;
+
+  /* IMPORTANT: make aside a flex column so nav can scroll */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brand{
+  border: var(--line);
+  background: rgba(255,255,255,0.03);
+  padding: 14px 12px;
+}
+
+.brand h1{
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: .3px;
+  margin: 0 0 6px 0;
+}
+
+.brand p{
+  margin:0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+nav{
+  border: var(--line);
+  background: rgba(0,0,0,0.18);
+  padding: 10px 8px;
+
+  overflow-y: auto; /* <-- scroll happens here */
+  flex: 1;          /* <-- fill remaining height */
+  min-height: 0;    /* <-- REQUIRED for flex scrolling */
+}
+
+nav a{
+  display:block;
+  padding: 8px 10px;
+  color: var(--muted);
+  text-decoration:none;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-left: 3px solid transparent;
+}
+
+nav a:hover{
+  color: var(--ink);
+  background: rgba(88,166,255,0.08);
+  border-left-color: rgba(88,166,255,0.35);
+}
+
+/* Details (collapsible nav groups) */
+nav details{
+  border-top: var(--line);
+  margin-top: 10px;
+  padding-top: 8px;
+}
+
+nav summary{
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(154,164,178,.9);
+  user-select: none;
+  border-left: 3px solid transparent;
+}
+
+nav summary:hover{
+  color: var(--ink);
+  background: rgba(88,166,255,0.08);
+  border-left-color: rgba(88,166,255,0.35);
+}
+
+nav summary::-webkit-details-marker{ display:none; }
+
+nav summary::before{
+  content: "▸";
+  display: inline-block;
+  width: 16px;
+  color: rgba(154,164,178,.8);
+}
+
+nav details[open] summary::before{
+  content: "▾";
+}
+
+/* Keep links inside details slightly indented */
+nav details a{
+  padding-left: 26px;
+}
+
+nav .label{
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(154,164,178,.8);
+  padding: 6px 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+/* Sidebar footer note */
+.side-note{
+  margin: 0 2px;
+  color: rgba(154,164,178,.9);
+  font-size: 12px;
+  font-family: var(--mono);
+}
+
+/* Content */
+main{
+  padding: 24px 28px 40px;
+  max-width: 1100px;
+}
+
+header{
+  border: var(--line);
+  background: radial-gradient(900px 260px at 20% 0%, rgba(88,166,255,0.18), transparent),
+              rgba(255,255,255,0.02);
+  padding: 18px 18px 16px;
+  margin-bottom: 18px;
+}
+
+header h2{
+  font-family: var(--mono);
+  margin:0 0 8px 0;
+  font-size: 20px;
+  letter-spacing:.4px;
+}
+
+header p{
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 70ch;
+  font-size: 13px;
+}
+
+section{
+  margin-top: 18px;
+  padding-top: 12px;
+}
+
+h3{
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--ink);
+  margin: 22px -28px 10px;     /* -28px matches main padding left/right */
+  padding: 10px 28px;         /* put the padding back inside the bar */
+  letter-spacing:.3px;
+
+  background: #0b203a;        /* dark blue bar */
+  border-top: var(--line);
+  border-bottom: var(--line);
+  border-right: var(--line);
+}
+
+h4{
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent2);
+  margin: 16px 0 8px;
+}
+
+p{
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 13px;
+  max-width: 80ch;
+}
+
+.panel{
+  border: var(--line);
+  background: rgba(255,255,255,0.02);
+  padding: 14px 14px 12px;
+  margin: 10px 0;
+  box-shadow: var(--shadow);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+pre, code{
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+pre{
+  margin: 10px 0 0;
+  padding: 12px 12px;
+  background: var(--code);
+  border: var(--line);
+  overflow-x:auto;
+  line-height: 1.35;
+}
+
+.inline{
+  font-family: var(--mono);
+  background: rgba(88,166,255,0.08);
+  border: 1px solid rgba(88,166,255,0.22);
+  padding: 1px 6px;
+}
+
+.callout-warn{
+  border: 1px solid rgba(248,81,73,0.35);
+  background: rgba(248,81,73,0.06);
+  padding: 10px 12px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(230,237,243,.92);
+}
+
+.small{
+  font-size: 12px;
+  color: rgba(154,164,178,.9);
+}
+
+hr{
+  border: none;
+  border-top: var(--line);
+  margin: 18px 0;
+}
+
+footer{
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--mono);
+}
+
+/* Anchor offset */
+.anchor{
+  position: relative;
+  top: -8px;
+}
+
+/* Responsive */
+@media (max-width: 960px){
+  .shell{ grid-template-columns: 1fr; }
+  aside{
+    position: relative; /* sticky sidebar on mobile is often annoying */
+    height: auto;
+  }
+  nav{
+    max-height: 45vh; /* keeps nav usable without taking over the whole phone */
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="shell">
+
+  <aside>
+    <div class="brand">
+      <h1>CODERGIRL</h1>
+      <p>SBOS UI API — windows, gadgets, handles, pools, and reality.</p>
+    </div>
+
+    <nav>
+      <div class="label">Overview</div>
+      <a href="#core">Core Concepts</a>
+      <a href="#handles">Handles & IDs</a>
+      <a href="#limits">Pool Limits</a>
+
+      <details open>
+        <summary>Windows</summary>
+        <a href="#win-api">Window API</a>
+        <a href="#win-flags">Window Flags</a>
+        <a href="#win-geom">Geometry Helpers</a>
+        <a href="#win-hit">Hit Testing</a>
+      </details>
+
+      <details open>
+        <summary>Gadgets</summary>
+        <a href="#gad-api">Gadget API</a>
+        <a href="#gad-flags">Gadget Flags</a>
+        <a href="#gad-lifecycle">Lifecycle & Safety</a>
+      </details>
+
+      <details>
+        <summary>Input & Data</summary>
+        <a href="#input">Input (Mouse)</a>
+        <a href="#itemlists">ItemLists</a>
+      </details>
+
+      <details>
+        <summary>Rendering</summary>
+        <a href="#render">Renderer & Clip</a>
+      </details>
+
+      <details>
+        <summary>Examples</summary>
+        <a href="#example">Minimal Example</a>
+        <a href="#ex-desktop">Desktop + Windows</a>
+        <a href="#ex-scroll-callback">Scrollbar Callback</a>
+        <a href="#ex-listbox-scroll">ListBox + Scrollbar</a>
+        <a href="#ex-kitchensink">Full Demo (Reference)</a>
+        <a href="#rules">Design Laws</a>
+      </details>
+    </nav>
+
+    <p class="side-note">Tip: drop this file into your repo and forget it exists until 3am.</p>
+  </aside>
+
+  <main>
+    <header>
+      <h2>CODERGIRL / SBOS UI API — Cheat Sheet</h2>
+      <p>
+        Internal and external API access.<br>
+        THIS is ONLY for the FIRMWARE
+      </p>
+    </header>
+
+    <section id="core"><span class="anchor"></span>
+      <h3>Core Concepts</h3>
+      <div class="panel">
+        <p>
+          The UI is built from <span class="inline">Windows</span> and <span class="inline">Gadgets</span>.
+          Both are pool-allocated (fixed maximum counts). Gadgets are referenced by
+          <span class="inline">SBControlHandle</span> (generation + index), so stale handles don’t silently target new objects.
+        </p>
+      </div>
+    </section>
+
+    <section id="handles"><span class="anchor"></span>
+      <h3>Handles & IDs</h3>
+      <div class="grid">
+        <div class="panel">
+          <h4>Window IDs</h4>
+          <pre>
+typedef uint8_t SBXWindowId;
+#define SBW_INVALID_ID ((SBXWindowId)0xFF)
+#define MAX_WINDOWS 16</pre>
+        </div>
+        <div class="panel">
+          <h4>Control Handles</h4>
+          <pre>
+typedef uint32_t SBControlHandle;
+#define SBCTL_INVALID ((SBControlHandle)0xFFFFFFFF)
+
+#define SBCTL_MAKE(gen, idx) ((((gen)&0xFFFFu)<<16) | ((idx)&0xFFFFu))
+#define SBCTL_IDX(h) ((uint16_t)((h) & 0xFFFFu))
+#define SBCTL_GEN(h) ((uint16_t)(((h)>>16) & 0xFFFFu))</pre>
+        </div>
+      </div>
+
+      <div class="callout-warn">
+        <b>Reality check:</b> raw gadget pointers are “live objects”. Great for internals, spicy for app code.
+        Prefer handles in app land unless you enjoy debugging ghost clicks.
+      </div>
+    </section>
+
+    <section id="limits"><span class="anchor"></span>
+      <h3>Pool Limits</h3>
+      <div class="panel">
+        <pre>
+#define MAX_WINDOWS     16
+#define MAX_GADGETS_PER_WINDOW 16
+
+#define MAX_BUTTONS     32
+#define MAX_SCROLLBARS  32
+#define MAX_CHECKBOXES  32
+#define MAX_RADIOS      32
+#define MAX_BITMAPVIEWS 32
+#define MAX_LISTBOXES   32</pre>
+        <p class="small">
+          These are hard resources available to the GUI.
+        </p>
+      </div>
+    </section>
+
+    <hr />
+
+    <section id="win-api"><span class="anchor"></span>
+      <h3>Window API</h3>
+      <div class="panel">
+        <h4>Create / Destroy / Access</h4>
+        <pre>
+SBXWindowId   SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
+
+void          SBOS_destroyWindow(SBXWindowId id);
+sbx_window_t* SBOS_getWindow(SBXWindowId id);</pre>
+      </div>
+
+      <div class="panel">
+        <h4>Paint & Focus</h4>
+        <pre>
+void SBOS_paintWindow(SBXWindowId id);
+void SBOS_paintAllWindows(void);
+
+void SBOS_bringToFront(SBXWindowId id);
+void SBOS_setFocus(SBXWindowId id);</pre>
+      </div>
+    </section>
+
+    <section id="win-flags"><span class="anchor"></span>
+      <h3>Window Flags</h3>
+      <div class="panel">
+        <pre>
+#define WIN_DEFAULT_FLAGS (SBX_WF_VISIBLE | SBX_WF_MOVEABLE | (SBX_WF_CLOSE | SBX_WF_TITLE_BAR | SBX_WF_MINIMISE | SBX_WF_MAXRESTORE | SBX_WF_ZORDER))</pre>
+        <p class="small">
+          Flags cover window frame (titlebar buttons), behavior (move/resize)<br>
+          z-order rules (always - front/back).
+        </p>
+      </div>
+    </section>
+
+    <section id="win-geom"><span class="anchor"></span>
+      <h3>Geometry Helpers</h3>
+      <div class="panel">
+        <pre>
+GADGET_RECT_T  win_inner_rect(const sbx_window_t *w);
+
+int16_t        win_gutter_right(const sbx_window_t *w);
+int16_t        win_gutter_bottom(const sbx_window_t *w);
+
+int16_t        win_inner_reserve_right(const sbx_window_t *w);
+int16_t        win_inner_reserve_bottom(const sbx_window_t *w);
+
+uint8_t        mousept_in_rect(int16_t px, int16_t py, int16_t x, int16_t y, int16_t w, int16_t h);
+uint8_t        pt_in_r16(int16_t px, int16_t py, const GADGET_RECT_T *r);
+GADGET_RECT_T  r16(int16_t x, int16_t y, int16_t w, int16_t h);</pre>
+      </div>
+      <p>
+        Use these for <b>both</b> drawing and hit testing.
+      </p>
+    </section>
+
+    <section id="win-hit"><span class="anchor"></span>
+      <h3>Hit Testing</h3>
+      <div class="panel">
+        <pre>
+GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my);
+uint8_t gadget_mouse_inside(const sbx_window_t *w, const GADGET_BASE_T *g, int16_t mx, int16_t my);</pre>
+      </div>
+    </section>
+
+    <hr />
+
+    <section id="gad-api"><span class="anchor"></span>
+      <h3>Gadget API</h3>
+
+      <div class="panel">
+        <h4>Init</h4>
+        <pre>
+initWb();       // call this BEFORE using any of the windows... HOWEVER this should already have started when launching CODERGIRL.
+void SBOS_gadgetsInit(void);</pre>
+      </div>
+
+      <div class="panel">
+        <h4>Create Gadgets (returns SBControlHandle)</h4>
+        <pre>
+SBControlHandle SBOS_addButton      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,const char *text, GAD_TOOL_FLAGS flags);
+
+SBControlHandle SBOS_addCheckbox    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
+                                     const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
+
+SBControlHandle SBOS_addRadioButton (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
+                                     const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
+
+SBControlHandle SBOS_addScrollbar   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
+                                     uint8_t orient, int16_t min, int16_t max,
+                                     int16_t step, int16_t initial_pct, uint32_t flags);
+
+SBControlHandle SBOS_addBitmapView  (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
+                                     const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride,
+                                     uint32_t bv_flags, uint32_t flags);
+
+SBControlHandle SBOS_addListBox     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags);</pre>
+      </div>
+
+      <div class="panel">
+        <h4>Handle Utilities / Destruction</h4>
+        <pre>
+GADGET_BASE_T*  SBOS_gadgetFromHandle(SBControlHandle h);
+GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
+SBControlHandle base_to_handle(GADGET_BASE_T *g);
+
+void SBOS_destroyGadget(SBControlHandle h);</pre>
+      </div>
+    </section>
+
+    <section id="gad-flags"><span class="anchor"></span>
+      <h3>Gadget Flags</h3>
+      <div class="panel">
+        <pre>
+typedef enum {
+  GAD_TOOL_DEFAULT = 0,
+  GAD_TOOL_CYCLEBUTTON    = (1<<0),
+  GAD_TOOL_SCROLLARROWS   = (1<<1),
+  GAD_TOOL_NOBORDER       = (1<<2),
+  GAD_TOOL_INSET          = (1<<3),
+  GAD_TOOL_DOCKED_RIGHT   = (1<<4),
+  GAD_TOOL_DOCKED_BOTTOM  = (1<<5)
+} GAD_TOOL_FLAGS;</pre>
+        <p class="small">Exact values may differ in your headers; this section is meant as “what exists conceptually”.</p>
+      </div>
+    </section>
+
+    <section id="gad-lifecycle"><span class="anchor"></span>
+      <h3>Lifecycle & Safety</h3>
+      <div class="panel">
+        <p>
+          <b>Recommended app-side pattern:</b> store <span class="inline">SBControlHandle</span>, not raw pointers.
+          If you must get a pointer (via <span class="inline">SBOS_gadgetFromHandle</span>),
+          treat it as temporary and do not cache it across deletes.
+        </p>
+        <div class="callout-warn">
+          If you keep a raw pointer and then delete the gadget, congratulations: you just built
+          a time machine that travels to “random crashes”.
+        </div>
+      </div>
+    </section>
+
+    <hr />
+
+    <section id="input"><span class="anchor"></span>
+      <h3>Input (Mouse)</h3>
+      <div class="panel">
+        <pre>
+void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my);</pre>
+        <p>
+          Feed mouse events here. Internally this tracks capture/drag/resize state so gadgets and windows behave consistently.
+        </p>
+      </div>
+    </section>
+
+    <section id="itemlists"><span class="anchor"></span>
+      <h3>ItemLists</h3>
+      <div class="panel">
+        <pre>
+void listitem_init(ItemLists_t *list);
+void listitem_clear(ItemLists_t *list);
+void listitem_free(ItemLists_t *list);
+
+int  listitem_add(ItemLists_t *list, const char *text);
+int  listitem_add_first(ItemLists_t *list, const char *text);
+int  listitem_insert(ItemLists_t *list, uint16_t idx, const char *text);
+
+void listitem_delete(ItemLists_t *list, uint16_t idx);
+void listitem_move(ItemLists_t *list, uint16_t from, uint16_t to);
+
+void        listitem_sort(ItemLists_t *list);
+const char* listitem_get(const ItemLists_t *list, uint16_t idx);
+uint32_t    listitem_count(const ItemLists_t *list);
+void        listitem_dump(const ItemLists_t *list);</pre>
+
+        <div class="callout-warn">
+          <b>Ownership rule:</b> <span class="inline">ItemLists_t</span> owns its strings (fastAlloc + free).
+          The ListBox does <u>not</u> own the list itself — keep the list alive as long as the ListBox points at it.
+        </div>
+      </div>
+    </section>
+
+    <hr />
+
+    <section id="render"><span class="anchor"></span>
+      <h3>Renderer & Clip</h3>
+      <div class="panel">
+        <pre>
+extern UIClipRect g_uiclip;
+
+// examples (not exhaustive)
+void ui_draw_text816(int16_t x, int16_t y, const char *text);
+void draw_bevel_rect(int16_t x, int16_t y, int16_t w, int16_t h);
+void draw_rect_outline_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t thickness);</pre>
+        <p class="small">
+          Your UI clip matters. If a gadget draws outside the window, it’s almost always a clip lifecycle bug
+          (set/restore mismatch) or geometry mismatch.
+        </p>
+      </div>
+    </section>
+
+    <hr />
+
+    <section id="example"><span class="anchor"></span>
+      <h3>Minimal Example</h3>
+      <div class="panel">
+        <pre>
+SBXWindowId w = SBOS_createWindow(20, 20, 320, 200, "Test", WIN_DEFAULT_FLAGS);
+
+SBControlHandle btn = SBOS_addButton(w, 10, 10, 120, 20, "Click", GAD_TOOL_DEFAULT);
+
+ItemLists_t items;
+listitem_init(&items);
+listitem_add(&items, "Alpha");
+listitem_add(&items, "Beta");
+
+SBControlHandle lb = SBOS_addListBox(w, 10, 40, 200, 120, &items, GAD_TOOL_DEFAULT);
+
+// main loop:
+SBOS_paintAllWindows();
+SBOS_MouseInterface(evt, mx, my);</pre>
+      </div>
+    </section>
+
+    <!-- Your existing example sections can stay as-is below -->
+
+    <hr />
+
+<section id="ex-desktop"><span class="anchor"></span>
+  <h3>Example: Desktop + Windows</h3>
+  <p>
+    This is the “boot into a UI” pattern: init systems, create a desktop window (workbench),
+    then spawn normal windows on top. A desktop is just a window with always-to-back + no border.
+  </p>
+
+  <div class="panel">
+    <h4>Desktop window (Workbench)</h4>
+<pre>
+void createBasicDesktopTest(){
+    initWb();
+    initFastRam();  // IMPORTANT: ItemLists use fastAlloc
+
+    // DESKTOP WINDOW (yes it IS a window)
+    SBXWindowId workbench = SBOS_createWindow(
+        0, 0, SCR_WIDTH, SCR_HEIGHT,
+        "Workbench",
+        SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER
+    );
+
+    SBOS_addBitmapView(workbench, 0, 0, 480, 320,
+        backdrop, 480, 320, 480,
+        BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER
+    );
+
+    SBOS_addButton(workbench, 6, 6, 170, 26,
+        "a workbench button",
+        GAD_TOOL_DEFAULT
+    );
+}
+</pre>
+  </div>
+
+  <div class="callout-warn">
+    <b>Note:</b> Your desktop stays behind everything because of <span class="inline">SBX_WF_ALWAYS_TO_BACK</span>.
+    That flag is basically “you are the background now” 😂
+  </div>
+</section>
+
+
+<section id="ex-scroll-callback"><span class="anchor"></span>
+  <h3>Example: Scrollbar Callback</h3>
+  <p>
+    Scrollbars can call a custom function when they change. The callback receives a pointer to the scrollbar gadget,
+    so you cast it to <span class="inline">GAD_SCROLLBAR_T*</span>.
+  </p>
+
+  <div class="panel">
+    <h4>Callback function</h4>
+<pre>
+// a CUSTOM function for a scroll bar
+void BitDemoScrolly1(void *s){
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
+    if (!sb) return;
+
+    printf("Custom Function!: %d\n", sb->value);
+}
+</pre>
+  </div>
+
+  <div class="panel">
+    <h4>Attach callback</h4>
+<pre>
+SBControlHandle scrrb =
+    SBOS_addScrollbar(winMain2, 260, 6, 20, 150,
+                      SB_ORIENT_VERT, 0, 120, 50, 0,
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+
+SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1);
+</pre>
+  </div>
+
+  <p class="small">
+    Rule: callback gets <span class="inline">void*</span> so you can keep the public API simple. Internals stay spicy.
+  </p>
+</section>
+
+
+<section id="ex-listbox-scroll"><span class="anchor"></span>
+  <h3>Example: Scrollbar Driving a ListBox</h3>
+  <p>
+    This one is genuinely “real UI”: the scrollbar controls the ListBox top index.
+    You store the listbox handle globally (or in your window state), and the scrollbar callback
+    updates the listbox via <span class="inline">SBOS_setListbox_top()</span>.
+  </p>
+
+  <div class="panel">
+    <h4>Globals</h4>
+<pre>
+static ItemLists_t demolist;
+static SBControlHandle theListBox;
+</pre>
+  </div>
+
+  <div class="panel">
+    <h4>Callback that updates the ListBox</h4>
+<pre>
+// CUSTOM function for a scrollbar that will interact with a listbox
+void ListBoxTopSet(void *s){
+    GAD_SCROLLBAR_T *src_sb = (GAD_SCROLLBAR_T*)s;
+    if (!src_sb) return;
+
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(theListBox);
+    if (!g) return;
+    if (!g->gadget) return;
+
+    SBOS_setListbox_top(g, src_sb->value);
+}
+</pre>
+  </div>
+
+  <div class="panel">
+    <h4>Create list, listbox, scrollbar, bind callback</h4>
+<pre>
+char txt[64];
+
+listitem_init(&demolist);
+for(int i = 0; i < 32; i++){
+    sprintf(txt, "Listbox test %d", i);
+    listitem_add(&demolist, txt);
+}
+
+// Create ListBox
+theListBox = SBOS_addListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
+
+// Create Scrollbar sized to visible rows:
+// total rows = 32, visible rows = 11, so max top = 32 - 11 = 21
+SBControlHandle ListBoxScroll =
+    SBOS_addScrollbar(winMain, 206, 40, 16, 196,
+                      SB_ORIENT_VERT,
+                      0, 31 - 11,   // max-top
+                      5, 0,
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+
+SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
+</pre>
+  </div>
+
+  <div class="callout-warn">
+    <b>Subtle gotcha:</b> your scrollbar max should match the listbox’s max top:
+    <span class="inline">maxTop = itemCount - visibleRows</span>.
+    If those disagree, you’ll get the classic “scrollbar lies, listbox stutters” bug.
+  </div>
+</section>
+
+
+<section id="ex-kitchensink"><span class="anchor"></span>
+  <h3>Full Demo (Reference)</h3>
+  <p>
+    Your full “kitchen sink” test function is valuable as a canonical usage reference.
+    Keep it here so future-you can copy/paste patterns without spelunking source files.
+  </p>
+
+  <div class="panel">
+    <h4>createBasicDesktopTest() — full listing</h4>
+<pre>
+static ItemLists_t listbox;
+static ItemLists_t demolist;
+static SBControlHandle theListBox;
+
+// a CUSTOM function for a scroll bar
+void BitDemoScrolly1(void *s){
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
+    if (!sb) return;
+    printf("Custom Function!: %d\n", sb->value);
+}
+
+// a CUSTOM function for a scroll bar that will interact with a listbox
+void ListBoxTopSet(void *s){
+    GAD_SCROLLBAR_T *src_sb = (GAD_SCROLLBAR_T*)s;
+    if (!src_sb) return;
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(theListBox);
+    if (!g) return;
+    if (!g->gadget) return;
+    SBOS_setListbox_top(g, src_sb->value);
+}
+
+void createBasicDesktopTest(){
+    initWb();
+    initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
+
+    // DESKTOP WINDOW (yes it IS a window)
+    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench",
+        SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
+
+    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480,
+        BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+
+    SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);
+
+    // WINDOW 1 -----------------------
+    SBXWindowId winMain = SBOS_createWindow(10, 20, 260, 280, "Sharks with lasers!",
+        SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE);
+
+    SBOS_addScrollbar(winMain, 0,0,0,0, SB_ORIENT_VERT, 0, 100, 25, 0, GAD_TOOL_DOCKED_RIGHT);
+    SBOS_addButton(winMain, 6,  6,  200, 26,
+        "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!",
+        GAD_TOOL_CYCLEBUTTON);
+
+    // WINDOW 2 -----------------------
+    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window",
+        SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+
+    SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);
+    SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+    SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable gerbils", 0, GAD_TOOL_DEFAULT);
+
+    SBOS_addRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 30, 100, 18, "Medium", 0, 0, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
+
+    SBOS_addRadioButton(winMain2, 180, 100, 100, 18, "PAL",   1, 1, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 120, 100, 18, "NTSC",  1, 0, GAD_TOOL_DEFAULT);
+
+    SBOS_addScrollbar(winMain2, 10, 120, 150, 16, SB_ORIENT_HORZ, 0, 1000, 250, 0, GAD_TOOL_SCROLLARROWS);
+
+    SBControlHandle scrrb =
+        SBOS_addScrollbar(winMain2, 260, 6, 20, 150, SB_ORIENT_VERT, 0, 120, 50, 0,
+                          GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+
+    SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1);
+
+    SBOS_addScrollbar(winMain2, 0,0,0,0, SB_ORIENT_HORZ, 0, 100, 25, 0,
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
+
+    SBOS_addScrollbar(winMain2, 0,0,0,0, SB_ORIENT_VERT, 0, 100, 25, 0,
+                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
+
+    // WINDOW 3 -----------------------
+    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff",
+        SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER);
+
+    SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480,
+        BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+
+    SBOS_addButton(winMain3, 6, 6, 170, 26, "a simple text test", GAD_TOOL_INSET);
+    SBOS_addScrollbar(winMain3, 0,0,0,0, SB_ORIENT_VERT, 0, 100, 25, 0, GAD_TOOL_DOCKED_RIGHT);
+
+    SBOS_setFocus(winMain);
+    SBOS_bringToFront(winMain);
+
+    // FAST RAM TESTING
+    char *txt5 = (char *)fastAlloc(200);
+    if(txt5) strcpy(txt5, "Hello world");
+
+    listitem_init(&listbox);
+    listitem_insert(&listbox, 0, "hello host LISTBOX one!");
+    listitem_add(&listbox, "random text 2");
+    listitem_add(&listbox, "CAMMELS!");
+    listitem_add(&listbox, "I still don't have my lasers!!");
+    listitem_add(&listbox, "GERBILS EVERYWHERE!!!! HELP!!!");
+
+    listitem_dump(&listbox);
+    listitem_delete(&listbox, 2);
+    listitem_dump(&listbox);
+
+    char txt[64];
+    listitem_init(&demolist);
+    for(int i = 0; i < 32; i++){
+        sprintf(txt, "Listbox test %d", i);
+        listitem_add(&demolist, txt);
+    }
+
+    theListBox = SBOS_addListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
+
+    SBControlHandle ListBoxScroll =
+        SBOS_addScrollbar(winMain, 206, 40, 16, 196, SB_ORIENT_VERT,
+                          0, 31 - 11, 5, 0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+
+    SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
+
+    printf("theListBox handle = %u (0x%08x)\n", (uint32_t)theListBox, (uint32_t)theListBox);
+    printf("ListBoxScroll handle = %u (0x%08x)\n", (uint32_t)ListBoxScroll, (uint32_t)ListBoxScroll);
+
+    printf("In memory: %s\n", txt5);
+
+    SBOS_paintAllWindows();
+}
+</pre>
+  </div>
+</section>
+
+
+    <section id="rules"><span class="anchor"></span>
+      <h3>Design Laws</h3>
+      <div class="panel">
+        <p>• Pool limits are the real physics.</p>
+        <p>• Draw math and hit math must match (centralise geometry helpers).</p>
+        <p>• Handles are safe. Raw pointers are chainsaws.</p>
+        <p>• If clip state isn’t restored correctly, your UI will start painting outside reality.</p>
+      </div>
+    </section>
+
+    <footer>
+      CODERGIRL / SBOS UI API — single-file docs page • sharp edges edition
+    </footer>
+  </main>
+
+</div>
+</body>
+</html>

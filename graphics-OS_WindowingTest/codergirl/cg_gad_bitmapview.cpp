@@ -5,6 +5,8 @@
 
 #include "cg_gad_bitmapview.h"
 
+
+// INTERNALS ------------------------------------------------------------------------------------------------------
 static inline int16_t clamp_scroll(int16_t v, int16_t maxv){
     if (v < 0) return 0;
     if (v > maxv) return maxv;
@@ -128,6 +130,8 @@ void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
     }
 }
 
+
+// MOUSE EVENTS ---------------------------------------------------------------------------------------------------
 uint32_t onMouseDownCaptureBitmapview(GADGET_BASE_T *gadget, int16_t *mx, int16_t *my){
     GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) gadget->gadget;
     if (bv->bv_flags & BVF_PAN) {
@@ -156,8 +160,6 @@ uint32_t onMouseMoveBitmapView(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *ev
     return 0;
 }
 
-
-
 uint32_t onMouseUpBitmapView(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     (void)mx; (void)my;
     GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*) g->gadget;
@@ -166,3 +168,6 @@ uint32_t onMouseUpBitmapView(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     bv->panning = 0;
     return 0;   // all good 0 as in 0k :)
 }
+
+
+// API INTERFACES -------------------------------------------------------------------------------------------------

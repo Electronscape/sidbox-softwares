@@ -27,12 +27,17 @@ typedef struct GAD_LISTBOX_T {
     int16_t         visablerows; // a count of how many are shown on box
 } GAD_LISTBOX_T;
 
+// INTERNALS ------------------------------------------------------------------------------------------------------
 extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
 
+
+// MOUSE EVENTS ---------------------------------------------------------------------------------------------------
 uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my);
 uint32_t onMouseReleaseListBox(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
-void SBOS_setListbox_top(GADGET_BASE_T *g, int top);
+
+// API INTERFACES -------------------------------------------------------------------------------------------------
+uint32_t SBOS_setListbox_top(GADGET_BASE_T *g, int top);
 
 #endif // CG_GAD_LISTBOX_H
