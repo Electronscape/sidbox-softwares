@@ -27,7 +27,7 @@ GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
 
 
 typedef struct {
-    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool;
+    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool;
 } SBOS_GadgetPoolBytes;
 
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
@@ -38,6 +38,7 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     b.radPool  = sizeof(g_radPool);
     b.sbPool   = sizeof(g_sbPool);
     b.bvPool   = sizeof(g_bvPool);
+    b.lbPool   = sizeof(g_lbPool);
     return b;
 }
 

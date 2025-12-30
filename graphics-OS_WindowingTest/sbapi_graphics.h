@@ -8,6 +8,14 @@
 /// this is the "hardware level" code.
 #define     SCR_WIDTH   480
 #define     SCR_HEIGHT  320
+
+//#define     SCR_WIDTH   1920
+//#define     SCR_HEIGHT  960
+
+//#define     SCR_WIDTH   800
+//#define     SCR_HEIGHT  480
+
+
 #define     SCR_STRIDE  SCR_HEIGHT
 
 #define     SCR_RAMSIZE (SCR_WIDTH * SCR_HEIGHT)

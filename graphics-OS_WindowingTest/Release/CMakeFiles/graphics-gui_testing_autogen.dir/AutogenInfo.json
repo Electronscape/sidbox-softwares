@@ -515,6 +515,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_theme.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_theme.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_type.h",
 			"MU",
 			"5AAQOGTO22/moc_cg_type.cpp",

@@ -27,8 +27,15 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t pad_y = (lb->padding_y > 0) ? lb->padding_y : 2;
 
     // Outer frame
-    fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+
+
+    if(!(lb->h.flags & GAD_TOOL_NOBORDER)) {
+        fill_rect_pen(ax, ay, aw, ah, PEN_WIN_BORDER_INACTIVE);
+        if(lb->h.flags && GAD_TOOL_INSET)
+            draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_L, PEN_WIN_BEVEL_H, 0);
+        else
+            draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 0);
+    }
 
     // Inner client area (inset)
     int16_t ix = (int16_t)(ax + 2);
@@ -37,7 +44,8 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t ih = (int16_t)(ah - 4);
     if (iw <= 0 || ih <= 0) return;
 
-    fill_rect_pen(ix, iy, iw, ih, WIN_CLIENT_PEN);
+
+    fill_rect_pen(ix, iy, iw, ih, PEN_WIN_BG);
 
 
     // No model? still draw empty box
@@ -71,7 +79,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // Draw rows
 
-    gfx_setcolour(WIN_TITLE_PEN);
+    //gfx_setcolour(WIN_TITLE_PEN);
 
     int16_t tx;
     int16_t ty;
@@ -85,12 +93,17 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         uint8_t selected = (idx == list->sel);
         // Selected highlight
         if (selected) {
-            fill_rect_pen(ix, ry-2, iw, row_h+2, WIN_SCROLLER_PROP_PEN);
+            fill_rect_pen(ix, ry-2, iw, row_h+2, PEN_SELECTED);
 
             // Focus rectangle inside the row (clipped by listbox clip already)
             //gfx_setcolour(WIN_BEVEL_L);
             //ui_hline((int16_t)(ix), (int16_t)(ry-2), (int16_t)(iw));
             //ui_hline((int16_t)(ix), (int16_t)(ry+row_h), (int16_t)(iw));
+
+            gfx_setcolour(PEN_SELECTED_INV);
+        } else {
+            gfx_setcolour(PEN_TEXT);
+
         }
 
         const char *s = listitem_get(list, (uint16_t)idx);
@@ -112,7 +125,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         //gfx_setcolour(selected ? WIN_CLIENT_PEN : WIN_TITLE_PEN);
         //ui_draw_text816(tx, ty, (const unsigned char*)tmp);
 
-        gfx_setcolour(WIN_TITLE_PEN);
+
         ui_draw_text816(tx, ty, (const unsigned char*)tmp);
     }
 }

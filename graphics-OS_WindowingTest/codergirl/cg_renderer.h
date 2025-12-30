@@ -9,27 +9,6 @@
 
 
 
-
-
-
-// defines//
-#define     WIN_CLIENT_PEN              1
-
-#define     WIN_TITLE_PEN_ACTIVE        16
-#define     WIN_TITLE_PEN_INACTIVE      16
-
-#define     WIN_BORDER_ACTIVE_PEN       3
-#define     WIN_BORDER_INACTIVE_PEN     6
-
-#define     WIN_BORDER_PEN          3
-#define     WIN_BG_PEN              1
-#define     WIN_TITLE_PEN           16
-#define     WIN_SCROLLER_PROP_PEN   4
-
-#define     WIN_BEVEL_H             2
-#define     WIN_BEVEL_L             16      // actual black
-
-
 // typedefs
 typedef struct {
     int16_t x0, y0, x1, y1; // [x0,x1), [y0,y1)

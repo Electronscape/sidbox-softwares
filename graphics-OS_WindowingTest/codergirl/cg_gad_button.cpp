@@ -21,8 +21,8 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t bh = b->h.rect.h;
 
     // face
-    fill_rect_pen(ax, ay, bw, bh, WIN_BORDER_INACTIVE_PEN);
-    draw_bevel(ax, ay, bw, bh, WIN_BEVEL_H, WIN_BEVEL_L, b->h.down);
+    fill_rect_pen(ax, ay, bw, bh, PEN_BUTTON_FACE);
+    draw_bevel(ax, ay, bw, bh, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, b->h.down);
 
     // choose what text to display
     const char *displaytext = b->text;
@@ -42,10 +42,10 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
         int16_t gx = (int16_t)(ax + 4);
         int16_t gy = (int16_t)(ay + (bh - char_h) / 2);
 
-        gfx_setcolour(WIN_BEVEL_L);
+        gfx_setcolour(PEN_WIN_BEVEL_L);
         ui_vline(gx+22, gy-2, bh-6);
 
-        gfx_setcolour(WIN_BEVEL_H);
+        gfx_setcolour(PEN_WIN_BEVEL_H);
         ui_vline(gx+23, gy-2, bh-6);
         sbgfx_glyph(gx+2, gy, glyph_cycle);
     }
@@ -67,7 +67,7 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     if (b->h.down) { tx++; ty++; }
 
-    gfx_setcolour(WIN_TITLE_PEN);
+    gfx_setcolour(PEN_WIN_TITLE);
     ui_draw_text816(tx, ty, (const unsigned char*)displaytext);
 }
 

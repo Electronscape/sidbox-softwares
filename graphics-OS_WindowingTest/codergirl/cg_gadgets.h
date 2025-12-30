@@ -32,8 +32,6 @@
 #define     SB_ARROW_SHRINK         16      // arrow sizes
 
 // colour defines
-#define     SB_TRACK_PEN        (16)   // <-- change later to your chosen track colour
-#define     SB_TRACK_INSET      2
 
 
 
@@ -62,6 +60,8 @@ typedef enum {
     GAD_TOOL_DOCKED_BOTTOM  = (1 << 2),     // bottom dock used
     GAD_TOOL_CYCLEBUTTON    = (1 << 3),     // button cycle flag
     GAD_TOOL_SCROLLARROWS   = (1 << 4),     // enable the arrows on the scrollbars
+    GAD_TOOL_NOBORDER       = (1 << 5),     // no border around gadgets
+    GAD_TOOL_INSET          = (1 << 6),     // invert the bevel on gadgets
 } GAD_TOOL_FLAGS;
 
 typedef enum BMV_FLAGS_T {

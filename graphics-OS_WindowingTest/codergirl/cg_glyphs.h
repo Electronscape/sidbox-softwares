@@ -4,11 +4,6 @@
 
 #include <stdint.h>
 
-
-
-
-
-
 // graphics glyphs up here out the way
 extern uint8_t glyph_resize[];
 

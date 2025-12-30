@@ -136,7 +136,7 @@ Dialog::Dialog(QWidget *parent)
 
     // DESKTOP WINDOW (yes it IS a window)
     SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
-    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
 
 
 
@@ -148,7 +148,7 @@ Dialog::Dialog(QWidget *parent)
 
     SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
 
-    SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
 
 
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
@@ -226,8 +226,7 @@ Dialog::Dialog(QWidget *parent)
                           GAD_TOOL_DOCKED_RIGHT);
 
 
-    SBOS_print_ui_usage();
-    SBOS_setFocus(winMain);
+    SBOS_setFocus(winMain3);
     SBOS_bringToFront(winMain);
     //SBOS_paintAllWindows();
     //updateGFXScreen();
@@ -268,16 +267,17 @@ Dialog::Dialog(QWidget *parent)
     }
 
 
-    SBOS_addListBox(winMain, 6, 40, 200, 198, &demolist, GAD_TOOL_DEFAULT );
+    SBOS_addListBox(winMain, 6, 40, 200, 198, &demolist, GAD_TOOL_INSET );
 
 
 
-    fastDumpHex(0x800);
-    fastDump();
+    //fastDumpHex(0x800);
+    //fastDump();
 
     int ls;
     char *text;
 
+    /*
     ls = listitem_count(&demolist);
     for(int i = 0; i < ls; i++){
         text = (char *)listitem_get(&demolist, i);
@@ -289,8 +289,9 @@ Dialog::Dialog(QWidget *parent)
         text = (char *)listitem_get(&listbox, i);
         printf("RETURNED: %s\n", text);
     }
+*/
 
-
+    SBOS_print_ui_usage();
     printf("In memory: %s\n", txt5);
 
     //listitem_free(&listbox);

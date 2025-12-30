@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "cg_theme.h"
+
 #include "cg_wintype.h"
 //#include "cg_renderer.h"
 #include "cg_gadgets.h"

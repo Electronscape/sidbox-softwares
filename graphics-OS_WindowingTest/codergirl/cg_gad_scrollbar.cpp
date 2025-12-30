@@ -86,8 +86,8 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     // ------------------------------------------------------------------
     if (!(s->h.flags & (GAD_TOOL_DOCKED_BOTTOM | GAD_TOOL_DOCKED_RIGHT)))
     {
-        fill_rect_pen(ax, ay, aw, ah, WIN_BORDER_INACTIVE_PEN);
-        draw_bevel(ax, ay, aw, ah, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+        fill_rect_pen(ax, ay, aw, ah, PEN_WIN_BORDER_INACTIVE);
+        draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 0);
     }
 
     // ------------------------------------------------------------------
@@ -113,11 +113,11 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (iw <= 0 || ih <= 0) return;
 
     // Fill the well with a different pen (change SB_TRACK_PEN later)
-    gfx_setcolour(SB_TRACK_PEN);
+    gfx_setcolour(PEN_SCROLLBAR_TRACK);
     ui_fill_dots(ix, iy, iw, ih, 2);
 
     // Draw the well bevel "inset" look:
-    draw_bevel(ix, iy, iw, ih, WIN_BEVEL_H, WIN_BEVEL_L, 1);
+    draw_bevel(ix, iy, iw, ih, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 1);
 
 // ------------------------------------------------------------------
 // 3) Draw the arrows if enabled
@@ -181,8 +181,8 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // Thumb face + bevel (your "perfect" thumb look stays)
     uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
-    fill_rect_pen(tx, ty, tw, th, WIN_SCROLLER_PROP_PEN);
-    draw_bevel(tx, ty, tw, th, WIN_BEVEL_H, WIN_BEVEL_L, pressed);
+    fill_rect_pen(tx, ty, tw, th, PEN_SCROLLBAR_GADGET_PROP);
+    draw_bevel(tx, ty, tw, th, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
 }
 
 

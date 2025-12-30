@@ -51,27 +51,19 @@ static inline void ui_clear_drag(void){
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock);
 static void normalize_zorder(void);
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-/// FUNCTIONALITY BELOW //////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+sbx_window_t* SBOS_getWindow(SBXWindowId id){
+    if (id >= MAX_WINDOWS || !gui_used[id]) return 0;
+    return &gui_windows[id];
+}
+
+
 
 static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
-}
-
-
-
-void initWb(void){
-    SBOS_print_reserved_ui_memory();
-    ui_clear_title_latch();
-    ui_clear_drag();
-    g_ui.mouse_down  = 0;
-    g_ui.down_win    = SBW_INVALID_ID;
-    g_ui.down_region = WH_NONE;
-    g_ui.resize_win  = SBW_INVALID_ID;
-    SBOS_gadgetsInit();
 }
 
 
@@ -97,6 +89,7 @@ static void enforce_screen_bounds(sbx_window_t *w){
     w->winrect.x = clamp_i16(w->winrect.x, 0, max_x);
     w->winrect.y = clamp_i16(w->winrect.y, 0, max_y);
 }
+
 
 
 int16_t win_gutter_right(const sbx_window_t *w){
@@ -244,10 +237,7 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
     return SBW_INVALID_ID;
 }
 
-sbx_window_t* SBOS_getWindow(SBXWindowId id){
-    if (id >= MAX_WINDOWS || !gui_used[id]) return 0;
-    return &gui_windows[id];
-}
+
 
 
 void SBOS_paintWindow(SBXWindowId id){
@@ -267,14 +257,14 @@ void SBOS_paintWindow(SBXWindowId id){
     const int16_t cli_w = w->clientrect.w;
     const int16_t cli_h = w->clientrect.h;
 
-    const uint16_t borderPen = (id == g_focusWin) ? WIN_BORDER_ACTIVE_PEN : WIN_BORDER_INACTIVE_PEN;
+    const uint16_t borderPen = (id == g_focusWin) ? PEN_WIN_BORDER_ACTIVE : PEN_WIN_BORDER_INACTIVE;
 
     // --- outer frame outline (always) ---
     draw_rect_outline_thick(win_x, win_y, win_w, win_h, WIN_BORDER, borderPen);
 
     // --- client background ---
     // IMPORTANT: clientrect is the app-drawable area. Fill it.
-    sbgfx_drawbox(cli_x, cli_y, cli_w, cli_h, WIN_BG_PEN);
+    sbgfx_drawbox(cli_x, cli_y, cli_w, cli_h, PEN_WIN_BG);
 
 
 
@@ -289,7 +279,7 @@ void SBOS_paintWindow(SBXWindowId id){
     }
 
     // --- compute title bar height used by frame chrome ---
-    const int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? (WIN_TITLE_HEIGHT + 4) : 0;
+    //const int16_t title_h = (w->flags & SBX_WF_TITLE_BAR) ? (WIN_TITLE_HEIGHT + 4) : 0;
 
     // --- draw resize gutter + glyph (chrome, not part of client) -----
 
@@ -319,11 +309,11 @@ void SBOS_paintWindow(SBXWindowId id){
         ui_clip_disable();
 
         sbgfx_drawbox(gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE, borderPen);
-        draw_bevel(gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+        draw_bevel(gx, gy, WIN_RESIZE_GLYPH_SIZE, WIN_RESIZE_GLYPH_SIZE, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 0);
         sbgfx_glyph(gx, gy, glyph_resize);
 
         // polish
-        gfx_setcolour(WIN_BEVEL_L);
+        gfx_setcolour(PEN_WIN_BEVEL_L);
         ui_vline((int16_t)(gx - 1), gy, WIN_RESIZE_GLYPH_SIZE);
 
         if(w->flags & SBX_WF_DOCKRIGHT)
@@ -348,10 +338,10 @@ void SBOS_paintWindow(SBXWindowId id){
     }
 
     // --- frame bevels ---
-    draw_bevel(win_x, win_y, win_w, win_h, WIN_BEVEL_H, WIN_BEVEL_L, 0);
+    draw_bevel(win_x, win_y, win_w, win_h, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 0);
 
     // inner bevel around the client area
-    draw_bevel((int16_t)(cli_x - 1), (int16_t)(cli_y - 1), (int16_t)(cli_w + 2), (int16_t)(cli_h + 2), WIN_BEVEL_H, WIN_BEVEL_L, 1);
+    draw_bevel((int16_t)(cli_x - 1), (int16_t)(cli_y - 1), (int16_t)(cli_w + 2), (int16_t)(cli_h + 2), PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 1);
 
     // --- title bar ---
     if (w->flags & SBX_WF_TITLE_BAR) {
@@ -407,7 +397,7 @@ void SBOS_paintWindow(SBXWindowId id){
         draw_bevel_rect(tb_x, win_y, twidth, (WIN_TITLE_HEIGHT + WIN_BORDER));
 
         // title text (clipped by character count)
-        uint16_t titlePen = (id == g_focusWin) ? WIN_TITLE_PEN_ACTIVE : WIN_TITLE_PEN_INACTIVE;
+        uint16_t titlePen = (id == g_focusWin) ? PEN_WIN_BORDER_ACTIVE : PEN_WIN_BORDER_INACTIVE;
         gfx_setcolour(titlePen);
 
         char tmpTitle[65];
@@ -424,7 +414,7 @@ void SBOS_paintWindow(SBXWindowId id){
 
     // --- focus dotted frame ---
     if (id == g_focusWin) {
-        gfx_setcolour(WIN_BEVEL_L);
+        gfx_setcolour(PEN_WIN_BEVEL_L);
         ui_dotted_rect_thick(win_x-1, win_y-1, win_w+1, win_h+1, 3);
     }
 }
@@ -768,11 +758,8 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-////  WINDOW INTERFACE WITH MOUSE  //////////////////////////////////////////////////////////////////
+////  WINDOW INTERFACE WITH MOUSE & EVENT HANDLING AND SUBMITTION  //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//// introducing a very function pointer way of doing things, instead of a branch of IF ELSE Types,
-
 
 static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
 static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
@@ -829,13 +816,9 @@ uint32_t doCancellables(sbx_window_t *gw, GADGET_BASE_T *g){
     return (0x00);/// this doesnt really need to worry about anything
 }
 
-
 void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
-
     uint8_t repaint = 0;
     uint8_t cleanups = 0;
-
-
     switch(evt){
         ///////////////////////////////////// MOUSE DOWN ////////////////////////////////////////
         case MOUSE_DOWN:{
@@ -1122,5 +1105,20 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
         callMouseReleaseEvt = NULL;
         ui_end_interaction();
     }
+}
+
+
+
+
+
+void initWb(void){
+    SBOS_print_reserved_ui_memory();
+    ui_clear_title_latch();
+    ui_clear_drag();
+    g_ui.mouse_down  = 0;
+    g_ui.down_win    = SBW_INVALID_ID;
+    g_ui.down_region = WH_NONE;
+    g_ui.resize_win  = SBW_INVALID_ID;
+    SBOS_gadgetsInit();
 }
 

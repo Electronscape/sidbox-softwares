@@ -5,6 +5,7 @@
 
 #include "sys_font.h"
 
+#include "cg_theme.h"
 #include "../sbapi_graphics.h"
 #include "cg_renderer.h"
 
@@ -149,12 +150,12 @@ void ui_fillrect(int16_t x, int16_t y, int16_t w, int16_t h){
 
 void draw_bevel_rect(int16_t x, int16_t y, int16_t w, int16_t h){
     // light (top + left)
-    gfx_setcolour(WIN_BEVEL_H);
+    gfx_setcolour(PEN_WIN_BEVEL_H);
     ui_hline(x, y, w);
     ui_vline(x, y, h);
 
     // dark (bottom + right)
-    gfx_setcolour(WIN_BEVEL_L);
+    gfx_setcolour(PEN_WIN_BEVEL_L);
     ui_hline(x, y + h - 1, w);
     ui_vline(x + w - 1, y, h);
 }
@@ -185,12 +186,12 @@ void glyph_close_x(int16_t x, int16_t y, int16_t w, int16_t h){
     int16_t bh = h - 12;
     if (bw <= 0 || bh <= 0) return;
 
-    gfx_setcolour(WIN_BEVEL_L);
+    gfx_setcolour(PEN_WIN_BEVEL_L);
     ui_vline(bx, by, bh);
     ui_hline(bx, by, bw);
 
 
-    gfx_setcolour(WIN_BEVEL_H);
+    gfx_setcolour(PEN_WIN_BEVEL_H);
     ui_hline(bx+1, by + bh - 1, bw);
     ui_vline(bx + bw, by, bh);
 }
@@ -198,14 +199,14 @@ void glyph_close_x(int16_t x, int16_t y, int16_t w, int16_t h){
 
 void glyph_resize_grip(int16_t x, int16_t y, int16_t w, int16_t h){
     // Draw 3 diagonal dotted lines (classic gripper vibe)
-    gfx_setcolour(WIN_BEVEL_L);
+    gfx_setcolour(PEN_WIN_BEVEL_L);
 
     // bottom-right diagonal-ish marks
     ui_hline((int16_t)(x + w - 4), (int16_t)(y + h - 2), 3);
     ui_hline((int16_t)(x + w - 7), (int16_t)(y + h - 5), 4);
     ui_hline((int16_t)(x + w - 10), (int16_t)(y + h - 8), 5);
 
-    gfx_setcolour(WIN_BEVEL_H);
+    gfx_setcolour(PEN_WIN_BEVEL_H);
     ui_hline((int16_t)(x + w - 3), (int16_t)(y + h - 3), 2);
     ui_hline((int16_t)(x + w - 6), (int16_t)(y + h - 6), 3);
     ui_hline((int16_t)(x + w - 9), (int16_t)(y + h - 9), 4);
@@ -219,7 +220,7 @@ void glyph_minimise(int16_t x, int16_t y, int16_t w, int16_t h){
     int16_t lw = w - 12;
     if (lw <= 0) return;
 
-    gfx_setcolour(WIN_BEVEL_L);
+    gfx_setcolour(PEN_WIN_BEVEL_L);
     ui_hline(lx, ly, lw);
 }
 
@@ -230,7 +231,7 @@ void glyph_max_box(int16_t x, int16_t y, int16_t w, int16_t h){
     int16_t bh = h - 10;
     if (bw <= 0 || bh <= 0) return;
 
-    gfx_setcolour(WIN_BEVEL_L);
+    gfx_setcolour(PEN_WIN_BEVEL_L);
     ui_hline(bx, by, bw);
     ui_hline(bx, by+1, bw);
     ui_hline(bx, by + bh - 1, bw);
@@ -244,7 +245,7 @@ void glyph_zorder(int16_t x, int16_t y, int16_t w, int16_t h){
     int16_t iw = w - 10;
     if (iw <= 0) return;
 
-    gfx_setcolour(WIN_BEVEL_L);
+    gfx_setcolour(PEN_WIN_BEVEL_L);
     ui_hline(ix, iy, iw);
     ui_hline(ix + 2, iy + 3, iw - 2);
     ui_hline(ix + 4, iy + 6, iw - 4);
@@ -276,7 +277,7 @@ void draw_title_button(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill
     fill_rect_pen(x, y, w, h, fill_pen);
 
     // pressed => invert bevel
-    draw_bevel(x, y, w, h, WIN_BEVEL_H, WIN_BEVEL_L, pressed);
+    draw_bevel(x, y, w, h, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
 }
 
 
