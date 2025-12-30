@@ -9,6 +9,8 @@
 
 #include "cg_gad_scrollbar.h"
 
+// place holder function - but will later use this to submit to the event queue BY DEFAULT
+
 static inline int16_t clamp_i16(int16_t v, int16_t lo, int16_t hi){
     if (v < lo) return lo;
     if (v > hi) return hi;
@@ -428,7 +430,9 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
 
         if (new_val != s->value) {
             s->value = new_val;
-            printf("SCROLLING: %d\n", s->value);
+            if(s->onScrollCallBack)
+                s->onScrollCallBack(s);
+
             SBOS_paintAllWindows();
         }
     }

@@ -66,8 +66,6 @@ int listitem_insert(ItemLists_t *list, uint16_t idx, const char *text){
     list->items[idx] = (void*)dup;
     list->count++;
 
-    if (list->sel >= (int16_t)idx) list->sel++;
-    if (list->top >= (int16_t)idx) list->top++;
     return fastAllocOK;
 }
 
@@ -89,12 +87,6 @@ void listitem_delete(ItemLists_t *list, uint16_t idx){
         list->items[i] = list->items[i + 1];
 
     list->count--;
-
-    if (list->sel == (int16_t)idx) list->sel = -1;
-    else if (list->sel > (int16_t)idx) list->sel--;
-
-    if (list->top > (int16_t)idx) list->top--;
-    if (list->top < 0) list->top = 0;
 }
 
 void listitem_move(ItemLists_t *list, uint16_t from, uint16_t to){
@@ -114,10 +106,6 @@ void listitem_move(ItemLists_t *list, uint16_t from, uint16_t to){
         list->items[to] = tmp;
     }
 
-    // keep selection following the moved item
-    if (list->sel == (int16_t)from) list->sel = (int16_t)to;
-    else if (from < to && list->sel > (int16_t)from && list->sel <= (int16_t)to) list->sel--;
-    else if (to < from && list->sel >= (int16_t)to && list->sel < (int16_t)from) list->sel++;
 }
 
 
@@ -130,7 +118,6 @@ void listitem_sort(ItemLists_t *list){
 
     // If you need stable sort later, we can add an index key. qsort is not stable.
     qsort(list->items, list->count, sizeof(void*), cmp_strptr);
-    list->sel = -1; // or re-find by pointer if you want to preserve selection
 }
 
 
@@ -138,8 +125,6 @@ void listitem_init(ItemLists_t *list){
     list->items = NULL;
     list->count = 0;
     list->cap   = 0;
-    list->sel   = -1;
-    list->top   = 0;
 }
 
 
@@ -174,8 +159,6 @@ void listitem_free(ItemLists_t *list){
     // Reset state
     list->count = 0;
     list->cap   = 0;
-    list->sel   = -1;
-    list->top   = 0;
 
     // fastFree(m);     //
 }

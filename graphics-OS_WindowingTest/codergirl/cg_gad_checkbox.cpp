@@ -64,3 +64,5 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         ui_draw_text816(tx, ty, (const unsigned char*)c->text);
     }
 }
+
+

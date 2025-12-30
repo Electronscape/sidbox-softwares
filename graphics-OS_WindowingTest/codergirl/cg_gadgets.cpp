@@ -71,6 +71,26 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     return c;
 }
 
+// --------------- DEFAULT EventSubmitters -----------------------
+
+
+void onScrollEmitEvent(void *s){
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
+    if (!sb) return;
+
+    printf("From ScrB CB: %d\n", sb->value);
+}
+
+
+
+
+
+
+
+
+
+
+
 // ---------------- INTERNAL HELPERS ----------------
 static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
     if (v < lo) return lo;
@@ -596,6 +616,7 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win,
     s->max = max;
     s->step = (step <= 0) ? 1 : step;
     s->value = initial_pct;
+    s->onScrollCallBack = onScrollEmitEvent;
 
     // Set flag for arrows based on the provided flags
     s->show_arrows = (flags & GAD_TOOL_SCROLLARROWS) ? 1 : 0;

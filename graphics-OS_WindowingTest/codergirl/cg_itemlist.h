@@ -12,8 +12,6 @@ typedef struct {
     uint16_t count;
     uint16_t cap;
 
-    int16_t  sel;        // selected index (-1 if none)
-    int16_t  top;        // first visible row (scroll)
 
     // object free too -- implement IF we need them
     //ItemFreeFn free_fn;

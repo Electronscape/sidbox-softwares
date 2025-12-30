@@ -20,6 +20,11 @@ typedef struct GAD_LISTBOX_T {
     int16_t         row_h;       // 16 by default (glyph height)
     int16_t         padding_x;   // 2..4 is nice
     int16_t         padding_y;   // 2
+
+
+    int16_t         sel;         // selected index (-1 if none)
+    int16_t         top;         // first visible row (scroll)
+    int16_t         visablerows; // a count of how many are shown on box
 } GAD_LISTBOX_T;
 
 extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];

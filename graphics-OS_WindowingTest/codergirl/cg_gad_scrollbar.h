@@ -6,6 +6,8 @@
 
 #include "cg_wintype.h"
 
+
+
 typedef struct GAD_SCROLLBAR_T{
     // common
     GAD_HDR_T   h;
@@ -24,6 +26,12 @@ typedef struct GAD_SCROLLBAR_T{
 
     // arrows
     uint8_t     show_arrows;    // needed for if we're using arrows
+
+    // function callback systems
+    void (*onScrollCallBack)(void *scrollerPtr);    // <-- since we should be able to peek at the scrollers internal anyway?
+
+    uint8_t suppress_cb; // prevents recursion
+
 } GAD_SCROLLBAR_T;
 
 
