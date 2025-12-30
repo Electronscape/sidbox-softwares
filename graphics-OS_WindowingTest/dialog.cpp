@@ -37,12 +37,20 @@ void sms_keyup(int keycode);
 
 void SBOS_print_ui_usage(void);
 
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  DESKTOP TEST - START  //////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
 static ItemLists_t listbox;
 static ItemLists_t demolist;
 
 static SBControlHandle    theListBox;
 
-
+// a CUSTOM function for a scroll bar
 void BitDemoScrolly1(void *s){
     GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
     if (!sb) return;
@@ -50,6 +58,8 @@ void BitDemoScrolly1(void *s){
     printf("Custom Function!: %d\n", sb->value);
 }
 
+
+// a CUSTOM function for a scroll bar that will interact with a listbox
 void ListBoxTopSet(void *s){
     GAD_SCROLLBAR_T *src_sb = (GAD_SCROLLBAR_T*)s;
     if (!src_sb) return;
@@ -57,9 +67,133 @@ void ListBoxTopSet(void *s){
     if (!g) return;
     if (!g->gadget) return;
     SBOS_setListbox_top(g, src_sb->value);
-
-
 }
+
+
+void createBasicDesktopTest(){
+    initWb();
+    initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
+
+    // DESKTOP WINDOW (yes it IS a window)
+    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
+    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+    SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+
+    // WINDOW 1 -----------------------
+    // cycle button test window
+    SBXWindowId winMain =  SBOS_createWindow(10, 20, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+    SBOS_addScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
+    SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
+
+    // WINDOW 2 -----------------------
+    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+    SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable gerbils", 0, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 30, 100, 18, "Medium", 0, 0, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 100, 100, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
+    SBOS_addRadioButton(winMain2, 180, 120, 100, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
+    SBOS_addScrollbar(winMain2,  10, 120, 150, 16,  SB_ORIENT_HORZ,  0, 1000,  250, 0, GAD_TOOL_SCROLLARROWS);
+
+    SBControlHandle scrrb =
+    SBOS_addScrollbar(winMain2,  260, 6, 20, 150,   SB_ORIENT_VERT,  0, 120,  50,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1); // attach this scrollbar to the function
+    SBOS_addScrollbar(winMain2,  0,0,0,0,           SB_ORIENT_HORZ,  0, 100,  25,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
+    SBOS_addScrollbar(winMain2,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
+
+
+    // WINDOW 3 -----------------------
+    // a bitmap viewable window ;) lets see if this works!!
+    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
+    SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+    SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addScrollbar(winMain3,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
+
+
+    SBOS_setFocus(winMain);
+    SBOS_bringToFront(winMain);
+
+    // FAUX FAST RAM TESTING //
+    char *txt5 = (char *)fastAlloc(200);
+    if(txt5)// it was given a pointer so lets do this
+        strcpy(txt5, "Hello world");
+
+
+    int32_t isok;
+
+
+    listitem_init(&listbox);
+
+    isok = listitem_insert(&listbox, 0, "hello host LISTBOX one!");
+    isok = listitem_add(&listbox, "random text 2");
+    isok = listitem_add(&listbox, "CAMMELS!");
+    isok = listitem_add(&listbox, "I still don't have my lasers!!");
+    isok = listitem_add(&listbox, "GERBILS EVERYWHERE!!!! HELP!!!");
+
+    listitem_dump(&listbox);
+    listitem_delete(&listbox, 2);
+    listitem_dump(&listbox);
+
+
+    char txt[64];
+
+    listitem_init(&demolist);
+    for(int i = 0; i < 32; i++){
+        sprintf(txt, "Listbox test %d", i);
+        listitem_add(&demolist, txt);
+    }
+
+
+    theListBox = SBOS_addListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
+    SBControlHandle ListBoxScroll =
+    SBOS_addScrollbar(winMain,  206, 40, 16, 196,  SB_ORIENT_VERT,  0, 31 - 11,  5,  0,  GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
+
+    printf("theListBox handle = %u (0x%08x)\n",    (uint32_t)theListBox,    (uint32_t)theListBox);
+    printf("ListBoxScroll handle = %u (0x%08x)\n", (uint32_t)ListBoxScroll, (uint32_t)ListBoxScroll);
+
+
+    //fastDumpHex(0x800);
+    //fastDump();
+
+    char *text;
+
+    //SBOS_print_ui_usage();
+    printf("In memory: %s\n", txt5);
+
+    //listitem_free(&listbox);
+    //listitem_free(&demolist);
+
+    SBOS_paintAllWindows();
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  DESKTOP TEST - END  ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -153,182 +287,10 @@ Dialog::Dialog(QWidget *parent)
 
     //sbgfx_drawbox(00,0,320,256, 3);
 
-    initWb();
-    initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
-    //uint32_t winID = createWindow(320, 256, (char *)"Test Window V1.0 - yey");
-
-    // DESKTOP WINDOW (yes it IS a window)
-    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
-    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
 
 
-
-    SBXWindowId winMain =  SBOS_createWindow(10, 20, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
-
-
-    // a bitmap viewable window ;) lets see if this works!!
-    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
-
-
-    SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
-
-    SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
-
-
-    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
-    if (winMain2 == SBW_INVALID_ID) {
-        printf("No more windows left\n");
-    } else
-        printf("Window ID %d\n", winMain2);
-
-
-    SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
-
-    SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
-
-    SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
-    SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
-    SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable gerbils", 0, GAD_TOOL_DEFAULT);
-
-
-    SBOS_addRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
-    SBOS_addRadioButton(winMain2, 180, 30, 100, 18, "Medium", 0, 0, GAD_TOOL_DEFAULT);
-    SBOS_addRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
-
-    SBOS_addRadioButton(winMain2, 180, 100, 100, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
-    SBOS_addRadioButton(winMain2, 180, 120, 100, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
-
-    SBOS_addScrollbar(winMain2,
-                      10, 120, 150, 16,
-                      SB_ORIENT_HORZ,
-                      0, 1000,
-                      250,
-                      0,
-                      GAD_TOOL_SCROLLARROWS);
-
-
-    SBControlHandle scrrb = SBOS_addScrollbar(winMain2,
-                      260, 6, 20, 150,
-                      SB_ORIENT_VERT,
-                      0, 120,
-                      50,
-                      0,
-                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
-
-    // attach this scrollbar to the function
-    SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1);
-
-
-    SBOS_addScrollbar(winMain2,
-                      0,0,0,0,                // ignored if docked
-                      SB_ORIENT_HORZ,
-                      0, 100,                // “meaning range” just for thumb sizing + app mapping
-                      25,                     // step in value units (thumb size + step pct)
-                      0,                      // initial percent
-                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
-
-    SBOS_addScrollbar(winMain2,
-                      0,0,0,0,                // ignored if docked
-                      SB_ORIENT_VERT,
-                      0, 100,                // “meaning range” just for thumb sizing + app mapping
-                      25,                     // step in value units (thumb size + step pct)
-                      0,                      // initial percent
-                      GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
-
-
-    SBOS_addScrollbar(winMain3,
-                      0,0,0,0,                // ignored if docked
-                      SB_ORIENT_VERT,
-                      0, 100,                // “meaning range” just for thumb sizing + app mapping
-                      25,                     // step in value units (thumb size + step pct)
-                      0,                      // initial percent
-                      GAD_TOOL_DOCKED_RIGHT);
-
-    SBOS_addScrollbar(winMain,
-                      0,0,0,0,                // ignored if docked
-                      SB_ORIENT_VERT,
-                      0, 100,                // “meaning range” just for thumb sizing + app mapping
-                      25,                     // step in value units (thumb size + step pct)
-                      0,                      // initial percent
-                          GAD_TOOL_DOCKED_RIGHT);
-
-
-    SBOS_setFocus(winMain);
-    SBOS_bringToFront(winMain);
-    //SBOS_paintAllWindows();
-    //updateGFXScreen();
-
-
-    // FAUX FAST RAM TESTING //
-
-
-
-
-    char *txt5 = (char *)fastAlloc(200);
-    if(txt5)// it was given a pointer so lets do this
-    strcpy(txt5, "Hello world");
-
-
-    int32_t isok;
-
-
-    listitem_init(&listbox);
-
-    isok = listitem_insert(&listbox, 0, "hello host LISTBOX one!");
-    isok = listitem_add(&listbox, "random text 2");
-    isok = listitem_add(&listbox, "CAMMELS!");
-    isok = listitem_add(&listbox, "I still don't have my lasers!!");
-    isok = listitem_add(&listbox, "GERBILS EVERYWHERE!!!! HELP!!!");
-
-    listitem_dump(&listbox);
-    listitem_delete(&listbox, 2);
-    listitem_dump(&listbox);
-
-
-    char txt[64];
-
-    listitem_init(&demolist);
-    for(int i = 0; i < 32; i++){
-        sprintf(txt, "Listbox test %d", i);
-        listitem_add(&demolist, txt);
-    }
-
-
-    theListBox = SBOS_addListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
-    SBControlHandle ListBoxScroll =
-        SBOS_addScrollbar(winMain,
-                          206, 40, 16, 196,
-                          SB_ORIENT_VERT,
-                          0, 31 - 11,
-                          5,
-                          0,
-                          GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
-
-    SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
-
-
-    printf("theListBox handle = %u (0x%08x)\n",    (uint32_t)theListBox,    (uint32_t)theListBox);
-    printf("ListBoxScroll handle = %u (0x%08x)\n", (uint32_t)ListBoxScroll, (uint32_t)ListBoxScroll);
-
-
-    //fastDumpHex(0x800);
-    //fastDump();
-
-    int ls;
-    char *text;
-
-    //SBOS_print_ui_usage();
-    printf("In memory: %s\n", txt5);
-
-    //listitem_free(&listbox);
-    //listitem_free(&demolist);
-
-
-
-
-    SBOS_paintAllWindows();
+    createBasicDesktopTest();
     updateGFXScreen();
-
 }
 
 

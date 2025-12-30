@@ -158,6 +158,14 @@ void cg_listbox_set_top(GADGET_BASE_T *g, int top)
 
 */
 
+static void listbox_tidyup(GAD_LISTBOX_T *lb){
+    int count = (lb && lb->items) ? (int)lb->items->count : 0;
+
+    if (lb->sel >= count) lb->sel = (count ? (int16_t)(count - 1) : (int16_t)-1);
+    if (lb->sel < -1) lb->sel = -1;
+
+    if (lb->top < 0) lb->top = 0;
+}
 
 
 static int16_t listbox_index_from_mouse(const sbx_window_t *w, const GAD_LISTBOX_T *lb,
@@ -232,7 +240,7 @@ uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *m
     ItemLists_t *list = lb->items;
 
     //listboxSelecting = true;
-    //lb->selecting = true;
+    lb->selecting = true;
     if (lb->sel != idx) {
         lb->sel = idx;
 
@@ -244,16 +252,6 @@ uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *m
     }
 
     return 0;
-}
-
-static void listbox_tidyup(GAD_LISTBOX_T *lb)
-{
-    int count = (lb && lb->items) ? (int)lb->items->count : 0;
-
-    if (lb->sel >= count) lb->sel = (count ? (int16_t)(count - 1) : (int16_t)-1);
-    if (lb->sel < -1) lb->sel = -1;
-
-    if (lb->top < 0) lb->top = 0;
 }
 
 uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my)
@@ -346,6 +344,16 @@ uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, in
 
     if (changed) SBOS_paintAllWindows();
     return 0;
+}
+
+uint32_t onMouseReleaseListBox(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
+    (void)mx; (void)my;
+
+    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*) g->gadget;
+    if (!lb) return 1;   // panic
+
+    lb->selecting = false;
+    return 0;   // all good 0 as in 0k :)
 }
 
 void SBOS_setListbox_top(GADGET_BASE_T *g, int top){

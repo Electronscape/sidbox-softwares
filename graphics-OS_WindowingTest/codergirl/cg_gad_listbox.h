@@ -31,6 +31,7 @@ extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
 
 uint32_t onMouseDownCaptureListBox(sbx_window_t *w, GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my);
+uint32_t onMouseReleaseListBox(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 void SBOS_setListbox_top(GADGET_BASE_T *g, int top);
 

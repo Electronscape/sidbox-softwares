@@ -915,7 +915,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                                 if (!onMouseDownCaptureListBox(w, g, &mx, &my)) {
                                     callMouseMoveEvt    = onMouseMoveListBox;   // optional
-                                    callMouseReleaseEvt = NULL;                 // you can add onMouseUpListBox later
+                                    callMouseReleaseEvt = onMouseReleaseListBox;                 // you can add onMouseUpListBox later
                                 }
                             } break;
 
