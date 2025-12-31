@@ -24,7 +24,7 @@ typedef struct GAD_GRIDSELECT_T {
 
     uint32_t flags;
 
-    fnGridSelectCallBack onGridSelectClickCallBack;
+    //fnGridSelectCallBack onGridSelectClickCallBack;
 } GAD_GRIDSELECT_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

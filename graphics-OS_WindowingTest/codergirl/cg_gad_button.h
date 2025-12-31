@@ -20,7 +20,7 @@ typedef struct GAD_BUTTON_T{
     int             current_option;               // index of the currently displayed option
     int             max_options;                  // maximum options found
 
-    fnButtonCallBack callbackRouteA;              // basic callback route
+    //fnButtonCallBack callbackRouteA;              // basic callback route
 } GAD_BUTTON_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

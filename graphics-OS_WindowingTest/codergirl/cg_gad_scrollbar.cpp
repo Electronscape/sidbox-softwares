@@ -424,8 +424,8 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
 
         if (new_val != s->value) {
             s->value = new_val;
-            if(s->callbackRouteA)
-                s->callbackRouteA(s);
+            if(s->h.callbackRouteA)
+                s->h.callbackRouteA(s);
 
             SBOS_paintAllWindows();
         }
@@ -458,7 +458,7 @@ uint32_t SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func){
     if (!g->gadget) return 3;
 
     GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g->gadget;
-    sb->callbackRouteA = func;
+    sb->h.callbackRouteA = func;
     return 0;
 }
 

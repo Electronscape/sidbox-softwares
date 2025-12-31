@@ -102,13 +102,14 @@ typedef enum GADGET_CLASS_T {
 
 
 typedef struct GAD_HDR_T {
-    GADGET_RECT_T   rect;       // the actionable area (container hit area, basic rectangle info)
-    uint32_t        flags;      // flags for this gadget
-    uint8_t         enabled;    // enabled/disabled gadget, sort of like if NOT clickable ;)
-    uint8_t         visible;    //
-    uint8_t         down;       // might need to remove this soon
-    SBXWindowId     winhnd;     // the window ID, the handler number
-    CGGadgetHandle  self;       // self handle id
+    GADGET_RECT_T   rect;           // the actionable area (container hit area, basic rectangle info)
+    uint32_t        flags;          // flags for this gadget
+    uint8_t         enabled;        // enabled/disabled gadget, sort of like if NOT clickable ;)
+    uint8_t         visible;        //
+    uint8_t         down;           // might need to remove this soon
+    SBXWindowId     winhnd;         // the window ID, the handler number
+    fnCallback      callbackRouteA; // the call back attached for events
+    CGGadgetHandle  self;           // self handle id
 
 } GAD_HDR_T;
 

@@ -14,7 +14,7 @@ typedef struct GAD_CHECKBOX_T{
     uint8_t             checked;    // 0/1
     char                text[DEF_GADGET_TEXT_SIZE]; // optional label
 
-    fnCallback          callbackRouteA;
+    //fnCallback          callbackRouteA;
 } GAD_CHECKBOX_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

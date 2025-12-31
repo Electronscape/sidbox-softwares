@@ -90,9 +90,9 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
 /////// DEFAULT EventEmitters /////////////////////////////////////////////////////////////////
 
 void onButtonClickEmitEvent(void *g){
-    GAD_BUTTON_T *button = (GAD_BUTTON_T *)g;
-    if (!button) return;
-    CG_PostGadgetMsg(button->h.winhnd, button->h.self, CGEVT_BUTTON_CLICK, button->current_option, 0);
+    GAD_BUTTON_T *bt = (GAD_BUTTON_T *)g;
+    if (!bt) return;
+    CG_PostGadgetMsg(bt->h.winhnd, bt->h.self, CGEVT_BUTTON_CLICK, bt->current_option, 0);
 }
 
 void onCheckBoxClickEmitEvent(void *g){
@@ -104,36 +104,29 @@ void onCheckBoxClickEmitEvent(void *g){
 void onGridSelectEmitEvent(void *g){
     GAD_GRIDSELECT_T *gs = (GAD_GRIDSELECT_T*)g;
     if (!gs) return;
-
     CG_PostGadgetMsg(gs->h.winhnd, gs->h.self, CGEVT_GRIDSEL_CHANGED, gs->selected_idx, 0);
 }
 
 void onListBoxEmitEvent(void *g){
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g;
     if (!lb) return;
-
     CG_PostGadgetMsg(lb->h.winhnd, lb->h.self, CGEVT_LISTBOX_CHANGED, lb->sel, 0);
 }
 
 void onRadioClickEmitEvent(void *g){
-    GAD_RADIO_T *r = (GAD_RADIO_T *)g;   // get the button
-    if(!r) return;
-    CG_PostGadgetMsg(r->h.winhnd, r->h.self, CGEVT_RADIO_CHANGED, r->checked ? 1 : 0, r->group);
+    GAD_RADIO_T *ra = (GAD_RADIO_T *)g;   // get the button
+    if(!ra) return;
+    CG_PostGadgetMsg(ra->h.winhnd, ra->h.self, CGEVT_RADIO_CHANGED, ra->checked ? 1 : 0, ra->group);
 }
 
 void onScrollEmitEvent(void *g){
-    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g;  // cast FIRST
-    if (!s) return;
-    CG_PostGadgetMsg(s->h.winhnd, s->h.self, CGEVT_SCROLL_CHANGED, s->value, 0);
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g;  // cast FIRST
+    if (!sb) return;
+    CG_PostGadgetMsg(sb->h.winhnd, sb->h.self, CGEVT_SCROLL_CHANGED, sb->value, 0);
 }
 
 
 // ---------------- INTERNAL HELPERS ----------------
-static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
 
 /////// internal supports
 static int find_free_window_slot(sbx_window_t *w){
@@ -499,16 +492,17 @@ static inline GAD_HDR_T* gad_hdr(GADGET_BASE_T *b){
 
 
 // ---------------- PUBLIC API ----------------
-
 void SBOS_gadgetsInit(void){
-    memset(g_basePool, 0, sizeof(g_basePool));  // base gadgets
-    memset(g_btnPool,  0, sizeof(g_btnPool));   // button gadgets
-    memset(g_chkPool,  0, sizeof(g_chkPool));   // check box gadgets
-    memset(g_radPool,  0, sizeof(g_radPool));   // radio buttons gadgets
-    memset(g_sbPool,   0, sizeof(g_sbPool));    // scrollbar gadgets
-    memset(g_bvPool,   0, sizeof(g_bvPool));    // bitmapview gadgets (THIS one is adventureous)
-    memset(g_lbPool,   0, sizeof(g_lbPool));    // listbox gadgets
-    memset(g_lblPool,  0, sizeof(g_lblPool));   // labels gadgets
+    memset(g_basePool, 0, sizeof(g_basePool));  // base gadgets ________________________________
+
+    memset(g_bvPool ,  0, sizeof( g_bvPool  ));   // bitmapview gadgets (THIS one is adventureous)
+    memset(g_btnPool,  0, sizeof( g_btnPool ));   // button gadgets
+    memset(g_chkPool,  0, sizeof( g_chkPool ));   // check box gadgets
+    memset(g_gsPool ,  0, sizeof( g_gsPool  ));   // grid select gadgets
+    memset(g_lblPool,  0, sizeof( g_lblPool ));   // labels gadgets
+    memset(g_lbPool ,  0, sizeof( g_lbPool  ));   // listbox gadgets
+    memset(g_radPool,  0, sizeof( g_radPool ));   // radio buttons gadgets
+    memset(g_sbPool ,  0, sizeof( g_sbPool  ));   // scrollbar gadgets
 }
 
 
@@ -583,7 +577,7 @@ CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t 
     //g->winhnd = win;
     g->gadgetType = GAD_BUTTON;
     g->gadget = b;
-    b->callbackRouteA = onButtonClickEmitEvent;  // basic button clicky
+    b->h.callbackRouteA = onButtonClickEmitEvent;  // basic button clicky
     b->h.winhnd = win;
 
     // payload header
@@ -660,7 +654,7 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
     c->h.winhnd = win;
     c->checked = initial_checked ? 1 : 0;
 
-    c->callbackRouteA = onCheckBoxClickEmitEvent;
+    c->h.callbackRouteA = onCheckBoxClickEmitEvent;
 
     if (text){
         int i = 0;
@@ -715,6 +709,7 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
 
     g->gadgetType = GAD_GRIDSELECT;
     g->gadget = c;
+    c->h.callbackRouteA = onGridSelectEmitEvent;
 
 
     int16_t border = 2;
@@ -848,7 +843,7 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
     r->h.winhnd = win;
     r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
     r->h.flags = flags;
-    r->callbackRouteA = onRadioClickEmitEvent;
+    r->h.callbackRouteA = onRadioClickEmitEvent;
 
 
     r->group = group;
@@ -915,7 +910,7 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
     s->max = max;
     s->step = (step <= 0) ? 1 : step;
     s->value = initial_pct;
-    s->callbackRouteA = onScrollEmitEvent;
+    s->h.callbackRouteA = onScrollEmitEvent;
 
     // Set flag for arrows based on the provided flags
     s->show_arrows = (flags & GAD_TOOL_SCROLLARROWS) ? 1 : 0;
@@ -948,16 +943,16 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
 
         //printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
         //b->current_option);
-        if(b->callbackRouteA)
-            b->callbackRouteA(b);
+        if(b->h.callbackRouteA)
+            b->h.callbackRouteA(b);
     }
     break;
     case GAD_CHECKBOX: {
         GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
         c->checked ^= 1;
         //printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
-        if(c->callbackRouteA)
-            c->callbackRouteA(c);  // call any function attached
+        if(c->h.callbackRouteA)
+            c->h.callbackRouteA(c);  // call any function attached
 
     }
     break;
@@ -977,8 +972,8 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
             }
             r->checked = 1;
         }
-        if(r->callbackRouteA)
-            r->callbackRouteA(r);
+        if(r->h.callbackRouteA)
+            r->h.callbackRouteA(r);
     }
     break;
 
@@ -986,6 +981,15 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
         // this should be handled on the onMouseReleaseListBox
     }
     break;
+
+    case GAD_GRIDSELECT: {
+        GAD_GRIDSELECT_T *gs = (GAD_GRIDSELECT_T *) g->gadget;
+        if (gw) {
+            if(gs->h.callbackRouteA){
+                gs->h.callbackRouteA(gs);
+            }
+        }
+    }
 
 
     default:

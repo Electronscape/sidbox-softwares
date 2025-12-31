@@ -15,7 +15,7 @@ typedef struct GAD_RADIO_T{
     uint8_t         checked;    // 0/1
     char            text[DEF_GADGET_TEXT_SIZE];
 
-    fnCallback      callbackRouteA;
+    //fnCallback      callbackRouteA;
 } GAD_RADIO_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

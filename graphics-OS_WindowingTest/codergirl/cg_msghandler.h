@@ -35,7 +35,7 @@ typedef struct CGMessage_t {
     CGGadgetHandle  gadget;         // this should contain the callback function too
 
     uint16_t        eventClass;     // BTN_CLICK, GRID_CHANGE, MS_CLICK, KB_HIT
-    int32_t         a, b;
+    int32_t         a, b, c, d;     // param payloads
 } CGMessage_t;
 
 

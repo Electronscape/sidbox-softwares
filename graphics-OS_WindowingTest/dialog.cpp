@@ -57,6 +57,7 @@ static SBXWindowId      titleBar;
 
 static CGGadgetHandle   MenuBarTitle;
 
+static CGGadgetHandle   btnCloseMe;
 static CGGadgetHandle   btnAboutUs;
 
 // a CUSTOM function for a scroll bar
@@ -186,10 +187,9 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
             switch (m->eventClass) {
                 case CGEVT_BUTTON_CLICK:
                     // Identify which button fired (by gadget handle)
-                    //if (m->gadget == g_aboutCloseBtn) {
-                        //SBOS_destroyWindow(win);
-                    //}
-                    //printf("a button from the Process (or program main!!)\n");
+                    if (m->gadget == btnCloseMe) {
+                        SBOS_destroyWindow(win);
+                    }
                     if(m->gadget == btnAboutUs)
                         doAboutWindow(NULL);
 
@@ -199,6 +199,14 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     printf("SCROLL: %lu\n", m->a);
                     break;
 
+                case CGEVT_CHECK_CHANGED:
+                    printf("CHECK BOX: %d\n", m->a);
+                    break;
+
+                case CGEVT_RADIO_CHANGED:
+                    printf("RADIO checked %d, grp:%d, gad_id:%d\n", m->a, m->b, m->gadget);
+
+                    break;
                 default:
                     break;
                 }
@@ -242,9 +250,12 @@ void createBasicDesktopTest(){
     // WINDOW 2 -----------------------
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_setWindowProc(winMain2, BasicWindowMAIN);
     SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     //SBOS_enableGadget(btn1, 0);// disable the button
-    SBOS_setWindowProc(winMain2, BasicWindowMAIN);
+
+
+    btnCloseMe = SBOS_CreateButton(winMain2, 120, 100, 50, 24, "CLOSE", GAD_TOOL_DEFAULT);
 
     CGGadgetHandle chk1 = SBOS_CreateCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
     SBOS_enableGadget(chk1, 0);
@@ -488,7 +499,7 @@ Dialog::Dialog(QWidget *parent)
 
 
     t->start(1500);   // every 22ms/ about 60hz?
-    osMessageHandlerTMR->start(1);// 1 second so we can see things in the queue
+    osMessageHandlerTMR->start(10);// 1 second so we can see things in the queue
 }
 
 
