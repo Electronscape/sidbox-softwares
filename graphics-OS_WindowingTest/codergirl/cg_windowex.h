@@ -107,7 +107,8 @@ typedef struct {
     uint16_t sb_used;   // scrollbars
     uint16_t bv_used;   // bitmap views
     uint16_t lb_used;   // list box
-    uint16_t lbl_used;   // list box
+    uint16_t lbl_used;  // list box
+    uint16_t gs_used;   // list box
 } SBOS_UiUsageCounts;
 
 SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);

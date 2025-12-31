@@ -17,13 +17,14 @@
 #include "cg_gadgets.h"
 
 // GADGET API's
+#include "cg_gad_bitmapview.h"
 #include "cg_gad_button.h"
 #include "cg_gad_checkbox.h"
+#include "cg_gad_gridselect.h"
 #include "cg_gad_radio.h"
-#include "cg_gad_bitmapview.h"
-#include "cg_gad_scrollbar.h"
-#include "cg_gad_listbox.h"
 #include "cg_gad_label.h"
+#include "cg_gad_listbox.h"
+#include "cg_gad_scrollbar.h"
 
 #include "cg_resources.h"
 
@@ -752,13 +753,15 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
         }
 
         switch (g->gadgetType){
+            case GAD_BITMAPVIEW: draw_bitmapview(w, g); break;
             case GAD_BUTTON:     draw_button(w, g);     break;
             case GAD_CHECKBOX:   draw_checkbox(w, g);   break;
-            case GAD_SCROLLBAR:  draw_scrollbar(w, g);  break;
-            case GAD_RADIO:      draw_radio(w, g);      break;
-            case GAD_BITMAPVIEW: draw_bitmapview(w, g); break;
-            case GAD_LISTBOX:    draw_listbox(w, g);    break;
+            case GAD_GRIDSELECT: draw_gridselect(w, g); break;
             case GAD_LABEL:      draw_label(w, g);      break;
+            case GAD_LISTBOX:    draw_listbox(w, g);    break;
+            case GAD_RADIO:      draw_radio(w, g);      break;
+            case GAD_SCROLLBAR:  draw_scrollbar(w, g);  break;
+
 
             default: break;     // if we got here, then the GUI is BARFING UP randomness, so stop it here ;)
         }

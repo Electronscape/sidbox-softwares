@@ -7,28 +7,35 @@
 
 
 // APIs
+#include "cg_gad_bitmapview.h"
 #include "cg_gad_button.h"
 #include "cg_gad_checkbox.h"
-#include "cg_gad_radio.h"
-#include "cg_gad_bitmapview.h"
-#include "cg_gad_scrollbar.h"
-#include "cg_gad_listbox.h"
+#include "cg_gad_gridselect.h"
 #include "cg_gad_label.h"
+#include "cg_gad_listbox.h"
+#include "cg_gad_radio.h"
+#include "cg_gad_scrollbar.h"
+
+
+
 
 // ---------------- POOLS ----------------
 static GADGET_BASE_T    g_basePool[MAX_GADGETS];
+GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
 GAD_BUTTON_T     g_btnPool [MAX_BUTTONS];
 GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
-GAD_RADIO_T      g_radPool [MAX_RADIOS];
-GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
-GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
-GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
+GAD_GRIDSELECT_T g_gsPool  [MAX_GRIDSELECTS];
 GAD_LABEL_T      g_lblPool [MAX_LABELS];
+GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
+GAD_RADIO_T      g_radPool [MAX_RADIOS];
+GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
+
+
 
 
 
 typedef struct {
-    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool;
+    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, gsPool;
 } SBOS_GadgetPoolBytes;
 
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
@@ -41,6 +48,7 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     b.bvPool   = sizeof(g_bvPool);
     b.lbPool   = sizeof(g_lbPool);
     b.lblPool  = sizeof(g_lblPool);
+    b.gsPool   = sizeof(g_gsPool);
     return b;
 }
 
@@ -65,13 +73,14 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     }
 
     // Per-type gadget pools
-    for (int i = 0; i < MAX_BUTTONS; i++)    if (g_btnPool[i].used) c.btn_used++;
-    for (int i = 0; i < MAX_CHECKBOXES; i++) if (g_chkPool[i].used) c.chk_used++;
-    for (int i = 0; i < MAX_RADIOS; i++)     if (g_radPool[i].used) c.rad_used++;
-    for (int i = 0; i < MAX_SCROLLBARS; i++) if (g_sbPool[i].used)  c.sb_used++;
-    for (int i = 0; i < MAX_BITMAPVIEWS; i++)if (g_bvPool[i].used)  c.bv_used++;
-    for (int i = 0; i < MAX_LISTBOXES; i++)  if (g_lbPool[i].used)  c.lb_used++;
-    for (int i = 0; i < MAX_LABELS; i++)     if (g_lblPool[i].used) c.lbl_used++;
+    for (int i = 0; i < MAX_BUTTONS; i++)     if (g_btnPool[i].used) c.btn_used++;
+    for (int i = 0; i < MAX_CHECKBOXES; i++)  if (g_chkPool[i].used) c.chk_used++;
+    for (int i = 0; i < MAX_RADIOS; i++)      if (g_radPool[i].used) c.rad_used++;
+    for (int i = 0; i < MAX_SCROLLBARS; i++)  if (g_sbPool[i].used)  c.sb_used++;
+    for (int i = 0; i < MAX_BITMAPVIEWS; i++) if (g_bvPool[i].used)  c.bv_used++;
+    for (int i = 0; i < MAX_LISTBOXES; i++)   if (g_lbPool[i].used)  c.lb_used++;
+    for (int i = 0; i < MAX_LABELS; i++)      if (g_lblPool[i].used) c.lbl_used++;
+    for (int i = 0; i < MAX_GRIDSELECTS; i++) if (g_gsPool[i].used)  c.gs_used++;
 
     return c;
 }
@@ -224,6 +233,25 @@ static GAD_CHECKBOX_T* chk_alloc(void){
     return NULL;
 }
 
+
+static GAD_GRIDSELECT_T* gsl_alloc(void){
+    for (int i = 0; i < MAX_GRIDSELECTS; i++){
+        if (!g_gsPool[i].used){
+            memset(&g_gsPool[i], 0, sizeof(g_gsPool[i]));
+            g_gsPool[i].used = 1;
+
+            g_gsPool[i].h.enabled = 1;
+            g_gsPool[i].h.visible = 1;
+            g_gsPool[i].h.down    = 0;
+            g_gsPool[i].h.flags   = GAD_TOOL_DEFAULT;
+            g_gsPool[i].flags     = GAD_GRIDSEL_JUST_ONE;
+
+            return &g_gsPool[i];
+        }
+    }
+    return NULL;
+}
+
 static GAD_LABEL_T* lbl_alloc(void){
     for (int i = 0; i < MAX_LABELS; i++){
         if (!g_lblPool[i].used){
@@ -334,6 +362,11 @@ static void chk_free(GAD_CHECKBOX_T *c){
     c->used = 0;
 }
 
+static void gs_free(GAD_GRIDSELECT_T *c){
+    if (!c) return;
+    c->used = 0;
+}
+
 static void lbl_free(GAD_LABEL_T *lb){
     if (!lb) return;
     lb->used = 0;
@@ -345,10 +378,8 @@ static void lb_free(GAD_LISTBOX_T *lb){
         SBOS_destroyItemList(lb->items);
         lb->items = NULL;
     }
-
     lb->used = 0;
 }
-
 
 static void rad_free(GAD_RADIO_T *r){
     if (!r) return;
@@ -644,6 +675,40 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
 }
 
 
+
+
+CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t cells_x, uint8_t cells_y, uint32_t gridflags, GAD_TOOL_FLAGS flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_GRIDSELECT_T *c = gsl_alloc();
+    if (!c){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    g->gadgetType = GAD_GRIDSELECT;
+    g->gadget = c;
+
+    c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
+    c->h.flags = flags;
+    c->h.winhnd = win;
+
+
+    W->GADGETS[slot] = g;
+
+    return base_to_handle(g);
+}
+
+
+
 CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
@@ -930,10 +995,12 @@ void SBOS_destroyGadget(CGGadgetHandle h){
         case GAD_BITMAPVIEW: bv_free ((GAD_BITMAPVIEW_T* )b->gadget); break;
         case GAD_BUTTON:     btn_free((GAD_BUTTON_T*     )b->gadget); break;
         case GAD_CHECKBOX:   chk_free((GAD_CHECKBOX_T*   )b->gadget); break;
+        case GAD_GRIDSELECT: gs_free ((GAD_GRIDSELECT_T* )b->gadget); break;
         case GAD_LABEL:      lbl_free((GAD_LABEL_T*      )b->gadget); break;
         case GAD_LISTBOX:    lb_free ((GAD_LISTBOX_T*    )b->gadget); break;
         case GAD_RADIO:      rad_free((GAD_RADIO_T*      )b->gadget); break;
         case GAD_SCROLLBAR:  sb_free ((GAD_SCROLLBAR_T*  )b->gadget); break;
+
         default: break;
     }
 

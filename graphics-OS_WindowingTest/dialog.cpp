@@ -94,6 +94,8 @@ void doCreateAWindow(void *s){
         return;
     }
 
+    CGGadgetHandle grid1 = SBOS_CreateGridSelect(newWindowThing, 10,10, 80, 80, 4, 4, GAD_GRIDSEL_JUST_ONE, GAD_TOOL_DEFAULT);
+
     SBOS_setFocus(newWindowThing);
 }
 
