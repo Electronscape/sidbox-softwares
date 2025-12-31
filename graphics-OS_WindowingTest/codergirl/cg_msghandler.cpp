@@ -65,11 +65,12 @@ uint8_t SBOS_PopMessage(CGMessage_t *out)
 
 
 
-void cg_os_messagehandler(uint8_t msgticks){
+int16_t cg_os_messagehandler(uint8_t msgticks){
     // message ticks are How many messages can be done PER CALL to this
     // this should ONLY be put into a Hardware timer, OR in the main OS loop!
     // NEVER ANY PROGRAMS and should ONLY be internal, NO API access to this at all
     CGMessage_t m;
+    int16_t triggered = 0;
     while (msgticks-- > 0) {
         if (!SBOS_PopMessage(&m)) break;
         sbx_window_t *w = SBOS_getWindow(m.winhnd);
@@ -79,7 +80,7 @@ void cg_os_messagehandler(uint8_t msgticks){
             w->proc(m.winhnd, &m);  // programmer runs here (may freeze themselves 😄)
             g_msg_sent++;
         }
-        printf(".");    // message handler heart beat;
+        triggered = 1;
     }
-
+    return triggered;
 }

@@ -33,7 +33,7 @@ typedef struct CGMessage_t {
 
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-void cg_os_messagehandler(uint8_t msgticks);
+int16_t cg_os_messagehandler(uint8_t msgticks);
 uint8_t SBOS_PostMessage(const CGMessage_t *m);
 uint8_t SBOS_PopMessage(CGMessage_t *out);
 

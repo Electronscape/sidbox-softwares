@@ -135,7 +135,13 @@ void doAboutWindow(void *s){
         SBOS_bringToFront(aboutWin);
         return;
     }
-    aboutWin = SBOS_createWindow(0, SYS_MENU_BAR_HEIGHT, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+
+    int32_t wx, wy;
+
+    wx = (SCR_WIDTH / 2) - (ABOUTWIN_WIDTH /2);
+    wy = (SCR_HEIGHT / 4) - (ABOUTWIN_HEIGHT /4);
+
+    aboutWin = SBOS_createWindow(wx, wy, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if(aboutWin == SBW_INVALID_ID){
         printf("Think we ran out of windows -- how about closing some!\n");
         return;
@@ -163,37 +169,39 @@ void doAboutWindow(void *s){
 
     SBOS_setFocus(aboutWin);
     SBOS_bringToFront(aboutWin);
+    printf("ABOUT WINDOW  ");
 }
 
-static void AboutProc(SBXWindowId win, const CGMessage_t *m)
+static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 {
     if (!m) return;
 
+    printf("EVENT : message_type %lu, class:%lu, gadget_id:%lu\n", m->mtype, m->eventClass, m->gadget);
+
     switch (m->mtype) {
+        case CGMSG_GADGET:
+            switch (m->eventClass) {
+                case CGEVT_BUTTON_CLICK:
+                    // Identify which button fired (by gadget handle)
+                    //if (m->gadget == g_aboutCloseBtn) {
+                        //SBOS_destroyWindow(win);
+                    //}
+                    printf("a button from the Process (or program main!!)\n");
+                    doAboutWindow(NULL);
 
-    case CGMSG_GADGET:
-        switch (m->eventClass) {
+                    break;
 
-        case CGEVT_BUTTON_CLICK:
-            // Identify which button fired (by gadget handle)
-            //if (m->gadget == g_aboutCloseBtn) {
-                //SBOS_destroyWindow(win);
-            //}
-            printf("a button from the Process (or program main!!)\n");
-            doAboutWindow(NULL);
+                default:
+                    break;
+                }
+                break;
+
+        case CGMSG_WINDOW:
+            // e.g. resize/minimize events later
             break;
 
         default:
             break;
-        }
-        break;
-
-    case CGMSG_WINDOW:
-        // e.g. resize/minimize events later
-        break;
-
-    default:
-        break;
     }
 }
 
@@ -227,7 +235,7 @@ void createBasicDesktopTest(){
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     CGGadgetHandle btn1 = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     //SBOS_enableGadget(btn1, 0);// disable the button
-    SBOS_setWindowProc(winMain2, AboutProc);
+    SBOS_setWindowProc(winMain2, BasicWindowMAIN);
 
     CGGadgetHandle chk1 = SBOS_CreateCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
     SBOS_enableGadget(chk1, 0);
@@ -352,17 +360,6 @@ void createBasicDesktopTest(){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Dialog)
@@ -451,7 +448,11 @@ Dialog::Dialog(QWidget *parent)
 
     QTimer *osMessageHandlerTMR = new QTimer(this);
     connect(osMessageHandlerTMR, &QTimer::timeout, this, [=](){
-        cg_os_messagehandler(1);    // one message at a time, FOR now
+        if(cg_os_messagehandler(1)){
+            SBOS_paintAllWindows();
+            updateGFXScreen();
+        }
+        ;    // one message at a time, FOR now
     });
 
 
@@ -478,7 +479,7 @@ Dialog::Dialog(QWidget *parent)
 
 
     t->start(1500);   // every 22ms/ about 60hz?
-    osMessageHandlerTMR->start(1000);// 1 second so we can see things in the queue
+    osMessageHandlerTMR->start(1);// 1 second so we can see things in the queue
 }
 
 
