@@ -15,6 +15,7 @@
 #define     MAX_SCROLLBARS          32
 #define     MAX_BITMAPVIEWS         8
 #define     MAX_LISTBOXES           16
+#define     MAX_LABELS              16
 
 
 // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
@@ -23,7 +24,8 @@
                                     MAX_RADIOS +        \
                                     MAX_SCROLLBARS +    \
                                     MAX_BITMAPVIEWS +   \
-                                    MAX_LISTBOXES       )
+                                    MAX_LISTBOXES +     \
+                                    MAX_LABELS          )
 
 
 
@@ -52,8 +54,6 @@ typedef uint32_t SBControlHandle;
 
 // -----------------------------------------------------
 
-
-
 typedef enum {
     GAD_TOOL_DEFAULT        = (1 << 0),
     GAD_TOOL_DOCKED_RIGHT   = (1 << 1),     // right dock used
@@ -64,12 +64,13 @@ typedef enum {
     GAD_TOOL_INSET          = (1 << 6),     // invert the bevel on gadgets
 } GAD_TOOL_FLAGS;
 
+// BITMAP VIEW FLAGS
 typedef enum BMV_FLAGS_T {
     BVF_SHOW_FRAME          = (1 << 0),
     BVF_PAN                 = (1 << 1),
     BVF_SRC_ROWMAJOR        = (1 << 2),     // src = pixels[y*stride + x]
-    BVF_SRC_XMAJOR          = (1 << 3)      // src = pixels[x*stride + y] (optional)
-
+    BVF_SRC_XMAJOR          = (1 << 3),     // src = pixels[x*stride + y] (optional)
+    BVF_WRAP                = (1 << 4)
 } BMV_FLAGS_T;
 
 // control types
@@ -81,6 +82,7 @@ typedef enum GADGET_CLASS_T {
     GAD_SCROLLBAR,
     GAD_BITMAPVIEW,
     GAD_LISTBOX,
+    GAD_LABEL
 } GADGET_CLASS_T;
 
 
@@ -125,6 +127,7 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t
                                   int16_t step,    int16_t initial_pct,  uint32_t flags);
 
 
+SBControlHandle SBOS_addLabel      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 SBControlHandle SBOS_addCheckbox   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);

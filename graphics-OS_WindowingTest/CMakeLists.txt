@@ -61,6 +61,8 @@ qt_add_executable(graphics-gui_testing
     codergirl/cg_gad_listbox.cpp
     codergirl/cg_wintype.h
     codergirl/cg_theme.h
+    codergirl/cg_gad_label.h
+    codergirl/cg_gad_label.cpp
 
 )
 

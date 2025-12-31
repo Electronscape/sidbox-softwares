@@ -6,7 +6,7 @@
 
 #include "fastram.h"
 
-#define RAMBANK_SIZE (32)      // Kbytes
+#define RAMBANK_SIZE (8)      // Kbytes
 #define FASTRAM_SIZE (1024u * RAMBANK_SIZE)
 
 static uint8_t FAUXRAM[FASTRAM_SIZE];   // eventually will move this to an actual memory location 0xD0000000 stm32 EXT RAM area xD
@@ -236,8 +236,9 @@ void* fastRealloc(void* p, uint32_t newSize) {
 // Stats: free bytes + largest free block + used bytes.
 FastStats fastStats(void) {
     FastStats s = {0};
+    memset(&s, 0, sizeof(FastStats));
     s.total = FASTRAM_SIZE;
-    memset(&s, 0x00, sizeof(FastStats));
+
     uint32_t off = g_fast_head;
     for (;;) {
         FastBlk* b = blk_from_off(off);
@@ -307,12 +308,19 @@ void fastDumpHex(uint32_t showsize){
     }
 }
 
-uint32_t getMemAvail(){
+uint32_t getMemAvail(void){
     FastStats s = fastStats();
-    uint32_t used_total = s.used_payload + (s.blocks ? (s.blocks * sizeof(FastBlk)) : 0); // optional
-    return used_total;
+    uint32_t used_total = (uint32_t)(s.used_payload + s.overhead_bytes);
+    if (used_total >= (uint32_t)FASTRAM_SIZE)
+        return 0;
+
+    return (uint32_t)FASTRAM_SIZE - used_total;
 }
 
-uint32_t getMemTotal(){
-    return (FASTRAM_SIZE);
+// Optional helper if you also want "how much is used" (arena bytes)
+uint32_t getMemUsed(void){
+    FastStats s = fastStats();
+    uint32_t used_total = (uint32_t)(s.used_payload + s.overhead_bytes);
+    if (used_total > (uint32_t)FASTRAM_SIZE) used_total = (uint32_t)FASTRAM_SIZE;
+    return used_total;
 }

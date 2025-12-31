@@ -13,7 +13,7 @@
 #include "cg_gad_bitmapview.h"
 #include "cg_gad_scrollbar.h"
 #include "cg_gad_listbox.h"
-
+#include "cg_gad_label.h"
 
 // ---------------- POOLS ----------------
 static GADGET_BASE_T    g_basePool[MAX_GADGETS];
@@ -23,11 +23,12 @@ GAD_RADIO_T      g_radPool [MAX_RADIOS];
 GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
 GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
 GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
+GAD_LABEL_T      g_lblPool [MAX_LABELS];
 
 
 
 typedef struct {
-    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool;
+    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool;
 } SBOS_GadgetPoolBytes;
 
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
@@ -39,6 +40,7 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     b.sbPool   = sizeof(g_sbPool);
     b.bvPool   = sizeof(g_bvPool);
     b.lbPool   = sizeof(g_lbPool);
+    b.lblPool  = sizeof(g_lbPool);
     return b;
 }
 
@@ -67,6 +69,7 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     for (int i = 0; i < MAX_SCROLLBARS; i++) if (g_sbPool[i].used)  c.sb_used++;
     for (int i = 0; i < MAX_BITMAPVIEWS; i++)if (g_bvPool[i].used)  c.bv_used++;
     for (int i = 0; i < MAX_LISTBOXES; i++)  if (g_lbPool[i].used)  c.lb_used++;
+    for (int i = 0; i < MAX_LABELS; i++)     if (g_lblPool[i].used) c.lbl_used++;
 
     return c;
 }
@@ -74,8 +77,6 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
 
 
 /////// DEFAULT EventEmitters /////////////////////////////////////////////////////////////////
-
-
 void onScrollEmitEvent(void *s){
     GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
     if (!sb) return;
@@ -85,22 +86,33 @@ void onScrollEmitEvent(void *s){
 void onButtonClickEmitEvent(void *g){
     GAD_BUTTON_T *button = (GAD_BUTTON_T *)g;   // get the button
     if(!button) return;
-
-    //GADGET_BASE_T *g = SBOS_gadgetFromHandle(button);
-
     printf("Button Click: text:'%s' Win_id: %d, index:%d\n",
            button->text,
            button->h.winhnd,
            button->current_option);
 }
 
+void onRadioClickEmitEvent(void *g){
+    GAD_RADIO_T *radio = (GAD_RADIO_T *)g;   // get the button
+    if(!radio) return;
+    printf("Radio Click: text:'%s' Win_id: %d, index:%d, Grp:%d\n",
+           radio->text,
+           radio->h.winhnd,
+           radio->checked,
+           radio->group
+           );
+}
 
 
-
-
-
-
-
+void onCheckBoxClickEmitEvent(void *g){
+    GAD_CHECKBOX_T *checkbox = (GAD_CHECKBOX_T *)g;   // get the button
+    if(!checkbox) return;
+    printf("Checkbox Click: text:'%s' Win_id: %d, check:%d\n",
+           checkbox->text,
+           checkbox->h.winhnd,
+           checkbox->checked
+           );
+}
 
 // ---------------- INTERNAL HELPERS ----------------
 static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
@@ -224,6 +236,25 @@ static GAD_BUTTON_T* btn_alloc(void){
     return NULL;
 }
 
+static GAD_LABEL_T* lbl_alloc(void){
+    for (int i = 0; i < MAX_BUTTONS; i++){
+        if (!g_lblPool[i].used){
+            g_lblPool[i].used = 1;
+
+            // sane defaults
+            g_lblPool[i].h.enabled = 1;
+            g_lblPool[i].h.visible = 1;
+            g_lblPool[i].h.down = 0;
+            g_lblPool[i].h.flags = GAD_TOOL_DEFAULT;
+
+            g_lblPool[i].text[0] = '\0';
+            return &g_lblPool[i];
+        }
+    }
+    return NULL;
+}
+
+
 static GAD_CHECKBOX_T* chk_alloc(void){
     for (int i = 0; i < MAX_CHECKBOXES; i++){
         if (!g_chkPool[i].used){
@@ -311,7 +342,8 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
     case GAD_CHECKBOX: {
         GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
         c->checked ^= 1;
-        printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
+        //printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
+        c->onCheckBoxClickCallBack(c);
     }
     break;
     case GAD_RADIO: {
@@ -330,7 +362,7 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
             }
             r->checked = 1;
         }
-        printf("RADIO SELECT: %s (grp %d)\r\n", r->text, r->group);
+        r->onRadioCallBack(r);
     }
     break;
 
@@ -548,6 +580,54 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
     return base_to_handle(g);
 }
 
+
+SBControlHandle SBOS_addLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_LABEL_T *b = lbl_alloc();
+    if (!b){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    // base host
+    //g->winhnd = win;
+    g->gadgetType = GAD_LABEL;
+    g->gadget = b;
+    b->h.winhnd = win;
+    b->bgColour = W->backColour;
+
+    // payload header
+    b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;
+    b->h.flags = flags;
+
+    // payload data
+    if (text){
+        int i = 0;
+        for (; text[i] && i < (DEF_GADGET_TEXT_SIZE - 1); i++) b->text[i] = text[i];
+        b->text[i] = '\0';
+    } else {
+        b->text[0] = '\0';
+    }
+
+
+
+    // attach to window
+    W->GADGETS[slot] = g;
+
+    return base_to_handle(g);
+}
+
+
+
 SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
@@ -572,8 +652,9 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
     c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
     c->h.flags = flags;
     c->h.winhnd = win;
-
     c->checked = initial_checked ? 1 : 0;
+
+    c->onCheckBoxClickCallBack = onCheckBoxClickEmitEvent;
 
     if (text){
         int i = 0;
@@ -617,6 +698,7 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
     r->h.winhnd = win;
     r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
     r->h.flags = flags;
+    r->onRadioCallBack = onRadioClickEmitEvent;
 
 
     r->group = group;

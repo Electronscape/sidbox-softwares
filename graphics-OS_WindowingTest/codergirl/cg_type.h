@@ -6,7 +6,7 @@
 
 #define BYTES_OF(x) ((size_t)sizeof(x))
 
-#define SBOS_UI_BUDGET_BYTES (64u * 1024u)
+//#define SBOS_UI_BUDGET_BYTES (64u * 1024u)
 
 
 // GADGET TYPES

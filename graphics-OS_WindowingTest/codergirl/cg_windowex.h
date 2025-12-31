@@ -107,6 +107,7 @@ typedef struct {
     uint16_t sb_used;   // scrollbars
     uint16_t bv_used;   // bitmap views
     uint16_t lb_used;   // list box
+    uint16_t lbl_used;   // list box
 } SBOS_UiUsageCounts;
 
 SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);
@@ -127,6 +128,7 @@ void            initWb(void);
 SBXWindowId     SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 void            SBOS_destroyWindow(SBXWindowId id);
 sbx_window_t*   SBOS_getWindow(SBXWindowId id);
+void            SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor);
 
 void            SBOS_paintWindow(SBXWindowId id);
 void            SBOS_paintAllWindows(void);

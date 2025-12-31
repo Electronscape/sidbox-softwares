@@ -23,6 +23,7 @@
 #include "cg_gad_bitmapview.h"
 #include "cg_gad_scrollbar.h"
 #include "cg_gad_listbox.h"
+#include "cg_gad_label.h"
 
 #include "cg_resources.h"
 
@@ -186,6 +187,12 @@ void SBOS_setFocus(SBXWindowId id){
     g_focusWin = id;
 }
 
+void SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor){
+    sbx_window_t *w = &gui_windows[winId];
+    if(!w) return;
+    w->backColour = newcolor;
+}
+
 SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
     for (SBXWindowId i = 0; i < MAX_WINDOWS; i++) {
         if (!gui_used[i]) {
@@ -197,6 +204,7 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
             w->winrect.w = (int16_t)width;
             w->winrect.h = (int16_t)height;
             w->flags = flags;
+            w->backColour = PEN_WIN_BG;
 
             //w->ctrl_count = 0;
             //w->id = i;
@@ -264,7 +272,7 @@ void SBOS_paintWindow(SBXWindowId id){
 
     // --- client background ---
     // IMPORTANT: clientrect is the app-drawable area. Fill it.
-    sbgfx_drawbox(cli_x, cli_y, cli_w, cli_h, PEN_WIN_BG);
+    sbgfx_drawbox(cli_x, cli_y, cli_w, cli_h, w->backColour);
 
 
 
@@ -299,9 +307,6 @@ void SBOS_paintWindow(SBXWindowId id){
         const int16_t inner_w = (int16_t)(win_w - (WIN_BORDER * 2));
 
         ui_clip_set(win_x, win_y, win_w, win_h);
-
-
-
 
         // bottom bar
         sbgfx_drawbox(inner_x, (int16_t)(gy + 1), inner_w, (int16_t)(WIN_RESIZE_GLYPH_SIZE - 2), borderPen);
@@ -397,8 +402,9 @@ void SBOS_paintWindow(SBXWindowId id){
         draw_bevel_rect(tb_x, win_y, twidth, (WIN_TITLE_HEIGHT + WIN_BORDER));
 
         // title text (clipped by character count)
-        uint16_t titlePen = (id == g_focusWin) ? PEN_WIN_BORDER_ACTIVE : PEN_WIN_BORDER_INACTIVE;
-        gfx_setcolour(titlePen);
+        //uint16_t titlePen = (id == g_focusWin) ? PEN_WIN_BORDER_ACTIVE : PEN_WIN_BORDER_INACTIVE;
+        gfx_setcolour(PEN_WIN_TITLE);
+
 
         char tmpTitle[65];
         int16_t max_chars = (int16_t)((twidth - 8) / 8);
@@ -569,8 +575,6 @@ void SBOS_destroyWindow(SBXWindowId id){
     SBOS_paintAllWindows();
 }
 
-
-
 void SBOS_sendToBack(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) return;
     if (gui_windows[id].flags & SBX_WF_ALWAYS_TO_FRONT) return;  // cannot sink 😄
@@ -601,8 +605,6 @@ void SBOS_paintAllWindows(void){
 static inline uint8_t is_title_gadget_region(WHitRegion r){
     return (r == WH_CLOSE) || (r == WH_MINIMISE) || (r == WH_MAXRESTORE) || (r == WH_ZORDER);
 }
-
-
 
 static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
     WHitResult r = { SBW_INVALID_ID, WH_NONE, SBCTL_INVALID };
@@ -756,6 +758,7 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
             case GAD_RADIO:      draw_radio(w, g);      break;
             case GAD_BITMAPVIEW: draw_bitmapview(w, g); break;
             case GAD_LISTBOX:    draw_listbox(w, g);    break;
+            case GAD_LABEL:      draw_label(w, g);      break;
 
             default: break;     // if we got here, then the GUI is BARFING UP randomness, so stop it here ;)
         }

@@ -23,6 +23,7 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -136,6 +137,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o:
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 

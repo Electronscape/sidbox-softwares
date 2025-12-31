@@ -13,6 +13,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o"

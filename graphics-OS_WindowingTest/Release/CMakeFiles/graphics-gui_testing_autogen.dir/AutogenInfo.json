@@ -455,6 +455,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_label.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_label.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.h",
 			"MU",
 			"5AAQOGTO22/moc_cg_gad_listbox.cpp",
@@ -642,6 +648,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_label.cpp",
 			"MU",
 			null
 		],

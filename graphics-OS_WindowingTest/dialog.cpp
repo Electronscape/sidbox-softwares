@@ -13,12 +13,13 @@
 #include "codergirl/cg_input.h"
 
 #include "fastram.h"
+#include "codergirl/cg_resources.h"
 
 #include "codergirl/cg_gad_listbox.h"
 #include "codergirl/cg_itemlist.h"
 #include "codergirl/cg_gad_button.h"
 #include "codergirl/cg_gad_scrollbar.h"
-
+#include "codergirl/cg_gad_label.h"
 
 float winScale = 1.0f;
 int currentScale = 1;
@@ -49,6 +50,9 @@ static ItemLists_t listbox;
 static ItemLists_t demolist;
 
 static SBControlHandle    theListBox;
+static SBXWindowId  titleBar;
+
+static SBControlHandle MenuBarTitle;
 
 // a CUSTOM function for a scroll bar
 void BitDemoScrolly1(void *s){
@@ -69,6 +73,19 @@ void ListBoxTopSet(void *s){
     SBOS_setListbox_top(g, src_sb->value);
 }
 
+void UpdateMenuLabel(void *s){
+    char txt[32];
+    // source gadget expected
+    GAD_SCROLLBAR_T *src_sb = (GAD_SCROLLBAR_T*)s;
+    if (!src_sb) return;
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(MenuBarTitle);
+    if (!g) return;
+    if (!g->gadget) return;
+    //SBOS_setListbox_top(g, src_sb->value);
+
+    sprintf(txt, "scr: %d", src_sb->value);
+    SBOS_setLabelText(MenuBarTitle, txt);
+}
 
 void createBasicDesktopTest(){
     initWb();
@@ -76,12 +93,19 @@ void createBasicDesktopTest(){
 
     // DESKTOP WINDOW (yes it IS a window)
     SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
-    SBOS_addBitmapView(workbench, 0, 0, 480, 320, backdrop, 480, 320, 480, BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
-    SBOS_addButton(workbench, 6,  6,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_addBitmapView(workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, backdrop, 480, 320, 480, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+    SBOS_addButton(workbench, 6,  60,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+
+    titleBar = SBOS_createWindow(0, 0, SCR_WIDTH, 20, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
+    SBOS_setWinBackColour(titleBar, 2);
+
+    SBOS_addLabel(titleBar, 5, 2, 100, 16, "SIDBOX DESKTOP V1.0", GAD_TOOL_DEFAULT);
+    MenuBarTitle = SBOS_addLabel(titleBar, 185, 2, 100, 16, "hello world", GAD_TOOL_DEFAULT);
+    SBOS_setLabelText(MenuBarTitle, "Initialisting...");
 
     // WINDOW 1 -----------------------
     // cycle button test window
-    SBXWindowId winMain =  SBOS_createWindow(10, 20, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+    SBXWindowId winMain =  SBOS_createWindow(10, 30, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
     SBOS_addScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
     SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
@@ -101,12 +125,20 @@ void createBasicDesktopTest(){
     SBOS_addScrollbar(winMain2,  260, 6, 20, 150,   SB_ORIENT_VERT,  0, 120,  50,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
     SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1); // attach this scrollbar to the function
     SBOS_addScrollbar(winMain2,  0,0,0,0,           SB_ORIENT_HORZ,  0, 100,  25,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
+
+    SBControlHandle winScroll =
     SBOS_addScrollbar(winMain2,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
+
+    //SBOS_setScrollBarCallBack(winScroll, &UpdateMenuLabel); // attach this scrollbar to the function
+
+
+
+
 
 
     // WINDOW 3 -----------------------
     // a bitmap viewable window ;) lets see if this works!!
-    SBXWindowId winMain3 = SBOS_createWindow(40, 30, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
+    SBXWindowId winMain3 = SBOS_createWindow(40, 40, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
     SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
     SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
     SBOS_addScrollbar(winMain3,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
@@ -162,6 +194,8 @@ void createBasicDesktopTest(){
 
     //SBOS_print_ui_usage();
     printf("In memory: %s\n", txt5);
+
+
 
     //listitem_free(&listbox);
     //listitem_free(&demolist);
@@ -248,14 +282,17 @@ Dialog::Dialog(QWidget *parent)
 
     connect(ui->cmdZoom1x, &QPushButton::clicked, this, [=](){
         setScreenScale(1);
+        pixmapItem->setTransformationMode(Qt::FastTransformation);
     });
 
     connect(ui->cmdZoom2x, &QPushButton::clicked, this, [=](){
         setScreenScale(2);
+        pixmapItem->setTransformationMode(Qt::FastTransformation);
     });
 
     connect(ui->cmdZoomWx, &QPushButton::clicked, this, [=](){
         setScreenScale(winScale);
+        pixmapItem->setTransformationMode(Qt::SmoothTransformation);
     });
 
     setScreenScale(1);
@@ -265,11 +302,26 @@ Dialog::Dialog(QWidget *parent)
     connect(t, &QTimer::timeout, this, [=](){
 
 
-        windowingTest();
+        //windowingTest();
 
+        uint32_t chipRes, fastRes;
+        getMemAvailChipNFast(&chipRes, &fastRes);
+
+        char chipBuf[16];
+        char fastBuf[16];
+        char ramText[64];
+
+        fmt_commas_u32(chipBuf, chipRes);
+        fmt_commas_u32(fastBuf, fastRes);
+
+        sprintf(ramText, "CHIP: %s  FAST: %s", chipBuf, fastBuf);
+        SBOS_setLabelText(MenuBarTitle, ramText);
+
+        SBOS_paintAllWindows();
+        updateGFXScreen();
 
     });
-    t->start(22);   // every 22ms/ about 60hz?
+
 
 
     timer = new QTimer(this);
@@ -291,6 +343,9 @@ Dialog::Dialog(QWidget *parent)
 
     createBasicDesktopTest();
     updateGFXScreen();
+
+
+    t->start(1500);   // every 22ms/ about 60hz?
 }
 
 

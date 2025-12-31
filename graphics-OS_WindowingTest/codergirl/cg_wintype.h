@@ -22,6 +22,8 @@ typedef struct {
     GADGET_RECT_T   winrect;            // window geometry (the actual area of the window)
     GADGET_RECT_T   clientrect;         // this is the inner view port, which will adjust according to what things will be there
 
+    uint8_t         backColour;         // default background colour
+
     GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
 } sbx_window_t;
 
