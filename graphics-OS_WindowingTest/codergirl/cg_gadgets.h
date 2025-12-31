@@ -119,7 +119,7 @@ typedef struct {
 
 
 
-
+//// API ACCESS ///////////
 void SBOS_gadgetsInit(void);
 
 SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
@@ -138,6 +138,9 @@ SBControlHandle base_to_handle(GADGET_BASE_T *g);
 
 GADGET_BASE_T*  SBOS_gadgetFromHandle(SBControlHandle h);
 GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
+
+
+void            SBOS_enableGadget(SBControlHandle h, uint8_t enable);
 void            SBOS_destroyGadget(SBControlHandle h);
 
 

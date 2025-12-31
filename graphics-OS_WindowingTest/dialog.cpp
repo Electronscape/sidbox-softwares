@@ -87,6 +87,16 @@ void UpdateMenuLabel(void *s){
     SBOS_setLabelText(MenuBarTitle, txt);
 }
 
+void doCreateAWindow(void *s){
+    SBXWindowId newWindowThing = SBOS_createWindow(20, 30, 200, 200, "This is a new window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    if(newWindowThing == SBW_INVALID_ID){
+        printf("Think we ran out of windows -- how about closing some!\n");
+        return;
+    }
+
+    SBOS_setFocus(newWindowThing);
+}
+
 void createBasicDesktopTest(){
     initWb();
     initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
@@ -94,7 +104,8 @@ void createBasicDesktopTest(){
     // DESKTOP WINDOW (yes it IS a window)
     SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
     SBOS_addBitmapView(workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, backdrop, 480, 320, 480, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
-    SBOS_addButton(workbench, 6,  60,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBControlHandle newWindowBtn = SBOS_addButton(workbench, 6,  60,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_setButtonCallBack(newWindowBtn, doCreateAWindow);
 
     titleBar = SBOS_createWindow(0, 0, SCR_WIDTH, 20, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
     SBOS_setWinBackColour(titleBar, 2);
@@ -109,12 +120,18 @@ void createBasicDesktopTest(){
     SBOS_addScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
     SBOS_addButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
+
+
     // WINDOW 2 -----------------------
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
-    SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
-    SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+    SBControlHandle btn1 = SBOS_addButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_enableGadget(btn1, 0);// disable the button
+
+    SBControlHandle chk1 = SBOS_addCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
+    SBOS_enableGadget(chk1, 0);
     SBOS_addCheckbox(winMain2, 10, 65, 160, 24, "Enable gerbils", 0, GAD_TOOL_DEFAULT);
-    SBOS_addRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
+    SBControlHandle rad2 = SBOS_addRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
+    SBOS_enableGadget(rad2, 0);
     SBOS_addRadioButton(winMain2, 180, 30, 100, 18, "Medium", 0, 0, GAD_TOOL_DEFAULT);
     SBOS_addRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
     SBOS_addRadioButton(winMain2, 180, 100, 100, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
@@ -139,10 +156,11 @@ void createBasicDesktopTest(){
     // WINDOW 3 -----------------------
     // a bitmap viewable window ;) lets see if this works!!
     SBXWindowId winMain3 = SBOS_createWindow(40, 40, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
-    SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+    SBControlHandle piccy1 = SBOS_addBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
     SBOS_addButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
     SBOS_addScrollbar(winMain3,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
 
+    SBOS_enableGadget(piccy1, 0);
 
     SBOS_setFocus(winMain);
     SBOS_bringToFront(winMain);
@@ -179,9 +197,14 @@ void createBasicDesktopTest(){
 
 
     theListBox = SBOS_addListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
+    SBOS_enableGadget(theListBox, 0);
+
+
     SBControlHandle ListBoxScroll =
     SBOS_addScrollbar(winMain,  206, 40, 16, 196,  SB_ORIENT_VERT,  0, 31 - 11,  5,  0,  GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
     SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
+
+    SBOS_enableGadget(ListBoxScroll, 0);
 
     printf("theListBox handle = %u (0x%08x)\n",    (uint32_t)theListBox,    (uint32_t)theListBox);
     printf("ListBoxScroll handle = %u (0x%08x)\n", (uint32_t)ListBoxScroll, (uint32_t)ListBoxScroll);

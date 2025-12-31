@@ -40,7 +40,7 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     b.sbPool   = sizeof(g_sbPool);
     b.bvPool   = sizeof(g_bvPool);
     b.lbPool   = sizeof(g_lbPool);
-    b.lblPool  = sizeof(g_lbPool);
+    b.lblPool  = sizeof(g_lblPool);
     return b;
 }
 
@@ -59,7 +59,9 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     // Base gadget handles in use (depends on your base pool layout)
     // If GADGET_BASE_T has a "used" field, count it; otherwise skip.
     for (int i = 0; i < MAX_GADGETS; i++) {
-        if (g_basePool[i].gadget != NULL) c.base_used++;   // <-- only if this exists
+        //if (g_basePool[i].gadget != NULL) c.base_used++;   // <-- only if this exists
+        if (g_basePool[i].gadgetSlotUsed) c.base_used++;
+
     }
 
     // Per-type gadget pools
@@ -154,39 +156,13 @@ static void base_free(GADGET_BASE_T *g){
 
 ////////////////// allocations area /////////////////////////
 
-//-------- LISTBOX ------------------------------------------
-static GAD_LISTBOX_T* lb_alloc(void){
-    for (int i = 0; i < MAX_LISTBOXES; i++){
-        if (!g_lbPool[i].used){
-            g_lbPool[i].used = 1;
-
-            g_lbPool[i].h.enabled = 1;
-            g_lbPool[i].h.visible = 1;
-            g_lbPool[i].h.down    = 0;
-            g_lbPool[i].h.flags   = GAD_TOOL_DEFAULT;
-
-            g_lbPool[i].items = NULL;
-            g_lbPool[i].row_h = 16;
-            g_lbPool[i].padding_x = 4;
-            g_lbPool[i].padding_y = 2;
-
-            return &g_lbPool[i];
-        }
-    }
-    return NULL;
-}
-
-static void lb_free(GAD_LISTBOX_T *lb){
-    if (!lb) return;
-    lb->used = 0;
-    lb->items = NULL;
-}
 
 
-//-------- BITMAP VIEWS -------------------------------------
+
 static GAD_BITMAPVIEW_T* bv_alloc(void){
     for (int i = 0; i < MAX_BITMAPVIEWS; i++){
         if (!g_bvPool[i].used){
+            memset(&g_bvPool[i], 0, sizeof(g_bvPool[i]));
             g_bvPool[i].used = 1;
 
             g_bvPool[i].h.enabled = 1;
@@ -208,19 +184,11 @@ static GAD_BITMAPVIEW_T* bv_alloc(void){
     return NULL;
 }
 
-static void bv_free(GAD_BITMAPVIEW_T *bv){
-    if (!bv) return;
-    bv->used = 0;
-}
-
-
-
-
-
-//-------- BUTTONS ------------------------------------------
 static GAD_BUTTON_T* btn_alloc(void){
     for (int i = 0; i < MAX_BUTTONS; i++){
         if (!g_btnPool[i].used){
+            memset(&g_btnPool[i], 0, sizeof(g_btnPool[i]));
+
             g_btnPool[i].used = 1;
 
             // sane defaults
@@ -236,28 +204,11 @@ static GAD_BUTTON_T* btn_alloc(void){
     return NULL;
 }
 
-static GAD_LABEL_T* lbl_alloc(void){
-    for (int i = 0; i < MAX_BUTTONS; i++){
-        if (!g_lblPool[i].used){
-            g_lblPool[i].used = 1;
-
-            // sane defaults
-            g_lblPool[i].h.enabled = 1;
-            g_lblPool[i].h.visible = 1;
-            g_lblPool[i].h.down = 0;
-            g_lblPool[i].h.flags = GAD_TOOL_DEFAULT;
-
-            g_lblPool[i].text[0] = '\0';
-            return &g_lblPool[i];
-        }
-    }
-    return NULL;
-}
-
 
 static GAD_CHECKBOX_T* chk_alloc(void){
     for (int i = 0; i < MAX_CHECKBOXES; i++){
         if (!g_chkPool[i].used){
+            memset(&g_chkPool[i], 0, sizeof(g_chkPool[i]));
             g_chkPool[i].used = 1;
 
             g_chkPool[i].h.enabled = 1;
@@ -273,10 +224,51 @@ static GAD_CHECKBOX_T* chk_alloc(void){
     return NULL;
 }
 
-//-------- RADIO BUTTONS ------------------------------------
+static GAD_LABEL_T* lbl_alloc(void){
+    for (int i = 0; i < MAX_LABELS; i++){
+        if (!g_lblPool[i].used){
+            memset(&g_lblPool[i], 0, sizeof(g_lblPool[i]));
+            g_lblPool[i].used = 1;
+
+            // sane defaults
+            g_lblPool[i].h.enabled = 1;
+            g_lblPool[i].h.visible = 1;
+            g_lblPool[i].h.down = 0;
+            g_lblPool[i].h.flags = GAD_TOOL_DEFAULT;
+
+            g_lblPool[i].text[0] = '\0';
+            return &g_lblPool[i];
+        }
+    }
+    return NULL;
+}
+
+static GAD_LISTBOX_T* lb_alloc(void){
+    for (int i = 0; i < MAX_LISTBOXES; i++){
+        if (!g_lbPool[i].used){
+            memset(&g_lbPool[i], 0, sizeof(g_lbPool[i]));
+            g_lbPool[i].used = 1;
+
+            g_lbPool[i].h.enabled = 1;
+            g_lbPool[i].h.visible = 1;
+            g_lbPool[i].h.down    = 0;
+            g_lbPool[i].h.flags   = GAD_TOOL_DEFAULT;
+
+            g_lbPool[i].items = NULL;
+            g_lbPool[i].row_h = 16;
+            g_lbPool[i].padding_x = 4;
+            g_lbPool[i].padding_y = 2;
+
+            return &g_lbPool[i];
+        }
+    }
+    return NULL;
+}
+
 static GAD_RADIO_T* rad_alloc(void){
     for (int i = 0; i < MAX_RADIOS; i++){
         if (!g_radPool[i].used){
+            memset(&g_radPool[i], 0, sizeof(g_radPool[i]));
             g_radPool[i].used = 1;
 
             g_radPool[i].h.enabled = 1;
@@ -297,6 +289,7 @@ static GAD_RADIO_T* rad_alloc(void){
 static GAD_SCROLLBAR_T* sb_alloc(void){
     for (int i = 0; i < MAX_SCROLLBARS; i++){
         if (!g_sbPool[i].used){
+            memset(&g_sbPool[i], 0, sizeof(g_sbPool[i]));
             g_sbPool[i].used = 1;
 
             g_sbPool[i].h.enabled = 1;
@@ -321,72 +314,14 @@ static GAD_SCROLLBAR_T* sb_alloc(void){
 }
 
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-
-uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
-{
-    switch (g->gadgetType) {
-    case GAD_BUTTON: {
-        GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;
-
-        b->current_option++;
-        if (b->current_option > b->max_options - 1)
-            b->current_option = 0;
-
-        //printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
-        //b->current_option);
-        b->onButtonClickCallBack(b);
-    }
-    break;
-    case GAD_CHECKBOX: {
-        GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
-        c->checked ^= 1;
-        //printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
-        c->onCheckBoxClickCallBack(c);
-    }
-    break;
-    case GAD_RADIO: {
-        GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
-        if (gw) {
-            // clear all radios in same group in this window
-            for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
-                GADGET_BASE_T *og = gw->GADGETS[i];
-                if (!og || og->gadgetType != GAD_RADIO
-                    || !og->gadget)
-                    continue;
-
-                GAD_RADIO_T *ort = (GAD_RADIO_T*) og->gadget;
-                if (ort->group == r->group)
-                    ort->checked = 0;
-            }
-            r->checked = 1;
-        }
-        r->onRadioCallBack(r);
-    }
-    break;
-
-    case GAD_LISTBOX: {
-        // this should be handled on the onMouseReleaseListBox
-    }
-    break;
-
-
-    default:
-        break;
-    }
-    return (0x00);/// this doesnt really need to worry about anything
-}
-
-
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // free gadget types
 
 
-static void chk_free(GAD_CHECKBOX_T *c){
-    if (!c) return;
-    c->used = 0;
+static void bv_free(GAD_BITMAPVIEW_T *bv){
+    if (!bv) return;
+    bv->used = 0;
 }
 
 static void btn_free(GAD_BUTTON_T *b){
@@ -394,16 +329,40 @@ static void btn_free(GAD_BUTTON_T *b){
     b->used = 0;
 }
 
+static void chk_free(GAD_CHECKBOX_T *c){
+    if (!c) return;
+    c->used = 0;
+}
+
+static void lbl_free(GAD_LABEL_T *lb){
+    if (!lb) return;
+    lb->used = 0;
+}
+
+static void lb_free(GAD_LISTBOX_T *lb){
+    if (!lb) return;
+    if (lb->items) {
+        SBOS_destroyItemList(lb->items);
+        lb->items = NULL;
+    }
+
+    lb->used = 0;
+}
+
+
 static void rad_free(GAD_RADIO_T *r){
     if (!r) return;
     r->used = 0;
 }
 
-
 static void sb_free(GAD_SCROLLBAR_T *s){
     if (!s) return;
     s->used = 0;
 }
+
+
+
+
 
 //
 // Convert a base pointer to stable handle (idx+gen)
@@ -501,6 +460,13 @@ GAD_HDR_T* SBOS_gadgetHdr(GADGET_BASE_T *g){
     return (GAD_HDR_T*)g->gadget; // safe because GAD_HDR_T is first in payload
 }
 
+// keep for tight loops
+static inline GAD_HDR_T* gad_hdr(GADGET_BASE_T *b){
+    return (b && b->gadget) ? (GAD_HDR_T*)b->gadget : NULL;
+}
+
+
+
 // ---------------- PUBLIC API ----------------
 
 void SBOS_gadgetsInit(void){
@@ -511,6 +477,56 @@ void SBOS_gadgetsInit(void){
     memset(g_sbPool,   0, sizeof(g_sbPool));    // scrollbar gadgets
     memset(g_bvPool,   0, sizeof(g_bvPool));    // bitmapview gadgets (THIS one is adventureous)
     memset(g_lbPool,   0, sizeof(g_lbPool));    // listbox gadgets
+    memset(g_lblPool,  0, sizeof(g_lblPool));   // labels gadgets
+}
+
+
+SBControlHandle SBOS_addBitmapView(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_BITMAPVIEW_T *bv = bv_alloc();
+    if (!bv){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    // base host
+    //g->winhnd = win;
+    g->gadgetType = GAD_BITMAPVIEW;
+    g->gadget = bv;
+
+    // header
+    bv->h.rect.x = x; bv->h.rect.y = y; bv->h.rect.w = w; bv->h.rect.h = h;
+    bv->h.flags = flags;
+    bv->h.winhnd = win;
+
+    // payload
+    bv->pixels = pixels;
+    bv->bmp_w = bmp_w;
+    bv->bmp_h = bmp_h;
+    bv->bmp_stride = bmp_stride;
+
+    bv->scroll_x = 0;
+    bv->scroll_y = 0;
+    bv->panning = 0;
+    bv->bv_flags = bv_flags;
+
+    // attach
+    W->GADGETS[slot] = g;
+
+    // (optional) docking propagation if you want it, same as scrollbar:
+    if (flags & GAD_TOOL_DOCKED_RIGHT)  W->flags |= SBX_WF_DOCKRIGHT;
+    if (flags & GAD_TOOL_DOCKED_BOTTOM) W->flags |= SBX_WF_DOCKBOTTOM;
+
+    return base_to_handle(g);
 }
 
 SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
@@ -581,6 +597,53 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
 }
 
 
+
+SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = base_alloc();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_CHECKBOX_T *c = chk_alloc();
+    if (!c){
+        base_free(g);
+        return SBCTL_INVALID;
+    }
+
+    //g->winhnd = win;
+    g->gadgetType = GAD_CHECKBOX;
+    g->gadget = c;
+
+    c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
+    c->h.flags = flags;
+    c->h.winhnd = win;
+    c->checked = initial_checked ? 1 : 0;
+
+    c->onCheckBoxClickCallBack = onCheckBoxClickEmitEvent;
+
+    if (text){
+        int i = 0;
+        for (; text[i] && i < (DEF_GADGET_TEXT_SIZE - 1); i++) c->text[i] = text[i];
+        c->text[i] = '\0';
+    } else {
+        c->text[0] = '\0';
+    }
+
+    W->GADGETS[slot] = g;
+
+    //if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
+    //W->hasDockedGadget |= flags;
+    //}
+
+    return base_to_handle(g);
+}
+
+
 SBControlHandle SBOS_addLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
@@ -627,8 +690,7 @@ SBControlHandle SBOS_addLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, 
 }
 
 
-
-SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
+SBControlHandle SBOS_addListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -639,39 +701,23 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
     GADGET_BASE_T *g = base_alloc();
     if (!g) return SBCTL_INVALID;
 
-    GAD_CHECKBOX_T *c = chk_alloc();
-    if (!c){
-        base_free(g);
-        return SBCTL_INVALID;
-    }
+    GAD_LISTBOX_T *lb = lb_alloc();
+    if (!lb){ base_free(g); return SBCTL_INVALID; }
 
     //g->winhnd = win;
-    g->gadgetType = GAD_CHECKBOX;
-    g->gadget = c;
+    g->gadgetType = GAD_LISTBOX;
+    g->gadget = lb;
 
-    c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
-    c->h.flags = flags;
-    c->h.winhnd = win;
-    c->checked = initial_checked ? 1 : 0;
-
-    c->onCheckBoxClickCallBack = onCheckBoxClickEmitEvent;
-
-    if (text){
-        int i = 0;
-        for (; text[i] && i < (DEF_GADGET_TEXT_SIZE - 1); i++) c->text[i] = text[i];
-        c->text[i] = '\0';
-    } else {
-        c->text[0] = '\0';
-    }
+    lb->h.rect.x = x; lb->h.rect.y = y; lb->h.rect.w = w; lb->h.rect.h = h;
+    lb->h.flags = flags;
+    lb->h.winhnd = win;
+    lb->items = items;
 
     W->GADGETS[slot] = g;
-
-    //if ((flags & GAD_TOOL_DOCKED_RIGHT) || (flags & GAD_TOOL_DOCKED_BOTTOM)) {
-        //W->hasDockedGadget |= flags;
-    //}
-
     return base_to_handle(g);
 }
+
+
 
 SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
 {
@@ -778,92 +824,87 @@ SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t
     return base_to_handle(g);
 }
 
-SBControlHandle SBOS_addBitmapView(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags)
+
+
+
+
+uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
 {
-    sbx_window_t *W = SBOS_getWindow(win);
-    if (!W) return SBCTL_INVALID;
+    switch (g->gadgetType) {
+    case GAD_BUTTON: {
+        GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;
 
-    int slot = find_free_window_slot(W);
-    if (slot < 0) return SBCTL_INVALID;
+        b->current_option++;
+        if (b->current_option > b->max_options - 1)
+            b->current_option = 0;
 
-    GADGET_BASE_T *g = base_alloc();
-    if (!g) return SBCTL_INVALID;
-
-    GAD_BITMAPVIEW_T *bv = bv_alloc();
-    if (!bv){
-        base_free(g);
-        return SBCTL_INVALID;
+        //printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
+        //b->current_option);
+        if(b->onButtonClickCallBack)
+            b->onButtonClickCallBack(b);
     }
+    break;
+    case GAD_CHECKBOX: {
+        GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
+        c->checked ^= 1;
+        //printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
+        if(c->onCheckBoxClickCallBack)
+            c->onCheckBoxClickCallBack(c);  // call any function attached
 
-    // base host
-    //g->winhnd = win;
-    g->gadgetType = GAD_BITMAPVIEW;
-    g->gadget = bv;
+    }
+    break;
+    case GAD_RADIO: {
+        GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
+        if (gw) {
+            // clear all radios in same group in this window
+            for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
+                GADGET_BASE_T *og = gw->GADGETS[i];
+                if (!og || og->gadgetType != GAD_RADIO
+                    || !og->gadget)
+                    continue;
 
-    // header
-    bv->h.rect.x = x; bv->h.rect.y = y; bv->h.rect.w = w; bv->h.rect.h = h;
-    bv->h.flags = flags;
-    bv->h.winhnd = win;
+                GAD_RADIO_T *ort = (GAD_RADIO_T*) og->gadget;
+                if (ort->group == r->group)
+                    ort->checked = 0;
+            }
+            r->checked = 1;
+        }
+        if(r->onRadioCallBack)
+            r->onRadioCallBack(r);
+    }
+    break;
 
-    // payload
-    bv->pixels = pixels;
-    bv->bmp_w = bmp_w;
-    bv->bmp_h = bmp_h;
-    bv->bmp_stride = bmp_stride;
+    case GAD_LISTBOX: {
+        // this should be handled on the onMouseReleaseListBox
+    }
+    break;
 
-    bv->scroll_x = 0;
-    bv->scroll_y = 0;
-    bv->panning = 0;
-    bv->bv_flags = bv_flags;
 
-    // attach
-    W->GADGETS[slot] = g;
-
-    // (optional) docking propagation if you want it, same as scrollbar:
-    if (flags & GAD_TOOL_DOCKED_RIGHT)  W->flags |= SBX_WF_DOCKRIGHT;
-    if (flags & GAD_TOOL_DOCKED_BOTTOM) W->flags |= SBX_WF_DOCKBOTTOM;
-
-    return base_to_handle(g);
-}
-
-SBControlHandle SBOS_addListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags)
-{
-    sbx_window_t *W = SBOS_getWindow(win);
-    if (!W) return SBCTL_INVALID;
-
-    int slot = find_free_window_slot(W);
-    if (slot < 0) return SBCTL_INVALID;
-
-    GADGET_BASE_T *g = base_alloc();
-    if (!g) return SBCTL_INVALID;
-
-    GAD_LISTBOX_T *lb = lb_alloc();
-    if (!lb){ base_free(g); return SBCTL_INVALID; }
-
-    //g->winhnd = win;
-    g->gadgetType = GAD_LISTBOX;
-    g->gadget = lb;
-
-    lb->h.rect.x = x; lb->h.rect.y = y; lb->h.rect.w = w; lb->h.rect.h = h;
-    lb->h.flags = flags;
-    lb->h.winhnd = win;
-    lb->items = items;
-
-    W->GADGETS[slot] = g;
-    return base_to_handle(g);
+    default:
+        break;
+    }
+    return (0x00);/// this doesnt really need to worry about anything
 }
 
 
+void SBOS_enableGadget(SBControlHandle h, uint8_t enable){
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
+    if (!g) return;
 
+    GAD_HDR_T *hdr = SBOS_gadgetHdr(g);
+    if (!hdr) return;
 
+    hdr->enabled = !!enable;
+    if (!hdr->enabled)
+        hdr->down = 0;   // prevent stuck-pressed visuals
+
+    // eventually have paintGadget(g);
+
+}
 
 
 //////////////////// destroy gadgets ///////////////////////////////////////////////
 
-
-static inline GAD_HDR_T* gad_hdr(GADGET_BASE_T *b){
-    return (b && b->gadget) ? (GAD_HDR_T*)b->gadget : NULL;
-}
 
 
 
@@ -886,12 +927,13 @@ void SBOS_destroyGadget(SBControlHandle h){
 
     // free payload by type
     switch (b->gadgetType){
+        case GAD_BITMAPVIEW: bv_free ((GAD_BITMAPVIEW_T* )b->gadget); break;
         case GAD_BUTTON:     btn_free((GAD_BUTTON_T*     )b->gadget); break;
         case GAD_CHECKBOX:   chk_free((GAD_CHECKBOX_T*   )b->gadget); break;
+        case GAD_LABEL:      lbl_free((GAD_LABEL_T*      )b->gadget); break;
+        case GAD_LISTBOX:    lb_free ((GAD_LISTBOX_T*    )b->gadget); break;
         case GAD_RADIO:      rad_free((GAD_RADIO_T*      )b->gadget); break;
         case GAD_SCROLLBAR:  sb_free ((GAD_SCROLLBAR_T*  )b->gadget); break;
-        case GAD_BITMAPVIEW: bv_free ((GAD_BITMAPVIEW_T* )b->gadget); break;
-        case GAD_LISTBOX:    lb_free ((GAD_LISTBOX_T*    )b->gadget); break;
         default: break;
     }
 

@@ -193,6 +193,11 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
     fill_rect_pen(tx, ty, tw, th, PEN_SCROLLBAR_GADGET_PROP);
     draw_bevel(tx, ty, tw, th, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
+
+
+    if (!s->h.enabled) {
+        draw_disabled_dots(ax+1, ay+1, aw-2, ah-2);
+    }
 }
 
 SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s, int16_t mx, int16_t my, int16_t *out_thumb_axis_start, int16_t *out_thumb_len, int16_t *out_track_axis_start)

@@ -320,5 +320,25 @@ void ui_dotted_rect_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t)
 }
 
 
+void draw_disabled_dots(int16_t x, int16_t y, int16_t w, int16_t h){
+    // Clip to gadget rect if you want extra safety:
+    //ui_clip_set(x, y, w, h); // <<-- commented out for now as window draw clips confuse things
+
+    // Pick a pen that contrasts with typical button fill
+    gfx_setcolour(PEN_WIN_BEVEL_L); // or something like PEN_GREY, etc.
+
+    // Simple 2x2 checker stipple
+    for (int16_t yy = y; yy < y + h; yy += 2) {
+        int16_t rowOff = (yy & 2) ? 1 : 0;
+        for (int16_t xx = x + rowOff; xx < x + w; xx += 2) {
+            ui_ppixel(xx, yy);
+        }
+    }
+
+    //ui_clip_disable();// <<-- commented out for now as window draw clips confuse things
+}
+
+
+
 ///////////// the window call to paint though will have to be on the sbx_windowex.c
 // these are WHERE the gadget renders will be for now

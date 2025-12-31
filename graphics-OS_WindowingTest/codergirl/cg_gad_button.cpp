@@ -72,6 +72,10 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     gfx_setcolour(PEN_WIN_TITLE);
     ui_draw_text816(tx, ty, (const unsigned char*)displaytext);
+
+    if (!b->h.enabled) {
+        draw_disabled_dots(ax+1, ay+1, bw-2, bh-2);
+    }
 }
 
 
@@ -90,3 +94,15 @@ uint32_t onMouseReleaseButton(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
 }
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
+
+uint32_t SBOS_setButtonCallBack(SBControlHandle h, fnButtonCallBack func){
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
+    if (!g) return 1;
+    if (g->gadgetType != GAD_BUTTON) return 2;
+    if (!g->gadget) return 3;
+
+    GAD_BUTTON_T *sb = (GAD_BUTTON_T*)g->gadget;
+    sb->onButtonClickCallBack = func;
+    return 0;
+}
+

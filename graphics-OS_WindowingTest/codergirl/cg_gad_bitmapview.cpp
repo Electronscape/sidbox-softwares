@@ -205,6 +205,10 @@ void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
             }
         }
     }
+
+    if (!bv->h.enabled) {
+        draw_disabled_dots(ax+1, ay+1, aw-2, ah-2);
+    }
 }
 
 

@@ -53,6 +53,10 @@ void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
         if (r->h.down) { tx++; ty++; }
         ui_draw_text816(tx, ty, (const unsigned char*)r->text);
     }
+
+    if (!r->h.enabled) {
+        draw_disabled_dots(box_x + 1, box_y + 1, r->h.rect.w-2, box);
+    }
 }
 
 

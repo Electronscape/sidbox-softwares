@@ -64,6 +64,10 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
 
         ui_draw_text816(tx, ty, (const unsigned char*)c->text);
     }
+
+    if (!c->h.enabled) {
+        draw_disabled_dots(box_x + 1, box_y + 1, c->h.rect.w-2, box);
+    }
 }
 
 

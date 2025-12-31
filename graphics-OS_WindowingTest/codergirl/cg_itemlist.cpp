@@ -160,9 +160,13 @@ void listitem_free(ItemLists_t *list){
     list->count = 0;
     list->cap   = 0;
 
-    // fastFree(m);     //
+    fastFree(list);
 }
 
+
+void SBOS_destroyItemList(ItemLists_t *list){
+    listitem_free(list);
+}
 
 
 const char* listitem_get(const ItemLists_t *list, uint16_t idx){
