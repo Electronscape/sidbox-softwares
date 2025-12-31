@@ -25,7 +25,7 @@ extern GAD_LABEL_T g_lblPool [MAX_LABELS];
 
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
-uint32_t SBOS_setLabelText(SBControlHandle h, const char *text);
+uint32_t SBOS_setLabelText(CGGadgetHandle h, const char *text);
 
 
 

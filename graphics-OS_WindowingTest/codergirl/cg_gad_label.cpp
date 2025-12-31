@@ -43,7 +43,7 @@ void draw_label(const sbx_window_t *w, const GADGET_BASE_T *g){
 
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
-uint32_t SBOS_setLabelText(SBControlHandle h, const char *text){
+uint32_t SBOS_setLabelText(CGGadgetHandle h, const char *text){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
     if (!g) return 1;
     if (g->gadgetType != GAD_LABEL) return 2;

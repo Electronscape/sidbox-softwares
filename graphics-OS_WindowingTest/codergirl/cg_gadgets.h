@@ -45,9 +45,9 @@
 
 
 // --------- HANDLE TYPE (index + generation) ----------
-typedef uint32_t SBControlHandle;
-#define SBCTL_INVALID           ((SBControlHandle)0xFFFFFFFF)
-#define SBCTL_MAKE(gen, idx)    ((SBControlHandle)((((uint32_t)(gen) & 0xFFFFu) << 16) | ((uint32_t)(idx) & 0xFFFFu)))
+typedef uint32_t CGGadgetHandle;
+#define SBCTL_INVALID           ((CGGadgetHandle)0xFFFFFFFF)
+#define SBCTL_MAKE(gen, idx)    ((CGGadgetHandle)((((uint32_t)(gen) & 0xFFFFu) << 16) | ((uint32_t)(idx) & 0xFFFFu)))
 #define SBCTL_IDX(h)            ((uint16_t)((h) & 0xFFFFu))
 #define SBCTL_GEN(h)            ((uint16_t)(((h) >> 16) & 0xFFFFu))
 
@@ -122,26 +122,24 @@ typedef struct {
 //// API ACCESS ///////////
 void SBOS_gadgetsInit(void);
 
-SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h,
-                                  uint8_t orient,  int16_t min, int16_t max,
-                                  int16_t step,    int16_t initial_pct,  uint32_t flags);
+CGGadgetHandle SBOS_CreateBitmapView (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags);
+CGGadgetHandle SBOS_CreateButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
+CGGadgetHandle SBOS_CreateCheckbox   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
+CGGadgetHandle SBOS_CreateLabel      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
+CGGadgetHandle SBOS_CreateListBox    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags);
+CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
+CGGadgetHandle SBOS_CreateScrollbar  (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient,  int16_t min, int16_t max, int16_t step,    int16_t initial_pct,  uint32_t flags);
 
 
-SBControlHandle SBOS_addLabel      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
-SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
-SBControlHandle SBOS_addButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
-SBControlHandle SBOS_addCheckbox   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
-SBControlHandle SBOS_addBitmapView (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags);
-SBControlHandle SBOS_addListBox    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags);
 
-SBControlHandle base_to_handle(GADGET_BASE_T *g);
+CGGadgetHandle base_to_handle(GADGET_BASE_T *g);
 
-GADGET_BASE_T*  SBOS_gadgetFromHandle(SBControlHandle h);
+GADGET_BASE_T*  SBOS_gadgetFromHandle(CGGadgetHandle h);
 GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
 
 
-void            SBOS_enableGadget(SBControlHandle h, uint8_t enable);
-void            SBOS_destroyGadget(SBControlHandle h);
+void            SBOS_enableGadget(CGGadgetHandle h, uint8_t enable);
+void            SBOS_destroyGadget(CGGadgetHandle h);
 
 
 

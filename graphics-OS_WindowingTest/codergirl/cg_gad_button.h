@@ -32,7 +32,7 @@ uint32_t onMouseReleaseButton(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
 
-uint32_t SBOS_setButtonCallBack(SBControlHandle h, fnButtonCallBack func);
+uint32_t SBOS_setButtonCallBack(CGGadgetHandle h, fnButtonCallBack func);
 
 
 

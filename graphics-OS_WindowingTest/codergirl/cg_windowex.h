@@ -87,7 +87,7 @@ typedef enum {
 typedef struct {
     SBXWindowId     id;
     WHitRegion      region;
-    SBControlHandle ctrl;   // optional, SBCTL_INVALID if none
+    CGGadgetHandle  ctrl;   // optional, SBCTL_INVALID if none
 } WHitResult;
 
 

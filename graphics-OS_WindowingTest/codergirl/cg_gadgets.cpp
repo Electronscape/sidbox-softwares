@@ -366,7 +366,7 @@ static void sb_free(GAD_SCROLLBAR_T *s){
 
 //
 // Convert a base pointer to stable handle (idx+gen)
-SBControlHandle base_to_handle(GADGET_BASE_T *g){
+CGGadgetHandle base_to_handle(GADGET_BASE_T *g){
     uint16_t idx = (uint16_t)(g - &g_basePool[0]);
     return SBCTL_MAKE(g->handleGen, idx);
 }
@@ -439,7 +439,7 @@ GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
 
 
 // Validate handle -> base pointer (stale handle detection)
-GADGET_BASE_T* SBOS_gadgetFromHandle(SBControlHandle h){
+GADGET_BASE_T* SBOS_gadgetFromHandle(CGGadgetHandle h){
     if (h == SBCTL_INVALID) return NULL;
 
     uint16_t idx = SBCTL_IDX(h);
@@ -481,7 +481,7 @@ void SBOS_gadgetsInit(void){
 }
 
 
-SBControlHandle SBOS_addBitmapView(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags)
+CGGadgetHandle SBOS_CreateBitmapView(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -529,7 +529,7 @@ SBControlHandle SBOS_addBitmapView(SBXWindowId win, int16_t x, int16_t y, int16_
     return base_to_handle(g);
 }
 
-SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
+CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -598,7 +598,7 @@ SBControlHandle SBOS_addButton(SBXWindowId win, int16_t x, int16_t y, int16_t w,
 
 
 
-SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
+CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -644,7 +644,7 @@ SBControlHandle SBOS_addCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t 
 }
 
 
-SBControlHandle SBOS_addLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
+CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -690,7 +690,7 @@ SBControlHandle SBOS_addLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, 
 }
 
 
-SBControlHandle SBOS_addListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags)
+CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -719,7 +719,7 @@ SBControlHandle SBOS_addListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w
 
 
 
-SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
+CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -777,7 +777,7 @@ SBControlHandle SBOS_addRadioButton(SBXWindowId win, int16_t x, int16_t y, int16
     return base_to_handle(g);
 }
 
-SBControlHandle SBOS_addScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step, int16_t initial_pct, uint32_t flags)
+CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step, int16_t initial_pct, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -887,7 +887,7 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
 }
 
 
-void SBOS_enableGadget(SBControlHandle h, uint8_t enable){
+void SBOS_enableGadget(CGGadgetHandle h, uint8_t enable){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
     if (!g) return;
 
@@ -908,7 +908,7 @@ void SBOS_enableGadget(SBControlHandle h, uint8_t enable){
 
 
 
-void SBOS_destroyGadget(SBControlHandle h){
+void SBOS_destroyGadget(CGGadgetHandle h){
     GADGET_BASE_T *b = SBOS_gadgetFromHandle(h);
     if (!b || !b->gadget) return;
 

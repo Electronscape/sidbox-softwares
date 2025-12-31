@@ -95,7 +95,7 @@ uint32_t onMouseReleaseButton(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
 
-uint32_t SBOS_setButtonCallBack(SBControlHandle h, fnButtonCallBack func){
+uint32_t SBOS_setButtonCallBack(CGGadgetHandle h, fnButtonCallBack func){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
     if (!g) return 1;
     if (g->gadgetType != GAD_BUTTON) return 2;
