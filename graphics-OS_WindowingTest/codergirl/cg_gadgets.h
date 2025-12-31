@@ -49,7 +49,6 @@
 
 
 // --------- HANDLE TYPE (index + generation) ----------
-typedef uint32_t CGGadgetHandle;
 #define SBCTL_INVALID           ((CGGadgetHandle)0xFFFFFFFF)
 #define SBCTL_MAKE(gen, idx)    ((CGGadgetHandle)((((uint32_t)(gen) & 0xFFFFu) << 16) | ((uint32_t)(idx) & 0xFFFFu)))
 #define SBCTL_IDX(h)            ((uint16_t)((h) & 0xFFFFu))
@@ -108,6 +107,8 @@ typedef struct GAD_HDR_T {
     uint8_t         visible;    //
     uint8_t         down;       // might need to remove this soon
     SBXWindowId     winhnd;     // the window ID, the handler number
+    CGGadgetHandle  self;       // self handle id
+
 } GAD_HDR_T;
 
 typedef struct {

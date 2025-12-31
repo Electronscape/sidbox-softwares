@@ -207,6 +207,8 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
             w->winrect.h = (int16_t)height;
             w->flags = flags;
             w->backColour = PEN_WIN_BG;
+            w->proc = NULL;
+
 
             //w->ctrl_count = 0;
             //w->id = i;
@@ -245,6 +247,13 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
     }
 
     return SBW_INVALID_ID;
+}
+
+
+void SBOS_setWindowProc(SBXWindowId win, MSGWndProc proc)
+{
+    sbx_window_t *w = SBOS_getWindow(win);
+    if (w) w->proc = proc;
 }
 
 

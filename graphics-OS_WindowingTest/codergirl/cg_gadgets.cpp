@@ -4,7 +4,7 @@
 #include <string.h>
 #include "cg_gadgets.h"
 #include "cg_windowex.h"
-
+#include "cg_msghandler.h"
 
 // APIs
 #include "cg_gad_bitmapview.h"
@@ -95,12 +95,27 @@ void onScrollEmitEvent(void *s){
 }
 
 void onButtonClickEmitEvent(void *g){
-    GAD_BUTTON_T *button = (GAD_BUTTON_T *)g;   // get the button
-    if(!button) return;
+
+    GAD_BUTTON_T *button = (GAD_BUTTON_T *)g;
+    if (!button) return;
     printf("Button Click: text:'%s' Win_id: %d, index:%d\n",
            button->text,
            button->h.winhnd,
            button->current_option);
+
+
+    CGMessage_t m;
+    memset(&m, 0, sizeof(m));
+
+
+    m.mtype      = CGMSG_GADGET;
+    m.winhnd     = button->h.winhnd;
+    m.gadget     = button->h.self;   // or base_to_handle(button)
+    m.eventClass = CGEVT_BUTTON_CLICK;
+    m.a          = button->current_option; // payload
+    m.b          = 0;
+
+    SBOS_PostMessage(&m);
 }
 
 void onRadioClickEmitEvent(void *g){
@@ -557,7 +572,9 @@ CGGadgetHandle SBOS_CreateBitmapView(SBXWindowId win, int16_t x, int16_t y, int1
     if (flags & GAD_TOOL_DOCKED_RIGHT)  W->flags |= SBX_WF_DOCKRIGHT;
     if (flags & GAD_TOOL_DOCKED_BOTTOM) W->flags |= SBX_WF_DOCKBOTTOM;
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    bv->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
@@ -624,7 +641,10 @@ CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t 
         //W->flags |= flags;
     //}
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    b->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
+
 }
 
 
@@ -671,7 +691,9 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
     //W->hasDockedGadget |= flags;
     //}
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    c->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 
@@ -728,7 +750,9 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
 
     W->GADGETS[slot] = g;
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    c->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 
@@ -776,7 +800,9 @@ CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w
     // attach to window
     W->GADGETS[slot] = g;
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    b->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 
@@ -804,7 +830,10 @@ CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t
     lb->items = items;
 
     W->GADGETS[slot] = g;
-    return base_to_handle(g);
+
+    CGGadgetHandle gHndle = base_to_handle(g);
+    lb->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 
@@ -864,7 +893,9 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
         }
     }
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    r->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step, int16_t initial_pct, uint32_t flags)
@@ -911,7 +942,9 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
     if (flags & GAD_TOOL_DOCKED_BOTTOM) W->flags |= SBX_WF_DOCKBOTTOM;
 
 
-    return base_to_handle(g);
+    CGGadgetHandle gHndle = base_to_handle(g);
+    s->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
 }
 
 

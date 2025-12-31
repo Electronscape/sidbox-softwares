@@ -8,10 +8,12 @@
 
 #include "cg_type.h"
 #include "cg_gadgets.h"
-
+#include "cg_msghandler.h"
 
 
 #define     WINDOW_TITLE_MAX_LEN    64
+
+typedef void (*MSGWndProc)(SBXWindowId win, const CGMessage_t *m);
 
 // keep these all 32bits
 typedef struct {
@@ -25,6 +27,9 @@ typedef struct {
     uint8_t         backColour;         // default background colour
 
     GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
+
+    MSGWndProc      proc;               // process tree id
+
 } sbx_window_t;
 
 typedef enum {

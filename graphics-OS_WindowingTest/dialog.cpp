@@ -165,6 +165,38 @@ void doAboutWindow(void *s){
     SBOS_bringToFront(aboutWin);
 }
 
+static void AboutProc(SBXWindowId win, const CGMessage_t *m)
+{
+    if (!m) return;
+
+    switch (m->mtype) {
+
+    case CGMSG_GADGET:
+        switch (m->eventClass) {
+
+        case CGEVT_BUTTON_CLICK:
+            // Identify which button fired (by gadget handle)
+            //if (m->gadget == g_aboutCloseBtn) {
+                //SBOS_destroyWindow(win);
+            //}
+            printf("a button from the Process (or program main!!)\n");
+            doAboutWindow(NULL);
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case CGMSG_WINDOW:
+        // e.g. resize/minimize events later
+        break;
+
+    default:
+        break;
+    }
+}
+
 
 void createBasicDesktopTest(){
     initWb();
@@ -194,7 +226,8 @@ void createBasicDesktopTest(){
     // WINDOW 2 -----------------------
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     CGGadgetHandle btn1 = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
-    SBOS_enableGadget(btn1, 0);// disable the button
+    //SBOS_enableGadget(btn1, 0);// disable the button
+    SBOS_setWindowProc(winMain2, AboutProc);
 
     CGGadgetHandle chk1 = SBOS_CreateCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
     SBOS_enableGadget(chk1, 0);

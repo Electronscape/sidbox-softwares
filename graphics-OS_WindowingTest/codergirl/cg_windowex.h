@@ -130,6 +130,7 @@ SBXWindowId     SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t
 void            SBOS_destroyWindow(SBXWindowId id);
 sbx_window_t*   SBOS_getWindow(SBXWindowId id);
 void            SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor);
+void            SBOS_setWindowProc(SBXWindowId win, MSGWndProc proc);
 
 void            SBOS_paintWindow(SBXWindowId id);
 void            SBOS_paintAllWindows(void);
