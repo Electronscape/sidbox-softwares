@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "cg_wintype.h"
 #include "cg_windowex.h"
@@ -76,11 +77,30 @@ int16_t cg_os_messagehandler(uint8_t msgticks){
         sbx_window_t *w = SBOS_getWindow(m.winhnd);
 
         if (w && w->proc) {
-            printf("MSG: winID: %lu, type: %u\n", m.winhnd, m.gadget);
+            //printf("MSG: winID: %lu, type: %u\n", m.winhnd, m.gadget);
             w->proc(m.winhnd, &m);  // programmer runs here (may freeze themselves 😄)
             g_msg_sent++;
         }
         triggered = 1;
     }
     return triggered;
+}
+
+
+void CG_PostGadgetMsg(
+    SBXWindowId win,
+    CGGadgetHandle gad,
+    uint16_t evt,
+    int32_t a,
+    int32_t b)
+{
+    CGMessage_t m;
+    memset(&m, 0, sizeof(m));
+    m.mtype      = CGMSG_GADGET;
+    m.winhnd     = win;
+    m.gadget     = gad;
+    m.eventClass = evt;
+    m.a          = a;
+    m.b          = b;
+    SBOS_PostMessage(&m);
 }

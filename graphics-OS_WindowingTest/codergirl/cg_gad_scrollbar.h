@@ -5,8 +5,6 @@
 #include "cg_wintype.h"
 #include "cg_gadgets.h"
 
-typedef void (*fnSBCallBack)(void *sb);
-
 typedef struct GAD_SCROLLBAR_T{
     // common
     GAD_HDR_T   h;
@@ -27,7 +25,7 @@ typedef struct GAD_SCROLLBAR_T{
     uint8_t     show_arrows;    // needed for if we're using arrows
 
     // function callback systems
-    fnSBCallBack onScrollCallBack;
+    fnCallback  callbackRouteA;
 
     uint8_t suppress_cb; // prevents recursion
 
@@ -63,6 +61,6 @@ uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
-uint32_t SBOS_setScrollBarCallBack(CGGadgetHandle h, fnSBCallBack func);
+uint32_t SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func);
 
 #endif // CG_GAD_SCROLLBAR_H

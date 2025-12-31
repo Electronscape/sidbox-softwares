@@ -88,8 +88,8 @@ uint32_t onMouseReleaseButton(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     GAD_BUTTON_T *btn = (GAD_BUTTON_T*) g->gadget;
     if (!btn) return 1;   // panic
 
-    if(btn->onButtonClickCallBack)
-        btn->onButtonClickCallBack(btn);
+    if(btn->callbackRouteA)
+        btn->callbackRouteA(btn);
     return 0;   // all good 0 as in 0k :)
 }
 
@@ -102,7 +102,7 @@ uint32_t SBOS_setButtonCallBack(CGGadgetHandle h, fnButtonCallBack func){
     if (!g->gadget) return 3;
 
     GAD_BUTTON_T *sb = (GAD_BUTTON_T*)g->gadget;
-    sb->onButtonClickCallBack = func;
+    sb->callbackRouteA = func;
     return 0;
 }
 

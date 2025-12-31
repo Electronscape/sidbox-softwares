@@ -3,7 +3,7 @@
 
 #include "cg_gadgets.h"
 
-typedef void (*fnCheckBoxCallBack)(void *button);
+
 
 typedef struct GAD_CHECKBOX_T{
     //-------------- common parts to the GADGET -----------------
@@ -14,7 +14,7 @@ typedef struct GAD_CHECKBOX_T{
     uint8_t             checked;    // 0/1
     char                text[DEF_GADGET_TEXT_SIZE]; // optional label
 
-    fnCheckBoxCallBack  onCheckBoxClickCallBack;
+    fnCallback          callbackRouteA;
 } GAD_CHECKBOX_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

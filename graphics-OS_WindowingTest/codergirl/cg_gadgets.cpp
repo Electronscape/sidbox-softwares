@@ -88,57 +88,45 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
 
 
 /////// DEFAULT EventEmitters /////////////////////////////////////////////////////////////////
-void onScrollEmitEvent(void *s){
-    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)s;  // cast FIRST
-    if (!sb) return;
-    printf("From ScrB Win_id:%d, CB_Value: %d\n", sb->h.winhnd, sb->value);
-}
 
 void onButtonClickEmitEvent(void *g){
-
     GAD_BUTTON_T *button = (GAD_BUTTON_T *)g;
     if (!button) return;
-    printf("Button Click: text:'%s' Win_id: %d, index:%d\n",
-           button->text,
-           button->h.winhnd,
-           button->current_option);
+    CG_PostGadgetMsg(button->h.winhnd, button->h.self, CGEVT_BUTTON_CLICK, button->current_option, 0);
+}
 
+void onCheckBoxClickEmitEvent(void *g){
+    GAD_CHECKBOX_T *cb = (GAD_CHECKBOX_T *)g;   // get the button
+    if(!cb) return;
+    CG_PostGadgetMsg(cb->h.winhnd, cb->h.self, CGEVT_CHECK_CHANGED, cb->checked ? 1 : 0, 0);
+}
 
-    CGMessage_t m;
-    memset(&m, 0, sizeof(m));
+void onGridSelectEmitEvent(void *g){
+    GAD_GRIDSELECT_T *gs = (GAD_GRIDSELECT_T*)g;
+    if (!gs) return;
 
+    CG_PostGadgetMsg(gs->h.winhnd, gs->h.self, CGEVT_GRIDSEL_CHANGED, gs->selected_idx, 0);
+}
 
-    m.mtype      = CGMSG_GADGET;
-    m.winhnd     = button->h.winhnd;
-    m.gadget     = button->h.self;   // or base_to_handle(button)
-    m.eventClass = CGEVT_BUTTON_CLICK;
-    m.a          = button->current_option; // payload
-    m.b          = 0;
+void onListBoxEmitEvent(void *g){
+    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g;
+    if (!lb) return;
 
-    SBOS_PostMessage(&m);
+    CG_PostGadgetMsg(lb->h.winhnd, lb->h.self, CGEVT_LISTBOX_CHANGED, lb->sel, 0);
 }
 
 void onRadioClickEmitEvent(void *g){
-    GAD_RADIO_T *radio = (GAD_RADIO_T *)g;   // get the button
-    if(!radio) return;
-    printf("Radio Click: text:'%s' Win_id: %d, index:%d, Grp:%d\n",
-           radio->text,
-           radio->h.winhnd,
-           radio->checked,
-           radio->group
-           );
+    GAD_RADIO_T *r = (GAD_RADIO_T *)g;   // get the button
+    if(!r) return;
+    CG_PostGadgetMsg(r->h.winhnd, r->h.self, CGEVT_RADIO_CHANGED, r->checked ? 1 : 0, r->group);
 }
 
-
-void onCheckBoxClickEmitEvent(void *g){
-    GAD_CHECKBOX_T *checkbox = (GAD_CHECKBOX_T *)g;   // get the button
-    if(!checkbox) return;
-    printf("Checkbox Click: text:'%s' Win_id: %d, check:%d\n",
-           checkbox->text,
-           checkbox->h.winhnd,
-           checkbox->checked
-           );
+void onScrollEmitEvent(void *g){
+    GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)g;  // cast FIRST
+    if (!s) return;
+    CG_PostGadgetMsg(s->h.winhnd, s->h.self, CGEVT_SCROLL_CHANGED, s->value, 0);
 }
+
 
 // ---------------- INTERNAL HELPERS ----------------
 static inline int16_t clamp_i16_local(int16_t v, int16_t lo, int16_t hi){
@@ -179,9 +167,6 @@ static void base_free(GADGET_BASE_T *g){
 }
 
 ////////////////// allocations area /////////////////////////
-
-
-
 
 static GAD_BITMAPVIEW_T* bv_alloc(void){
     for (int i = 0; i < MAX_BITMAPVIEWS; i++){
@@ -598,7 +583,7 @@ CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t 
     //g->winhnd = win;
     g->gadgetType = GAD_BUTTON;
     g->gadget = b;
-    b->onButtonClickCallBack = onButtonClickEmitEvent;  // basic button clicky
+    b->callbackRouteA = onButtonClickEmitEvent;  // basic button clicky
     b->h.winhnd = win;
 
     // payload header
@@ -675,7 +660,7 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
     c->h.winhnd = win;
     c->checked = initial_checked ? 1 : 0;
 
-    c->onCheckBoxClickCallBack = onCheckBoxClickEmitEvent;
+    c->callbackRouteA = onCheckBoxClickEmitEvent;
 
     if (text){
         int i = 0;
@@ -863,7 +848,7 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
     r->h.winhnd = win;
     r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
     r->h.flags = flags;
-    r->onRadioCallBack = onRadioClickEmitEvent;
+    r->callbackRouteA = onRadioClickEmitEvent;
 
 
     r->group = group;
@@ -930,7 +915,7 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
     s->max = max;
     s->step = (step <= 0) ? 1 : step;
     s->value = initial_pct;
-    s->onScrollCallBack = onScrollEmitEvent;
+    s->callbackRouteA = onScrollEmitEvent;
 
     // Set flag for arrows based on the provided flags
     s->show_arrows = (flags & GAD_TOOL_SCROLLARROWS) ? 1 : 0;
@@ -963,16 +948,16 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
 
         //printf("BUTTON CLICK: %s (cycle %d)\r\n", b->text,
         //b->current_option);
-        if(b->onButtonClickCallBack)
-            b->onButtonClickCallBack(b);
+        if(b->callbackRouteA)
+            b->callbackRouteA(b);
     }
     break;
     case GAD_CHECKBOX: {
         GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*) g->gadget;
         c->checked ^= 1;
         //printf("CHECKBOX TOGGLE: %s => %d\r\n", c->text, c->checked);
-        if(c->onCheckBoxClickCallBack)
-            c->onCheckBoxClickCallBack(c);  // call any function attached
+        if(c->callbackRouteA)
+            c->callbackRouteA(c);  // call any function attached
 
     }
     break;
@@ -992,8 +977,8 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
             }
             r->checked = 1;
         }
-        if(r->onRadioCallBack)
-            r->onRadioCallBack(r);
+        if(r->callbackRouteA)
+            r->callbackRouteA(r);
     }
     break;
 

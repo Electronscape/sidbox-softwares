@@ -16,7 +16,17 @@ typedef enum {
 
 typedef enum {
     CGEVT_NONE          = 0,
-    CGEVT_BUTTON_CLICK
+    CGEVT_BUTTON_CLICK,
+
+    CGEVT_CHECK_CHANGED,      // a = 0/1
+    CGEVT_RADIO_CHANGED,      // a = selected index or 1
+    CGEVT_LABEL_CLICK,        // if you ever want it
+
+    CGEVT_SCROLL_CHANGED,     // a = value, b = delta or max
+    CGEVT_LISTBOX_CHANGED,    // a = selected index
+    CGEVT_LISTBOX_DBLCLICK,   // a = selected index
+
+    CGEVT_GRIDSEL_CHANGED     // a = cell index
 } CGEventType;
 
 typedef struct CGMessage_t {
@@ -36,6 +46,8 @@ typedef struct CGMessage_t {
 int16_t cg_os_messagehandler(uint8_t msgticks);
 uint8_t SBOS_PostMessage(const CGMessage_t *m);
 uint8_t SBOS_PopMessage(CGMessage_t *out);
+
+void CG_PostGadgetMsg(SBXWindowId win, CGGadgetHandle gad, uint16_t evt, int32_t a, int32_t b);
 
 
 

@@ -53,9 +53,11 @@ static ItemLists_t listbox;
 static ItemLists_t demolist;
 
 static CGGadgetHandle    theListBox;
-static SBXWindowId  titleBar;
+static SBXWindowId      titleBar;
 
-static CGGadgetHandle MenuBarTitle;
+static CGGadgetHandle   MenuBarTitle;
+
+static CGGadgetHandle   btnAboutUs;
 
 // a CUSTOM function for a scroll bar
 void BitDemoScrolly1(void *s){
@@ -176,7 +178,8 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 {
     if (!m) return;
 
-    printf("EVENT : message_type %lu, class:%lu, gadget_id:%lu\n", m->mtype, m->eventClass, m->gadget);
+    //printf("btnAboutUs: %lu\n", btnAboutUs);
+    //printf("EVENT : message_type %lu, class:%lu, gadget_id:%lu\n", m->mtype, m->eventClass, m->gadget);
 
     switch (m->mtype) {
         case CGMSG_GADGET:
@@ -186,9 +189,14 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     //if (m->gadget == g_aboutCloseBtn) {
                         //SBOS_destroyWindow(win);
                     //}
-                    printf("a button from the Process (or program main!!)\n");
-                    doAboutWindow(NULL);
+                    //printf("a button from the Process (or program main!!)\n");
+                    if(m->gadget == btnAboutUs)
+                        doAboutWindow(NULL);
 
+                    break;
+
+                case CGEVT_SCROLL_CHANGED:
+                    printf("SCROLL: %lu\n", m->a);
                     break;
 
                 default:
@@ -233,7 +241,8 @@ void createBasicDesktopTest(){
 
     // WINDOW 2 -----------------------
     SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
-    CGGadgetHandle btn1 = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "a simple text test", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     //SBOS_enableGadget(btn1, 0);// disable the button
     SBOS_setWindowProc(winMain2, BasicWindowMAIN);
 

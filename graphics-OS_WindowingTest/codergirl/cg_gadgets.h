@@ -55,6 +55,7 @@
 #define SBCTL_GEN(h)            ((uint16_t)(((h) >> 16) & 0xFFFFu))
 
 
+typedef void (*fnCallback)(void *gadget);
 // -----------------------------------------------------
 
 typedef enum {
