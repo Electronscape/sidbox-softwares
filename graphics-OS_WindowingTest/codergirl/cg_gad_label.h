@@ -4,6 +4,8 @@
 #include "cg_wintype.h"
 #include "cg_gadgets.h"
 
+#define FPEN_NOCHANGE   -1
+#define BPEN_NOCHANGE   -1
 
 // create types for each gadget
 typedef struct GAD_LABEL_T{
@@ -14,7 +16,8 @@ typedef struct GAD_LABEL_T{
 
     char            text[DEF_GADGET_TEXT_SIZE];   // common gadget text
 
-    uint8_t         bgColour;       // inherit the bgcolour from window on creation
+    uint8_t         fPen;       // front Pen, usually black, inheret from OS Window Title colour text
+    uint8_t         bPen;       // inherit the bgcolour from window on creation
 } GAD_LABEL_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
@@ -26,7 +29,7 @@ extern GAD_LABEL_T g_lblPool [MAX_LABELS];
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
 uint32_t SBOS_setLabelText(CGGadgetHandle h, const char *text);
-
+uint32_t SBOS_setLabelColour(CGGadgetHandle h, int16_t FPen, int16_t BPen);
 
 
 

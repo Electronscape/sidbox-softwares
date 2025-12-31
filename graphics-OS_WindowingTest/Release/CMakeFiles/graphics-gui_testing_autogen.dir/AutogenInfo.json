@@ -515,6 +515,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_msghandler.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_msghandler.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h",
 			"MU",
 			"5AAQOGTO22/moc_cg_renderer.cpp",
@@ -699,6 +705,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_msghandler.cpp",
 			"MU",
 			null
 		],

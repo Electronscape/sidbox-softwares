@@ -78,7 +78,8 @@ typedef enum BMV_FLAGS_T {
 } BMV_FLAGS_T;
 
 typedef enum {
-    GAD_GRIDSEL_JUST_ONE     = (1u << 0), // in single mode: never allow -1
+    GAD_GRIDSEL_JUST_ONE     = (1 << 0),   // in single mode: never allow -1
+    GAD_GRIDSEL_TEXT_INVERT  = (1 << 1),   // allows teh text to be inverted colours
 } GSEL_FLAG_T;
 
 

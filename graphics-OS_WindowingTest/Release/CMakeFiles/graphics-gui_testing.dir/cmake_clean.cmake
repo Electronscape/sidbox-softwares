@@ -31,6 +31,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o"

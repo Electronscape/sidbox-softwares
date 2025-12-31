@@ -32,6 +32,8 @@ graphics-gui_testing_autogen/timestamp: \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \
+	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_msghandler.cpp \
+	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_msghandler.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.cpp \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.h \
 	/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp \

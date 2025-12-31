@@ -714,6 +714,8 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
     if(flags & GAD_TOOL_NOBORDER)
         border = 0;
 
+    c->flags = gridflags;
+
     c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = cell_size_x * cells_x + border; c->h.rect.h = cell_size_y * cells_y + border;
     c->h.flags = flags;
     c->h.winhnd = win;
@@ -753,7 +755,8 @@ CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w
     g->gadgetType = GAD_LABEL;
     g->gadget = b;
     b->h.winhnd = win;
-    b->bgColour = W->backColour;
+    b->bPen = W->backColour;
+    b->fPen = PEN_WIN_TITLE;
 
     // payload header
     b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;

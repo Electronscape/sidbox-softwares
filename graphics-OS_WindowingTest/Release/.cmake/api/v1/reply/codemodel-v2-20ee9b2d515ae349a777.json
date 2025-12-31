@@ -7,7 +7,7 @@
 				{
 					"build" : ".",
 					"hasInstallRule" : true,
-					"jsonFile" : "directory-.-Release-c77c9be664365154377d.json",
+					"jsonFile" : "directory-.-Release-85a51acc74f226eb0b96.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.16"
@@ -44,7 +44,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "graphics-gui_testing::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-graphics-gui_testing-Release-b2e6b9b4df8fdedb7ee5.json",
+					"jsonFile" : "target-graphics-gui_testing-Release-3d912f4af1e6edd25e22.json",
 					"name" : "graphics-gui_testing",
 					"projectIndex" : 0
 				},

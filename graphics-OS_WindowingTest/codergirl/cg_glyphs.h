@@ -20,8 +20,9 @@ extern uint8_t glyph_arrow_right[];
 extern uint8_t glyph_test[];
 
 
+extern uint8_t baseGrid[];
 
-
+extern uint8_t baseGridLight[];
 
 
 

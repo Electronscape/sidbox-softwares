@@ -59,6 +59,13 @@ static int16_t gridselect_cell_at_abs(const sbx_window_t *w, const GAD_GRIDSELEC
     return (int16_t)(row * gs->cells_x + col);
 }
 
+static inline uint8_t text_len3(const char t[4]) {
+    uint8_t n = 0;
+    while (n < 3 && t[n]) n++;
+    return n;
+}
+
+
 void draw_gridselect(const sbx_window_t *w, const GADGET_BASE_T *g)
 {
     if (!w || !g || !g->gadget) return;
@@ -70,6 +77,10 @@ void draw_gridselect(const sbx_window_t *w, const GADGET_BASE_T *g)
     int16_t ay = (int16_t)(w->clientrect.y + gs->h.rect.y);
     int16_t bw = gs->h.rect.w;
     int16_t bh = gs->h.rect.h;
+
+    const int16_t FONT_W = 8;
+    const int16_t FONT_H = 16;
+
 
     // Face
     fill_rect_pen(ax, ay, bw, bh, w->backColour);
@@ -95,6 +106,7 @@ void draw_gridselect(const sbx_window_t *w, const GADGET_BASE_T *g)
     if (cw <= 0 || ch <= 0) return;
 
     // Draw each cell
+
     for (int16_t row = 0; row < gs->cells_y; row++) {
         for (int16_t col = 0; col < gs->cells_x; col++) {
 
@@ -114,6 +126,30 @@ void draw_gridselect(const sbx_window_t *w, const GADGET_BASE_T *g)
 
             // Cell bevel: selected looks "pressed"
             // Use your bevel pens; tweak if you want stronger hover.
+
+            // Text (up to 3 chars)
+            const char *txt = (char *)gs->cellText[idx];          // assuming cellText[256][4] or [5]
+            uint8_t n = text_len3((char *)gs->cellText[idx]);
+            if (n) {
+                int16_t tw = (int16_t)(n * FONT_W);
+
+                // center in cell
+                int16_t tx = (int16_t)(x + (wcell - tw) / 2);
+                int16_t ty = (int16_t)(y + (hcell - FONT_H) / 2);
+
+                // “pressed” nudge for selected cell
+                if (sel) { tx++; ty++; }
+
+                if(gs->flags & GAD_GRIDSEL_TEXT_INVERT){
+                    uint8_t col = gs->cellColour[idx];
+                    gfx_setcolour(~col);
+                } else
+                    gfx_setcolour(16);
+
+                ui_draw_text816(tx, ty, (const unsigned char*)txt);
+            }
+
+
             if (sel) {
                 draw_bevel(x, y, wcell, hcell, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 1);
             }

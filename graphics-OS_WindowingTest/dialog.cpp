@@ -13,7 +13,9 @@
 #include "codergirl/cg_input.h"
 
 #include "fastram.h"
+#include "codergirl/cg_msghandler.h"
 #include "codergirl/cg_resources.h"
+#include "codergirl/cg_glyphs.h"
 
 #include "codergirl/cg_gad_listbox.h"
 #include "codergirl/cg_itemlist.h"
@@ -95,14 +97,74 @@ void doCreateAWindow(void *s){
         return;
     }
 
-    CGGadgetHandle grid1 = SBOS_CreateGridSelect(newWindowThing, 10,10, 20, 20, 16, 16, GAD_GRIDSEL_JUST_ONE, GAD_TOOL_DEFAULT);
+    CGGadgetHandle grid1 = SBOS_CreateGridSelect(newWindowThing, 10,10, 20, 20, 16, 16, GAD_GRIDSEL_JUST_ONE | GAD_GRIDSEL_TEXT_INVERT, GAD_TOOL_DEFAULT);
 
     //SBOS_enableGadget(grid1, 0);
-    for(int i = 0; i < 256; i++)
+    char txt[4];
+    for(int i = 0; i < 256; i++){
         SBOS_setCellColour(grid1, i, i);
+
+
+        sprintf(txt, "%02X", i);
+        SBOS_setCellText(grid1, txt, i);
+    }
+
+
+
 
     SBOS_setFocus(newWindowThing);
 }
+
+SBXWindowId aboutWin;
+
+void closeAboutWindow(void *){
+    printf("Close the about window? HOW DARE YOU!\n");
+    SBOS_destroyWindow(aboutWin);
+    aboutWin = 0;
+}
+
+#define ABOUTWIN_WIDTH  280
+#define ABOUTWIN_HEIGHT 200
+#define ABOUTWIN_TEXTWIDTH  (ABOUTWIN_WIDTH - 30)
+#define ABOUTWIN_TEXTHEIGHT (ABOUTWIN_HEIGHT - 70)
+#define SYS_MENU_BAR_HEIGHT     20
+void doAboutWindow(void *s){
+    if(aboutWin) {
+        // its already loaded, just bring it to the front and focus
+        SBOS_setFocus(aboutWin);
+        SBOS_bringToFront(aboutWin);
+        return;
+    }
+    aboutWin = SBOS_createWindow(0, SYS_MENU_BAR_HEIGHT, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    if(aboutWin == SBW_INVALID_ID){
+        printf("Think we ran out of windows -- how about closing some!\n");
+        return;
+    }
+
+    SBOS_CreateBitmapView(aboutWin, 0, 0, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, baseGrid, 32, 32, 32, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+    SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
+    CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 110,
+                                          "SIDBOX OS - Version 1.0\n"
+                                          "Window Manager: \"CODER-GIRL\"\n"
+                                          , GAD_TOOL_DEFAULT);
+
+    txt = SBOS_CreateLabel(aboutWin, 14, 54, ABOUTWIN_TEXTWIDTH-10, 64,
+                           "Resource Pool System v0.1\n"
+                           "Built by Electronscape\n\n"
+                           "Licensing pending\n"
+                           "\xa9 2025 - 2099"
+                           , GAD_TOOL_DEFAULT);
+
+    int16_t PerfX = (ABOUTWIN_WIDTH/2) - 35;
+    CGGadgetHandle closeBtn = SBOS_CreateButton(aboutWin, PerfX,  ABOUTWIN_HEIGHT - 55,  70, 26, "CLOSE", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+
+    //SBOS_setLabelColour(txt, 2, BPEN_NOCHANGE);
+    SBOS_setButtonCallBack(closeBtn, closeAboutWindow);
+
+    SBOS_setFocus(aboutWin);
+    SBOS_bringToFront(aboutWin);
+}
+
 
 void createBasicDesktopTest(){
     initWb();
@@ -114,7 +176,7 @@ void createBasicDesktopTest(){
     CGGadgetHandle newWindowBtn = SBOS_CreateButton(workbench, 6,  60,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setButtonCallBack(newWindowBtn, doCreateAWindow);
 
-    titleBar = SBOS_createWindow(0, 0, SCR_WIDTH, 20, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
+    titleBar = SBOS_createWindow(0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
     SBOS_setWinBackColour(titleBar, 2);
 
     SBOS_CreateLabel(titleBar, 5, 2, 100, 16, "SIDBOX DESKTOP V1.0", GAD_TOOL_DEFAULT);
@@ -143,7 +205,10 @@ void createBasicDesktopTest(){
     SBOS_CreateRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
     SBOS_CreateRadioButton(winMain2, 180, 100, 100, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
     SBOS_CreateRadioButton(winMain2, 180, 120, 100, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
-    SBOS_CreateScrollbar(winMain2,  10, 120, 150, 16,  SB_ORIENT_HORZ,  0, 1000,  250, 0, GAD_TOOL_SCROLLARROWS);
+    SBOS_CreateScrollbar(winMain2,  10, 140, 150, 16,  SB_ORIENT_HORZ,  0, 1000,  250, 0, GAD_TOOL_SCROLLARROWS);
+
+    CGGadgetHandle aboutBtn = SBOS_CreateButton(winMain2, 10, 100, 100, 25, "About...", GAD_TOOL_DEFAULT);
+    SBOS_setButtonCallBack(aboutBtn, doAboutWindow);
 
     CGGadgetHandle scrrb =
     SBOS_CreateScrollbar(winMain2,  260, 6, 20, 150,   SB_ORIENT_VERT,  0, 120,  50,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
@@ -164,13 +229,15 @@ void createBasicDesktopTest(){
     // a bitmap viewable window ;) lets see if this works!!
     SBXWindowId winMain3 = SBOS_createWindow(40, 40, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
     CGGadgetHandle piccy1 = SBOS_CreateBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
+    //SBOS_enableGadget(piccy1, 0);
+
     SBOS_CreateButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
     SBOS_CreateScrollbar(winMain3,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
 
-    SBOS_enableGadget(piccy1, 0);
 
-    SBOS_setFocus(winMain);
-    SBOS_bringToFront(winMain);
+
+    SBOS_setFocus(winMain2);
+    SBOS_bringToFront(winMain2);
 
     // FAUX FAST RAM TESTING //
     char *txt5 = (char *)fastAlloc(200);
@@ -204,14 +271,15 @@ void createBasicDesktopTest(){
 
 
     theListBox = SBOS_CreateListBox(winMain, 6, 40, 200, 196, &demolist, GAD_TOOL_DEFAULT);
-    SBOS_enableGadget(theListBox, 0);
+
 
 
     CGGadgetHandle ListBoxScroll =
     SBOS_CreateScrollbar(winMain,  206, 40, 16, 196,  SB_ORIENT_VERT,  0, 31 - 11,  5,  0,  GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
     SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
 
-    SBOS_enableGadget(ListBoxScroll, 0);
+    //SBOS_enableGadget(theListBox, 0);
+    //SBOS_enableGadget(ListBoxScroll, 0);
 
     printf("theListBox handle = %u (0x%08x)\n",    (uint32_t)theListBox,    (uint32_t)theListBox);
     printf("ListBoxScroll handle = %u (0x%08x)\n", (uint32_t)ListBoxScroll, (uint32_t)ListBoxScroll);
@@ -328,12 +396,9 @@ Dialog::Dialog(QWidget *parent)
     setScreenScale(1);
 
 
+    // Resource Memory Monitor Heart beat
     QTimer *t = new QTimer(this);
     connect(t, &QTimer::timeout, this, [=](){
-
-
-        //windowingTest();
-
         uint32_t chipRes, fastRes;
         getMemAvailChipNFast(&chipRes, &fastRes);
 
@@ -349,7 +414,11 @@ Dialog::Dialog(QWidget *parent)
 
         SBOS_paintAllWindows();
         updateGFXScreen();
+    });
 
+    QTimer *osMessageHandlerTMR = new QTimer(this);
+    connect(osMessageHandlerTMR, &QTimer::timeout, this, [=](){
+        cg_os_messagehandler(1);    // one message at a time, FOR now
     });
 
 
@@ -376,6 +445,7 @@ Dialog::Dialog(QWidget *parent)
 
 
     t->start(1500);   // every 22ms/ about 60hz?
+    osMessageHandlerTMR->start(1000);// 1 second so we can see things in the queue
 }
 
 
