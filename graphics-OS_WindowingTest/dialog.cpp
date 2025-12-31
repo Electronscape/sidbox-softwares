@@ -20,6 +20,7 @@
 #include "codergirl/cg_gad_button.h"
 #include "codergirl/cg_gad_scrollbar.h"
 #include "codergirl/cg_gad_label.h"
+#include "codergirl/cg_gad_gridselect.h"
 
 float winScale = 1.0f;
 int currentScale = 1;
@@ -88,13 +89,17 @@ void UpdateMenuLabel(void *s){
 }
 
 void doCreateAWindow(void *s){
-    SBXWindowId newWindowThing = SBOS_createWindow(20, 30, 200, 200, "This is a new window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId newWindowThing = SBOS_createWindow(20, 30, 360, 380, "Gridselect is a palette!", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if(newWindowThing == SBW_INVALID_ID){
         printf("Think we ran out of windows -- how about closing some!\n");
         return;
     }
 
-    CGGadgetHandle grid1 = SBOS_CreateGridSelect(newWindowThing, 10,10, 80, 80, 4, 4, GAD_GRIDSEL_JUST_ONE, GAD_TOOL_DEFAULT);
+    CGGadgetHandle grid1 = SBOS_CreateGridSelect(newWindowThing, 10,10, 20, 20, 16, 16, GAD_GRIDSEL_JUST_ONE, GAD_TOOL_DEFAULT);
+
+    //SBOS_enableGadget(grid1, 0);
+    for(int i = 0; i < 256; i++)
+        SBOS_setCellColour(grid1, i, i);
 
     SBOS_setFocus(newWindowThing);
 }
@@ -118,7 +123,7 @@ void createBasicDesktopTest(){
 
     // WINDOW 1 -----------------------
     // cycle button test window
-    SBXWindowId winMain =  SBOS_createWindow(10, 30, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+    SBXWindowId winMain =  SBOS_createWindow(80, 70, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
     SBOS_CreateScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
     SBOS_CreateButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 

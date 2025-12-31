@@ -677,8 +677,14 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
 
 
 
-CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t cells_x, uint8_t cells_y, uint32_t gridflags, GAD_TOOL_FLAGS flags)
+CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int16_t cell_size_x, int16_t cell_size_y, uint8_t cells_x, uint8_t cells_y, uint32_t gridflags, GAD_TOOL_FLAGS flags)
 {
+
+    // check before we buy!
+    uint16_t cellcount = (uint16_t)cells_x * (uint16_t)cells_y;
+    if (cellcount > 256) return SBCTL_INVALID;
+
+
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
@@ -694,13 +700,29 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
         return SBCTL_INVALID;
     }
 
+    for(int i = 0; i < 256; i++){
+        c->cellColour[i] = W->backColour;   // default all to window background
+        memset(c->cellText[i], 0x00, 4);
+    }
+
+
     g->gadgetType = GAD_GRIDSELECT;
     g->gadget = c;
 
-    c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
+
+    int16_t border = 2;
+    if(flags & GAD_TOOL_NOBORDER)
+        border = 0;
+
+    c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = cell_size_x * cells_x + border; c->h.rect.h = cell_size_y * cells_y + border;
     c->h.flags = flags;
     c->h.winhnd = win;
 
+    c->down_idx  = -1;
+    c->selected_idx = -1;
+
+    c->cells_x = cells_x;
+    c->cells_y = cells_y;
 
     W->GADGETS[slot] = g;
 

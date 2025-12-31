@@ -190,7 +190,7 @@ void sbgfx_drawvline(int x, int y, int h){
     }
 }
 
-void gfx_setcolour(unsigned char col){
+void gfx_setcolour(uint8_t col){
     current_fr_colour = col;
 }
 

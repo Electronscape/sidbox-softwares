@@ -26,6 +26,7 @@
 #include "cg_gad_listbox.h"
 #include "cg_gad_scrollbar.h"
 
+
 #include "cg_resources.h"
 
 
@@ -882,6 +883,14 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                                 }
                             } break;
 
+                            case GAD_GRIDSELECT: {
+                                if (!onMouseDownCaptureGridSelect(w, g, &mx, &my)) {
+                                    callMouseMoveEvt    = onMouseMoveGridSelect;      // optional (hover/drag)
+                                    callMouseReleaseEvt = onMouseReleaseGridSelect;   // commit selection
+                                }
+                            } break;
+
+
                             default: break;
                         }
                     }
@@ -1041,7 +1050,8 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                     (g->gadgetType == GAD_BUTTON)   ||
                     (g->gadgetType == GAD_CHECKBOX) ||
                     (g->gadgetType == GAD_RADIO)    ||
-                    (g->gadgetType == GAD_LISTBOX);
+                    (g->gadgetType == GAD_LISTBOX)  ||
+                    (g->gadgetType == GAD_GRIDSELECT);
 
 
                 if (clickActivate && inside) {

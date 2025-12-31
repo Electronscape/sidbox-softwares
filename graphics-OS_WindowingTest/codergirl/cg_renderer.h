@@ -25,7 +25,7 @@ void ui_draw_glyph(int16_t x, int16_t y, uint8_t *glyph);
 void ui_ppixel(int16_t x, int16_t y);
 void ui_draw_text816(int x, int y, const unsigned char* textptr);
 
-void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen);
+void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t pen);
 void ui_fill_dots(int16_t x, int16_t y, int16_t w, int16_t h, int16_t step);
 
 void ui_hlinedotted(int16_t x, int16_t y, int16_t w);

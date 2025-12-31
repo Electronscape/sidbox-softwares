@@ -24,7 +24,7 @@ void ui_ppixel(int16_t x, int16_t y){
     sbgfx_ppixel(x, y);
 }
 
-void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen){
+void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t pen){
     //sbgfx_drawbox(x, y, w, h, pen);
     gfx_setcolour(pen);
     for(int dx = x; dx < x + w; dx++){
@@ -328,8 +328,11 @@ void draw_disabled_dots(int16_t x, int16_t y, int16_t w, int16_t h){
     gfx_setcolour(PEN_WIN_BEVEL_L); // or something like PEN_GREY, etc.
 
     // Simple 2x2 checker stipple
+    int16_t startOff;   // ensures the pattern always starts at 0, looked weird when the y coords moved and the pattern would switch
+    startOff = 0;
     for (int16_t yy = y; yy < y + h; yy += 2) {
-        int16_t rowOff = (yy & 2) ? 1 : 0;
+        int16_t rowOff = (startOff & 2) ? 1 : 0;
+        startOff+=2;
         for (int16_t xx = x + rowOff; xx < x + w; xx += 2) {
             ui_ppixel(xx, yy);
         }
