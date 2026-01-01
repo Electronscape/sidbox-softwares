@@ -136,6 +136,7 @@ static int find_free_window_slot(sbx_window_t *w){
     return -1;
 }
 
+/*
 static GADGET_BASE_T* base_alloc(void){
     for (int i = 0; i < MAX_GADGETS; i++){
         if (!g_basePool[i].gadgetSlotUsed){
@@ -146,17 +147,41 @@ static GADGET_BASE_T* base_alloc(void){
     }
     return NULL;
 }
+*/
+
+static GADGET_BASE_T* base_alloc(void){
+    for (uint16_t i = 0; i < MAX_GADGETS; i++){
+        if (!g_basePool[i].gadgetSlotUsed){
+            GADGET_BASE_T *g = &g_basePool[i];
+            g->gadgetSlotUsed = 1;
+            g->handleGen++;          // new lifetime
+            g->slotIndex = i;        // <-- key for Option B
+            return g;
+        }
+    }
+    return NULL;
+}
+
 
 
 
 // BITS FOR THE GADGETS //////////// the helpers /////////////
-
+/*
 static void base_free(GADGET_BASE_T *g){
     if (!g) return;
     g->gadgetSlotUsed = 0;
     g->gadgetType = GAD_NULL;
     g->gadget = NULL;
     //g->winhnd = 0;
+}
+*/
+static void base_free(GADGET_BASE_T *g){
+    if (!g) return;
+
+    g->handleGen++;             //invalidate old handles NOW
+    g->gadgetSlotUsed = 0;
+    g->gadgetType = GAD_NULL;
+    g->gadget = NULL;
 }
 
 ////////////////// allocations area /////////////////////////
@@ -390,10 +415,32 @@ static void sb_free(GAD_SCROLLBAR_T *s){
 
 //
 // Convert a base pointer to stable handle (idx+gen)
+/*
 CGGadgetHandle base_to_handle(GADGET_BASE_T *g){
     uint16_t idx = (uint16_t)(g - &g_basePool[0]);
     return SBCTL_MAKE(g->handleGen, idx);
 }
+*/
+
+/*
+CGGadgetHandle base_to_handle(GADGET_BASE_T *g){
+    if (!g) return SBCTL_INVALID;
+
+    if (g < &g_basePool[0] || g >= &g_basePool[MAX_GADGETS]) {
+        return SBCTL_INVALID; // not from base pool -> don't mint nonsense
+    }
+
+    uint16_t idx = (uint16_t)(g - &g_basePool[0]);
+    return SBCTL_MAKE(g->handleGen, idx);
+}
+*/
+
+CGGadgetHandle base_to_handle(GADGET_BASE_T *g){
+    if (!g) return SBCTL_INVALID;
+    if (!g->gadgetSlotUsed) return SBCTL_INVALID;  // optional paranoia
+    return SBCTL_MAKE(g->handleGen, g->slotIndex);
+}
+
 
 GADGET_RECT_T r16(int16_t x, int16_t y, int16_t w, int16_t h){
     GADGET_RECT_T r = {x,y,w,h};

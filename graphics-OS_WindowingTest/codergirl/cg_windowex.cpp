@@ -36,6 +36,10 @@
 static SBXWindowId      g_focusWin   = SBW_INVALID_ID;
 
 
+static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
+static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
+
+
 
 static inline void ui_clear_title_latch(void){
     g_ui.title_win = SBW_INVALID_ID;
@@ -166,18 +170,21 @@ static void layoutWindow(sbx_window_t *w){
 }
 
 static inline void ui_end_interaction(void){
+    // Hard reset of all active mouse/UI interaction state.
+    // Safe to call from anywhere.
     g_ui.mouse_down  = 0;
     g_ui.down_win    = SBW_INVALID_ID;
     g_ui.down_region = WH_NONE;
-
     ui_clear_title_latch();
     ui_clear_drag();
-
     g_ui.resize_win  = SBW_INVALID_ID;
-
-    g_ui.capturedGadget = NULL;
-    g_ui.capturedGadgetRect = NULL;
+    callMouseMoveEvt = NULL;
+    callMouseReleaseEvt = NULL;
+    g_ui.capturing = 0;
+    g_ui.capturedGadget = (CGGadgetHandle){0};
 }
+
+
 
 void SBOS_setFocus(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) {
@@ -263,9 +270,23 @@ void SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m){
     DefaultWindowProc(win, m);
 }
 
-uint8_t SBOS_isWindowValid(SBXWindowId id){
 
+static inline GADGET_BASE_T* UI_CapturedGadgetPtr(void) {
+    if (!g_ui.capturing) return NULL;
+
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(g_ui.capturedGadget);
+    if (!g) {
+        g_ui.capturing = 0;
+        g_ui.capturedGadget = (CGGadgetHandle){0};
+
+        // optional: prevent stale handler calls
+        callMouseMoveEvt = NULL;
+        callMouseReleaseEvt = NULL;
+        return NULL;
+    }
+    return g;
 }
+
 
 
 SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
@@ -656,13 +677,32 @@ void SBOS_destroyWindow(SBXWindowId id){
     if (id >= MAX_WINDOWS) return;
     if (!gui_used[id]) return;
 
+    uint8_t involved = 0;
+
     sbx_window_t *w = &gui_windows[id];
 
     SBOS_ClearMessagesForWindow(id);
 
-    if (g_ui.capturedGadget && SBOS_getWindowByGadget(g_ui.capturedGadget) == id) {
-        g_ui.capturedGadget = NULL;
+    if (g_ui.down_win   == id) involved = 1;
+    if (g_ui.drag_win   == id) involved = 1;
+    if (g_ui.resize_win == id) involved = 1;
+    if (g_ui.title_win  == id) involved = 1;
+
+    if (g_ui.capturing) {
+        GADGET_BASE_T *cg = UI_CapturedGadgetPtr();
+        if (cg && SBOS_getWindowByGadget(cg) == id) {
+            involved = 1;  // <--- add this
+
+
+            g_ui.capturing = 0;
+            g_ui.capturedGadget = (CGGadgetHandle){0};
+        }
     }
+    //if (g_ui.capturedGadget && SBOS_getWindowByGadget(g_ui.capturedGadget) == id) {
+    //    g_ui.capturedGadget = NULL;
+    //}
+
+
 
     if (g_ui.drag_win == id) ui_clear_drag();
     if (g_ui.resize_win == id) g_ui.resize_win = SBW_INVALID_ID;
@@ -683,6 +723,9 @@ void SBOS_destroyWindow(SBXWindowId id){
 
     normalize_zorder();
     SBOS_paintAllWindows();
+
+    if (involved)
+        ui_end_interaction();
 
 
     if (w->lptrRef) {
@@ -890,9 +933,6 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
 ////  WINDOW INTERFACE WITH MOUSE & EVENT HANDLING AND SUBMITTION  //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
-static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
-
 
 
 void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
@@ -938,6 +978,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                 if (hit.region == WH_RESIZE) {
                     if (w && (w->flags & SBX_WF_RESIZABLE)) {
+                        g_ui.capturing = 0;
+                        g_ui.capturedGadget = (CGGadgetHandle){0};
+                        callMouseMoveEvt = NULL;
+                        callMouseReleaseEvt = NULL;
+
                         g_ui.resize_win = hit.id;
                         g_ui.r_start_mx = mx;
                         g_ui.r_start_my = my;
@@ -950,6 +995,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                 // start drag if title hit
                 if (hit.region == WH_TITLE) {
                     if (w->flags & SBX_WF_MOVEABLE) {
+                        g_ui.capturing = 0;
+                        g_ui.capturedGadget = (CGGadgetHandle){0};
+                        callMouseMoveEvt = NULL;
+                        callMouseReleaseEvt = NULL;
+
                         g_ui.drag_win = hit.id;
                         g_ui.drag_off_x = mx - w->winrect.x;
                         g_ui.drag_off_y = my - w->winrect.y;
@@ -967,7 +1017,10 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                         g_ui.resize_win = SBW_INVALID_ID;
                         g_ui.down_win = hit.id;
                         g_ui.down_region = WH_CLIENT;
-                        g_ui.capturedGadget = g;
+                        //g_ui.capturedGadget = g;
+                        g_ui.capturing = 1;
+                        g_ui.capturedGadget = base_to_handle(g);
+
 
                         GAD_HDR_T *h = (GAD_HDR_T*) g->gadget;
                         h->down = 1;
@@ -1070,29 +1123,27 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
             }
 
             // ######################### GADGETS IN WINDOW #########################
-            if (g_ui.mouse_down && g_ui.capturedGadget) {
+            if (g_ui.mouse_down && g_ui.capturing) {
 
-                SBXWindowId wid = SBOS_getWindowByGadget(g_ui.capturedGadget);
+                GADGET_BASE_T *g = UI_CapturedGadgetPtr();
+                if (!g) break;  // capture dropped because gadget died
+
+                SBXWindowId wid = SBOS_getWindowByGadget(g);
                 sbx_window_t *gw = SBOS_getWindow(wid);
                 if (gw) {
-                    // this handles the last gadget that was click mouse down'd (this is NOT a multi-point OS so thank GOD!)
-                    if(callMouseMoveEvt) {
-                        uint32_t stop = callMouseMoveEvt(gw, g_ui.capturedGadget, &evt, &mx, &my);
-                        if (stop) { repaint = 1; break; }  // skip default inside/down behavior
+                    if (callMouseMoveEvt) {
+                        uint32_t stop = callMouseMoveEvt(gw, g, &evt, &mx, &my);
+                        if (stop) { repaint = 1; break; }
                     }
 
-                    // non-scrollbar default "down if inside" behaviour
-                    // this is default when something can be cancelled just by moving out the gadget.
-                    GAD_HDR_T *h = (GAD_HDR_T*) g_ui.capturedGadget->gadget;
-                    uint8_t inside = gadget_mouse_inside(gw, g_ui.capturedGadget, mx, my);
+                    GAD_HDR_T *h = (GAD_HDR_T*) g->gadget;
+                    uint8_t inside = gadget_mouse_inside(gw, g, mx, my);
                     uint8_t newDown = inside ? 1 : 0;
-                    if (newDown != h->down) {
-                        h->down = newDown;
-                        repaint = 1;
-                    }
+                    if (newDown != h->down) { h->down = newDown; repaint = 1; }
                 }
                 break;
             }
+
 
             // ######################### CANCEL MOTIONS ############################
             // when mouse is held down and a gadget is captured
@@ -1119,6 +1170,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                 repaint = 1;
                 cleanups = 1;
+
                 break;
             }
 
@@ -1132,6 +1184,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                 repaint  = 1;
                 cleanups = 1;
+
                 break;
             }
 
@@ -1181,8 +1234,11 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
             }
 
             /// the gadget was released
-            if (g_ui.capturedGadget) {
-                GADGET_BASE_T *g = g_ui.capturedGadget;
+            if (g_ui.capturing) {
+                //GADGET_BASE_T *g = g_ui.capturedGadget;
+                GADGET_BASE_T *g = UI_CapturedGadgetPtr();
+                if (!g) { repaint = 1; cleanups = 1; break; }  // this was killed before we got here
+
                 SBXWindowId wid = SBOS_getWindowByGadget(g);
                 sbx_window_t *gw = SBOS_getWindow(wid);
 
@@ -1200,7 +1256,9 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                     //if(cres) return;
                 }
 
-                g_ui.capturedGadget = NULL;
+                //g_ui.capturedGadget = NULL;
+                g_ui.capturing = 0;
+                g_ui.capturedGadget = (CGGadgetHandle){0};
 
                 bool clickActivate =
                     (g->gadgetType == GAD_BUTTON)   ||

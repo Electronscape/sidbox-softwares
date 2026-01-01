@@ -49,7 +49,8 @@
 
 
 // --------- HANDLE TYPE (index + generation) ----------
-#define SBCTL_INVALID           ((CGGadgetHandle)0xFFFFFFFF)
+//#define SBCTL_INVALID           ((CGGadgetHandle)0xFFFFFFFF)
+#define SBCTL_INVALID           ((CGGadgetHandle)0)
 #define SBCTL_MAKE(gen, idx)    ((CGGadgetHandle)((((uint32_t)(gen) & 0xFFFFu) << 16) | ((uint32_t)(idx) & 0xFFFFu)))
 #define SBCTL_IDX(h)            ((uint16_t)((h) & 0xFFFFu))
 #define SBCTL_GEN(h)            ((uint16_t)(((h) >> 16) & 0xFFFFu))
@@ -122,6 +123,8 @@ typedef struct {
     // lifetime handles
     uint16_t        gadgetSlotUsed;    // 0 free, 1 used
     uint16_t        handleGen;         // generation for stale-handle detection
+    uint16_t        slotIndex;   // <-- add this (index into g_basePool)
+    uint16_t        _pad;        // optional: keep alignment nice if you care
 
     // control data
     GADGET_CLASS_T  gadgetType; // what type of gadget are we going with;

@@ -13,4 +13,8 @@ UIInputState g_ui = {
 
     .drag_win     = SBW_INVALID_ID,
     .resize_win   = SBW_INVALID_ID,
+    .capturedGadget = 0,
+    .capturing    = 0
 };
+
+

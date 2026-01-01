@@ -39,8 +39,12 @@ typedef struct UIInputState {
     // since i HOPE we are going to use the gadget handle as the references later
     // example: dummy stuff below
 
-    GADGET_BASE_T   *capturedGadget;
-    GADGET_RECT_T   *capturedGadgetRect;    // this is to help with the checking for "are we still inside the button rect" for exmaple
+    //GADGET_BASE_T   *capturedGadget;
+    // Old: GADGET_BASE_T *capturedGadget;
+    CGGadgetHandle  capturedGadget;   // same name, new meaning
+    uint8_t         capturing;
+
+    //GADGET_RECT_T   *capturedGadgetRect;    // this is to help with the checking for "are we still inside the button rect" for exmaple
 
     int16_t         clicked_x, clicked_y;   // starting gadget mouse hit point
     int16_t         drag_x, drag_y;         // moving mouse point over the gadget (usually for sliders
