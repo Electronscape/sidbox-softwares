@@ -9,7 +9,7 @@
 #include "cg_itemlist.h"
 
 //                                  v----- these numbers are HUGE, but for funsies keeping them this high
-#define     MAX_EVERYTHING          512
+#define     MAX_EVERYTHING          32
 
 #define     MAX_BITMAPVIEWS         (MAX_EVERYTHING)
 #define     MAX_BUTTONS             (MAX_EVERYTHING)

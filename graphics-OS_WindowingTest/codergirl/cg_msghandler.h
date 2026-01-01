@@ -15,18 +15,30 @@ typedef enum {
 } CGMsgType;
 
 typedef enum {
-    CGEVT_NONE          = 0,
-    CGEVT_BUTTON_CLICK,
+    CGEVT_NONE             = 0,
+//- gadget events -------------
+    CGEVT_GAD_BUTTON_HIT      ,
+    CGEVT_GAD_CHECK_CHANGED   ,
+    CGEVT_GAD_RADIO_CHANGED   ,
+    CGEVT_GAD_LABEL_HIT       ,
 
-    CGEVT_CHECK_CHANGED,      // a = 0/1
-    CGEVT_RADIO_CHANGED,      // a = selected index or 1
-    CGEVT_LABEL_CLICK,        // if you ever want it
+    CGEVT_GAD_SCROLL_CHANGED  ,
+    CGEVT_GAD_LISTBOX_CHANGED ,
+    CGEVT_GAD_LISTBOX_DBLHIT  ,
 
-    CGEVT_SCROLL_CHANGED,     // a = value, b = delta or max
-    CGEVT_LISTBOX_CHANGED,    // a = selected index
-    CGEVT_LISTBOX_DBLCLICK,   // a = selected index
+    CGEVT_GAD_GRIDSEL_CHANGED ,
 
-    CGEVT_GRIDSEL_CHANGED     // a = cell index
+//- window events -------------
+    CGEVT_WIN_CLOSE_REQUEST   ,
+    CGEVT_WIN_MOVE            ,
+    CGEVT_WIN_MOVED           ,
+
+    CGEVT_WIN_RESIZE          ,
+    CGEVT_WIN_RESIZED         ,
+
+    CGEVT_WIN_ZORDER          ,
+    CGEVT_WIN_MAXRESTORED     ,
+    CGEVT_WIN_MINIMISE        ,
 } CGEventType;
 
 typedef struct CGMessage_t {
@@ -47,8 +59,12 @@ int16_t cg_os_messagehandler(uint8_t msgticks);
 uint8_t SBOS_PostMessage(const CGMessage_t *m);
 uint8_t SBOS_PopMessage(CGMessage_t *out);
 
-void CG_PostGadgetMsg(SBXWindowId win, CGGadgetHandle gad, uint16_t evt, int32_t a, int32_t b);
+void CG_PostGadgetMsg(SBXWindowId win, CGGadgetHandle gad, uint16_t evt, int32_t a, int32_t b, int32_t c, int32_t d);
+void CG_PostWindowMsg(SBXWindowId win, uint16_t evt, int32_t a, int32_t b, int32_t c, int32_t d);
 
 
+
+// API ------------------------------------------------------------------------------------------------------------
+void SBOS_CG_PostWindowMsg(SBXWindowId win, CGMsgType messagetype, uint16_t evt, int32_t a, int32_t b, int32_t c, int32_t d);
 
 #endif // CG_MSGHANDLER_H

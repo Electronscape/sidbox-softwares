@@ -1,11 +1,6 @@
 //// SBX_INPUT.CPP //////
 
-
-//#include "sbx_gadgets.h"
 #include "cg_input.h"
-//#include "sbx_windowex.h"
-
-
 
 UIInputState g_ui = {
     .mouse_down   = 0,

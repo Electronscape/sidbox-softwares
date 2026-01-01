@@ -126,7 +126,7 @@ GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my);
 
 void            initWb(void);
 
-SBXWindowId     SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
+SBXWindowId     SBOS_createWindow(SBXWindowId *selfPTR, int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 void            SBOS_destroyWindow(SBXWindowId id);
 sbx_window_t*   SBOS_getWindow(SBXWindowId id);
 void            SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor);
@@ -139,6 +139,8 @@ void            SBOS_bringToFront(SBXWindowId id);
 void            SBOS_setFocus(SBXWindowId id);
 
 SBXWindowId     SBOS_getWindowByGadget(const GADGET_BASE_T *b);
+void            SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m);
+uint8_t         SBOS_isWindowValid(SBXWindowId id);
 
 
 // gadgets interactions from window host

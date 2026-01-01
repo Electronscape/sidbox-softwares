@@ -18,6 +18,7 @@ typedef void (*MSGWndProc)(SBXWindowId win, const CGMessage_t *m);
 // keep these all 32bits
 typedef struct {
     SBXWindowId     self;               // self id  // we'll keep this so its much quicker to find the window (findWindowEx(winhandle *hnd) for example
+    SBXWindowId     *lptrRef;           // feed the variable handle address here
     uint32_t        flags;
     char            title[WINDOW_TITLE_MAX_LEN];
 

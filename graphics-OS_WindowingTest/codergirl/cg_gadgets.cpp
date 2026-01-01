@@ -92,37 +92,37 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
 void onButtonClickEmitEvent(void *g){
     GAD_BUTTON_T *bt = (GAD_BUTTON_T *)g;
     if (!bt) return;
-    CG_PostGadgetMsg(bt->h.winhnd, bt->h.self, CGEVT_BUTTON_CLICK, bt->current_option, 0);
+    CG_PostGadgetMsg(bt->h.winhnd, bt->h.self, CGEVT_GAD_BUTTON_HIT, bt->current_option, 0, 0, 0);
 }
 
 void onCheckBoxClickEmitEvent(void *g){
     GAD_CHECKBOX_T *cb = (GAD_CHECKBOX_T *)g;   // get the button
     if(!cb) return;
-    CG_PostGadgetMsg(cb->h.winhnd, cb->h.self, CGEVT_CHECK_CHANGED, cb->checked ? 1 : 0, 0);
+    CG_PostGadgetMsg(cb->h.winhnd, cb->h.self, CGEVT_GAD_CHECK_CHANGED, cb->checked ? 1 : 0, 0, 0, 0);
 }
 
 void onGridSelectEmitEvent(void *g){
     GAD_GRIDSELECT_T *gs = (GAD_GRIDSELECT_T*)g;
     if (!gs) return;
-    CG_PostGadgetMsg(gs->h.winhnd, gs->h.self, CGEVT_GRIDSEL_CHANGED, gs->selected_idx, 0);
+    CG_PostGadgetMsg(gs->h.winhnd, gs->h.self, CGEVT_GAD_GRIDSEL_CHANGED, gs->selected_idx, 0, 0, 0);
 }
 
 void onListBoxEmitEvent(void *g){
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g;
     if (!lb) return;
-    CG_PostGadgetMsg(lb->h.winhnd, lb->h.self, CGEVT_LISTBOX_CHANGED, lb->sel, 0);
+    CG_PostGadgetMsg(lb->h.winhnd, lb->h.self, CGEVT_GAD_LISTBOX_CHANGED, lb->sel, 0, 0, 0);
 }
 
 void onRadioClickEmitEvent(void *g){
     GAD_RADIO_T *ra = (GAD_RADIO_T *)g;   // get the button
     if(!ra) return;
-    CG_PostGadgetMsg(ra->h.winhnd, ra->h.self, CGEVT_RADIO_CHANGED, ra->checked ? 1 : 0, ra->group);
+    CG_PostGadgetMsg(ra->h.winhnd, ra->h.self, CGEVT_GAD_RADIO_CHANGED, ra->checked ? 1 : 0, ra->group, 0, 0);
 }
 
 void onScrollEmitEvent(void *g){
     GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g;  // cast FIRST
     if (!sb) return;
-    CG_PostGadgetMsg(sb->h.winhnd, sb->h.self, CGEVT_SCROLL_CHANGED, sb->value, 0);
+    CG_PostGadgetMsg(sb->h.winhnd, sb->h.self, CGEVT_GAD_SCROLL_CHANGED, sb->value, 0, 0, 0);
 }
 
 
@@ -450,17 +450,6 @@ GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
     }
     return NULL;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 // Validate handle -> base pointer (stale handle detection)
 GADGET_BASE_T* SBOS_gadgetFromHandle(CGGadgetHandle h){

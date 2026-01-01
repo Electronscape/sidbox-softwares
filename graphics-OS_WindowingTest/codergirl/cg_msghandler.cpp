@@ -9,8 +9,6 @@
 
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-
-
 static CGMessage_t  g_msgs[CGMSG_QUEUE_CAP];
 
 static volatile uint16_t g_msg_hx = 0;
@@ -64,8 +62,6 @@ uint8_t SBOS_PopMessage(CGMessage_t *out)
     return 1;
 }
 
-
-
 int16_t cg_os_messagehandler(uint8_t msgticks){
     // message ticks are How many messages can be done PER CALL to this
     // this should ONLY be put into a Hardware timer, OR in the main OS loop!
@@ -87,12 +83,7 @@ int16_t cg_os_messagehandler(uint8_t msgticks){
 }
 
 
-void CG_PostGadgetMsg(
-    SBXWindowId win,
-    CGGadgetHandle gad,
-    uint16_t evt,
-    int32_t a,
-    int32_t b)
+void CG_PostGadgetMsg(SBXWindowId win, CGGadgetHandle gad, uint16_t evt, int32_t a, int32_t b, int32_t c, int32_t d)
 {
     CGMessage_t m;
     memset(&m, 0, sizeof(m));
@@ -102,5 +93,36 @@ void CG_PostGadgetMsg(
     m.eventClass = evt;
     m.a          = a;
     m.b          = b;
+    m.c          = c;
+    m.d          = d;
+    SBOS_PostMessage(&m);
+}
+
+void CG_PostWindowMsg(SBXWindowId win, uint16_t evt, int32_t a, int32_t b, int32_t c, int32_t d)
+{
+    CGMessage_t m;
+    memset(&m, 0, sizeof(m));
+    m.mtype      = CGMSG_WINDOW;
+    m.winhnd     = win;
+    m.gadget     = 0;     // not applicable
+    m.eventClass = evt;
+    m.a          = a;
+    m.b          = b;
+    m.c          = c;
+    m.d          = d;
+    SBOS_PostMessage(&m);
+}
+
+void SBOS_CG_PostWindowMsg(SBXWindowId win, CGMsgType messagetype, uint16_t evt, int32_t a, int32_t b, int32_t c, int32_t d){
+    CGMessage_t m;
+    memset(&m, 0, sizeof(m));
+    m.mtype      = messagetype;
+    m.winhnd     = win;
+    m.gadget     = 0;     // not applicable
+    m.eventClass = evt;
+    m.a          = a;
+    m.b          = b;
+    m.c          = c;
+    m.d          = d;
     SBOS_PostMessage(&m);
 }

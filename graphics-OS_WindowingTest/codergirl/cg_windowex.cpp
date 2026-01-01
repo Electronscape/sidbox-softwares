@@ -18,14 +18,15 @@
 
 // GADGET API's
 #include "cg_gad_bitmapview.h"
-#include "cg_gad_button.h"
-#include "cg_gad_checkbox.h"
+//#include "cg_gad_button.h"
+//#include "cg_gad_checkbox.h"
 #include "cg_gad_gridselect.h"
-#include "cg_gad_radio.h"
-#include "cg_gad_label.h"
+//#include "cg_gad_radio.h"
+//#include "cg_gad_label.h"
 #include "cg_gad_listbox.h"
 #include "cg_gad_scrollbar.h"
 
+#include "cg_msghandler.h"
 
 #include "cg_resources.h"
 
@@ -195,7 +196,79 @@ void SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor){
     w->backColour = newcolor;
 }
 
-SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
+
+static int z_find(SBXWindowId id){
+    for (int i = 0; i < (int)g_winZcount; i++) {
+        if (g_winZorder[i] == id) return i;
+    }
+    return -1;
+}
+void SBOS_sendToBack(SBXWindowId id){
+    if (id >= MAX_WINDOWS || !gui_used[id]) return;
+    if (gui_windows[id].flags & SBX_WF_ALWAYS_TO_FRONT) return;  // cannot sink 😄
+
+    int pos = z_find(id);
+    if (pos < 0) return;
+    if (pos == 0) return;
+
+    SBXWindowId temp = g_winZorder[pos];
+    for (int i = pos; i > 0; i--) g_winZorder[i] = g_winZorder[i - 1];
+    g_winZorder[0] = temp;
+
+    normalize_zorder();
+}
+
+
+
+static void DefaultWindowProc(SBXWindowId win, const CGMessage_t *m)
+{
+    if (!m) return;
+
+    if (m->mtype != CGMSG_WINDOW) return;
+
+    switch (m->eventClass) {
+
+
+    case CGEVT_WIN_CLOSE_REQUEST:
+        SBOS_destroyWindow(win);
+        break;
+
+    case CGEVT_WIN_ZORDER:
+        // Example: a==0 => send to back, a==1 => bring to front
+        if (m->a == 0) SBOS_sendToBack(win);
+        else          SBOS_bringToFront(win);
+        break;
+
+    case CGEVT_WIN_MINIMISE:
+        // TODO: implement later
+        // SBOS_minimiseWindow(win);
+        break;
+
+    case CGEVT_WIN_MAXRESTORED:
+        // TODO: implement later
+        // SBOS_toggleMaxRestore(win);
+        break;
+
+    case CGEVT_WIN_MOVED:
+    case CGEVT_WIN_RESIZED:
+        // Default: do nothing (apps may care; OS doesn't)
+        break;
+
+    default:
+        break;
+    }
+}
+
+void SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m){
+    DefaultWindowProc(win, m);
+}
+
+uint8_t SBOS_isWindowValid(SBXWindowId id){
+
+}
+
+
+SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
     for (SBXWindowId i = 0; i < MAX_WINDOWS; i++) {
         if (!gui_used[i]) {
             gui_used[i] = 1;
@@ -207,7 +280,10 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
             w->winrect.h = (int16_t)height;
             w->flags = flags;
             w->backColour = PEN_WIN_BG;
-            w->proc = NULL;
+
+
+
+            w->proc = DefaultWindowProc;
 
 
             //w->ctrl_count = 0;
@@ -241,6 +317,9 @@ SBXWindowId SBOS_createWindow(int16_t x, int16_t y, uint16_t width, uint16_t hei
             w->self = i;
             for (int k = 0; k < MAX_GADGETS_PER_WINDOW; k++) w->GADGETS[k] = NULL;
 
+
+            w->lptrRef = selfHandlePTR;
+            if (w->lptrRef) *w->lptrRef = i;
 
             return i;
         }
@@ -480,12 +559,6 @@ static int z_front_barrier(void){
     return (int)g_winZcount;
 }
 
-static int z_find(SBXWindowId id){
-    for (int i = 0; i < (int)g_winZcount; i++) {
-        if (g_winZorder[i] == id) return i;
-    }
-    return -1;
-}
 
 void SBOS_bringToFront(SBXWindowId id){
     if (id >= MAX_WINDOWS || !gui_used[id]) return;
@@ -556,11 +629,36 @@ SBXWindowId SBOS_getWindowByGadget(const GADGET_BASE_T *b){
     return h->winhnd;
 }
 
+
+void SBOS_ClearMessagesForWindow(SBXWindowId win)
+{
+    CGMessage_t tmp[CGMSG_QUEUE_CAP];
+    uint16_t keep = 0;
+
+    CGMessage_t m;
+    while (SBOS_PopMessage(&m)) {
+        if (m.winhnd != win) {
+            tmp[keep++] = m;
+        } else {
+            // optionally track drops/purges
+            // g_msg_dropped++;
+        }
+    }
+
+    // Re-queue kept messages in original order
+    for (uint16_t i = 0; i < keep; i++) {
+        SBOS_PostMessage(&tmp[i]);
+    }
+}
+
+
 void SBOS_destroyWindow(SBXWindowId id){
     if (id >= MAX_WINDOWS) return;
     if (!gui_used[id]) return;
 
     sbx_window_t *w = &gui_windows[id];
+
+    SBOS_ClearMessagesForWindow(id);
 
     if (g_ui.capturedGadget && SBOS_getWindowByGadget(g_ui.capturedGadget) == id) {
         g_ui.capturedGadget = NULL;
@@ -576,6 +674,7 @@ void SBOS_destroyWindow(SBXWindowId id){
     w->flags = 0;
     w->title[0] = '\0';
 
+
     gui_used[id] = 0;
     z_remove(id);
 
@@ -584,22 +683,15 @@ void SBOS_destroyWindow(SBXWindowId id){
 
     normalize_zorder();
     SBOS_paintAllWindows();
+
+
+    if (w->lptrRef) {
+        *w->lptrRef = 0;
+        w->lptrRef = NULL;
+    }
+
 }
 
-void SBOS_sendToBack(SBXWindowId id){
-    if (id >= MAX_WINDOWS || !gui_used[id]) return;
-    if (gui_windows[id].flags & SBX_WF_ALWAYS_TO_FRONT) return;  // cannot sink 😄
-
-    int pos = z_find(id);
-    if (pos < 0) return;
-    if (pos == 0) return;
-
-    SBXWindowId temp = g_winZorder[pos];
-    for (int i = pos; i > 0; i--) g_winZorder[i] = g_winZorder[i - 1];
-    g_winZorder[0] = temp;
-
-    normalize_zorder();
-}
 
 void SBOS_paintAllWindows(void){
     for (int zi = 0; zi < (int)g_winZcount; zi++) {
@@ -686,6 +778,19 @@ static WHitResult hittest_window(SBXWindowId id, int16_t mx, int16_t my){
                 return r;
             }
         }
+
+        /*
+        if (w->flags & SBX_WF_RESIZABLE){
+            int16_t cx = w->winrect.x;
+            printf("RESIZINGS...");
+            if (mousept_in_rect(mx, my, cx, by, WIN_RESIZE_GLYPH_SIZE, bh)) {
+                r.region = WH_RESIZE;
+                return r;
+            }
+            //resize_win
+        }
+        */
+
         // Otherwise it’s the title bar
         r.region = WH_TITLE;
         return r;
@@ -940,6 +1045,10 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                     layoutWindow(w);
                     repaint = 1;
+
+                    //SBXWindowId win = g_ui.resize_win;
+                    //if(win)
+                    CG_PostWindowMsg(g_ui.resize_win, CGEVT_WIN_RESIZE, w->winrect.w, w->winrect.h, 0, 0);
                 }
                 break;
             }
@@ -955,6 +1064,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
                     layoutWindow(w);
                     repaint = 1;
+                    CG_PostWindowMsg(g_ui.drag_win, CGEVT_WIN_MOVE, w->winrect.x, w->winrect.y, 0, 0);
                 }
                 break;
             }
@@ -999,6 +1109,33 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
         ///////////////////////////////////// MOUSE UP //////////////////////////////////////////
         case MOUSE_UP:{
+
+            if (g_ui.resize_win != SBW_INVALID_ID) {
+                SBXWindowId win = g_ui.resize_win;
+                sbx_window_t *w = SBOS_getWindow(win);
+                g_ui.resize_win = SBW_INVALID_ID;
+
+                if(w) CG_PostWindowMsg(win, CGEVT_WIN_RESIZED, w->winrect.w, w->winrect.h, 0, 0);
+
+                repaint = 1;
+                cleanups = 1;
+                break;
+            }
+
+            // ---- MOVE RELEASE ----
+            if (g_ui.drag_win != SBW_INVALID_ID) {
+                SBXWindowId win = g_ui.drag_win;
+                sbx_window_t *w = SBOS_getWindow(win);
+                g_ui.drag_win = SBW_INVALID_ID;
+
+                if(w) CG_PostWindowMsg(win, CGEVT_WIN_MOVED, w->winrect.x, w->winrect.y, 0, 0);
+
+                repaint  = 1;
+                cleanups = 1;
+                break;
+            }
+
+
             g_ui.resize_win = SBW_INVALID_ID;
 
             // 1) TITLE GADGET RELEASE (latched)
@@ -1014,18 +1151,28 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                 // click only if released inside same gadget
                 WHitResult ht = hittest_window(wclick, mx, my);
                 if (ht.region == rclick) {
-                    if (rclick == WH_CLOSE) {
-                        SBOS_destroyWindow(wclick);
-                        printf("GLYPH HIT - Close Window\r\n");
-                    } else if (rclick == WH_ZORDER) {
-                        SBOS_sendToBack(wclick);
-                        printf("GLYPH HIT - Zorder\r\n");
-                    } else if (rclick == WH_MINIMISE) {
-                        printf("GLYPH HIT - Minimised\r\n");
-                        /* TODO */
-                    } else if (rclick == WH_MAXRESTORE) {
-                        printf("GLYPH HIT - MaxRestore\r\n");
-                        /* TODO */
+                    switch(rclick){
+                        case WH_CLOSE:{
+                            CG_PostWindowMsg(wclick, CGEVT_WIN_CLOSE_REQUEST, 0, 0, 0, 0);
+                        } break;
+
+                        case WH_ZORDER: {
+                            CG_PostWindowMsg(wclick, CGEVT_WIN_ZORDER, 0, 0, 0, 0);
+                            SBOS_sendToBack(wclick);
+                            //printf("GLYPH HIT - Zorder\r\n");
+                        } break;
+
+                        case WH_MINIMISE: {
+                            //printf("GLYPH HIT - Minimised\r\n");
+                            CG_PostWindowMsg(wclick, CGEVT_WIN_MINIMISE, 0, 0, 0, 0);
+                        } break;
+
+                        case WH_MAXRESTORE: {
+                            printf("GLYPH HIT - MaxRestore\r\n");
+                            CG_PostWindowMsg(wclick, CGEVT_WIN_MAXRESTORED, 0, 0, 0, 0);
+                        } break;
+
+                        default: break;
                     }
                 }
                 repaint = 1;

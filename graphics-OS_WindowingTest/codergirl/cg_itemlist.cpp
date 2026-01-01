@@ -13,8 +13,6 @@
 #include "../fastram.h"
 #include "cg_itemlist.h"
 
-
-
 static char* fastStrdup(const char *s) {
     uint32_t len = 0;
     while (s[len]) len++;
@@ -105,10 +103,7 @@ void listitem_move(ItemLists_t *list, uint16_t from, uint16_t to){
             list->items[i] = list->items[i - 1];
         list->items[to] = tmp;
     }
-
 }
-
-
 
 void listitem_sort(ItemLists_t *list){
     // NOTE:
@@ -120,13 +115,11 @@ void listitem_sort(ItemLists_t *list){
     qsort(list->items, list->count, sizeof(void*), cmp_strptr);
 }
 
-
 void listitem_init(ItemLists_t *list){
     list->items = NULL;
     list->count = 0;
     list->cap   = 0;
 }
-
 
 void listitem_clear(ItemLists_t *list){
     for (uint16_t i = 0; i < list->count; i++) {
@@ -136,7 +129,6 @@ void listitem_clear(ItemLists_t *list){
 
     listitem_init(list);
 }
-
 
 void listitem_free(ItemLists_t *list){
     if (!list) return;
@@ -148,7 +140,6 @@ void listitem_free(ItemLists_t *list){
             list->items[i] = NULL;
         }
     }
-
 
     // Free the pointer table
     if (list->items) {
@@ -163,11 +154,9 @@ void listitem_free(ItemLists_t *list){
     fastFree(list);
 }
 
-
 void SBOS_destroyItemList(ItemLists_t *list){
     listitem_free(list);
 }
-
 
 const char* listitem_get(const ItemLists_t *list, uint16_t idx){
     if (idx >= list->count) return NULL;
@@ -177,7 +166,6 @@ const char* listitem_get(const ItemLists_t *list, uint16_t idx){
 uint32_t listitem_count(const ItemLists_t *list){
     return (list->count);
 }
-
 
 void listitem_dump(const ItemLists_t *list){
     printf("ListBox dump: %u items\n", list->count);

@@ -94,7 +94,7 @@ void UpdateMenuLabel(void *s){
 }
 
 void doCreateAWindow(void *s){
-    SBXWindowId newWindowThing = SBOS_createWindow(20, 30, 360, 380, "Gridselect is a palette!", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId newWindowThing = SBOS_createWindow(&newWindowThing, 20, 30, 360, 380, "Gridselect is a palette!", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if(newWindowThing == SBW_INVALID_ID){
         printf("Think we ran out of windows -- how about closing some!\n");
         return;
@@ -144,7 +144,7 @@ void doAboutWindow(void *s){
     wx = (SCR_WIDTH / 2) - (ABOUTWIN_WIDTH /2);
     wy = (SCR_HEIGHT / 4) - (ABOUTWIN_HEIGHT /4);
 
-    aboutWin = SBOS_createWindow(wx, wy, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    aboutWin = SBOS_createWindow(&aboutWin, wx, wy, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     if(aboutWin == SBW_INVALID_ID){
         printf("Think we ran out of windows -- how about closing some!\n");
         return;
@@ -185,25 +185,25 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
     switch (m->mtype) {
         case CGMSG_GADGET:
             switch (m->eventClass) {
-                case CGEVT_BUTTON_CLICK:
+                case CGEVT_GAD_BUTTON_HIT:
                     // Identify which button fired (by gadget handle)
-                    if (m->gadget == btnCloseMe) {
+                    if (m->gadget == btnCloseMe)
                         SBOS_destroyWindow(win);
-                    }
+
                     if(m->gadget == btnAboutUs)
                         doAboutWindow(NULL);
 
                     break;
 
-                case CGEVT_SCROLL_CHANGED:
+                case CGEVT_GAD_SCROLL_CHANGED:
                     printf("SCROLL: %lu\n", m->a);
                     break;
 
-                case CGEVT_CHECK_CHANGED:
+                case CGEVT_GAD_CHECK_CHANGED:
                     printf("CHECK BOX: %d\n", m->a);
                     break;
 
-                case CGEVT_RADIO_CHANGED:
+                case CGEVT_GAD_RADIO_CHANGED:
                     printf("RADIO checked %d, grp:%d, gad_id:%d\n", m->a, m->b, m->gadget);
 
                     break;
@@ -214,25 +214,52 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 
         case CGMSG_WINDOW:
             // e.g. resize/minimize events later
+            switch(m->eventClass){
+                case CGEVT_WIN_RESIZED:
+                    //printf("WINDOW RESIZE\n");
+                break;
+                case CGEVT_WIN_RESIZE:
+                    //printf("WINDOW RESIZING\n");
+                    break;
+
+                case CGEVT_WIN_MOVED:
+                    //printf("WINDOW MOVED\n");
+                    break;
+
+                case CGEVT_WIN_MOVE:
+                    //printf("WINDOW MOVING...\n");
+                    break;
+
+                case CGEVT_WIN_CLOSE_REQUEST:
+                    //SBOS_destroyWindow(win);
+                    //return;
+                    break;
+
+                default: break;
+            }
+
+
             break;
 
         default:
             break;
     }
+
+    SBOS_DefaultWindowProc(win, m);
 }
 
-
+SBXWindowId winMain;
 void createBasicDesktopTest(){
     initWb();
     initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
 
     // DESKTOP WINDOW (yes it IS a window)
-    SBXWindowId workbench = SBOS_createWindow(0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
+    SBXWindowId workbench = SBOS_createWindow(&workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
     SBOS_CreateBitmapView(workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, backdrop, 480, 320, 480, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
     CGGadgetHandle newWindowBtn = SBOS_CreateButton(workbench, 6,  60,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setButtonCallBack(newWindowBtn, doCreateAWindow);
 
-    titleBar = SBOS_createWindow(0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
+    titleBar = SBOS_createWindow(&titleBar, 0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
     SBOS_setWinBackColour(titleBar, 2);
 
     SBOS_CreateLabel(titleBar, 5, 2, 100, 16, "SIDBOX DESKTOP V1.0", GAD_TOOL_DEFAULT);
@@ -241,14 +268,14 @@ void createBasicDesktopTest(){
 
     // WINDOW 1 -----------------------
     // cycle button test window
-    SBXWindowId winMain =  SBOS_createWindow(80, 70, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
+    SBXWindowId winMain =  SBOS_createWindow(0, 80, 70, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
     SBOS_CreateScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
     SBOS_CreateButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
 
 
     // WINDOW 2 -----------------------
-    SBXWindowId winMain2 = SBOS_createWindow(100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setWindowProc(winMain2, BasicWindowMAIN);
     SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
@@ -288,7 +315,7 @@ void createBasicDesktopTest(){
 
     // WINDOW 3 -----------------------
     // a bitmap viewable window ;) lets see if this works!!
-    SBXWindowId winMain3 = SBOS_createWindow(40, 40, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
+    SBXWindowId winMain3 = SBOS_createWindow(&winMain3, 40, 40, 320, 200, "TEST test #x/y \xff", SBX_WF_RESIZABLE | SBX_WF_MOVEABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_ZORDER );
     CGGadgetHandle piccy1 = SBOS_CreateBitmapView(winMain3, 0, 0, 200, 200, testpix, 480, 320, 480, BVF_PAN | BVF_SHOW_FRAME | BVF_SRC_ROWMAJOR, GAD_TOOL_DEFAULT);
     //SBOS_enableGadget(piccy1, 0);
 
