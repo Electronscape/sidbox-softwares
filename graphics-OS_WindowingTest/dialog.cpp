@@ -24,6 +24,8 @@
 #include "codergirl/cg_gad_label.h"
 #include "codergirl/cg_gad_gridselect.h"
 
+#include "codergirl/lib_filerequest.h"
+
 float winScale = 1.0f;
 int currentScale = 1;
 
@@ -59,6 +61,8 @@ static CGGadgetHandle   MenuBarTitle;
 
 static CGGadgetHandle   btnCloseMe;
 static CGGadgetHandle   btnAboutUs;
+
+static CGGadgetHandle   btnFileRequest;
 
 // a CUSTOM function for a scroll bar
 void BitDemoScrolly1(void *s){
@@ -175,6 +179,9 @@ void doAboutWindow(void *s){
     printf("ABOUT WINDOW  ");
 }
 
+////////// this section would be in our client software anyway so treat it as such -------------
+
+static SBXWindowId g_filerqWin = SBW_INVALID_ID;
 static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 {
     if (!m) return;
@@ -185,6 +192,7 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
     switch (m->mtype) {
         case CGMSG_GADGET:
             switch (m->eventClass) {
+                /// FILE REQUEST DEMO ///////////////////////////////////////////////////////////////////
                 case CGEVT_GAD_BUTTON_HIT:
                     // Identify which button fired (by gadget handle)
                     if (m->gadget == btnCloseMe)
@@ -193,7 +201,25 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     if(m->gadget == btnAboutUs)
                         doAboutWindow(NULL);
 
+
+                    if(m->gadget == btnFileRequest){
+
+                        static char g_filebuf[256];
+
+                        CGFileRqParams p = {0};
+                        p.title = "Open File";
+                        p.initial_dir = "/";
+                        p.out_path = g_filebuf;
+                        p.out_cap  = (int32_t)sizeof(g_filebuf);
+                        p.user     = (void*)0xC0FFEE;   // test cookie (optional)
+
+                        g_filebuf[0] = '\0';
+
+                        g_filerqWin = SBOS_OpenFileRequester(win, &p);
+                        printf("[MAIN] OpenFileRequester -> win=%u\n", (unsigned)g_filerqWin);
+                    }
                     break;
+                /////////////////////////////////////////////////////////////////////////////////////////
 
                 case CGEVT_GAD_SCROLL_CHANGED:
                     printf("SCROLL: %lu\n", m->a);
@@ -205,7 +231,6 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 
                 case CGEVT_GAD_RADIO_CHANGED:
                     printf("RADIO checked %d, grp:%d, gad_id:%d\n", m->a, m->b, m->gadget);
-
                     break;
                 default:
                     break;
@@ -234,6 +259,22 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     //SBOS_destroyWindow(win);
                     //return;
                     break;
+
+
+                /// FILE REQUEST DEMO ///////////////////////////////////////////////////////////////////
+                case CGEVT_SYS_FILERQ_DONE: {
+                    int ok = (int)m->a;
+                    void *cookie = MSG_AS_PTR(void, m->b);
+                    char *outp = MSG_AS_PTR(char, m->c);
+                    SBXWindowId rq = (SBXWindowId)m->d;
+
+                    printf("[MAIN] FILERQ_DONE ok=%d rq=%u cookie=%p path='%s'\n",
+                           ok, (unsigned)rq, cookie, outp ? outp : "(null)");
+
+                    // optional: track/clear
+                    if (rq == g_filerqWin) g_filerqWin = SBW_INVALID_ID;
+                } break;
+                /////////////////////////////////////////////////////////////////////////////////////////
 
                 default: break;
             }
@@ -275,7 +316,7 @@ void createBasicDesktopTest(){
 
 
     // WINDOW 2 -----------------------
-    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 200, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 230, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setWindowProc(winMain2, BasicWindowMAIN);
     SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
@@ -283,6 +324,8 @@ void createBasicDesktopTest(){
 
 
     btnCloseMe = SBOS_CreateButton(winMain2, 120, 100, 50, 24, "CLOSE", GAD_TOOL_DEFAULT);
+
+    btnFileRequest = SBOS_CreateButton(winMain2, 10, 160, 150, 24, "FILE_REQ", GAD_TOOL_DEFAULT);
 
     CGGadgetHandle chk1 = SBOS_CreateCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
     SBOS_enableGadget(chk1, 0);

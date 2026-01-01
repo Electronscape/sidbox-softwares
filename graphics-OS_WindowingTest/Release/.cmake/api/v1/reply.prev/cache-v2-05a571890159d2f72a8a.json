@@ -6939,7 +6939,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/local"
+			"value" : "/tmp"
 		},
 		{
 			"name" : "graphics-gui_testing_BINARY_DIR",

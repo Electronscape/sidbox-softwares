@@ -67,6 +67,8 @@ qt_add_executable(graphics-gui_testing
     codergirl/cg_gad_gridselect.cpp
     codergirl/cg_msghandler.cpp
     codergirl/cg_msghandler.h
+    codergirl/lib_filerequest.cpp
+    codergirl/lib_filerequest.h
 
 )
 

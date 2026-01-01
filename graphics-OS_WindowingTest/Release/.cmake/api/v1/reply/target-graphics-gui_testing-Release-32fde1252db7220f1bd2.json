@@ -71,13 +71,13 @@
 			{
 				"command" : 4,
 				"file" : 1,
-				"line" : 95,
+				"line" : 97,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
 				"file" : 1,
-				"line" : 78,
+				"line" : 80,
 				"parent" : 0
 			},
 			{
@@ -296,7 +296,8 @@
 				41,
 				45,
 				47,
-				48
+				48,
+				50
 			]
 		}
 	],
@@ -383,8 +384,8 @@
 			"sourceIndexes" : 
 			[
 				0,
-				50,
-				51
+				52,
+				53
 			]
 		},
 		{
@@ -413,7 +414,8 @@
 				41,
 				45,
 				47,
-				48
+				48,
+				50
 			]
 		},
 		{
@@ -444,7 +446,8 @@
 				43,
 				44,
 				46,
-				49
+				49,
+				51
 			]
 		},
 		{
@@ -458,7 +461,7 @@
 			"name" : "CMake Rules",
 			"sourceIndexes" : 
 			[
-				52
+				54
 			]
 		}
 	],
@@ -737,6 +740,17 @@
 		{
 			"backtrace" : 4,
 			"path" : "codergirl/cg_msghandler.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 4,
+			"compileGroupIndex" : 0,
+			"path" : "codergirl/lib_filerequest.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"path" : "codergirl/lib_filerequest.h",
 			"sourceGroupIndex" : 2
 		},
 		{

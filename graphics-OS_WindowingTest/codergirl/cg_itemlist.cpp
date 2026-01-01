@@ -154,6 +154,7 @@ void listitem_free(ItemLists_t *list){
     fastFree(list);
 }
 
+// YOUR PROGRAM MUST FREE THIS MANUALLY WHEN YOU'RE DONE WITH IT, unless you like memory packman!
 void SBOS_destroyItemList(ItemLists_t *list){
     listitem_free(list);
 }

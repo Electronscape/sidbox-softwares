@@ -39,6 +39,10 @@ typedef enum {
     CGEVT_WIN_ZORDER          ,
     CGEVT_WIN_MAXRESTORED     ,
     CGEVT_WIN_MINIMISE        ,
+
+//- system reserved events
+    CGEVT_SYS_FILERQ_DONE     = 0x8000u, // a feed back for when a file requester is done :)
+    CGEVT_SYS_FILERQ_CHANGED  = 0x8001u, // if list changed (might be useful)
 } CGEventType;
 
 typedef struct CGMessage_t {
@@ -55,6 +59,9 @@ typedef struct CGMessage_t {
 
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
+#define MSG_PTR(p)      ((int32_t)(uintptr_t)(p))
+#define MSG_AS_PTR(t,p) ((t*)(uintptr_t)(p))
+
 int16_t cg_os_messagehandler(uint8_t msgticks);
 uint8_t SBOS_PostMessage(const CGMessage_t *m);
 uint8_t SBOS_PopMessage(CGMessage_t *out);

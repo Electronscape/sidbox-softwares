@@ -155,6 +155,7 @@ static GADGET_BASE_T* base_alloc(void){
             GADGET_BASE_T *g = &g_basePool[i];
             g->gadgetSlotUsed = 1;
             g->handleGen++;          // new lifetime
+            if (g_basePool[i].handleGen == 0) g_basePool[i].handleGen = 1;
             g->slotIndex = i;        // <-- key for Option B
             return g;
         }
@@ -391,12 +392,18 @@ static void lbl_free(GAD_LABEL_T *lb){
 }
 
 static void lb_free(GAD_LISTBOX_T *lb){
+    // Listbox's dont OWN the list attached.
+    if (!lb) return;
+    lb->items = NULL;   // detach; owner frees the list
+    lb->used = 0;
+    /*
     if (!lb) return;
     if (lb->items) {
         SBOS_destroyItemList(lb->items);
         lb->items = NULL;
     }
     lb->used = 0;
+    */
 }
 
 static void rad_free(GAD_RADIO_T *r){
@@ -821,7 +828,8 @@ CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w
     return gHndle;
 }
 
-
+// NOTE: items is caller-owned. ListBox will NOT free it.
+// Caller must keep it alive while ListBox is using it and free it after destroying the ListBox/window.
 CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
