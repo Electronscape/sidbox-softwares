@@ -5,9 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "cg_wintype.h"
-#include "lib_filerequest.h"
+
+#include "cg_windowex.h"     // SBXWindowId
 #include "cg_gad_listbox.h"
 
+#include "lib_filerequest.h"
 
 
 typedef struct LIB_FILEREQUEST_PRIVATE {
@@ -31,8 +33,51 @@ typedef struct LIB_FILEREQUEST_PRIVATE {
 
 static struct LIB_FILEREQUEST_PRIVATE *g_filerq_state[MAX_WINDOWS];
 
+#define MAX_FILERQS 4  // pick a sane limit
+
+static LIB_FILEREQUEST_PRIVATE g_filerq_pool[MAX_FILERQS];
+static uint8_t g_filerq_used[MAX_FILERQS];
+
+
+
+uint16_t SBOS_filerq_used_count(void){
+    uint16_t n = 0;
+    for (int i = 0; i < MAX_FILERQS; i++)
+        if (g_filerq_used[i]) n++;
+    return n;
+}
+
+uint16_t SBOS_filerq_capacity (void){ return MAX_FILERQS;}
+uint16_t SBOS_filerq_poolsize (void){ return sizeof(g_filerq_pool); }
+uint16_t SBOS_filerq_poolsize1(void){ return sizeof(g_filerq_pool[0]); }
+
+static LIB_FILEREQUEST_PRIVATE* filerq_alloc(void){
+    for (int i = 0; i < MAX_FILERQS; i++){
+        if (!g_filerq_used[i]){
+            g_filerq_used[i] = 1;
+            memset(&g_filerq_pool[i], 0, sizeof(LIB_FILEREQUEST_PRIVATE));
+            return &g_filerq_pool[i];
+        }
+    }
+    return NULL;
+}
+
+static void filerq_free(LIB_FILEREQUEST_PRIVATE *st){
+    if (!st) return;
+    int idx = (int)(st - g_filerq_pool);
+    if (idx >= 0 && idx < MAX_FILERQS){
+        g_filerq_used[idx] = 0;
+    }
+}
+
+
+
+
+
+
+
 // prototypes at the top here
-static void FileRqProc(SBXWindowId win, const CGMessage_t *m);
+static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m);
 static void filerq_post_done(LIB_FILEREQUEST_PRIVATE *st, int ok);
 static void filerq_destroy(SBXWindowId filerq_winhnd);
 
@@ -55,12 +100,13 @@ static void filerq_post_done(LIB_FILEREQUEST_PRIVATE *st, int ok){
                      MSG_PTR(st->user),
                      MSG_PTR(st->out_file),
                      (int32_t)st->selfWinId);
-
-    printf("SYS:FILEREQ:%s\n", st->out_file);
 }
 
 static void filerq_destroy(SBXWindowId filerq_winhnd){
     if (filerq_winhnd >= MAX_WINDOWS) return;
+    //LIB_FILEREQUEST_PRIVATE *st = g_filerq_state[filerq_winhnd];
+    //g_filerq_state[filerq_winhnd] = NULL;
+
     LIB_FILEREQUEST_PRIVATE *st = g_filerq_state[filerq_winhnd];
     g_filerq_state[filerq_winhnd] = NULL;
 
@@ -79,6 +125,7 @@ static void filerq_destroy(SBXWindowId filerq_winhnd){
         // }
         //listitem_free(&st->fileListData);   // this handles the list free item
         listitem_deinit(&st->fileListData);
+        filerq_free(st);
     }
 
     SBOS_destroyWindow(filerq_winhnd);
@@ -86,15 +133,12 @@ static void filerq_destroy(SBXWindowId filerq_winhnd){
 
 static void filerq_build_outpath(LIB_FILEREQUEST_PRIVATE *st){
     if (!st || !st->out_file || st->out_size <= 1) return;
-
     st->out_file[0] = '\0';
-
     if (st->selected_idx < 0) return;
 
     // You need a getter for ItemLists_t by index.
     // Replace this call with your real accessor.
     const char *item = listitem_get(&st->fileListData, st->selected_idx);
-    printf("BuildOutPath: ");
     if (!item || !item[0]) return;
 
     // Build: currdir + (maybe slash) + item
@@ -121,13 +165,13 @@ static void filerq_build_outpath(LIB_FILEREQUEST_PRIVATE *st){
 }
 
 
-static void FileRqProc(SBXWindowId win, const CGMessage_t *m){
+static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
     if (!m || m->mtype != CGMSG_GADGET && m->mtype != CGMSG_WINDOW) {
         // Depending on your enum values, you can just accept all and switch on eventClass.
     }
 
     LIB_FILEREQUEST_PRIVATE *st = filerq_get(win);
-    if (!st) return;
+    if (!st) return(CGPROC_DEFAULT);
 
     switch(m->eventClass){
 
@@ -177,6 +221,7 @@ static void FileRqProc(SBXWindowId win, const CGMessage_t *m){
     default:
         break;
     }
+    return(CGPROC_COMPLETE);
 }
 
 SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParams *p){
@@ -187,10 +232,12 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     // LIB_FILEREQUEST_PRIVATE *st = (LIB_FILEREQUEST_PRIVATE*)malloc(sizeof(*st));
     // if (!st) return SBW_INVALID_ID;
 
-    static LIB_FILEREQUEST_PRIVATE st_store; // TEMP: single instance (replace with pool/malloc)
-    LIB_FILEREQUEST_PRIVATE *st = &st_store;
+    LIB_FILEREQUEST_PRIVATE *st = filerq_alloc();
+    if (!st) return SBW_INVALID_ID;
+
 
     memset(st, 0, sizeof(*st));
+
     st->parentWinId = owner_winhnd;
     st->out_file = p->out_path;
     st->out_size = (uint32_t)p->out_cap;
@@ -238,8 +285,8 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
 
     // Create gadgets
     st->fListBox = SBOS_CreateListBox(win, 8, 8, 264, 140, &st->fileListData, GAD_TOOL_DEFAULT);
-    st->btnOk    = SBOS_CreateButton (win, 140, 154, 60, 18, "OK",     GAD_TOOL_DEFAULT);
-    st->btnCancel= SBOS_CreateButton (win, 210, 154, 60, 18, "Cancel", GAD_TOOL_DEFAULT);
+    st->btnOk    = SBOS_CreateButton (win, 140, 154, 60, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
+    st->btnCancel= SBOS_CreateButton (win, 210, 154, 60, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
 
     SBOS_paintAllWindows();
     return win;

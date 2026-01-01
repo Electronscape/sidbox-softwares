@@ -13,7 +13,16 @@
 
 #define     WINDOW_TITLE_MAX_LEN    64
 
-typedef void (*MSGWndProc)(SBXWindowId win, const CGMessage_t *m);
+// WINDOW HANDLER EVENT RETURN RESULTS // GOD AM TIRED..... BLAH BLAH BLAH
+typedef enum {
+    CGPROC_DEFAULT      = 0x00,  // not handled, let default / others see it
+    CGPROC_NORMAL       = 0x01,  // handled, but propagation allowed
+    // anything in between is likely a use return path
+    CGPROC_COMPLETE     = 0xFF   // handled AND stop propagation
+} CGWindowProcRes;
+
+
+typedef CGWindowProcRes (*MSGWndProc)(SBXWindowId win, const CGMessage_t *m);
 
 // keep these all 32bits
 typedef struct {

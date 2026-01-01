@@ -16,6 +16,8 @@
 #include "cg_gad_radio.h"
 #include "cg_gad_scrollbar.h"
 
+#include "lib_filerequest.h"
+#include "lib_msgbox.h"
 
 
 
@@ -35,7 +37,7 @@ GAD_SCROLLBAR_T  g_sbPool  [MAX_SCROLLBARS];
 
 
 typedef struct {
-    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, gsPool;
+    size_t basePool, btnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, gsPool, msgPool, frqPool;
 } SBOS_GadgetPoolBytes;
 
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
@@ -49,6 +51,10 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     b.lbPool   = sizeof(g_lbPool);
     b.lblPool  = sizeof(g_lblPool);
     b.gsPool   = sizeof(g_gsPool);
+
+    b.msgPool = SBOS_msgbox_poolsize();
+    b.frqPool = SBOS_filerq_poolsize();
+
     return b;
 }
 
@@ -81,6 +87,12 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     for (int i = 0; i < MAX_LISTBOXES; i++)   if (g_lbPool[i].used)  c.lb_used++;
     for (int i = 0; i < MAX_LABELS; i++)      if (g_lblPool[i].used) c.lbl_used++;
     for (int i = 0; i < MAX_GRIDSELECTS; i++) if (g_gsPool[i].used)  c.gs_used++;
+
+    c.filerq_used = SBOS_filerq_used_count();
+    c.msgbox_used = SBOS_msgbox_used_count();
+
+    //c.filerq_cap  = SBOS_filerq_capacity();
+    //c.msgbox_cap  = SBOS_msgbox_capacity();
 
     return c;
 }

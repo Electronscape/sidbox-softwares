@@ -2,8 +2,7 @@
 #define LIB_FILEREQUEST_H
 
 #include <stdint.h>
-#include "cg_windowex.h"     // SBXWindowId
-#include "cg_msghandler.h"   // MSG_PTR, MSG_AS_PTR
+#include "cg_type.h"
 
 
 // Result event posted back to owner window.
@@ -30,6 +29,11 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
 
 // Optional: programmatically close (cancel) an existing requester.
 void SBOS_CloseFileRequester(SBXWindowId filerq_winhnd);
+
+uint16_t SBOS_filerq_used_count(void);
+uint16_t SBOS_filerq_capacity(void);
+uint16_t SBOS_filerq_poolsize(void);
+uint16_t SBOS_filerq_poolsize1(void);
 
 
 #endif // LIB_FILEREQUEST_H

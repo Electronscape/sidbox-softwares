@@ -25,6 +25,7 @@
 #include "codergirl/cg_gad_gridselect.h"
 
 #include "codergirl/lib_filerequest.h"
+#include "codergirl/lib_msgbox.h"
 
 float winScale = 1.0f;
 int currentScale = 1;
@@ -63,6 +64,7 @@ static CGGadgetHandle   btnCloseMe;
 static CGGadgetHandle   btnAboutUs;
 
 static CGGadgetHandle   btnFileRequest;
+static CGGadgetHandle   btnMessageTest;
 
 // a CUSTOM function for a scroll bar
 void BitDemoScrolly1(void *s){
@@ -182,9 +184,9 @@ void doAboutWindow(void *s){
 ////////// this section would be in our client software anyway so treat it as such -------------
 
 static SBXWindowId g_filerqWin = SBW_INVALID_ID;
-static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
+static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 {
-    if (!m) return;
+    if (!m) return(CGPROC_DEFAULT);
 
     //printf("btnAboutUs: %lu\n", btnAboutUs);
     //printf("EVENT : message_type %lu, class:%lu, gadget_id:%lu\n", m->mtype, m->eventClass, m->gadget);
@@ -201,6 +203,32 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     if(m->gadget == btnAboutUs)
                         doAboutWindow(NULL);
 
+                    if(m->gadget == btnMessageTest){
+                        /*
+                            MSGBOXF_OK          = 0x00,   // OK only
+                            MSGBOXF_OKCANCEL    = 0x01,   // OK + Cancel
+                            MSGBOXF_YESNO       = 0x02,   // Yes + No
+                            MSGBOXF_YESNOCANCEL = 0x03    // Yes + No + Cancel (optional)
+                        */
+
+                        SBOS_MessageBoxSimple(win, "test message",
+                                              "hello this is a text box! bit of a long text so i want to see if the box expands\n"
+                                              "Next line testing\n"
+                                              "Just say Hello!\n"
+                                              "Its time to play\n"
+                                              "with other buttons\n"
+                                              "Can you do it?\n"
+                                              "YEY PLEASE!\n"
+                                              "They More lines\n"
+                                              "Stranger Things!!\n"
+                                              "I just pooped my self!",
+                                              MSGBOXF_YESNOCANCEL);
+                        /*
+                        SBOS_MessageBoxSimple(win, "test message",
+                                              "\ngogk\n ",
+                                              MSGBOXF_YESNOCANCEL);
+                        */
+                    }
 
                     if(m->gadget == btnFileRequest){
 
@@ -257,7 +285,7 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 
                 case CGEVT_WIN_CLOSE_REQUEST:
                     //SBOS_destroyWindow(win);
-                    //return;
+                    return(CGPROC_NORMAL); // PREVENT window from closing!
                     break;
 
 
@@ -274,6 +302,15 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     // optional: track/clear
                     if (rq == g_filerqWin) g_filerqWin = SBW_INVALID_ID;
                 } break;
+
+                /// MESSAGEBOX RESULTS //////////////////////////////////////////////////////////////////
+                case CGEVT_SYS_MSGBOX_DONE: {
+                    int choice = (int)m->a;
+                    void *cookie = MSG_AS_PTR(void, m->b);
+                    SBXWindowId msgboxWin = (SBXWindowId)m->d;
+
+                    printf("MsgBox done: choice=%d win=%u cookie=%p\n", choice, msgboxWin, cookie);
+                } break;
                 /////////////////////////////////////////////////////////////////////////////////////////
 
                 default: break;
@@ -286,7 +323,8 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
             break;
     }
 
-    SBOS_DefaultWindowProc(win, m);
+
+    return(CGPROC_COMPLETE);
 }
 
 SBXWindowId winMain;
@@ -319,7 +357,7 @@ void createBasicDesktopTest(){
     SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 230, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setWindowProc(winMain2, BasicWindowMAIN);
-    SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
+    btnMessageTest = SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     //SBOS_enableGadget(btn1, 0);// disable the button
 
 

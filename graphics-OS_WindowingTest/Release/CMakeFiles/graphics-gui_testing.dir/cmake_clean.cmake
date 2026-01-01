@@ -41,6 +41,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o"

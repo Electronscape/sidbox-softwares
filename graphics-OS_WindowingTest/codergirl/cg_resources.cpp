@@ -22,6 +22,9 @@
 #include "cg_gad_label.h"
 #include "cg_gad_gridselect.h"
 
+#include "lib_filerequest.h"
+#include "lib_msgbox.h"
+
 
 
 sbx_window_t     gui_windows[MAX_WINDOWS];
@@ -120,6 +123,9 @@ void SBOS_print_ui_usage(void){
     // Used bytes (counts * sizeof element)
     size_t u_windows = (size_t)uc.win_used * sizeof(gui_windows[0]);
 
+
+    u_windows += (rb.frqPool + rb.msgPool);
+
     // base_used only if meaningful; else set to 0
     size_t u_base    = (size_t)uc.base_used * SBOS_GetBasePoolSize();
 
@@ -139,9 +145,21 @@ void SBOS_print_ui_usage(void){
     // Note: zorder tables are always reserved+used; same for gui_used[].
     size_t u_total = sizeof(g_ui) + u_windows + r_used + r_zorder + r_zcount + u_gadgets;
 
+    size_t totalWindows_sizes;
+    size_t WindowSize;
+
+    totalWindows_sizes = sizeof(gui_windows);
+    totalWindows_sizes += SBOS_msgbox_poolsize();
+    totalWindows_sizes += SBOS_filerq_poolsize();
+
+    WindowSize = sizeof(gui_windows[0]);
+    WindowSize += SBOS_msgbox_poolsize1();
+    WindowSize += SBOS_filerq_poolsize1();
+
+
     printf("\n[SBOS] UI memory usage (live)\n");
     printf("--------------------------------------------------\n");
-    printf("Windows            : %u / %u\n", uc.win_used, (unsigned)(sizeof(gui_windows)/sizeof(gui_windows[0])));
+    printf("Windows            : %u / %u\n", uc.win_used, (unsigned)( totalWindows_sizes / WindowSize ));
     printf("Buttons            : %u / %u\n", uc.btn_used, (unsigned)(rb.btnPool / sizeof(GAD_BUTTON_T)));
     printf("Checkboxes         : %u / %u\n", uc.chk_used, (unsigned)(rb.chkPool / sizeof(GAD_CHECKBOX_T)));
     printf("Radios             : %u / %u\n", uc.rad_used, (unsigned)(rb.radPool / sizeof(GAD_RADIO_T)));
@@ -178,6 +196,11 @@ static size_t ui_reserved_bytes(void)
     size_t r_ui      = sizeof(g_ui);
 
     size_t r_windows = sizeof(gui_windows);
+    size_t r_msgbox = SBOS_msgbox_used_count();
+    size_t r_filerq = SBOS_filerq_used_count();
+
+    r_windows += (r_msgbox + r_filerq);
+
     size_t r_used    = sizeof(gui_used);
     size_t r_zorder  = sizeof(g_winZorder);
     size_t r_zcount  = sizeof(g_winZcount);
@@ -211,6 +234,15 @@ static size_t ui_used_bytes(void)
 
     size_t u_gadgets = u_base +
                        u_bv + u_btn + u_chk + u_gs + u_lbl + u_lb + u_rad + u_sb;
+
+
+    size_t u_msb  = SBOS_msgbox_used_count();
+    size_t u_frq  = SBOS_filerq_capacity();
+    //c.filerq_used = SBOS_filerq_used_count();
+    //c.msgbox_used = SBOS_msgbox_used_count();
+
+    u_windows += (u_msb + u_frq);
+
 
     // Treat these as "always consumed" (they're fully reserved tables)
     size_t always = sizeof(g_ui) + sizeof(gui_used) + sizeof(g_winZorder) + sizeof(g_winZcount);

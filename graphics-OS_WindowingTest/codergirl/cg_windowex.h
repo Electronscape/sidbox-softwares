@@ -35,17 +35,17 @@
 #define     WIN_BORDER              4       // border around the window frame
 
 
-#define SB_BDOCK_OFFSET_X   (-2 )
-#define SB_BDOCK_OFFSET_Y   ( 2 )
+#define     SB_BDOCK_OFFSET_X   (-2 )
+#define     SB_BDOCK_OFFSET_Y   ( 2 )
 
-#define SB_RDOCK_OFFSET_X   ( 2 )
-#define SB_RDOCK_OFFSET_Y   ( 1 )
-
-
+#define     SB_RDOCK_OFFSET_X   ( 2 )
+#define     SB_RDOCK_OFFSET_Y   ( 1 )
 
 #define     SBW_INVALID_ID          ((SBXWindowId)0xFF)
 
 
+#define     DEF_DIALOG_BUTTON_WIDTH      80
+#define     DEF_DIALOG_BUTTON_HEIGHT     22
 
 
 typedef enum {
@@ -109,6 +109,14 @@ typedef struct {
     uint16_t lb_used;   // list box
     uint16_t lbl_used;  // list box
     uint16_t gs_used;   // list box
+
+    // NEW: library dialogs
+    uint16_t filerq_used;
+    uint16_t msgbox_used;
+
+    // Optional: capacity too (handy for printing)
+    //uint16_t filerq_cap;
+    //uint16_t msgbox_cap;
 } SBOS_UiUsageCounts;
 
 SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void);
@@ -139,7 +147,7 @@ void            SBOS_bringToFront(SBXWindowId id);
 void            SBOS_setFocus(SBXWindowId id);
 
 SBXWindowId     SBOS_getWindowByGadget(const GADGET_BASE_T *b);
-void            SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m);
+CGWindowProcRes SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m);
 uint8_t         SBOS_isWindowValid(SBXWindowId id);
 
 

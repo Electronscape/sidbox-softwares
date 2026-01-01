@@ -73,8 +73,14 @@ int16_t cg_os_messagehandler(uint8_t msgticks){
         sbx_window_t *w = SBOS_getWindow(m.winhnd);
 
         if (w && w->proc) {
-            //printf("MSG: winID: %lu, type: %u\n", m.winhnd, m.gadget);
-            w->proc(m.winhnd, &m);  // programmer runs here (may freeze themselves 😄)
+            if (!w) {
+                // window vanished, drop message safely
+                continue;
+            }
+            CGWindowProcRes r = CGPROC_DEFAULT;
+
+            if (w->proc) r = w->proc(m.winhnd, &m);
+            if (r == CGPROC_DEFAULT) SBOS_DefaultWindowProc(m.winhnd, &m);
             g_msg_sent++;
         }
         triggered = 1;

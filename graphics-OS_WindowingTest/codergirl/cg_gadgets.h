@@ -44,7 +44,7 @@
 
 
 #define     MAX_GADGETS_PER_WINDOW  16   // this is low, but its for testing. WILL increase this for a normal size
-#define     DEF_GADGET_TEXT_SIZE    128
+#define     DEF_GADGET_TEXT_SIZE    256
 
 
 

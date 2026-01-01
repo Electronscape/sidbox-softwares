@@ -227,11 +227,11 @@ void SBOS_sendToBack(SBXWindowId id){
 
 
 
-static void DefaultWindowProc(SBXWindowId win, const CGMessage_t *m)
+static CGWindowProcRes DefaultWindowProc(SBXWindowId win, const CGMessage_t *m)
 {
-    if (!m) return;
+    if (!m) return(CGPROC_DEFAULT);
 
-    if (m->mtype != CGMSG_WINDOW) return;
+    if (m->mtype != CGMSG_WINDOW) return(CGPROC_DEFAULT);
 
     switch (m->eventClass) {
 
@@ -264,10 +264,11 @@ static void DefaultWindowProc(SBXWindowId win, const CGMessage_t *m)
     default:
         break;
     }
+    return(CGPROC_COMPLETE);// we got here so everything was good
 }
 
-void SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m){
-    DefaultWindowProc(win, m);
+CGWindowProcRes SBOS_DefaultWindowProc(SBXWindowId win, const CGMessage_t *m){
+    return DefaultWindowProc(win, m);
 }
 
 

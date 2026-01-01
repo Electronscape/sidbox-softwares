@@ -27,6 +27,7 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -148,6 +149,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o:
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 
