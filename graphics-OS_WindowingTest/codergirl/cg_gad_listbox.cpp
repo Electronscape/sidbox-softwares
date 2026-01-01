@@ -367,4 +367,17 @@ uint32_t SBOS_setListbox_top(GADGET_BASE_T *g, int top){
 
 
 
+int16_t SBOS_ListBoxGetSelectedIndex(CGGadgetHandle h){
+    GADGET_BASE_T *b = SBOS_gadgetFromHandle(h);
+    if (!b || b->gadgetType != GAD_LISTBOX || !b->gadget) return -1;
+    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)b->gadget;
+    return lb->sel;
+}
+
+ItemLists_t* SBOS_ListBoxGetItems(CGGadgetHandle h){
+    GADGET_BASE_T *b = SBOS_gadgetFromHandle(h);
+    if (!b || b->gadgetType != GAD_LISTBOX || !b->gadget) return NULL;
+    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)b->gadget;
+    return lb->items;
+}
 

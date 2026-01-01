@@ -39,5 +39,7 @@ uint32_t onMouseReleaseListBox(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
 uint32_t SBOS_setListbox_top(GADGET_BASE_T *g, int top);
+int16_t SBOS_ListBoxGetSelectedIndex(CGGadgetHandle h);
+ItemLists_t* SBOS_ListBoxGetItems(CGGadgetHandle h);
 
 #endif // CG_GAD_LISTBOX_H

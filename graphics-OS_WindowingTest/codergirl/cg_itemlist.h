@@ -21,9 +21,10 @@ typedef struct {
 
 
 
-
+// INTERNALS ------------------------------------------------------------------------------------------------------
 void listitem_init(ItemLists_t *list);
 void listitem_clear(ItemLists_t *list);
+
 void listitem_free(ItemLists_t *list);
 
 
@@ -40,9 +41,10 @@ const char* listitem_get(const ItemLists_t *list, uint16_t idx);
 uint32_t listitem_count(const ItemLists_t *list);
 
 
-// API
-
+// API INTERFACES -------------------------------------------------------------------------------------------------
 void SBOS_destroyItemList(ItemLists_t *list);
+const char* SBOS_listitem_getString(const ItemLists_t *list, int index);
+void listitem_deinit(ItemLists_t *list);    // hmm feels like this should be internal
 
 
 #endif // CG_ITEMLIST_H

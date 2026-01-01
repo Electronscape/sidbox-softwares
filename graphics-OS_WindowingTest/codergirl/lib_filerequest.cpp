@@ -6,6 +6,7 @@
 #include <string.h>
 #include "cg_wintype.h"
 #include "lib_filerequest.h"
+#include "cg_gad_listbox.h"
 
 
 
@@ -54,6 +55,8 @@ static void filerq_post_done(LIB_FILEREQUEST_PRIVATE *st, int ok){
                      MSG_PTR(st->user),
                      MSG_PTR(st->out_file),
                      (int32_t)st->selfWinId);
+
+    printf("SYS:FILEREQ:%s\n", st->out_file);
 }
 
 static void filerq_destroy(SBXWindowId filerq_winhnd){
@@ -74,11 +77,49 @@ static void filerq_destroy(SBXWindowId filerq_winhnd){
         //     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)gb->gadget;
         //     lb->items = NULL;
         // }
-        listitem_free(&st->fileListData);   // this handles the list free item
+        //listitem_free(&st->fileListData);   // this handles the list free item
+        listitem_deinit(&st->fileListData);
     }
 
     SBOS_destroyWindow(filerq_winhnd);
 }
+
+static void filerq_build_outpath(LIB_FILEREQUEST_PRIVATE *st){
+    if (!st || !st->out_file || st->out_size <= 1) return;
+
+    st->out_file[0] = '\0';
+
+    if (st->selected_idx < 0) return;
+
+    // You need a getter for ItemLists_t by index.
+    // Replace this call with your real accessor.
+    const char *item = listitem_get(&st->fileListData, st->selected_idx);
+    printf("BuildOutPath: ");
+    if (!item || !item[0]) return;
+
+    // Build: currdir + (maybe slash) + item
+    // Ensure currdir ends with '/' or add one.
+    char tmp[512]; // temp join buffer
+    tmp[0] = '\0';
+
+    strncpy(tmp, st->currdir, sizeof(tmp) - 1);
+    tmp[sizeof(tmp) - 1] = '\0';
+
+    size_t n = strlen(tmp);
+    if (n && tmp[n - 1] != '/'){
+        if (n + 1 < sizeof(tmp)){
+            tmp[n] = '/';
+            tmp[n + 1] = '\0';
+        }
+    }
+
+    strncat(tmp, item, sizeof(tmp) - 1 - strlen(tmp));
+
+    // Copy into caller buffer (bounded)
+    strncpy(st->out_file, tmp, st->out_size - 1);
+    st->out_file[st->out_size - 1] = '\0';
+}
+
 
 static void FileRqProc(SBXWindowId win, const CGMessage_t *m){
     if (!m || m->mtype != CGMSG_GADGET && m->mtype != CGMSG_WINDOW) {
@@ -115,7 +156,19 @@ static void FileRqProc(SBXWindowId win, const CGMessage_t *m){
             filerq_post_done(st, 0);
             filerq_destroy(win);
         } else if (m->gadget == st->btnOk){
-            // TODO: validate selection, build out_file
+            // Build st->out_file = currdir + selected filename
+            int16_t sel = SBOS_ListBoxGetSelectedIndex(st->fListBox);
+            st->selected_idx = sel;
+
+            filerq_build_outpath(st);
+
+            // If nothing selected, treat as cancel (or just ignore)
+            if (!st->out_file || st->out_file[0] == '\0'){
+                filerq_post_done(st, 0);   // or: return; (to force user to select)
+                filerq_destroy(win);
+                break;
+            }
+
             filerq_post_done(st, 1);
             filerq_destroy(win);
         }
@@ -154,8 +207,8 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     const char *title = (p->title && p->title[0]) ? p->title : "Open File";
 
     // create requester window
-    SBXWindowId win = SBOS_createWindow(NULL, 40, 40, 280, 200, title,
-                                        SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_CLOSE | SBX_WF_MOVEABLE);
+    SBXWindowId win = SBOS_createWindow(NULL, 40, 40, 290, 206, title,
+                                        SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_CLOSE | SBX_WF_MOVEABLE | SBX_WF_ZORDER | SBX_WF_SCREENBOUND);
     if (win == SBW_INVALID_ID){
         // free(st);
         return SBW_INVALID_ID;
@@ -172,6 +225,15 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     listitem_add(&st->fileListData, "test1.txt");
     listitem_add(&st->fileListData, "test2.bmp");
     listitem_add(&st->fileListData, "docs/");
+    listitem_add(&st->fileListData, "monty1.sid");
+    listitem_add(&st->fileListData, "1_67YT-Turrican_III_Remix.sid");
+    listitem_add(&st->fileListData, "Bionic_Commando(+).sid");
+    listitem_add(&st->fileListData, "Co-Axis_Remix(+).sid");
+    listitem_add(&st->fileListData, "Mega_Apocalypse_remix.sid");
+    listitem_add(&st->fileListData, "Wiklund_-_Cheese.sid");
+    listitem_add(&st->fileListData, "1943.YM");
+    listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
+
 
 
     // Create gadgets

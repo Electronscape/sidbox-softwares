@@ -130,7 +130,23 @@ void listitem_clear(ItemLists_t *list){
     listitem_init(list);
 }
 
+
+void listitem_deinit(ItemLists_t *list){
+    if (!list) return;
+    for (uint16_t i = 0; i < list->count; i++){
+        if (list->items[i]) fastFree(list->items[i]);
+    }
+    if (list->items) fastFree(list->items);
+    list->items = NULL;
+    list->count = 0;
+    list->cap   = 0;
+}
+
 void listitem_free(ItemLists_t *list){
+    if (!list) return;
+    listitem_deinit(list);
+    fastFree(list);
+    /* keeping the below just incase
     if (!list) return;
 
     // Free all strings
@@ -152,6 +168,7 @@ void listitem_free(ItemLists_t *list){
     list->cap   = 0;
 
     fastFree(list);
+    */
 }
 
 // YOUR PROGRAM MUST FREE THIS MANUALLY WHEN YOU'RE DONE WITH IT, unless you like memory packman!
@@ -163,6 +180,16 @@ const char* listitem_get(const ItemLists_t *list, uint16_t idx){
     if (idx >= list->count) return NULL;
     return (const char *)list->items[idx];
 }
+
+const char* SBOS_listitem_getString(const ItemLists_t *list, int index){
+    if (!list) return NULL;
+    if (index < 0) return NULL;
+    if ((uint16_t)index >= list->count) return NULL;
+    return (const char*)list->items[(uint16_t)index];
+}
+
+
+
 
 uint32_t listitem_count(const ItemLists_t *list){
     return (list->count);

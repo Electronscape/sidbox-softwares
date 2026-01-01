@@ -208,7 +208,7 @@ static void BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 
                         CGFileRqParams p = {0};
                         p.title = "Open File";
-                        p.initial_dir = "/";
+                        p.initial_dir = "/music";
                         p.out_path = g_filebuf;
                         p.out_cap  = (int32_t)sizeof(g_filebuf);
                         p.user     = (void*)0xC0FFEE;   // test cookie (optional)
