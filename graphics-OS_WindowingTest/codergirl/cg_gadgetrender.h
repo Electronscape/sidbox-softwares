@@ -13,6 +13,7 @@ void draw_checkbox   (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_gridselect (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_label      (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_listbox    (const sbx_window_t *w, const GADGET_BASE_T *g);
+void draw_progbar    (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_radio      (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_scrollbar  (const sbx_window_t *w, const GADGET_BASE_T *g);
 

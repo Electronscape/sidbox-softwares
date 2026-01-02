@@ -1,7 +1,7 @@
 #ifndef CG_GAD_PROGBAR_H
 #define CG_GAD_PROGBAR_H
 
-#include "cg_wintype.h"
+//#include "cg_wintype.h"
 #include "cg_gadgets.h"
 
 #define FPEN_NOCHANGE   -1
@@ -32,5 +32,8 @@ typedef struct GAD_PROGBAR_T{
 extern GAD_PROGBAR_T g_pbPool [MAX_PROGBARS];
 
 
+// API ------------------------------------------------------------------------------------------------------------
+void    SBOS_setProgBarValue(CGGadgetHandle h, int16_t value);
+void    SBOS_setProgBarMinMax(CGGadgetHandle h, int16_t newMin, int16_t newMax);
 
 #endif // CG_GAD_PROGBAR_H

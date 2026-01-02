@@ -20,8 +20,9 @@
 #include "codergirl/cg_gad_listbox.h"
 #include "codergirl/cg_itemlist.h"
 #include "codergirl/cg_gad_button.h"
-#include "codergirl/cg_gad_canvas.h"
+//#include "codergirl/cg_gad_canvas.h"
 #include "codergirl/cg_gad_scrollbar.h"
+#include "codergirl/cg_gad_progbar.h"
 #include "codergirl/cg_gad_label.h"
 #include "codergirl/cg_gad_gridselect.h"
 
@@ -161,7 +162,7 @@ void doAboutWindow(void *s){
     SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
     CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 110,
                                           "SIDBOX OS - Version 1.0\n"
-                                          "Window Manager: \""UI_NAME"\"\n"
+                                          "Window Manager: \"" UI_NAME "\"\n"
                                           , GAD_TOOL_DEFAULT);
 
     txt = SBOS_CreateLabel(aboutWin, 14, 54, ABOUTWIN_TEXTWIDTH-10, 64,
@@ -246,7 +247,7 @@ static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                 /////////////////////////////////////////////////////////////////////////////////////////
 
                 case CGEVT_GAD_SCROLL_CHANGED:
-                    printf("SCROLL: %lu\n", m->a);
+                    printf("SCROLL: %d\n", m->a);
                     break;
 
                 case CGEVT_GAD_CHECK_CHANGED:
@@ -353,26 +354,30 @@ void createBasicDesktopTest(){
 
 
     // WINDOW 2 -----------------------
-    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 230, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 260, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setWindowProc(winMain2, BasicWindowMAIN);
     btnMessageTest = SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     //SBOS_enableGadget(btn1, 0);// disable the button
 
-
     btnCloseMe = SBOS_CreateButton(winMain2, 120, 100, 50, 24, "CLOSE", GAD_TOOL_DEFAULT);
 
     btnFileRequest = SBOS_CreateButton(winMain2, 10, 160, 150, 24, "FILE_REQ", GAD_TOOL_DEFAULT);
 
+    CGGadgetHandle pb1 = SBOS_CreateProgBar(winMain2, 10, 190, 150, 26, GAD_TOOL_DEFAULT);
+    SBOS_setProgBarMinMax(pb1, 0, 100);
+    SBOS_setProgBarValue(pb1, 75);
+
     CGGadgetHandle chk1 = SBOS_CreateCheckbox(winMain2, 10, 45, 160, 24, "Enable lasers", 0, GAD_TOOL_DEFAULT);
     SBOS_enableGadget(chk1, 0);
     SBOS_CreateCheckbox(winMain2, 10, 65, 160, 24, "Enable gerbils", 0, GAD_TOOL_DEFAULT);
-    CGGadgetHandle rad2 = SBOS_CreateRadioButton(winMain2, 180, 10, 100, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
+    CGGadgetHandle rad2 =
+    SBOS_CreateRadioButton(winMain2, 180, 10,  80, 18, "Easy",   0, 1, GAD_TOOL_DEFAULT);
     SBOS_enableGadget(rad2, 0);
-    SBOS_CreateRadioButton(winMain2, 180, 30, 100, 18, "Medium", 0, 0, GAD_TOOL_DEFAULT);
-    SBOS_CreateRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
-    SBOS_CreateRadioButton(winMain2, 180, 100, 100, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
-    SBOS_CreateRadioButton(winMain2, 180, 120, 100, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
+    SBOS_CreateRadioButton(winMain2, 180, 30,  80, 18, "Medium", 0, 0, GAD_TOOL_DEFAULT);
+    SBOS_CreateRadioButton(winMain2, 180, 50,  80, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
+    SBOS_CreateRadioButton(winMain2, 180, 100, 80, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
+    SBOS_CreateRadioButton(winMain2, 180, 120, 80, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
     SBOS_CreateScrollbar(winMain2,
                          10, 140, 150, 16,
                          SB_ORIENT_HORZ,
@@ -385,11 +390,12 @@ void createBasicDesktopTest(){
 
     CGGadgetHandle scrrb =
     SBOS_CreateScrollbar(winMain2,
-                                260, 6, 20, 150,
-                                                SB_ORIENT_VERT,
-                                                0, 120,
-                                                5,  50,
-                                                GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+                        280, 6, 20, 150,
+                        SB_ORIENT_VERT,
+                        0, 120,
+                        5,  50,
+                        GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+
     SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1); // attach this scrollbar to the function
     SBOS_CreateScrollbar(winMain2,
                          0,0,0,0,
@@ -400,11 +406,11 @@ void createBasicDesktopTest(){
 
     CGGadgetHandle winScroll =
     SBOS_CreateScrollbar(winMain2,
-                                                    0,0,0,0,
-                                                    SB_ORIENT_VERT,
-                                                    0, 100,
-                                                    1,  25,
-                                                    GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
+                        0,0,0,0,
+                        SB_ORIENT_VERT,
+                        0, 100,
+                        1,  25,
+                        GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
 
     //SBOS_setScrollBarCallBack(winScroll, &UpdateMenuLabel); // attach this scrollbar to the function
 
@@ -605,7 +611,7 @@ Dialog::Dialog(QWidget *parent)
 
     QTimer *osMessageHandlerTMR = new QTimer(this);
     connect(osMessageHandlerTMR, &QTimer::timeout, this, [=](){
-        if(cg_os_messagehandler(1)){
+        if(cg_os_messagehandler(4)){
             SBOS_paintAllWindows();
             updateGFXScreen();
         }

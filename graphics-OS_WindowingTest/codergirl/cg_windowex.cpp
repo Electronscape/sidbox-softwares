@@ -950,6 +950,7 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
             case GAD_GRIDSELECT: draw_gridselect(w, g); break;
             case GAD_LABEL:      draw_label(w, g);      break;
             case GAD_LISTBOX:    draw_listbox(w, g);    break;
+            case GAD_PROGBAR:    draw_progbar(w, g);    break;
             case GAD_RADIO:      draw_radio(w, g);      break;
             case GAD_SCROLLBAR:  draw_scrollbar(w, g);  break;
 

@@ -94,8 +94,6 @@ typedef enum {
     GAD_GRIDSEL_TEXT_INVERT  = (1 << 1),   // allows teh text to be inverted colours
 } GSEL_FLAG_T;
 
-
-
 // control types
 typedef enum GADGET_CLASS_T {
     GAD_NULL        = 0,
@@ -111,10 +109,6 @@ typedef enum GADGET_CLASS_T {
     GAD_SCROLLBAR
 } GADGET_CLASS_T;
 
-
-
-
-
 typedef struct GAD_HDR_T {
     GADGET_RECT_T   rect;           // the actionable area (container hit area, basic rectangle info)
     uint32_t        flags;          // flags for this gadget
@@ -124,13 +118,11 @@ typedef struct GAD_HDR_T {
     SBXWindowId     winhnd;         // the window ID, the handler number
     fnCallback      callbackRouteA; // the call back attached for events
     CGGadgetHandle  self;           // self handle id
-
 } GAD_HDR_T;
 
 typedef struct {
     /// GADGET HOST ///
     /// ** GLOBALE CONTROL HOST STUFF, SYSTEM NEEDS TO KNOW THE GADGET DIMENTIONS AND TYPE, EVERYTHING WELL WILL POINT TO THE ACTUAL GADGET LATER.
-
     //SBXWindowId     winhnd;     // the window ID, the handler number for the window - useful to "peek at a control cross programs and see who it belongs too"
 
     // lifetime handles
@@ -142,7 +134,6 @@ typedef struct {
     // control data
     GADGET_CLASS_T  gadgetType; // what type of gadget are we going with;
     void            *gadget;    // the gadget host (what ever the gadget is assigned here)
-
 } GADGET_BASE_T;
 
 
@@ -160,6 +151,7 @@ CGGadgetHandle SBOS_CreateCheckbox   (SBXWindowId win, int16_t x, int16_t y, int
 CGGadgetHandle SBOS_CreateGridSelect (SBXWindowId win, int16_t x, int16_t y, int16_t cell_size_x, int16_t cell_size_y, uint8_t cells_x, uint8_t cells_y, uint32_t gridflags, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateLabel      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateListBox    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags);
+CGGadgetHandle SBOS_CreateProgBar    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateScrollbar  (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step_small, int16_t step_large, uint32_t flags);
 

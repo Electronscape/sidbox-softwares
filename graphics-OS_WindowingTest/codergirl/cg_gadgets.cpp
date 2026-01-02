@@ -83,7 +83,6 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     for (int i = 0; i < MAX_GADGETS; i++) {
         //if (g_basePool[i].gadget != NULL) c.base_used++;   // <-- only if this exists
         if (g_basePool[i].gadgetSlotUsed) c.base_used++;
-
     }
 
     // Per-type gadget pools
@@ -992,6 +991,43 @@ CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t
     return gHndle;
 }
 
+
+CGGadgetHandle SBOS_CreateProgBar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, GAD_TOOL_FLAGS flags)
+{
+    sbx_window_t *W = SBOS_getWindow(win);
+    if (!W) return SBCTL_INVALID;
+
+    int slot = find_free_window_slot(W);
+    if (slot < 0) return SBCTL_INVALID;
+
+    GADGET_BASE_T *g = alloc_base();
+    if (!g) return SBCTL_INVALID;
+
+    GAD_PROGBAR_T *b = alloc_pb();
+    if (!b){
+        free_base(g);
+        return SBCTL_INVALID;
+    }
+
+    // base host
+    //g->winhnd = win;
+    g->gadgetType = GAD_PROGBAR;
+    g->gadget = b;
+    b->h.callbackRouteA = NULL;  // shouldnt ever HAVE a call back
+    b->h.winhnd = win;
+
+    // payload header
+    b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;
+    b->h.flags = flags;
+
+    // attach to window
+    W->GADGETS[slot] = g;
+
+    CGGadgetHandle gHndle = base_to_handle(g);
+    b->h.self = gHndle;   // for gridselect/label/button etc.
+    return gHndle;
+
+}
 
 
 CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags)

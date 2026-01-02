@@ -22,7 +22,11 @@ void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t box_x = ax;
     int16_t box_y = (int16_t)(ay + (r->h.rect.h - box) / 2);
 
-    fill_rect_pen(box_x, box_y, box, box, PEN_WIN_BORDER_INACTIVE);
+    fill_rect_pen(box_x, box_y, r->h.rect.w, box, PEN_WIN_BORDER_INACTIVE);
+    fill_rect_pen(box_x + box, box_y, r->h.rect.w, box, w->backColour);
+
+
+
     draw_bevel(box_x, box_y, box, box, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, r->h.down);
 
     // “radio dot” when checked
@@ -33,7 +37,7 @@ void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
         int16_t cx = (int16_t)(box_x + 4);
         int16_t cy = (int16_t)(box_y + 4);
 
-        fill_rect_pen(cx, cy, box-8, box-8, PEN_SELECTED);
+        fill_rect_pen(cx, cy, box-8, box-8, PEN_TEXT);
         //ui_ppixel(cx, cy);
         //ui_ppixel((int16_t)(cx+1), cy);
         //ui_ppixel(cx, (int16_t)(cy+1));
