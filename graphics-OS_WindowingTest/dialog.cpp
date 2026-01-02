@@ -161,7 +161,7 @@ void doAboutWindow(void *s){
     SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
     CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 110,
                                           "SIDBOX OS - Version 1.0\n"
-                                          "Window Manager: \"CODER-GIRL\"\n"
+                                          "Window Manager: \""UI_NAME"\"\n"
                                           , GAD_TOOL_DEFAULT);
 
     txt = SBOS_CreateLabel(aboutWin, 14, 54, ABOUTWIN_TEXTWIDTH-10, 64,
@@ -237,6 +237,9 @@ static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                         g_filebuf[0] = '\0';
 
                         g_filerqWin = SBOS_OpenFileRequester(win, &p);
+
+                        SBOS_enableGadget(btnFileRequest, 0);// disable for now!
+
                         printf("[MAIN] OpenFileRequester -> win=%u\n", (unsigned)g_filerqWin);
                     }
                     break;
@@ -288,6 +291,8 @@ static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                     void *cookie = MSG_AS_PTR(void, m->b);
                     char *outp = MSG_AS_PTR(char, m->c);
                     SBXWindowId rq = (SBXWindowId)m->d;
+
+                    SBOS_enableGadget(btnFileRequest, 1);// re-enable
 
                     printf("[MAIN] FILERQ_DONE ok=%d rq=%u cookie=%p path='%s'\n",
                            ok, (unsigned)rq, cookie, outp ? outp : "(null)");
@@ -342,7 +347,7 @@ void createBasicDesktopTest(){
     // WINDOW 1 -----------------------
     // cycle button test window
     SBXWindowId winMain =  SBOS_createWindow(0, 80, 70, 260, 280, "Sharks with lasers!", SBX_WF_CLOSE | SBX_WF_ZORDER | SBX_WF_MOVEABLE | SBX_WF_TITLE_BAR | SBX_WF_RESIZABLE | SBX_WF_VISIBLE );
-    SBOS_CreateScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
+    //SBOS_CreateScrollbar(winMain,   0,0,0,0,           SB_ORIENT_VERT,  0, 100, 1,  25,  0, GAD_TOOL_DOCKED_RIGHT, 0);
     SBOS_CreateButton(winMain, 6,  6,  200, 26, "a workbench button|desktop icons|where are my lasers?|ok gerbils instead!", GAD_TOOL_CYCLEBUTTON);//GAD_TOOL_DOCKED_RIGHT
 
 
@@ -368,18 +373,38 @@ void createBasicDesktopTest(){
     SBOS_CreateRadioButton(winMain2, 180, 50, 100, 18, "Hard",   0, 0, GAD_TOOL_DEFAULT);
     SBOS_CreateRadioButton(winMain2, 180, 100, 100, 18, "PAL",    1, 1, GAD_TOOL_DEFAULT);
     SBOS_CreateRadioButton(winMain2, 180, 120, 100, 18, "NTSC",   1, 0, GAD_TOOL_DEFAULT);
-    SBOS_CreateScrollbar(winMain2,  10, 140, 150, 16,  SB_ORIENT_HORZ,  0, 1000,  250, 0, GAD_TOOL_SCROLLARROWS);
+    SBOS_CreateScrollbar(winMain2,
+                         10, 140, 150, 16,
+                         SB_ORIENT_HORZ,
+                         0, 100,
+                         50,  250,
+                         GAD_TOOL_SCROLLARROWS);
 
     CGGadgetHandle aboutBtn = SBOS_CreateButton(winMain2, 10, 100, 100, 25, "About...", GAD_TOOL_DEFAULT);
     SBOS_setButtonCallBack(aboutBtn, doAboutWindow);
 
     CGGadgetHandle scrrb =
-    SBOS_CreateScrollbar(winMain2,  260, 6, 20, 150,   SB_ORIENT_VERT,  0, 120,  50,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    SBOS_CreateScrollbar(winMain2,
+                                260, 6, 20, 150,
+                                                SB_ORIENT_VERT,
+                                                0, 120,
+                                                5,  50,
+                                                GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
     SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1); // attach this scrollbar to the function
-    SBOS_CreateScrollbar(winMain2,  0,0,0,0,           SB_ORIENT_HORZ,  0, 100,  25,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
+    SBOS_CreateScrollbar(winMain2,
+                         0,0,0,0,
+                         SB_ORIENT_HORZ,
+                         0, 100,
+                         1,  50,
+                         GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_BOTTOM);
 
     CGGadgetHandle winScroll =
-    SBOS_CreateScrollbar(winMain2,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
+    SBOS_CreateScrollbar(winMain2,
+                                                    0,0,0,0,
+                                                    SB_ORIENT_VERT,
+                                                    0, 100,
+                                                    1,  25,
+                                                    GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
 
     //SBOS_setScrollBarCallBack(winScroll, &UpdateMenuLabel); // attach this scrollbar to the function
 
@@ -395,7 +420,12 @@ void createBasicDesktopTest(){
     //SBOS_enableGadget(piccy1, 0);
 
     SBOS_CreateButton(winMain3, 6,  6,  170, 26, "a simple text test", GAD_TOOL_INSET);//GAD_TOOL_DOCKED_RIGHT
-    SBOS_CreateScrollbar(winMain3,  0,0,0,0,           SB_ORIENT_VERT,  0, 100,  25,  0, GAD_TOOL_DOCKED_RIGHT);
+    SBOS_CreateScrollbar(winMain3,
+                         0,0,0,0,
+                         SB_ORIENT_VERT,
+                         0, 100,
+                         1,  25,
+                         GAD_TOOL_DOCKED_RIGHT);
 
 
 
@@ -438,7 +468,12 @@ void createBasicDesktopTest(){
 
 
     CGGadgetHandle ListBoxScroll =
-    SBOS_CreateScrollbar(winMain,  206, 40, 16, 196,  SB_ORIENT_VERT,  0, 31 - 11,  5,  0,  GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    SBOS_CreateScrollbar(winMain,
+                                                        206, 40, 16, 196,
+                                                        SB_ORIENT_VERT,
+                                                        0, 31 - 11,
+                                                        1,  5,
+                                                        GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
     SBOS_setScrollBarCallBack(ListBoxScroll, &ListBoxTopSet);
 
     //SBOS_enableGadget(theListBox, 0);

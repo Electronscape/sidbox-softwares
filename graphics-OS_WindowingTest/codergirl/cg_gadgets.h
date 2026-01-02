@@ -17,6 +17,7 @@
 #define     MAX_GRIDSELECTS         (MAX_EVERYTHING)
 #define     MAX_LABELS              (MAX_EVERYTHING)
 #define     MAX_LISTBOXES           (MAX_EVERYTHING)
+#define     MAX_PROGBARS            (MAX_EVERYTHING)
 #define     MAX_RADIOS              (MAX_EVERYTHING)
 #define     MAX_SCROLLBARS          (MAX_EVERYTHING)
 #define     MAX_CANVASES            (MAX_EVERYTHING)
@@ -30,6 +31,7 @@
                                     MAX_GRIDSELECTS +   \
                                     MAX_LABELS +        \
                                     MAX_LISTBOXES +     \
+                                    MAX_PROGBARS +      \
                                     MAX_RADIOS +        \
                                     MAX_SCROLLBARS      )
 
@@ -47,6 +49,7 @@
 
 #define     MAX_GADGETS_PER_WINDOW  16   // this is low, but its for testing. WILL increase this for a normal size
 #define     DEF_GADGET_TEXT_SIZE    256
+#define     DEF_LISTBOX_TEXT_HEIGHT 18  // this is the text spacing for viewable height, its a guide, but can be set to anything
 
 
 
@@ -103,6 +106,7 @@ typedef enum GADGET_CLASS_T {
     GAD_GRIDSELECT,
     GAD_LABEL,
     GAD_LISTBOX,
+    GAD_PROGBAR,
     GAD_RADIO,
     GAD_SCROLLBAR
 } GADGET_CLASS_T;
@@ -157,8 +161,7 @@ CGGadgetHandle SBOS_CreateGridSelect (SBXWindowId win, int16_t x, int16_t y, int
 CGGadgetHandle SBOS_CreateLabel      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateListBox    (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, ItemLists_t *items, uint32_t flags);
 CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t group, uint8_t checked, GAD_TOOL_FLAGS flags);
-CGGadgetHandle SBOS_CreateScrollbar  (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient,  int16_t min, int16_t max, int16_t step,    int16_t initial_pct,  uint32_t flags);
-
+CGGadgetHandle SBOS_CreateScrollbar  (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step_small, int16_t step_large, uint32_t flags);
 
 
 CGGadgetHandle base_to_handle(GADGET_BASE_T *g);
@@ -167,6 +170,7 @@ GADGET_BASE_T*  SBOS_gadgetFromHandle(CGGadgetHandle h);
 GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
 
 
+// these should only be GLOBAL GADGET stuff, that ALL gadgets have in common
 // More useful direct functions
 void            SBOS_moveGadget(CGGadgetHandle hnd, int16_t newx, int16_t newy);
 void            SBOS_resizeGadget(CGGadgetHandle hnd, int16_t neww, int16_t newh);

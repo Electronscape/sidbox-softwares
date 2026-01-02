@@ -8,8 +8,10 @@
 
 
 
+
+
 typedef struct {
-    size_t basePool, btnPool, cnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, gsPool, msgPool, frqPool;
+    size_t basePool, btnPool, cnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, pbPool, gsPool, msgPool, frqPool;
 } SBOS_GadgetPoolBytes;
 
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void);

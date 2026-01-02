@@ -14,6 +14,7 @@
 #include "cg_gad_gridselect.h"
 #include "cg_gad_label.h"
 #include "cg_gad_listbox.h"
+#include "cg_gad_progbar.h"
 #include "cg_gad_radio.h"
 #include "cg_gad_scrollbar.h"
 
@@ -31,6 +32,7 @@ GAD_CHECKBOX_T   g_chkPool  [MAX_CHECKBOXES];
 GAD_GRIDSELECT_T g_gsPool   [MAX_GRIDSELECTS];
 GAD_LABEL_T      g_lblPool  [MAX_LABELS];
 GAD_LISTBOX_T    g_lbPool   [MAX_LISTBOXES];
+GAD_PROGBAR_T    g_pbPool   [MAX_PROGBARS];
 GAD_RADIO_T      g_radPool  [MAX_RADIOS];
 GAD_SCROLLBAR_T  g_sbPool   [MAX_SCROLLBARS];
 
@@ -40,7 +42,7 @@ GAD_SCROLLBAR_T  g_sbPool   [MAX_SCROLLBARS];
 
 
 typedef struct {
-    size_t basePool, btnPool, cnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, gsPool, msgPool, frqPool;
+    size_t basePool, btnPool, cnPool, chkPool, radPool, sbPool, bvPool, lbPool, lblPool, pbPool, gsPool, msgPool, frqPool;
 } SBOS_GadgetPoolBytes;
 
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
@@ -54,6 +56,7 @@ SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     b.bvPool   = sizeof(g_bvPool);
     b.lbPool   = sizeof(g_lbPool);
     b.lblPool  = sizeof(g_lblPool);
+    b.pbPool   = sizeof(g_pbPool);
     b.gsPool   = sizeof(g_gsPool);
 
 
@@ -89,8 +92,10 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     for (int i = 0; i < MAX_RADIOS; i++)      if (g_radPool[i].used)  c.rad_used++;
     for (int i = 0; i < MAX_SCROLLBARS; i++)  if (g_sbPool[i].used)   c.sb_used++;
     for (int i = 0; i < MAX_BITMAPVIEWS; i++) if (g_bvPool[i].used)   c.bv_used++;
-    for (int i = 0; i < MAX_LISTBOXES; i++)   if (g_lbPool[i].used)   c.lb_used++;
     for (int i = 0; i < MAX_LABELS; i++)      if (g_lblPool[i].used)  c.lbl_used++;
+    for (int i = 0; i < MAX_LISTBOXES; i++)   if (g_lbPool[i].used)   c.lb_used++;
+    for (int i = 0; i < MAX_PROGBARS; i++)    if (g_pbPool[i].used)   c.pb_used++;
+
     for (int i = 0; i < MAX_GRIDSELECTS; i++) if (g_gsPool[i].used)   c.gs_used++;
     for (int i = 0; i < MAX_CANVASES; i++)    if (g_cnPool[i].used)   c.cn_used++;
 
@@ -128,7 +133,7 @@ void onGridSelectEmitEvent(void *g){
 void onListBoxEmitEvent(void *g){
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)g;
     if (!lb) return;
-    CG_PostGadgetMsg(lb->h.winhnd, lb->h.self, CGEVT_GAD_LISTBOX_CHANGED, lb->sel, 0, 0, 0);
+    CG_PostGadgetMsg(lb->h.winhnd, lb->h.self, CGEVT_GAD_LISTBOX_CHANGED, lb->sel, lb->top, 0, 0);
 }
 
 void onRadioClickEmitEvent(void *g){
@@ -350,6 +355,25 @@ static GAD_LISTBOX_T* lb_alloc(void){
     return NULL;
 }
 
+
+static GAD_PROGBAR_T* pb_alloc(void){
+    for (int i = 0; i < MAX_PROGBARS; i++){
+        if (!g_pbPool[i].used){
+            memset(&g_pbPool[i], 0, sizeof(g_pbPool[i]));
+            g_pbPool[i].used = 1;
+
+            g_pbPool[i].h.enabled = 1;
+            g_pbPool[i].h.visible = 1;
+            g_pbPool[i].h.down    = 0;
+            g_pbPool[i].h.flags   = GAD_TOOL_DEFAULT;
+
+            return &g_pbPool[i];
+        }
+    }
+    return NULL;
+}
+
+
 static GAD_RADIO_T* rad_alloc(void){
     for (int i = 0; i < MAX_RADIOS; i++){
         if (!g_radPool[i].used){
@@ -385,7 +409,8 @@ static GAD_SCROLLBAR_T* sb_alloc(void){
             g_sbPool[i].orient = SB_ORIENT_VERT;
             g_sbPool[i].min = 0;
             g_sbPool[i].max = 100;
-            g_sbPool[i].step = 1;
+            g_sbPool[i].step_large = 1;
+            g_sbPool[i].step_small = 1;
 
             g_sbPool[i].value = 0;
 
@@ -434,6 +459,12 @@ static void lbl_free(GAD_LABEL_T *lb){
     if (!lb) return;
     lb->used = 0;
 }
+
+static void pb_free(GAD_PROGBAR_T *pb){
+    if (!pb) return;
+    pb->used = 0;
+}
+
 
 static void lb_free(GAD_LISTBOX_T *lb){
     // Listbox's dont OWN the list attached.
@@ -626,6 +657,7 @@ void SBOS_gadgetsInit(void){
     memset(g_gsPool ,  0, sizeof( g_gsPool  ));   // grid select gadgets
     memset(g_lblPool,  0, sizeof( g_lblPool ));   // labels gadgets
     memset(g_lbPool ,  0, sizeof( g_lbPool  ));   // listbox gadgets
+    memset(g_pbPool ,  0, sizeof( g_pbPool  ));   // progbar gadgets
     memset(g_radPool,  0, sizeof( g_radPool ));   // radio buttons gadgets
     memset(g_sbPool ,  0, sizeof( g_sbPool  ));   // scrollbar gadgets
 }
@@ -978,6 +1010,9 @@ CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t
     lb->h.flags = flags;
     lb->h.winhnd = win;
     lb->items = items;
+    lb->row_h = DEF_LISTBOX_TEXT_HEIGHT;
+
+    lb->h.callbackRouteA = onListBoxEmitEvent;
 
     W->GADGETS[slot] = g;
 
@@ -1048,7 +1083,7 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
     return gHndle;
 }
 
-CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step, int16_t initial_pct, uint32_t flags)
+CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step_small, int16_t step_large, uint32_t flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
@@ -1078,8 +1113,13 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
     s->orient = orient;
     s->min = min;
     s->max = max;
-    s->step = (step <= 0) ? 1 : step;
-    s->value = initial_pct;
+    s->step_large = (step_large <= 0) ? 1 : step_large;
+    s->step_small = (step_small <= 0) ? 1 : step_small;
+
+    if (step_small > step_large-1)  // more a rule of the OS than being "right"
+        s->step_small /= 2;
+
+    s->value = 0;
     s->h.callbackRouteA = onScrollEmitEvent;
 
     // Set flag for arrows based on the provided flags

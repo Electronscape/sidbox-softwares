@@ -11,15 +11,16 @@ typedef struct GAD_SCROLLBAR_T{
     uint8_t     used;
 
     // behaviour
-    uint8_t     orient;      // SB_ORIENT_*
-    int16_t     min;         // used for thumb sizing + optional conversion
+    uint8_t     orient;         // SB_ORIENT_*
+    int16_t     min;            // used for thumb sizing + optional conversion
     int16_t     max;
-    int16_t     step;        // affects thumb size + step in percent
-    int16_t     value;      // the actual value between min and max
+    int16_t     step_small;     // how fast the arrows change the scroller bar value in small steps
+    int16_t     step_large;     // how fast the arrows change the scroller bar value in LARGE steps!
+    int16_t     value;          // the actual value between min and max
 
     // interaction
     uint8_t     dragging;
-    int16_t     drag_off;    // mouse offset inside thumb (in track axis)
+    int16_t     drag_off;       // mouse offset inside thumb (in track axis)
 
     // arrows
     uint8_t     show_arrows;    // needed for if we're using arrows
@@ -62,6 +63,7 @@ uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
 uint32_t    SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func);
-void        SBOS_setScrollerMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16_t stepping);
+void        SBOS_setScrollBarMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16_t step_small, uint16_t step_large);
+void        SBOS_setScrollBarValue(CGGadgetHandle h, uint16_t newValue);
 
 #endif // CG_GAD_SCROLLBAR_H

@@ -1,4 +1,4 @@
-//#include <stdio.h>
+#include <stdio.h>
 #include "stdint.h"
 #include "cg_renderer.h"
 #include "cg_windowex.h"
@@ -23,7 +23,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (aw <= 0 || ah <= 0) return;
 
     // Defaults if caller left them 0
-    int16_t row_h = (lb->row_h > 0) ? lb->row_h : 16;
+    int16_t row_h = (lb->row_h > 0) ? lb->row_h : DEF_LISTBOX_TEXT_HEIGHT;
     int16_t pad_x = (lb->padding_x > 0) ? lb->padding_x : 4;
     int16_t pad_y = (lb->padding_y > 0) ? lb->padding_y : 2;
 
@@ -346,7 +346,11 @@ uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, in
 
 
 
-    if (changed) SBOS_paintAllWindows();
+    if (changed) {
+        if(lb->h.callbackRouteA)
+            lb->h.callbackRouteA(lb);
+        SBOS_paintAllWindows();
+    }
     return 0;
 }
 

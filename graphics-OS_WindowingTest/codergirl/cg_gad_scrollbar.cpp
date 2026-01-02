@@ -181,7 +181,7 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     // 4) Thumb geometry inside the inner well (after shrinking for arrows)
     // ------------------------------------------------------------------
     int16_t track_len = (s->orient == SB_ORIENT_VERT) ? ih : iw;
-    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
+    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step_large);
 
     int16_t travel = (int16_t)(track_len - thumb_len);
     if (travel < 0) travel = 0;
@@ -257,7 +257,7 @@ SBPart hittest_scrollbar_part(const sbx_window_t *w, const GAD_SCROLLBAR_T *s, i
     if (track_len < 0) track_len = 0;
 
     // Calculate the thumb length
-    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step);
+    int16_t thumb_len = sb_thumb_len_from_step(track_len, s->min, s->max, s->step_large);
 
     // Calculate the available space (travel distance) for the thumb
     int16_t travel = (int16_t)(track_len - thumb_len);
@@ -329,13 +329,17 @@ uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t 
     s->dragging = 0;
 
     if (part == SB_PART_ARROW_UP) {
-        s->value = clamp_i16(s->value - s->step, s->min, s->max);
+        s->value = clamp_i16(s->value - 1, s->min, s->max);
+
+
     } else if (part == SB_PART_ARROW_DOWN) {
-        s->value = clamp_i16(s->value + s->step, s->min, s->max);
+        s->value = clamp_i16(s->value + 1, s->min, s->max);
+
+
     } else if (part == SB_PART_ARROW_LEFT) {
-        s->value = clamp_i16(s->value - s->step, s->min, s->max);
+        s->value = clamp_i16(s->value - 1, s->min, s->max);
     } else if (part == SB_PART_ARROW_RIGHT) {
-        s->value = clamp_i16(s->value + s->step, s->min, s->max);
+        s->value = clamp_i16(s->value + 1, s->min, s->max);
 
     } else if (part == SB_PART_THUMB) {
         s->dragging = 1;
@@ -399,7 +403,7 @@ uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t 
         int16_t m_axis = (s->orient == SB_ORIENT_VERT) ? *my : *mx;
 
         // ensure sane step
-        int16_t step = (s->step <= 0) ? 1 : s->step;
+        int16_t step = (s->step_large <= 0) ? 1 : s->step_large;
 
         if (m_axis < thumb_start)
             s->value = clamp_i16( (int16_t) (s->value - step), s->min, s->max);
@@ -407,6 +411,8 @@ uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t 
             s->value = clamp_i16(
                 (int16_t) (s->value + step), s->min,
                 s->max);
+
+
 
         // IMPORTANT: not dragging
         s->dragging = 0;
@@ -443,16 +449,23 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
 }
 
 uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
-    (void)mx; (void)my;
+    //(void)mx; (void)my;
 
     GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*) g->gadget;
     if (!s) return 1;   // panic
+
+    if(s->h.callbackRouteA)
+        s->h.callbackRouteA(s);
+
+    SBOS_paintAllWindows();
 
     s->dragging = 0;
     s->drag_off = 0;
     g_ui.sb_track_start = 0;
     g_ui.sb_travel = 0;
     g_ui.sb_drag_off = 0;
+
+
     return 0;   // all good 0 as in 0k :)
 }
 
@@ -469,7 +482,7 @@ uint32_t SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func){
     return 0;
 }
 
-void SBOS_setScrollerMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16_t stepping){
+void SBOS_setScrollBarMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16_t step_small, uint16_t step_large){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
     if (!g) return;
     if (g->gadgetType != GAD_SCROLLBAR) return;
@@ -477,8 +490,21 @@ void SBOS_setScrollerMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16
     GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g->gadget;
     sb->min = min;
     sb->max = max;
-    sb->step = stepping;
+    sb->step_small = step_small;
+    sb->step_large = step_large;
 }
 
+void SBOS_setScrollBarValue(CGGadgetHandle h, uint16_t newValue){
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
+    if (!g || g->gadgetType != GAD_SCROLLBAR || !g->gadget) return;
 
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g->gadget;
+
+    // Clamp, then only redraw if it actually changed
+    int16_t v = clamp_i16(newValue, sb->min, sb->max);
+    if (v == sb->value) return;
+
+    sb->value = v;
+
+}
 

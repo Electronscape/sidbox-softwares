@@ -479,6 +479,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_progbar.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_progbar.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.h",
 			"MU",
 			"5AAQOGTO22/moc_cg_gad_radio.cpp",
@@ -698,6 +704,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_progbar.cpp",
 			"MU",
 			null
 		],

@@ -185,7 +185,6 @@ static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
             if(m->gadget == st->scrollBar){
                 GADGET_BASE_T *lb = SBOS_gadgetFromHandle(st->fListBox);
                 if (!lb || !lb->gadget) return CGPROC_DEFAULT;
-
                 SBOS_setListbox_top(lb, (int16_t)m->a);
             }
         }
@@ -200,7 +199,11 @@ static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
     // --- gadgets ---
     case CGEVT_GAD_LISTBOX_CHANGED:
         // a == selected index in your emitter
-        st->selected_idx = (int16_t)m->a;
+        if(m->gadget == st->fListBox){
+            st->selected_idx = (int16_t)m->a;
+            SBOS_setScrollBarValue(st->scrollBar, m->b);
+        }
+
         // Optional: update a label with filename preview later
         break;
 
@@ -254,7 +257,8 @@ static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
             int16_t fileCount = listitem_count(&st->fileListData) - (visCount); // 8 is what is visable items
             if(fileCount <0) fileCount = 0;
 
-            SBOS_setScrollerMinMax(st->scrollBar, 0, fileCount, (fileCount) );
+            //fileCount, 4, (fileCount/4)
+            SBOS_setScrollBarMinMax(st->scrollBar, 0, fileCount, 4, (fileCount/4) );
 
             Req_height += 12;
 
@@ -434,10 +438,11 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
 
     int16_t fileCount = listitem_count(&st->fileListData) - 8; // 8 is what is visable items
 
-
+    //CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, uint8_t orient, int16_t min, int16_t max, int16_t step_small, int16_t step_large, uint32_t flags, uint8_t BLONDE)
     Req_height -= 80;
     // Create gadgets
-    st->scrollBar = SBOS_CreateScrollbar(win, Req_width - 40 - (WIN_BORDER * 2) + 8, 8, DEF_DIALOG_SCROLL_WIDTH, Req_height, SB_ORIENT_VERT, 0, fileCount, (fileCount), 0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    st->scrollBar = SBOS_CreateScrollbar(win,
+                                         Req_width - 40 - (WIN_BORDER * 2) + 8, 8, DEF_DIALOG_SCROLL_WIDTH, Req_height, SB_ORIENT_VERT, 0, fileCount, 4, (fileCount/4), GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
     st->fListBox  = SBOS_CreateListBox(win, 8, 8, Req_width - 40 - (WIN_BORDER * 2), Req_height, &st->fileListData, GAD_TOOL_DEFAULT);
 
     int16_t buttox = 8;

@@ -21,6 +21,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o"

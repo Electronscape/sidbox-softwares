@@ -73,6 +73,8 @@ qt_add_executable(graphics-gui_testing
     codergirl/lib_msgbox.cpp
     codergirl/cg_gad_canvas.h
     codergirl/cg_gad_canvas.cpp
+    codergirl/cg_gad_progbar.cpp
+    codergirl/cg_gad_progbar.h
 
 )
 
