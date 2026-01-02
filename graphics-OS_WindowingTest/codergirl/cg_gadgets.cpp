@@ -159,20 +159,7 @@ static int find_free_window_slot(sbx_window_t *w){
     return -1;
 }
 
-/*
-static GADGET_BASE_T* base_alloc(void){
-    for (int i = 0; i < MAX_GADGETS; i++){
-        if (!g_basePool[i].gadgetSlotUsed){
-            g_basePool[i].gadgetSlotUsed = 1;
-            g_basePool[i].handleGen++;
-            return &g_basePool[i];
-        }
-    }
-    return NULL;
-}
-*/
-
-static GADGET_BASE_T* base_alloc(void){
+static GADGET_BASE_T* alloc_base(void){
     for (uint16_t i = 0; i < MAX_GADGETS; i++){
         if (!g_basePool[i].gadgetSlotUsed){
             GADGET_BASE_T *g = &g_basePool[i];
@@ -187,8 +174,6 @@ static GADGET_BASE_T* base_alloc(void){
 }
 
 
-
-
 // BITS FOR THE GADGETS //////////// the helpers /////////////
 /*
 static void base_free(GADGET_BASE_T *g){
@@ -199,7 +184,7 @@ static void base_free(GADGET_BASE_T *g){
     //g->winhnd = 0;
 }
 */
-static void base_free(GADGET_BASE_T *g){
+static void free_base(GADGET_BASE_T *g){
     if (!g) return;
 
     g->handleGen++;             //invalidate old handles NOW
@@ -210,7 +195,7 @@ static void base_free(GADGET_BASE_T *g){
 
 ////////////////// allocations area /////////////////////////
 
-static GAD_BITMAPVIEW_T* bv_alloc(void){
+static GAD_BITMAPVIEW_T* alloc_bv(void){
     for (int i = 0; i < MAX_BITMAPVIEWS; i++){
         if (!g_bvPool[i].used){
             memset(&g_bvPool[i], 0, sizeof(g_bvPool[i]));
@@ -235,7 +220,7 @@ static GAD_BITMAPVIEW_T* bv_alloc(void){
     return NULL;
 }
 
-static GAD_BUTTON_T* btn_alloc(void){
+static GAD_BUTTON_T* alloc_btn(void){
     for (int i = 0; i < MAX_BUTTONS; i++){
         if (!g_btnPool[i].used){
             memset(&g_btnPool[i], 0, sizeof(g_btnPool[i]));
@@ -255,7 +240,7 @@ static GAD_BUTTON_T* btn_alloc(void){
     return NULL;
 }
 
-static GAD_CANVAS_T* canv_alloc(void){
+static GAD_CANVAS_T* alloc_canv(void){
     for (int i = 0; i < MAX_CANVASES; i++){
         if (!g_cnPool[i].used){
             memset(&g_cnPool[i], 0, sizeof(g_cnPool[i]));
@@ -276,7 +261,7 @@ static GAD_CANVAS_T* canv_alloc(void){
 
 
 
-static GAD_CHECKBOX_T* chk_alloc(void){
+static GAD_CHECKBOX_T* alloc_chk(void){
     for (int i = 0; i < MAX_CHECKBOXES; i++){
         if (!g_chkPool[i].used){
             memset(&g_chkPool[i], 0, sizeof(g_chkPool[i]));
@@ -296,7 +281,7 @@ static GAD_CHECKBOX_T* chk_alloc(void){
 }
 
 
-static GAD_GRIDSELECT_T* gsl_alloc(void){
+static GAD_GRIDSELECT_T* alloc_gsl(void){
     for (int i = 0; i < MAX_GRIDSELECTS; i++){
         if (!g_gsPool[i].used){
             memset(&g_gsPool[i], 0, sizeof(g_gsPool[i]));
@@ -314,7 +299,7 @@ static GAD_GRIDSELECT_T* gsl_alloc(void){
     return NULL;
 }
 
-static GAD_LABEL_T* lbl_alloc(void){
+static GAD_LABEL_T* alloc_lbl(void){
     for (int i = 0; i < MAX_LABELS; i++){
         if (!g_lblPool[i].used){
             memset(&g_lblPool[i], 0, sizeof(g_lblPool[i]));
@@ -333,7 +318,7 @@ static GAD_LABEL_T* lbl_alloc(void){
     return NULL;
 }
 
-static GAD_LISTBOX_T* lb_alloc(void){
+static GAD_LISTBOX_T* alloc_lb(void){
     for (int i = 0; i < MAX_LISTBOXES; i++){
         if (!g_lbPool[i].used){
             memset(&g_lbPool[i], 0, sizeof(g_lbPool[i]));
@@ -356,7 +341,7 @@ static GAD_LISTBOX_T* lb_alloc(void){
 }
 
 
-static GAD_PROGBAR_T* pb_alloc(void){
+static GAD_PROGBAR_T* alloc_pb(void){
     for (int i = 0; i < MAX_PROGBARS; i++){
         if (!g_pbPool[i].used){
             memset(&g_pbPool[i], 0, sizeof(g_pbPool[i]));
@@ -374,7 +359,7 @@ static GAD_PROGBAR_T* pb_alloc(void){
 }
 
 
-static GAD_RADIO_T* rad_alloc(void){
+static GAD_RADIO_T* alloc_rad(void){
     for (int i = 0; i < MAX_RADIOS; i++){
         if (!g_radPool[i].used){
             memset(&g_radPool[i], 0, sizeof(g_radPool[i]));
@@ -395,7 +380,7 @@ static GAD_RADIO_T* rad_alloc(void){
 }
 
 
-static GAD_SCROLLBAR_T* sb_alloc(void){
+static GAD_SCROLLBAR_T* alloc_sb(void){
     for (int i = 0; i < MAX_SCROLLBARS; i++){
         if (!g_sbPool[i].used){
             memset(&g_sbPool[i], 0, sizeof(g_sbPool[i]));
@@ -429,44 +414,44 @@ static GAD_SCROLLBAR_T* sb_alloc(void){
 // free gadget types
 
 
-static void bv_free(GAD_BITMAPVIEW_T *bv){
+static void free_bv(GAD_BITMAPVIEW_T *bv){
     if (!bv) return;
     bv->used = 0;
 }
 
-static void btn_free(GAD_BUTTON_T *b){
+static void free_btn(GAD_BUTTON_T *b){
     if (!b) return;
     b->used = 0;
 }
 
-static void canv_free(GAD_CANVAS_T *b){
+static void free_canv(GAD_CANVAS_T *b){
     if (!b) return;
     b->used = 0;
 }
 
 
-static void chk_free(GAD_CHECKBOX_T *c){
+static void free_chk(GAD_CHECKBOX_T *c){
     if (!c) return;
     c->used = 0;
 }
 
-static void gs_free(GAD_GRIDSELECT_T *c){
+static void free_gs(GAD_GRIDSELECT_T *c){
     if (!c) return;
     c->used = 0;
 }
 
-static void lbl_free(GAD_LABEL_T *lb){
+static void free_lbl(GAD_LABEL_T *lb){
     if (!lb) return;
     lb->used = 0;
 }
 
-static void pb_free(GAD_PROGBAR_T *pb){
+static void free_pb(GAD_PROGBAR_T *pb){
     if (!pb) return;
     pb->used = 0;
 }
 
 
-static void lb_free(GAD_LISTBOX_T *lb){
+static void free_lb(GAD_LISTBOX_T *lb){
     // Listbox's dont OWN the list attached.
     if (!lb) return;
     lb->items = NULL;   // detach; owner frees the list
@@ -481,18 +466,15 @@ static void lb_free(GAD_LISTBOX_T *lb){
     */
 }
 
-static void rad_free(GAD_RADIO_T *r){
+static void free_rad(GAD_RADIO_T *r){
     if (!r) return;
     r->used = 0;
 }
 
-static void sb_free(GAD_SCROLLBAR_T *s){
+static void free_sb(GAD_SCROLLBAR_T *s){
     if (!s) return;
     s->used = 0;
 }
-
-
-
 
 
 //
@@ -671,12 +653,12 @@ CGGadgetHandle SBOS_CreateBitmapView(SBXWindowId win, int16_t x, int16_t y, int1
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_BITMAPVIEW_T *bv = bv_alloc();
+    GAD_BITMAPVIEW_T *bv = alloc_bv();
     if (!bv){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -721,12 +703,12 @@ CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t 
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_BUTTON_T *b = btn_alloc();
+    GAD_BUTTON_T *b = alloc_btn();
     if (!b){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -791,12 +773,12 @@ CGGadgetHandle SBOS_CreateCanvas(SBXWindowId win, int16_t x, int16_t y, int16_t 
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_CANVAS_T *b = canv_alloc();
+    GAD_CANVAS_T *b = alloc_canv();
     if (!b){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -825,10 +807,6 @@ CGGadgetHandle SBOS_CreateCanvas(SBXWindowId win, int16_t x, int16_t y, int16_t 
     return gHndle;
 }
 
-
-
-
-
 CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
@@ -837,12 +815,12 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_CHECKBOX_T *c = chk_alloc();
+    GAD_CHECKBOX_T *c = alloc_chk();
     if (!c){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -876,9 +854,6 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
     return gHndle;
 }
 
-
-
-
 CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int16_t cell_size_x, int16_t cell_size_y, uint8_t cells_x, uint8_t cells_y, uint32_t gridflags, GAD_TOOL_FLAGS flags)
 {
 
@@ -893,12 +868,12 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_GRIDSELECT_T *c = gsl_alloc();
+    GAD_GRIDSELECT_T *c = alloc_gsl();
     if (!c){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -936,8 +911,6 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
     return gHndle;
 }
 
-
-
 CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags)
 {
     sbx_window_t *W = SBOS_getWindow(win);
@@ -946,12 +919,12 @@ CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_LABEL_T *b = lbl_alloc();
+    GAD_LABEL_T *b = alloc_lbl();
     if (!b){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -976,8 +949,6 @@ CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w
         b->text[0] = '\0';
     }
 
-
-
     // attach to window
     W->GADGETS[slot] = g;
 
@@ -996,11 +967,11 @@ CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_LISTBOX_T *lb = lb_alloc();
-    if (!lb){ base_free(g); return SBCTL_INVALID; }
+    GAD_LISTBOX_T *lb = alloc_lb();
+    if (!lb){ free_base(g); return SBCTL_INVALID; }
 
     //g->winhnd = win;
     g->gadgetType = GAD_LISTBOX;
@@ -1031,12 +1002,12 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_RADIO_T *r = rad_alloc();
+    GAD_RADIO_T *r = alloc_rad();
     if (!r){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -1091,12 +1062,12 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
-    GADGET_BASE_T *g = base_alloc();
+    GADGET_BASE_T *g = alloc_base();
     if (!g) return SBCTL_INVALID;
 
-    GAD_SCROLLBAR_T *s = sb_alloc();
+    GAD_SCROLLBAR_T *s = alloc_sb();
     if (!s){
-        base_free(g);
+        free_base(g);
         return SBCTL_INVALID;
     }
 
@@ -1249,20 +1220,21 @@ void SBOS_destroyGadget(CGGadgetHandle h){
 
     // free payload by type
     switch (b->gadgetType){
-        case GAD_BITMAPVIEW: bv_free  ((GAD_BITMAPVIEW_T* )b->gadget); break;
-        case GAD_BUTTON:     btn_free ((GAD_BUTTON_T*     )b->gadget); break;
-        case GAD_CANVAS:     canv_free((GAD_CANVAS_T*     )b->gadget); break;
-        case GAD_CHECKBOX:   chk_free ((GAD_CHECKBOX_T*   )b->gadget); break;
-        case GAD_GRIDSELECT: gs_free  ((GAD_GRIDSELECT_T* )b->gadget); break;
-        case GAD_LABEL:      lbl_free ((GAD_LABEL_T*      )b->gadget); break;
-        case GAD_LISTBOX:    lb_free  ((GAD_LISTBOX_T*    )b->gadget); break;
-        case GAD_RADIO:      rad_free ((GAD_RADIO_T*      )b->gadget); break;
-        case GAD_SCROLLBAR:  sb_free  ((GAD_SCROLLBAR_T*  )b->gadget); break;
+        case GAD_BITMAPVIEW: free_bv  ((GAD_BITMAPVIEW_T* )b->gadget); break;
+        case GAD_BUTTON:     free_btn ((GAD_BUTTON_T*     )b->gadget); break;
+        case GAD_CANVAS:     free_canv((GAD_CANVAS_T*     )b->gadget); break;
+        case GAD_CHECKBOX:   free_chk ((GAD_CHECKBOX_T*   )b->gadget); break;
+        case GAD_GRIDSELECT: free_gs  ((GAD_GRIDSELECT_T* )b->gadget); break;
+        case GAD_LABEL:      free_lbl ((GAD_LABEL_T*      )b->gadget); break;
+        case GAD_LISTBOX:    free_lb  ((GAD_LISTBOX_T*    )b->gadget); break;
+        case GAD_PROGBAR:    free_pb  ((GAD_PROGBAR_T*    )b->gadget); break;
+        case GAD_RADIO:      free_rad ((GAD_RADIO_T*      )b->gadget); break;
+        case GAD_SCROLLBAR:  free_sb  ((GAD_SCROLLBAR_T*  )b->gadget); break;
 
         default: break;
     }
 
-    base_free(b);
+    free_base(b);
 }
 
 
