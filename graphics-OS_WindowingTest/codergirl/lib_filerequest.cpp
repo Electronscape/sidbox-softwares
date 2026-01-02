@@ -234,6 +234,41 @@ static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
         }
         break;
 
+    case CGEVT_WIN_RESIZED:
+        {
+            int16_t Req_height, Req_width;
+            SBOS_getWindowSize(win, &Req_width, &Req_height);
+
+            SBOS_resizeGadget(st->bgBitmap, Req_width, Req_height);
+
+            Req_height -=80;
+            //Req_width = FILEREQUEST_DEF_WIDTH - 40 - (WIN_BORDER * 2);
+            Req_width -= 48 - (WIN_BORDER * 2);
+            //SBOS_ListBoxResize(st->fListBox, Req_width, Req_height);
+            SBOS_resizeGadget(st->fListBox, Req_width-8, Req_height);
+            SBOS_resizeGadget(st->scrollBar, DEF_DIALOG_SCROLL_WIDTH, Req_height);
+
+            SBOS_moveGadget(st->scrollBar, Req_width, 8);
+            int16_t visCount = SBOS_getListBoxVisableCount(st->fListBox);
+
+            int16_t fileCount = listitem_count(&st->fileListData) - (visCount); // 8 is what is visable items
+            if(fileCount <0) fileCount = 0;
+
+            SBOS_setScrollerMinMax(st->scrollBar, 0, fileCount, (fileCount) );
+
+            Req_height += 12;
+
+            int16_t buttox = 8;
+            SBOS_moveGadget(st->btnOk, buttox, Req_height);
+            buttox += 5 + 40;
+            SBOS_moveGadget(st->btnCancel, buttox, Req_height);
+            buttox += 5 + 60;
+            SBOS_moveGadget(st->btnParent, buttox, Req_height);
+            buttox += 5 + 90;
+            SBOS_moveGadget(st->btnRoot, buttox, Req_height);
+
+        } break;
+
     default:
         break;
     }
@@ -279,9 +314,9 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
         return SBW_INVALID_ID;
     }
 
-    SBOS_setWindowResizeLimits(win, Req_width, Req_height, Req_width, 0x7fff); // set resize constraints
+    SBOS_setWindowResizeLimits(win, Req_width, Req_height, SCR_WIDTH, 0x7fff); // set resize constraints
 
-    st->bgBitmap = SBOS_CreateBitmapView(win, 0, 0, Req_width, SCR_HEIGHT, baseGrid, 32, 32, 32,
+    st->bgBitmap = SBOS_CreateBitmapView(win, 0, 0, Req_width, Req_height, baseGrid, 32, 32, 32,
                                 BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
 
 
@@ -305,23 +340,116 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     listitem_add(&st->fileListData, "Wiklund_-_Cheese.sid");
     listitem_add(&st->fileListData, "1943.YM");
     listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
+    listitem_add(&st->fileListData, "sonic 2.vgm");
+    listitem_add(&st->fileListData, "sonic 3 - stage 2.vgm");
+    listitem_add(&st->fileListData, "turrican 2 - title.tfx");
+    listitem_add(&st->fileListData, "sweet dreams.mod");
+    listitem_add(&st->fileListData, "unreal.mod");
+    listitem_add(&st->fileListData, "matkamis.mod");
+    listitem_add(&st->fileListData, "egyption-knights.mod");
+    listitem_add(&st->fileListData, "mcappin-dance.mod");
+
+    listitem_add(&st->fileListData, "test1.txt");
+    listitem_add(&st->fileListData, "test2.bmp");
+    listitem_add(&st->fileListData, "docs/");
+    listitem_add(&st->fileListData, "monty1.sid");
+    listitem_add(&st->fileListData, "1_67YT-Turrican_III_Remix.sid");
+    listitem_add(&st->fileListData, "Bionic_Commando(+).sid");
+    listitem_add(&st->fileListData, "Co-Axis_Remix(+).sid");
+    listitem_add(&st->fileListData, "Mega_Apocalypse_remix.sid");
+    listitem_add(&st->fileListData, "Wiklund_-_Cheese.sid");
+    listitem_add(&st->fileListData, "1943.YM");
+    listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
+    listitem_add(&st->fileListData, "sonic 2.vgm");
+    listitem_add(&st->fileListData, "sonic 3 - stage 2.vgm");
+    listitem_add(&st->fileListData, "turrican 2 - title.tfx");
+    listitem_add(&st->fileListData, "sweet dreams.mod");
+    listitem_add(&st->fileListData, "unreal.mod");
+    listitem_add(&st->fileListData, "matkamis.mod");
+    listitem_add(&st->fileListData, "egyption-knights.mod");
+    listitem_add(&st->fileListData, "mcappin-dance.mod");
+
+    listitem_add(&st->fileListData, "test1.txt");
+    listitem_add(&st->fileListData, "test2.bmp");
+    listitem_add(&st->fileListData, "docs/");
+    listitem_add(&st->fileListData, "monty1.sid");
+    listitem_add(&st->fileListData, "1_67YT-Turrican_III_Remix.sid");
+    listitem_add(&st->fileListData, "Bionic_Commando(+).sid");
+    listitem_add(&st->fileListData, "Co-Axis_Remix(+).sid");
+    listitem_add(&st->fileListData, "Mega_Apocalypse_remix.sid");
+    listitem_add(&st->fileListData, "Wiklund_-_Cheese.sid");
+    listitem_add(&st->fileListData, "1943.YM");
+    listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
+    listitem_add(&st->fileListData, "sonic 2.vgm");
+    listitem_add(&st->fileListData, "sonic 3 - stage 2.vgm");
+    listitem_add(&st->fileListData, "turrican 2 - title.tfx");
+    listitem_add(&st->fileListData, "sweet dreams.mod");
+    listitem_add(&st->fileListData, "unreal.mod");
+    listitem_add(&st->fileListData, "matkamis.mod");
+    listitem_add(&st->fileListData, "egyption-knights.mod");
+    listitem_add(&st->fileListData, "mcappin-dance.mod");
+
+
+    listitem_add(&st->fileListData, "test1.txt");
+    listitem_add(&st->fileListData, "test2.bmp");
+    listitem_add(&st->fileListData, "docs/");
+    listitem_add(&st->fileListData, "monty1.sid");
+    listitem_add(&st->fileListData, "1_67YT-Turrican_III_Remix.sid");
+    listitem_add(&st->fileListData, "Bionic_Commando(+).sid");
+    listitem_add(&st->fileListData, "Co-Axis_Remix(+).sid");
+    listitem_add(&st->fileListData, "Mega_Apocalypse_remix.sid");
+    listitem_add(&st->fileListData, "Wiklund_-_Cheese.sid");
+    listitem_add(&st->fileListData, "1943.YM");
+    listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
+    listitem_add(&st->fileListData, "sonic 2.vgm");
+    listitem_add(&st->fileListData, "sonic 3 - stage 2.vgm");
+    listitem_add(&st->fileListData, "turrican 2 - title.tfx");
+    listitem_add(&st->fileListData, "sweet dreams.mod");
+    listitem_add(&st->fileListData, "unreal.mod");
+    listitem_add(&st->fileListData, "matkamis.mod");
+    listitem_add(&st->fileListData, "egyption-knights.mod");
+    listitem_add(&st->fileListData, "mcappin-dance.mod");
+
+
+    listitem_add(&st->fileListData, "test1.txt");
+    listitem_add(&st->fileListData, "test2.bmp");
+    listitem_add(&st->fileListData, "docs/");
+    listitem_add(&st->fileListData, "monty1.sid");
+    listitem_add(&st->fileListData, "1_67YT-Turrican_III_Remix.sid");
+    listitem_add(&st->fileListData, "Bionic_Commando(+).sid");
+    listitem_add(&st->fileListData, "Co-Axis_Remix(+).sid");
+    listitem_add(&st->fileListData, "Mega_Apocalypse_remix.sid");
+    listitem_add(&st->fileListData, "Wiklund_-_Cheese.sid");
+    listitem_add(&st->fileListData, "1943.YM");
+    listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
+    listitem_add(&st->fileListData, "sonic 2.vgm");
+    listitem_add(&st->fileListData, "sonic 3 - stage 2.vgm");
+    listitem_add(&st->fileListData, "turrican 2 - title.tfx");
+    listitem_add(&st->fileListData, "sweet dreams.mod");
+    listitem_add(&st->fileListData, "unreal.mod");
+    listitem_add(&st->fileListData, "matkamis.mod");
+    listitem_add(&st->fileListData, "egyption-knights.mod");
+    listitem_add(&st->fileListData, "mcappin-dance.mod");
 
 
     int16_t fileCount = listitem_count(&st->fileListData) - 8; // 8 is what is visable items
 
 
+    Req_height -= 80;
     // Create gadgets
-    st->scrollBar = SBOS_CreateScrollbar(win, Req_width - 40 - (WIN_BORDER * 2) + 8, 8, DEF_DIALOG_SCROLL_WIDTH, 140, SB_ORIENT_VERT, 0, fileCount, (fileCount/2), 0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
-    st->fListBox  = SBOS_CreateListBox(win, 8, 8, Req_width - 40 - (WIN_BORDER * 2), 140, &st->fileListData, GAD_TOOL_DEFAULT);
+    st->scrollBar = SBOS_CreateScrollbar(win, Req_width - 40 - (WIN_BORDER * 2) + 8, 8, DEF_DIALOG_SCROLL_WIDTH, Req_height, SB_ORIENT_VERT, 0, fileCount, (fileCount), 0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    st->fListBox  = SBOS_CreateListBox(win, 8, 8, Req_width - 40 - (WIN_BORDER * 2), Req_height, &st->fileListData, GAD_TOOL_DEFAULT);
 
     int16_t buttox = 8;
-    st->btnOk     = SBOS_CreateButton (win, buttox, 154, 40, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
+
+    Req_height += 12;
+    st->btnOk     = SBOS_CreateButton (win, buttox, Req_height, 40, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
     buttox += 5 + 40;
-    st->btnCancel = SBOS_CreateButton (win, buttox, 154, 60, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
+    st->btnCancel = SBOS_CreateButton (win, buttox, Req_height, 60, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
     buttox += 5 + 60;
-    st->btnParent = SBOS_CreateButton (win, buttox, 154, 90, DEF_DIALOG_BUTTON_HEIGHT, "Parent...", GAD_TOOL_DEFAULT);
+    st->btnParent = SBOS_CreateButton (win, buttox, Req_height, 90, DEF_DIALOG_BUTTON_HEIGHT, "Parent...", GAD_TOOL_DEFAULT);
     buttox += 5 + 90;
-    st->btnRoot   = SBOS_CreateButton (win, buttox, 154, 50, DEF_DIALOG_BUTTON_HEIGHT, "Root", GAD_TOOL_DEFAULT);
+    st->btnRoot   = SBOS_CreateButton (win, buttox, Req_height, 50, DEF_DIALOG_BUTTON_HEIGHT, "Root", GAD_TOOL_DEFAULT);
 
     SBOS_bringToFront(win);
     SBOS_setFocus(win);

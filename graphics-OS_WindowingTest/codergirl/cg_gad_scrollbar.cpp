@@ -32,18 +32,25 @@ static inline int16_t sb_value_from_thumb_pos(int16_t pos, int16_t min, int16_t 
 
 int16_t sb_thumb_len_from_step(int16_t track_len, int16_t min, int16_t max, int16_t step){
     const int16_t MIN_THUMB = 8;
-    int32_t range = (int32_t)max - (int32_t)min;
 
     if (track_len <= 0) return 0;
-    if (range <= 0) return track_len; // no scroll range => thumb fills track
+
+    int32_t range = (int32_t)max - (int32_t)min;
+    if (range <= 0) return track_len;   // no scroll => fills track
 
     if (step <= 0) step = 1;
-    if ((int32_t)step > range) step = (int16_t)range;
 
-    int32_t len = ((int32_t)step * (int32_t)track_len + range/2) / range;
+    // Treat step as "visible amount". Total represented = range + step.
+    int32_t total = range + (int32_t)step;
+    if (total <= 0) return track_len;
+
+    int32_t len = ((int32_t)step * (int32_t)track_len + total/2) / total;
+
     if (len < MIN_THUMB) len = MIN_THUMB;
     if (len > track_len) len = track_len;
+
     return (int16_t)len;
+
 }
 
 int16_t sb_thumb_pos_from_value(int16_t value, int16_t min, int16_t max, int16_t travel){
@@ -462,7 +469,16 @@ uint32_t SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func){
     return 0;
 }
 
-
+void SBOS_setScrollerMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16_t stepping){
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
+    if (!g) return;
+    if (g->gadgetType != GAD_SCROLLBAR) return;
+    if (!g->gadget) return;
+    GAD_SCROLLBAR_T *sb = (GAD_SCROLLBAR_T*)g->gadget;
+    sb->min = min;
+    sb->max = max;
+    sb->step = stepping;
+}
 
 
 

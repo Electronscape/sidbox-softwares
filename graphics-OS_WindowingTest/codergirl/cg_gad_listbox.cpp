@@ -56,7 +56,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (!list) return;
 
     // Compute visible rows
-    int16_t usable_h = (int16_t)(ih - pad_y * 2 + 2);
+    int16_t usable_h = (int16_t)(ih - pad_y * 2);
     if (usable_h <= 0) return;
 
     int16_t rows = (int16_t)(usable_h / row_h);
@@ -75,6 +75,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     if (lb->top < 0) lb->top = 0;
     if (lb->top > maxTop) lb->top = maxTop;
 
+    lb->visablerows = 0;
 
 
     // How many chars fit per row (8x16 font)
@@ -92,6 +93,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     for (int16_t r = 0; r < rows; r++){
         int16_t idx = (int16_t)(lb->top + r);
+        lb->visablerows ++;
         if (idx >= count) break;
 
         int16_t ry = (int16_t)(iy + pad_y + r * row_h);
@@ -139,6 +141,27 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         draw_disabled_dots(ax+1, ay+1, aw-2, ah-2);
     }
 }
+
+
+// api-stuff
+void SBOS_ListBoxResize(CGGadgetHandle h, int16_t neww, int16_t newh){
+
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(h);
+    if(!g)return;
+
+    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T *)g->gadget;
+
+    lb->h.rect.w = neww;
+    lb->h.rect.h = newh;
+
+    // invalidate Gadget would go here
+    // TODO: not ready for these yet
+}
+
+
+
+
+
 
 static void listbox_tidyup(GAD_LISTBOX_T *lb){
     int count = (lb && lb->items) ? (int)lb->items->count : 0;
@@ -262,7 +285,7 @@ uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, in
     int16_t row_h = (lb->row_h > 0) ? lb->row_h : 16;
     int16_t pad_y = (lb->padding_y > 0) ? lb->padding_y : 2;
 
-    int16_t usable_h = (int16_t)(ih - pad_y * 2 + 2);
+    int16_t usable_h = (int16_t)(ih - pad_y * 2 );
     if (usable_h <= 0) return 0;
 
     int16_t band_h = (int16_t)(rows * row_h);
@@ -327,6 +350,7 @@ uint32_t onMouseMoveListBox(sbx_window_t *w, GADGET_BASE_T *g, MouseEvt *evt, in
     return 0;
 }
 
+
 uint32_t onMouseReleaseListBox(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
     (void)mx; (void)my;
 
@@ -379,5 +403,17 @@ ItemLists_t* SBOS_ListBoxGetItems(CGGadgetHandle h){
     if (!b || b->gadgetType != GAD_LISTBOX || !b->gadget) return NULL;
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)b->gadget;
     return lb->items;
+}
+
+int16_t SBOS_getListBoxVisableCount(CGGadgetHandle h){
+    GADGET_BASE_T *b = SBOS_gadgetFromHandle(h);
+    if (!b || b->gadgetType != GAD_LISTBOX || !b->gadget) return -1;    // invalid number
+
+    GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)b->gadget;
+
+
+    return lb->visablerows;
+
+
 }
 

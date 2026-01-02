@@ -565,6 +565,7 @@ GADGET_BASE_T* SBOS_gadgetFromHandle(CGGadgetHandle h){
     return g;
 }
 
+
 // Handy: get header for hit-test / common flags
 GAD_HDR_T* SBOS_gadgetHdr(GADGET_BASE_T *g){
     if (!g || !g->gadget) return NULL;
@@ -575,6 +576,43 @@ GAD_HDR_T* SBOS_gadgetHdr(GADGET_BASE_T *g){
 static inline GAD_HDR_T* gad_hdr(GADGET_BASE_T *b){
     return (b && b->gadget) ? (GAD_HDR_T*)b->gadget : NULL;
 }
+
+void SBOS_moveGadget(CGGadgetHandle hnd, int16_t newx, int16_t newy){
+    if (hnd == SBCTL_INVALID) return;
+
+    uint16_t idx = SBCTL_IDX(hnd);
+    uint16_t gen = SBCTL_GEN(hnd);
+
+    if (idx >= MAX_GADGETS) return;
+
+    GADGET_BASE_T *g = &g_basePool[idx];
+    if (!g->gadgetSlotUsed) return ;
+    if (g->handleGen != gen) return;
+
+    GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+
+    gad->rect.x = newx;
+    gad->rect.y = newy;
+}
+
+void SBOS_resizeGadget(CGGadgetHandle hnd, int16_t neww, int16_t newh){
+    if (hnd == SBCTL_INVALID) return;
+
+    uint16_t idx = SBCTL_IDX(hnd);
+    uint16_t gen = SBCTL_GEN(hnd);
+
+    if (idx >= MAX_GADGETS) return;
+
+    GADGET_BASE_T *g = &g_basePool[idx];
+    if (!g->gadgetSlotUsed) return ;
+    if (g->handleGen != gen) return;
+
+    GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+
+    gad->rect.w = neww;
+    gad->rect.h = newh;
+}
+
 
 
 

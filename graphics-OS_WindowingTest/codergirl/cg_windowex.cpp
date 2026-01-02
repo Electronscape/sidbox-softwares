@@ -303,6 +303,7 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
             w->flags = flags;
             w->backColour = PEN_WIN_BG;
 
+            // resize limiter box (WORKS REAAAAAAAAAALLY well
             w->maxrect.x = 100;   // <-- these two points arent
             w->maxrect.y = 100;
             w->maxrect.w = 0x7FFF;  // pretty big
@@ -378,9 +379,16 @@ void SBOS_setWindowResizeLimits(SBXWindowId win, int16_t minw, int16_t minh, int
     w->maxrect.y = minh;
     w->maxrect.w = maxw;
     w->maxrect.h = maxh;
-
 }
 
+void SBOS_getWindowSize(SBXWindowId win, int16_t *w, int16_t *h){
+    sbx_window_t *winh = SBOS_getWindow(win);
+    if (!winh) return; // not a valid window!!
+
+    *w = winh->winrect.w;
+    *h = winh->winrect.h;
+
+}
 
 
 void SBOS_paintWindow(SBXWindowId id){
@@ -1130,9 +1138,9 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                     layoutWindow(w);
                     repaint = 1;
 
-                    //SBXWindowId win = g_ui.resize_win;
-                    //if(win)
-                    CG_PostWindowMsg(g_ui.resize_win, CGEVT_WIN_RESIZE, w->winrect.w, w->winrect.h, 0, 0);
+                    //if(w)
+                        CG_PostWindowMsg(g_ui.resize_win, CGEVT_WIN_RESIZED, w->winrect.w, w->winrect.h, 0, 0);
+
                 }
                 break;
             }

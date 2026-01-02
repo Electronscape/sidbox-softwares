@@ -167,6 +167,11 @@ GADGET_BASE_T*  SBOS_gadgetFromHandle(CGGadgetHandle h);
 GAD_HDR_T*      SBOS_gadgetHdr(GADGET_BASE_T *g);
 
 
+// More useful direct functions
+void            SBOS_moveGadget(CGGadgetHandle hnd, int16_t newx, int16_t newy);
+void            SBOS_resizeGadget(CGGadgetHandle hnd, int16_t neww, int16_t newh);
+
+
 void            SBOS_enableGadget(CGGadgetHandle h, uint8_t enable);
 void            SBOS_destroyGadget(CGGadgetHandle h);
 

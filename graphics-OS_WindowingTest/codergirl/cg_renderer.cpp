@@ -203,7 +203,7 @@ void draw_bevel(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen_hi, uin
 
     // bottom + right
     gfx_setcolour(br);
-    ui_hline(x+1, (int16_t)(y + h - 1), w-1);
+    ui_hline(x, (int16_t)(y + h - 1), w-1);
     ui_vline((int16_t)(x + w - 1), y, h);
 }
 

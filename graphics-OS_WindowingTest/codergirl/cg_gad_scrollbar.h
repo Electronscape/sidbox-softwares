@@ -61,6 +61,7 @@ uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my);
 
 
 // API INTERFACES -------------------------------------------------------------------------------------------------
-uint32_t SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func);
+uint32_t    SBOS_setScrollBarCallBack(CGGadgetHandle h, fnCallback func);
+void        SBOS_setScrollerMinMax(CGGadgetHandle h, uint16_t min, uint16_t max, uint16_t stepping);
 
 #endif // CG_GAD_SCROLLBAR_H
