@@ -449,6 +449,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_canvas.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_gad_canvas.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.h",
 			"MU",
 			"5AAQOGTO22/moc_cg_gad_checkbox.cpp",
@@ -667,6 +673,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.cpp",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_canvas.cpp",
 			"MU",
 			null
 		],

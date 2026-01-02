@@ -169,9 +169,9 @@ static CGWindowProcRes MsgBoxProc(SBXWindowId win, const CGMessage_t *m){
 }
 
 #define MSG_WIN_WIDTH           290
-#define MSG_WIN_HEIGHT          180
+#define MSG_WIN_HEIGHT          100
 //#define MSG_BTN_HEIGHT          24
-#define MSG_BTN_MARGIN_BOTTOM  (16 + WIN_TITLE_HEIGHT)
+#define MSG_BTN_MARGIN_BOTTOM  (12 + WIN_TITLE_HEIGHT)
 #define MGS_BTN_WIDTH           80
 
 static int16_t clamp16(int16_t v, int16_t lo, int16_t hi){
@@ -221,7 +221,7 @@ SBXWindowId SBOS_MessageBox(SBXWindowId owner_winhnd, const CGFMsgBoxParams *p){
     //lines--;
 
     // --- window size ---
-    int16_t prepHeight = (int16_t)(86 + lines * FONT_HEIGHT);
+    int16_t prepHeight = (int16_t)(76 + lines * FONT_HEIGHT);
     int16_t prepWidth  = clamp16((int16_t)(maxChars * FONT_WIDTH + 32), MSG_WIN_WIDTH, SCR_WIDTH);
 
     // --- window pos ---
@@ -265,8 +265,8 @@ SBXWindowId SBOS_MessageBox(SBXWindowId owner_winhnd, const CGFMsgBoxParams *p){
     mb->bgShape = SBOS_CreateBitmapView(win, 0, 0, prepWidth, prepHeight, baseGridLight, 32, 32, 32,
                                         BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
 
-    mb->lblBg  = SBOS_CreateLabel(win, 10, 10, prepWidth - 30, (int16_t)(btnY - 20), "", GAD_TOOL_INSET);
-    mb->lblMsg = SBOS_CreateLabel(win, 16, 16, prepWidth - 42, (int16_t)(btnY - 32), mb->txtMsg, GAD_TOOL_DEFAULT);
+    mb->lblBg  = SBOS_CreateLabel(win, 10, 10, prepWidth - 30, (int16_t)(btnY - 15), "", GAD_TOOL_INSET);
+    mb->lblMsg = SBOS_CreateLabel(win, 16, 16, prepWidth - 42, (int16_t)(btnY - 28), mb->txtMsg, GAD_TOOL_DEFAULT);
 
     if (mb->flags == MSGBOXF_OK) {
         mb->btnOk = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "OK", GAD_TOOL_DEFAULT);

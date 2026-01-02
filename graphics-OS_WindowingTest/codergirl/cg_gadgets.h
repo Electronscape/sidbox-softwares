@@ -19,11 +19,13 @@
 #define     MAX_LISTBOXES           (MAX_EVERYTHING)
 #define     MAX_RADIOS              (MAX_EVERYTHING)
 #define     MAX_SCROLLBARS          (MAX_EVERYTHING)
+#define     MAX_CANVASES            (MAX_EVERYTHING)
 
 
 // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
 #define     MAX_GADGETS         (   MAX_BITMAPVIEWS +   \
                                     MAX_BUTTONS +       \
+                                    MAX_CANVASES +      \
                                     MAX_CHECKBOXES +    \
                                     MAX_GRIDSELECTS +   \
                                     MAX_LABELS +        \
@@ -78,6 +80,12 @@ typedef enum BMV_FLAGS_T {
     BVF_WRAP                = (1 << 4)
 } BMV_FLAGS_T;
 
+typedef enum CNV_FLAGS_T {
+    CNV_LINE                = 0,
+    CNV_RECT                ,
+    CNV_RECTF               ,
+} CNV_FLAGS_T;
+
 typedef enum {
     GAD_GRIDSEL_JUST_ONE     = (1 << 0),   // in single mode: never allow -1
     GAD_GRIDSEL_TEXT_INVERT  = (1 << 1),   // allows teh text to be inverted colours
@@ -90,6 +98,7 @@ typedef enum GADGET_CLASS_T {
     GAD_NULL        = 0,
     GAD_BITMAPVIEW,
     GAD_BUTTON,
+    GAD_CANVAS,
     GAD_CHECKBOX,
     GAD_GRIDSELECT,
     GAD_LABEL,
@@ -142,6 +151,7 @@ void SBOS_gadgetsInit(void);
 
 CGGadgetHandle SBOS_CreateBitmapView (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pixels, int16_t bmp_w, int16_t bmp_h, int16_t bmp_stride, uint32_t bv_flags, uint32_t flags);
 CGGadgetHandle SBOS_CreateButton     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);
+CGGadgetHandle SBOS_CreateCanvas     (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, CNV_FLAGS_T drawtype, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateCheckbox   (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, uint8_t initial_checked, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateGridSelect (SBXWindowId win, int16_t x, int16_t y, int16_t cell_size_x, int16_t cell_size_y, uint8_t cells_x, uint8_t cells_y, uint32_t gridflags, GAD_TOOL_FLAGS flags);
 CGGadgetHandle SBOS_CreateLabel      (SBXWindowId win, int16_t x, int16_t y, int16_t w, int16_t h, const char *text, GAD_TOOL_FLAGS flags);

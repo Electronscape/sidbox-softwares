@@ -8,6 +8,7 @@
 // prototype access (internal stuffs)
 void draw_bitmapview (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_button     (const sbx_window_t *w, const GADGET_BASE_T *g);
+void draw_canvas     (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_checkbox   (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_gridselect (const sbx_window_t *w, const GADGET_BASE_T *g);
 void draw_label      (const sbx_window_t *w, const GADGET_BASE_T *g);

@@ -6,6 +6,7 @@
 #include <string.h>
 #include "cg_wintype.h"
 
+#include "cg_glyphs.h"
 #include "cg_windowex.h"     // SBXWindowId
 #include "cg_gad_listbox.h"
 
@@ -23,6 +24,7 @@ typedef struct LIB_FILEREQUEST_PRIVATE {
     char currdir[256];           // faux dir (later FS_FNLEN)
 
     CGGadgetHandle btnOk, btnCancel;
+    CGGadgetHandle bgBitmap;
     CGGadgetHandle fListBox;
 
     ItemLists_t fileListData;    // listbox items backing store
@@ -235,6 +237,8 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     LIB_FILEREQUEST_PRIVATE *st = filerq_alloc();
     if (!st) return SBW_INVALID_ID;
 
+    int16_t Req_width = FILEREQUEST_DEF_WIDTH;
+    int16_t Req_height = FILEREQUEST_DEF_HEIGHT;
 
     memset(st, 0, sizeof(*st));
 
@@ -254,12 +258,16 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     const char *title = (p->title && p->title[0]) ? p->title : "Open File";
 
     // create requester window
-    SBXWindowId win = SBOS_createWindow(NULL, 40, 40, 290, 206, title,
+    SBXWindowId win = SBOS_createWindow(NULL, 40, 40, Req_width, Req_height, title,
                                         SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_CLOSE | SBX_WF_MOVEABLE | SBX_WF_ZORDER | SBX_WF_SCREENBOUND);
     if (win == SBW_INVALID_ID){
         // free(st);
         return SBW_INVALID_ID;
     }
+
+
+    st->bgBitmap = SBOS_CreateBitmapView(win, 0, 0, Req_width, Req_height, baseGridLight, 32, 32, 32,
+                                BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
 
     st->selfWinId = win;
     g_filerq_state[win] = st;

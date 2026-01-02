@@ -11,6 +11,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o"

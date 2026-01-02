@@ -20,6 +20,7 @@
 #include "codergirl/cg_gad_listbox.h"
 #include "codergirl/cg_itemlist.h"
 #include "codergirl/cg_gad_button.h"
+#include "codergirl/cg_gad_canvas.h"
 #include "codergirl/cg_gad_scrollbar.h"
 #include "codergirl/cg_gad_label.h"
 #include "codergirl/cg_gad_gridselect.h"
@@ -212,16 +213,8 @@ static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                         */
 
                         SBOS_MessageBoxSimple(win, "test message",
-                                              "hello this is a text box! bit of a long text so i want to see if the box expands\n"
-                                              "Next line testing\n"
-                                              "Just say Hello!\n"
-                                              "Its time to play\n"
-                                              "with other buttons\n"
-                                              "Can you do it?\n"
-                                              "YEY PLEASE!\n"
-                                              "They More lines\n"
-                                              "Stranger Things!!\n"
-                                              "I just pooped my self!",
+                                              "hello this is a text box!\n"
+                                              "testing next line!",
                                               MSGBOXF_YESNOCANCEL);
                         /*
                         SBOS_MessageBoxSimple(win, "test message",
@@ -340,6 +333,7 @@ void createBasicDesktopTest(){
 
     titleBar = SBOS_createWindow(&titleBar, 0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
     SBOS_setWinBackColour(titleBar, 2);
+    SBOS_CreateCanvas(titleBar, 0, SYS_MENU_BAR_HEIGHT-1, SCR_WIDTH, 0, CNV_LINE,  GAD_TOOL_DEFAULT);
 
     SBOS_CreateLabel(titleBar, 5, 2, 100, 16, "SIDBOX DESKTOP V1.0", GAD_TOOL_DEFAULT);
     MenuBarTitle = SBOS_CreateLabel(titleBar, 185, 2, 100, 16, "hello world", GAD_TOOL_DEFAULT);
@@ -607,7 +601,7 @@ Dialog::Dialog(QWidget *parent)
 
 
     t->start(1500);   // every 22ms/ about 60hz?
-    osMessageHandlerTMR->start(10);// 1 second so we can see things in the queue
+    osMessageHandlerTMR->start(16);// 1 second so we can see things in the queue
 }
 
 

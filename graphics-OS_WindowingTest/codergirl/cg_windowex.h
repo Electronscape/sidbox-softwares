@@ -107,8 +107,9 @@ typedef struct {
     uint16_t sb_used;   // scrollbars
     uint16_t bv_used;   // bitmap views
     uint16_t lb_used;   // list box
-    uint16_t lbl_used;  // list box
-    uint16_t gs_used;   // list box
+    uint16_t lbl_used;  // label
+    uint16_t gs_used;   // gridselect
+    uint16_t cn_used;   // canvas
 
     // NEW: library dialogs
     uint16_t filerq_used;

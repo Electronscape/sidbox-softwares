@@ -13,10 +13,11 @@
 
 #include "cg_input.h"
 
+#include "cg_gad_bitmapview.h"
 #include "cg_gad_button.h"
+#include "cg_gad_canvas.h"
 #include "cg_gad_checkbox.h"
 #include "cg_gad_radio.h"
-#include "cg_gad_bitmapview.h"
 #include "cg_gad_scrollbar.h"
 #include "cg_gad_listbox.h"
 #include "cg_gad_label.h"
@@ -137,6 +138,7 @@ void SBOS_print_ui_usage(void){
     size_t u_lbl     = (size_t)uc.lbl_used * sizeof(GAD_LABEL_T);
     size_t u_lb      = (size_t)uc.lb_used  * sizeof(GAD_LISTBOX_T);
     size_t u_sb      = (size_t)uc.sb_used  * sizeof(GAD_SCROLLBAR_T);
+    size_t u_cn      = (size_t)uc.cn_used  * sizeof(GAD_CANVAS_T);
 
 
     size_t u_gadgets = u_base +
@@ -168,6 +170,7 @@ void SBOS_print_ui_usage(void){
     printf("ListBoxs           : %u / %u\n", uc.lb_used,  (unsigned)(rb.lbPool  / sizeof(GAD_LISTBOX_T)));
     printf("Labels             : %u / %u\n", uc.lbl_used, (unsigned)(rb.lblPool / sizeof(GAD_LABEL_T)));
     printf("Gridselects        : %u / %u\n", uc.gs_used,  (unsigned)(rb.gsPool  / sizeof(GAD_GRIDSELECT_T)));
+    printf("Canvases           : %u / %u\n", uc.cn_used,  (unsigned)(rb.cnPool  / sizeof(GAD_CANVAS_T)));
     printf("--------------------------------------------------\n");
 
     double usage_pct = 0.0;

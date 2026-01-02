@@ -12,6 +12,8 @@
 // c = MSG_PTR(out_path)   (same pointer the caller gave)
 // d = (int32_t)filerq_winhnd   (so owner can match which requester finished)
 
+#define     FILEREQUEST_DEF_WIDTH   290
+#define     FILEREQUEST_DEF_HEIGHT  206
 
 typedef struct CGFileRqParams {
     const char *title;        // window title text (optional)

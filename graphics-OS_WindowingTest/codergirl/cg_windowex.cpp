@@ -914,6 +914,7 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
         switch (g->gadgetType){
             case GAD_BITMAPVIEW: draw_bitmapview(w, g); break;
             case GAD_BUTTON:     draw_button(w, g);     break;
+            case GAD_CANVAS:     draw_canvas(w, g);     break;
             case GAD_CHECKBOX:   draw_checkbox(w, g);   break;
             case GAD_GRIDSELECT: draw_gridselect(w, g); break;
             case GAD_LABEL:      draw_label(w, g);      break;

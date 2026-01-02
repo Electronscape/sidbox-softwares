@@ -34,6 +34,36 @@ void fill_rect_pen(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t pen){
     }
 }
 
+void ui_draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1){
+    int16_t dx = (x1 > x0) ? (x1 - x0) : (x0 - x1);
+    int16_t sx = (x0 < x1) ? 1 : -1;
+
+    int16_t dy = (y1 > y0) ? (y1 - y0) : (y0 - y1);
+    int16_t sy = (y0 < y1) ? 1 : -1;
+
+    int16_t err = dx - dy;
+
+    for (;;) {
+        ui_ppixel(x0, y0);
+
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        int16_t e2 = err << 1;
+
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+    //ui_ppixel(x, y);
+}
+
 void ui_draw_glyph(int16_t x, int16_t y, uint8_t *glyph) {
     int16_t x0 = x;
     int16_t y0 = y;
