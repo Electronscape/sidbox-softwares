@@ -32,6 +32,7 @@ typedef struct {
     char            title[WINDOW_TITLE_MAX_LEN];
 
     GADGET_RECT_T   winrect;            // window geometry (the actual area of the window)
+    GADGET_RECT_T   maxrect;            // min/maximum size geometry can grow to!
     GADGET_RECT_T   clientrect;         // this is the inner view port, which will adjust according to what things will be there
 
     uint8_t         backColour;         // default background colour

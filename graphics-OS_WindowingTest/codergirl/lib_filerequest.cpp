@@ -6,8 +6,10 @@
 #include <string.h>
 #include "cg_wintype.h"
 
+#include "cg_renderer.h"
 #include "cg_glyphs.h"
 #include "cg_windowex.h"     // SBXWindowId
+#include "cg_gad_scrollbar.h"
 #include "cg_gad_listbox.h"
 
 #include "lib_filerequest.h"
@@ -23,9 +25,10 @@ typedef struct LIB_FILEREQUEST_PRIVATE {
 
     char currdir[256];           // faux dir (later FS_FNLEN)
 
-    CGGadgetHandle btnOk, btnCancel;
+    CGGadgetHandle btnOk, btnCancel, btnParent, btnRoot;
     CGGadgetHandle bgBitmap;
     CGGadgetHandle fListBox;
+    CGGadgetHandle scrollBar;
 
     ItemLists_t fileListData;    // listbox items backing store
 
@@ -177,6 +180,17 @@ static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
 
     switch(m->eventClass){
 
+    case CGEVT_GAD_SCROLL_CHANGED: {
+            // only one scroller so we know where this came from?
+            if(m->gadget == st->scrollBar){
+                GADGET_BASE_T *lb = SBOS_gadgetFromHandle(st->fListBox);
+                if (!lb || !lb->gadget) return CGPROC_DEFAULT;
+
+                SBOS_setListbox_top(lb, (int16_t)m->a);
+            }
+        }
+        break;
+
     // window chrome close
     case CGEVT_WIN_CLOSE_REQUEST:
         filerq_post_done(st, 0);
@@ -259,15 +273,18 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
 
     // create requester window
     SBXWindowId win = SBOS_createWindow(NULL, 40, 40, Req_width, Req_height, title,
-                                        SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_CLOSE | SBX_WF_MOVEABLE | SBX_WF_ZORDER | SBX_WF_SCREENBOUND);
+                                        SBX_WF_RESIZABLE | SBX_WF_VISIBLE | SBX_WF_TITLE_BAR | SBX_WF_CLOSE | SBX_WF_MOVEABLE | SBX_WF_ZORDER | SBX_WF_SCREENBOUND);
     if (win == SBW_INVALID_ID){
         // free(st);
         return SBW_INVALID_ID;
     }
 
+    SBOS_setWindowResizeLimits(win, Req_width, Req_height, Req_width, 0x7fff); // set resize constraints
 
-    st->bgBitmap = SBOS_CreateBitmapView(win, 0, 0, Req_width, Req_height, baseGridLight, 32, 32, 32,
+    st->bgBitmap = SBOS_CreateBitmapView(win, 0, 0, Req_width, SCR_HEIGHT, baseGrid, 32, 32, 32,
                                 BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+
+
 
     st->selfWinId = win;
     g_filerq_state[win] = st;
@@ -290,11 +307,24 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     listitem_add(&st->fileListData, "Union Demo - Alloy Run.ym");
 
 
+    int16_t fileCount = listitem_count(&st->fileListData) - 8; // 8 is what is visable items
+
 
     // Create gadgets
-    st->fListBox = SBOS_CreateListBox(win, 8, 8, 264, 140, &st->fileListData, GAD_TOOL_DEFAULT);
-    st->btnOk    = SBOS_CreateButton (win, 140, 154, 60, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
-    st->btnCancel= SBOS_CreateButton (win, 210, 154, 60, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
+    st->scrollBar = SBOS_CreateScrollbar(win, Req_width - 40 - (WIN_BORDER * 2) + 8, 8, DEF_DIALOG_SCROLL_WIDTH, 140, SB_ORIENT_VERT, 0, fileCount, (fileCount/2), 0, GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
+    st->fListBox  = SBOS_CreateListBox(win, 8, 8, Req_width - 40 - (WIN_BORDER * 2), 140, &st->fileListData, GAD_TOOL_DEFAULT);
+
+    int16_t buttox = 8;
+    st->btnOk     = SBOS_CreateButton (win, buttox, 154, 40, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
+    buttox += 5 + 40;
+    st->btnCancel = SBOS_CreateButton (win, buttox, 154, 60, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
+    buttox += 5 + 60;
+    st->btnParent = SBOS_CreateButton (win, buttox, 154, 90, DEF_DIALOG_BUTTON_HEIGHT, "Parent...", GAD_TOOL_DEFAULT);
+    buttox += 5 + 90;
+    st->btnRoot   = SBOS_CreateButton (win, buttox, 154, 50, DEF_DIALOG_BUTTON_HEIGHT, "Root", GAD_TOOL_DEFAULT);
+
+    SBOS_bringToFront(win);
+    SBOS_setFocus(win);
 
     SBOS_paintAllWindows();
     return win;

@@ -601,7 +601,7 @@ Dialog::Dialog(QWidget *parent)
 
 
     t->start(1500);   // every 22ms/ about 60hz?
-    osMessageHandlerTMR->start(16);// 1 second so we can see things in the queue
+    osMessageHandlerTMR->start(8);// 1 second so we can see things in the queue
 }
 
 

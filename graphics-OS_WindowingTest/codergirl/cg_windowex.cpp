@@ -303,6 +303,10 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
             w->flags = flags;
             w->backColour = PEN_WIN_BG;
 
+            w->maxrect.x = 100;   // <-- these two points arent
+            w->maxrect.y = 100;
+            w->maxrect.w = 0x7FFF;  // pretty big
+            w->maxrect.h = 0x7FFF;  // pretty big
 
 
             w->proc = DefaultWindowProc;
@@ -357,6 +361,25 @@ void SBOS_setWindowProc(SBXWindowId win, MSGWndProc proc)
     if (w) w->proc = proc;
 }
 
+void SBOS_setWindowResizeLimits(SBXWindowId win, int16_t minw, int16_t minh, int16_t maxw, int16_t maxh){
+
+    sbx_window_t *w = SBOS_getWindow(win);
+    if (!w) return; // not a valid window!!
+    if(minw < 100) minw = 100;
+    if(w->flags && SBX_WF_RESIZABLE){
+        if(minh < (WIN_TITLE_HEIGHT * 2)) minh = (WIN_TITLE_HEIGHT * 2);
+    } else
+        if(minh < WIN_TITLE_HEIGHT) minh = WIN_TITLE_HEIGHT;
+
+    if(maxw > 0x7fff) maxw = 0x7fff;
+    if(maxh > 0x7fff) maxh = 0x7fff;
+
+    w->maxrect.x = minw;
+    w->maxrect.y = minh;
+    w->maxrect.w = maxw;
+    w->maxrect.h = maxh;
+
+}
 
 
 
@@ -1090,10 +1113,16 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                     }
 
                     // enforce minimum window size
-                    if (nw < 100)
-                        nw = 100;
-                    if (nh < 100)
-                        nh = 100;
+                    //if (nw < 100)
+                        //nw = 100;
+                    //if (nh < 100)
+                        //nh = 100;
+
+                    if(nw < w->maxrect.x) nw = w->maxrect.x;
+                    if(nh < w->maxrect.y) nh = w->maxrect.y;
+
+                    if(nw > w->maxrect.w) nw = w->maxrect.w;
+                    if(nh > w->maxrect.h) nh = w->maxrect.h;
 
                     w->winrect.w = nw;
                     w->winrect.h = nh;

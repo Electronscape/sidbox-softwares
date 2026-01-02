@@ -13,7 +13,7 @@
 // d = (int32_t)filerq_winhnd   (so owner can match which requester finished)
 
 #define     FILEREQUEST_DEF_WIDTH   290
-#define     FILEREQUEST_DEF_HEIGHT  206
+#define     FILEREQUEST_DEF_HEIGHT  (206 + WIN_RESIZE_GLYPH_SIZE)
 
 typedef struct CGFileRqParams {
     const char *title;        // window title text (optional)

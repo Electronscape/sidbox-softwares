@@ -46,6 +46,8 @@
 
 #define     DEF_DIALOG_BUTTON_WIDTH      80
 #define     DEF_DIALOG_BUTTON_HEIGHT     22
+#define     DEF_DIALOG_SCROLL_WIDTH      22
+#define     DEF_DIALOG_SCROLL_HEIGHT     22
 
 
 typedef enum {
@@ -140,6 +142,7 @@ void            SBOS_destroyWindow(SBXWindowId id);
 sbx_window_t*   SBOS_getWindow(SBXWindowId id);
 void            SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor);
 void            SBOS_setWindowProc(SBXWindowId win, MSGWndProc proc);
+void            SBOS_setWindowResizeLimits(SBXWindowId win, int16_t minw, int16_t minh, int16_t maxw, int16_t maxh);
 
 void            SBOS_paintWindow(SBXWindowId id);
 void            SBOS_paintAllWindows(void);

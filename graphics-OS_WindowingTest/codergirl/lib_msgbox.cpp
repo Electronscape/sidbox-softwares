@@ -261,6 +261,9 @@ SBXWindowId SBOS_MessageBox(SBXWindowId owner_winhnd, const CGFMsgBoxParams *p){
     g_msgbox_state[win] = mb;
     SBOS_setWindowProc(win, MsgBoxProc);
 
+    SBOS_setFocus(win);
+    SBOS_bringToFront(win);
+
     // --- gadgets ---
     mb->bgShape = SBOS_CreateBitmapView(win, 0, 0, prepWidth, prepHeight, baseGridLight, 32, 32, 32,
                                         BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
