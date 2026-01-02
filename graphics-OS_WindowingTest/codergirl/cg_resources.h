@@ -20,4 +20,6 @@ void SBOS_print_reserved_ui_memory(void);
 char* fmt_commas_u32(char *dst, uint32_t value);
 void getMemAvailChipNFast(uint32_t *chip, uint32_t *fast);
 
+
+
 #endif // CG_RESOURCES_H

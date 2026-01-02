@@ -190,6 +190,18 @@ void draw_bevel_rect(int16_t x, int16_t y, int16_t w, int16_t h){
     ui_vline(x + w - 1, y, h);
 }
 
+void draw_bevel_rect_inset(int16_t x, int16_t y, int16_t w, int16_t h){
+    // light (top + left)
+    gfx_setcolour(PEN_WIN_BEVEL_L);
+    ui_hline(x, y, w);
+    ui_vline(x, y, h);
+
+    // dark (bottom + right)
+    gfx_setcolour(PEN_WIN_BEVEL_H);
+    ui_hline(x, y + h - 1, w);
+    ui_vline(x + w - 1, y, h);
+}
+
 void draw_bevel(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen_hi, uint16_t pen_lo, uint8_t pressed){
     if (w <= 0 || h <= 0) return;
 

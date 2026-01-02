@@ -354,7 +354,7 @@ void createBasicDesktopTest(){
 
 
     // WINDOW 2 -----------------------
-    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 310, 260, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBXWindowId winMain2 = SBOS_createWindow(&winMain2, 100, 100, 340, 260, "Adjustable Drawer window", SBX_WF_DOCKBOTTOM | SBX_WF_RESIZABLE | SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
     btnAboutUs = SBOS_CreateButton(winMain2, 6,  6,  170, 26, "About us event post", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setWindowProc(winMain2, BasicWindowMAIN);
     btnMessageTest = SBOS_CreateButton(winMain2, 180,  70,  70, 26, "demo", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
@@ -388,6 +388,7 @@ void createBasicDesktopTest(){
     CGGadgetHandle aboutBtn = SBOS_CreateButton(winMain2, 10, 100, 100, 25, "About...", GAD_TOOL_DEFAULT);
     SBOS_setButtonCallBack(aboutBtn, doAboutWindow);
 
+
     CGGadgetHandle scrrb =
     SBOS_CreateScrollbar(winMain2,
                         280, 6, 20, 150,
@@ -395,7 +396,6 @@ void createBasicDesktopTest(){
                         0, 120,
                         5,  50,
                         GAD_TOOL_SCROLLARROWS | GAD_TOOL_DEFAULT);
-
     SBOS_setScrollBarCallBack(scrrb, &BitDemoScrolly1); // attach this scrollbar to the function
     SBOS_CreateScrollbar(winMain2,
                          0,0,0,0,
@@ -411,6 +411,9 @@ void createBasicDesktopTest(){
                         0, 100,
                         1,  25,
                         GAD_TOOL_SCROLLARROWS | GAD_TOOL_DOCKED_RIGHT);
+
+    printf("winScroll: %lu\n", winScroll);
+
 
     //SBOS_setScrollBarCallBack(winScroll, &UpdateMenuLabel); // attach this scrollbar to the function
 

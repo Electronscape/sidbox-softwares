@@ -140,18 +140,22 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
 // 3) Draw the arrows if enabled
 // ------------------------------------------------------------------
 #define ARROW_BUTTON_SIZE_TMP   16
+    uint8_t pressedArrow;
     if (s->show_arrows) {
+
         // Vertical scrollbar arrows (Top and Bottom)
         if (s->orient == SB_ORIENT_VERT) {
             // Top Arrow: Centered horizontally in 'aw', at the very top 'ay'
             // We use (aw - 8) / 2 to perfectly center the 8px box
-            draw_bevel_rect(ax, ay, aw, ARROW_BUTTON_SIZE_TMP);
+            //draw_bevel_rect(ax, ay, aw, ARROW_BUTTON_SIZE_TMP);
 
+            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_UP);
+            draw_bevel(ax, ay, aw, ARROW_BUTTON_SIZE_TMP, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
             ui_draw_glyph(ax + (aw - ARROW_BUTTON_SIZE_TMP) / 2, ay, glyph_arrow_up);
 
             // Bottom Arrow: At the very bottom of the scrollbar (ay + ah - 8)
-            draw_bevel_rect(ax, ay + ah - ARROW_BUTTON_SIZE_TMP, aw, ARROW_BUTTON_SIZE_TMP);
-
+            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_DOWN);
+            draw_bevel(ax, ay + ah - ARROW_BUTTON_SIZE_TMP, aw, ARROW_BUTTON_SIZE_TMP, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
             ui_draw_glyph(ax + (aw - ARROW_BUTTON_SIZE_TMP) / 2 , ay + (ah - ARROW_BUTTON_SIZE_TMP) , glyph_arrow_down);
 
         }
@@ -160,16 +164,16 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
             int ht = ah; // The thickness of the bar
 
             // --- LEFT ARROW ---
-            // Button is at 'ax'
-            draw_bevel_rect(ax, ay, ARROW_BUTTON_SIZE_TMP, ht);
-
-            // Glyph is at 'ax', vertically centered in 'ht'
+            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_LEFT);
+            draw_bevel(ax, ay, ARROW_BUTTON_SIZE_TMP, ht, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
             ui_draw_glyph(ax, ay + (ht - ARROW_BUTTON_SIZE_TMP) / 2, glyph_arrow_left);
 
             // --- RIGHT ARROW ---
             // Button is at the far right: ax + total_width - button_width
+            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_RIGHT);
             int16_t right_btn_x = ax + aw - ARROW_BUTTON_SIZE_TMP;
-            draw_bevel_rect(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht);
+            //draw_bevel_rect(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht);
+            draw_bevel(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
 
             // Glyph is at the same 'right_btn_x', vertically centered
             ui_draw_glyph(right_btn_x, ay + (ht - ARROW_BUTTON_SIZE_TMP) / 2, glyph_arrow_right);
@@ -199,6 +203,7 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     // Thumb face + bevel (your "perfect" thumb look stays)
     uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
     fill_rect_pen(tx, ty, tw, th, PEN_SCROLLBAR_GADGET_PROP);
+    if(pressedArrow) pressed = 0;
     draw_bevel(tx, ty, tw, th, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
 
 
@@ -326,6 +331,7 @@ uint32_t onMouseDownCaptureScrollBar(sbx_window_t *w, GADGET_BASE_T *g, int16_t 
     int16_t thumb_start = 0, thumb_len = 0, track_start = 0;
     SBPart part = hittest_scrollbar_part(w, s, *mx, *my, &thumb_start, &thumb_len, &track_start);
 
+    s->down_part = (uint8_t)part;   // NEW: remember what was pressed
     s->dragging = 0;
 
     if (part == SB_PART_ARROW_UP) {
@@ -445,6 +451,15 @@ uint32_t onMouseMoveScrollbar(sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt
     }
     if (!s || !s->dragging) return 1;
 
+    if (!s->dragging && s->h.down) {
+        int16_t ts=0, tl=0, tr=0;
+        SBPart now = hittest_scrollbar_part(win, s, *mx, *my, &ts, &tl, &tr);
+
+        // keep pressed only if still over the same part
+        if ((uint8_t)now != s->down_part)
+            s->down_part = SB_PART_NONE;
+    }
+
     return 0;   // this is happening all the time
 }
 
@@ -459,6 +474,7 @@ uint32_t onMouseReleaseScrollbar(GADGET_BASE_T *g, int16_t *mx, int16_t *my){
 
     SBOS_paintAllWindows();
 
+    s->down_part = SB_PART_NONE;    // NEW
     s->dragging = 0;
     s->drag_off = 0;
     g_ui.sb_track_start = 0;

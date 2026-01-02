@@ -2,7 +2,7 @@
 
 
 #include "stdio.h"
-
+#include <string.h>
 #include "stdint.h"
 
 //#include "../fastram.h"
@@ -39,7 +39,12 @@ static SBXWindowId      g_focusWin   = SBW_INVALID_ID;
 static uint32_t (*callMouseMoveEvt)   (sbx_window_t *win, GADGET_BASE_T *g, MouseEvt *evt, int16_t *mx, int16_t *my) = NULL;
 static uint32_t (*callMouseReleaseEvt)(GADGET_BASE_T *g, int16_t *mx, int16_t *my) = NULL;
 
+typedef struct {
+    uint8_t active;
+    char msg[96];
+} UI_EmergencyOverlay;
 
+static UI_EmergencyOverlay g_emerg = {0};
 
 static inline void ui_clear_title_latch(void){
     g_ui.title_win = SBW_INVALID_ID;
@@ -352,6 +357,7 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
         }
     }
 
+    SBOS_EmergencyError("Out of Windows.\nPlease close some");
     return SBW_INVALID_ID;
 }
 
@@ -759,13 +765,46 @@ void SBOS_destroyWindow(SBXWindowId id){
     if (involved)
         ui_end_interaction();
 
-
     if (w->lptrRef) {
         *w->lptrRef = 0;
         w->lptrRef = NULL;
     }
-
 }
+
+
+
+
+void SBOS_EmergencyError(const char *s){
+    g_emerg.active = 1;
+    strncpy(g_emerg.msg, s ? s : "UI error", sizeof(g_emerg.msg)-1);
+    g_emerg.msg[sizeof(g_emerg.msg)-1] = 0;
+}
+
+void SBOS_CloseEmergencyError(){
+    g_emerg.active = 0;
+    // call all window redraw - when ready
+}
+
+static void draw_emergency_overlay(void){
+    if (!g_emerg.active) return;
+
+    int16_t w = 320, h = 140;           // or measure text width if you want
+    int16_t x = (SCR_WIDTH  - w) / 2;
+    int16_t y = (SCR_HEIGHT - h) / 2;
+
+    fill_rect_pen(x, y, w, h, 5);
+    draw_bevel_rect(x, y, w, h);
+
+    draw_bevel_rect_inset(x+8, y+ 33, w-16, 78);
+
+    gfx_setcolour(PEN_WIN_TITLE);
+
+    ui_draw_text816(x + 8, y + 10, (const unsigned char*)"SIDBOX OS: Emergency Alert");
+    ui_draw_text816(x + 14, y + 40, (const unsigned char*)g_emerg.msg);
+    //ui_draw_text816(x + 14, y + 40, (const unsigned char*)"line 1\nline 2\nline 3###########1############2#####\nline 4");
+    ui_draw_text816(x + 8, y + h - ( 22 ), (const unsigned char*)"Close: click / press top-left");
+}
+
 
 
 void SBOS_paintAllWindows(void){
@@ -778,6 +817,8 @@ void SBOS_paintAllWindows(void){
             SBOS_paintWindow(id);
         }
     }
+
+    draw_emergency_overlay();
 }
 
 static inline uint8_t is_title_gadget_region(WHitRegion r){
@@ -1200,6 +1241,13 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
 
         ///////////////////////////////////// MOUSE UP //////////////////////////////////////////
         case MOUSE_UP:{
+            if (g_emerg.active) {
+                if (mx >= EMERG_CLOSE_X && mx < EMERG_CLOSE_X + EMERG_CLOSE_W &&
+                    my >= EMERG_CLOSE_Y && my < EMERG_CLOSE_Y + EMERG_CLOSE_H) {
+
+                    SBOS_CloseEmergencyError();
+                }
+            }
 
             if (g_ui.resize_win != SBW_INVALID_ID) {
                 SBXWindowId win = g_ui.resize_win;

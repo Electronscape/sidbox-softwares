@@ -24,6 +24,8 @@ typedef struct GAD_SCROLLBAR_T{
 
     // arrows
     uint8_t     show_arrows;    // needed for if we're using arrows
+    uint8_t     down_part;      // stores SBPart (SB_PART_*)
+
 
     // function callback systems
     //fnCallback  callbackRouteA;

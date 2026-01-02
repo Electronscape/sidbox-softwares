@@ -49,6 +49,11 @@
 #define     DEF_DIALOG_SCROLL_WIDTH      22
 #define     DEF_DIALOG_SCROLL_HEIGHT     22
 
+#define     EMERG_CLOSE_X       0
+#define     EMERG_CLOSE_Y       0
+#define     EMERG_CLOSE_W       32
+#define     EMERG_CLOSE_H       32
+
 
 typedef enum {
     // system cosmetic
@@ -174,5 +179,7 @@ GADGET_RECT_T   r16(int16_t x, int16_t y, int16_t w, int16_t h);
 
 // EVENT HANDLING ///////////////////////////////////////////////////////////////////
 uint32_t        commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g);
+
+void SBOS_EmergencyError(const char *s);
 
 #endif // CG_WINDOWEX_H

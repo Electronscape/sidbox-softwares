@@ -155,6 +155,7 @@ static int find_free_window_slot(sbx_window_t *w){
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         if (w->GADGETS[i] == NULL) return i;
     }
+    SBOS_EmergencyError("Out of gadget slots for window");
     return -1;
 }
 
@@ -216,6 +217,9 @@ static GAD_BITMAPVIEW_T* alloc_bv(void){
             return &g_bvPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: bitmapView");
     return NULL;
 }
 
@@ -236,6 +240,9 @@ static GAD_BUTTON_T* alloc_btn(void){
             return &g_btnPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: buttons");
     return NULL;
 }
 
@@ -255,6 +262,9 @@ static GAD_CANVAS_T* alloc_canv(void){
             return &g_cnPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: canvas");
     return NULL;
 }
 
@@ -276,6 +286,8 @@ static GAD_CHECKBOX_T* alloc_chk(void){
             return &g_chkPool[i];
         }
     }
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: checkBox");
     return NULL;
 }
 
@@ -295,6 +307,9 @@ static GAD_GRIDSELECT_T* alloc_gsl(void){
             return &g_gsPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: gridSelect");
     return NULL;
 }
 
@@ -314,6 +329,8 @@ static GAD_LABEL_T* alloc_lbl(void){
             return &g_lblPool[i];
         }
     }
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: labels");
     return NULL;
 }
 
@@ -336,6 +353,8 @@ static GAD_LISTBOX_T* alloc_lb(void){
             return &g_lbPool[i];
         }
     }
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: listBox");
     return NULL;
 }
 
@@ -354,6 +373,9 @@ static GAD_PROGBAR_T* alloc_pb(void){
             return &g_pbPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: progressBar");
     return NULL;
 }
 
@@ -375,6 +397,9 @@ static GAD_RADIO_T* alloc_rad(void){
             return &g_radPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: radioButton");
     return NULL;
 }
 
@@ -404,6 +429,9 @@ static GAD_SCROLLBAR_T* alloc_sb(void){
             return &g_sbPool[i];
         }
     }
+
+    SBOS_EmergencyError("Out of gadget slots:\n"
+                        "Resource: scrollBar");
     return NULL;
 }
 

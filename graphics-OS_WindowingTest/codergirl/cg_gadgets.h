@@ -9,6 +9,9 @@
 #include "cg_itemlist.h"
 
 //                                  v----- these numbers are HUGE, but for funsies keeping them this high
+
+#define     MAX_GADGETS_PER_WINDOW  64   // this is low, but its for testing. WILL increase this for a normal size
+
 #define     MAX_EVERYTHING          32
 
 #define     MAX_BITMAPVIEWS         (MAX_EVERYTHING)
@@ -47,7 +50,7 @@
 
 
 
-#define     MAX_GADGETS_PER_WINDOW  16   // this is low, but its for testing. WILL increase this for a normal size
+
 #define     DEF_GADGET_TEXT_SIZE    256
 #define     DEF_LISTBOX_TEXT_HEIGHT 18  // this is the text spacing for viewable height, its a guide, but can be set to anything
 

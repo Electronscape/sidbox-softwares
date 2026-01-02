@@ -36,8 +36,12 @@ void ui_draw_line(int16_t x, int16_t y, int16_t x2, int16_t y2);
 
 void draw_title_button      (int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill_pen, uint8_t pressed);
 void draw_rect_outline_thick(int16_t x, int16_t y, int16_t w, int16_t h, int16_t t, uint16_t pen);
-void draw_bevel_rect        (int16_t x, int16_t y, int16_t w, int16_t h);
+
 void draw_bevel             (int16_t x, int16_t y, int16_t w, int16_t h, uint16_t pen_hi, uint16_t pen_lo, uint8_t pressed);
+void draw_bevel_rect        (int16_t x, int16_t y, int16_t w, int16_t h);
+void draw_bevel_rect_inset  (int16_t x, int16_t y, int16_t w, int16_t h);
+
+
 void ui_dotted_rect_thick   (int16_t x, int16_t y, int16_t w, int16_t h, int16_t t);
 
 
