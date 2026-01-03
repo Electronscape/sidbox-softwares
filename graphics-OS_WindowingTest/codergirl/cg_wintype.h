@@ -37,7 +37,8 @@ typedef struct {
 
     uint8_t         backColour;         // default background colour
 
-    GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
+    //GADGET_BASE_T   *GADGETS[MAX_GADGETS_PER_WINDOW];   // pointer to the gadget in the pool
+    GADGET_BASE_T   **GADGETS;   // pointer to the gadget in the pool
 
     MSGWndProc      proc;               // process tree id
 

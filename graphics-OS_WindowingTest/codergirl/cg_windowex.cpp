@@ -5,7 +5,7 @@
 #include <string.h>
 #include "stdint.h"
 
-//#include "../fastram.h"
+#include "../fastram.h"
 #include "cg_renderer.h"
 #include "cg_input.h"
 #include "cg_windowex.h"
@@ -298,7 +298,7 @@ static inline GADGET_BASE_T* UI_CapturedGadgetPtr(void) {
 SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags){
     for (SBXWindowId i = 0; i < MAX_WINDOWS; i++) {
         if (!gui_used[i]) {
-            gui_used[i] = 1;
+            gui_used[i] = 0;// it should already be zero, but doesnt heard to really be sure ;)
 
             sbx_window_t *w = &gui_windows[i];
             w->winrect.x = x;
@@ -314,13 +314,14 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
             w->maxrect.w = 0x7FFF;  // pretty big
             w->maxrect.h = 0x7FFF;  // pretty big
 
-
+            w->GADGETS = (GADGET_BASE_T**)fastAlloc((uint32_t)MAX_GADGETS_PER_WINDOW * sizeof(GADGET_BASE_T*));
+            if (!w->GADGETS) {
+                gui_used[i] = 0;
+                SBOS_EmergencyError("Out of fastRam:\nResource: window gadget table");
+                return SBW_INVALID_ID; // or your failure path
+            }
+            memset(w->GADGETS, 0, (uint32_t)MAX_GADGETS_PER_WINDOW * sizeof(GADGET_BASE_T*));
             w->proc = DefaultWindowProc;
-
-
-            //w->ctrl_count = 0;
-            //w->id = i;
-
 
             if (title) {
                 size_t n = 0;
@@ -340,18 +341,22 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
                 g_winZorder[g_winZcount++] = i;
             } else {
                 gui_used[i] = 0;
+                if (w->GADGETS) {
+                    fastFree(w->GADGETS);
+                    w->GADGETS = NULL;
+                }
                 return SBW_INVALID_ID;
             }
 
-            normalize_zorder();
-            SBOS_paintAllWindows();
-
             w->self = i;
-            for (int k = 0; k < MAX_GADGETS_PER_WINDOW; k++) w->GADGETS[k] = NULL;
-
 
             w->lptrRef = selfHandlePTR;
             if (w->lptrRef) *w->lptrRef = i;
+
+            gui_used[i] = 1;    // everything checked out, slot is now used
+
+            normalize_zorder();
+            SBOS_paintAllWindows();
 
             return i;
         }
@@ -673,7 +678,8 @@ static SBXWindowId findTopFocusable(void){
 }
 
 static void destroy_window_gadgets(sbx_window_t *w){
-    if (!w) return;
+    //if (!w) return;
+    if (!w || !w->GADGETS) return;  // guard against bad gadgets
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         GADGET_BASE_T *g = w->GADGETS[i];
         if (!g) continue;
@@ -729,25 +735,22 @@ void SBOS_destroyWindow(SBXWindowId id){
     if (g_ui.capturing) {
         GADGET_BASE_T *cg = UI_CapturedGadgetPtr();
         if (cg && SBOS_getWindowByGadget(cg) == id) {
-            involved = 1;  // <--- add this
-
-
+            involved = 1;
             g_ui.capturing = 0;
             g_ui.capturedGadget = (CGGadgetHandle){0};
         }
     }
-    //if (g_ui.capturedGadget && SBOS_getWindowByGadget(g_ui.capturedGadget) == id) {
-    //    g_ui.capturedGadget = NULL;
-    //}
-
-
-
     if (g_ui.drag_win == id) ui_clear_drag();
     if (g_ui.resize_win == id) g_ui.resize_win = SBW_INVALID_ID;
     if (g_ui.title_win == id) ui_clear_title_latch();
     if (g_ui.down_win == id) { g_ui.down_win = SBW_INVALID_ID; g_ui.down_region = WH_NONE; }
 
     destroy_window_gadgets(w);
+    if (w->GADGETS) {
+        fastFree(w->GADGETS);
+        w->GADGETS = NULL;
+    }
+
 
     w->flags = 0;
     w->title[0] = '\0';

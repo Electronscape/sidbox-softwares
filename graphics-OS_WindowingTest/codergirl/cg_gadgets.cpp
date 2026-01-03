@@ -777,6 +777,7 @@ CGGadgetHandle SBOS_CreateBitmapView(SBXWindowId win, int16_t x, int16_t y, int1
     sbx_window_t *W = SBOS_getWindow(win);
     if (!W) return SBCTL_INVALID;
 
+
     int slot = find_free_window_slot(W);
     if (slot < 0) return SBCTL_INVALID;
 
@@ -1409,7 +1410,7 @@ void SBOS_destroyGadget(CGGadgetHandle h){
     sbx_window_t *W = SBOS_getWindow(hdr->winhnd);
 
     // detach from window slots
-    if (W){
+    if (W && W->GADGETS){
         for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
             if (W->GADGETS[i] == b){
                 W->GADGETS[i] = NULL;
