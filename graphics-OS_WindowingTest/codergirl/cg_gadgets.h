@@ -10,7 +10,7 @@
 
 //                                  v----- these numbers are HUGE, but for funsies keeping them this high
 
-#define     MAX_GADGETS_PER_WINDOW  32   // this is low, but its for testing. WILL increase this for a normal size
+//#define     MAX_GADGETS_PER_WINDOW  32   // this is low, but its for testing. WILL increase this for a normal size
 
 #define     MAX_EVERYTHING          64
 

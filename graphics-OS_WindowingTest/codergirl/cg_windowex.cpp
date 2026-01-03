@@ -314,6 +314,13 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
             w->maxrect.w = 0x7FFF;  // pretty big
             w->maxrect.h = 0x7FFF;  // pretty big
 
+            if (w->GADGETS) fastFree(w->GADGETS);   // clear out the old gadgets (for reusable windows)
+            w->GADGETS = NULL;//
+            w->gadCap = 0;
+
+            //w->GADGETS = (GADGET_BASE_T**)fastAlloc((uint32_t)sizeof(GADGET_BASE_T*));
+            //w->gadCap = 1;
+            /*
             w->GADGETS = (GADGET_BASE_T**)fastAlloc((uint32_t)MAX_GADGETS_PER_WINDOW * sizeof(GADGET_BASE_T*));
             if (!w->GADGETS) {
                 gui_used[i] = 0;
@@ -321,6 +328,9 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
                 return SBW_INVALID_ID; // or your failure path
             }
             memset(w->GADGETS, 0, (uint32_t)MAX_GADGETS_PER_WINDOW * sizeof(GADGET_BASE_T*));
+            w->gadCap = MAX_GADGETS_PER_WINDOW;
+            */
+
             w->proc = DefaultWindowProc;
 
             if (title) {
@@ -680,7 +690,7 @@ static SBXWindowId findTopFocusable(void){
 static void destroy_window_gadgets(sbx_window_t *w){
     //if (!w) return;
     if (!w || !w->GADGETS) return;  // guard against bad gadgets
-    for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+    for (int i = 0; i < w->gadCap; i++){
         GADGET_BASE_T *g = w->GADGETS[i];
         if (!g) continue;
         SBOS_destroyGadget(base_to_handle(g));
@@ -972,7 +982,9 @@ static inline uint8_t gadget_is_docked(const GAD_HDR_T *h){
 }
 
 static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
-    for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+
+    if (!w || !w->GADGETS || w->gadCap == 0) return;
+    for (int i = 0; i < w->gadCap; i++){
         GADGET_BASE_T *g = w->GADGETS[i];
         if (!g || !g->gadget) continue;
 

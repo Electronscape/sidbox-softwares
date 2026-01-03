@@ -150,13 +150,65 @@ void onScrollEmitEvent(void *g){
 // ---------------- INTERNAL HELPERS ----------------
 
 /////// internal supports
-static int find_free_window_slot(sbx_window_t *w){
+static int grow_window_gadgets_if_needed(sbx_window_t *w, uint16_t newCap)
+{
+    if (!w) return 0;
+    if (newCap <= w->gadCap) return 1;
+
+    uint32_t bytes = (uint32_t)newCap * sizeof(GADGET_BASE_T*);
+    void *np;
+
+    if (!w->GADGETS) {
+        np = fastAlloc(bytes);
+        if (!np) return 0;
+        memset(np, 0, bytes);
+    } else {
+        np = fastRealloc(w->GADGETS, bytes);
+        if (!np) return 0;
+
+        memset((GADGET_BASE_T**)np + w->gadCap, 0,
+               (newCap - w->gadCap) * sizeof(GADGET_BASE_T*));
+    }
+
+    w->GADGETS = (GADGET_BASE_T**)np;
+    w->gadCap  = newCap;
+    return 1;
+}
+
+static int find_free_window_slot(sbx_window_t *w)
+{
+    if (!w) return -1;
+
+
+    // first time: allocate initial slots
+    if (w->gadCap == 0) {
+        if (!grow_window_gadgets_if_needed(w, 8)) return -1;
+    }
+
+    // search for a free slot
+    for (int i = 0; i < (int)w->gadCap; i++) {
+        if (w->GADGETS[i] == NULL) return i;
+    }
+
+    // none free → grow (double) and return first new slot
+    uint16_t oldCap = w->gadCap;
+    uint16_t newCap = (uint16_t)(oldCap * 2);
+    if (newCap < oldCap) return -1; // overflow paranoia
+
+    if (!grow_window_gadgets_if_needed(w, newCap)) return -1;
+
+    return (int)oldCap; // first slot in the new region (it is NULL)
+}
+
+/*
+static int find_free_window_slot_old(sbx_window_t *w){
     for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
         if (w->GADGETS[i] == NULL) return i;
     }
     SBOS_EmergencyError("Out of gadget slots for window");
     return -1;
 }
+*/
 
 static GADGET_BASE_T* alloc_base(void){
     for (uint16_t i = 0; i < MAX_GADGETS; i++){
@@ -658,7 +710,7 @@ GADGET_BASE_T* hittest_gadget(sbx_window_t *w, int16_t mx, int16_t my){
     int16_t lx = (int16_t)(mx - w->clientrect.x);
     int16_t ly = (int16_t)(my - w->clientrect.y);
 
-    for (int i = MAX_GADGETS_PER_WINDOW - 1; i >= 0; i--){
+    for (int i = w->gadCap - 1; i >= 0; i--){
         GADGET_BASE_T *g = w->GADGETS[i];
         if (!g || !g->gadget) continue;
 
@@ -1229,14 +1281,16 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
     //}
 
     // Optional “only one checked per group” policy on add:
+
     if (r->checked) {
-        for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+        for (int i = 0; i < W->gadCap; i++){
             GADGET_BASE_T *og = W->GADGETS[i];
             if (!og || og == g || og->gadgetType != GAD_RADIO) continue;
             GAD_RADIO_T *ort = (GAD_RADIO_T*)og->gadget;
             if (ort && ort->group == group) ort->checked = 0;
         }
     }
+
 
     CGGadgetHandle gHndle = base_to_handle(g);
     r->h.self = gHndle;   // for gridselect/label/button etc.
@@ -1342,7 +1396,7 @@ uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
         GAD_RADIO_T *r = (GAD_RADIO_T*) g->gadget;
         if (gw) {
             // clear all radios in same group in this window
-            for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++) {
+            for (int i = 0; i < gw->gadCap; i++) {
                 GADGET_BASE_T *og = gw->GADGETS[i];
                 if (!og || og->gadgetType != GAD_RADIO
                     || !og->gadget)
@@ -1411,7 +1465,7 @@ void SBOS_destroyGadget(CGGadgetHandle h){
 
     // detach from window slots
     if (W && W->GADGETS){
-        for (int i = 0; i < MAX_GADGETS_PER_WINDOW; i++){
+        for (int i = 0; i < W->gadCap; i++){
             if (W->GADGETS[i] == b){
                 W->GADGETS[i] = NULL;
                 break;
