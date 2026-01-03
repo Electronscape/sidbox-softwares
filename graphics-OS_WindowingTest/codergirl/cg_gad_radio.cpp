@@ -25,28 +25,14 @@ void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
     fill_rect_pen(box_x, box_y, r->h.rect.w, box, r->h.BPen);
     fill_rect_pen(box_x + box, box_y, r->h.rect.w, box, w->backColour);
 
-
-
     draw_bevel(box_x, box_y, box, box, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, r->h.down);
 
     // “radio dot” when checked
     if (r->checked) {
-        //gfx_setcolour(PEN_SELECTED);
-
         // cheap filled center blob (looks fine at 8x16 font scale)
         int16_t cx = (int16_t)(box_x + 4);
         int16_t cy = (int16_t)(box_y + 4);
-
         fill_rect_pen(cx, cy, box-8, box-8, r->h.HPen);
-        //ui_ppixel(cx, cy);
-        //ui_ppixel((int16_t)(cx+1), cy);
-        //ui_ppixel(cx, (int16_t)(cy+1));
-        //ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
-
-        //ui_ppixel((int16_t)(cx-1), cy);
-        //ui_ppixel((int16_t)(cx+2), cy);
-        //ui_ppixel(cx, (int16_t)(cy-1));
-        //ui_ppixel(cx, (int16_t)(cy+2));
     }
 
     // label
