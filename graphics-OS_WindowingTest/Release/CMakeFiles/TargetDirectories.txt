@@ -1,9 +1,0 @@
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/edit_cache.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/rebuild_cache.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/list_install_components.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/install.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/install/local.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/install/strip.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing_autogen_timestamp_deps.dir
-/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles/graphics-gui_testing_autogen.dir
