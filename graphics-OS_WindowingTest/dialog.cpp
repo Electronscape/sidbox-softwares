@@ -607,12 +607,15 @@ Dialog::Dialog(QWidget *parent)
         uint32_t chipRes, fastRes;
         getMemAvailChipNFast(&chipRes, &fastRes);
 
+        fastRes = getMemUsed();
+
         char chipBuf[16];
         char fastBuf[16];
         char ramText[64];
 
         fmt_commas_u32(chipBuf, chipRes);
         fmt_commas_u32(fastBuf, fastRes);
+
 
         sprintf(ramText, "CHIP: %s  FAST: %s", chipBuf, fastBuf);
         SBOS_setLabelText(MenuBarTitle, ramText);

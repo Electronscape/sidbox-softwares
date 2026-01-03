@@ -28,7 +28,7 @@ typedef struct GAD_LISTBOX_T {
 } GAD_LISTBOX_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
+//extern GAD_LISTBOX_T    g_lbPool  [MAX_LISTBOXES];
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------

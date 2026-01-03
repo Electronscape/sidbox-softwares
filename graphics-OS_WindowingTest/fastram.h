@@ -36,5 +36,6 @@ void      fastDumpHex(uint32_t showsize);
 
 uint32_t  getMemAvail();
 uint32_t  getMemTotal();
+uint32_t  getMemUsed(void);
 
 #endif // FASTRAM_H

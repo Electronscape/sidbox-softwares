@@ -24,7 +24,7 @@ typedef struct GAD_BUTTON_T{
 } GAD_BUTTON_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_BUTTON_T g_btnPool [MAX_BUTTONS];
+//extern GAD_BUTTON_T g_btnPool [MAX_BUTTONS];
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------

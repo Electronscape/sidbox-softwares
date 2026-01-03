@@ -26,7 +26,7 @@ typedef struct GAD_GRIDSELECT_T {
 } GAD_GRIDSELECT_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_GRIDSELECT_T g_gsPool  [MAX_GRIDSELECTS];
+//extern GAD_GRIDSELECT_T g_gsPool  [MAX_GRIDSELECTS];
 
 
 

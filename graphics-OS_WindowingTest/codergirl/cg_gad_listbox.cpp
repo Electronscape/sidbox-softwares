@@ -52,6 +52,7 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
 
 
     // No model? still draw empty box
+    if(lb->items == NULL) return;
     ItemLists_t *list = lb->items;
     if (!list) return;
 

@@ -18,7 +18,7 @@ typedef struct GAD_LABEL_T{
 } GAD_LABEL_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_LABEL_T g_lblPool [MAX_LABELS];
+//extern GAD_LABEL_T g_lblPool [MAX_LABELS];
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------

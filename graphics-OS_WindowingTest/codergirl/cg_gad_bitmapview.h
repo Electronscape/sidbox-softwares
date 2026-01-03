@@ -36,7 +36,7 @@ typedef struct GAD_BITMAPVIEW_T {
 
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
+//extern GAD_BITMAPVIEW_T g_bvPool  [MAX_BITMAPVIEWS];
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------

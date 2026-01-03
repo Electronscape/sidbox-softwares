@@ -19,7 +19,7 @@ typedef struct GAD_RADIO_T{
 } GAD_RADIO_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_RADIO_T      g_radPool [MAX_RADIOS];
+//extern GAD_RADIO_T      g_radPool [MAX_RADIOS];
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------

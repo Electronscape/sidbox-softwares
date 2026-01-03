@@ -18,7 +18,7 @@ typedef struct GAD_CHECKBOX_T{
 } GAD_CHECKBOX_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
+//extern GAD_CHECKBOX_T   g_chkPool [MAX_CHECKBOXES];
 
 
 // MOUSE EVENTS ---------------------------------------------------------------------------------------------------
