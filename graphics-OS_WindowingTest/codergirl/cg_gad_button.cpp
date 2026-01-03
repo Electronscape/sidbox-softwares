@@ -24,7 +24,7 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t bh = b->h.rect.h;
 
     // face
-    fill_rect_pen(ax, ay, bw, bh, b->h.BPenHdr);
+    fill_rect_pen(ax, ay, bw, bh, b->h.BPen);
     draw_bevel(ax, ay, bw, bh, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, b->h.down);
 
     // choose what text to display
@@ -70,7 +70,7 @@ void draw_button(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     if (b->h.down) { tx++; ty++; }
 
-    gfx_setcolour(b->h.FPenHdr);
+    gfx_setcolour(b->h.FPen);
     ui_draw_text816(tx, ty, (const unsigned char*)displaytext);
 
     if (!b->h.enabled) {

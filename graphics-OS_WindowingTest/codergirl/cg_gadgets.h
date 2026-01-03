@@ -113,16 +113,20 @@ typedef enum GADGET_CLASS_T {
 } GADGET_CLASS_T;
 
 typedef struct GAD_HDR_T {
+    CGGadgetHandle  self;           // self handle id
+    SBXWindowId     winhnd;         // the window ID, the handler number
+
     GADGET_RECT_T   rect;           // the actionable area (container hit area, basic rectangle info)
     uint32_t        flags;          // flags for this gadget
     uint8_t         enabled;        // enabled/disabled gadget, sort of like if NOT clickable ;)
     uint8_t         visible;        //
     uint8_t         down;           // might need to remove this soon
-    uint8_t         BPenHdr;        // Back  Pen Colour
-    uint8_t         FPenHdr;        // Front Pen Colour
-    SBXWindowId     winhnd;         // the window ID, the handler number
+
+    uint8_t         BPen;           // Back  Pen Colour
+    uint8_t         FPen;           // Front Pen Colour
+    uint8_t         HPen;           // Highlighter Pen Colour
+
     fnCallback      callbackRouteA; // the call back attached for events
-    CGGadgetHandle  self;           // self handle id
 } GAD_HDR_T;
 
 typedef struct {
@@ -173,6 +177,7 @@ void            SBOS_moveGadget(CGGadgetHandle hnd, int16_t newx, int16_t newy);
 void            SBOS_resizeGadget(CGGadgetHandle hnd, int16_t neww, int16_t newh);
 void            SBOS_setGadgetBPen(CGGadgetHandle hnd, uint8_t bpen);
 void            SBOS_setGadgetFPen(CGGadgetHandle hnd, uint8_t fpen);
+void            SBOS_setGadgetHPen(CGGadgetHandle hnd, uint8_t hpen);
 
 void            SBOS_enableGadget(CGGadgetHandle h, uint8_t enable);
 void            SBOS_destroyGadget(CGGadgetHandle h);

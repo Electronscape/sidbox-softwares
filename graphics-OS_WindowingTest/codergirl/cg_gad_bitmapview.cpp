@@ -44,7 +44,7 @@ void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
     // Frame + inner area
     int16_t ix = ax, iy = ay, iw = aw, ih = ah;
     if (!(bv->h.flags & GAD_TOOL_NOBORDER)) {
-        fill_rect_pen(ax, ay, aw, ah, bv->h.BPenHdr);
+        fill_rect_pen(ax, ay, aw, ah, bv->h.BPen);
         if(bv->h.flags & GAD_TOOL_INSET)
             draw_bevel(ax, ay, aw, ah, PEN_WIN_BEVEL_L, PEN_WIN_BEVEL_H, 0);
         else
@@ -60,7 +60,7 @@ void draw_bitmapview(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // Clear background of the view area
     if(!bv->pixels) // if NO pixels attached, black it
-        fill_rect_pen(ix, iy, iw, ih, bv->h.FPenHdr);
+        fill_rect_pen(ix, iy, iw, ih, bv->h.FPen);
 
     // No source? done
     if (!bv->pixels || bv->bmp_w <= 0 || bv->bmp_h <= 0) return;

@@ -22,7 +22,7 @@ void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t box_x = ax;
     int16_t box_y = (int16_t)(ay + (r->h.rect.h - box) / 2);
 
-    fill_rect_pen(box_x, box_y, r->h.rect.w, box, PEN_WIN_BORDER_INACTIVE);
+    fill_rect_pen(box_x, box_y, r->h.rect.w, box, r->h.BPen);
     fill_rect_pen(box_x + box, box_y, r->h.rect.w, box, w->backColour);
 
 
@@ -37,7 +37,7 @@ void draw_radio(const sbx_window_t *w, const GADGET_BASE_T *g){
         int16_t cx = (int16_t)(box_x + 4);
         int16_t cy = (int16_t)(box_y + 4);
 
-        fill_rect_pen(cx, cy, box-8, box-8, PEN_TEXT);
+        fill_rect_pen(cx, cy, box-8, box-8, r->h.HPen);
         //ui_ppixel(cx, cy);
         //ui_ppixel((int16_t)(cx+1), cy);
         //ui_ppixel(cx, (int16_t)(cy+1));

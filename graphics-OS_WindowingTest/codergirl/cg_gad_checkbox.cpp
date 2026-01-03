@@ -28,12 +28,12 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t box_y = (int16_t)(ay + (c->h.rect.h - box) / 2);
 
     // face + bevel
-    fill_rect_pen(box_x, box_y, box, box, c->h.BPenHdr);
+    fill_rect_pen(box_x, box_y, box, box, c->h.BPen);
     draw_bevel(box_x, box_y, box, box, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, c->h.down);
 
     // check mark
     if (c->checked) {
-        gfx_setcolour(c->h.FPenHdr);
+        gfx_setcolour(c->h.FPen);
 
         // simple “tick” using pixels/lines (cheap + readable)
         // adjust offsets for your font/pixel vibe
@@ -41,20 +41,24 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         int16_t cy = (int16_t)(box_y + 8);
 
         // down-left to center
-        ui_ppixel(cx,     cy);
-        ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
-        ui_ppixel((int16_t)(cx+2), (int16_t)(cy+2));
+        for(int i = 0; i < 2; i++){
+            ui_ppixel(cx,     cy);
+            ui_ppixel((int16_t)(cx+1), (int16_t)(cy+1));
+            ui_ppixel((int16_t)(cx+2), (int16_t)(cy+2));
 
-        // center to up-right
-        ui_ppixel((int16_t)(cx+3), (int16_t)(cy+1));
-        ui_ppixel((int16_t)(cx+4), cy);
-        ui_ppixel((int16_t)(cx+5), (int16_t)(cy-1));
-        ui_ppixel((int16_t)(cx+6), (int16_t)(cy-2));
+            // center to up-right
+            ui_ppixel((int16_t)(cx+3), (int16_t)(cy+1));
+            ui_ppixel((int16_t)(cx+4), cy);
+            ui_ppixel((int16_t)(cx+5), (int16_t)(cy-1));
+            ui_ppixel((int16_t)(cx+6), (int16_t)(cy-2));
+            cx ++;
+
+        }
     }
 
     // label text (optional)
     if (c->text[0]) {
-        gfx_setcolour(c->h.FPenHdr);
+        gfx_setcolour(c->h.FPen);
 
         // text baseline centered-ish
         int16_t tx = (int16_t)(box_x + box + 6);

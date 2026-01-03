@@ -639,16 +639,22 @@ void SBOS_setGadgetFPen(CGGadgetHandle hnd, uint8_t fpen){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
 
-    gad->FPenHdr = fpen;
+    gad->FPen = fpen;
 }
 
 void SBOS_setGadgetBPen(CGGadgetHandle hnd, uint8_t bpen){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
 
-    gad->FPenHdr = bpen;
+    gad->BPen = bpen;
 }
 
+void SBOS_setGadgetHPen(CGGadgetHandle hnd, uint8_t hpen){  // select colour pen
+    GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
+    GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+
+    gad->HPen = hpen;
+}
 
 
 
@@ -694,8 +700,8 @@ CGGadgetHandle SBOS_CreateBitmapView(SBXWindowId win, int16_t x, int16_t y, int1
     bv->h.rect.x = x; bv->h.rect.y = y; bv->h.rect.w = w; bv->h.rect.h = h;
     bv->h.flags = flags;
     bv->h.winhnd = win;
-    bv->h.BPenHdr = PEN_WIN_BG;
-    bv->h.FPenHdr = PEN_TEXT;
+    bv->h.BPen = PEN_WIN_BG;
+    bv->h.FPen = PEN_TEXT;
 
     // payload
     bv->pixels = pixels;
@@ -743,8 +749,8 @@ CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t 
     g->gadget = b;
     b->h.callbackRouteA = onButtonClickEmitEvent;  // basic button clicky
     b->h.winhnd = win;
-    b->h.BPenHdr = PEN_BUTTON_FACE;
-    b->h.FPenHdr = PEN_TEXT;
+    b->h.BPen = PEN_BUTTON_FACE;
+    b->h.FPen = PEN_TEXT;
 
     // payload header
     b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;
@@ -815,8 +821,8 @@ CGGadgetHandle SBOS_CreateCanvas(SBXWindowId win, int16_t x, int16_t y, int16_t 
     g->gadget = b;
     //b->h.callbackRouteA = onButtonClickEmitEvent;  // basic button clicky
     b->h.winhnd = win;
-    b->h.BPenHdr = PEN_WIN_BG;
-    b->h.FPenHdr = PEN_TEXT;
+    b->h.BPen = PEN_WIN_BG;
+    b->h.FPen = PEN_TEXT;
 
     // payload header
     b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;
@@ -860,8 +866,9 @@ CGGadgetHandle SBOS_CreateCheckbox(SBXWindowId win, int16_t x, int16_t y, int16_
     c->h.rect.x = x; c->h.rect.y = y; c->h.rect.w = w; c->h.rect.h = h;
     c->h.flags = flags;
     c->h.winhnd = win;
-    c->h.BPenHdr = PEN_CHECKBOX_FACE;
-    c->h.FPenHdr = PEN_TEXT;
+    c->h.BPen = PEN_CHECKBOX_FACE;
+    c->h.FPen = PEN_TEXT;
+    c->h.HPen = PEN_WIN_BORDER_ACTIVE;
     c->checked = initial_checked ? 1 : 0;
 
     c->h.callbackRouteA = onCheckBoxClickEmitEvent;
@@ -908,12 +915,13 @@ CGGadgetHandle SBOS_CreateGridSelect(SBXWindowId win, int16_t x, int16_t y, int1
         return SBCTL_INVALID;
     }
 
-    c->h.BPenHdr = PEN_WIN_BG;
-    c->h.FPenHdr = PEN_TEXT;
+    c->h.BPen = PEN_WIN_BG;
+    c->h.FPen = PEN_TEXT;
+    c->h.HPen = PEN_WIN_BORDER_ACTIVE;
 
     for(int i = 0; i < 256; i++){
-        c->cellColour[i] = c->h.BPenHdr;   // default all to window background
-        memset(c->cellText[i], 0x00, c->h.FPenHdr);
+        c->cellColour[i] = c->h.BPen;   // default all to window background
+        memset(c->cellText[i], 0x00, c->h.FPen);
     }
 
     g->gadgetType = GAD_GRIDSELECT;
@@ -965,8 +973,8 @@ CGGadgetHandle SBOS_CreateLabel(SBXWindowId win, int16_t x, int16_t y, int16_t w
     g->gadgetType = GAD_LABEL;
     g->gadget = b;
     b->h.winhnd = win;
-    b->h.BPenHdr = PEN_WIN_BG;
-    b->h.FPenHdr = PEN_WIN_TITLE;
+    b->h.BPen = W->backColour;   // in herrite the background window colour
+    b->h.FPen = PEN_WIN_TITLE;
 
     // payload header
     b->h.rect.x = x; b->h.rect.y = y; b->h.rect.w = w; b->h.rect.h = h;
@@ -1013,8 +1021,9 @@ CGGadgetHandle SBOS_CreateListBox(SBXWindowId win, int16_t x, int16_t y, int16_t
     lb->h.rect.x = x; lb->h.rect.y = y; lb->h.rect.w = w; lb->h.rect.h = h;
     lb->h.flags = flags;
     lb->h.winhnd = win;
-    lb->h.BPenHdr = PEN_WIN_BG;
-    lb->h.FPenHdr = PEN_TEXT;
+    lb->h.BPen = PEN_WIN_BG;
+    lb->h.FPen = PEN_TEXT;
+    lb->h.HPen = PEN_WIN_BORDER_ACTIVE;
 
 
     lb->items = items;
@@ -1053,8 +1062,8 @@ CGGadgetHandle SBOS_CreateProgBar(SBXWindowId win, int16_t x, int16_t y, int16_t
     g->gadget = b;
     b->h.callbackRouteA = NULL;  // shouldnt ever HAVE a call back
     b->h.winhnd = win;
-    b->h.BPenHdr = PEN_WIN_BG;
-    b->h.FPenHdr = PEN_WIN_BORDER_ACTIVE;
+    b->h.BPen = PEN_WIN_BG;
+    b->h.FPen = PEN_WIN_BORDER_ACTIVE;
 
 
     // payload header
@@ -1094,8 +1103,9 @@ CGGadgetHandle SBOS_CreateRadioButton(SBXWindowId win, int16_t x, int16_t y, int
 
 
     r->h.winhnd = win;
-    r->h.BPenHdr = PEN_WIN_BG;
-    r->h.FPenHdr = PEN_TEXT;
+    r->h.BPen = PEN_CHECKBOX_FACE;
+    r->h.FPen = PEN_TEXT;
+    r->h.HPen = PEN_WIN_BORDER_ACTIVE;
 
     r->h.rect.x = x; r->h.rect.y = y; r->h.rect.w = w; r->h.rect.h = h;
     r->h.flags = flags;
@@ -1161,8 +1171,9 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
     s->h.flags = flags;
     s->h.winhnd = win;
     // doubt this will used, but set anyway
-    s->h.BPenHdr = PEN_WIN_BG;
-    s->h.FPenHdr = PEN_TEXT;
+    s->h.BPen = PEN_WIN_BG;
+    s->h.FPen = PEN_TEXT;
+    s->h.HPen = PEN_WIN_BORDER_ACTIVE;
 
 
     s->orient = orient;

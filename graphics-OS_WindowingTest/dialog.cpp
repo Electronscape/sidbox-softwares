@@ -153,17 +153,23 @@ void doAboutWindow(void *s){
     wy = (SCR_HEIGHT / 4) - (ABOUTWIN_HEIGHT /4);
 
     aboutWin = SBOS_createWindow(&aboutWin, wx, wy, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
+    SBOS_setWindowBackColour(aboutWin, 6);
+
+
     if(aboutWin == SBW_INVALID_ID){
         printf("Think we ran out of windows -- how about closing some!\n");
         return;
     }
 
     //SBOS_CreateBitmapView(aboutWin, 0, 0, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, baseGrid, 32, 32, 32, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
-    SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
-    CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 110,
+    CGGadgetHandle lbl = SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
+    SBOS_setGadgetBPen(lbl, PEN_WIN_BG);
+    CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 32,
                                           "SIDBOX OS - Version 1.0\n"
                                           "Window Manager: \"" UI_NAME "\"\n"
                                           , GAD_TOOL_DEFAULT);
+
+    SBOS_setGadgetBPen(txt, PEN_WIN_BG);
 
     txt = SBOS_CreateLabel(aboutWin, 14, 54, ABOUTWIN_TEXTWIDTH-10, 64,
                            "Resource Pool System v0.1\n"
@@ -171,6 +177,8 @@ void doAboutWindow(void *s){
                            "Licensing pending\n"
                            "\xa9 2025 - 2099"
                            , GAD_TOOL_DEFAULT);
+
+    SBOS_setGadgetBPen(txt, PEN_WIN_BG);
 
     int16_t PerfX = (ABOUTWIN_WIDTH/2) - 35;
     CGGadgetHandle closeBtn = SBOS_CreateButton(aboutWin, PerfX,  ABOUTWIN_HEIGHT - 55,  70, 26, "CLOSE", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
@@ -338,13 +346,13 @@ void createBasicDesktopTest(){
     SBOS_setButtonCallBack(newWindowBtn, doCreateAWindow);
 
     titleBar = SBOS_createWindow(&titleBar, 0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
-    SBOS_setWinBackColour(titleBar, 2);
+    SBOS_setWindowBackColour(titleBar, 2);
     SBOS_CreateCanvas(titleBar, 0, SYS_MENU_BAR_HEIGHT-1, SCR_WIDTH, 0, CNV_LINE,  GAD_TOOL_DEFAULT);
 
     SBOS_CreateLabel(titleBar, 5, 2, 100, 16, "SIDBOX DESKTOP V1.0", GAD_TOOL_DEFAULT);
     MenuBarTitle = SBOS_CreateLabel(titleBar, 185, 2, 100, 16, "hello world", GAD_TOOL_DEFAULT);
     SBOS_setLabelText(MenuBarTitle, "Initialisting...");
-    //SBOS_setGadgetBPen(MenuBarTitle, 2);
+    //SBOS_setGadgetBPen(MenuBarTitle, 7);
 
     // WINDOW 1 -----------------------
     // cycle button test window

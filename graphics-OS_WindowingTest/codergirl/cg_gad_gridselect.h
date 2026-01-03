@@ -23,8 +23,6 @@ typedef struct GAD_GRIDSELECT_T {
     int16_t selected_idx;     // single-select, -1 allowed unless MUST_ONE
 
     uint32_t flags;
-
-    //fnGridSelectCallBack onGridSelectClickCallBack;
 } GAD_GRIDSELECT_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ typedef struct LIB_FILEREQUEST_PRIVATE {
     char currdir[256];           // faux dir (later FS_FNLEN)
 
     CGGadgetHandle btnOk, btnCancel, btnParent, btnRoot;
-    CGGadgetHandle bgBitmap;
+    //CGGadgetHandle bgBitmap;
     CGGadgetHandle fListBox;
     CGGadgetHandle scrollBar;
 
@@ -242,7 +242,7 @@ static CGWindowProcRes FileRqProc(SBXWindowId win, const CGMessage_t *m){
             int16_t Req_height, Req_width;
             SBOS_getWindowSize(win, &Req_width, &Req_height);
 
-            SBOS_resizeGadget(st->bgBitmap, Req_width, Req_height);
+            //SBOS_resizeGadget(st->bgBitmap, Req_width, Req_height);
 
             Req_height -=80;
             //Req_width = FILEREQUEST_DEF_WIDTH - 40 - (WIN_BORDER * 2);
@@ -318,11 +318,14 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
         return SBW_INVALID_ID;
     }
 
+    SBOS_setWindowBackColour(win, 6);
+
     SBOS_setWindowResizeLimits(win, Req_width, Req_height, SCR_WIDTH, 0x7fff); // set resize constraints
 
+    /*
     st->bgBitmap = SBOS_CreateBitmapView(win, 0, 0, Req_width, Req_height, baseGrid, 32, 32, 32,
                                 BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
-
+    */
 
 
     st->selfWinId = win;

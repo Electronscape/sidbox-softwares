@@ -202,7 +202,7 @@ void SBOS_setFocus(SBXWindowId id){
     g_focusWin = id;
 }
 
-void SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor){
+void SBOS_setWindowBackColour(SBXWindowId winId, uint8_t newcolor){
     sbx_window_t *w = &gui_windows[winId];
     if(!w) return;
     w->backColour = newcolor;
@@ -393,7 +393,6 @@ void SBOS_getWindowSize(SBXWindowId win, int16_t *w, int16_t *h){
 
     *w = winh->winrect.w;
     *h = winh->winrect.h;
-
 }
 
 
@@ -422,6 +421,7 @@ void SBOS_paintWindow(SBXWindowId id){
     // --- client background ---
     // IMPORTANT: clientrect is the app-drawable area. Fill it.
     sbgfx_drawbox(cli_x, cli_y, cli_w, cli_h, w->backColour);
+
 
 
 

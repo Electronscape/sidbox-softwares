@@ -146,11 +146,12 @@ void            initWb(void);
 SBXWindowId     SBOS_createWindow(SBXWindowId *selfPTR, int16_t x, int16_t y, uint16_t width, uint16_t height, const char *title, uint32_t flags);
 void            SBOS_destroyWindow(SBXWindowId id);
 sbx_window_t*   SBOS_getWindow(SBXWindowId id);
-void            SBOS_setWinBackColour(SBXWindowId winId, uint8_t newcolor);
+void            SBOS_setWindowBackColour(SBXWindowId winId, uint8_t newcolor);
 void            SBOS_setWindowProc(SBXWindowId win, MSGWndProc proc);
 void            SBOS_setWindowResizeLimits(SBXWindowId win, int16_t minw, int16_t minh, int16_t maxw, int16_t maxh);
 
 void            SBOS_getWindowSize(SBXWindowId win, int16_t *w, int16_t *h);
+
 
 void            SBOS_paintWindow(SBXWindowId id);
 void            SBOS_paintAllWindows(void);

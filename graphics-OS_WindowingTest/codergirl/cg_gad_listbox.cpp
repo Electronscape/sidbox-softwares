@@ -101,14 +101,14 @@ void draw_listbox(const sbx_window_t *w, const GADGET_BASE_T *g){
         uint8_t selected = (idx == lb->sel);
         // Selected highlight
         if (selected) {
-            fill_rect_pen(ix, ry-2, iw, row_h+2, PEN_SELECTED);
+            fill_rect_pen(ix, ry-2, iw, row_h+2, lb->h.HPen);
 
             // Focus rectangle inside the row (clipped by listbox clip already)
             //gfx_setcolour(WIN_BEVEL_L);
             //ui_hline((int16_t)(ix), (int16_t)(ry-2), (int16_t)(iw));
             //ui_hline((int16_t)(ix), (int16_t)(ry+row_h), (int16_t)(iw));
 
-            gfx_setcolour(PEN_SELECTED_INV);
+            gfx_setcolour(lb->h.BPen);
         } else {
             gfx_setcolour(PEN_TEXT);
 
