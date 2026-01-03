@@ -27,18 +27,17 @@
 
 // ---------------- POOLS ----------------
 static GADGET_BASE_T g_basePool[MAX_GADGETS];
-//GAD_BITMAPVIEW_T g_bvPool   [MAX_BITMAPVIEWS];
-//GAD_BUTTON_T     g_btnPool  [MAX_BUTTONS];
-GAD_CANVAS_T     g_cnPool   [MAX_CANVASES];
-//GAD_CHECKBOX_T   g_chkPool  [MAX_CHECKBOXES];
-//GAD_GRIDSELECT_T g_gsPool   [MAX_GRIDSELECTS];
-//GAD_LABEL_T      g_lblPool  [MAX_LABELS];
-//GAD_LISTBOX_T    g_lbPool   [MAX_LISTBOXES];
-GAD_PROGBAR_T    g_pbPool   [MAX_PROGBARS];
-//GAD_RADIO_T      g_radPool  [MAX_RADIOS];
-//GAD_SCROLLBAR_T  g_sbPool   [MAX_SCROLLBARS];
 
-
+static uint16_t g_bv_count  = 0;    // bitmap views
+static uint16_t g_btn_count = 0;    // buttons
+static uint16_t g_cn_count = 0;     // canvas
+static uint16_t g_chk_count = 0;    // check boxes
+static uint16_t g_gs_count = 0;     // grid select
+static uint16_t g_lbl_count = 0;    // labels
+static uint16_t g_lb_count = 0;     // list boxes
+static uint16_t g_pb_count  = 0;    // Progress Bars
+static uint16_t g_rad_count = 0;    // radio buttons
+static uint16_t g_sb_count = 0;     // scrollbars
 
 
 
@@ -50,18 +49,16 @@ typedef struct {
 SBOS_GadgetPoolBytes SBOS_get_gadget_pool_bytes(void){
     SBOS_GadgetPoolBytes b;
     b.basePool = sizeof(g_basePool);    // ** BASE GADGET **
-    b.bvPool   = 0;//sizeof(g_bvPool);      // bitmap view
-    b.btnPool  = 0;//sizeof(g_btnPool); // button
-    b.chkPool  = 0;//sizeof(g_chkPool);     // check button
-    b.cnPool   = sizeof(g_cnPool);      // canvas
-    b.radPool  = 0;//sizeof(g_radPool);     // radio button
-
-
-    b.lbPool   = 0;//sizeof(g_lbPool);      // listbox
-    b.lblPool  = 0;//sizeof(g_lblPool); // label
-    b.pbPool   = sizeof(g_pbPool);      // progress bar
-    b.gsPool   = 0;//sizeof(g_gsPool);      // grid select
-    b.sbPool   = 0;//sizeof(g_sbPool);      // scrollbar
+    b.bvPool   = 0; // bitmap view
+    b.btnPool  = 0; // button
+    b.chkPool  = 0; // check button
+    b.cnPool   = 0; // canvas
+    b.radPool  = 0; // radio button
+    b.lbPool   = 0; // listbox
+    b.lblPool  = 0; // label
+    b.pbPool   = 0; // progress bar
+    b.gsPool   = 0; // grid select
+    b.sbPool   = 0; // scrollbar
 
 
     b.msgPool = SBOS_msgbox_poolsize();
@@ -90,31 +87,15 @@ SBOS_UiUsageCounts SBOS_get_ui_usage_counts(void){
     }
 
     // Per-type gadget pools
-    //for (int i = 0; i < MAX_BUTTONS; i++)     if (g_btnPool[i].used)  c.btn_used++;
-    for (int i = 0; i < MAX_GADGETS; i++) {
-        if (g_basePool[i].gadgetSlotUsed){
-            if (g_basePool[i].gadgetType == GAD_BITMAPVIEW) c.bv_used ++;
-            if (g_basePool[i].gadgetType == GAD_BUTTON)     c.btn_used++;
-            if (g_basePool[i].gadgetType == GAD_CHECKBOX)   c.chk_used++;
-            if (g_basePool[i].gadgetType == GAD_GRIDSELECT) c.gs_used ++;
-            if (g_basePool[i].gadgetType == GAD_LABEL)      c.lbl_used++;
-            if (g_basePool[i].gadgetType == GAD_LISTBOX)    c.lb_used ++;
-            if (g_basePool[i].gadgetType == GAD_RADIO)      c.rad_used++;
-            if (g_basePool[i].gadgetType == GAD_SCROLLBAR)  c.sb_used ++;
-        }
-    }
-
-    //for (int i = 0; i < MAX_CHECKBOXES; i++)  if (g_chkPool[i].used)  c.chk_used++;
-    //for (int i = 0; i < MAX_RADIOS; i++)      if (g_radPool[i].used)  c.rad_used++;
-    //for (int i = 0; i < MAX_SCROLLBARS; i++)  if (g_sbPool[i].used)   c.sb_used++;
-    //for (int i = 0; i < MAX_BITMAPVIEWS; i++) if (g_bvPool[i].used)   c.bv_used++;
-    //for (int i = 0; i < MAX_LABELS; i++)      if (g_lblPool[i].used)  c.lbl_used++;
-
-    //for (int i = 0; i < MAX_LISTBOXES; i++)   if (g_lbPool[i].used)   c.lb_used++;
-    for (int i = 0; i < MAX_PROGBARS; i++)    if (g_pbPool[i].used)   c.pb_used++;
-
-    //for (int i = 0; i < MAX_GRIDSELECTS; i++) if (g_gsPool[i].used)   c.gs_used++;
-    for (int i = 0; i < MAX_CANVASES; i++)    if (g_cnPool[i].used)   c.cn_used++;
+    c.bv_used  = g_bv_count;    // BITMAPVIEW
+    c.btn_used = g_btn_count;   // BUTTON
+    c.chk_used = g_chk_count;   // CHECK BOX
+    c.gs_used  = g_gs_count;    // GRID SELECT
+    c.lbl_used = g_lbl_count;   // LABEL
+    c.lb_used  = g_lb_count;    // LISTBOX
+    c.rad_used = g_rad_count;   // RADIO BUTTON
+    c.sb_used  = g_sb_count;    // SCROLLBAR
+    c.pb_used  = g_pb_count;    // PROGBAR
 
     c.filerq_used = SBOS_filerq_used_count();
     c.msgbox_used = SBOS_msgbox_used_count();
@@ -188,6 +169,9 @@ static GADGET_BASE_T* alloc_base(void){
             return g;
         }
     }
+    SBOS_EmergencyError("Out of BASE gadget slots:\n\n"
+                        "Increase MAX_GADGETS\nor destroy unused gadgets.");
+
     return NULL;
 }
 
@@ -214,33 +198,6 @@ static void free_base(GADGET_BASE_T *g){
 ////////////////// allocations area /////////////////////////
 
 static GAD_BITMAPVIEW_T* alloc_bv(void){
-    /*
-    for (int i = 0; i < MAX_BITMAPVIEWS; i++){
-        if (!g_bvPool[i].used){
-            memset(&g_bvPool[i], 0, sizeof(g_bvPool[i]));
-            g_bvPool[i].used = 1;
-
-            g_bvPool[i].h.enabled = 1;
-            g_bvPool[i].h.visible = 1;
-            g_bvPool[i].h.down    = 0;
-            g_bvPool[i].h.flags   = GAD_TOOL_DEFAULT;
-
-            // sensible defaults
-            g_bvPool[i].pixels = NULL;
-            g_bvPool[i].bmp_w = g_bvPool[i].bmp_h = 0;
-            g_bvPool[i].bmp_stride = 0;
-            g_bvPool[i].scroll_x = g_bvPool[i].scroll_y = 0;
-            g_bvPool[i].panning = 0;
-            g_bvPool[i].bv_flags = 0;
-
-            return &g_bvPool[i];
-        }
-    }
-
-    SBOS_EmergencyError("Out of gadget slots:\n"
-                        "Resource: bitmapView");
-    return NULL;
-    */
     GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)fastAlloc((uint32_t)sizeof(GAD_BITMAPVIEW_T));
     if (!bv){
         SBOS_EmergencyError("Out of fastRam:\nResource: bitmapviews");
@@ -253,31 +210,11 @@ static GAD_BITMAPVIEW_T* alloc_bv(void){
     bv->h.flags   = GAD_TOOL_DEFAULT;
     bv->pixels = NULL;
     // can use the owns_pixels
+    g_bv_count ++;
     return bv;
 }
 
 static GAD_BUTTON_T* alloc_btn(void){
-
-    /*
-    for (int i = 0; i < MAX_BUTTONS; i++){
-        if (!g_btnPool[i].used){
-            memset(&g_btnPool[i], 0, sizeof(g_btnPool[i]));
-
-            g_btnPool[i].used = 1;
-
-            // sane defaults
-            g_btnPool[i].h.enabled = 1;
-            g_btnPool[i].h.visible = 1;
-            g_btnPool[i].h.down = 0;
-            g_btnPool[i].h.flags = GAD_TOOL_DEFAULT;
-
-            g_btnPool[i].text[0] = '\0';
-            return &g_btnPool[i];
-        }
-    }
-    */
-
-
     GAD_BUTTON_T *b = (GAD_BUTTON_T*)fastAlloc((uint32_t)sizeof(GAD_BUTTON_T));
     if (!b){
         SBOS_EmergencyError("Out of fastRam:\n"
@@ -295,56 +232,32 @@ static GAD_BUTTON_T* alloc_btn(void){
     b->h.flags   = GAD_TOOL_DEFAULT;
 
     b->text[0] = '\0';
+    g_btn_count ++;
     return b;
-
-
 }
 
 static GAD_CANVAS_T* alloc_canv(void){
-    for (int i = 0; i < MAX_CANVASES; i++){
-        if (!g_cnPool[i].used){
-            memset(&g_cnPool[i], 0, sizeof(g_cnPool[i]));
-
-            g_cnPool[i].used = 1;
-
-            // sane defaults
-            g_cnPool[i].h.enabled = 1;
-            g_cnPool[i].h.visible = 1;
-            g_cnPool[i].h.down = 0;
-            g_cnPool[i].h.flags = GAD_TOOL_DEFAULT;
-
-            return &g_cnPool[i];
-        }
+    GAD_CANVAS_T *cn = (GAD_CANVAS_T*)fastAlloc((uint32_t)sizeof(GAD_CANVAS_T));
+    if (!cn){
+        SBOS_EmergencyError("Out of fastRam:\n"
+                            "Resource: canvas");
+        return NULL;
     }
+    memset(cn, 0, sizeof(*cn));
+    cn->used = 1; // kept for debugging/diagnostics
+    cn->h.enabled = 1;
 
-    SBOS_EmergencyError("Out of gadget slots:\n"
-                        "Resource: canvas");
-    return NULL;
+    cn->h.visible = 1;
+    cn->h.down = 0;
+    cn->h.flags = GAD_TOOL_DEFAULT;
+
+    g_cn_count ++;
+    return cn;
 }
 
 
 
 static GAD_CHECKBOX_T* alloc_chk(void){
-    /*
-    for (int i = 0; i < MAX_CHECKBOXES; i++){
-        if (!g_chkPool[i].used){
-            memset(&g_chkPool[i], 0, sizeof(g_chkPool[i]));
-            g_chkPool[i].used = 1;
-
-            g_chkPool[i].h.enabled = 1;
-            g_chkPool[i].h.visible = 1;
-            g_chkPool[i].h.down    = 0;
-            g_chkPool[i].h.flags   = GAD_TOOL_DEFAULT;
-
-            g_chkPool[i].checked = 0;
-            g_chkPool[i].text[0] = '\0';
-            return &g_chkPool[i];
-        }
-    }
-    SBOS_EmergencyError("Out of gadget slots:\n"
-                        "Resource: checkBox");
-    return NULL;
-    */
     GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*)fastAlloc((uint32_t)sizeof(GAD_CHECKBOX_T));
     if (!c){
         SBOS_EmergencyError("Out of fastRam:\n"
@@ -360,6 +273,7 @@ static GAD_CHECKBOX_T* alloc_chk(void){
     c->h.flags   = GAD_TOOL_DEFAULT;
 
     c->text[0] = '\0';
+    g_chk_count ++;
     return c;
 }
 
@@ -385,8 +299,8 @@ static GAD_GRIDSELECT_T* alloc_gsl(void){
     // Optional: allow "none selected", do this
     // gs->selected_idx = -1;
 
+    g_gs_count ++;
     return gs;
-
 }
 
 static GAD_LABEL_T* alloc_lbl(void){
@@ -406,11 +320,11 @@ static GAD_LABEL_T* alloc_lbl(void){
     l->h.flags   = GAD_TOOL_DEFAULT;
 
     l->text[0] = '\0';
+    g_lbl_count ++;
     return l;
 }
 
 static GAD_LISTBOX_T* alloc_lb(void){
-
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)fastAlloc((uint32_t)sizeof(GAD_LISTBOX_T));
     if (!lb){
         SBOS_EmergencyError("Out of fastRam:\nResource: listboxes");
@@ -429,12 +343,13 @@ static GAD_LISTBOX_T* alloc_lb(void){
 
     // RULE: borrowed list, never owned
     lb->items = NULL;
-
+    g_lb_count ++;
     return lb;
 }
 
 
 static GAD_PROGBAR_T* alloc_pb(void){
+    /*
     for (int i = 0; i < MAX_PROGBARS; i++){
         if (!g_pbPool[i].used){
             memset(&g_pbPool[i], 0, sizeof(g_pbPool[i]));
@@ -452,6 +367,29 @@ static GAD_PROGBAR_T* alloc_pb(void){
     SBOS_EmergencyError("Out of gadget slots:\n"
                         "Resource: progressBar");
     return NULL;
+    */
+    GAD_PROGBAR_T *pb = (GAD_PROGBAR_T*)fastAlloc(sizeof(GAD_PROGBAR_T));
+    if (!pb){
+        SBOS_EmergencyError("Out of memory:\n"
+                            "Resource: progressBar (FastRam)");
+        return NULL;
+    }
+
+    memset(pb, 0, sizeof(*pb));
+    pb->used = 1;
+
+    pb->h.enabled = 1;
+    pb->h.visible = 1;
+    pb->h.down    = 0;
+    pb->h.flags   = GAD_TOOL_DEFAULT;
+
+    // sensible defaults
+    pb->min = 0;
+    pb->max = 100;
+    pb->value = 0;
+
+    g_pb_count++;
+    return pb;
 }
 
 
@@ -471,6 +409,7 @@ static GAD_RADIO_T* alloc_rad(void){
     r->h.flags   = GAD_TOOL_DEFAULT;
 
     r->text[0] = '\0';
+    g_rad_count ++;
     return r;
 }
 
@@ -502,6 +441,8 @@ static GAD_SCROLLBAR_T* alloc_sb(void){
 
     s->dragging = 0;
     s->drag_off = 0;
+
+    g_sb_count ++;
 
     return s;
 
@@ -577,6 +518,7 @@ static void free_bv(GAD_BITMAPVIEW_T *bv){
 
     bv->used = 0;
     fastFree(bv);
+    if (g_bv_count) g_bv_count--;
 }
 
 static void free_btn(GAD_BUTTON_T *b){
@@ -585,12 +527,20 @@ static void free_btn(GAD_BUTTON_T *b){
     if (!b) return;
     b->used = 0; // debug only
     fastFree(b);
+    if (g_btn_count) g_btn_count--;
 
 }
 
 static void free_canv(GAD_CANVAS_T *b){
+    //if (!b) return;
+    //b->used = 0;
+
     if (!b) return;
-    b->used = 0;
+
+    b->used = 0;          // not strictly needed, but keeps your debug vibe consistent
+    fastFree(b);
+
+    if (g_cn_count) g_cn_count--;
 }
 
 
@@ -600,6 +550,7 @@ static void free_chk(GAD_CHECKBOX_T *c){
     if (!c) return;
     c->used = 0;
     fastFree(c);
+    if (g_chk_count) g_chk_count--;
 }
 
 static void free_gs(GAD_GRIDSELECT_T *c){   // grid select
@@ -608,6 +559,7 @@ static void free_gs(GAD_GRIDSELECT_T *c){   // grid select
     if (!c) return;
     c->used = 0; // debug only
     fastFree(c);
+    if (g_gs_count) g_gs_count--;
 }
 
 static void free_lbl(GAD_LABEL_T *lb){
@@ -616,27 +568,22 @@ static void free_lbl(GAD_LABEL_T *lb){
     if (!lb) return;
     lb->used = 0; // debug only
     fastFree(lb);
+    if (g_lbl_count) g_lbl_count --;
 }
 
 static void free_pb(GAD_PROGBAR_T *pb){
+    //if (!pb) return;
+    //pb->used = 0;
     if (!pb) return;
-    pb->used = 0;
+
+    pb->used = 0;          // not strictly needed, but keeps your debug vibe consistent
+    fastFree(pb);
+
+    if (g_pb_count) g_pb_count--;
 }
 
 
 static void free_lb(GAD_LISTBOX_T *lb){ // list box
-    // Listbox's dont OWN the list attached.
-    //if (!lb) return;
-    //lb->items = NULL;   // detach; owner frees the list
-    //lb->used = 0;
-    /*
-    if (!lb) return;
-    if (lb->items) {
-        SBOS_destroyItemList(lb->items);
-        lb->items = NULL;
-    }
-    lb->used = 0;
-    */
     if (!lb) return;
 
     // RULE: DO NOT FREE lb->items (borrowed).
@@ -644,6 +591,7 @@ static void free_lb(GAD_LISTBOX_T *lb){ // list box
 
     lb->used = 0;
     fastFree(lb);
+    if (g_lb_count) g_lb_count --;
 }
 
 static void free_rad(GAD_RADIO_T *r){
@@ -652,6 +600,7 @@ static void free_rad(GAD_RADIO_T *r){
     if (!r) return;
     r->used = 0;
     fastFree(r);
+    if (g_rad_count) g_rad_count --;
 }
 
 static void free_sb(GAD_SCROLLBAR_T *s){
@@ -660,6 +609,7 @@ static void free_sb(GAD_SCROLLBAR_T *s){
     if (!s) return;
     s->used = 0;
     fastFree(s);
+    if (g_sb_count) g_sb_count --;
 }
 
 
@@ -781,6 +731,7 @@ static inline GAD_HDR_T* gad_hdr(GADGET_BASE_T *b){
 void SBOS_moveGadget(CGGadgetHandle hnd, int16_t newx, int16_t newy){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+    if (!gad) return;
 
     gad->rect.x = newx;
     gad->rect.y = newy;
@@ -789,6 +740,7 @@ void SBOS_moveGadget(CGGadgetHandle hnd, int16_t newx, int16_t newy){
 void SBOS_resizeGadget(CGGadgetHandle hnd, int16_t neww, int16_t newh){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+    if (!gad) return;
 
     gad->rect.w = neww;
     gad->rect.h = newh;
@@ -797,6 +749,7 @@ void SBOS_resizeGadget(CGGadgetHandle hnd, int16_t neww, int16_t newh){
 void SBOS_setGadgetFPen(CGGadgetHandle hnd, uint8_t fpen){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+    if (!gad) return;
 
     gad->FPen = fpen;
 }
@@ -804,6 +757,7 @@ void SBOS_setGadgetFPen(CGGadgetHandle hnd, uint8_t fpen){
 void SBOS_setGadgetBPen(CGGadgetHandle hnd, uint8_t bpen){
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+    if (!gad) return;
 
     gad->BPen = bpen;
 }
@@ -811,6 +765,7 @@ void SBOS_setGadgetBPen(CGGadgetHandle hnd, uint8_t bpen){
 void SBOS_setGadgetHPen(CGGadgetHandle hnd, uint8_t hpen){  // select colour pen
     GADGET_BASE_T *g = SBOS_gadgetFromHandle(hnd);
     GAD_HDR_T *gad = SBOS_gadgetHdr(g);
+    if (!gad) return;
 
     gad->HPen = hpen;
 }
@@ -821,16 +776,16 @@ void SBOS_setGadgetHPen(CGGadgetHandle hnd, uint8_t hpen){  // select colour pen
 void SBOS_gadgetsInit(void){
     memset(g_basePool, 0, sizeof(g_basePool));  // base gadgets ________________________________
 
-    //memset(g_bvPool ,  0, sizeof( g_bvPool  ));   // bitmapview gadgets (THIS one is adventureous)
-    //memset(g_btnPool,  0, sizeof( g_btnPool ));   // button gadgets   -- is now allocated in fastRam
-    memset(g_cnPool,  0, sizeof( g_cnPool ));       // canvas
-    //memset(g_chkPool,  0, sizeof( g_chkPool ));   // check box gadgets
-    //memset(g_gsPool ,  0, sizeof( g_gsPool  ));   // grid select gadgets
-    //memset(g_lblPool,  0, sizeof( g_lblPool ));   // labels gadgets
-    //memset(g_lbPool ,  0, sizeof( g_lbPool  ));   // listbox gadgets
-    memset(g_pbPool ,  0, sizeof( g_pbPool  ));   // progbar gadgets
-    //memset(g_radPool,  0, sizeof( g_radPool ));   // radio buttons gadgets
-    //memset(g_sbPool ,  0, sizeof( g_sbPool  ));   // scrollbar gadgets
+    g_bv_count  = 0;
+    g_btn_count = 0;
+    g_cn_count  = 0;
+    g_chk_count = 0;
+    g_gs_count  = 0;
+    g_lbl_count = 0;
+    g_lb_count  = 0;
+    g_pb_count  = 0;
+    g_rad_count = 0;
+    g_sb_count  = 0;
 }
 
 
@@ -1366,6 +1321,16 @@ CGGadgetHandle SBOS_CreateScrollbar(SBXWindowId win, int16_t x, int16_t y, int16
 
 uint32_t commitGadgetRelease(sbx_window_t *gw, GADGET_BASE_T *g)
 {
+    if (!g || !g->gadget) return 0;
+
+    // HARD SAFETY: if base slot isn't marked used, refuse.
+    if (!g->gadgetSlotUsed) return 0;
+
+    // HARD SAFETY: header exists and handle looks real
+    GAD_HDR_T *hdr = (GAD_HDR_T*)g->gadget;
+    if (!hdr->self || hdr->self == SBCTL_INVALID) return 0;
+
+
     switch (g->gadgetType) {
     case GAD_BUTTON: {
         GAD_BUTTON_T *b = (GAD_BUTTON_T*) g->gadget;

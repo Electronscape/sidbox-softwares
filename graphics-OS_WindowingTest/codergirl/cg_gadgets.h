@@ -14,29 +14,9 @@
 
 #define     MAX_EVERYTHING          32
 
-#define     MAX_BITMAPVIEWS         (MAX_EVERYTHING)
-#define     MAX_BUTTONS             (MAX_EVERYTHING)
-#define     MAX_CHECKBOXES          (MAX_EVERYTHING)
-#define     MAX_GRIDSELECTS         (MAX_EVERYTHING)
-#define     MAX_LABELS              (MAX_EVERYTHING)
-#define     MAX_LISTBOXES           (MAX_EVERYTHING)
-#define     MAX_PROGBARS            (MAX_EVERYTHING)
-#define     MAX_RADIOS              (MAX_EVERYTHING)
-#define     MAX_SCROLLBARS          (MAX_EVERYTHING)
-#define     MAX_CANVASES            (MAX_EVERYTHING)
-
 
 // MASTER COLLECTION change this higher for when the OS is tested with programs, 16 is enough for BASE TESTING nothing serious
-#define     MAX_GADGETS         (   MAX_BITMAPVIEWS +   \
-                                    MAX_BUTTONS +       \
-                                    MAX_CANVASES +      \
-                                    MAX_CHECKBOXES +    \
-                                    MAX_GRIDSELECTS +   \
-                                    MAX_LABELS +        \
-                                    MAX_LISTBOXES +     \
-                                    MAX_PROGBARS +      \
-                                    MAX_RADIOS +        \
-                                    MAX_SCROLLBARS      )
+#define     MAX_GADGETS         (   MAX_EVERYTHING )
 
 
 

@@ -24,7 +24,7 @@ typedef struct GAD_PROGBAR_T{
 } GAD_PROGBAR_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_PROGBAR_T g_pbPool [MAX_PROGBARS];
+//extern GAD_PROGBAR_T g_pbPool [MAX_PROGBARS];
 
 
 // API ------------------------------------------------------------------------------------------------------------

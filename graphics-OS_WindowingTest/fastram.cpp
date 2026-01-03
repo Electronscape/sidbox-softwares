@@ -6,7 +6,7 @@
 
 #include "fastram.h"
 
-#define RAMBANK_SIZE (2048)   // Kbytes
+#define RAMBANK_SIZE (2048u)   // Kbytes
 #define FASTRAM_SIZE (1024u * RAMBANK_SIZE)
 
 static uint8_t FAUXRAM[FASTRAM_SIZE];   // eventually will move this to an actual memory location 0xD0000000 stm32 EXT RAM area xD
@@ -322,7 +322,7 @@ uint32_t getMemAvail(void){
 
 
 
-    return (uint32_t)FASTRAM_SIZE - used_total;
+    return (uint32_t)FASTRAM_SIZE;// - used_total;
 }
 
 // Optional helper if you also want "how much is used" (arena bytes)

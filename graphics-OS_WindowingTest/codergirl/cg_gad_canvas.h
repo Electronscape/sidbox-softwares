@@ -19,7 +19,7 @@ typedef struct GAD_CANVAS_T{
 } GAD_CANVAS_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------
-extern GAD_CANVAS_T g_cnPool [MAX_CANVASES];
+//extern GAD_CANVAS_T g_cnPool [MAX_CANVASES];
 
 
 

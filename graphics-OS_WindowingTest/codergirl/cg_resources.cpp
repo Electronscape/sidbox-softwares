@@ -199,21 +199,22 @@ static size_t ui_reserved_bytes(void)
     size_t r_ui      = sizeof(g_ui);
 
     size_t r_windows = sizeof(gui_windows);
-    size_t r_msgbox = SBOS_msgbox_used_count();
-    size_t r_filerq = SBOS_filerq_used_count();
-
-    r_windows += (r_msgbox + r_filerq);
+    // msgbox/filerq are POOLS (bytes), not USED COUNTS
+    size_t r_msgbox  = rb.msgPool;
+    size_t r_filerq  = rb.frqPool;
 
     size_t r_used    = sizeof(gui_used);
     size_t r_zorder  = sizeof(g_winZorder);
     size_t r_zcount  = sizeof(g_winZcount);
 
     size_t r_gadgets =
-        rb.basePool + rb.btnPool + rb.chkPool + rb.radPool +
-        rb.sbPool + rb.bvPool + rb.lbPool + rb.lblPool +
+        rb.basePool + rb.btnPool + rb.cnPool + rb.chkPool + rb.radPool +
+        rb.sbPool + rb.bvPool + rb.lbPool + rb.lblPool + rb.pbPool +
         rb.gsPool;
 
-    return r_ui + r_windows + r_used + r_zorder + r_zcount + r_gadgets;
+    // Windows are statically reserved anyway; msgbox/filerq are separate pools
+    return r_ui + r_windows + r_used + r_zorder + r_zcount + r_gadgets + r_msgbox + r_filerq;
+
 }
 
 
@@ -222,51 +223,33 @@ static size_t ui_used_bytes(void)
     SBOS_GadgetPoolBytes rb = SBOS_get_gadget_pool_bytes();
     SBOS_UiUsageCounts   uc = SBOS_get_ui_usage_counts();
 
+    // Windows that are active (chip utilization, not reclaimable memory)
     size_t u_windows = (size_t)uc.win_used * sizeof(gui_windows[0]);
 
+    // Base gadget handles live in chip (this is real chip-side utilization)
     size_t u_base = (size_t)uc.base_used * (size_t)SBOS_GetBasePoolSize();
 
-    size_t u_bv   = (size_t)uc.bv_used   * sizeof(GAD_BITMAPVIEW_T);
-    size_t u_btn  = (size_t)uc.btn_used  * sizeof(GAD_BUTTON_T);
-    size_t u_chk  = (size_t)uc.chk_used  * sizeof(GAD_CHECKBOX_T);
-    size_t u_gs   = (size_t)uc.gs_used   * sizeof(GAD_GRIDSELECT_T);
-    size_t u_lbl  = (size_t)uc.lbl_used  * sizeof(GAD_LABEL_T);
-    size_t u_lb   = (size_t)uc.lb_used   * sizeof(GAD_LISTBOX_T);
-    size_t u_rad  = (size_t)uc.rad_used  * sizeof(GAD_RADIO_T);
-    size_t u_sb   = (size_t)uc.sb_used   * sizeof(GAD_SCROLLBAR_T);
+    // Gadget bodies are FastRam now -> NOT chip
+    size_t u_gadgets = u_base;
 
-    size_t u_gadgets = u_base +
-                       u_bv + u_btn + u_chk + u_gs + u_lbl + u_lb + u_rad + u_sb;
+    // Msgbox / filerq: if these are static pools, "used bytes" should be used_count * entry_size,
+    // but you don't have that cleanly here. Minimal fix: treat them as always-reserved (like you already do elsewhere).
+    // So DO NOT add used_count (counts) to bytes.
+    // (If you later want utilization, use poolsize1 * used_count, but not today.)
 
-
-    size_t u_msb  = SBOS_msgbox_used_count();
-    size_t u_frq  = SBOS_filerq_capacity();
-    //c.filerq_used = SBOS_filerq_used_count();
-    //c.msgbox_used = SBOS_msgbox_used_count();
-
-    u_windows += (u_msb + u_frq);
-
-
-    // Treat these as "always consumed" (they're fully reserved tables)
+    // Always-reserved chip tables
     size_t always = sizeof(g_ui) + sizeof(gui_used) + sizeof(g_winZorder) + sizeof(g_winZcount);
 
     return always + u_windows + u_gadgets;
+
 }
 
 void getMemAvailChipNFast(uint32_t *chip, uint32_t *fast)
 {
     if (chip) {
         const size_t ui_used = ui_used_bytes();
-
-        // "Available chip" here means "remaining UI budget"
-        // (If you later want "remaining physical chip RAM", you'll need a system-wide chip allocator stat too.)
-        size_t avail = 0;
-        //if ((size_t)SBOS_UI_BUDGET_BYTES > ui_used) {
-            //avail = (size_t)SBOS_UI_BUDGET_BYTES - ui_used;
-        //}
-
-        avail =  ui_reserved_bytes() - ui_used ;
-
+        size_t r = ui_reserved_bytes();
+        size_t avail = (r > ui_used) ? (r - ui_used) : 0;
         *chip = (uint32_t)avail;
     }
 
