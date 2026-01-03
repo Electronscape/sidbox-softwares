@@ -16,7 +16,7 @@ X(STR_GUI_INFOABOUT_TEXT,              ST_OS_NAME " - Version 1.0\nWindow Manage
                                         "Resource Pool System v0.1\n"
                                         "Built by Electronscape\n\n"
                                         "Licensing pending\n"
-                                        "\xa9 2025 - 2099\n \n ")
+                                        "\xa9 2025 - 2099")
 
 // desktop stuff
 X(STR_DESKTOP,	                       "Workbench")

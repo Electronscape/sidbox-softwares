@@ -422,7 +422,6 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
 
     listitem_add(&st->fileListData, "test1.txt");
     listitem_add(&st->fileListData, "test2.bmp");
-    listitem_add(&st->fileListData, "docs/");
     listitem_add(&st->fileListData, "monty1.sid");
     listitem_add(&st->fileListData, "1_67YT-Turrican_III_Remix.sid");
     listitem_add(&st->fileListData, "Bionic_Commando(+).sid");
@@ -439,6 +438,9 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     listitem_add(&st->fileListData, "matkamis.mod");
     listitem_add(&st->fileListData, "egyption-knights.mod");
     listitem_add(&st->fileListData, "mcappin-dance.mod");
+
+
+    listitem_sort(&st->fileListData);
 
 
     int16_t fileCount = listitem_count(&st->fileListData) - 8; // 8 is what is visable items

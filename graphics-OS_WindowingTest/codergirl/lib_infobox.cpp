@@ -1,5 +1,5 @@
 #include <string.h>
-
+#include <stdio.h>
 #include "../resources/lang/lang.h"
 
 #include "cg_wintype.h"
@@ -151,6 +151,8 @@ static int16_t clamp16(int16_t v, int16_t lo, int16_t hi){
     return v;
 }
 
+
+
 SBXWindowId SBOS_InfoBox(SBXWindowId owner_winhnd, const CGFInfoBoxParams *p){
     if (!p) return SBW_INVALID_ID;
 
@@ -169,30 +171,34 @@ SBXWindowId SBOS_InfoBox(SBXWindowId owner_winhnd, const CGFInfoBoxParams *p){
     const char *title = (p->title && p->title[0]) ? p->title : "SIDBOX OS: Info box";
 
     // --- measure lines + widest line (in chars) ---
-    int16_t maxChars = 0, curChars = 0, lines = 0;
+    int16_t maxChars = 0;
+    int16_t curChars = 0;
+    int16_t lines    = 1;   // "" is one line
 
-    for (const char *s = mb->txtMsg; ; s++) {
-        if (*s == '\n' || *s == '\0') {
+    for (const char *s = mb->txtMsg; ; ++s) {
+        char c = *s;
 
-            if (curChars > 0 || lines == 0) {
-                if ((curChars + 1) > maxChars)
-                    maxChars = (curChars + 1);
-                lines++;
-            }
-
+        if (c == '\n' || c == '\0') {
+            if (curChars > maxChars) maxChars = curChars;
             curChars = 0;
 
-            if (*s == '\0')
-                break;
+            if (c == '\n') {
+                lines++;          // COUNT EVERY '\n' (including blank lines)
+            } else {
+                break;            // '\0'
+            }
         } else {
             curChars++;
         }
     }
+
+
+    printf("Line Count: %u\n", lines);
     //lines--;
 
     // --- window size ---
     int16_t prepHeight = (int16_t)(76 + lines * FONT_HEIGHT);
-    int16_t prepWidth  = clamp16((int16_t)(maxChars * FONT_WIDTH + 32), INF_WIN_WIDTH, SCR_WIDTH);
+    int16_t prepWidth  = clamp16((int16_t)((1 + maxChars) * FONT_WIDTH + 32), INF_WIN_WIDTH, SCR_WIDTH);
 
     // --- window pos ---
     int16_t msgx = (int16_t)((SCR_WIDTH  / 2) - (prepWidth  / 2));
@@ -235,7 +241,7 @@ SBXWindowId SBOS_InfoBox(SBXWindowId owner_winhnd, const CGFInfoBoxParams *p){
                                         BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
 
     mb->lblBg  = SBOS_CreateLabel(win, 10, 10, prepWidth - 30, (int16_t)(btnY - 15), "", GAD_TOOL_INSET);
-    mb->lblMsg = SBOS_CreateLabel(win, 16, 16, prepWidth - 42, (int16_t)(btnY - 28), mb->txtMsg, GAD_TOOL_DEFAULT);
+    mb->lblMsg = SBOS_CreateLabel(win, 15, 16, prepWidth - 42, (int16_t)(btnY - 28), mb->txtMsg, GAD_TOOL_DEFAULT);
 
     mb->btnOk = SBOS_CreateButton(win, btnX[0], btnY, INF_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_OK), GAD_TOOL_DEFAULT);
 

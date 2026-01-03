@@ -200,30 +200,32 @@ SBXWindowId SBOS_MessageBox(SBXWindowId owner_winhnd, const CGFMsgBoxParams *p){
     const char *title = (p->title && p->title[0]) ? p->title : "SIDBOX OS: Message";
 
     // --- measure lines + widest line (in chars) ---
-    int16_t maxChars = 0, curChars = 0, lines = 0;
+    int16_t maxChars = 0;
+    int16_t curChars = 0;
+    int16_t lines    = 1;   // "" is one line
 
-    for (const char *s = mb->txtMsg; ; s++) {
-        if (*s == '\n' || *s == '\0') {
+    for (const char *s = mb->txtMsg; ; ++s) {
+        char c = *s;
 
-            if (curChars > 0 || lines == 0) {
-                if ((curChars + 1) > maxChars)
-                    maxChars = (curChars + 1);
-                lines++;
-            }
-
+        if (c == '\n' || c == '\0') {
+            if (curChars > maxChars) maxChars = curChars;
             curChars = 0;
 
-            if (*s == '\0')
-                break;
+            if (c == '\n') {
+                lines++;          // COUNT EVERY '\n' (including blank lines)
+            } else {
+                break;            // '\0'
+            }
         } else {
             curChars++;
         }
     }
+
     //lines--;
 
     // --- window size ---
     int16_t prepHeight = (int16_t)(76 + lines * FONT_HEIGHT);
-    int16_t prepWidth  = clamp16((int16_t)(maxChars * FONT_WIDTH + 32), MSG_WIN_WIDTH, SCR_WIDTH);
+    int16_t prepWidth  = clamp16((int16_t)((1+maxChars) * FONT_WIDTH + 32), MSG_WIN_WIDTH, SCR_WIDTH);
 
     // --- window pos ---
     int16_t msgx = (int16_t)((SCR_WIDTH  / 2) - (prepWidth  / 2));
