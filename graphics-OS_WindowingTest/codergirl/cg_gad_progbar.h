@@ -16,16 +16,11 @@ typedef struct GAD_PROGBAR_T{
     uint8_t         used;
     //-----------------------------------------------------------
 
-    uint8_t         fPen;       // front Pen, usually black, inheret from OS Window Title colour text
-    uint8_t         bPen;       // inherit the bgcolour from window on creation
-
     int16_t         min;
     int16_t         max;
     int16_t         value;
 
     uint32_t        flags;
-
-
 } GAD_PROGBAR_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

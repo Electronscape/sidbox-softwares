@@ -244,7 +244,77 @@ void dopalletecycle() {
 }
 
 
-void draw_text816(int x, int y, const unsigned char* textptr)
+void draw_text816_silhouette_smooth(int x, int y, const unsigned char* textptr)
+{
+    int32_t start_x = x;
+    uint8_t colf = current_fr_colour;
+
+    uint8_t colblast=0;
+    for (int32_t i = 0; textptr[i] != '\0'; ++i) {
+
+        unsigned char ch = textptr[i];
+
+        if (ch == '\n') {
+            x = start_x;
+            y += 16;
+            continue;
+        }
+
+        const uint8_t* pixeldata = DEFAULT_SYSFONT[ch];
+
+        for (int j = 0; j < 8; ++j) {
+
+            int xc = x + j;
+            if ((unsigned)xc >= SCR_WIDTH) continue;
+
+            uint8_t bits = pixeldata[j];
+            int base = xc * SCR_HEIGHT;
+
+            // Iterate source rows r=0..7 -> dest rows (2r, 2r+1)
+            for (int r = 0; r < 8; ++r) {
+                uint8_t mask = (uint8_t)(1u << r);
+                if (!(bits & mask)) continue;
+
+                // neighbor bits in same column
+                uint8_t above = (r > 0) ? (bits & (uint8_t)(mask >> 1)) : 0;
+                uint8_t below = (r < 7) ? (bits & (uint8_t)(mask << 1)) : 0;
+
+                int yy0 = y + (r << 1);     // 2r
+                int yy1 = yy0 + 1;          // 2r+1
+
+                // Always draw the top pixel
+                if ((unsigned)yy0 < SCR_HEIGHT) PROJ_VRAM[base + yy0] = colf;
+
+                // Decide whether to draw the bottom pixel.
+                //
+                // If this pixel is part of a vertical run (above or below also on),
+                // keep full thickness. If it's an endpoint / corner, drop the bottom
+                // to make the cap look rounded.
+                //
+                // Endpoints:
+                //  - start of run: above=0 below=1
+                //  - end of run:   above=1 below=0
+                //  - isolated dot: above=0 below=0 (keep it fat, looks nicer)
+                //
+                uint8_t is_start = (!above && below);
+                uint8_t is_end   = (above && !below);
+                uint8_t isolated = (!above && !below);
+
+                if (isolated || (!is_start && !is_end)) {
+                    // normal body pixel or isolated dot: draw bottom pixel too
+                    if ((unsigned)yy1 < SCR_HEIGHT) PROJ_VRAM[base + yy1] = colf + (colblast++);
+                } else {
+                    // start/end cap: skip bottom pixel -> "rounded" feel
+                }
+            }
+        }
+
+        x += 8;
+    }
+}
+
+
+void draw_text816q(int x, int y, const unsigned char* textptr)
 {
     int32_t start_x = x;
     uint8_t colf = current_fr_colour;
@@ -332,3 +402,6 @@ void draw_text816(int x, int y, const unsigned char* textptr)
     }
 }
 
+void draw_text816_NOTUSED(int x, int y, const unsigned char* textptr){
+    draw_text816_silhouette_smooth(x, y, textptr);
+}

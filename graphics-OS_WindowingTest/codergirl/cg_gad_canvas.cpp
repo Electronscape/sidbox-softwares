@@ -29,7 +29,7 @@ void draw_canvas(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // face
     //fill_rect_pen(ax, ay, bw, bh, 16);
-    gfx_setcolour(b->FPen);
+    gfx_setcolour(b->h.FPenHdr);
     switch(b->drawtype){
         case CNV_LINE:
             ui_draw_line(ax, ay, bw, bh);

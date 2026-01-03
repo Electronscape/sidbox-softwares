@@ -28,12 +28,12 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
     int16_t box_y = (int16_t)(ay + (c->h.rect.h - box) / 2);
 
     // face + bevel
-    fill_rect_pen(box_x, box_y, box, box, PEN_CHECKBOX_FACE);
+    fill_rect_pen(box_x, box_y, box, box, c->h.BPenHdr);
     draw_bevel(box_x, box_y, box, box, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, c->h.down);
 
     // check mark
     if (c->checked) {
-        gfx_setcolour(PEN_WIN_BEVEL_L);
+        gfx_setcolour(c->h.FPenHdr);
 
         // simple “tick” using pixels/lines (cheap + readable)
         // adjust offsets for your font/pixel vibe
@@ -54,7 +54,7 @@ void draw_checkbox(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // label text (optional)
     if (c->text[0]) {
-        gfx_setcolour(PEN_WIN_TITLE);
+        gfx_setcolour(c->h.FPenHdr);
 
         // text baseline centered-ish
         int16_t tx = (int16_t)(box_x + box + 6);

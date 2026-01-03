@@ -15,9 +15,6 @@ typedef struct GAD_LABEL_T{
     //-----------------------------------------------------------
 
     char            text[DEF_GADGET_TEXT_SIZE];   // common gadget text
-
-    uint8_t         fPen;       // front Pen, usually black, inheret from OS Window Title colour text
-    uint8_t         bPen;       // inherit the bgcolour from window on creation
 } GAD_LABEL_T;
 
 // INTERNALS ------------------------------------------------------------------------------------------------------

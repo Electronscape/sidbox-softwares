@@ -78,6 +78,8 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
     GADGET_RECT_T inner = win_inner_rect(w);
     int16_t reserveR = win_inner_reserve_right(w);
     int16_t reserveB = win_inner_reserve_bottom(w);
+    uint8_t pressedArrow, pressedArrow1, pressedArrow2, pressedArrow3, pressedArrow4;// = 0;
+    pressedArrow = pressedArrow1 = pressedArrow2 = pressedArrow3 = pressedArrow4 = 0;
 
     if ((s->h.flags & GAD_TOOL_DOCKED_RIGHT) && (s->orient == SB_ORIENT_VERT)) {
         ax = (int16_t)(inner.x + inner.w - SB_SCROLL_THICK + SB_RDOCK_OFFSET_X);
@@ -140,7 +142,7 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
 // 3) Draw the arrows if enabled
 // ------------------------------------------------------------------
 #define ARROW_BUTTON_SIZE_TMP   16
-    uint8_t pressedArrow;
+
     if (s->show_arrows) {
 
         // Vertical scrollbar arrows (Top and Bottom)
@@ -149,14 +151,18 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
             // We use (aw - 8) / 2 to perfectly center the 8px box
             //draw_bevel_rect(ax, ay, aw, ARROW_BUTTON_SIZE_TMP);
 
-            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_UP);
-            draw_bevel(ax, ay, aw, ARROW_BUTTON_SIZE_TMP, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
+            pressedArrow1 = (s->h.down && s->down_part == SB_PART_ARROW_UP);
+            draw_bevel(ax, ay, aw, ARROW_BUTTON_SIZE_TMP, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow1);
             ui_draw_glyph(ax + (aw - ARROW_BUTTON_SIZE_TMP) / 2, ay, glyph_arrow_up);
 
+
+
             // Bottom Arrow: At the very bottom of the scrollbar (ay + ah - 8)
-            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_DOWN);
-            draw_bevel(ax, ay + ah - ARROW_BUTTON_SIZE_TMP, aw, ARROW_BUTTON_SIZE_TMP, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
+            pressedArrow2 = (s->h.down && s->down_part == SB_PART_ARROW_DOWN);
+            draw_bevel(ax, ay + ah - ARROW_BUTTON_SIZE_TMP, aw, ARROW_BUTTON_SIZE_TMP, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow2);
             ui_draw_glyph(ax + (aw - ARROW_BUTTON_SIZE_TMP) / 2 , ay + (ah - ARROW_BUTTON_SIZE_TMP) , glyph_arrow_down);
+
+
 
         }
         // Horizontal scrollbar arrows (Left and Right)
@@ -164,22 +170,25 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
             int ht = ah; // The thickness of the bar
 
             // --- LEFT ARROW ---
-            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_LEFT);
-            draw_bevel(ax, ay, ARROW_BUTTON_SIZE_TMP, ht, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
+            pressedArrow3 = (s->h.down && s->down_part == SB_PART_ARROW_LEFT);
+            draw_bevel(ax, ay, ARROW_BUTTON_SIZE_TMP, ht, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow3);
             ui_draw_glyph(ax, ay + (ht - ARROW_BUTTON_SIZE_TMP) / 2, glyph_arrow_left);
 
             // --- RIGHT ARROW ---
             // Button is at the far right: ax + total_width - button_width
-            pressedArrow = (s->h.down && s->down_part == SB_PART_ARROW_RIGHT);
+            pressedArrow4 = (s->h.down && s->down_part == SB_PART_ARROW_RIGHT);
+
             int16_t right_btn_x = ax + aw - ARROW_BUTTON_SIZE_TMP;
             //draw_bevel_rect(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht);
-            draw_bevel(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow);
+            draw_bevel(right_btn_x, ay, ARROW_BUTTON_SIZE_TMP, ht, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressedArrow4);
 
             // Glyph is at the same 'right_btn_x', vertically centered
             ui_draw_glyph(right_btn_x, ay + (ht - ARROW_BUTTON_SIZE_TMP) / 2, glyph_arrow_right);
 
         }
     }
+
+    pressedArrow = pressedArrow1 + pressedArrow2 + pressedArrow3 + pressedArrow4;
 
     // ------------------------------------------------------------------
     // 4) Thumb geometry inside the inner well (after shrinking for arrows)
@@ -202,10 +211,12 @@ void draw_scrollbar(const sbx_window_t *w, const GADGET_BASE_T *g){
 
     // Thumb face + bevel (your "perfect" thumb look stays)
     uint8_t pressed = (s->dragging || s->h.down) ? 1 : 0;
-    fill_rect_pen(tx, ty, tw, th, PEN_SCROLLBAR_GADGET_PROP);
-    if(pressedArrow) pressed = 0;
-    draw_bevel(tx, ty, tw, th, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
 
+    if(pressedArrow)
+        pressed = 0;
+
+    fill_rect_pen(tx, ty, tw, th, PEN_SCROLLBAR_GADGET_PROP);
+    draw_bevel(tx, ty, tw, th, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, pressed);
 
     if (!s->h.enabled) {
         draw_disabled_dots(ax+1, ay+1, aw-2, ah-2);

@@ -12,7 +12,7 @@ typedef struct GAD_CANVAS_T{
     uint8_t         used;
     //-----------------------------------------------------------
 
-    uint8_t         BPen, FPen;     // set the colours for this canvas
+    //uint8_t         BPen, FPen;     // set the colours for this canvas
     uint32_t        drawtype;       // draw type
 
     //fnButtonCallBack callbackRouteA;              // basic callback route

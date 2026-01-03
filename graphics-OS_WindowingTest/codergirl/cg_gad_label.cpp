@@ -25,7 +25,7 @@ void draw_label(const sbx_window_t *w, const GADGET_BASE_T *g)
     int16_t bh = b->h.rect.h;
 
     // face
-    fill_rect_pen(ax, ay, bw, bh, b->bPen);
+    fill_rect_pen(ax, ay, bw, bh, b->h.BPenHdr);
     if(b->h.flags & GAD_TOOL_INSET)
         draw_bevel(ax, ay, bw, bh, PEN_WIN_BEVEL_H, PEN_WIN_BEVEL_L, 1);
 
@@ -35,7 +35,7 @@ void draw_label(const sbx_window_t *w, const GADGET_BASE_T *g)
     const int16_t char_w = 8, char_h = 16;
 
 
-    gfx_setcolour(b->fPen);
+    gfx_setcolour(b->h.FPenHdr);
     ui_draw_text816(ax, ay, (const unsigned char*)displaytext);
 }
 
@@ -71,8 +71,8 @@ uint32_t SBOS_setLabelColour(CGGadgetHandle h, int16_t FPen, int16_t BPen)
     if (!g->gadget) return 3;
     GAD_LABEL_T *lbl = (GAD_LABEL_T*)g->gadget;
 
-    if(FPen >=0) lbl->fPen = (uint8_t)FPen; // set only if NOT -1 (no change)
-    if(BPen >=0) lbl->bPen = (uint8_t)BPen; // set only if NOT -1 (no change)
+    if(FPen >=0) lbl->h.FPenHdr = (uint8_t)FPen; // set only if NOT -1 (no change)
+    if(BPen >=0) lbl->h.BPenHdr = (uint8_t)BPen; // set only if NOT -1 (no change)
 
     return 0;
 }

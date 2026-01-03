@@ -158,7 +158,7 @@ void doAboutWindow(void *s){
         return;
     }
 
-    SBOS_CreateBitmapView(aboutWin, 0, 0, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, baseGrid, 32, 32, 32, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+    //SBOS_CreateBitmapView(aboutWin, 0, 0, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, baseGrid, 32, 32, 32, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
     SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
     CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 110,
                                           "SIDBOX OS - Version 1.0\n"
@@ -344,6 +344,7 @@ void createBasicDesktopTest(){
     SBOS_CreateLabel(titleBar, 5, 2, 100, 16, "SIDBOX DESKTOP V1.0", GAD_TOOL_DEFAULT);
     MenuBarTitle = SBOS_CreateLabel(titleBar, 185, 2, 100, 16, "hello world", GAD_TOOL_DEFAULT);
     SBOS_setLabelText(MenuBarTitle, "Initialisting...");
+    //SBOS_setGadgetBPen(MenuBarTitle, 2);
 
     // WINDOW 1 -----------------------
     // cycle button test window
