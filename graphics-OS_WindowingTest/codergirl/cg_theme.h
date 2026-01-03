@@ -4,7 +4,7 @@
 // just a bunch of preset colour settings
 #define     SB_TRACK_INSET      2
 
-#define     UI_NAME                     "EVENTUALLY"
+
 // window colouring
 //#define     PEN_WIN_BORDER          3
 

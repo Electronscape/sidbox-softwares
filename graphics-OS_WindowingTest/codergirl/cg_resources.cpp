@@ -255,7 +255,7 @@ void getMemAvailChipNFast(uint32_t *chip, uint32_t *fast)
 
     if (fast) {
         uint32_t fastAll;
-        fastAll = getMemAvail();
+        fastAll = FASTRAM_SIZE - getMemUsed();//getMemAvail();
 
         // Pick ONE interpretation and stick to it:
         // 1) allocatable payload only (usually what you want)

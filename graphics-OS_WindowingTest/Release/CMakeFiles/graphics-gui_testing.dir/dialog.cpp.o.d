@@ -407,6 +407,8 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: \
  /usr/include/qt6/QtCore/QSettings /usr/include/qt6/QtCore/qsettings.h \
  /usr/include/qt6/QtGui/QMouseEvent /usr/include/qt6/QtCore/QPoint \
  /usr/include/qt6/QtCore/qpoint.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/lang.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/en.def \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/sbapi_graphics.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_theme.h \
@@ -429,4 +431,5 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_label.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_gridselect.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_filerequest.h \
- /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_msgbox.h
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_msgbox.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_infobox.h

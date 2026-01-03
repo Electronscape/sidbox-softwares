@@ -23,6 +23,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o: \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
  /usr/include/bits/stdint-least.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../resources/lang/lang.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../resources/lang/en.def \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.h \

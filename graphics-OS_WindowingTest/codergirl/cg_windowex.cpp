@@ -5,6 +5,9 @@
 #include <string.h>
 #include "stdint.h"
 
+
+#include "../resources/lang/lang.h"
+
 #include "../fastram.h"
 #include "cg_renderer.h"
 #include "cg_input.h"
@@ -372,7 +375,7 @@ SBXWindowId SBOS_createWindow(SBXWindowId *selfHandlePTR, int16_t x, int16_t y, 
         }
     }
 
-    SBOS_EmergencyError("Out of Windows.\nPlease close some");
+    SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOWINDOWS));
     return SBW_INVALID_ID;
 }
 
@@ -789,7 +792,7 @@ void SBOS_destroyWindow(SBXWindowId id){
 
 void SBOS_EmergencyError(const char *s){
     g_emerg.active = 1;
-    strncpy(g_emerg.msg, s ? s : "UI error", sizeof(g_emerg.msg)-1);
+    strncpy(g_emerg.msg, s ? s : lang_get(STR_UI_ERROR), sizeof(g_emerg.msg)-1);
     g_emerg.msg[sizeof(g_emerg.msg)-1] = 0;
 }
 
@@ -812,10 +815,18 @@ static void draw_emergency_overlay(void){
 
     gfx_setcolour(PEN_WIN_TITLE);
 
-    ui_draw_text816(x + 8, y + 10, (const unsigned char*)"SIDBOX OS: Emergency Alert");
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%s: %s",
+             lang_get(STR_GUI_OS),
+             lang_get(STR_EMERGENCY_ALERT));
+
+    //ui_draw_text816(x + 8, y + 10, (const unsigned char*)"SIDBOX OS: Emergency Alert");
+    ui_draw_text816(x + 8, y + 10, (const unsigned char *)buf);
+
     ui_draw_text816(x + 14, y + 40, (const unsigned char*)g_emerg.msg);
     //ui_draw_text816(x + 14, y + 40, (const unsigned char*)"line 1\nline 2\nline 3###########1############2#####\nline 4");
-    ui_draw_text816(x + 8, y + h - ( 22 ), (const unsigned char*)"Close: click / press top-left");
+    ui_draw_text816(x + 8, y + h - ( 22 ), (const unsigned char*)lang_get(STR_CLICKTOCLOSE_ERR));
 }
 
 
@@ -1009,7 +1020,6 @@ static void SBOS_drawControlsFiltered(sbx_window_t *w, uint8_t wantDock){
             case GAD_PROGBAR:    draw_progbar(w, g);    break;
             case GAD_RADIO:      draw_radio(w, g);      break;
             case GAD_SCROLLBAR:  draw_scrollbar(w, g);  break;
-
 
             default: break;     // if we got here, then the GUI is BARFING UP randomness, so stop it here ;)
         }
@@ -1324,7 +1334,7 @@ void SBOS_MouseInterface(MouseEvt evt, int16_t mx, int16_t my) {
                         } break;
 
                         case WH_MAXRESTORE: {
-                            printf("GLYPH HIT - MaxRestore\r\n");
+                            //printf("GLYPH HIT - MaxRestore\r\n");
                             CG_PostWindowMsg(wclick, CGEVT_WIN_MAXRESTORED, 0, 0, 0, 0);
                         } break;
 

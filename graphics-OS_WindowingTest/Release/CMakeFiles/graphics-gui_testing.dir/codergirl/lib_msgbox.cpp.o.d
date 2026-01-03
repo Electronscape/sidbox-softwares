@@ -9,6 +9,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o: \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
  /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
  /usr/include/strings.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../resources/lang/lang.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../resources/lang/en.def \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.h \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../sbapi_graphics.h \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \

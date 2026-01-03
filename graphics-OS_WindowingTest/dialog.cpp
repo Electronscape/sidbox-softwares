@@ -8,6 +8,8 @@
 #include <QMouseEvent>
 #include <QPoint>  // for the QPoint objects
 
+#include "resources/lang/lang.h"
+
 #include "sbapi_graphics.h"
 #include "codergirl/cg_windowex.h"
 #include "codergirl/cg_input.h"
@@ -28,6 +30,7 @@
 
 #include "codergirl/lib_filerequest.h"
 #include "codergirl/lib_msgbox.h"
+#include "codergirl/lib_infobox.h"
 
 float winScale = 1.0f;
 int currentScale = 1;
@@ -128,68 +131,21 @@ void doCreateAWindow(void *s){
 
 SBXWindowId aboutWin;
 
-void closeAboutWindow(void *){
-    printf("Close the about window? HOW DARE YOU!\n");
-    SBOS_destroyWindow(aboutWin);
-    aboutWin = 0;
-}
 
-#define ABOUTWIN_WIDTH  280
-#define ABOUTWIN_HEIGHT 200
-#define ABOUTWIN_TEXTWIDTH  (ABOUTWIN_WIDTH - 30)
-#define ABOUTWIN_TEXTHEIGHT (ABOUTWIN_HEIGHT - 70)
 #define SYS_MENU_BAR_HEIGHT     20
-void doAboutWindow(void *s){
-    if(aboutWin) {
-        // its already loaded, just bring it to the front and focus
-        SBOS_setFocus(aboutWin);
-        SBOS_bringToFront(aboutWin);
-        return;
-    }
-
-    int32_t wx, wy;
-
-    wx = (SCR_WIDTH / 2) - (ABOUTWIN_WIDTH /2);
-    wy = (SCR_HEIGHT / 4) - (ABOUTWIN_HEIGHT /4);
-
-    aboutWin = SBOS_createWindow(&aboutWin, wx, wy, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, "SIDBOX OS!", SBX_WF_SCREENBOUND | WIN_DEFAULT_FLAGS);
-    SBOS_setWindowBackColour(aboutWin, 6);
 
 
-    if(aboutWin == SBW_INVALID_ID){
-        printf("Think we ran out of windows -- how about closing some!\n");
-        return;
-    }
+void doAnotherFunction(void *s){
+    // this message was from a button so
+    GAD_BUTTON_T *bnt = (GAD_BUTTON_T*)s;
 
-    //SBOS_CreateBitmapView(aboutWin, 0, 0, ABOUTWIN_WIDTH, ABOUTWIN_HEIGHT, baseGrid, 32, 32, 32, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
-    CGGadgetHandle lbl = SBOS_CreateLabel(aboutWin, 10,10, ABOUTWIN_TEXTWIDTH, ABOUTWIN_TEXTHEIGHT, "", GAD_TOOL_INSET);
-    SBOS_setGadgetBPen(lbl, PEN_WIN_BG);
-    CGGadgetHandle txt = SBOS_CreateLabel(aboutWin, 14,14, ABOUTWIN_TEXTWIDTH-10, 32,
-                                          "SIDBOX OS - Version 1.0\n"
-                                          "Window Manager: \"" UI_NAME "\"\n"
-                                          , GAD_TOOL_DEFAULT);
+    printf("another function clicked\n");
 
-    SBOS_setGadgetBPen(txt, PEN_WIN_BG);
 
-    txt = SBOS_CreateLabel(aboutWin, 14, 54, ABOUTWIN_TEXTWIDTH-10, 64,
-                           "Resource Pool System v0.1\n"
-                           "Built by Electronscape\n\n"
-                           "Licensing pending\n"
-                           "\xa9 2025 - 2099"
-                           , GAD_TOOL_DEFAULT);
 
-    SBOS_setGadgetBPen(txt, PEN_WIN_BG);
-
-    int16_t PerfX = (ABOUTWIN_WIDTH/2) - 35;
-    CGGadgetHandle closeBtn = SBOS_CreateButton(aboutWin, PerfX,  ABOUTWIN_HEIGHT - 55,  70, 26, "CLOSE", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
-
-    //SBOS_setLabelColour(txt, 2, BPEN_NOCHANGE);
-    SBOS_setButtonCallBack(closeBtn, closeAboutWindow);
-
-    SBOS_setFocus(aboutWin);
-    SBOS_bringToFront(aboutWin);
-    printf("ABOUT WINDOW  ");
+    SBOS_InfoBoxSimple(bnt->h.winhnd, "Function hit test", "This message from an attached button");
 }
+
 
 ////////// this section would be in our client software anyway so treat it as such -------------
 
@@ -211,7 +167,8 @@ static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
                         SBOS_destroyWindow(win);
 
                     if(m->gadget == btnAboutUs)
-                        doAboutWindow(NULL);
+                        //doAboutWindow(NULL);
+                        SBOS_InfoBoxSimple(win, lang_get(STR_GUI_INFOBOX_HEADER), lang_get(STR_GUI_INFOABOUT_TEXT));
 
                     if(m->gadget == btnMessageTest){
                         /*
@@ -336,16 +293,22 @@ static CGWindowProcRes BasicWindowMAIN(SBXWindowId win, const CGMessage_t *m)
 
 SBXWindowId winMain;
 void createBasicDesktopTest(){
+    init_language();		// init language pack
+    printf("LANGUAGE: %s\n", lang_get(STR_LANGUAGE));
+
+
     initWb();
     initFastRam();  // REALLY IMPORTANT BEFORE LAUNCHING ANYTHING NEEDING LIST!
 
     // DESKTOP WINDOW (yes it IS a window)
-    SBXWindowId workbench = SBOS_createWindow(&workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, "Workbench", SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
+    SBXWindowId workbench = SBOS_createWindow(&workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, lang_get(STR_MENUTITLE), SBX_WF_ALWAYS_TO_BACK | SBX_WF_VISIBLE | SBX_WF_NOBORDER);
     SBOS_CreateBitmapView(workbench, 0, 0, SCR_WIDTH, SCR_HEIGHT, backdrop, 480, 320, 480, BVF_WRAP | BVF_SRC_ROWMAJOR, GAD_TOOL_NOBORDER);
+
+
     CGGadgetHandle newWindowBtn = SBOS_CreateButton(workbench, 6,  60,  170, 26, "a workbench button", GAD_TOOL_DEFAULT);//GAD_TOOL_DOCKED_RIGHT
     SBOS_setButtonCallBack(newWindowBtn, doCreateAWindow);
 
-    titleBar = SBOS_createWindow(&titleBar, 0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, "MenuSystem", SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
+    titleBar = SBOS_createWindow(&titleBar, 0, 0, SCR_WIDTH, SYS_MENU_BAR_HEIGHT, lang_get(STR_MENUTITLE), SBX_WF_NOBORDER | SBX_WF_VISIBLE | SBX_WF_NOAUTOZORDER);
     SBOS_setWindowBackColour(titleBar, 2);
     SBOS_CreateCanvas(titleBar, 0, SYS_MENU_BAR_HEIGHT-1, SCR_WIDTH, 0, CNV_LINE,  GAD_TOOL_DEFAULT);
 
@@ -395,7 +358,7 @@ void createBasicDesktopTest(){
                          GAD_TOOL_SCROLLARROWS);
 
     CGGadgetHandle aboutBtn = SBOS_CreateButton(winMain2, 10, 100, 100, 25, "About...", GAD_TOOL_DEFAULT);
-    SBOS_setButtonCallBack(aboutBtn, doAboutWindow);
+    SBOS_setButtonCallBack(aboutBtn, doAnotherFunction);
 
 
     CGGadgetHandle scrrb =
@@ -607,7 +570,7 @@ Dialog::Dialog(QWidget *parent)
         uint32_t chipRes, fastRes;
         getMemAvailChipNFast(&chipRes, &fastRes);
 
-        fastRes = getMemUsed();
+        //fastRes = getMemUsed();
 
         char chipBuf[16];
         char fastBuf[16];

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "../fastram.h"
 
+#include "../resources/lang/lang.h"
 #include "cg_gadgets.h"
 #include "cg_windowex.h"
 #include "cg_msghandler.h"
@@ -221,8 +222,7 @@ static GADGET_BASE_T* alloc_base(void){
             return g;
         }
     }
-    SBOS_EmergencyError("Out of BASE gadget slots:\n\n"
-                        "Increase MAX_GADGETS\nor destroy unused gadgets.");
+    SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_GADGETSLOTS));
 
     return NULL;
 }
@@ -252,8 +252,7 @@ static void free_base(GADGET_BASE_T *g){
 static GAD_BITMAPVIEW_T* alloc_bv(void){
     GAD_BITMAPVIEW_T *bv = (GAD_BITMAPVIEW_T*)fastAlloc((uint32_t)sizeof(GAD_BITMAPVIEW_T));
     if (!bv){
-        SBOS_EmergencyError("Out of fastRam:\n\r"
-                            "Resource: bitmap views");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_BITMAPGAD));
         return NULL;
     }
     memset(bv, 0, sizeof(*bv));
@@ -270,8 +269,7 @@ static GAD_BITMAPVIEW_T* alloc_bv(void){
 static GAD_BUTTON_T* alloc_btn(void){
     GAD_BUTTON_T *b = (GAD_BUTTON_T*)fastAlloc((uint32_t)sizeof(GAD_BUTTON_T));
     if (!b){
-        SBOS_EmergencyError("Out of fastRam:\n\r"
-                            "Resource: buttons");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_BUTTONGAD));
         return NULL;
     }
 
@@ -292,8 +290,7 @@ static GAD_BUTTON_T* alloc_btn(void){
 static GAD_CANVAS_T* alloc_canv(void){
     GAD_CANVAS_T *cn = (GAD_CANVAS_T*)fastAlloc((uint32_t)sizeof(GAD_CANVAS_T));
     if (!cn){
-        SBOS_EmergencyError("Out of fastRam:\n\r"
-                            "Resource: canvas");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_CANVASGAD));
         return NULL;
     }
     memset(cn, 0, sizeof(*cn));
@@ -313,8 +310,7 @@ static GAD_CANVAS_T* alloc_canv(void){
 static GAD_CHECKBOX_T* alloc_chk(void){
     GAD_CHECKBOX_T *c = (GAD_CHECKBOX_T*)fastAlloc((uint32_t)sizeof(GAD_CHECKBOX_T));
     if (!c){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: checkboxes");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_CHECKBGAD));
         return NULL;
     }
 
@@ -334,8 +330,7 @@ static GAD_CHECKBOX_T* alloc_chk(void){
 static GAD_GRIDSELECT_T* alloc_gsl(void){
     GAD_GRIDSELECT_T *gs = (GAD_GRIDSELECT_T*)fastAlloc((uint32_t)sizeof(GAD_GRIDSELECT_T));
     if (!gs){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: gridSelect");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_GRIDSELECTGAD));
         return NULL;
     }
 
@@ -359,8 +354,7 @@ static GAD_GRIDSELECT_T* alloc_gsl(void){
 static GAD_LABEL_T* alloc_lbl(void){
     GAD_LABEL_T *l = (GAD_LABEL_T*)fastAlloc((uint32_t)sizeof(GAD_LABEL_T));
     if (!l){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: labels");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_LABELSGAD));
         return NULL;
     }
 
@@ -380,8 +374,7 @@ static GAD_LABEL_T* alloc_lbl(void){
 static GAD_LISTBOX_T* alloc_lb(void){
     GAD_LISTBOX_T *lb = (GAD_LISTBOX_T*)fastAlloc((uint32_t)sizeof(GAD_LISTBOX_T));
     if (!lb){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: listboxes");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_LISTBXGAD));
         return NULL;
     }
 
@@ -405,8 +398,7 @@ static GAD_LISTBOX_T* alloc_lb(void){
 static GAD_PROGBAR_T* alloc_pb(void){
     GAD_PROGBAR_T *pb = (GAD_PROGBAR_T*)fastAlloc(sizeof(GAD_PROGBAR_T));
     if (!pb){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: progressBar");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_PROGBRGAD));
         return NULL;
     }
 
@@ -431,8 +423,7 @@ static GAD_PROGBAR_T* alloc_pb(void){
 static GAD_RADIO_T* alloc_rad(void){
     GAD_RADIO_T *r = (GAD_RADIO_T*)fastAlloc((uint32_t)sizeof(GAD_RADIO_T));
     if (!r){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: radios");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_RADBUTGAD));
         return NULL;
     }
 
@@ -452,8 +443,7 @@ static GAD_RADIO_T* alloc_rad(void){
 static GAD_SCROLLBAR_T* alloc_sb(void){
     GAD_SCROLLBAR_T *s = (GAD_SCROLLBAR_T*)fastAlloc((uint32_t)sizeof(GAD_SCROLLBAR_T));
     if (!s){
-        SBOS_EmergencyError("Out of fastRam:\n\n"
-                            "Resource: scrollbars");
+        SBOS_EmergencyError(lang_get(STR_RES_FAIL_NOMORE_SCROLLGAD));
         return NULL;
     }
 
@@ -931,7 +921,7 @@ CGGadgetHandle SBOS_CreateButton(SBXWindowId win, int16_t x, int16_t y, int16_t 
             }
         }
         b->max_options = optionCount;
-        printf("Found options; %d\n", optionCount);
+        printf("DBUG: Found options; %d\n", optionCount);
     }
 
 

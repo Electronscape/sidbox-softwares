@@ -86,10 +86,52 @@ CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilatio
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.s"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/graphics-gui_testing_autogen/mocs_compilation.cpp -o CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.s
 
+CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o: CMakeFiles/graphics-gui_testing.dir/flags.make
+CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/en.c
+CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o -MF CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o.d -o CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/en.c
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.i"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/en.c > CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.i
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.s"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/en.c -o CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.s
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o: CMakeFiles/graphics-gui_testing.dir/flags.make
+CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/fr.c
+CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o -MF CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o.d -o CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/fr.c
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.i"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/fr.c > CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.i
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.s"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/fr.c -o CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.s
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o: CMakeFiles/graphics-gui_testing.dir/flags.make
+CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/lang.c
+CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o -MF CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o.d -o CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/lang.c
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.i"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/lang.c > CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.i
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.s"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/lang.c -o CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.s
+
 CMakeFiles/graphics-gui_testing.dir/main.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/main.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/main.cpp
 CMakeFiles/graphics-gui_testing.dir/main.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/graphics-gui_testing.dir/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/graphics-gui_testing.dir/main.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/main.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/main.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/main.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/main.cpp
 
 CMakeFiles/graphics-gui_testing.dir/main.cpp.i: cmake_force
@@ -103,7 +145,7 @@ CMakeFiles/graphics-gui_testing.dir/main.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp
 
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.i: cmake_force
@@ -117,7 +159,7 @@ CMakeFiles/graphics-gui_testing.dir/dialog.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/graphics.cpp
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/graphics.cpp
 
 CMakeFiles/graphics-gui_testing.dir/graphics.cpp.i: cmake_force
@@ -131,7 +173,7 @@ CMakeFiles/graphics-gui_testing.dir/graphics.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.i: cmake_force
@@ -145,7 +187,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.i: cmake_force
@@ -159,7 +201,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gadgets.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.i: cmake_force
@@ -173,7 +215,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_renderer.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.i: cmake_force
@@ -187,7 +229,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_renderer.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_input.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.i: cmake_force
@@ -201,7 +243,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_input.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp
 CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp
 
 CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.i: cmake_force
@@ -215,7 +257,7 @@ CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp
 CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/fastram.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/fastram.cpp
 
 CMakeFiles/graphics-gui_testing.dir/fastram.cpp.i: cmake_force
@@ -229,7 +271,7 @@ CMakeFiles/graphics-gui_testing.dir/fastram.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_itemlist.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.i: cmake_force
@@ -243,7 +285,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_itemlist.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.i: cmake_force
@@ -257,7 +299,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.i: cmake_force
@@ -271,7 +313,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_button.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.i: cmake_force
@@ -285,7 +327,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_button.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_glyphs.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.i: cmake_force
@@ -299,7 +341,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_glyphs.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_checkbox.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.i: cmake_force
@@ -313,7 +355,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_checkbox.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_radio.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.i: cmake_force
@@ -327,7 +369,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_radio.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_scrollbar.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.i: cmake_force
@@ -341,7 +383,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_scrollbar.cpp.s: cmake_forc
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.i: cmake_force
@@ -355,7 +397,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.s: cmake_for
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_listbox.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.i: cmake_force
@@ -369,7 +411,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_listbox.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_label.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_label.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.i: cmake_force
@@ -383,7 +425,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_label.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_gridselect.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_gridselect.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.i: cmake_force
@@ -397,7 +439,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_gridselect.cpp.s: cmake_for
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_msghandler.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_msghandler.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.i: cmake_force
@@ -411,7 +453,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_msghandler.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_filerequest.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_filerequest.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.i: cmake_force
@@ -425,7 +467,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_msgbox.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_msgbox.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.i: cmake_force
@@ -439,7 +481,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_canvas.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_canvas.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.i: cmake_force
@@ -453,7 +495,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.s: cmake_force
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_progbar.cpp
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_progbar.cpp
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.i: cmake_force
@@ -464,9 +506,26 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.s"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_progbar.cpp -o CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.s
 
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o: CMakeFiles/graphics-gui_testing.dir/flags.make
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_infobox.cpp
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o -MF CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o.d -o CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o -c /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_infobox.cpp
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.i"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_infobox.cpp > CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.i
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.s"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_infobox.cpp -o CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.s
+
 # Object files for target graphics-gui_testing
 graphics__gui_testing_OBJECTS = \
 "CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o" \
+"CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o" \
+"CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o" \
+"CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o" \
 "CMakeFiles/graphics-gui_testing.dir/main.cpp.o" \
 "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o" \
 "CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o" \
@@ -493,12 +552,16 @@ graphics__gui_testing_OBJECTS = \
 "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o" \
 "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o" \
 "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o" \
-"CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o"
+"CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o" \
+"CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o"
 
 # External object files for target graphics-gui_testing
 graphics__gui_testing_EXTERNAL_OBJECTS =
 
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o
+graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o
+graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o
+graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/main.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o
@@ -526,6 +589,7 @@ graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequ
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o
+graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/build.make
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/compiler_depend.ts
 graphics-gui_testing: /usr/lib64/libQt6Widgets.so.6.10.1
@@ -534,7 +598,7 @@ graphics-gui_testing: /usr/lib64/libGLX.so
 graphics-gui_testing: /usr/lib64/libOpenGL.so
 graphics-gui_testing: /usr/lib64/libQt6Core.so.6.10.1
 graphics-gui_testing: CMakeFiles/graphics-gui_testing.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Linking CXX executable graphics-gui_testing"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Linking CXX executable graphics-gui_testing"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/graphics-gui_testing.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

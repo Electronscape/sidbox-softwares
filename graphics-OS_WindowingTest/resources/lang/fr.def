@@ -1,0 +1,4 @@
+// FRENCH.DEF
+X(STR_LANGUAGE,            "FRENCH")
+
+X(STR_UI_ERROR,    "UI error")

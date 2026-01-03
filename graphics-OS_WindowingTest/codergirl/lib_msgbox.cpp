@@ -5,6 +5,7 @@
 //#include <stdio.h>
 #include <string.h>
 
+#include "../resources/lang/lang.h"
 #include "sys_font.h"
 #include "../sbapi_graphics.h"
 
@@ -42,7 +43,7 @@ typedef struct LIB_MSGBOX_PRIVATE {
 static struct LIB_MSGBOX_PRIVATE *g_msgbox_state[MAX_WINDOWS];
 
 
-#define MAX_MSGBOXES 4   // choose your limit
+#define MAX_MSGBOXES    4
 
 static LIB_MSGBOX_PRIVATE g_msgbox_pool[MAX_MSGBOXES];
 static uint8_t            g_msgbox_used[MAX_MSGBOXES];
@@ -272,17 +273,17 @@ SBXWindowId SBOS_MessageBox(SBXWindowId owner_winhnd, const CGFMsgBoxParams *p){
     mb->lblMsg = SBOS_CreateLabel(win, 16, 16, prepWidth - 42, (int16_t)(btnY - 28), mb->txtMsg, GAD_TOOL_DEFAULT);
 
     if (mb->flags == MSGBOXF_OK) {
-        mb->btnOk = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "OK", GAD_TOOL_DEFAULT);
+        mb->btnOk = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_OK), GAD_TOOL_DEFAULT);
     } else if (mb->flags == MSGBOXF_OKCANCEL) {
-        mb->btnOk     = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
-        mb->btnCancel = SBOS_CreateButton(win, btnX[1], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
+        mb->btnOk     = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_OK),     GAD_TOOL_DEFAULT);
+        mb->btnCancel = SBOS_CreateButton(win, btnX[1], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_CANCEL), GAD_TOOL_DEFAULT);
     } else if (mb->flags == MSGBOXF_YESNO) {
-        mb->btnYes = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "Yes", GAD_TOOL_DEFAULT);
-        mb->btnNo  = SBOS_CreateButton(win, btnX[1], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "No",  GAD_TOOL_DEFAULT);
+        mb->btnYes = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_YES),       GAD_TOOL_DEFAULT);
+        mb->btnNo  = SBOS_CreateButton(win, btnX[1], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_NO),        GAD_TOOL_DEFAULT);
     } else { // MSGBOXF_YESNOCANCEL
-        mb->btnYes    = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "Yes",    GAD_TOOL_DEFAULT);
-        mb->btnNo     = SBOS_CreateButton(win, btnX[1], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "No",     GAD_TOOL_DEFAULT);
-        mb->btnCancel = SBOS_CreateButton(win, btnX[2], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
+        mb->btnYes    = SBOS_CreateButton(win, btnX[0], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_YES),    GAD_TOOL_DEFAULT);
+        mb->btnNo     = SBOS_CreateButton(win, btnX[1], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_NO),     GAD_TOOL_DEFAULT);
+        mb->btnCancel = SBOS_CreateButton(win, btnX[2], btnY, MGS_BTN_WIDTH, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_COMMDLG_BTN_CANCEL), GAD_TOOL_DEFAULT);
     }
 
     SBOS_paintAllWindows();

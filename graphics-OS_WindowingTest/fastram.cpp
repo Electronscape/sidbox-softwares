@@ -6,8 +6,6 @@
 
 #include "fastram.h"
 
-#define RAMBANK_SIZE (2048u)   // Kbytes
-#define FASTRAM_SIZE (1024u * RAMBANK_SIZE)
 
 static uint8_t FAUXRAM[FASTRAM_SIZE];   // eventually will move this to an actual memory location 0xD0000000 stm32 EXT RAM area xD
 

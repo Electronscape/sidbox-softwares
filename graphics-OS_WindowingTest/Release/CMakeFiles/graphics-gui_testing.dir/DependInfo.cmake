@@ -8,6 +8,9 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/en.c" "CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o.d"
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/fr.c" "CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o.d"
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/resources/lang/lang.c" "CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/bitmaps_src.cpp" "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/bitmaps_src.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_aroot.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_aroot.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_gad_bitmapview.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_bitmapview.cpp.o.d"
@@ -29,6 +32,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_resources.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_resources.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_windowex.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_filerequest.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o.d"
+  "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_infobox.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/lib_msgbox.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/sys_font.cpp" "CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o.d"
   "/mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/dialog.cpp" "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o" "gcc" "CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o.d"

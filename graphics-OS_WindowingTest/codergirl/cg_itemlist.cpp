@@ -196,7 +196,7 @@ uint32_t listitem_count(const ItemLists_t *list){
 }
 
 void listitem_dump(const ItemLists_t *list){
-    printf("ListBox dump: %u items\n", list->count);
+    printf("DBUG: ListBox dump: %u items\n", list->count);
 
     for (uint16_t i = 0; i < list->count; i++) {
         const char *s = list->items[i] ? (const char *)list->items[i] : "(null)";

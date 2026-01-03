@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define RAMBANK_SIZE (32u)   // Kbytes
+#define FASTRAM_SIZE (1024u * RAMBANK_SIZE)
+
 
 typedef struct FastBlk {
     uint32_t size;      // payload size in bytes (aligned)

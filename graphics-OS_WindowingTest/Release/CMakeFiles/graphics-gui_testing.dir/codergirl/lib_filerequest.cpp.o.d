@@ -18,6 +18,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o: \
  /usr/include/bits/floatn-common.h /usr/include/bits/stdio.h \
  /usr/include/string.h /usr/include/bits/types/locale_t.h \
  /usr/include/bits/types/__locale_t.h /usr/include/strings.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../resources/lang/lang.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/../resources/lang/en.def \
  /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/codergirl/cg_wintype.h \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \

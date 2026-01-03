@@ -3,6 +3,9 @@ graphics-gui_testing: \
   /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o \
   /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o \
   CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o \
+  CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o \
+  CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o \
   CMakeFiles/graphics-gui_testing.dir/main.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o \
@@ -30,6 +33,7 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -104,6 +108,12 @@ graphics-gui_testing: \
 
 CMakeFiles/graphics-gui_testing.dir/graphics-gui_testing_autogen/mocs_compilation.cpp.o:
 
+CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o:
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o:
+
+CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o:
+
 CMakeFiles/graphics-gui_testing.dir/main.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/dialog.cpp.o:
@@ -157,6 +167,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o:
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_canvas.cpp.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gad_progbar.cpp.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 

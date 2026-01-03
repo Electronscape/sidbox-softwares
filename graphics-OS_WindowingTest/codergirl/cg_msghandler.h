@@ -45,6 +45,7 @@ typedef enum {
     CGEVT_SYS_FILERQ_CHANGED,            // if list changed (might be useful)
 
     CGEVT_SYS_MSGBOX_DONE,               // our msgbox is done
+    CGEVT_SYS_INFOBOX_DONE,             // just a simple info box done message
 } CGEventType;
 
 typedef struct CGMessage_t {

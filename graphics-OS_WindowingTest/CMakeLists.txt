@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(graphics-gui_testing LANGUAGES CXX)
+project(graphics-gui_testing LANGUAGES C CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
 
@@ -7,6 +7,15 @@ qt_standard_project_setup()
 
 qt_add_executable(graphics-gui_testing
     WIN32 MACOSX_BUNDLE
+
+
+    resources/lang/en.c
+    resources/lang/en.def
+    resources/lang/fr.c
+    resources/lang/fr.def
+    resources/lang/lang.c
+    resources/lang/lang.h
+
     main.cpp
     dialog.cpp
     dialog.h
@@ -75,11 +84,15 @@ qt_add_executable(graphics-gui_testing
     codergirl/cg_gad_canvas.cpp
     codergirl/cg_gad_progbar.cpp
     codergirl/cg_gad_progbar.h
+    codergirl/lib_infobox.h
+    codergirl/lib_infobox.cpp
+
+
 
 )
 
 find_package(
-    ALSA REQUIRED
+#ALSA REQUIRED
     Threads REQUIRED
 )
 

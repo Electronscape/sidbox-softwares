@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "../resources/lang/lang.h"
 #include "cg_wintype.h"
 
 #include "cg_renderer.h"
@@ -308,7 +310,7 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
         strncpy(st->currdir, "/", sizeof(st->currdir)-1);
     }
 
-    const char *title = (p->title && p->title[0]) ? p->title : "Open File";
+    const char *title = (p->title && p->title[0]) ? p->title : lang_get(STR_FILEREQ_OPENFILE);
 
     // create requester window
     SBXWindowId win = SBOS_createWindow(NULL, 40, 40, Req_width, Req_height, title,
@@ -451,13 +453,13 @@ SBXWindowId SBOS_OpenFileRequester(SBXWindowId owner_winhnd, const CGFileRqParam
     int16_t buttox = 8;
 
     Req_height += 12;
-    st->btnOk     = SBOS_CreateButton (win, buttox, Req_height, 40, DEF_DIALOG_BUTTON_HEIGHT, "OK",     GAD_TOOL_DEFAULT);
+    st->btnOk     = SBOS_CreateButton (win, buttox, Req_height, 40, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_FILEREQ_BTN_OK),     GAD_TOOL_DEFAULT);
     buttox += 5 + 40;
-    st->btnCancel = SBOS_CreateButton (win, buttox, Req_height, 60, DEF_DIALOG_BUTTON_HEIGHT, "Cancel", GAD_TOOL_DEFAULT);
+    st->btnCancel = SBOS_CreateButton (win, buttox, Req_height, 60, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_FILEREQ_BTN_CANCEL), GAD_TOOL_DEFAULT);
     buttox += 5 + 60;
-    st->btnParent = SBOS_CreateButton (win, buttox, Req_height, 90, DEF_DIALOG_BUTTON_HEIGHT, "Parent...", GAD_TOOL_DEFAULT);
+    st->btnParent = SBOS_CreateButton (win, buttox, Req_height, 90, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_FILEREQ_BTN_PARENT), GAD_TOOL_DEFAULT);
     buttox += 5 + 90;
-    st->btnRoot   = SBOS_CreateButton (win, buttox, Req_height, 50, DEF_DIALOG_BUTTON_HEIGHT, "Root", GAD_TOOL_DEFAULT);
+    st->btnRoot   = SBOS_CreateButton (win, buttox, Req_height, 50, DEF_DIALOG_BUTTON_HEIGHT, lang_get(STR_FILEREQ_BTN_ROOT),   GAD_TOOL_DEFAULT);
 
     SBOS_bringToFront(win);
     SBOS_setFocus(win);

@@ -45,6 +45,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/cg_windowex.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_filerequest.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_infobox.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/lib_msgbox.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/sys_font.cpp.o"
@@ -59,11 +61,17 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/graphics.cpp.o.d"
   "CMakeFiles/graphics-gui_testing.dir/main.cpp.o"
   "CMakeFiles/graphics-gui_testing.dir/main.cpp.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o"
+  "CMakeFiles/graphics-gui_testing.dir/resources/lang/en.c.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o"
+  "CMakeFiles/graphics-gui_testing.dir/resources/lang/fr.c.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o"
+  "CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o.d"
   "graphics-gui_testing"
   "graphics-gui_testing.pdb"
 )
 
 # Per-language clean rules from dependency scanning.
-foreach(lang CXX)
+foreach(lang C CXX)
   include(CMakeFiles/graphics-gui_testing.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()
