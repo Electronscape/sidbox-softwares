@@ -255,8 +255,7 @@
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">border: 1px solid #3c6dc3;
-</string>
+         <string notr="true">border: 1px solid #3c6dc3;</string>
         </property>
         <property name="verticalScrollBarPolicy">
          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
@@ -268,7 +267,7 @@
          <bool>false</bool>
         </property>
         <property name="readOnly">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="html">
          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
