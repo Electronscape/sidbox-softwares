@@ -1,5 +1,6 @@
 graphics-gui_testing_autogen/timestamp: \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/CMakeLists.txt \
+	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.c \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h \

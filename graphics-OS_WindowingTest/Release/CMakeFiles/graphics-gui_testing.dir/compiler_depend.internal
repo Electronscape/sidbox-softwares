@@ -5,6 +5,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -220,6 +221,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/drivers/cgdriver_memory.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_bitmapview.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_bitmapview.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -272,6 +274,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_bitmapview.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_button.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_button.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -326,6 +329,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_button.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_canvas.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_canvas.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -379,6 +383,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_canvas.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_checkbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_checkbox.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -417,6 +422,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_checkbox.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_gridselect.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_gridselect.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -468,6 +474,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_gridselect.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_label.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_label.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -507,6 +514,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_label.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_listbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_listbox.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -560,6 +568,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_listbox.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_progbar.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_progbar.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -611,6 +620,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_progbar.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_radio.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_radio.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -649,6 +659,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_radio.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_scrollbar.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_scrollbar.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -702,6 +713,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_scrollbar.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_slider.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_slider.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -742,6 +754,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_slider.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textarea.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_textarea.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -813,6 +826,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textarea.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_textbox.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -867,6 +881,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textbox.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_clip.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
@@ -975,6 +990,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_glyphs.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_renderer.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_renderer.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h
@@ -1004,6 +1020,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_console.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_console.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1056,6 +1073,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_filerequest.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_filerequest.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1116,6 +1134,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_infobox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_infobox.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1200,6 +1219,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_msgbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_msgbox.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1341,6 +1361,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/memory/cg_itemlist.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_input.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_input.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1377,6 +1398,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_input.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_msghandler.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1429,6 +1451,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_os_io.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_os_io.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1522,6 +1545,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_os_io.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_resources.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_resources.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -1620,6 +1644,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/window/cg_windowex.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -2279,6 +2304,7 @@ CMakeFiles/graphics-gui_testing.dir/driver_filesys.cpp.o
 
 CMakeFiles/graphics-gui_testing.dir/driver_graphics.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_graphics.cpp
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h
@@ -3361,6 +3387,7 @@ CMakeFiles/graphics-gui_testing.dir/main.cpp.o
 
 CMakeFiles/graphics-gui_testing.dir/main_window.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/main_window.cpp
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
@@ -4025,6 +4052,7 @@ CMakeFiles/graphics-gui_testing.dir/resources/lang/lang.c.o
 
 CMakeFiles/graphics-gui_testing.dir/wb_start.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/wb_start.cpp
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h

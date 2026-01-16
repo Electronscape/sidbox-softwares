@@ -15,4 +15,5 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_renderer.c.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_renderer.h

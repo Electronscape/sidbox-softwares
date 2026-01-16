@@ -15,10 +15,12 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textarea.c.o: \
  /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
  /usr/include/strings.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_textarea.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h \

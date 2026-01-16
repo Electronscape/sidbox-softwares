@@ -16,6 +16,7 @@ CMakeFiles/graphics-gui_testing.dir/driver_graphics.cpp.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_graphics.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h \
  /usr/include/string.h /usr/include/bits/types/locale_t.h \
  /usr/include/bits/types/__locale_t.h /usr/include/strings.h

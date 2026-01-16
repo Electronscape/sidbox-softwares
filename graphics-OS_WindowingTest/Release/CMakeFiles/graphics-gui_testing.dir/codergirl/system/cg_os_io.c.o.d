@@ -43,6 +43,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_os_io.c.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/../resources/lang/lang.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/../resources/lang/en.def \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_dirty.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_renderer.h \
@@ -52,6 +53,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_os_io.c.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h \

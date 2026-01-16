@@ -449,6 +449,12 @@
 	"HEADERS" : 
 	[
 		[
+			"/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h",
+			"MU",
+			"5AAQOGTO22/moc_cg_aroot.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h",
 			"MU",
 			"5AAQOGTO22/moc_cg_gadgets.cpp",

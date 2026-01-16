@@ -27,10 +27,12 @@ CMakeFiles/graphics-gui_testing.dir/wb_start.cpp.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_graphics.h \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h \
