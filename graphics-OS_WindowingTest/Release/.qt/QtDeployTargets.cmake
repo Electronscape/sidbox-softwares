@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_graphics-gui_testing_FILE /mnt/LinuxDatas/work/sidbox-softwares/graphics-OS_WindowingTest/Release/graphics-gui_testing)
+set(__QT_DEPLOY_TARGET_graphics-gui_testing_TYPE EXECUTABLE)

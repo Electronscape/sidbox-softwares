@@ -1,0 +1,33 @@
+SIDBOX OS V1.0 - Console Window V0.1
+(help for more)
+
+:>hello
+
+
+Unknown command: hello (type 'help')
+:>help
+
+Commands:
+  help               - this help
+  info               - build/system info
+  echo <text>        - print text
+  cls                - clear screen
+  exit               - close console window
+  pwd                - show current directory
+  cd <path>          - change directory (faux)
+  dir [path]         - list directory (faux)
+  ls [path]          - alias of dir
+  theme              - show theme info
+  title              - change console title
+  msgbox "message"   - do a message
+
+Tip: use quotes: echo "hello world"
+:>save "flaps.txt"
+
+[SaveTextArea] saved TextArea: flaps.txt (657 bytes)
+
+Saved
+:>SIDBOX OS V1.0 - Console Window V0.1
+(help for more)
+
+:>
