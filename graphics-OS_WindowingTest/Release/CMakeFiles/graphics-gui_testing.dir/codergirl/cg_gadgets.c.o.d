@@ -71,4 +71,5 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.c.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_input.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_textarea.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_filerequest.h \
- /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_msgbox.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_msgbox.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_console.h

@@ -60,8 +60,9 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/window/cg_windowex.c.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_gadgetrender.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_glyphs.h \
- /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_bitmapview.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_console.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_bitmapview.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_button.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_checkbox.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_gridselect.h \

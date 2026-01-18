@@ -9,6 +9,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_gadgets.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_bitmapview.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_button.h
@@ -24,6 +25,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_textarea.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/gadgets/cg_gad_textbox.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_dirty.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_console.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_filerequest.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_msgbox.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h
@@ -1666,6 +1668,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/window/cg_windowex.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_gadgetrender.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_glyphs.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_renderer.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_console.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_input.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
