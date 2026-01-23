@@ -27,13 +27,16 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_dirty.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_console.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_filerequest.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_infobox.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/libs/lib_msgbox.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_input.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -102,7 +105,9 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/cg_gadgets.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/drivers/cgdriver_filesys.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_filesys.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_filesys.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -130,7 +135,9 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/drivers/cgdriver_filesys.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/drivers/cgdriver_gfx.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -169,8 +176,10 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/drivers/cgdriver_memory.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -235,6 +244,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_bitmapview.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -290,6 +300,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_button.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -344,6 +355,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_canvas.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -396,6 +408,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_checkbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -435,6 +448,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_gridselect.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -488,6 +502,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_label.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -529,6 +544,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_listbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -581,6 +597,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_progbar.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -633,6 +650,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_radio.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -674,6 +692,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_scrollbar.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -728,6 +747,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_slider.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -771,6 +791,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textarea.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -842,6 +863,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/gadgets/cg_gad_textbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -885,6 +907,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_clip.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.c
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -907,9 +930,11 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_clip.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_dirty.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_dirty.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_dirty.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -932,10 +957,12 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_dirty.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_glyphs.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_glyphs.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -998,6 +1025,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/graphics/cg_renderer.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_renderer.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -1032,6 +1060,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_console.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -1093,6 +1122,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_filerequest.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -1151,6 +1181,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_infobox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1236,6 +1267,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_msgbox.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1293,9 +1325,11 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_msgbox.c.o
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/memory/cg_itemlist.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.c
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/memory/cg_itemlist.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1372,6 +1406,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_input.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -1410,6 +1445,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_msghandler.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_msghandler.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h
@@ -1479,6 +1515,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_os_io.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1570,6 +1607,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_resources.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1677,6 +1715,7 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/window/cg_windowex.c.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1745,9 +1784,11 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/window/cg_windowex.c.o
 
 CMakeFiles/graphics-gui_testing.dir/driver_fastram.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_fastram.cpp
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_fastram.h
  /usr/include/alloca.h
+ /usr/include/assert.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/endian.h
@@ -1823,6 +1864,7 @@ CMakeFiles/graphics-gui_testing.dir/driver_fastram.cpp.o
 
 CMakeFiles/graphics-gui_testing.dir/driver_filesys.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_filesys.cpp
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_filesys.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_filesys.h
  /usr/include/alloca.h
@@ -2312,6 +2354,7 @@ CMakeFiles/graphics-gui_testing.dir/driver_graphics.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/graphics/cg_clip.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_graphics.h
+ /usr/include/assert.h
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/long-double.h
  /usr/include/bits/stdint-intn.h
@@ -4089,6 +4132,7 @@ CMakeFiles/graphics-gui_testing.dir/wb_start.cpp.o
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/lang.h
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/wb_start.h
+ /usr/include/assert.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
  /usr/include/bits/libc-header-start.h

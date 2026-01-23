@@ -60,6 +60,8 @@ CMakeFiles/graphics-gui_testing.dir/driver_filesys.cpp.o: \
  /usr/include/asm/errno.h /usr/include/asm-generic/errno.h \
  /usr/include/asm-generic/errno-base.h /usr/include/bits/types/error_t.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_filesys.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
+ /usr/include/assert.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_filesys.h \
  /usr/include/qt6/QtCore/QDir /usr/include/qt6/QtCore/qdir.h \
  /usr/include/qt6/QtCore/qcompare.h /usr/include/qt6/QtCore/qglobal.h \
@@ -68,7 +70,7 @@ CMakeFiles/graphics-gui_testing.dir/driver_filesys.cpp.o: \
  /usr/include/c++/15/bits/stl_relops.h \
  /usr/include/c++/15/bits/stl_pair.h /usr/include/c++/15/bits/move.h \
  /usr/include/c++/15/bits/utility.h /usr/include/c++/15/initializer_list \
- /usr/include/c++/15/cstdint /usr/include/assert.h \
+ /usr/include/c++/15/cstdint \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdbool.h \
  /usr/include/qt6/QtCore/qtcoreglobal.h \
  /usr/include/qt6/QtCore/qtversionchecks.h \

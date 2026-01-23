@@ -410,6 +410,7 @@ CMakeFiles/graphics-gui_testing.dir/main_window.cpp.o: \
  /usr/include/qt6/QtWidgets/QGraphicsItem /usr/include/qt6/QtGui/QPainter \
  /usr/include/qt6/QtGui/qpainter.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_filesys.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_gfx.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_graphics.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/driver_filesys.h \
@@ -421,7 +422,6 @@ CMakeFiles/graphics-gui_testing.dir/main_window.cpp.o: \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/resources/lang/en.def \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_input.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.h \
- /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_theme.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_wintype.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_type.h \

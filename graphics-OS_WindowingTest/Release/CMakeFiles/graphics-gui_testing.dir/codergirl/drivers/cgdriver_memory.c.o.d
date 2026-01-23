@@ -30,4 +30,6 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/drivers/cgdriver_memory.c.o: \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-uintn.h /usr/include/bits/stdint-least.h \
  /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/../resources/lang/en.def \
- /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/drivers/cgdriver_memory.h \
+ /mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/cg_aroot.h \
+ /usr/include/assert.h
