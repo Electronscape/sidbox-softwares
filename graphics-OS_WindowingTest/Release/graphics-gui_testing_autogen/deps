@@ -64,6 +64,8 @@ graphics-gui_testing_autogen/timestamp: \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_os_io.h \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_resources.c \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_resources.h \
+	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_timers.c \
+	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_timers.h \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.c \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h \
 	/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/window/cg_windowex.c \

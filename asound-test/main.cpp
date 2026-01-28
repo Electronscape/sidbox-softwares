@@ -90,6 +90,7 @@ int main() {
 
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
+    printf("done\n");
 
     return 0;
 }

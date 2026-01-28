@@ -183,7 +183,7 @@ FrmFTP::FrmFTP(SerialHandler* sh, QWidget *parent)
     });
 
     connect(ui->cmdClearRam, &QPushButton::clicked, this, [=](){
-        sh->writeData("clear");
+        sh->writeData("ramclr 0 0\n");
     });
 
 }
@@ -376,16 +376,11 @@ void FrmFTP::processFtpBuffer()
 
         case FTP_WAIT_END_ACK: {
             ftpState = FTP_IDLE;
-
-
-
             //submitFTPLog("END ACK received, FTP upload complete!");
             submitFTPLog("FTP upload complete!");
             if(ui->chkAutoRun->isChecked()){
-
                 ftpSerial->write(QString("usr %1\n").arg(offset).toUtf8()); // <-- this doesnt, but its the same function!?
             }
-
             disconnect(ftpSerial, &QSerialPort::readyRead, this, &FrmFTP::processFtpBuffer);
             connect(ftpSerial, &QSerialPort::readyRead, serialHandler, &SerialHandler::readData);
             ftpBuffer.clear();

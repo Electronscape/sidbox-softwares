@@ -45,6 +45,7 @@ graphics-gui_testing: \
   CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_msgbox.c.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_infobox.c.o \
   CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_console.c.o \
+  CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_timers.c.o \
   /usr/lib64/libQt6Widgets.so.6.10.1 \
   /usr/lib64/libQt6Gui.so.6.10.1 \
   /usr/lib64/libGLX.so \
@@ -202,6 +203,8 @@ CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_msgbox.c.o:
 CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_infobox.c.o:
 
 CMakeFiles/graphics-gui_testing.dir/codergirl/libs/lib_console.c.o:
+
+CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_timers.c.o:
 
 /usr/lib64/libQt6Widgets.so.6.10.1:
 

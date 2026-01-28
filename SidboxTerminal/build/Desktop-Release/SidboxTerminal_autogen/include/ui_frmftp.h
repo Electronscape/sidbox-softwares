@@ -178,14 +178,17 @@ public:
         opt2Chunk2->setStyleSheet(QString::fromUtf8("border:none"));
         opt2Chunk3 = new QRadioButton(frame_2);
         opt2Chunk3->setObjectName("opt2Chunk3");
+        opt2Chunk3->setEnabled(false);
         opt2Chunk3->setGeometry(QRect(190, 10, 100, 23));
         opt2Chunk3->setStyleSheet(QString::fromUtf8("border:none"));
         opt2Chunk4 = new QRadioButton(frame_2);
         opt2Chunk4->setObjectName("opt2Chunk4");
+        opt2Chunk4->setEnabled(false);
         opt2Chunk4->setGeometry(QRect(270, 10, 100, 23));
         opt2Chunk4->setStyleSheet(QString::fromUtf8("border:none"));
         opt2Chunk5 = new QRadioButton(frame_2);
         opt2Chunk5->setObjectName("opt2Chunk5");
+        opt2Chunk5->setEnabled(false);
         opt2Chunk5->setGeometry(QRect(350, 10, 100, 23));
         opt2Chunk5->setStyleSheet(QString::fromUtf8("border:none"));
         label_3 = new QLabel(centralwidget);

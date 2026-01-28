@@ -653,6 +653,12 @@
 			null
 		],
 		[
+			"/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_timers.h",
+			"MU",
+			"5V4C3ABU7A/moc_cg_timers.cpp",
+			null
+		],
+		[
 			"/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/sys_font.h",
 			"MU",
 			"5V4C3ABU7A/moc_sys_font.cpp",
@@ -927,6 +933,11 @@
 		],
 		[
 			"/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_resources.c",
+			"MU",
+			null
+		],
+		[
+			"/mnt/LinuxDatas/work/PrivateCode/CoderGirlOSGUI/codergirl/system/cg_timers.c",
 			"MU",
 			null
 		],

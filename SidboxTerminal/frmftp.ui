@@ -450,6 +450,9 @@
      </property>
     </widget>
     <widget class="QRadioButton" name="opt2Chunk3">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>190</x>
@@ -466,6 +469,9 @@
      </property>
     </widget>
     <widget class="QRadioButton" name="opt2Chunk4">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>270</x>
@@ -482,6 +488,9 @@
      </property>
     </widget>
     <widget class="QRadioButton" name="opt2Chunk5">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>350</x>

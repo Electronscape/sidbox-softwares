@@ -63,6 +63,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_os_io.c.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_resources.c.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_resources.c.o.d"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_timers.c.o"
+  "CMakeFiles/graphics-gui_testing.dir/codergirl/system/cg_timers.c.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/system/sys_font.c.o"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/system/sys_font.c.o.d"
   "CMakeFiles/graphics-gui_testing.dir/codergirl/window/cg_windowex.c.o"
