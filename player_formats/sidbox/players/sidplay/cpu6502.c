@@ -305,7 +305,8 @@ static inline u8 pack_p_for_irq(cpu6502_t *c){
 
 static int cpu_handle_interrupts(cpu6502_t *c){
     // NMI edge-latched (highest priority)
-    if (c->nmi_latch) {
+    if (c->nmi_latch)
+    {
         c->nmi_latch = 0;
 
         // push PC, push P, set I
@@ -337,13 +338,13 @@ static int cpu_handle_interrupts(cpu6502_t *c){
 
 // Assert/clear IRQ/NMI lines (for later RSID)
 void cpu6502_irq(cpu6502_t *c, int level){
-    c->irq_line = (u8)(level != 0);
+    c->irq_line = !!level;//(u8)(level != 0);
 }
 
 void cpu6502_nmi(cpu6502_t *c, int level){
     // NMI is edge-triggered on real 6502; latch rising edge.
     if (level && !c->nmi_line) c->nmi_latch = 1;
-    c->nmi_line = (u8)(level != 0);
+    c->nmi_line = !!level;//(u8)(level != 0);
 }
 
 
@@ -410,6 +411,7 @@ static u16 ea(cpu6502_t *c, int mode, int *cycles){
         }
 
     default:
+        *cycles +=1;
         return 0;
     }
 }
@@ -435,8 +437,9 @@ int cpu6502_step(cpu6502_t *c){
 
     int cycles = 0;
 
+
     // optional interrupt handling at instruction boundary
-    cycles += cpu_handle_interrupts(c);
+
 
     u8 opc = READ8(c->pc++);
     //int cmd  = cpu6502_opcodes[opc];
@@ -447,7 +450,7 @@ int cpu6502_step(cpu6502_t *c){
 
 
     if (!roms_loaded && c->pc >= 0xE000) {
-        printf("RSID executed ROM-space @ %04X (but ROM not active)\n", c->pc);
+        //printf("RSID executed ROM-space @ %04X (but ROM not active)\n", c->pc);
     }
 
     u8 bval;
@@ -723,6 +726,7 @@ int cpu6502_step(cpu6502_t *c){
         break;
     }
 
+    cycles += cpu_handle_interrupts(c);
 
     return cycles;
 }
@@ -731,9 +735,6 @@ int cpu6502_run(cpu6502_t *c, int cycle_budget){
     int used = 0;
     while (used < cycle_budget) {
         int ccy = cpu6502_step(c);
-
-
-
         if (ccy <= 0) break;
         used += ccy;
         if (c->pc == 0) break; // sentinel

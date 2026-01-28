@@ -12,8 +12,15 @@ typedef struct {
     uint16_t ta;       // current counter
     uint16_t ta_latch; // reload value
 
+
+    // Timer B
+    uint16_t tb;       // current counter
+    uint16_t tb_latch; // reload value
+
     // Control + IRQ
     uint8_t cra;       // Control Register A ($0E)
+    uint8_t crb;       // Control Register A ($0E)
+
     uint8_t icr_mask;  // interrupt enable mask (lower 5 bits)
     uint8_t icr_flags; // pending interrupt flags (lower 5 bits)
 

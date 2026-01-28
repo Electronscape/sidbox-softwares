@@ -10,76 +10,10 @@ static uint32_t be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | (uint32_t)p[3];
 }
 
-/*
-int psid_load_from_bytes(const uint8_t *song, uint32_t song_len, uint8_t ram[65536], psid_info_t *out){
-    psid_info_t info;
-    uint16_t version, data_off, load_be, init_be, play_be, songs_be, start_be;
-    uint32_t speed_be;
+//int psid_song_uses_cia(const sid_program_t *p, uint16_t song1_based);
+//c64_video_t sid_pick_video(const sid_program_t *p);
 
-    if (!song || song_len < 0x76 || !ram) return -1;
-
-    // Magic: "PSID" or "RSID"
-    if (song[0] == 'P' && song[1] == 'S' && song[2] == 'I' && song[3] == 'D') {
-        info.is_rsid = 0;
-    } else if (song[0] == 'R' && song[1] == 'S' && song[2] == 'I' && song[3] == 'D') {
-        info.is_rsid = 1;
-        // RSID needs real C64 environment; we bail for now.
-        return -2;
-    } else {
-        return -3;
-    }
-
-    version  = be16(&song[0x04]);
-    data_off = be16(&song[0x06]);
-    load_be  = be16(&song[0x08]);
-    init_be  = be16(&song[0x0A]);
-    play_be  = be16(&song[0x0C]);
-    songs_be = be16(&song[0x0E]);
-    start_be = be16(&song[0x10]);
-    speed_be = be32(&song[0x12]);
-
-    if (data_off >= song_len) return -4;
-
-    info.data_offset = data_off;
-    info.init_addr   = init_be;
-    info.play_addr   = play_be;
-    info.songs       = songs_be;
-    info.start_song  = start_be;
-    info.speed       = speed_be;
-
-    // Determine load address + data pointer
-    uint32_t data_pos = data_off;
-    uint16_t load_addr = load_be;
-
-    if (load_addr == 0) {
-        // load address is first 2 bytes of data (little endian)
-        if (data_pos + 2 > song_len) return -5;
-        load_addr = (uint16_t)song[data_pos] | ((uint16_t)song[data_pos + 1] << 8);
-        data_pos += 2;
-    }
-
-    info.load_addr = load_addr;
-    if (info.init_addr == 0) info.init_addr = info.load_addr;
-    if (info.play_addr == 0) info.play_addr = info.load_addr;
-
-
-    // Copy data into RAM
-    uint32_t data_len = song_len - data_pos;
-    if ((uint32_t)load_addr + data_len > 65536u) {
-        // clamp to RAM end (or treat as error)
-        data_len = 65536u - (uint32_t)load_addr;
-    }
-
-    memcpy(&ram[load_addr], &song[data_pos], data_len);
-
-    if (out) *out = info;
-    return 0;
-}
-*/
-
-int sid_load_from_bytes(const uint8_t *buf, uint32_t len,
-                        uint8_t ram[65536], sid_program_t *out)
-{
+int sid_load_from_bytes(const uint8_t *buf, uint32_t len, uint8_t *ram, sid_program_t *out){
     if (!buf || !ram || !out) return -1;
     if (len < 0x76) return -2; // header is at least 0x76 for PSID v2+
 

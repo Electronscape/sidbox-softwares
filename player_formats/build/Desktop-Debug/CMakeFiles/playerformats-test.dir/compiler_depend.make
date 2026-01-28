@@ -309,11 +309,8 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o: /mnt/Linux
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sidplaybus.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sidplaybus.c \
-  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/basic_rom.h \
-  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/char_rom.h \
   /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/ciairq.h \
   /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.h \
-  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/kernal.h \
   /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sid8579.h \
   /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sidplaybus.h \
   /usr/include/bits/floatn-common.h \
@@ -459,17 +456,11 @@ CMakeFiles/playerformats-test.dir/song.c.o:
 
 /lib64/ld-linux-x86-64.so.2:
 
-/mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/kernal.h:
-
-/mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/char_rom.h:
-
 /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sidplaybus.c:
 
 /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c:
 
 /usr/include/stdc-predef.h:
-
-/mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/basic_rom.h:
 
 /usr/include/bits/libc-header-start.h:
 

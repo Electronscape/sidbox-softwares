@@ -31,7 +31,13 @@ static inline void cia_update_irq(cia_t *c) {
 void cia_init(cia_t *c) {
     c->ta = 0;
     c->ta_latch = 0;
+
+    c->tb = 0;          // ✅
+    c->tb_latch = 0;    // ✅
+
     c->cra = 0;
+    c->crb = 0;         // ✅
+
     c->icr_mask = 0;
     c->icr_flags = 0;
     c->irq_level = 0;
@@ -43,37 +49,50 @@ void cia_set_flag(cia_t *c, uint8_t flag) {
 
 }
 
+int io_visible(void);;
 uint8_t cia_read(cia_t *c, uint8_t reg) {
     reg &= 0x0F;
 
+    if(!io_visible())
+        printf("RAW_CIA%c R reg=$%02X IO:%u! => ", (c==&cia1)?'1':'2', reg, io_visible());
+
     switch (reg) {
-    case 0x04: return (uint8_t)(c->ta & 0xFF);        // TALO
-    case 0x05: return (uint8_t)(c->ta >> 8);          // TAHI
+        case 0x04: return (uint8_t)(c->ta & 0xFF);        // TALO
+        case 0x05: return (uint8_t)(c->ta >> 8);          // TAHI
+        case 0x06: return (uint8_t)(c->tb & 0xFF);  // TBLO
+        case 0x07: return (uint8_t)(c->tb >> 8);    // TBHI
 
-    case 0x0D: { // ICR: reading returns flags + bit7 if any enabled pending, then clears flags
-        uint8_t pending = (uint8_t)(c->icr_flags & 0x1F);
-        uint8_t v = pending;
-        if (pending & c->icr_mask) v |= ICR_IRQ;
 
-        // Read-ack: clear pending flags
-        c->icr_flags = 0;
-        cia_update_irq(c);
-        return v;
+
+        case 0x0D: {
+            uint8_t pending = (uint8_t)(c->icr_flags & 0x1F);
+            uint8_t v = pending;
+            if (pending & c->icr_mask) v |= ICR_IRQ;
+            c->icr_flags = 0;
+            cia_update_irq(c);
+            return v;
+        }
+
+
+        case 0x0E: return c->cra;
+        case 0x0F: return c->crb;                   // CRB
+
+
+        default:
+            // For RSID-minimum, return 0 for unimplemented regs
+            return 0;
     }
-
-    case 0x0E: return c->cra;
-
-    default:
-        // For RSID-minimum, return 0 for unimplemented regs
-        return 0;
+    if(!io_visible()){
+        printf(" [read]\n");
+        fflush(stdout);
     }
 }
+
 
 void cia_write(cia_t *c, uint8_t reg, uint8_t v) {
     reg &= 0x0F;
 
-    printf("RAW_CIA%c W reg=$%02X v=$%02X  \n", (c==&cia1)?'1':'2', reg, v);
-    fflush(stdout);
+    printf("RAW_CIA%c W reg=$%02X v=$%02X IO:%u => ", (c==&cia1)?'1':'2', reg, v, io_visible());
 
     switch (reg) {
         case 0x04: // TALO latch low
@@ -82,22 +101,37 @@ void cia_write(cia_t *c, uint8_t reg, uint8_t v) {
 
         case 0x05: // TAHI latch high
             c->ta_latch = (uint16_t)(((uint16_t)v << 8) | (c->ta_latch & 0x00FF));
-            if (!(c->cra & CRA_START)) {
-                c->ta = c->ta_latch;
+            if (!(c->cra & CRA_START)) c->ta = c->ta_latch;
+            break;
+
+        case 0x06: // TBLO latch low
+            c->tb_latch = (uint16_t)((c->tb_latch & 0xFF00) | (uint16_t)v);
+            break;
+
+        case 0x07: // TBHI latch high
+            c->tb_latch = (uint16_t)(((uint16_t)v << 8) | (c->tb_latch & 0x00FF));
+            if (!(c->crb & CRA_START)) {
+                c->tb = c->tb_latch;
             }
             break;
+
 
         case 0x0D: {
             // ICR write: bit7 = set/clear mask bits, lower 5 bits select which
             uint8_t bits = (uint8_t)(v & 0x1F);
-            if (v & 0x80) c->icr_mask |= bits;   // set enables
-            else          c->icr_mask &= (uint8_t)~bits; // clear enables
+            if (v & 0x80)
+                c->icr_mask |= bits;   // set enables
+            else {
+                c->icr_mask  &= (uint8_t)~bits; // clear enables
+                c->icr_flags &= (uint8_t)~bits; // <-- THIS was the only thing added
+            }
 
             // real CIA also clears matching flags when writing with bit7=0 sometimes depending on docs;
             // RSID-minimum: don't clear flags here. Flags cleared on read.
             cia_update_irq(c);
             break;
         }
+
 
         case 0x0E: {
             // CRA
@@ -111,6 +145,16 @@ void cia_write(cia_t *c, uint8_t reg, uint8_t v) {
             break;
         }
 
+        case 0x0F: { // CRB
+            c->crb = v;
+            if (v & CRA_LOAD) {
+                c->tb = c->tb_latch;
+                c->crb &= (uint8_t)~CRA_LOAD;
+            }
+            break;
+        }
+
+
         default: break;
     }
     printf("latch=%04X ta=%04X cra=%02X mask=%02X\n", c->ta_latch, c->ta, c->cra, c->icr_mask);
@@ -118,36 +162,39 @@ void cia_write(cia_t *c, uint8_t reg, uint8_t v) {
 
 }
 
-void cia_tick(cia_t *c, uint32_t cycles) {
-    if (!(c->cra & CRA_START)) return;
+
+static inline void cia_tick_timer(
+    cia_t *c,
+    uint16_t *t,
+    uint16_t latch,
+    uint8_t *cr,
+    uint8_t flag,
+    uint32_t cycles
+    ){
+    if (!(*cr & CRA_START)) return;
+
     while (cycles) {
-        // How many cycles until the next underflow?
-        // If ta == 0, underflow happens on the very next tick.
-        uint32_t to_underflow = (c->ta == 0) ? 1u : (uint32_t)c->ta + 1u;
+        uint32_t to_underflow = (*t == 0) ? 1u : (uint32_t)(*t);
 
         if (cycles < to_underflow) {
-            // No underflow this tick window
-            c->ta = (uint16_t)(c->ta - (uint16_t)cycles);
+            *t = (uint16_t)(*t - (uint16_t)cycles);
             return;
         }
 
-
-        // Consume up to and including the underflow tick
         cycles -= to_underflow;
 
-        // Underflow event
-        cia_set_flag(c, ICR_TA);
+        cia_set_flag(c, flag);
 
-        // Reload
-        c->ta = c->ta_latch;
+        *t = latch;
 
-        // One-shot stops after underflow
-        if (c->cra & CRA_RUNMODE) {
-            c->cra &= (uint8_t)~CRA_START;
+        if (*cr & CRA_RUNMODE) {
+            *cr &= (uint8_t)~CRA_START;
             return;
         }
-
-        // If latch is 0, you'd underflow every cycle; loop continues safely.
     }
+}
 
+void cia_tick(cia_t *c, uint32_t cycles) {
+    cia_tick_timer(c, &c->ta, c->ta_latch, &c->cra, ICR_TA, cycles);
+    cia_tick_timer(c, &c->tb, c->tb_latch, &c->crb, ICR_TB, cycles);
 }

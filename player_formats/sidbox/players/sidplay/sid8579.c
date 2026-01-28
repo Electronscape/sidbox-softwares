@@ -70,10 +70,10 @@ void sid_init(sid_t *s, uint32_t sid_hz, uint32_t sample_hz)
     s->dirty = 1;
 
     s->freqmul = (int32_t)(15872000u / sample_hz);
-    s->filtmul = pfloat_from_float(8.11415946f) / (int32_t)sample_hz;
+    s->filtmul = pfloat_from_float(12.11415946f) / (int32_t)sample_hz;
 
     // ADSR clk for 6581 was 0x30 (8580 was 0x18)
-    const int adsrclk = 0x30;
+    const int adsrclk = 0x18;
 
     for (int i = 0; i < 16; i++) {
         // matches: (adsrclk*0x100000)/(time*mixing_frequency)
@@ -360,8 +360,9 @@ void sid_write(sid_t *sid, uint16_t addr, uint8_t val){
     static uint32_t sid_writes = 0;
 
 
+    /*
     sid_writes++;
-//    if (sid_writes > 30)
+    //    if (sid_writes > 30)
     {
         sid_writes = 0;
         printf("sid writes: %u  D418=%02X  V1 ctrl=%02X\n",
@@ -370,7 +371,7 @@ void sid_write(sid_t *sid, uint16_t addr, uint8_t val){
                sid->reg[0x04]);
         fflush(stdout);
     }
-
+    */
 
     if (addr < 0xD400 || addr > 0xD41F) return;
     sid->reg[addr - 0xD400] = val;

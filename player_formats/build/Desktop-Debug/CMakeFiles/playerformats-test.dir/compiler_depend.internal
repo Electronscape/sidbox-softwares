@@ -316,11 +316,8 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sidplaybus.c.o
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sidplaybus.c
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/basic_rom.h
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/char_rom.h
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/ciairq.h
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.h
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/kernal.h
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sid8579.h
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sidplaybus.h
  /usr/include/bits/floatn-common.h
