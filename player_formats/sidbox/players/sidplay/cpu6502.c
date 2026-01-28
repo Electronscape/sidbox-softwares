@@ -428,7 +428,7 @@ static u8 rdop(cpu6502_t *c, int mode, int *cycles, u16 *out_addr){
     }}
 }
 
-extern uint8_t roms_loaded;
+extern uint8_t roms_loaded; //nice
 
 int cpu6502_step(cpu6502_t *c){
     if (!c || !c->bus.read8 || !c->bus.write8) return 0;
