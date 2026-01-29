@@ -4,12 +4,11 @@ playerformats-test: \
   /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o \
   CMakeFiles/playerformats-test.dir/main.c.o \
   CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o \
-  CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu_test.c.o \
   CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o \
-  CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sidplaybus.c.o \
-  CMakeFiles/playerformats-test.dir/song.c.o \
+  CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o \
   CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o \
-  CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/ciairq.c.o \
+  CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o \
+  CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o \
   /usr/lib64/libasound.so \
   /usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a \
   /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
@@ -44,17 +43,15 @@ CMakeFiles/playerformats-test.dir/main.c.o:
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o:
 
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu_test.c.o:
-
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o:
 
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sidplaybus.c.o:
-
-CMakeFiles/playerformats-test.dir/song.c.o:
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o:
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o:
 
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/ciairq.c.o:
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o:
+
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o:
 
 /usr/lib64/libasound.so:
 

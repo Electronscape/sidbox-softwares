@@ -1,937 +1,660 @@
-// cpu6502.c
-
 #include <stdio.h>
-#include <stdint.h>
-#include <string.h>
+
 #include "cpu6502.h"
+#include "vic.h"
+#include "bus.h"
+#include "cia.h"
 
-#define READ8(addr)   (c->bus.read8(c->bus.user, (u16)(addr)))
-#define WRITE8(a,v)   (c->bus.write8(c->bus.user, (u16)(a), (u8)(v)))
+// flags (match your sidplay.h style)
+#define sFLAG_N 128
+#define sFLAG_V 64
+#define sFLAG_B 16
+#define sFLAG_D 8
+#define sFLAG_I 4
+#define sFLAG_Z 2
+#define sFLAG_C 1
 
-static inline u16 read16(cpu6502_t *c, u16 addr){
-    u8 lo = READ8(addr);
-    u8 hi = READ8((u16)(addr + 1));
-    return (u16)(lo | ((u16)hi << 8));
-}
-
-static inline void setflags(cpu6502_t *c, u8 flag, int cond){
-    if (cond) c->p |= flag;
-    else      c->p &= (u8)~flag;
-}
-
-static inline void push(cpu6502_t *c, u8 v){
-    WRITE8((u16)(0x0100u + c->sp), v);
-    c->sp--;
-}
-
-static inline u8 pop(cpu6502_t *c){
-    c->sp++;
-    return READ8((u16)(0x0100u + c->sp));
-}
-
-// Addressing modes
-enum {
-    am_imp  = 0,
-    am_imm  = 1,
-    am_abs  = 2,
-    am_absx = 3,
-    am_absy = 4,
-    am_zp   = 6,
-    am_zpx  = 7,
-    am_zpy  = 8,
-    am_ind  = 9,
-    am_indx = 10,
-    am_indy = 11,
-    am_acc  = 12,
-    am_rel  = 13,
-    am_xxx  = 255
+// --- Opcode enum (yours) ---
+__attribute__((const))
+const enum {
+    op_adc, op_and, op_asl, op_bcc, op_bcs, op_beq, op_bit, op_bmi, op_bne, op_bpl, op_brk, op_bvc, op_bvs, op_clc,
+    op_cld, op_cli, op_clv, op_cmp, op_cpx, op_cpy, op_dec, op_dex, op_dey, op_eor, op_inc, op_inx, op_iny, op_jmp,
+    op_jsr, op_lda, op_ldx, op_ldy, op_lsr, op_nop, op_ora, op_pha, op_php, op_pla, op_plp, op_rol, op_ror, op_rti,
+    op_rts, op_sbc, op_sec, op_sed, op_sei, op_sta, op_stx, op_sty, op_tax, op_tay, op_tsx, op_txa, op_txs, op_tya,
+    op_xxx
 };
 
-// Opcode IDs (internal dispatch names)
-enum {
-    op_adc, op_and, op_asl, op_bcc, op_bcs, op_beq, op_bit, op_bmi, op_bne, op_bpl, op_brk,
-    op_bvc, op_bvs, op_clc, op_cld, op_cli, op_clv, op_cmp, op_cpx, op_cpy, op_dec, op_dex,
-    op_dey, op_eor, op_inc, op_inx, op_iny, op_jmp, op_jsr, op_lda, op_ldx, op_ldy, op_lsr,
-    op_nop, op_ora, op_pha, op_php, op_pla, op_plp, op_rol, op_ror, op_rti, op_rts, op_sbc,
-    op_sec, op_sed, op_sei, op_sta, op_stx, op_sty, op_tax, op_tay, op_tsx, op_txa, op_txs,
-    op_tya, op_illegal
-};
+// addressing modes (yours)
+#define op_imp  0
+#define op_imm  1
+#define op_abs  2
+#define op_absx 3
+#define op_absy 4
+#define op_zp   6
+#define op_zpx  7
+#define op_zpy  8
+#define op_ind  9
+#define op_indx 10
+#define op_indy 11
+#define op_acc  12
+#define op_rel  13
 
-// NOTE: table type is u8, so no "byte" typedef needed.
-static const u8 cpu6502_opcodes[256] = {
-    op_brk, op_ora, op_illegal, op_illegal, op_illegal, op_ora, op_asl, op_illegal, op_php, op_ora, op_asl, op_illegal, op_illegal, op_ora, op_asl, op_illegal, op_bpl, op_ora,
-    op_illegal, op_illegal, op_illegal, op_ora, op_asl, op_illegal, op_clc, op_ora, op_illegal, op_illegal, op_illegal, op_ora, op_asl, op_illegal, op_jsr, op_and, op_illegal, op_illegal, op_bit, op_and, op_rol,
-    op_illegal, op_plp, op_and, op_rol, op_illegal, op_bit, op_and, op_rol, op_illegal, op_bmi, op_and, op_illegal, op_illegal, op_illegal, op_and, op_rol, op_illegal, op_sec, op_and, op_illegal, op_illegal,
-    op_illegal, op_and, op_rol, op_illegal, op_rti, op_eor, op_illegal, op_illegal, op_illegal, op_eor, op_lsr, op_illegal, op_pha, op_eor, op_lsr, op_illegal, op_jmp, op_eor, op_lsr, op_illegal, op_bvc,
-    op_eor, op_illegal, op_illegal, op_illegal, op_eor, op_lsr, op_illegal, op_cli, op_eor, op_illegal, op_illegal, op_illegal, op_eor, op_lsr, op_illegal, op_rts, op_adc, op_illegal, op_illegal, op_illegal, op_adc,
-    op_ror, op_illegal, op_pla, op_adc, op_ror, op_illegal, op_jmp, op_adc, op_ror, op_illegal, op_bvs, op_adc, op_illegal, op_illegal, op_illegal, op_adc, op_ror, op_illegal, op_sei, op_adc, op_illegal,
-    op_illegal, op_illegal, op_adc, op_ror, op_illegal, op_illegal, op_sta, op_illegal, op_illegal, op_sty, op_sta, op_stx, op_illegal, op_dey, op_illegal, op_txa, op_illegal, op_sty, op_sta, op_stx, op_illegal,
-    op_bcc, op_sta, op_illegal, op_illegal, op_sty, op_sta, op_stx, op_illegal, op_tya, op_sta, op_txs, op_illegal, op_illegal, op_sta, op_illegal, op_illegal, op_ldy, op_lda, op_ldx, op_illegal, op_ldy,
-    op_lda, op_ldx, op_illegal, op_tay, op_lda, op_tax, op_illegal, op_ldy, op_lda, op_ldx, op_illegal, op_bcs, op_lda, op_illegal, op_illegal, op_ldy, op_lda, op_ldx, op_illegal, op_clv, op_lda,
-    op_tsx, op_illegal, op_ldy, op_lda, op_ldx, op_illegal, op_cpy, op_cmp, op_illegal, op_illegal, op_cpy, op_cmp, op_dec, op_illegal, op_iny, op_cmp, op_dex, op_illegal, op_cpy, op_cmp, op_dec,
-    op_illegal, op_bne, op_cmp, op_illegal, op_illegal, op_illegal, op_cmp, op_dec, op_illegal, op_cld, op_cmp, op_illegal, op_illegal, op_illegal, op_cmp, op_dec, op_illegal, op_cpx, op_sbc, op_illegal, op_illegal,
-    op_cpx, op_sbc, op_inc, op_illegal, op_inx, op_sbc, op_nop, op_illegal, op_cpx, op_sbc, op_inc, op_illegal, op_beq, op_sbc, op_illegal, op_illegal, op_illegal, op_sbc, op_inc, op_illegal, op_sed,
-    op_sbc, op_illegal, op_illegal, op_illegal, op_sbc, op_inc, op_illegal
-};
+// opcode tables (your pasted ones)
+static byte cur_opc;
 
-static const u8 cpu6502_modes[256] = {
-    am_imp, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp, am_imm,
-    am_acc, am_xxx,  am_abs, am_abs, am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_xxx,  am_zpx,  am_zpx,  am_xxx, am_imp,
-    am_absy,am_xxx,  am_xxx, am_xxx, am_absx, am_absx, am_xxx,
-    am_abs, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_abs, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_xxx,  am_zpx,  am_zpx,  am_xxx, am_imp,
-    am_absy,am_xxx,  am_xxx, am_xxx, am_absx, am_absx, am_xxx,
-    am_imp, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_abs, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_xxx,  am_zpx,  am_zpx,  am_xxx, am_imp,
-    am_absy,am_xxx,  am_xxx, am_xxx, am_absx, am_absx, am_xxx,
-    am_imp, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_ind, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_xxx,  am_zpx,  am_zpx,  am_xxx, am_imp,
-    am_absy,am_xxx,  am_xxx, am_xxx, am_absx, am_absx, am_xxx,
-    am_imm, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_abs, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_zpx,  am_zpx,  am_zpy,  am_xxx, am_imp,
-    am_absy,am_acc,  am_xxx, am_xxx, am_absx, am_absx, am_xxx,
-    am_imm, am_indx, am_imm, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_abs, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_zpx,  am_zpx,  am_zpy,  am_xxx, am_imp,
-    am_absy,am_acc,  am_xxx, am_absx,am_absx, am_absy, am_xxx,
-    am_imm, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_abs, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_zpx,  am_zpx,  am_zpx,  am_xxx, am_imp,
-    am_absy,am_acc,  am_xxx, am_xxx, am_absx, am_absx, am_xxx,
-    am_imm, am_indx, am_xxx, am_xxx, am_zp,   am_zp,   am_zp,   am_xxx, am_imp,
-    am_imm, am_acc,  am_xxx, am_abs, am_abs,  am_abs,  am_xxx,
-    am_rel, am_indy, am_xxx, am_xxx, am_zpx,  am_zpx,  am_zpx,  am_xxx, am_imp,
-    am_absy,am_acc,  am_xxx, am_xxx, am_absx, am_absx, am_xxx
+static const uint8_t page_cross_ok[256] = {
+    // 1 only for opcodes that get +1 cycle on page cross
+    // (loads/ALU reads + some compares), 0 otherwise.
+    // I'll give you a safe starter mask below.
+#if(0)
+    /* 00-0F */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* 10-1F */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,
+    /* 20-2F */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* 30-3F */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,
+    /* 40-4F */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* 50-5F */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,
+    /* 60-6F */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* 70-7F */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,
+    /* 80-8F */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* 90-9F */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* A0-AF */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* B0-BF */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,
+    /* C0-CF */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* D0-DF */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,
+    /* E0-EF */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* F0-FF */ 0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0
+#endif
+    [0x11]=1, [0x19]=1, [0x1D]=1, // ORA (ind),Y / abs,Y / abs,X
+    [0x31]=1, [0x39]=1, [0x3D]=1, // AND
+    [0x51]=1, [0x59]=1, [0x5D]=1, // EOR
+    [0x71]=1, [0x79]=1, [0x7D]=1, // ADC
+
+    [0xB1]=1, [0xB9]=1, [0xBD]=1, // LDA
+    [0xBC]=1,                     // LDY abs,X  <-- missing
+    [0xBE]=1,                     // LDX abs,Y  <-- missing
+
+    [0xD1]=1, [0xD9]=1, [0xDD]=1, // CMP
+    [0xF1]=1, [0xF9]=1, [0xFD]=1, // SBC
 };
 
 
-#define PACK_OPMODE(op, mode)  ((uint16_t)(uint8_t)(op) | ((uint16_t)(uint8_t)(mode) << 8))
-#define UNPACK_OP(x)           ((uint8_t)((x) & 0xFF))
-#define UNPACK_MODE(x)         ((uint8_t)((x) >> 8))
 
-static uint16_t cpu6502_decode[256];   // op in low byte, mode in high byte
+static const uint8_t base_cycles[256] = {
+    /* 0x00 */  7,6,2,2,3,3,5,2,3,2,2,2,4,4,6,2,
+    /* 0x10 */  2,5,2,2,4,4,6,2,2,4,2,2,4,4,7,2,
+    /* 0x20 */  6,6,2,2,3,3,5,2,4,2,2,2,4,4,6,2,
+    /* 0x30 */  2,5,2,2,4,4,6,2,2,4,2,2,4,4,7,2,
+    /* 0x40 */  6,6,2,2,3,3,5,2,3,2,2,2,3,4,6,2,
+    /* 0x50 */  2,5,2,2,4,4,6,2,2,4,2,2,4,4,7,2,
+    /* 0x60 */  6,6,2,2,3,3,5,2,4,2,2,2,5,4,6,2,
+    /* 0x70 */  2,5,2,2,4,4,6,2,2,4,2,2,4,4,7,2,
+    /* 0x80 */  2,6,2,2,3,3,3,2,2,2,2,2,4,4,4,2,
+    /* 0x90 */  2,6,2,2,4,4,4,2,2,5,2,2,4,5,5,2,
+    /* 0xA0 */  2,6,2,2,3,3,3,2,2,2,2,2,4,4,4,2,
+    /* 0xB0 */  2,5,2,2,4,4,4,2,2,4,2,2,4,4,4,2,
+    /* 0xC0 */  2,6,2,2,3,3,5,2,2,2,2,2,4,4,6,2,
+    /* 0xD0 */  2,5,2,2,4,4,6,2,2,4,2,2,4,4,7,2,
+    /* 0xE0 */  2,6,2,2,3,3,5,2,2,2,2,2,4,4,6,2,
+    /* 0xF0 */  2,5,2,2,4,4,6,2,2,4,2,2,4,4,7,2
+};
 
+static const byte opcodes[256] = {
+    op_brk, op_ora, op_xxx, op_xxx, op_xxx, op_ora, op_asl, op_xxx, op_php, op_ora, op_asl, op_xxx, op_xxx, op_ora, op_asl, op_xxx,
+    op_bpl, op_ora, op_xxx, op_xxx, op_xxx, op_ora, op_asl, op_xxx, op_clc, op_ora, op_xxx, op_xxx, op_xxx, op_ora, op_asl, op_xxx,
+    op_jsr, op_and, op_xxx, op_xxx, op_bit, op_and, op_rol, op_xxx, op_plp, op_and, op_rol, op_xxx, op_bit, op_and, op_rol, op_xxx,
+    op_bmi, op_and, op_xxx, op_xxx, op_xxx, op_and, op_rol, op_xxx, op_sec, op_and, op_xxx, op_xxx, op_xxx, op_and, op_rol, op_xxx,
+    op_rti, op_eor, op_xxx, op_xxx, op_xxx, op_eor, op_lsr, op_xxx, op_pha, op_eor, op_lsr, op_xxx, op_jmp, op_eor, op_lsr, op_xxx,
+    op_bvc, op_eor, op_xxx, op_xxx, op_xxx, op_eor, op_lsr, op_xxx, op_cli, op_eor, op_xxx, op_xxx, op_xxx, op_eor, op_lsr, op_xxx,
+    op_rts, op_adc, op_xxx, op_xxx, op_xxx, op_adc, op_ror, op_xxx, op_pla, op_adc, op_ror, op_xxx, op_jmp, op_adc, op_ror, op_xxx,
+    op_bvs, op_adc, op_xxx, op_xxx, op_xxx, op_adc, op_ror, op_xxx, op_sei, op_adc, op_xxx, op_xxx, op_xxx, op_adc, op_ror, op_xxx,
+    op_xxx, op_sta, op_xxx, op_xxx, op_sty, op_sta, op_stx, op_xxx, op_dey, op_xxx, op_txa, op_xxx, op_sty, op_sta, op_stx, op_xxx,
+    op_bcc, op_sta, op_xxx, op_xxx, op_sty, op_sta, op_stx, op_xxx, op_tya, op_sta, op_txs, op_xxx, op_xxx, op_sta, op_xxx, op_xxx,
+    op_ldy, op_lda, op_ldx, op_xxx, op_ldy, op_lda, op_ldx, op_xxx, op_tay, op_lda, op_tax, op_xxx, op_ldy, op_lda, op_ldx, op_xxx,
+    op_bcs, op_lda, op_xxx, op_xxx, op_ldy, op_lda, op_ldx, op_xxx, op_clv, op_lda, op_tsx, op_xxx, op_ldy, op_lda, op_ldx, op_xxx,
+    op_cpy, op_cmp, op_xxx, op_xxx, op_cpy, op_cmp, op_dec, op_xxx, op_iny, op_cmp, op_dex, op_xxx, op_cpy, op_cmp, op_dec, op_xxx,
+    op_bne, op_cmp, op_xxx, op_xxx, op_xxx, op_cmp, op_dec, op_xxx, op_cld, op_cmp, op_xxx, op_xxx, op_xxx, op_cmp, op_dec, op_xxx,
+    op_cpx, op_sbc, op_xxx, op_xxx, op_cpx, op_sbc, op_inc, op_xxx, op_inx, op_sbc, op_nop, op_xxx, op_cpx, op_sbc, op_inc, op_xxx,
+    op_beq, op_sbc, op_xxx, op_xxx, op_xxx, op_sbc, op_inc, op_xxx, op_sed, op_sbc, op_xxx, op_xxx, op_xxx, op_sbc, op_inc, op_xxx
+};
 
+static const byte modes[256] = {
+    op_imp, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_xxx, op_zpx, op_zpx, op_xxx, op_imp, op_absy, op_xxx, op_xxx, op_xxx, op_absx, op_absx, op_xxx,
+    op_abs, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_xxx, op_zpx, op_zpx, op_xxx, op_imp, op_absy, op_xxx, op_xxx, op_xxx, op_absx, op_absx, op_xxx,
+    op_imp, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_xxx, op_zpx, op_zpx, op_xxx, op_imp, op_absy, op_xxx, op_xxx, op_xxx, op_absx, op_absx, op_xxx,
+    op_imp, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_ind, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_xxx, op_zpx, op_zpx, op_xxx, op_imp, op_absy, op_xxx, op_xxx, op_xxx, op_absx, op_absx, op_xxx,
+    op_imm, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_zpx, op_zpx, op_zpy, op_xxx, op_imp, op_absy, op_acc, op_xxx, op_xxx, op_absx, op_absx, op_xxx,
+    op_imm, op_indx, op_imm, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_zpx, op_zpx, op_zpy, op_xxx, op_imp, op_absy, op_acc, op_xxx, op_absx, op_absx, op_absy, op_xxx,
+    op_imm, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_zpx, op_zpx, op_zpx, op_xxx, op_imp, op_absy, op_acc, op_xxx, op_xxx, op_absx, op_absx, op_xxx,
+    op_imm, op_indx, op_xxx, op_xxx, op_zp, op_zp, op_zp, op_xxx, op_imp, op_imm, op_acc, op_xxx, op_abs, op_abs, op_abs, op_xxx,
+    op_rel, op_indy, op_xxx, op_xxx, op_zpx, op_zpx, op_zpx, op_xxx, op_imp, op_absy, op_acc, op_xxx, op_xxx, op_absx, op_absx, op_xxx
+};
 
-// If you don’t want externs, keep them static in this file.
-// (I’m doing extern to keep this snippet short.)
-static u8 getaddr(cpu6502_t *c, int mode, int *cycles){
-    u16 ad, ad2;
-    switch (mode) {
-    case am_imp:  *cycles += 2; return 0;
-    case am_imm:  *cycles += 2; return READ8(c->pc++);
-    case am_abs:  *cycles += 4; ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8; return READ8(ad);
-    case am_absx: *cycles += 4; ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8; ad2 = (u16)(ad + c->x);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++; return READ8(ad2);
-    case am_absy: *cycles += 4; ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8; ad2 = (u16)(ad + c->y);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++; return READ8(ad2);
-    case am_zp:   *cycles += 3; ad = READ8(c->pc++); return READ8(ad);
-    case am_zpx:  *cycles += 4; ad = (u8)(READ8(c->pc++) + c->x); return READ8((u16)(ad & 0xFF));
-    case am_zpy:  *cycles += 4; ad = (u8)(READ8(c->pc++) + c->y); return READ8((u16)(ad & 0xFF));
-    case am_indx: *cycles += 6; ad = (u8)(READ8(c->pc++) + c->x);
-        ad2 = READ8((u16)(ad & 0xFF));
-        ad2 |= (u16)READ8((u16)((ad + 1) & 0xFF)) << 8;
-        return READ8(ad2);
-    case am_indy: *cycles += 5; ad = READ8(c->pc++);
-        ad2 = READ8(ad);
-        ad2 |= (u16)READ8((u16)((ad + 1) & 0xFF)) << 8;
-        ad = (u16)(ad2 + c->y);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++;
-        return READ8(ad);
-    case am_acc:  *cycles += 2; return c->a;
-    default: return 0;
-    }
-}
+// CPU state
+static int cycles;
+static byte bval;
+static word wval;
 
-static void setaddr(cpu6502_t *c, int mode, u8 val, int *cycles){
-    u16 ad, ad2;
-    switch (mode) {
-    case am_abs:
-        *cycles += 2;
-        ad = READ8((u16)(c->pc - 2));
-        ad |= (u16)READ8((u16)(c->pc - 1)) << 8;
-        WRITE8(ad, val);
-        return;
-    case am_absx:
-        *cycles += 3;
-        ad = READ8((u16)(c->pc - 2));
-        ad |= (u16)READ8((u16)(c->pc - 1)) << 8;
-        ad2 = (u16)(ad + c->x);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)--;
-        WRITE8(ad2, val);
-        return;
-    case am_zp:
-        *cycles += 2;
-        ad = READ8((u16)(c->pc - 1));
-        WRITE8(ad, val);
-        return;
-    case am_zpx:
-        *cycles += 2;
-        ad = (u8)(READ8((u16)(c->pc - 1)) + c->x);
-        WRITE8((u16)(ad & 0xFF), val);
-        return;
-    case am_acc:
-        c->a = val;
-        return;
-    default:
-        return;
-    }
-}
-static void putaddr(cpu6502_t *c, int mode, u8 val, int *cycles){
-    u16 ad, ad2;
-    switch (mode) {
-    case am_abs:
-        *cycles += 4;
-        ad = READ8(c->pc++);
-        ad |= (u16)READ8(c->pc++) << 8;
-        WRITE8(ad, val);
-        return;
-    case am_absx:
-        *cycles += 4;
-        ad = READ8(c->pc++);
-        ad |= (u16)READ8(c->pc++) << 8;
-        ad2 = (u16)(ad + c->x);
-        WRITE8(ad2, val);
-        return;
-    case am_absy:
-        *cycles += 4;
-        ad = READ8(c->pc++);
-        ad |= (u16)READ8(c->pc++) << 8;
-        ad2 = (u16)(ad + c->y);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++;
-        WRITE8(ad2, val);
-        return;
-    case am_zp:
-        *cycles += 3;
-        ad = READ8(c->pc++);
-        WRITE8(ad, val);
-        return;
-    case am_zpx:
-        *cycles += 4;
-        ad = (u8)(READ8(c->pc++) + c->x);
-        WRITE8((u16)(ad & 0xFF), val);
-        return;
-    case am_zpy:
-        *cycles += 4;
-        ad = (u8)(READ8(c->pc++) + c->y);
-        WRITE8((u16)(ad & 0xFF), val);
-        return;
-    case am_indx:
-        *cycles += 6;
-        ad = (u8)(READ8(c->pc++) + c->x);
-        ad2 = READ8((u16)(ad & 0xFF));
-        ad2 |= (u16)READ8((u16)((ad + 1) & 0xFF)) << 8;
-        WRITE8(ad2, val);
-        return;
-    case am_indy:
-        *cycles += 5;
-        ad = READ8(c->pc++);
-        ad2 = READ8(ad);
-        ad2 |= (u16)READ8((u16)((ad + 1) & 0xFF)) << 8;
-        ad = (u16)(ad2 + c->y);
-        WRITE8(ad, val);
-        return;
-    case am_acc:
-        *cycles += 2;
-        c->a = val;
-        return;
-    default:
-        return;
-    }
-}
+static byte a, x, y, s, p;
+static word pc;
 
 
-static void branch(cpu6502_t *c, int cond, int *cycles){
-    int8_t dist = (int8_t)getaddr(c, am_imm, cycles);
-    u16 target = (u16)(c->pc + dist);
-    if (cond) {
-        *cycles += ((c->pc & 0xFF00) != (target & 0xFF00)) ? 2 : 1;
-        c->pc = target;
-    }
-}
+// addressing helpers
+static byte getaddr(int mode){
+    word ad, ad2;
+    switch(mode){
+    case op_imp:  return 0;
+    case op_imm:  return bus_read8(pc++);
+    case op_abs:  ad = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8); return bus_read8(ad);
+    //case op_absx: ad = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8); ad2 = (word)(ad + x); if((ad2 & 0xff00) != (ad & 0xff00)) cycles++; return bus_read8(ad2);
+    //case op_absy: ad = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8); ad2 = (word)(ad + y); if((ad2 & 0xff00) != (ad & 0xff00)) cycles++; return bus_read8(ad2);
+    case op_zp:   ad = bus_read8(pc++); return bus_read8(ad);
+    case op_zpx:  ad = (word)(bus_read8(pc++) + x); return bus_read8(ad & 0xff);
+    case op_zpy:  ad = (word)(bus_read8(pc++) + y); return bus_read8(ad & 0xff);
+    case op_indx: ad = (word)(bus_read8(pc++) + x); ad2 = bus_read8(ad & 0xff); ad++; ad2 |= (word)(bus_read8(ad & 0xff) << 8); return bus_read8(ad2);
+    //case op_indy: ad = bus_read8(pc++); ad2 = bus_read8(ad); ad2 |= (word)(bus_read8((ad + 1) & 0xff) << 8); ad = (word)(ad2 + y); if((ad2 & 0xff00) != (ad & 0xff00)) cycles++; return bus_read8(ad);
+    case op_acc:  return a;
 
-void cpu6502_init(cpu6502_t *c, cpu6502_bus_t bus){
-    if (!c) return;
-    *c = (cpu6502_t){0};
-    c->bus = bus;
-    c->sp = 0xFF;
+    case op_absx:
+        ad  = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8);
+        ad2 = (word)(ad + x);
+        if (((ad2 ^ ad) & 0xFF00) && page_cross_ok[cur_opc]) cycles++;
+        return bus_read8(ad2);
 
-    // Build packed decode table once
-    for (int i = 0; i < 256; i++) {
-        cpu6502_decode[i] = PACK_OPMODE(cpu6502_opcodes[i], cpu6502_modes[i]);
-    }
-}
+    case op_absy:
+        ad  = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8);
+        ad2 = (word)(ad + y);
+        if (((ad2 ^ ad) & 0xFF00) && page_cross_ok[cur_opc]) cycles++;
+        return bus_read8(ad2);
 
-void cpu6502_reset(cpu6502_t *c){
-    if (!c) return;
-    c->a = c->x = c->y = 0;
-    c->p = 0x00;
-    c->sp = 0xFD;
-    c->pc = read16(c, 0xFFFC);
-}
-
-void cpu6502_reset_to(cpu6502_t *c, u16 pc){
-    if (!c) return;
-    c->a = c->x = c->y = 0;
-    c->p = 0x24;
-    c->sp = 0xFD;
-    c->pc = pc;
-}
-
-static inline void push16(cpu6502_t *c, u16 v){
-    push(c, (u8)(v >> 8));
-    push(c, (u8)(v & 0xFF));
-}
-
-static inline u16 vec16(cpu6502_t *c, u16 addr){
-    u8 lo = READ8(addr);
-    u8 hi = READ8((u16)(addr + 1));
-    return (u16)(lo | ((u16)hi << 8));
-}
-
-// 6502 pushes P with B=0 for IRQ/NMI, and bit5 (unused) is usually 1.
-// We'll force bit5=1 and B=0.
-static inline u8 pack_p_for_irq(cpu6502_t *c){
-    u8 p = c->p;
-    p &= (u8)~sFLAG_B;
-    p |= 0x20;
-    return p;
-}
-
-static int cpu_handle_interrupts(cpu6502_t *c){
-    // NMI edge-latched (highest priority)
-    if (c->nmi_latch)
-    {
-        c->nmi_latch = 0;
-
-        // push PC, push P, set I
-        push16(c, c->pc);
-        push(c, pack_p_for_irq(c));
-        c->p |= sFLAG_I;
-
-        // jump to NMI vector
-        c->pc = vec16(c, 0xFFFA);
-
-        return 7; // NMI takes 7 cycles
+    case op_indy: { // (ohh yeah bracket around this, declared tmp var)
+        ad  = bus_read8(pc++);
+        ad2 = bus_read8(ad) | ((word)bus_read8((ad + 1) & 0xFF) << 8);
+        word ea = (word)(ad2 + y);
+        if (((ea ^ ad2) & 0xFF00) && page_cross_ok[cur_opc]) cycles++;
+        return bus_read8(ea);
     }
 
-    // IRQ level-triggered, only if I flag clear
-    if (c->irq_line && !(c->p & sFLAG_I)) {
 
-        push16(c, c->pc);
-        push(c, pack_p_for_irq(c));
-        c->p |= sFLAG_I;
-
-        c->pc = vec16(c, 0xFFFE);
-
-        return 7; // IRQ takes 7 cycles
     }
-
     return 0;
 }
 
-
-// Assert/clear IRQ/NMI lines (for later RSID)
-void cpu6502_irq(cpu6502_t *c, int level){
-    c->irq_line = !!level;//(u8)(level != 0);
-}
-
-void cpu6502_nmi(cpu6502_t *c, int level){
-    // NMI is edge-triggered on real 6502; latch rising edge.
-    if (level && !c->nmi_line) c->nmi_latch = 1;
-    c->nmi_line = !!level;//(u8)(level != 0);
-}
-
-
-static u16 ea(cpu6502_t *c, int mode, int *cycles){
-    u16 ad, ad2;
-    switch (mode) {
-    case am_abs:
-        *cycles += 4;
-        ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8;
-        return ad;
-
-    case am_absx:
-        *cycles += 4;
-        ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8;
-        ad2 = (u16)(ad + c->x);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++;
-        return ad2;
-
-    case am_absy:
-        *cycles += 4;
-        ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8;
-        ad2 = (u16)(ad + c->y);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++;
-        return ad2;
-
-    case am_zp:
-        *cycles += 3;
-        return (u16)READ8(c->pc++);
-
-    case am_zpx:
-        *cycles += 4;
-        return (u16)(u8)(READ8(c->pc++) + c->x);
-
-    case am_zpy:
-        *cycles += 4;
-        return (u16)(u8)(READ8(c->pc++) + c->y);
-
-    case am_indx:
-        *cycles += 6;
-        ad = (u8)(READ8(c->pc++) + c->x);
-        ad2 = READ8((u16)(ad & 0xFF));
-        ad2 |= (u16)READ8((u16)((ad + 1) & 0xFF)) << 8;
-        return ad2;
-
-    case am_indy:
-        *cycles += 5;
-        ad = READ8(c->pc++);
-        ad2 = READ8(ad);
-        ad2 |= (u16)READ8((u16)((ad + 1) & 0xFF)) << 8;
-        ad = (u16)(ad2 + c->y);
-        if ((ad2 & 0xFF00) != (ad & 0xFF00)) (*cycles)++;
-        return ad;
-
-    // Only used by JMP (ind)
-    case am_ind:
-        *cycles += 5;
-        ad = READ8(c->pc++); ad |= (u16)READ8(c->pc++) << 8;
-        {
-            // 6502 JMP(ind) page-wrap bug
-            u8 lo = READ8(ad);
-            u16 adhi = (u16)((ad & 0xFF00) | ((ad + 1) & 0x00FF));
-            u8 hi = READ8(adhi);
-            return (u16)(lo | ((u16)hi << 8));
-        }
-
-    default:
-        *cycles +=1;
-        return 0;
+static void setaddr(int mode, byte val){
+    word ad, ad2;
+    switch(mode){
+    case op_abs:
+        ad = bus_read8(pc - 2); ad |= (word)(bus_read8(pc - 1) << 8);
+        bus_write8(ad, val); return;
+    case op_absx:
+        ad = bus_read8(pc - 2); ad |= (word)(bus_read8(pc - 1) << 8);
+        ad2 = (word)(ad + x);
+        bus_write8(ad2, val); return;
+    case op_zp:
+        ad = bus_read8(pc - 1); bus_write8(ad, val); return;
+    case op_zpx:
+        ad = (word)(bus_read8(pc - 1) + x); bus_write8(ad & 0xff, val); return;
+    case op_acc:
+        a = val; return;
     }
 }
 
-static u8 rdop(cpu6502_t *c, int mode, int *cycles, u16 *out_addr){
-    if (out_addr) *out_addr = 0;
-
-    switch (mode) {
-    case am_imm:  *cycles += 2; return READ8(c->pc++);
-    case am_acc:  *cycles += 2; return c->a;
-    case am_imp:  *cycles += 2; return 0;
-    default: {
-        u16 a = ea(c, mode, cycles);
-        if (out_addr) *out_addr = a;
-        return READ8(a);
-    }}
+static void putaddr(int mode, byte val){
+    word ad, ad2;
+    switch(mode){
+    case op_abs:  ad = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8); bus_write8(ad, val); return;
+    case op_absx: ad = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8); ad2 = (word)(ad + x); bus_write8(ad2, val); return;
+    case op_absy: ad = bus_read8(pc++); ad |= (word)(bus_read8(pc++) << 8); ad2 = (word)(ad + y); bus_write8(ad2, val); return;
+    case op_zp:   ad = bus_read8(pc++); bus_write8(ad, val); return;
+    case op_zpx:  ad = (word)(bus_read8(pc++) + x); bus_write8(ad & 0xff, val); return;
+    case op_zpy:  ad = (word)(bus_read8(pc++) + y); bus_write8(ad & 0xff, val); return;
+    case op_indx: ad = (word)(bus_read8(pc++) + x); ad2 = bus_read8(ad & 0xff); ad++; ad2 |= (word)(bus_read8(ad & 0xff) << 8); bus_write8(ad2, val); return;
+    case op_indy: ad = bus_read8(pc++); ad2 = bus_read8(ad); ad2 |= (word)(bus_read8((ad + 1) & 0xff) << 8); ad = (word)(ad2 + y); bus_write8(ad, val); return;
+    case op_acc:  a = val; return;
+    }
 }
 
-extern uint8_t roms_loaded; //nice
+static inline void setflags(int flag, int cond){
+    if(cond) p |= (byte)flag;
+    else     p &= (byte)~flag;
+}
+static inline void push(byte val){
+    bus_write8((word)(0x100 + s), val);
+    if(s) s--;
+}
+static inline byte pop(void){
+    if(s < 0xff) s++;
+    return bus_read8((word)(0x100 + s));
+}
 
-int cpu6502_step(cpu6502_t *c){
-    if (!c || !c->bus.read8 || !c->bus.write8) return 0;
+static void branch(int take){
+    int8_t dist = (int8_t)bus_read8(pc++);   // branch offset byte
+    word oldpc = pc;
+    word newpc = (word)(pc + dist);
 
-    int cycles = 0;
+    if(take){
+        cycles += 1;                         // branch taken
+        if((oldpc & 0xFF00) != (newpc & 0xFF00))
+            cycles += 1;                     // page crossed
+        pc = newpc;
+    }
+}
+void cpuReset(void){
+    cycles = 0;
+    a = x = y = 0;
+    //p = 0;
+    p = (byte)(sFLAG_I | 0x20);
+
+    s = 255;
+    pc = bus_read16(0xfffc);
+}
+void cpuResetTo(word npc){
+    cycles = 0;
+
+    a = x = y = 0;
+    p = 0;
+    s = 255;
+    pc = npc;
+}
 
 
-    // optional interrupt handling at instruction boundary
+// additional stuff mainly used for RSID
+void cpu_irq(void){
+    cycles += 7;
+
+    // all the other hardbits need 7 cycle updates too
+    vic_step(7);    // THIS is here, but soon will be the CIA timers too
+    cia_step_all(7);
 
 
-    u8 opc = READ8(c->pc++);
-    //int cmd  = cpu6502_opcodes[opc];
-    //int mode = cpu6502_modes[opc];
-    uint16_t d = cpu6502_decode[opc];
-    int cmd  = UNPACK_OP(d);
-    int mode = UNPACK_MODE(d);
+    push((byte)(pc >> 8));
+    push((byte)(pc & 0xFF));
+
+    byte P = p;
+    P &= (byte)~sFLAG_B;
+    P |= 0x20;
+    push(P);
+
+    p |= sFLAG_I;
+    pc = bus_read16(0xFFFE);
+    //putchar('I');  // prove IRQ taken
+
+}
 
 
-    if (!roms_loaded && c->pc >= 0xE000) {
-        //printf("RSID executed ROM-space @ %04X (but ROM not active)\n", c->pc);
+/// VIC interrupt needs;
+
+
+
+// Execute ONE opcode, return cycles consumed by that opcode.
+// Returns 0 if CPU is halted (pc==0).
+int cpuStep(void){
+    if (!pc) return 0;
+
+    int cycles_before = cycles;
+
+
+
+    byte opc = bus_read8(pc++);
+    cur_opc = opc;
+
+    cycles += base_cycles[opc];
+
+    int cmd  = opcodes[opc];
+    int addr = modes[opc];
+    int c;
+
+    switch(cmd){
+    case op_adc:{
+        byte m = getaddr(addr);
+        uint16_t sum = (uint16_t)a + (uint16_t)m + ((p & sFLAG_C) ? 1 : 0);
+
+        setflags(sFLAG_C, sum & 0x100);
+        setflags(sFLAG_V, (~(a ^ m) & (a ^ (byte)sum) & 0x80));
+
+        a = (byte)sum;
+        setflags(sFLAG_Z, !a);
+        setflags(sFLAG_N, a & 0x80);
+        break;
     }
 
-    u8 bval;
-    u16 wval;
-    int carry;
-    u16 addr = 0;
-
-    switch (cmd) {
-
-    // -------------------- LOAD/STORE --------------------
-    case op_lda:
-        c->a = rdop(c, mode, &cycles, NULL);
-        setflags(c, sFLAG_Z, c->a == 0);
-        setflags(c, sFLAG_N, c->a & 0x80);
-        break;
-
-    case op_ldx:
-        c->x = rdop(c, mode, &cycles, NULL);
-        setflags(c, sFLAG_Z, c->x == 0);
-        setflags(c, sFLAG_N, c->x & 0x80);
-        break;
-
-    case op_ldy:
-        c->y = rdop(c, mode, &cycles, NULL);
-        setflags(c, sFLAG_Z, c->y == 0);
-        setflags(c, sFLAG_N, c->y & 0x80);
-        break;
-
-    case op_sta:
-        addr = ea(c, mode, &cycles);
-        WRITE8(addr, c->a);
-        break;
-
-    case op_stx:
-        addr = ea(c, mode, &cycles);
-        WRITE8(addr, c->x);
-        break;
-
-    case op_sty:
-        addr = ea(c, mode, &cycles);
-        WRITE8(addr, c->y);
-        break;
-
-    // -------------------- TRANSFERS --------------------
-    case op_tax: cycles += 2; c->x = c->a;  setflags(c,sFLAG_Z,c->x==0); setflags(c,sFLAG_N,c->x&0x80); break;
-    case op_tay: cycles += 2; c->y = c->a;  setflags(c,sFLAG_Z,c->y==0); setflags(c,sFLAG_N,c->y&0x80); break;
-    case op_txa: cycles += 2; c->a = c->x;  setflags(c,sFLAG_Z,c->a==0); setflags(c,sFLAG_N,c->a&0x80); break;
-    case op_tya: cycles += 2; c->a = c->y;  setflags(c,sFLAG_Z,c->a==0); setflags(c,sFLAG_N,c->a&0x80); break;
-    case op_tsx: cycles += 2; c->x = c->sp; setflags(c,sFLAG_Z,c->x==0); setflags(c,sFLAG_N,c->x&0x80); break;
-    case op_txs: cycles += 2; c->sp = c->x; break;
-
-    // -------------------- INC/DEC REG --------------------
-    case op_inx: cycles += 2; c->x++; setflags(c,sFLAG_Z,c->x==0); setflags(c,sFLAG_N,c->x&0x80); break;
-    case op_dex: cycles += 2; c->x--; setflags(c,sFLAG_Z,c->x==0); setflags(c,sFLAG_N,c->x&0x80); break;
-    case op_iny: cycles += 2; c->y++; setflags(c,sFLAG_Z,c->y==0); setflags(c,sFLAG_N,c->y&0x80); break;
-    case op_dey: cycles += 2; c->y--; setflags(c,sFLAG_Z,c->y==0); setflags(c,sFLAG_N,c->y&0x80); break;
-
-    // -------------------- LOGIC --------------------
     case op_and:
-        bval = rdop(c, mode, &cycles, NULL);
-        c->a &= bval;
-        setflags(c, sFLAG_Z, c->a == 0);
-        setflags(c, sFLAG_N, c->a & 0x80);
+        bval = getaddr(addr); a &= bval;
+        setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80);
         break;
 
-    case op_ora:
-        bval = rdop(c, mode, &cycles, NULL);
-        c->a |= bval;
-        setflags(c, sFLAG_Z, c->a == 0);
-        setflags(c, sFLAG_N, c->a & 0x80);
+    case op_asl:
+        wval = getaddr(addr); wval <<= 1;
+        setaddr(addr, (byte)wval);
+        setflags(sFLAG_Z, !wval); setflags(sFLAG_N, wval & 0x80); setflags(sFLAG_C, wval & 0x100);
         break;
 
-    case op_eor:
-        bval = rdop(c, mode, &cycles, NULL);
-        c->a ^= bval;
-        setflags(c, sFLAG_Z, c->a == 0);
-        setflags(c, sFLAG_N, c->a & 0x80);
-        break;
+    case op_bcc: branch(!(p & sFLAG_C)); break;
+    case op_bcs: branch( (p & sFLAG_C)); break;
+    case op_bne: branch(!(p & sFLAG_Z)); break;
+    case op_beq: branch( (p & sFLAG_Z)); break;
+    case op_bpl: branch(!(p & sFLAG_N)); break;
+    case op_bmi: branch( (p & sFLAG_N)); break;
+    case op_bvc: branch(!(p & sFLAG_V)); break;
+    case op_bvs: branch( (p & sFLAG_V)); break;
 
-    case op_bit: {
-        u8 v = rdop(c, mode, &cycles, NULL);
-        setflags(c, sFLAG_Z, (c->a & v) == 0);
-        setflags(c, sFLAG_N, v & 0x80);
-        setflags(c, sFLAG_V, v & 0x40);
-    } break;
-
-    // -------------------- ADC/SBC --------------------
-    case op_adc: {
-        u8 v = rdop(c, mode, &cycles, NULL);
-        u16 sum = (u16)c->a + (u16)v + ((c->p & sFLAG_C) ? 1 : 0);
-        setflags(c, sFLAG_C, sum & 0x100);
-        // overflow: (~(A^V) & (A^R)) & 0x80
-        setflags(c, sFLAG_V, (~(c->a ^ v) & (c->a ^ (u8)sum)) & 0x80);
-        c->a = (u8)sum;
-        setflags(c, sFLAG_Z, c->a == 0);
-        setflags(c, sFLAG_N, c->a & 0x80);
-    } break;
-
-    case op_sbc: {
-        u8 v = rdop(c, mode, &cycles, NULL) ^ 0xFF;
-        u16 sum = (u16)c->a + (u16)v + ((c->p & sFLAG_C) ? 1 : 0);
-        setflags(c, sFLAG_C, sum & 0x100);
-        setflags(c, sFLAG_V, (~(c->a ^ v) & (c->a ^ (u8)sum)) & 0x80);
-        c->a = (u8)sum;
-        setflags(c, sFLAG_Z, c->a == 0);
-        setflags(c, sFLAG_N, c->a & 0x80);
-    } break;
-
-    // -------------------- COMPARES --------------------
-    case op_cmp: {
-        u8 v = rdop(c, mode, &cycles, NULL);
-        u8 r = (u8)(c->a - v);
-        setflags(c, sFLAG_C, c->a >= v);
-        setflags(c, sFLAG_Z, r == 0);
-        setflags(c, sFLAG_N, r & 0x80);
-    } break;
-
-    case op_cpx: {
-        u8 v = rdop(c, mode, &cycles, NULL);
-        u8 r = (u8)(c->x - v);
-        setflags(c, sFLAG_C, c->x >= v);
-        setflags(c, sFLAG_Z, r == 0);
-        setflags(c, sFLAG_N, r & 0x80);
-    } break;
-
-    case op_cpy: {
-        u8 v = rdop(c, mode, &cycles, NULL);
-        u8 r = (u8)(c->y - v);
-        setflags(c, sFLAG_C, c->y >= v);
-        setflags(c, sFLAG_Z, r == 0);
-        setflags(c, sFLAG_N, r & 0x80);
-    } break;
-
-    // -------------------- SHIFTS/ROTATES (acc or memory) --------------------
-    case op_asl: {
-        u16 a = 0; u8 v = rdop(c, mode, &cycles, &a);
-        setflags(c, sFLAG_C, v & 0x80);
-        v <<= 1;
-        setflags(c, sFLAG_Z, v == 0);
-        setflags(c, sFLAG_N, v & 0x80);
-        if (mode == am_acc) c->a = v; else WRITE8(a, v);
-        if (mode != am_acc) cycles += 2; // RMW internal timing fudge
-    } break;
-
-    case op_lsr: {
-        u16 a = 0; u8 v = rdop(c, mode, &cycles, &a);
-        setflags(c, sFLAG_C, v & 0x01);
-        v >>= 1;
-        setflags(c, sFLAG_Z, v == 0);
-        setflags(c, sFLAG_N, 0);
-        if (mode == am_acc) c->a = v; else WRITE8(a, v);
-        if (mode != am_acc) cycles += 2;
-    } break;
-
-    case op_rol: {
-        u16 a = 0; u8 v = rdop(c, mode, &cycles, &a);
-        u8 c_in = (c->p & sFLAG_C) ? 1 : 0;
-        setflags(c, sFLAG_C, v & 0x80);
-        v = (u8)((v << 1) | c_in);
-        setflags(c, sFLAG_Z, v == 0);
-        setflags(c, sFLAG_N, v & 0x80);
-        if (mode == am_acc) c->a = v; else WRITE8(a, v);
-        if (mode != am_acc) cycles += 2;
-    } break;
-
-    case op_ror: {
-        u16 a = 0; u8 v = rdop(c, mode, &cycles, &a);
-        u8 c_in = (c->p & sFLAG_C) ? 0x80 : 0x00;
-        setflags(c, sFLAG_C, v & 0x01);
-        v = (u8)((v >> 1) | c_in);
-        setflags(c, sFLAG_Z, v == 0);
-        setflags(c, sFLAG_N, v & 0x80);
-        if (mode == am_acc) c->a = v; else WRITE8(a, v);
-        if (mode != am_acc) cycles += 2;
-    } break;
-
-    // -------------------- INC/DEC MEMORY --------------------
-    case op_inc: {
-        u16 a = ea(c, mode, &cycles);
-        u8 v = (u8)(READ8(a) + 1);
-        WRITE8(a, v);
-        setflags(c, sFLAG_Z, v == 0);
-        setflags(c, sFLAG_N, v & 0x80);
-        cycles += 2;
-    } break;
-
-    case op_dec: {
-        u16 a = ea(c, mode, &cycles);
-        u8 v = (u8)(READ8(a) - 1);
-        WRITE8(a, v);
-        setflags(c, sFLAG_Z, v == 0);
-        setflags(c, sFLAG_N, v & 0x80);
-        cycles += 2;
-    } break;
-
-    // -------------------- STACK --------------------
-    case op_pha: cycles += 3; push(c, c->a); break;
-    case op_php: cycles += 3; push(c, (u8)(c->p | sFLAG_B)); break; // B set when pushed
-    case op_pla: cycles += 4; c->a = pop(c); setflags(c,sFLAG_Z,c->a==0); setflags(c,sFLAG_N,c->a&0x80); break;
-    case op_plp: cycles += 4; c->p = pop(c); break;
-
-    // -------------------- FLAGS --------------------
-    case op_clc: cycles += 2; c->p &= (u8)~sFLAG_C; break;
-    case op_sec: cycles += 2; c->p |= sFLAG_C; break;
-    case op_cli: cycles += 2; c->p &= (u8)~sFLAG_I; break;
-    case op_sei: cycles += 2; c->p |= sFLAG_I; break;
-    case op_clv: cycles += 2; c->p &= (u8)~sFLAG_V; break;
-    case op_cld: cycles += 2; c->p &= (u8)~sFLAG_D; break;
-    case op_sed: cycles += 2; c->p |= sFLAG_D; break;
-
-    // -------------------- BRANCHES --------------------
-    case op_bne: branch(c, !(c->p & sFLAG_Z), &cycles); break;
-    case op_beq: branch(c,  (c->p & sFLAG_Z), &cycles); break;
-    case op_bpl: branch(c, !(c->p & sFLAG_N), &cycles); break;
-    case op_bmi: branch(c,  (c->p & sFLAG_N), &cycles); break;
-    case op_bcc: branch(c, !(c->p & sFLAG_C), &cycles); break;
-    case op_bcs: branch(c,  (c->p & sFLAG_C), &cycles); break;
-    case op_bvc: branch(c, !(c->p & sFLAG_V), &cycles); break;
-    case op_bvs: branch(c,  (c->p & sFLAG_V), &cycles); break;
-
-    // -------------------- JUMPS/RTS/RTI --------------------
-    case op_jmp:
-        if (mode == am_ind) {
-            c->pc = ea(c, am_ind, &cycles); // ea(ind) returns target already
-        } else {
-            cycles += 3;
-            u16 lo = READ8(c->pc++);
-            u16 hi = READ8(c->pc++);
-            c->pc = (u16)(lo | (hi << 8));
-        }
-        break;
-
-    case op_jsr: {
-        u16 target = (u16)READ8(c->pc++);
-        target |= (u16)READ8(c->pc++) << 8;
-        u16 ret = (u16)(c->pc - 1);
-        push(c, (u8)(ret >> 8));
-        push(c, (u8)(ret & 0xFF));
-        c->pc = target;
-        cycles += 6;
-    } break;
-
-    case op_rts:
-        cycles += 6;
-        wval = pop(c);
-        wval |= (u16)pop(c) << 8;
-        c->pc = (u16)(wval + 1);
-        break;
-
-    case op_rti:
-        cycles += 6;
-        c->p = pop(c);
-        wval = pop(c);
-        wval |= (u16)pop(c) << 8;
-        c->pc = wval;
-        break;
-
-    // -------------------- NOP/BRK --------------------
-    case op_nop:
-        cycles += 2;
+    case op_bit:
+        bval = getaddr(addr);
+        setflags(sFLAG_Z, !(a & bval));
+        setflags(sFLAG_N, bval & 0x80);
+        setflags(sFLAG_V, bval & 0x40);
         break;
 
     case op_brk:
-        // minimal BRK = stop sentinel (your SID runner can treat as "done")
-        c->pc = 0;
-        cycles += 7;
+        // pc = 0; // exit emulation loop - good for PSID
+        // 6502 BRK behaves like an IRQ, but sets B flag in the pushed P,
+        // and increments PC by one extra (BRK is 1 byte but acts like 2).
+        pc++;                 // skip "padding" byte
+
+        // push PC
+        push((byte)(pc >> 8));
+        push((byte)(pc & 0xFF));
+
+        // push P with B set, bit5 set
+        byte P = p;
+        P |= sFLAG_B;
+        P |= 0x20;
+        push(P);
+
+        // set I (disable further IRQs until RTI)
+        p |= sFLAG_I;
+
+        // jump via IRQ/BRK vector
+        pc = bus_read16(0xFFFE);
         break;
+
+
+    case op_clc: setflags(sFLAG_C, 0); break;
+    case op_cld: setflags(sFLAG_D, 0); break;
+    case op_cli: setflags(sFLAG_I, 0); break;
+    case op_clv: setflags(sFLAG_V, 0); break;
+
+    case op_cmp:
+        bval = getaddr(addr);
+        wval = (word)((unsigned short)a - bval);
+        setflags(sFLAG_Z, !wval);
+        setflags(sFLAG_N, wval & 0x80);
+        setflags(sFLAG_C, a >= bval);
+        break;
+
+    case op_cpx:
+        bval = getaddr(addr);
+        wval = (word)((unsigned short)x - bval);
+        setflags(sFLAG_Z, !wval);
+        setflags(sFLAG_N, wval & 0x80);
+        setflags(sFLAG_C, x >= bval);
+        break;
+
+    case op_cpy:
+        bval = getaddr(addr);
+        wval = (word)((unsigned short)y - bval);
+        setflags(sFLAG_Z, !wval);
+        setflags(sFLAG_N, wval & 0x80);
+        setflags(sFLAG_C, y >= bval);
+        break;
+
+    case op_dec:
+        bval = getaddr(addr); bval--;
+        setaddr(addr, bval);
+        setflags(sFLAG_Z, !bval); setflags(sFLAG_N, bval & 0x80);
+        break;
+
+    case op_dex:
+        x--; setflags(sFLAG_Z, !x); setflags(sFLAG_N, x & 0x80);
+        break;
+
+    case op_dey:
+        y--; setflags(sFLAG_Z, !y); setflags(sFLAG_N, y & 0x80);
+        break;
+
+    case op_eor:
+        bval = getaddr(addr); a ^= bval;
+        setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80);
+        break;
+
+    case op_inc:
+        bval = getaddr(addr); bval++;
+        setaddr(addr, bval);
+        setflags(sFLAG_Z, !bval); setflags(sFLAG_N, bval & 0x80);
+        break;
+
+    case op_inx:
+        x++; setflags(sFLAG_Z, !x); setflags(sFLAG_N, x & 0x80);
+        break;
+
+    case op_iny:
+        y++; setflags(sFLAG_Z, !y); setflags(sFLAG_N, y & 0x80);
+        break;
+
+    case op_jmp:
+        wval = bus_read8(pc++);
+        wval |= (word)(bus_read8(pc++) << 8);
+        if(addr == op_abs){
+            pc = wval;
+        } else {
+            pc = bus_read16_wrap(wval);
+        }
+        break;
+
+    case op_jsr:
+        word target = bus_read8(pc++);
+        target |= (word)(bus_read8(pc++) << 8);
+
+        // pc is now the address of the *next* instruction
+        word ret = (word)(pc - 1);     // last byte of operand
+        push((byte)(ret >> 8));
+        push((byte)(ret & 0xFF));
+
+        pc = target;
+
+        break;
+
+    case op_lda:
+        a = getaddr(addr);
+        setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80);
+        break;
+
+    case op_ldx:
+        x = getaddr(addr);
+        setflags(sFLAG_Z, !x); setflags(sFLAG_N, x & 0x80);
+        break;
+
+    case op_ldy:
+        y = getaddr(addr);
+        setflags(sFLAG_Z, !y); setflags(sFLAG_N, y & 0x80);
+        break;
+
+    case op_lsr:
+        bval = getaddr(addr);
+        wval = bval; wval >>= 1;
+        setaddr(addr, (byte)wval);
+        setflags(sFLAG_Z, !wval);
+        setflags(sFLAG_N, wval & 0x80);
+        setflags(sFLAG_C, bval & 1);
+        break;
+
+    case op_nop:
+        // IMPORTANT: NOP still costs cycles via addressing mode (implied = 2)
+        // Your tables mark NOP as implied, so getaddr isn't called.
+        // 2 cycles are taken up, already applied
+        break;
+
+    case op_ora:
+        bval = getaddr(addr); a |= bval;
+        setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80);
+        break;
+
+    case op_pha: push(a); break;  // stack ops have fixed timing (see note below)
+    case op_php: push(p); break;
+
+    case op_pla:
+        a = pop();
+        setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80);
+        break;
+
+    case op_plp: p = pop(); break;
+
+    case op_rol:
+        bval = getaddr(addr);
+        c = !!(p & sFLAG_C);
+        setflags(sFLAG_C, bval & 0x80);
+        bval <<= 1; bval |= (byte)c;
+        setaddr(addr, bval);
+        setflags(sFLAG_N, bval & 0x80);
+        setflags(sFLAG_Z, !bval);
+        break;
+
+    case op_ror:
+        bval = getaddr(addr);
+        c = !!(p & sFLAG_C);
+        setflags(sFLAG_C, bval & 1);
+        bval >>= 1; bval |= (byte)(128 * c);
+        setaddr(addr, bval);
+        setflags(sFLAG_N, bval & 0x80);
+        setflags(sFLAG_Z, !bval);
+        break;
+
+    case op_rti:
+        p = pop();
+        wval = pop();
+        wval |= (word)(pop() << 8);
+        pc = wval;
+        break;
+
+    case op_rts:
+        wval = pop();
+        wval |= (word)(pop() << 8);
+        pc = (word)(wval + 1);
+        break;
+
+    case op_sbc:{
+        byte m  = getaddr(addr);
+        byte mi = (byte)(m ^ 0xFF);
+
+        uint16_t sum = (uint16_t)a + (uint16_t)mi + ((p & sFLAG_C) ? 1 : 0);
+
+        setflags(sFLAG_C, sum & 0x100);
+        setflags(sFLAG_V, (~(a ^ mi) & (a ^ (byte)sum) & 0x80));  // using mi because that's what you're adding
+
+        a = (byte)sum;
+        setflags(sFLAG_Z, !a);
+        setflags(sFLAG_N, a & 0x80);
+        break;
+    }
+
+    case op_sec: setflags(sFLAG_C, 1); break;
+    case op_sed: setflags(sFLAG_D, 1); break;
+    case op_sei: setflags(sFLAG_I, 1); break;
+
+    case op_sta: putaddr(addr, a); break;
+    case op_stx: putaddr(addr, x); break;
+    case op_sty: putaddr(addr, y); break;
+
+    case op_tax: x = a; setflags(sFLAG_Z, !x); setflags(sFLAG_N, x & 0x80); break;
+    case op_tay: y = a; setflags(sFLAG_Z, !y); setflags(sFLAG_N, y & 0x80); break;
+    case op_tsx: x = s; setflags(sFLAG_Z, !x); setflags(sFLAG_N, x & 0x80); break;
+    case op_txa: a = x; setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80); break;
+    case op_txs: s = x; break;
+    case op_tya: a = y; setflags(sFLAG_Z, !a); setflags(sFLAG_N, a & 0x80); break;
 
     default:
-        // Unimplemented/illegal
-        c->pc = 0;   // hard stop so tests don't "pass" quietly
-        cycles += 2;
+        // Unsupported opcode: treat as NOP-ish (2 cycles) to avoid freezing.
         break;
     }
 
-    cycles += cpu_handle_interrupts(c);
+    // RSID helping, this section CAN be skipped for PSID play back routines
+    int spent = cycles - cycles_before; // log how many cycles this step too
 
-    return cycles;
-}
-
-int cpu6502_run(cpu6502_t *c, int cycle_budget){
-    int used = 0;
-    while (used < cycle_budget) {
-        int ccy = cpu6502_step(c);
-        if (ccy <= 0) break;
-        used += ccy;
-        if (c->pc == 0) break; // sentinel
-    }
-    return used;
-}
-
-int cpu6502_jsr(cpu6502_t *c, u16 addr, u8 a_reg)
-{
-    int total_cycles = 0;
-
-    // Make sure stack is sane (real 6502 reset value)
-    // If you already set this in reset/reset_to, you can remove this line.
-    if (c->sp == 0) c->sp = 0xFD;
-
-    // Load A as PSID expects: A = song_index (0-based) for INIT.
-    c->a = a_reg;
-
-    // Push return address-1 so RTS returns to PC==0x0000.
-    // RTS pulls addr then does PC = addr + 1.
-    // So we want pulled addr = 0xFFFF -> PC becomes 0x0000.
-    c->bus.write8(c->bus.user, (u16)(0x0100u | c->sp), 0xFF); c->sp--;
-    c->bus.write8(c->bus.user, (u16)(0x0100u | c->sp), 0xFF); c->sp--;
-
-    // Jump into routine
-    c->pc = addr;
-
-    // Run until it returns to sentinel
-    while (c->pc != 0x0000) {
-        int cyc = cpu6502_step(c);
-        if (cyc <= 0) break;       // safety
-        total_cycles += cyc;
+    /// ** VIC HANDLING ** ///
+    vic_step(spent);    // let the vic_step consume some of the cycles!
+    cia_step_all(spent);
+    //if (VIC_IRQ_LINE && !(p & sFLAG_I)) {
+    if ((VIC_IRQ_LINE || CIA1_IRQ_LINE || CIA2_IRQ_LINE) && !(p & sFLAG_I)) {
+        cpu_irq();
     }
 
-    return total_cycles;
+    //if (VIC_IRQ_LINE) putchar('v');   // proves VIC line stays high
+
+
+
+    return spent;       // return the cycles
+
+}
+
+int cpuGetPC(void) { return pc; }
+
+void cpuSetPC(word npc) { pc = npc; }
+
+
+// for debugging only //
+void cpu_force_cli(void){
+    p &= (byte)~sFLAG_I;
+    putchar('C'); // prove it runs
+
 }
 
 
+int cpu_call_jsr_resetting(word npc, byte na){
+    int total = 0;
+    cycles = 0;
 
-//////////////// ROMS FOR TESTING CPU ///////////////////////////
+    a = na;
+    x = 0;
+    y = 0;
+    //p = 0;
+    p = (byte)(0x20 | sFLAG_I);   // start init with IRQs masked
+    s = 255;
+    pc = npc;
 
-// JSR/RTS nesting test @ $8000
-// Output should be: 1ABCD4\n
-static const uint8_t prog_jsr_rts[] = {
-    // main @ $8000
-    0xA9,'1',        0x8D,0x20,0xD0,     // LDA #'1' ; STA $D020
-    0x20,0x10,0x80,                      // JSR $8010
-    0xA9,'4',        0x8D,0x20,0xD0,     // LDA #'4' ; STA $D020
-    0xA9,'\n',       0x8D,0x20,0xD0,     // newline
-    0x00,                                 // BRK
-
-    // pad to $8010
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-
-    // subA @ $8010
-    0xA9,'A',        0x8D,0x20,0xD0,     // print 'A'
-    0x20,0x20,0x80,                      // JSR $8020
-    0xA9,'D',        0x8D,0x20,0xD0,     // print 'D'
-    0x60,                                 // RTS
-
-    // pad to $8020
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-
-    // subB @ $8020
-    0xA9,'B',        0x8D,0x20,0xD0,     // print 'B'
-    0x20,0x30,0x80,                      // JSR $8030
-    0xA9,'C',        0x8D,0x20,0xD0,     // print 'C'
-    0x60,                                 // RTS
-
-    // pad to $8030
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-
-    // subC @ $8030
-    0xA9,'C',        0x8D,0x20,0xD0,     // print 'C' (extra marker)
-    0x60                                  // RTS
-};
+    push(0xFF); // high
+    push(0xFF); // low
 
 
-
-// RMW INC/DEC on zero page
-// Expected: "I D\n" (with a space) if both pass
-static const uint8_t prog_rmw_inc_dec[] = {
-    // init zp $10 = 1
-    0xA9,0x01,        0x85,0x10,          // LDA #$01 ; STA $10
-
-    // INC $10 -> should be 2
-    0xE6,0x10,                             // INC $10
-    0xA5,0x10,        0xC9,0x02,          // LDA $10 ; CMP #$02
-    0xF0,0x07,                             // BEQ inc_ok
-    0xA9,'i',         0x8D,0x20,0xD0,     // fail -> 'i'
-    0x4C,0x1C,0x80,                        // JMP after_inc
-    // inc_ok:
-    0xA9,'I',         0x8D,0x20,0xD0,     // pass -> 'I'
-    // after_inc:
-    0xA9,' ',         0x8D,0x20,0xD0,     // print space
-
-    // DEC $10 -> should be 1 again
-    0xC6,0x10,                             // DEC $10
-    0xA5,0x10,        0xC9,0x01,          // LDA $10 ; CMP #$01
-    0xF0,0x07,                             // BEQ dec_ok
-    0xA9,'d',         0x8D,0x20,0xD0,     // fail -> 'd'
-    0x4C,0x32,0x80,                        // JMP done
-    // dec_ok:
-    0xA9,'D',         0x8D,0x20,0xD0,     // pass -> 'D'
-
-    // done:
-    0xA9,'\n',        0x8D,0x20,0xD0,
-    0x00
-};
+    while(pc){
+        total += cpuStep();
+    }
+    return total;
+}
 
 
+// cpu6502.c additions
 
-// ADC/SBC overflow (V flag) test
-// Expected: "A S\n"
-static const uint8_t prog_adc_sbc_v[] = {
-    // ---- ADC overflow: 0x50 + 0x50 = 0xA0, V should set ----
-    0x18,             // CLC
-    0xB8,             // CLV
-    0xA9,0x50,        // LDA #$50
-    0x69,0x50,        // ADC #$50
-    0x70,0x07,        // BVS adc_ok
-    0xA9,'a',         0x8D,0x20,0xD0,   // fail -> 'a'
-    0x4C,0x18,0x80,                      // JMP after_adc
-    // adc_ok:
-    0xA9,'A',         0x8D,0x20,0xD0,
-    // after_adc:
-    0xA9,' ',         0x8D,0x20,0xD0,
+void cpu_set_regs(byte A, byte X, byte Y) { a = A; x = X; y = Y; }
+void cpu_set_a(byte A) { a = A; }
+byte cpu_get_a(void) { return a; }
 
-    // ---- SBC overflow: 0x80 - 0x01 = 0x7F, V should set ----
-    0x38,             // SEC (6502 SBC uses carry as NOT-borrow)
-    0xB8,             // CLV
-    0xA9,0x80,        // LDA #$80
-    0xE9,0x01,        // SBC #$01  => 0x7F, V=1
-    0x70,0x07,        // BVS sbc_ok
-    0xA9,'s',         0x8D,0x20,0xD0,   // fail -> 's'
-    0x4C,0x2E,0x80,                      // JMP done
-    // sbc_ok:
-    0xA9,'S',         0x8D,0x20,0xD0,
+// Emulate: JSR target; run until it returns.
+// DOES NOT reset CPU state.
+int cpu_call_jsr(word target){
+    int total = 0;
+    uint16_t saved_pc    = pc;
 
-    // done
-    0xA9,'\n',        0x8D,0x20,0xD0,
-    0x00
-};
+    // Push fake return address = $FFFF.
+    // RTS will pop it, add 1, pc becomes $0000 -> stops your loop.
+    push(0xFF); // high
+    push(0xFF); // low
 
+    pc = target;
 
-// Branch across page boundary correctness test
-// We arrange PC so BEQ jumps from $80FE to $8102.
-static const uint8_t prog_branch_page[] = {
-    // Fill up to reach $80FE with harmless NOPs.
-    // Put the useful code near the end.
-    // NOTE: this assumes you load at $8000 exactly.
-    // Size here: 0xFE bytes total before BEQ instruction.
-    // We'll do it simple: 0xFE-6 bytes of NOP, then:
-    //   LDA #$00 ; (sets Z)
-    //   BEQ +2 across page
-    //   BRK (should be skipped)
-    //   LDA #'P' ; STA $D020 ; '\n' ; BRK
+    while (pc){
+        total += cpuStep();
+    }
 
-    // 0xF8 NOPs (248)
-    // (If you prefer, generate these in code rather than typing them.)
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
+    pc = saved_pc;
 
-    // near $80FC-ish: make Z=1 then BEQ
-    0xA9,0x00,        // LDA #$00  (Z=1)
-    0xF0,0x02,        // BEQ +2    (jumps over BRK)
-    0x00,             // BRK (should be skipped if branch works)
-    0xA9,'P',         // LDA #'P'
-    0x8D,0x20,0xD0,   // STA $D020
-    0xA9,'\n',
-    0x8D,0x20,0xD0,
-    0x00
-};
-
-
-
-
-
-
-
-
-
-
+    return total;
+}
 
 
 

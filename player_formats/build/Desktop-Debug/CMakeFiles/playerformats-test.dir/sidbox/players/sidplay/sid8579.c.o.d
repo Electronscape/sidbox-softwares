@@ -15,11 +15,13 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o: \
  /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h \
  /usr/include/bits/types/cookie_io_functions_t.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/floatn.h \
- /usr/include/bits/floatn-common.h /usr/include/string.h \
- /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
- /usr/include/strings.h \
+ /usr/include/bits/floatn-common.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sid8579.h \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
  /usr/include/bits/stdint-least.h \
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sid8579.h
+ /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.h \
+ /usr/include/string.h /usr/include/bits/types/locale_t.h \
+ /usr/include/bits/types/__locale_t.h /usr/include/strings.h

@@ -9,18 +9,21 @@ add_executable(playerformats-test main.c
 
     sidbox/players/sidplay/cpu6502.c
     sidbox/players/sidplay/cpu6502.h
-    sidbox/players/sidplay/cpu_test.c
+
     sidbox/players/sidplay/sid8579.c
     sidbox/players/sidplay/sid8579.h
-    sidbox/players/sidplay/sidplaybus.h
-    sidbox/players/sidplay/sidplaybus.c
-    song.c
+    sidbox/players/sidplay/bus.h
+    sidbox/players/sidplay/bus.c
+
     sidbox/players/sidplay/playsid.c
     sidbox/players/sidplay/playsid.h
     main.h
-    song.h
-    sidbox/players/sidplay/ciairq.h
-    sidbox/players/sidplay/ciairq.c
+
+    sidbox/players/sidplay/cia.h
+    sidbox/players/sidplay/cia.c
+    sidbox/players/sidplay/vic.c
+    sidbox/players/sidplay/vic.h
+    sidbox/players/sidplay/c64_types.h
 
 
 

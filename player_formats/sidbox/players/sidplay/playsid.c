@@ -1,76 +1,371 @@
-#include <stdint.h>
+#include "playsid.h"
+#include "bus.h"
+#include "cpu6502.h"
+#include "vic.h"
+#include "sid8579.h"
+#include "cia.h"
+
+#include <stdio.h>
 #include <string.h>
 
-#include "playsid.h"
+static word load_addr, init_addr, play_addr;
+static byte subsongs, startsong, speed;
+static long ticks = 0;
+static unsigned long nRefreshCIA = 20000;
+static int mixing_frequency = 44100;
 
-static uint16_t be16(const uint8_t *p) {
-    return (uint16_t)((uint16_t)p[0] << 8) | (uint16_t)p[1];
-}
-static uint32_t be32(const uint8_t *p) {
-    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | (uint32_t)p[3];
-}
+// crude "timekeeping"
+static long timeplay = 0;
 
-//int psid_song_uses_cia(const sid_program_t *p, uint16_t song1_based);
-//c64_video_t sid_pick_video(const sid_program_t *p);
+static uint32_t last_play_cycles = 0;
+static uint64_t total_cycles = 0;
 
-int sid_load_from_bytes(const uint8_t *buf, uint32_t len, uint8_t *ram, sid_program_t *out){
-    if (!buf || !ram || !out) return -1;
-    if (len < 0x76) return -2; // header is at least 0x76 for PSID v2+
+////////////////////// RSID //////////////////////////////////////////////////
+// playsid.c (RSID-only helper)
 
-    // magic
-    sid_fmt_t fmt = SIDFMT_UNKNOWN;
-    if (buf[0]=='P' && buf[1]=='S' && buf[2]=='I' && buf[3]=='D') fmt = SIDFMT_PSID;
-    if (buf[0]=='R' && buf[1]=='S' && buf[2]=='I' && buf[3]=='D') fmt = SIDFMT_RSID;
-    if (fmt == SIDFMT_UNKNOWN) return -3;
+#define RSID_TRAMP_ADDR  0xF000u
 
-    uint16_t version     = be16(buf + 0x04);
-    uint16_t data_offset = be16(buf + 0x06);
-    uint16_t load_addr_h = be16(buf + 0x08);
-    uint16_t init_addr   = be16(buf + 0x0A);
-    uint16_t play_addr   = be16(buf + 0x0C);
-    uint16_t songs       = be16(buf + 0x0E);
-    uint16_t start_song  = be16(buf + 0x10);
-    uint32_t speed       = be32(buf + 0x12);
+// Installs an IRQ handler at RSID_TRAMP_ADDR that:
+// - reads $0314/$0315
+// - self-modifies a JSR target
+// - calls it
+// - ACKs VIC $D019
+// - restores regs and RTI
+static void rsid_install_vic_irq_trampoline(void){
+    uint16_t a = RSID_TRAMP_ADDR;
 
-    uint16_t flags = 0;
-    if (version >= 2 && len >= 0x78) { // flags exist in v2NG-ish layouts
-        flags = be16(buf + 0x76);
+    // 6502 bytes, assembled for address RSID_TRAMP_ADDR, no branches needed.
+    // IRQ handler:
+    //   PHA
+    //   TXA / PHA
+    //   TYA / PHA
+    //   LDA $0314 ; STA jsr+1
+    //   LDA $0315 ; STA jsr+2
+    // jsr: JSR $FFFF
+    //   LDA #$01  ; STA $D019   (ACK raster IRQ)
+    //   PLA / TAY
+    //   PLA / TAX
+    //   PLA
+    //   RTI
+    static const uint8_t tramp[] = {
+        0x48,                   // PHA  (save A)
+
+        // tick counter in $02
+        0xE6, 0x02,             // INC $02
+        0xA5, 0x02,             // LDA $02
+        0xC9, 0x32,             // CMP #$32 (50)
+        0xD0, 0x0C,             // BNE notyet
+
+        0xA9, 0x00,             // LDA #$00
+        0x85, 0x02,             // STA $02
+
+        0xA9, '\0',              // LDA #'.'
+        0x8D, 0xF0, 0xD7,       // STA $D7F0
+        0xA9, '\0',             // LDA #'\n'
+        0x8D, 0xF0, 0xD7,       // STA $D7F0
+
+        // notyet:
+        0xA9, 0x01,             // LDA #$01
+        0x8D, 0x19, 0xD0,       // STA $D019   (ACK raster IRQ)
+
+        0x68,                   // PLA (restore A)
+
+        // if ($0314|$0315)==0 => RTI
+        0xAD, 0x14, 0x03,       // LDA $0314
+        0x0D, 0x15, 0x03,       // ORA $0315
+        0xF0, 0x03,             // BEQ do_rti
+
+        0x6C, 0x14, 0x03,       // JMP ($0314)  (chain to real handler; it will RTI)
+
+        // do_rti:
+        0x40                    // RTI
+    };
+
+    for (size_t i = 0; i < sizeof(tramp); i++){
+        bus_write8(a++, tramp[i]);
     }
 
-    if (data_offset >= len) return -4;
 
-    // Determine final load address:
-    // If header load addr == 0, first two bytes of data are little-endian load address.
-    uint32_t pos = data_offset;
-    uint16_t load_addr = load_addr_h;
+    // Reset counter
+    bus_write8(0x0002, 0x00);
 
-    if (load_addr == 0) {
-        if (pos + 2 > len) return -5;
-        load_addr = (uint16_t)((uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8));
-        pos += 2;
+
+    // Set IRQ/BRK vector to our trampoline
+    bus_write16(0xFFFE, RSID_TRAMP_ADDR);
+
+    // Optional: also mirror the KERNAL IRQ vector area so code that reads it sees something sane
+    //bus_write16(0x0314, RSID_TRAMP_ADDR); // not required, but harmless in this ROMless sandbox
+}
+
+// Enable one raster IRQ per frame (≈50Hz PAL-ish in your VIC model).
+static void rsid_enable_vic_50hz_raster_irq(uint8_t raster_line){
+    // set compare line
+    bus_write8(0xD012, raster_line);
+
+    // clear high-bit latch in $D011 compare (bit7)
+    uint8_t d011 = bus_read8(0xD011);
+    d011 &= 0x7F;
+    bus_write8(0xD011, d011);
+
+    // clear pending raster IRQ
+    bus_write8(0xD019, 0x01);
+
+    // enable raster IRQ
+    bus_write8(0xD01A, 0x01);
+
+    // clear again right before we let CPU run (reduces "start burst")
+    bus_write8(0xD019, 0x01);
+}
+
+
+
+#pragma pack(push,1)
+typedef struct {
+    char     magic[4];     // "PSID" or "RSID"
+    uint16_t version;      // big-endian
+    uint16_t dataOffset;   // big-endian
+    uint16_t loadAddress;  // big-endian (0 = read from first 2 data bytes)
+    uint16_t initAddress;  // big-endian (RSID often 0)
+    uint16_t playAddress;  // big-endian (RSID often 0)
+    uint16_t songs;        // big-endian
+    uint16_t startSong;    // big-endian
+    uint32_t speed;        // big-endian bitfield // 19-22
+    char     name[32];      // 22
+    char     author[32];    // 54
+    char     released[32];  // 86
+    // v2+ has more fields, but we can ignore for “load & pray”
+} SIDHeader;
+#pragma pack(pop)
+
+static uint16_t be16(uint16_t v){ return (uint16_t)((v >> 8) | (v << 8)); }
+static uint32_t be32(uint32_t v){
+    return ((v>>24)&0x000000FF) | ((v>>8)&0x0000FF00) | ((v<<8)&0x00FF0000) | ((v<<24)&0xFF000000);
+}
+
+
+
+
+static inline uint16_t rd_u16be(const uint8_t *p){ return (uint16_t)(p[0] << 8) | p[1]; }
+// PSID loader
+
+
+static int LoadSIDFromFile(const char *filename){
+    FILE *f = fopen(filename, "rb");
+    if(!f) return 0;
+
+    uint8_t hdr[124];
+    if(fread(hdr, 1, 124, f) != 124){
+        fclose(f);
+        return 0;
     }
 
-    // Copy payload into RAM
-    uint32_t payload_len = len - pos;
-    if ((uint32_t)load_addr + payload_len > 65536u) {
-        // clamp to fit rather than explode
-        payload_len = 65536u - (uint32_t)load_addr;
+    // PSID header:
+    // 0..3 "PSID"/"RSID"
+    // 6..7 dataOffset (big endian)
+    // 8..9 loadAddr
+    // 10..11 initAddr
+    // 12..13 playAddr
+    // 14..15 songs
+    // 16..17 startSong
+    // 18..21 speed (v2 uses flags; we keep your 0x15 usage style loosely)
+    uint16_t dataOffset = rd_u16be(&hdr[6]);
+    load_addr  = rd_u16be(&hdr[8]);
+    init_addr  = rd_u16be(&hdr[10]);
+    play_addr  = rd_u16be(&hdr[12]);
+    subsongs   = (byte)(rd_u16be(&hdr[14]) - 1);
+    startsong  = (byte)(rd_u16be(&hdr[16]) - 1);
+
+    // your old code used pData[0x15] (which is in first 128 bytes region)
+    // Here we approximate speed using the first byte of the speed word.
+    speed = hdr[0x15];
+
+    // if load_addr==0 -> first two bytes of data are load address (little endian)
+    // seek to dataOffset
+    fseek(f, dataOffset, SEEK_SET);
+
+    if(load_addr == 0){
+        uint8_t lo = (uint8_t)fgetc(f);
+        uint8_t hi = (uint8_t)fgetc(f);
+        load_addr = (word)(lo | (hi << 8));
     }
-    memcpy(&ram[load_addr], &buf[pos], payload_len);
 
-    // Fill result
-    memset(out, 0, sizeof(*out));
-    out->fmt         = fmt;
-    out->load_addr   = load_addr;
-    out->init_addr   = init_addr;
-    out->play_addr   = play_addr;
-    out->songs       = songs;
-    out->start_song  = start_song;
-    out->speed_bits  = speed;
-    out->data_offset = data_offset;
-    out->flags       = flags;
+    // load the rest into C64 RAM
+    uint32_t addr = load_addr;
+    int c;
+    while((c = fgetc(f)) != EOF){
+        bus_write8((uint16_t)addr, (uint8_t)c);
+        addr = (addr + 1) & 0xFFFF;
+    }
 
-    return 0;
+    fclose(f);
+
+    // if play_addr == 0, call init and read IRQ vector ($0314/5) like your original
+    if(play_addr == 0){
+        cpu_call_jsr_resetting(init_addr, 0);
+        play_addr = (word)((bus_read8(0x0315) << 8) | bus_read8(0x0314));
+    }
+    return 1;
+}
+
+uint32_t PlaySID_GetLastPlayCycles(void){
+    return last_play_cycles;
+}
+
+uint64_t PlaySID_GetTotalCycles(void){
+    return total_cycles;
+}
+
+void PlaySID_ResetCycleCounters(void){
+    last_play_cycles = 0;
+    total_cycles = 0;
+}
+
+
+static void c64Init(void){
+    clear64KRam();
+    restartSidChipModes();
+    synth_init((uint32_t)mixing_frequency);
+    cpuReset();
+    vic_reset();
+    cia_reset_all();
+
+
+    // volume poke like your code (both chips)
+    bus_write8(0xD418, 15);
+    bus_write8(0xD438, 15);
+}
+
+
+
+
+
+static int LoadRSIDFromFile(const char *filename){
+    char tstring[64];
+    FILE *f = fopen(filename, "rb");
+    if(!f) return 0;
+
+    uint8_t hdr[124];
+    if(fread(hdr, 1, 124, f) != 124){
+        fclose(f);
+        return 0;
+    }
+
+    // Must be RSID
+    if(!(hdr[0]=='R' && hdr[1]=='S' && hdr[2]=='I' && hdr[3]=='D')){
+        fclose(f);
+        return 0;
+    }
+
+    uint16_t dataOffset = rd_u16be(&hdr[6]);
+    load_addr  = rd_u16be(&hdr[8]);
+    init_addr  = rd_u16be(&hdr[10]);
+    play_addr  = rd_u16be(&hdr[12]);
+    subsongs   = (byte)(rd_u16be(&hdr[14]) - 1);
+    startsong  = (byte)(rd_u16be(&hdr[16]) - 1);
+    speed      = hdr[0x15];
+
+
+    memset(tstring, 0x00, 64);
+    int i=0;
+    for(i = 0; i < 32; i ++ ) tstring[i] = hdr[22 + i]; tstring[i] = 0;
+    printf("Song name: %s\n", tstring);
+
+    for(i = 0; i < 32; i ++ ) tstring[i] = hdr[54 + i]; tstring[i] = 0;
+    printf("   Author: %s\n", tstring);
+
+    for(i = 0; i < 32; i ++ ) tstring[i] = hdr[86 + i]; tstring[i] = 0;
+    printf(" Released: %s\n", tstring);
+
+
+    printf(" Load Addr: 0x%04X\n", load_addr);
+    printf(" Init Addr: 0x%04X\n", init_addr);
+    printf(" Play Addr: 0x%04X\n", play_addr);
+    printf(" sub songs: 0x%04X\n", subsongs);
+    printf("start song: 0x%04X\n", startsong);
+    printf("     speed: 0x%04X\n", speed);
+
+
+    //char     name[32];      // 22
+    //char     author[32];    // 54
+    //char     released[32];  // 96
+
+    // RSID rules-ish: play often 0, init often 0 in header (then you RESET into load area)
+    // We'll handle gracefully.
+
+    fseek(f, dataOffset, SEEK_SET);
+
+    if(load_addr == 0){
+        uint8_t lo = (uint8_t)fgetc(f);
+        uint8_t hi = (uint8_t)fgetc(f);
+        load_addr = (word)(lo | (hi << 8));
+    }
+
+    // Stream into RAM
+    uint32_t addr = load_addr;
+    int c;
+    while((c = fgetc(f)) != EOF){
+        bus_write8((uint16_t)addr, (uint8_t)c);
+        addr = (addr + 1) & 0xFFFF;
+    }
+
+    fclose(f);
+
+    // Minimal C64-ish IO visible defaults (you already do this in LoadProgram; RSID expects it)
+    bus_write8(0x0000, 0x2F);
+    bus_write8(0x0001, 0x37);
+
+    // Decide RESET target:
+    // - If init_addr != 0, RSID typically wants you to start there (as RESET handler).
+    // - Else boot at load_addr.
+    uint16_t resetTarget = init_addr ? init_addr : load_addr;
+
+    // Decide IRQ/NMI vectors:
+    // - If play_addr provided (rare for RSID), use it as IRQ target
+    // - Else point IRQ+NMI to resetTarget (harmless default until CIA/VIC drives real vectors)
+    uint16_t irqTarget = play_addr ? play_addr : resetTarget;
+
+    bus_write16(0xFFFA, resetTarget);  // NMI
+    bus_write16(0xFFFC, resetTarget);  // RESET
+    bus_write16(0xFFFE, irqTarget);    // IRQ/BRK
+
+    // Also set the KERNAL vectors area some code pokes ($0314/$0315 IRQ vector)
+    // Not “real RSID spec”, but helps in your current no-ROM world.
+    bus_write16(0x0314, irqTarget);
+
+    // CPU will start at RESET vector
+    cpuReset();
+
+    // Prime audio
+    synth_start();
+
+    return 1;
+}
+
+
+
+
+int PlaySID_InitRSID(const char *filename){
+    c64Init();
+
+    if(!LoadRSIDFromFile(filename)){
+        fprintf(stderr, "PlaySID_InitRSID: failed loading %s\n", filename);
+        return 0;
+    }
+
+
+    //rsid_install_vic_irq_trampoline();
+    //rsid_enable_vic_50hz_raster_irq(3);   // try 0 or 100; either is fine
+
+    ticks = 0;
+    timeplay = 0;
+    PlaySID_ResetCycleCounters();
+
+    // For RSID, DO NOT do cpu_call_jsr_resetting(init_addr,...)
+    // because RSID expects reset-style startup.
+    // cpuReset() already set PC from $FFFC.
+    cpu_force_cli();
+
+    return 1;
 }
 
 
@@ -91,5 +386,166 @@ int sid_load_from_bytes(const uint8_t *buf, uint32_t len, uint8_t *ram, sid_prog
 
 
 
+int PlaySID_Init(const char *filename, int subsong){
+    c64Init();
+
+    if(!LoadSIDFromFile(filename)){
+        fprintf(stderr, "PlaySID_Init: failed loading %s\n", filename);
+        return 0;
+    }
+
+    if(subsong < 0) subsong = startsong;
+
+    ticks = 0;
+    timeplay = 0;
+
+    PlaySID_ResetCycleCounters();
+    cpu_call_jsr_resetting(init_addr, (byte)subsong);
+    synth_start(); // prime osc/filter based on regs after init
+
+    return 1;
+}
 
 
+
+int PlaySID_LoadProgram(const uint8_t *bytes, size_t len,
+                        int prg_has_loadaddr,
+                        uint16_t load_addr,
+                        uint16_t reset_vec,
+                        uint16_t irq_vec,
+                        uint16_t nmi_vec)
+{
+    if (!bytes || len == 0) return 0;
+
+    // Power-on baseline
+    c64Init();
+
+    const uint8_t *code = bytes;
+    size_t code_len = len;
+
+    if (prg_has_loadaddr){
+        if (len < 3) return 0;
+        load_addr = (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));
+        code      = bytes + 2;
+        code_len  = len - 2;
+    }
+
+    // Load code into RAM (wrap like real 16-bit address space)
+    uint16_t a = load_addr;
+    for (size_t i = 0; i < code_len; i++){
+        bus_write8(a, code[i]);
+        a = (uint16_t)(a + 1);
+    }
+
+    // Minimal "sane-ish" C64 defaults (optional but helps some code)
+    // 6510 port: $0000 DDR, $0001 data. Common default makes IO visible.
+    bus_write8(0x0000, 0x2F);
+    bus_write8(0x0001, 0x37);
+
+    // Set vectors in RAM
+    // NMI  = $FFFA/$FFFB
+    // RESET= $FFFC/$FFFD
+    // IRQ  = $FFFE/$FFFF
+    bus_write16(0xFFFA, nmi_vec);
+    bus_write16(0xFFFC, reset_vec);
+    bus_write16(0xFFFE, irq_vec);
+
+    // Now reset CPU; it will fetch RESET vector from $FFFC
+    cpuReset();
+
+    // Prime audio like your PSID init does (optional)
+    synth_start();
+
+    return 1;
+}
+
+
+// Your STM32 version derived ticks from CIA timer ($DC04/$DC05) after play call.
+// We'll do the same: after cpuJSR(play_addr,0), read those bytes from memory.
+// If zero => default 20000us => ~50Hz.
+static inline void refresh_ticks_from_cia(void){
+    int gm1 = bus_read8(0xDC04);
+    int gm2 = bus_read8(0xDC05);
+    unsigned long cia = (unsigned long)(gm1 | (256L * gm2));
+    nRefreshCIA = (unsigned long)(20000UL * cia / 0x4C00);
+
+    if(nRefreshCIA == 0 || speed == 0) nRefreshCIA = 20000UL;
+    ticks = (long)((mixing_frequency * nRefreshCIA) / 1000000UL);
+    if(ticks <= 0) ticks = (mixing_frequency / 50);
+}
+
+static inline void call_psid_play(void){
+    // Most tunes expect this each call:
+    cpu_set_regs(0, 0, 0);
+    last_play_cycles = (uint32_t)cpu_call_jsr(play_addr);
+    total_cycles += last_play_cycles;
+}
+
+
+
+
+
+
+////////////////// P_SID ROUTER /////////////////////////////////////////////////////
+uint32_t doPlaySidStep(int16_t *out_interleaved, uint32_t frames){
+    if(!out_interleaved || frames == 0) return 0;
+
+    for(uint32_t i=0; i<frames; i++){
+        if(ticks <= 0){
+            // simple PSID player
+            call_psid_play();
+            refresh_ticks_from_cia();
+            synth_start();
+        }
+
+        int16_t L, R;
+        sid_render_sample(&L, &R);
+
+        out_interleaved[i*2 + 0] = L;
+        out_interleaved[i*2 + 1] = R;
+
+        ticks--;
+        timeplay++;
+    }
+    return frames;
+}
+
+////////////////// R_SID ROUTER /////////////////////////////////////////////////////
+uint32_t doRSIDStep(int16_t *out_interleaved, uint32_t frames, uint32_t sample_rate){
+    if(!out_interleaved || frames == 0) return 0;
+
+    const uint32_t cycles_per_sample = (uint32_t)(C64_CPU_HZ_PAL / sample_rate);
+
+
+    for(uint32_t i=0; i<frames; i++){
+        uint32_t cyc = 0;
+        synth_start(); /// <-- THIS WAS MISSING! SOUND cmoing out!!
+
+        while(cyc < cycles_per_sample){
+            int spent = cpuStep();
+            if(!spent) break;
+            cyc += (uint32_t)spent;
+        }
+
+        int16_t L, R;
+        sid_render_sample(&L, &R);
+        out_interleaved[i*2 + 0] = L;
+        out_interleaved[i*2 + 1] = R;
+    }
+    return frames;
+}
+
+
+
+
+
+void playsid_start_tune(int subtune){   // this should just switch the sub tune without needing to reload the file
+    if (!init_addr) return;
+
+    //cpuReset();           // set pc from $FFFC or cpu_reset_to()
+    PlaySID_ResetCycleCounters();
+    cpu_set_regs((byte)subtune, 0, 0);  // common: A=subtune
+    cpu_call_jsr(init_addr);
+    refresh_ticks_from_cia();
+    synth_start();
+}

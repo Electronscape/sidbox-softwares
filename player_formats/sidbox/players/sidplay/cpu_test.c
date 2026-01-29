@@ -5,7 +5,7 @@
 #include "cpu6502.h"
 
 #include "sid8579.h"
-#include "sidplaybus.h"
+#include "bus.h"
 /// to be removed later ///
 
 

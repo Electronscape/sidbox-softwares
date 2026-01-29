@@ -1,381 +1,434 @@
-
 #include <stdio.h>
-#include <string.h>
-#include <stdint.h>
 
 #include "sid8579.h"
+#include "bus.h"
+#include <string.h>
 
+// ---- Your globals/knobs (kept similar) ----
+volatile unsigned long CHIPCONFIGS = 0;
 
-// PAL C64 clock ≈ 985248 Hz
-// NTSC ≈ 1022727 Hz
-// You already pass this in, so we trust you 😉
+#define SIDHV_CHANNEL_STEREO (1u<<0) // you can map this properly later
 
-// --- SID register offsets (shadowed as 0x00..0x1F for $D400..$D41F) ---
+static unsigned char SidChipType[2] = { Chip6581, Chip6581 };
+static unsigned char SidVoicesEn[2] = { 0x7, 0x7 };
 
-/* Put these at file scope */
-#define ENV_ATTACK   0
-#define ENV_DECAY    1
-#define ENV_SUSTAIN  2
-#define ENV_RELEASE  3
+void SetSidChipTypes(unsigned char chip, unsigned char type){ SidChipType[chip & 1] = type; }
+unsigned char GetSidChipType(unsigned char chip){ return SidChipType[chip & 1]; }
+void SetSidChipVoices(unsigned char chip, unsigned char voices){ SidVoicesEn[chip & 1] = voices; }
+unsigned char GetSidChipVoices(unsigned char chip){ return SidVoicesEn[chip & 1]; }
 
-#define CTRL_GATE    0x01
-#define CTRL_SYNC    0x02
-#define CTRL_RING    0x04
-#define CTRL_TEST    0x08
+static unsigned char bDualChipMode = 1;        // 1=single, 2=dual detected
+static unsigned char bSidPlay2SIDmode = 0;     // address-based "2SID mode"
+static int mixing_frequency;
+static int freqmul;
+static int filtmul_1, filtmul_2;
 
-#define WF_TRI       0x10
-#define WF_SAW       0x20
-#define WF_PULSE     0x40
-#define WF_NOISE     0x80
+// --- fixed-point helper (your pfloat) ---
+static inline int pfloat_ConvertFromInt(int i) { return i << 16; }
+static inline int pfloat_ConvertFromFloat(float f) { return (int)(f * (1L << 16)); }
+static inline int pfloat_Multiply(int a, int b) { return (a >> 8) * (b >> 8); }
+static inline int pfloat_ConvertToInt(int i) { return i >> 16; }
 
-#define U24_MASK     0xFFFFFFu
+struct sidfiltercaps { float capacitor; float banda; float bandb; long adsrclk; };
 
+static struct sidfiltercaps filtermult[2] = {
+    { 2.41415946f, 1.4f,  0.04f, 0x30 }, // 6581
+    { 21.5332031f, 1.0f,  0.04f, 0x18 }  // 8580
+};
 
+// SID reg layout
+struct s6581 {
+    struct sidvoice {
+        dword freq;
+        dword pulse;
+        byte wave;
+        byte ad;
+        byte sr;
+    } v[3];
+    byte ffreqlo;
+    byte ffreqhi;
+    byte res_ftv;
+    byte ftp_vol;
+};
 
+struct sidosc {
+    dword freq;
+    dword pulse;
+    byte wave;
+    byte filter;
+    dword attack;
+    dword decay;
+    dword sustain;
+    dword release;
+    dword counter;
+    signed int envval;
+    byte envphase;
+    dword noisepos;
+    dword noiseval;
+    byte noiseout;
+};
 
+struct sidflt {
+    int freq;
+    byte l_ena, b_ena, h_ena;
+    byte v3ena;
+    int stray;
+    int vol;
+    int rez;
+    int h, b, l;
+};
 
-// Chip model selection (keep it simple for now)
-#ifndef SID_CHIP_6581
-#define SID_CHIP_6581 1
-#endif
+__attribute__((aligned(32)))
+static struct s6581 sid[2];
+__attribute__((aligned(32)))
+static struct sidosc osc[2][3];
+__attribute__((aligned(32)))
+static struct sidflt filter[2];
 
+__attribute__((aligned(32)))
 static const float attackTimes[16] = {
-    0.0022528606f, 0.0080099577f, 0.0157696042f, 0.0237795619f,
-    0.0372963655f, 0.0550684591f, 0.0668330845f, 0.0783473987f,
-    0.0981219818f, 0.244554021f,  0.489108042f,  0.782472742f,
-    0.977715461f,  2.93364701f,   4.88907793f,   7.82272493f
+        0.0022528606f, 0.0080099577f, 0.0157696042f, 0.0237795619f,
+        0.0372963655f, 0.0550684591f, 0.0668330845f, 0.0783473987f,
+        0.0981219818f, 0.244554021f,  0.489108042f,  0.782472742f,
+        0.977715461f,  2.93364701f,   4.88907793f,   7.82272493f
 };
 
+__attribute__((aligned(32)))
 static const float decayReleaseTimes[16] = {
-    0.00891777693f, 0.024594051f,  0.0484185907f, 0.0730116639f,
-    0.114512475f,   0.169078356f,  0.205199432f,  0.240551975f,
-    0.301266125f,   0.750858245f,  1.50171551f,   2.40243682f,
-    3.00189298f,    9.00721405f,   15.010998f,    24.0182111f
+        0.00891777693f, 0.024594051f,  0.0484185907f, 0.0730116639f,
+        0.114512475f,   0.169078356f,  0.205199432f,  0.240551975f,
+        0.301266125f,   0.750858245f,  1.50171551f,   2.40243682f,
+        3.00189298f,    9.00721405f,   15.010998f,    24.0182111f
 };
 
-static inline uint8_t get_bit_u8(uint8_t v, uint8_t b){ return (v >> b) & 1u; }
+__attribute__((aligned(32)))
+static int attacks[2][16];
+__attribute__((aligned(32)))
+static int releases[2][16];
 
-static inline int32_t pfloat_from_int(int32_t i){ return i << 16; }
-static inline int32_t pfloat_from_float(float f){ return (int32_t)(f * 65536.0f); }
-static inline int32_t pfloat_mul(int32_t a, int32_t b){ return (a >> 8) * (b >> 8); }
-static inline int32_t pfloat_to_int(int32_t a){ return a >> 16; }
+static inline byte get_bit(dword val, byte b){ return (byte)((val >> b) & 1); }
 
+static void CalcFilts(void){
+    // TODO: make this "dirty" update ONLY if something was changed
+    if(!mixing_frequency) return;
 
-void sid_init(sid_t *s, uint32_t sid_hz, uint32_t sample_hz)
-{
-    memset(s, 0, sizeof(*s));
-    s->sid_hz    = sid_hz;
-    s->sample_hz = sample_hz;
-    s->cycles_acc = 0;
-    s->dirty = 1;
+    // filtmul for each chip based on selected type
+    filtmul_1 = pfloat_ConvertFromFloat(filtermult[SidChipType[0]].capacitor) / mixing_frequency;
+    filtmul_2 = pfloat_ConvertFromFloat(filtermult[SidChipType[1]].capacitor) / mixing_frequency;
 
-    s->freqmul = (int32_t)(15872000u / sample_hz);
-    s->filtmul = pfloat_from_float(12.11415946f) / (int32_t)sample_hz;
+    for(int i=0;i<16;i++){
+        attacks [Chip6581][i] = (long)((filtermult[Chip6581].adsrclk * 0x100000) / (attackTimes[i] * mixing_frequency));
+        releases[Chip6581][i] = (long)((filtermult[Chip6581].adsrclk * 0x100000) / (decayReleaseTimes[i] * mixing_frequency));
 
-    // ADSR clk for 6581 was 0x30 (8580 was 0x18)
-    const int adsrclk = 0x18;
-
-    for (int i = 0; i < 16; i++) {
-        // matches: (adsrclk*0x100000)/(time*mixing_frequency)
-        s->attacks[i]  = (uint32_t)((adsrclk * 0x100000u) / (attackTimes[i] * (float)sample_hz));
-        s->releases[i] = (uint32_t)((adsrclk * 0x100000u) / (decayReleaseTimes[i] * (float)sample_hz));
-        if (s->attacks[i]  == 0) s->attacks[i]  = 1;
-        if (s->releases[i] == 0) s->releases[i] = 1;
-    }
-
-    // init noise like old
-    for (int v = 0; v < 3; v++) {
-        s->cv[v].noiseval = 0xFFFFFFu;
-        s->cv[v].envval = 0;
-        s->cv[v].envphase = 3; // release
+        attacks [Chip8580][i] = (long)((filtermult[Chip8580].adsrclk * 0x100000) / (attackTimes[i] * mixing_frequency));
+        releases[Chip8580][i] = (long)((filtermult[Chip8580].adsrclk * 0x100000) / (decayReleaseTimes[i] * mixing_frequency));
     }
 }
 
-int sid_render_interleaved(sid_t *s, int16_t *dst, int max_frames){
-    int n = (s->out_count < (uint32_t)max_frames) ? (int)s->out_count : max_frames;
-
-    for (int i = 0; i < n; i++) {
-        dst[i*2 + 0] = s->out_l[i];
-        dst[i*2 + 1] = s->out_r[i];
-    }
-
-    // shift remaining samples down (usually none left)
-    for (uint32_t i = (uint32_t)n; i < s->out_count; i++) {
-        s->out_l[i - (uint32_t)n] = s->out_l[i];
-        s->out_r[i - (uint32_t)n] = s->out_r[i];
-    }
-
-    s->out_count -= (uint32_t)n;
-    return n;
+void restartSidChipModes(void){
+    bSidPlay2SIDmode = 0;
+    bDualChipMode = 1;
 }
 
+void synth_init(uint32_t mixfrq){
+    mixing_frequency = (int)mixfrq;
+    freqmul = (int)(15872000 / mixfrq); // your original
+    CalcFilts();
 
-static void sid_prepare(sid_t *s)
-{
-    // Step 1: convert SID regs into cached fast values (like synth_start)
+    memset(sid, 0, sizeof(sid));
+    memset(osc, 0, sizeof(osc));
+    memset(filter, 0, sizeof(filter));
 
-    for (int v = 0; v < 3; v++) {
-        const uint8_t base = (uint8_t)(v * 7);
-
-        const uint16_t freq = (uint16_t)(
-            (uint16_t)s->reg[base + 0] |
-            ((uint16_t)s->reg[base + 1] << 8)
-            );
-
-        const uint16_t pw = (uint16_t)(
-            (uint16_t)s->reg[base + 2] |
-            ((uint16_t)(s->reg[base + 3] & 0x0F) << 8)
-            );
-
-        const uint8_t wave = s->reg[base + 4];
-        const uint8_t ad   = s->reg[base + 5];
-        const uint8_t sr   = s->reg[base + 6];
-
-        s->cv[v].pulse_fp = ((uint32_t)(pw & 0x0FFFu)) << 16;
-        s->cv[v].filter_en = (uint8_t)get_bit_u8(s->reg[0x17], (uint8_t)v);
-
-        s->cv[v].attack  = s->attacks[(ad >> 4) & 0x0F];
-        s->cv[v].decay   = s->releases[(ad >> 0) & 0x0F];
-        s->cv[v].sustain = (uint32_t)(sr & 0xF0u);          // nibble in high half
-        s->cv[v].release = s->releases[(sr >> 0) & 0x0F];
-
-        s->cv[v].wave = wave;
-
-        // THIS is the old core pitch scaling
-        s->cv[v].freq_inc = (uint32_t)((uint64_t)freq * (uint64_t)s->freqmul);
+    for(int c=0;c<2;c++){
+        for(int v=0;v<3;v++){
+            osc[c][v].noiseval = 0xffffff;
+        }
     }
 
-    // Filter cache (old USE_FILTER section)
-    // rez = pfloat(1.2) - pfloat(0.04)*(res_ftv>>4) for 6581
-    int32_t rez = pfloat_from_float(1.2f) - pfloat_from_float(0.04f) * (int32_t)(s->reg[0x17] >> 4);
-    if (rez > 21200) rez = 21200;
-    if (rez < 100)   rez = 100;
-    rez >>= 8;
-    s->filt.rez = rez;
-
-    // freq = (16*hi + (lo&7)) * filtmul ; clamp <= 1.0
-    int32_t f = (int32_t)(16u * (uint32_t)s->reg[0x16] + ((uint32_t)s->reg[0x15] & 7u));
-    f = (int32_t)((int64_t)f * (int64_t)s->filtmul);
-
-    if (f > pfloat_from_int(1)) f = pfloat_from_int(1);
-    s->filt.freq = f;
-
-    const uint8_t fv = s->reg[0x18];
-    s->filt.l_ena = get_bit_u8(fv, 4);
-    s->filt.b_ena = get_bit_u8(fv, 5);
-    s->filt.h_ena = get_bit_u8(fv, 6);
-    s->filt.v3ena = (uint8_t)!get_bit_u8(fv, 7);
-    s->filt.vol   = (uint8_t)(fv & 0x0F);
+    // set volume to something sane so silence isn't "muted by default"
+    sid[0].ftp_vol = 15;
+    sid[1].ftp_vol = 15;
 }
 
+void synth_start(void){
+    for(int chip=0; chip<2; chip++){
+        for(int v=0; v<3; v++){
+            osc[chip][v].pulse   = (sid[chip].v[v].pulse & 0xfff) << 16;
+            osc[chip][v].filter  = get_bit(sid[chip].res_ftv, (byte)v);
+            osc[chip][v].attack  = attacks[SidChipType[chip]][sid[chip].v[v].ad >> 4];
+            osc[chip][v].decay   = releases[SidChipType[chip]][sid[chip].v[v].ad & 0xf];
+            osc[chip][v].sustain = sid[chip].v[v].sr & 0xf0;
+            osc[chip][v].release = releases[SidChipType[chip]][sid[chip].v[v].sr & 0xf];
+            osc[chip][v].wave    = sid[chip].v[v].wave;
+            osc[chip][v].freq    = (dword)(((long long)sid[chip].v[v].freq) * (long long)freqmul);
+        }
 
+        long filtmul = (chip==0) ? filtmul_1 : filtmul_2;
 
-/* NOTE: This sid_step intentionally does NOT fake ADSR timing tables.
- * It implements the real structure + noise + waveform AND mixing.
- * You can drop in a real EG period table later without changing architecture.
- */
-void sid_step(sid_t *s, uint32_t cpu_cycles)
-{
-    uint32_t cycles_per_sample;
-    uint8_t  vol4;
-    uint8_t  wrapped[3];
-    uint32_t prev_phase[3];
-    int vi;
+        // resonance (your simplified version)
+        if(SidChipType[chip] == Chip6581){
+            filter[chip].rez = pfloat_ConvertFromFloat(1.2f) - pfloat_ConvertFromFloat(0.04f) * (sid[chip].res_ftv >> 4);
+            if(filter[chip].rez > 21200) filter[chip].rez = 21200;
+            if(filter[chip].rez < 100)   filter[chip].rez = 100;
+        } else {
+            filter[chip].rez = pfloat_ConvertFromFloat(1.0f) - pfloat_ConvertFromFloat(0.04f) * (sid[chip].res_ftv >> 4);
+        }
+        filter[chip].rez >>= 8;
 
-    /* -------- EG timing tables (integer, derived from your floats) --------
-       Values are microseconds for full 0..255 attack or full 255..0 decay/release. */
-    //static const uint32_t atk_us[16] = { 2253, 8010, 15770, 23780, 37296, 55068, 66833, 78347, 98122, 244554, 489108, 782473, 977715, 2933647, 4889078, 7822725 };
-    //static const uint32_t dr_us[16] = { 8918, 24594, 48419, 73012, 114512, 169078, 205199, 240552, 301266, 750858, 1501716, 2402437, 3001893, 9007214, 15010998, 24018211 };
+        filter[chip].freq = (int)((16L * sid[chip].ffreqhi + (sid[chip].ffreqlo & 0x7)) * filtmul);
+        if(filter[chip].freq > pfloat_ConvertFromInt(1)) filter[chip].freq = pfloat_ConvertFromInt(1);
 
-    /* Convert table -> samples-per-env-step for THIS sample rate (once) */
-    //static uint32_t cached_hz = 0;
-    //static uint32_t atk_step_samp[16];
-    //static uint32_t dr_step_samp[16];
+        filter[chip].l_ena = get_bit(sid[chip].ftp_vol, 4);
+        filter[chip].b_ena = get_bit(sid[chip].ftp_vol, 5);
+        filter[chip].h_ena = get_bit(sid[chip].ftp_vol, 6);
+        filter[chip].v3ena = !get_bit(sid[chip].ftp_vol, 7);
+        filter[chip].vol   = (sid[chip].ftp_vol & 0xf);
+    }
+}
 
-    s->cycles_acc += cpu_cycles;
+// Your sidPoke logic, exposed as "sid_write"
+static void sidPoke(int reg, unsigned char val){
+    int voice = 0;
+    int dualChip = 0;
 
-    cycles_per_sample = (s->sid_hz / s->sample_hz);
-    if (cycles_per_sample == 0) return;
-    if (s->dirty) {
-        sid_prepare(s);
-        s->dirty = 0;
+    if(reg >= 32){
+        bSidPlay2SIDmode = 1;
+        dualChip = 1;
+        reg -= 32;
+        if(bDualChipMode != 2) bDualChipMode = 2;
     }
 
-    while (s->cycles_acc >= cycles_per_sample) {
-        s->cycles_acc -= cycles_per_sample;
-        if (s->out_count >= SID_AUDIO_BUF) { continue; }
+    if(reg <= 6) voice = 0;
+    else if(reg <= 13) voice = 1;
+    else if(reg <= 20) voice = 2;
 
-        vol4 = (uint8_t)(s->reg[0x18] & 0x0F);
+    switch(reg){
+    case 0x00: case 0x07: case 0x0E:
+        if(!bSidPlay2SIDmode){
+            sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff00) + val;
+            sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff00) + val;
+        } else {
+            sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff00) + val;
+        }
+        break;
 
-        int32_t outf = 0;
-        int32_t outo = 0;
+    case 0x01: case 0x08: case 0x0F:
+        if(!bSidPlay2SIDmode){
+            sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff) + ((dword)val << 8);
+            sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff) + ((dword)val << 8);
+        } else {
+            sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff) + ((dword)val << 8);
+        }
+        break;
 
-        for (int v = 0; v < 3; v++) {
-            // update wave counter
-            s->cv[v].counter = (s->cv[v].counter + s->cv[v].freq_inc) & 0x0FFFFFFFu;
+    case 0x02: case 0x09: case 0x10:
+        if(!bSidPlay2SIDmode){
+            sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff00) + val;
+            sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff00) + val;
+        } else {
+            sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff00) + val;
+        }
+        break;
 
-            // TEST bit resets counter + noise
-            if (s->cv[v].wave & CTRL_TEST) {
-                s->cv[v].counter = 0;
-                s->cv[v].noisepos = 0;
-                s->cv[v].noiseval = 0xFFFFFFu;
+    case 0x03: case 0x0A: case 0x11:
+        if(!bSidPlay2SIDmode){
+            sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff) + ((dword)val << 8);
+            sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff) + ((dword)val << 8);
+        } else {
+            sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff) + ((dword)val << 8);
+        }
+        break;
+
+    case 0x04: case 0x0B: case 0x12:
+        if(!bSidPlay2SIDmode){
+            sid[0].v[voice].wave = val;
+            if((val & 0x01) == 0) osc[0][voice].envphase = 3;
+            else if(osc[0][voice].envphase == 3) osc[0][voice].envphase = 0;
+
+            sid[1].v[voice].wave = val;
+            if((val & 0x01) == 0) osc[1][voice].envphase = 3;
+            else if(osc[1][voice].envphase == 3) osc[1][voice].envphase = 0;
+        } else {
+            sid[dualChip].v[voice].wave = val;
+            if((val & 0x01) == 0) osc[dualChip][voice].envphase = 3;
+            else if(osc[dualChip][voice].envphase == 3) osc[dualChip][voice].envphase = 0;
+        }
+        break;
+
+    case 0x05: case 0x0C: case 0x13:
+        if(!bSidPlay2SIDmode){ sid[0].v[voice].ad = val; sid[1].v[voice].ad = val; }
+        else sid[dualChip].v[voice].ad = val;
+        break;
+
+    case 0x06: case 0x0D: case 0x14:
+        if(!bSidPlay2SIDmode){ sid[0].v[voice].sr = val; sid[1].v[voice].sr = val; }
+        else sid[dualChip].v[voice].sr = val;
+        break;
+
+    case 0x15:
+        if(!bSidPlay2SIDmode) sid[0].ffreqlo = val;
+        else sid[dualChip].ffreqlo = val;
+        break;
+
+    case 0x16:
+        if(!bSidPlay2SIDmode) sid[0].ffreqhi = val;
+        else sid[dualChip].ffreqhi = val;
+        break;
+
+    case 0x17:
+        if(!bSidPlay2SIDmode) sid[0].res_ftv = val;
+        else sid[dualChip].res_ftv = val;
+        break;
+
+    case 0x18:
+        if(bSidPlay2SIDmode) sid[dualChip].ftp_vol = val;
+        else sid[0].ftp_vol = val;
+        break;
+    }
+
+    if(!bSidPlay2SIDmode){
+        sid[1].ftp_vol = sid[0].ftp_vol;
+        sid[1].res_ftv = sid[0].res_ftv;
+        sid[1].ffreqlo = sid[0].ffreqlo;
+        sid[1].ffreqhi = sid[0].ffreqhi;
+    }
+}
+
+void sid_write(int chip, uint8_t reg, uint8_t v){
+    (void)chip;
+    //printf("[SID] $%04X = %02X\n", reg, v);
+    sidPoke(reg, v);
+}
+
+// --- Render one stereo sample (your sidMixer, but one-shot) ---
+void sid_render_sample(int16_t *outL, int16_t *outR){
+    // a trimmed version of your sidMixer inner loop
+    int finalL = 0, finalR = 0;
+
+    int chiplen = 1;
+    if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
+
+    for(int chip=0; chip<chiplen; chip++){
+        int outf = 0;
+        int outo = 0;
+
+        unsigned char tVoice = 0x7;
+        if(bDualChipMode==1){
+            tVoice = (unsigned char)(GetSidChipVoices((unsigned char)chip) & 0x7);
+        }
+
+        for(int v=0; v<3; v++){
+            osc[chip][v].counter = (osc[chip][v].counter + osc[chip][v].freq) & 0x0FFFFFFF;
+
+            if(osc[chip][v].wave & 0x08){
+                osc[chip][v].counter = 0;
+                osc[chip][v].noisepos = 0;
+                osc[chip][v].noiseval = 0xffffff;
             }
 
-            const uint8_t refosc = (v ? (uint8_t)(v - 1) : 2);
-
-            // SYNC
-            if (s->cv[v].wave & CTRL_SYNC) {
-                if (s->cv[refosc].counter < s->cv[refosc].freq_inc) {
-                    // original: scale by ratio
-                    if (s->cv[refosc].freq_inc != 0) {
-                        s->cv[v].counter =
-                            (uint32_t)((uint64_t)s->cv[refosc].counter * (uint64_t)s->cv[v].freq_inc / (uint64_t)s->cv[refosc].freq_inc);
-                    } else {
-                        s->cv[v].counter = 0;
-                    }
+            int refosc = v ? (v - 1) : 2;
+            if(osc[chip][v].wave & 0x02){
+                if(osc[chip][refosc].counter < osc[chip][refosc].freq){
+                    osc[chip][v].counter = osc[chip][refosc].counter * osc[chip][v].freq / osc[chip][refosc].freq;
                 }
             }
 
-            // --- waveforms ---
-            uint8_t triout = (uint8_t)(s->cv[v].counter >> 19);
-            if (s->cv[v].counter >> 27) triout ^= 0xFF;
+            byte triout = (byte)(osc[chip][v].counter >> 19);
+            if(osc[chip][v].counter >> 27) triout ^= 0xff;
+            byte sawout = (byte)(osc[chip][v].counter >> 20);
+            byte plsout = (byte)((osc[chip][v].counter > osc[chip][v].pulse) - 1);
 
-            uint8_t sawout = (uint8_t)(s->cv[v].counter >> 20);
-
-            uint8_t plsout = (uint8_t)((s->cv[v].counter > s->cv[v].pulse_fp) - 1);
-
-            // noise (23-bit LFSR)
-            if (s->cv[v].noisepos != (s->cv[v].counter >> 24)) {
-                s->cv[v].noisepos = (s->cv[v].counter >> 24);
-
-                // newbit = bit22 xor bit17
-                uint32_t nv = s->cv[v].noiseval;
-                uint32_t newb = ((nv >> 22) ^ (nv >> 17)) & 1u;
-                nv = ((nv << 1) | newb) & 0x7FFFFFu;
-                s->cv[v].noiseval = nv;
-
-                s->cv[v].noiseout = (uint8_t)(
-                    (((nv >> 22) & 1u) << 7) |
-                    (((nv >> 20) & 1u) << 6) |
-                    (((nv >> 16) & 1u) << 5) |
-                    (((nv >> 13) & 1u) << 4) |
-                    (((nv >> 11) & 1u) << 3) |
-                    (((nv >>  7) & 1u) << 2) |
-                    (((nv >>  4) & 1u) << 1) |
-                    (((nv >>  2) & 1u) << 0)
-                    );
+            if(osc[chip][v].noisepos != (osc[chip][v].counter >> 24)){
+                osc[chip][v].noisepos = osc[chip][v].counter >> 24;
+                osc[chip][v].noiseval = (osc[chip][v].noiseval << 1) | (get_bit(osc[chip][v].noiseval, 22) ^ get_bit(osc[chip][v].noiseval, 17));
+                osc[chip][v].noiseout =
+                    (get_bit(osc[chip][v].noiseval,22) << 7) |
+                    (get_bit(osc[chip][v].noiseval,20) << 6) |
+                    (get_bit(osc[chip][v].noiseval,16) << 5) |
+                    (get_bit(osc[chip][v].noiseval,13) << 4) |
+                    (get_bit(osc[chip][v].noiseval,11) << 3) |
+                    (get_bit(osc[chip][v].noiseval, 7) << 2) |
+                    (get_bit(osc[chip][v].noiseval, 4) << 1) |
+                    (get_bit(osc[chip][v].noiseval, 2) << 0);
             }
-            uint8_t nseout = s->cv[v].noiseout;
+            byte nseout = osc[chip][v].noiseout;
 
-            // ringmod
-            if (s->cv[v].wave & CTRL_RING) {
-                if (s->cv[refosc].counter < 0x8000000u) triout ^= 0xFF;
+            if(osc[chip][v].wave & 0x04){
+                if(osc[chip][refosc].counter < 0x8000000) triout ^= 0xff;
             }
 
-            // mix waveforms (AND-combo)
-            uint8_t outv = 0xFF;
-            if (s->cv[v].wave & WF_TRI)   outv &= triout;
-            if (s->cv[v].wave & WF_SAW)   outv &= sawout;
-            if (s->cv[v].wave & WF_PULSE) outv &= plsout;
-            if (s->cv[v].wave & WF_NOISE) outv &= nseout;
+            byte outv = 0xFF;
+            if(osc[chip][v].wave & 0x10) outv &= triout;
+            if(osc[chip][v].wave & 0x20) outv &= sawout;
+            if(osc[chip][v].wave & 0x40) outv &= plsout;
+            if(osc[chip][v].wave & 0x80) outv &= nseout;
 
-            // --- envelope (old behaviour) ---
-            if (!(s->cv[v].wave & CTRL_GATE)) {
-                s->cv[v].envphase = 3;
-            } else if (s->cv[v].envphase == 3) {
-                s->cv[v].envphase = 0;
-            }
+            if(!(osc[chip][v].wave & 0x01)) osc[chip][v].envphase = 3;
+            else if(osc[chip][v].envphase == 3) osc[chip][v].envphase = 0;
 
-            switch (s->cv[v].envphase) {
-            case 0: // attack
-                s->cv[v].envval += (int32_t)s->cv[v].attack;
-                if (s->cv[v].envval >= (int32_t)0xFFFFFF) {
-                    s->cv[v].envval = (int32_t)0xFFFFFF;
-                    s->cv[v].envphase = 1;
+            switch(osc[chip][v].envphase){
+            case 0:
+                osc[chip][v].envval += osc[chip][v].attack;
+                if(osc[chip][v].envval >= 0xFFFFFF){ osc[chip][v].envval = 0xFFFFFF; osc[chip][v].envphase = 1; }
+                break;
+            case 1:
+                osc[chip][v].envval -= osc[chip][v].decay;
+                if((signed int)osc[chip][v].envval <= (signed int)(osc[chip][v].sustain << 16)){
+                    osc[chip][v].envval = (signed int)(osc[chip][v].sustain << 16);
+                    osc[chip][v].envphase = 2;
                 }
                 break;
-
-            case 1: // decay
-                s->cv[v].envval -= (int32_t)s->cv[v].decay;
-                if (s->cv[v].envval <= (int32_t)(s->cv[v].sustain << 16)) {
-                    s->cv[v].envval = (int32_t)(s->cv[v].sustain << 16);
-                    s->cv[v].envphase = 2;
-                }
+            case 2:
+                if((signed int)osc[chip][v].envval != (signed int)(osc[chip][v].sustain << 16)) osc[chip][v].envphase = 1;
                 break;
-
-            case 2: // sustain
-                if (s->cv[v].envval != (int32_t)(s->cv[v].sustain << 16)) {
-                    s->cv[v].envphase = 1;
-                }
-                break;
-
-            case 3: // release
-            default:
-                s->cv[v].envval -= (int32_t)s->cv[v].release;
-                if (s->cv[v].envval < (int32_t)0x40000) s->cv[v].envval = (int32_t)0x40000;
+            case 3:
+                osc[chip][v].envval -= osc[chip][v].release;
+                if(osc[chip][v].envval < 0x40000) osc[chip][v].envval = 0x40000;
                 break;
             }
 
-            // route to filter/non-filter, obey voice3 enable
-            if ((v < 2) || s->filt.v3ena) {
-                int32_t tform = (((int32_t)((int)outv - 0x80)) * (int32_t)s->cv[v].envval) >> 22;
-                if (s->cv[v].filter_en) outf += tform;
-                else                    outo += tform;
+            // filtered/non-filtered routing
+            if((v < 2) || filter[chip].v3ena){
+                long tform = 0;
+                if(tVoice & (1 << v)) tform = (((int)(outv - 0x80)) * osc[chip][v].envval) >> 22;
+                if(osc[chip][v].filter) outf += (int)tform;
+                else outo += (int)tform;
             }
         }
 
-        // --- filter stage ---
-        if (s->filt.freq < 2000) s->filt.freq = 2000;
+        // filter step
+        if(filter[chip].freq < 2000) filter[chip].freq = 2000;
 
-        s->filt.h = pfloat_from_int(outf) - (s->filt.b >> 8) * s->filt.rez - s->filt.l;
-        s->filt.b += pfloat_mul(s->filt.freq, s->filt.h);
-        s->filt.l += pfloat_mul(s->filt.freq, s->filt.b);
+        filter[chip].h = pfloat_ConvertFromInt(outf) - ((filter[chip].b >> 8) * filter[chip].rez) - filter[chip].l;
+        filter[chip].b += pfloat_Multiply(filter[chip].freq, filter[chip].h);
+        filter[chip].l += pfloat_Multiply(filter[chip].freq, filter[chip].b);
 
-        int32_t outf2 = 0;
-        if (s->filt.l_ena) outf2 += pfloat_to_int(s->filt.l);
-        if (s->filt.b_ena) outf2 += pfloat_to_int(s->filt.b);
-        if (s->filt.h_ena) outf2 += pfloat_to_int(s->filt.h);
+        outf = 0;
+        if(filter[chip].l_ena) outf += pfloat_ConvertToInt(filter[chip].l);
+        if(filter[chip].b_ena) outf += pfloat_ConvertToInt(filter[chip].b);
+        if(filter[chip].h_ena) outf += pfloat_ConvertToInt(filter[chip].h);
 
-        int32_t final = (int32_t)s->filt.vol * (outo + outf2);
+        int mixed = filter[chip].vol * (outo + outf);
 
-        // old code did >>1 after GenerateDigi; you don't have digis here yet,
-        // so mimic the gain staging:
-        //final >>= 1;
-
-        if (final < -32700) final = -32700;
-        if (final >  32700) final =  32700;
-
-        s->out_l[s->out_count] = (int16_t)final;
-        s->out_r[s->out_count] = (int16_t)final;
-        s->out_count++;
-
+        if(!(CHIPCONFIGS & SIDHV_CHANNEL_STEREO)){
+            finalL += mixed;
+            finalR += mixed;
+        } else {
+            if(chip == 0) finalL += mixed;
+            if(chip == 1) finalR += mixed;
+        }
     }
-}
 
+    // scaling/clamp to S16
+    // Your original used some shifting; here we do a safe clamp.
+    finalL >>= 1;
+    finalR >>= 1;
 
+    if(finalL < -32767) finalL = -32767;
+    if(finalL >  32767) finalL =  32767;
+    if(finalR < -32767) finalR = -32767;
+    if(finalR >  32767) finalR =  32767;
 
-
-
-void sid_write(sid_t *sid, uint16_t addr, uint8_t val){
-    static uint32_t sid_writes = 0;
-
-
-    /*
-    sid_writes++;
-    //    if (sid_writes > 30)
-    {
-        sid_writes = 0;
-        printf("sid writes: %u  D418=%02X  V1 ctrl=%02X\n",
-               sid_writes,
-               sid->reg[0x18],
-               sid->reg[0x04]);
-        fflush(stdout);
-    }
-    */
-
-    if (addr < 0xD400 || addr > 0xD41F) return;
-    sid->reg[addr - 0xD400] = val;
-    sid->dirty = 1;
-
-
+    *outL = (int16_t)finalL;
+    *outR = (int16_t)finalR;
 }

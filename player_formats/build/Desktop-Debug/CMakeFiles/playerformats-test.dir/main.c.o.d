@@ -15,60 +15,52 @@ CMakeFiles/playerformats-test.dir/main.c.o: \
  /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h \
  /usr/include/bits/types/cookie_io_functions_t.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/floatn.h \
- /usr/include/bits/floatn-common.h /usr/include/stdlib.h \
+ /usr/include/bits/floatn-common.h \
+ /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h \
+ /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
+ /usr/include/bits/stdint-least.h /usr/include/alsa/asoundlib.h \
+ /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+ /usr/include/bits/environments.h /usr/include/bits/confname.h \
+ /usr/include/bits/getopt_posix.h /usr/include/bits/getopt_core.h \
+ /usr/include/bits/unistd_ext.h /usr/include/stdlib.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
  /usr/include/sys/types.h /usr/include/bits/types/clock_t.h \
  /usr/include/bits/types/clockid_t.h /usr/include/bits/types/time_t.h \
- /usr/include/bits/types/timer_t.h /usr/include/bits/stdint-intn.h \
- /usr/include/endian.h /usr/include/bits/endian.h \
- /usr/include/bits/endianness.h /usr/include/bits/byteswap.h \
- /usr/include/bits/uintn-identity.h /usr/include/sys/select.h \
- /usr/include/bits/select.h /usr/include/bits/types/sigset_t.h \
- /usr/include/bits/types/__sigset_t.h \
+ /usr/include/bits/types/timer_t.h /usr/include/endian.h \
+ /usr/include/bits/endian.h /usr/include/bits/endianness.h \
+ /usr/include/bits/byteswap.h /usr/include/bits/uintn-identity.h \
+ /usr/include/sys/select.h /usr/include/bits/select.h \
+ /usr/include/bits/types/sigset_t.h /usr/include/bits/types/__sigset_t.h \
  /usr/include/bits/types/struct_timeval.h \
  /usr/include/bits/types/struct_timespec.h \
  /usr/include/bits/pthreadtypes.h /usr/include/bits/thread-shared-types.h \
  /usr/include/bits/pthreadtypes-arch.h \
  /usr/include/bits/atomic_wide_counter.h /usr/include/bits/struct_mutex.h \
  /usr/include/bits/struct_rwlock.h /usr/include/alloca.h \
- /usr/include/bits/stdlib-float.h \
- /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
- /usr/include/stdint.h /usr/include/bits/wchar.h \
- /usr/include/bits/stdint-uintn.h /usr/include/bits/stdint-least.h \
- /usr/include/string.h /usr/include/bits/types/locale_t.h \
- /usr/include/bits/types/__locale_t.h /usr/include/strings.h \
- /usr/include/math.h /usr/include/bits/math-vector.h \
- /usr/include/bits/libm-simd-decl-stubs.h \
- /usr/include/bits/flt-eval-method.h /usr/include/bits/fp-logb.h \
- /usr/include/bits/fp-fast.h /usr/include/bits/mathcalls-macros.h \
- /usr/include/bits/mathcalls-helper-functions.h \
- /usr/include/bits/mathcalls.h /usr/include/time.h \
- /usr/include/bits/time.h /usr/include/bits/types/struct_tm.h \
- /usr/include/bits/types/struct_itimerspec.h \
- /usr/include/alsa/asoundlib.h /usr/include/unistd.h \
- /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
- /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
- /usr/include/bits/getopt_core.h /usr/include/bits/unistd_ext.h \
- /usr/include/fcntl.h /usr/include/bits/fcntl.h \
+ /usr/include/bits/stdlib-float.h /usr/include/string.h \
+ /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
+ /usr/include/strings.h /usr/include/fcntl.h /usr/include/bits/fcntl.h \
  /usr/include/bits/fcntl-linux.h /usr/include/bits/stat.h \
  /usr/include/bits/struct_stat.h /usr/include/assert.h \
  /usr/include/poll.h /usr/include/sys/poll.h /usr/include/bits/poll.h \
  /usr/include/errno.h /usr/include/bits/errno.h \
  /usr/include/linux/errno.h /usr/include/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
- /usr/include/alsa/asoundef.h /usr/include/alsa/version.h \
- /usr/include/alsa/global.h /usr/include/alsa/input.h \
- /usr/include/alsa/output.h /usr/include/alsa/error.h \
- /usr/include/alsa/conf.h /usr/include/alsa/pcm.h \
- /usr/include/alsa/rawmidi.h /usr/include/alsa/ump.h \
- /usr/include/alsa/timer.h /usr/include/alsa/hwdep.h \
- /usr/include/alsa/control.h /usr/include/alsa/mixer.h \
- /usr/include/alsa/ump_msg.h /usr/include/alsa/seq_event.h \
- /usr/include/alsa/seq.h /usr/include/alsa/seqmid.h \
- /usr/include/alsa/seq_midi_event.h \
+ /usr/include/time.h /usr/include/bits/time.h \
+ /usr/include/bits/types/struct_tm.h \
+ /usr/include/bits/types/struct_itimerspec.h /usr/include/alsa/asoundef.h \
+ /usr/include/alsa/version.h /usr/include/alsa/global.h \
+ /usr/include/alsa/input.h /usr/include/alsa/output.h \
+ /usr/include/alsa/error.h /usr/include/alsa/conf.h \
+ /usr/include/alsa/pcm.h /usr/include/alsa/rawmidi.h \
+ /usr/include/alsa/ump.h /usr/include/alsa/timer.h \
+ /usr/include/alsa/hwdep.h /usr/include/alsa/control.h \
+ /usr/include/alsa/mixer.h /usr/include/alsa/ump_msg.h \
+ /usr/include/alsa/seq_event.h /usr/include/alsa/seq.h \
+ /usr/include/alsa/seqmid.h /usr/include/alsa/seq_midi_event.h \
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.h \
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sid8579.h \
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sidplaybus.h \
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.h \
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/ciairq.h \
- /mnt/LinuxDatas/work/sidbox-softwares/player_formats/song.h
+ /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.h \
+ /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.h
