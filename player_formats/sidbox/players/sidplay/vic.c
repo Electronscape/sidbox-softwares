@@ -1,150 +1,165 @@
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "vic.h"
 
+// --- Constants ---
+#define VIC_PAL_CYCLES   63
+#define VIC_PAL_LINES    311
+
+#define VIC_NTSC_CYCLES  65
+#define VIC_NTSC_LINES   263
+
+uint32_t VIC_MACHINE_CYCLES = VIC_PAL_CYCLES;
+uint32_t VIC_MACHINE_LINES  = VIC_PAL_LINES;
+
+// --- Globals ---
 uint8_t  VICREG[0x40];
 uint16_t VICRASTER;
 uint32_t VIC_CYC_ACC;
 uint8_t  VIC_IRQ_LINE;
 
-
-static uint8_t  VIC_RASTER_CMP_LO;   // latch written via $D012
-static uint8_t  VIC_RASTER_CMP_HI;   // latch written via bit7 of $D011
-
+// --- Internal State ---
+static uint8_t  VIC_RASTER_CMP_LO;
+static uint8_t  VIC_RASTER_CMP_HI;
+// Hardware Detail: Raster IRQ stays triggered as long as the match is true
+// and the latch isn't cleared.
+static uint8_t  raster_irq_triggered;
 
 #define VIC_R(a) ((uint8_t)((a) & 0x3F))
 
-
-
-
-static inline uint16_t vic_raster_cmp(void){
-    //uint16_t hi = (VICREG[0x11] & 0x80) ? 0x100 : 0x000;
-    //uint16_t lo = VICREG[0x12];
-    //return (uint16_t)(hi | lo);
+static inline uint16_t vic_get_raster_cmp(void) {
     return (uint16_t)((VIC_RASTER_CMP_HI ? 0x100 : 0x000) | VIC_RASTER_CMP_LO);
 }
 
-static inline void vic_update_irq(void){
-    uint8_t en   = VICREG[0x1A] & 0x01;  // raster irq enable
-    uint8_t flag = VICREG[0x19] & 0x01;  // raster irq flag
+static inline void vic_update_irq(void) {
+    // Bits 0-3 are status, bit 7 is the master "Any VIC IRQ" bit
+    uint8_t pending = VICREG[0x19] & 0x0F;
+    uint8_t mask    = VICREG[0x1A] & 0x0F;
 
-    if (en && flag){
-        //if (!VIC_IRQ_LINE) putchar('#');  // edge detect
+    if (pending & mask) {
+        VICREG[0x19] |= 0x80;
         VIC_IRQ_LINE = 1;
-        VICREG[0x19] |= 0x80;            // irq happened status
     } else {
+        VICREG[0x19] &= 0x7F;
         VIC_IRQ_LINE = 0;
-        VICREG[0x19] &= (uint8_t)~0x80;
     }
 }
 
-void vic_clear_irq(void){
-    VIC_IRQ_LINE = 0;
-    VICREG[0x19] &= (uint8_t)~0x80;
-}
+void vic_reset(void) {
+    // On a real VIC, unused bits usually read as 1.
+    memset(VICREG, 0xFF, 0x40);
 
-void vic_reset(void){
-    for(int i=0;i<0x40;i++) VICREG[i]=0;
-    VICRASTER = 0;
-    VIC_CYC_ACC = 0;
-    VIC_IRQ_LINE = 0;
-
+    VICRASTER         = 0;
+    VIC_CYC_ACC       = 0;
+    VIC_IRQ_LINE      = 0;
     VIC_RASTER_CMP_LO = 0;
     VIC_RASTER_CMP_HI = 0;
+    raster_irq_triggered = 0;
 
-
-    // sensible-ish default
-    VICREG[0x11] = 0x1B; // bit7 cleared ( for clarity = (0x1B & 0x7F)  )
+    // Standard Power-up
+    VICREG[0x11] = 0x1B;
     VICREG[0x12] = 0x00;
-    VICREG[0x19] = 0x00;
-    VICREG[0x1A] = 0x00;
+    VICREG[0x19] = 0x70; // High bits 4-6 are always 1
+    VICREG[0x1A] = 0xF0; // High bits 4-7 are always 1
 }
 
-uint8_t vic_read(uint16_t addr){
+uint8_t vic_read(uint16_t addr) {
     uint8_t r = VIC_R(addr);
 
-    if (r == 0x12) return (uint8_t)(VICRASTER & 0xFF);
+    switch (r) {
+    case 0x11:
+        // Bit 7 is the 9th bit of the REAL raster counter
+        return (VICREG[0x11] & 0x7F) | ((VICRASTER & 0x100) >> 1);
 
-    // updated with this
-    // This prevents any accidental weirdness if code relies on bits 0..6 staying stable while polling.
-    if (r == 0x11){
-        uint8_t v = (uint8_t)(VICREG[0x11] & 0x7F);  // keep bits 0..6 as written
-        if (VICRASTER & 0x100) v |= 0x80;            // bit7 = current raster hi
-        return v;
+    case 0x12:
+        // Low 8 bits of REAL raster counter
+        return (uint8_t)(VICRASTER & 0xFF);
+
+    case 0x19:
+        return VICREG[0x19] | 0x70; // Bits 4-6 are hardwired to 1
+
+    case 0x1A:
+        return VICREG[0x1A] | 0xF0; // Bits 4-7 are hardwired to 1
+
+    default:
+        return VICREG[r];
     }
-
-    /* asked to not use this anymore
-    if (r == 0x11){
-        uint8_t v = VICREG[0x11];
-        if (VICRASTER & 0x100) v |= 0x80;
-        else                   v &= (uint8_t)~0x80;
-        return v;
-    }
-    */
-
-    return VICREG[r];
 }
 
-void vic_write(uint16_t addr, uint8_t val){
+void vic_write(uint16_t addr, uint8_t val) {
     uint8_t r = VIC_R(addr);
 
-    switch(r){
+    switch (r) {
+    case 0x11:
+        VIC_RASTER_CMP_HI = (val & 0x80) >> 7;
+        VICREG[0x11] = val;
+        // Re-check for match immediately (crucial for stable rasters)
+        if (VICRASTER == vic_get_raster_cmp()) {
+            if (!raster_irq_triggered) {
+                VICREG[0x19] |= 0x01;
+                raster_irq_triggered = 1;
+                vic_update_irq();
+            }
+        } else {
+            raster_irq_triggered = 0;
+        }
+        break;
 
-        // this section is locked in now, too many u-turns, stick to basics
-        case 0x12:
-            VIC_RASTER_CMP_LO = val;
-            VICREG[0x12] = val;
-            if (VICRASTER == vic_raster_cmp()) VICREG[0x19] |= 0x01;
-            vic_update_irq();
-            return;
+    case 0x12:
+        VIC_RASTER_CMP_LO = val;
+        if (VICRASTER == vic_get_raster_cmp()) {
+            if (!raster_irq_triggered) {
+                VICREG[0x19] |= 0x01;
+                raster_irq_triggered = 1;
+                vic_update_irq();
+            }
+        } else {
+            raster_irq_triggered = 0;
+        }
+        break;
 
-        // this section is locked in now, too many u-turns, stick to basics
-        case 0x11:
-            VIC_RASTER_CMP_HI = (val & 0x80) ? 1 : 0;
-            VICREG[0x11] = (uint8_t)(val & 0x7F);
-            if (VICRASTER == vic_raster_cmp()) VICREG[0x19] |= 0x01;
-            vic_update_irq();
-            return;
+    case 0x19:
+        // ACK BUG FIX: Writing 1 clears the bit, but ONLY if the match condition
+        // is no longer true. We just clear the status bits here.
+        VICREG[0x19] &= ~(val & 0x0F);
+        vic_update_irq();
+        break;
 
+    case 0x1A:
+        VICREG[0x1A] = val | 0xF0;
+        vic_update_irq();
+        break;
 
-
-
-
-        case 0x19:  // mostly for "yey i got the irq, can clear it now" MOSTLY
-            //printf("[VIC] D019 W1C <= %02X  (before=%02X)\n", val, VICREG[0x19]);
-            // write-1-to-clear on bits 0..3
-            VICREG[0x19] &= (uint8_t)~(val & 0x0F);
-            vic_update_irq();
-            return;
-
-        case 0x1A:
-            //printf("[VIC] D01A <= %02X\n", val);
-            VICREG[0x1A] = val;
-            vic_update_irq();
-            return;
-
-        default:
-            VICREG[r] = val;
-            return;
+    default:
+        VICREG[r] = val;
+        break;
     }
 }
 
-void vic_step(int cpu_cycles){
-    // PAL-ish: 63 cycles/line, 312 lines/frame
-    const int CYC_PER_LINE = 63;
-    const int LINES_PER_FRAME = 312;
-
+void vic_step(int cpu_cycles) {
     VIC_CYC_ACC += (uint32_t)cpu_cycles;
 
-    while (VIC_CYC_ACC >= (uint32_t)CYC_PER_LINE){
-        VIC_CYC_ACC -= (uint32_t)CYC_PER_LINE;
+    while (VIC_CYC_ACC >= VIC_MACHINE_CYCLES) {
+        VIC_CYC_ACC -= VIC_MACHINE_CYCLES;
 
         VICRASTER++;
-        if (VICRASTER >= LINES_PER_FRAME) VICRASTER = 0;
+        if (VICRASTER >= VIC_MACHINE_LINES) {
+            VICRASTER = 0;
+        }
 
-        if (VICRASTER == vic_raster_cmp()){
-            VICREG[0x19] |= 0x01;   // raster irq flag
-            vic_update_irq();
+        // Logic Check: On every line change, the trigger gate resets.
+        // This is how "Raster IRQs" actually cycle.
+        uint16_t cmp = vic_get_raster_cmp();
+        if (VICRASTER == cmp) {
+            if (!raster_irq_triggered) {
+                VICREG[0x19] |= 0x01;
+                raster_irq_triggered = 1;
+                vic_update_irq();
+            }
+        } else {
+            raster_irq_triggered = 0;
         }
     }
 }

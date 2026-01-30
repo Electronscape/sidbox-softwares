@@ -19,9 +19,8 @@ extern "C" {
 
 
 
+extern uint8_t playmode_sidtype;
 
-#define SIDPLAY_PLAYMODE_PSID  0x00
-#define SIDPLAY_PLAYMODE_RSID  0x01
 
 // Init + load PSID
 int PlaySID_Init(const char *filename, int subsong /* -1 = default */);

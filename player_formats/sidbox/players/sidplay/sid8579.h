@@ -16,7 +16,7 @@ void sid_write(int chip, uint8_t reg, uint8_t v);
 
 // Called by player to (re)init synth
 void synth_init(uint32_t mixfrq);
-void synth_start(void);
+void synth_prep_per_step();
 
 // Render ONE sample (stereo) into signed 16-bit
 void sid_render_sample(int16_t *outL, int16_t *outR);
@@ -27,6 +27,13 @@ unsigned char GetSidChipType(unsigned char chip);
 void SetSidChipVoices(unsigned char chip, unsigned char voices);
 unsigned char GetSidChipVoices(unsigned char chip);
 void restartSidChipModes(void);
+
+
+
+void sid_render_sample_noadvance(int16_t *outL, int16_t *outR);
+void sid_clock_cycles(uint32_t cycles);
+
+
 
 #ifdef __cplusplus
 }

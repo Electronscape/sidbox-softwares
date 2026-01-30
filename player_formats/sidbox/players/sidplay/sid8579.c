@@ -9,7 +9,8 @@ volatile unsigned long CHIPCONFIGS = 0;
 
 #define SIDHV_CHANNEL_STEREO (1u<<0) // you can map this properly later
 
-static unsigned char SidChipType[2] = { Chip6581, Chip6581 };
+//static unsigned char SidChipType[2] = { Chip6581, Chip6581 };
+static unsigned char SidChipType[2] = { Chip8580, Chip8580 };
 static unsigned char SidVoicesEn[2] = { 0x7, 0x7 };
 
 void SetSidChipTypes(unsigned char chip, unsigned char type){ SidChipType[chip & 1] = type; }
@@ -150,7 +151,7 @@ void synth_init(uint32_t mixfrq){
     sid[1].ftp_vol = 15;
 }
 
-void synth_start(void){
+void synth_prep_per_step(void){
     for(int chip=0; chip<2; chip++){
         for(int v=0; v<3; v++){
             osc[chip][v].pulse   = (sid[chip].v[v].pulse & 0xfff) << 16;
@@ -305,6 +306,7 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
     // a trimmed version of your sidMixer inner loop
     int finalL = 0, finalR = 0;
 
+    //synth_prep_per_step();
     int chiplen = 1;
     if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
 
@@ -329,7 +331,14 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
             int refosc = v ? (v - 1) : 2;
             if(osc[chip][v].wave & 0x02){
                 if(osc[chip][refosc].counter < osc[chip][refosc].freq){
-                    osc[chip][v].counter = osc[chip][refosc].counter * osc[chip][v].freq / osc[chip][refosc].freq;
+                    // ---------------- THIS WAS CHANGED ----------------
+                    // Protect against Division By Zero if master freq is 0
+                    if(osc[chip][refosc].freq > 0) {
+                        osc[chip][v].counter = osc[chip][refosc].counter * osc[chip][v].freq / osc[chip][refosc].freq;
+                    } else {
+                        osc[chip][v].counter = 0;
+                    }
+                    // --------------------------------------------------
                 }
             }
 
@@ -421,6 +430,222 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
 
     // scaling/clamp to S16
     // Your original used some shifting; here we do a safe clamp.
+    finalL >>= 1;
+    finalR >>= 1;
+
+    if(finalL < -32767) finalL = -32767;
+    if(finalL >  32767) finalL =  32767;
+    if(finalR < -32767) finalR = -32767;
+    if(finalR >  32767) finalR =  32767;
+
+    *outL = (int16_t)finalL;
+    *outR = (int16_t)finalR;
+}
+
+
+
+
+
+
+
+// ===================== RSID cycle sync state =====================
+// fractional accumulator: (cpu_cycles * mixing_frequency) / C64_CPU_HZ_PAL
+static uint64_t g_rsid_acc = 0;
+// ================================================================
+
+
+// advance SID internal time by real CPU cycles (RSID path)
+// This now actually ADVANCES osc/env/filter state for the number of "ticks" elapsed.
+void sid_clock_cycles(uint32_t cpu_cycles){
+    if(cpu_cycles == 0) return;
+
+    // accumulate fractional "ticks"
+    g_rsid_acc += (uint64_t)cpu_cycles * (uint64_t)mixing_frequency;
+
+    // how many whole ticks elapsed?
+    uint32_t ticks = (uint32_t)(g_rsid_acc / (uint64_t)C64_CPU_HZ_PAL);
+    if(!ticks) return;
+
+    // keep remainder
+    g_rsid_acc -= (uint64_t)ticks * (uint64_t)C64_CPU_HZ_PAL;
+
+    int chiplen = 1;
+    if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
+
+    // Run your ORIGINAL stepping logic "ticks" times, but WITHOUT producing output samples.
+    while(ticks--){
+        for(int chip=0; chip<chiplen; chip++){
+            int outf = 0;
+            int outo = 0;
+
+            unsigned char tVoice = 0x7;
+            if(bDualChipMode==1){
+                tVoice = (unsigned char)(GetSidChipVoices((unsigned char)chip) & 0x7);
+            }
+
+            for(int v=0; v<3; v++){
+                // --- ORIGINAL osc advance ---
+                osc[chip][v].counter = (osc[chip][v].counter + osc[chip][v].freq) & 0x0FFFFFFF;
+
+                if(osc[chip][v].wave & 0x08){
+                    osc[chip][v].counter = 0;
+                    osc[chip][v].noisepos = 0;
+                    osc[chip][v].noiseval = 0xffffff;
+                }
+
+                int refosc = v ? (v - 1) : 2;
+                if(osc[chip][v].wave & 0x02){
+                    if(osc[chip][refosc].counter < osc[chip][refosc].freq){
+                        // ---------------- THIS WAS CHANGED ----------------
+                        if(osc[chip][refosc].freq > 0) {
+                            osc[chip][v].counter = osc[chip][refosc].counter * osc[chip][v].freq / osc[chip][refosc].freq;
+                        } else {
+                            osc[chip][v].counter = 0;
+                        }
+                        // --------------------------------------------------
+                    }
+                }
+
+                byte triout = (byte)(osc[chip][v].counter >> 19);
+                if(osc[chip][v].counter >> 27) triout ^= 0xff;
+                byte sawout = (byte)(osc[chip][v].counter >> 20);
+                byte plsout = (byte)((osc[chip][v].counter > osc[chip][v].pulse) - 1);
+
+                if(osc[chip][v].noisepos != (osc[chip][v].counter  >> 24)){
+                    osc[chip][v].noisepos =  osc[chip][v].counter  >> 24;
+                    osc[chip][v].noiseval = (osc[chip][v].noiseval << 1) | (get_bit(osc[chip][v].noiseval, 22) ^ get_bit(osc[chip][v].noiseval, 17));
+                    osc[chip][v].noiseout =
+                        (get_bit(osc[chip][v].noiseval,22) << 7) |
+                        (get_bit(osc[chip][v].noiseval,20) << 6) |
+                        (get_bit(osc[chip][v].noiseval,16) << 5) |
+                        (get_bit(osc[chip][v].noiseval,13) << 4) |
+                        (get_bit(osc[chip][v].noiseval,11) << 3) |
+                        (get_bit(osc[chip][v].noiseval, 7) << 2) |
+                        (get_bit(osc[chip][v].noiseval, 4) << 1) |
+                        (get_bit(osc[chip][v].noiseval, 2) << 0);
+                }
+                byte nseout = osc[chip][v].noiseout;
+
+                if(osc[chip][v].wave & 0x04){
+                    if(osc[chip][refosc].counter < 0x8000000) triout ^= 0xff;
+                }
+
+                byte outv = 0xFF;
+                if(osc[chip][v].wave & 0x10) outv &= triout;
+                if(osc[chip][v].wave & 0x20) outv &= sawout;
+                if(osc[chip][v].wave & 0x40) outv &= plsout;
+                if(osc[chip][v].wave & 0x80) outv &= nseout;
+
+                // --- ORIGINAL gate/env phase logic ---
+                if(!(osc[chip][v].wave & 0x01)) osc[chip][v].envphase = 3;
+                else if(osc[chip][v].envphase == 3) osc[chip][v].envphase = 0;
+
+                // --- ORIGINAL envelope stepping ---
+                switch(osc[chip][v].envphase){
+                case 0:
+                    osc[chip][v].envval += osc[chip][v].attack;
+                    if(osc[chip][v].envval >= 0xFFFFFF){ osc[chip][v].envval = 0xFFFFFF; osc[chip][v].envphase = 1; }
+                    break;
+                case 1:
+                    osc[chip][v].envval -= osc[chip][v].decay;
+                    if((signed int)osc[chip][v].envval <= (signed int)(osc[chip][v].sustain << 16)){
+                        osc[chip][v].envval = (signed int)(osc[chip][v].sustain << 16);
+                        osc[chip][v].envphase = 2;
+                    }
+                    break;
+                case 2:
+                    if((signed int)osc[chip][v].envval != (signed int)(osc[chip][v].sustain << 16)) osc[chip][v].envphase = 1;
+                    break;
+                case 3:
+                    osc[chip][v].envval -= osc[chip][v].release;
+                    if(osc[chip][v].envval < 0x40000) osc[chip][v].envval = 0x40000;
+                    break;
+                }
+
+                // --- feed filter integrator with real input, but we don’t output audio here ---
+                if((v < 2) || filter[chip].v3ena){
+                    long tform = 0;
+                    if(tVoice & (1 << v)) tform = (((int)(outv - 0x80)) * osc[chip][v].envval) >> 22;
+                    if(osc[chip][v].filter) outf += (int)tform;
+                    else outo += (int)tform;
+                }
+            }
+
+            // --- ORIGINAL filter integrator step (state must advance or it sounds wrong) ---
+            if(filter[chip].freq < 2000) filter[chip].freq = 2000;
+
+            filter[chip].h = pfloat_ConvertFromInt(outf) - ((filter[chip].b >> 8) * filter[chip].rez) - filter[chip].l;
+            filter[chip].b += pfloat_Multiply(filter[chip].freq, filter[chip].h);
+            filter[chip].l += pfloat_Multiply(filter[chip].freq, filter[chip].b);
+
+            // NOTE: no output mixing here; this is just "advance time"
+            (void)outo;
+        }
+    }
+}
+
+
+// Produce one sample from CURRENT state (no counters/envelopes/filter stepping)
+// (your existing one is fine — keep it exactly like you wrote)
+void sid_render_sample_noadvance(int16_t *outL, int16_t *outR){
+    int finalL = 0, finalR = 0;
+
+    int chiplen = 1;
+    if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
+
+    for(int chip=0; chip<chiplen; chip++){
+        int outf = 0;
+        int outo = 0;
+
+        unsigned char tVoice = 0x7;
+        if(bDualChipMode==1){
+            tVoice = (unsigned char)(GetSidChipVoices((unsigned char)chip) & 0x7);
+        }
+
+        for(int v=0; v<3; v++){
+            int refosc = v ? (v - 1) : 2;
+
+            byte triout = (byte)(osc[chip][v].counter >> 19);
+            if(osc[chip][v].counter >> 27) triout ^= 0xff;
+            byte sawout = (byte)(osc[chip][v].counter >> 20);
+            byte plsout = (byte)((osc[chip][v].counter > osc[chip][v].pulse) - 1);
+
+            byte nseout = osc[chip][v].noiseout;
+
+            if(osc[chip][v].wave & 0x04){
+                if(osc[chip][refosc].counter < 0x8000000) triout ^= 0xff;
+            }
+
+            byte outv = 0xFF;
+            if(osc[chip][v].wave & 0x10) outv &= triout;
+            if(osc[chip][v].wave & 0x20) outv &= sawout;
+            if(osc[chip][v].wave & 0x40) outv &= plsout;
+            if(osc[chip][v].wave & 0x80) outv &= nseout;
+
+            if((v < 2) || filter[chip].v3ena){
+                long tform = 0;
+                if(tVoice & (1 << v)) tform = (((int)(outv - 0x80)) * osc[chip][v].envval) >> 22;
+                if(osc[chip][v].filter) outf += (int)tform;
+                else outo += (int)tform;
+            }
+        }
+
+        int fsum = 0;
+        if(filter[chip].l_ena) fsum += pfloat_ConvertToInt(filter[chip].l);
+        if(filter[chip].b_ena) fsum += pfloat_ConvertToInt(filter[chip].b);
+        if(filter[chip].h_ena) fsum += pfloat_ConvertToInt(filter[chip].h);
+
+        int mixed = filter[chip].vol * (outo + fsum);
+
+        if(!(CHIPCONFIGS & SIDHV_CHANNEL_STEREO)){
+            finalL += mixed;
+            finalR += mixed;
+        } else {
+            if(chip == 0) finalL += mixed;
+            if(chip == 1) finalR += mixed;
+        }
+    }
+
     finalL >>= 1;
     finalR >>= 1;
 

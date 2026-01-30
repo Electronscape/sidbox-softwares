@@ -106,7 +106,7 @@ static const uint8_t prog_vic_irq[] = {
     0x40                    // RTI
 };
 
-
+uint8_t playmode_sidtype = SIDPLAY_PLAYMODE_PSID;   // 0 = PSID, 1 = RSID, 2 = some crazy thing i dunno yet
 
 int main(){
 
@@ -139,7 +139,8 @@ int main(){
     snd_pcm_hw_params_free(params);
 
 
-    uint8_t playmode_sidtype = SIDPLAY_PLAYMODE_RSID;   // 0 = PSID, 1 = RSID, 2 = some crazy thing i dunno yet
+    playmode_sidtype = SIDPLAY_PLAYMODE_PSID;
+    playmode_sidtype = SIDPLAY_PLAYMODE_RSID;
 
     /////////////////////////// TEST ////////////////////////////////////////////////////////////
     if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){  // TEST AREA //
@@ -156,13 +157,23 @@ int main(){
     }
 
     if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){  // TEST AREA //
-        //sprintf(sidfilename, "../../rsid_Chimera.sid"); // <-- RSID - doesnt play :(
-        //sprintf(sidfilename, "../../rsid_Robox.sid"); // <-- RSID - Actually plays :O
-        sprintf(sidfilename, "../../rsid_rooter.sid"); // <-- RSID - doesnt play :(
-        //sprintf(sidfilename, "../../rsid_rorrol.sid"); // <-- RSID - plays, but does something else
+        //sprintf(sidfilename, "../../rsid_Chimera.sid"); // <-- RSID - plays now :)
+        //sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
+        //sprintf(sidfilename, "../../rsid_rooter.sid");  // <-- RSID - plays now :)
+        sprintf(sidfilename, "../../rsid_rorrol.sid");    // <-- RSID - plays, but does something else
 
         PlaySID_InitRSID(sidfilename);
 
+
+        /*
+            // flimsy song select, doesnt work though but its okay
+        uint8_t s = (uint8_t)(3 + 1);
+
+        bus_write8(0x0002, s);     // you already touch $02, some code might read it
+        bus_write8(0x0030, s);     // random-ish zp slot some players use
+        bus_write8(0x033C, s);     // kernal workspace-ish
+        bus_write8(0x033D, 0x00);  // sometimes hi byte / flags
+        */
 
         //PlaySID_LoadProgramRAW(prog_vic_irq, sizeof(prog_vic_irq), 0x0800, 0x0800, 0x0900, 0x0800); //
     }
