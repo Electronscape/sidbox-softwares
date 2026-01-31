@@ -117,7 +117,7 @@ int main(){
 
     snd_pcm_t *pcm_handle;
     snd_pcm_hw_params_t *params;
-    unsigned int rate = 44100;
+    unsigned int rate = AUDIO_MIX_FREQ;
     int err;
 
 
@@ -161,6 +161,8 @@ int main(){
         //sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
         //sprintf(sidfilename, "../../rsid_rooter.sid");  // <-- RSID - plays now :)
         sprintf(sidfilename, "../../rsid_rorrol.sid");    // <-- RSID - plays, but does something else
+        //sprintf(sidfilename, "../../rsid_MARRS_Mix.sid");
+        //sprintf(sidfilename, "../../rsid_Flippy.sid");
 
         PlaySID_InitRSID(sidfilename);
 
@@ -209,7 +211,7 @@ int main(){
         // todo-later :LATER: cyc_acc = 0; for now we wont bother this just a reminder
         /////////////////
         if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){
-            doRSIDStep(buffer, frames, 44100);
+            doRSIDStep(buffer, frames, AUDIO_MIX_FREQ);
         }
 
         // ## FOR RSID PLAY ONLY (or programs) call THIS and loop #########################################

@@ -19,7 +19,7 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o: \
  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
- /usr/include/bits/stdint-least.h \
+ /usr/include/bits/stdint-least.h /usr/include/inttypes.h \
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.h \
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/vic.h \
  /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.h \

@@ -161,16 +161,26 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: /mnt/LinuxData
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cia.c \
   /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cia.h \
+  /usr/include/bits/floatn-common.h \
+  /usr/include/bits/floatn.h \
   /usr/include/bits/libc-header-start.h \
   /usr/include/bits/long-double.h \
   /usr/include/bits/stdint-intn.h \
   /usr/include/bits/stdint-least.h \
   /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/stdio_lim.h \
   /usr/include/bits/time64.h \
   /usr/include/bits/timesize.h \
   /usr/include/bits/types.h \
+  /usr/include/bits/types/FILE.h \
+  /usr/include/bits/types/__FILE.h \
+  /usr/include/bits/types/__fpos64_t.h \
+  /usr/include/bits/types/__fpos_t.h \
   /usr/include/bits/types/__locale_t.h \
+  /usr/include/bits/types/__mbstate_t.h \
+  /usr/include/bits/types/cookie_io_functions_t.h \
   /usr/include/bits/types/locale_t.h \
+  /usr/include/bits/types/struct_FILE.h \
   /usr/include/bits/typesizes.h \
   /usr/include/bits/wchar.h \
   /usr/include/bits/wordsize.h \
@@ -180,9 +190,11 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o: /mnt/LinuxData
   /usr/include/gnu/stubs.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdint.h \
+  /usr/include/stdio.h \
   /usr/include/string.h \
   /usr/include/strings.h \
   /usr/include/sys/cdefs.h \
+  /usr/lib/gcc/x86_64-redhat-linux/15/include/stdarg.h \
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h \
   /usr/lib/gcc/x86_64-redhat-linux/15/include/stdint.h
 
@@ -217,6 +229,7 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o: /mnt/Linux
   /usr/include/features.h \
   /usr/include/gnu/stubs-64.h \
   /usr/include/gnu/stubs.h \
+  /usr/include/inttypes.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdint.h \
   /usr/include/stdio.h \
@@ -388,6 +401,8 @@ CMakeFiles/playerformats-test.dir/main.c.o:
 
 /usr/lib64/crtn.o:
 
+/usr/lib64/crti.o:
+
 /usr/include/bits/struct_stat.h:
 
 /usr/include/bits/types/time_t.h:
@@ -453,6 +468,8 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o:
 /usr/include/bits/fcntl-linux.h:
 
 /usr/include/strings.h:
+
+/usr/include/inttypes.h:
 
 /usr/include/alsa/seq_midi_event.h:
 
@@ -647,8 +664,6 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o:
 /usr/lib/gcc/x86_64-redhat-linux/15/include/stddef.h:
 
 /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/vic.h:
-
-/usr/lib64/crti.o:
 
 /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cpu6502.c:
 

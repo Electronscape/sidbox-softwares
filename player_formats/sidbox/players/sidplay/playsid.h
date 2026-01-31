@@ -11,7 +11,7 @@ extern "C" {
 
 
 
-
+#define AUDIO_MIX_FREQ  48000
 
 
 

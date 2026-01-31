@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include "bus.h"
 #include "cia.h"
 #include "sid8579.h"
@@ -118,7 +119,8 @@ uint8_t bus_read8(uint16_t addr) {
             if (addr >= 0xD400 && addr <= 0xD7FF) {
                 // Determine if read is supported (usually SID is write-only)
                 // Mirrors exist every 0x20 bytes
-                return 0;
+                printf("SID Read!\n");
+                return 0xff;
             }
 
             // CIA 1 ($DC00-$DCFF) - mirrored every 16 bytes
@@ -141,6 +143,7 @@ uint8_t bus_read8(uint16_t addr) {
 void bus_write8(uint16_t addr, uint8_t v) {
     C64RAM[addr] = v;
 
+
     if (playmode_sidtype == SIDPLAY_PLAYMODE_PSID) {
         if (addr >= 0xD400 && addr <= 0xD41F) sid_write(0, addr & 0x1F, v);
         return;
@@ -148,8 +151,12 @@ void bus_write8(uint16_t addr, uint8_t v) {
 
     const uint8_t p = cpu_port_eff();
 
+
+
     if (addr == 0x0000) { cpu_ddr = v; return; }
     if (addr == 0x0001) { cpu_port = v; return; }
+
+
 
     if (charen_on(p) && (loram_on(p) || hiram_on(p))) {
         // VIC-II Mirroring

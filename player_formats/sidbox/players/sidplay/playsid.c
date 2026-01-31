@@ -7,12 +7,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 static word load_addr, init_addr, play_addr;
 static byte subsongs, startsong, speed;
 static long ticks = 0;
 static unsigned long nRefreshCIA = 20000;
-static int mixing_frequency = 44100;
+static int mixing_frequency = AUDIO_MIX_FREQ;
 
 // crude "timekeeping"
 static long timeplay = 0;
@@ -267,9 +268,6 @@ static int LoadRSIDFromFile(const char *filename){
     startsong  = (byte)(rd_u16be(&hdr[16]));
     speed      = hdr[0x15];
 
-    byte targetSubsong = (startsong > 0) ? (startsong - 1) : 0;
-
-
     memset(tstring, 0x00, 64);
     int i=0;
     for(i = 0; i < 32; i ++ ) tstring[i] = hdr[22 + i]; tstring[i] = 0;
@@ -321,34 +319,7 @@ static int LoadRSIDFromFile(const char *filename){
     bus_write8(0x0000, 0x2F);
     bus_write8(0x0001, 0x37);
 
-    // Decide RESET target:
-    // - If init_addr != 0, RSID typically wants you to start there (as RESET handler).
-    // - Else boot at load_addr.
-    uint16_t resetTarget = init_addr ? init_addr : load_addr;
-
-    // In a ROM-less sandbox we must provide vectors in RAM, otherwise IRQ/NMI will jump to $0000.
-    // If the user provided KERNAL ROM, its vectors live in ROM and should be used instead.
-    if (!rsid_have_roms) {
-        uint16_t irqTarget = play_addr ? play_addr : resetTarget;
-        bus_write16(0xFFFA, 0xFE66); // Standard NMI return
-        bus_write16(0xFFFC, resetTarget);
-        bus_write16(0xFFFE, 0xFF48); // Standard IRQ entry
-
-        // KERNAL RAM vector ($0314/$0315) helper (common in tunes)
-        bus_write16(0x0314, irqTarget);
-
-        printf("** NO ROMS **\n");
-        // CPU will start at RESET vector (from RAM)
-        //cpuReset();
-        cpu_call_jsr_resetting(resetTarget, targetSubsong);
-    } else {
-        // Start execution at the tune's reset entry, but keep ROMs visible.
-        //cpuResetTo(resetTarget);
-        cpuResetTo(resetTarget);
-        cpu_set_a(targetSubsong); // Ensure A is set for the init call
-    }
-
-    // Prime audio
+      // Prime audio
     synth_prep_per_step();
 
     return 1;
@@ -359,8 +330,14 @@ static int LoadRSIDFromFile(const char *filename){
 
 int PlaySID_InitRSID(const char *filename){
     // volume poke like your code (both chips)
-    bus_write8(0xD418, 15);
-    bus_write8(0xD438, 15);
+    bus_write8(0xD418, 0xff);
+    bus_write8(0xD438, 0xff);
+    bus_write8(0xD418, 0xff);
+    bus_write8(0xD438, 0xff);
+    bus_write8(0xD418, 0xff);
+    bus_write8(0xD438, 0xff);
+
+
 
 
     clear64KRam();
@@ -447,8 +424,11 @@ int PlaySID_InitRSID(const char *filename){
         cpuSetPC(start_addr);
 
         // 5. Set Accumulator to Subsong (Standard RSID convention)
-        startsong = 1;
+
         byte targetSubsong = (startsong > 0) ? (startsong - 1) : 0;
+
+        //targetSubsong+=3;
+
         cpu_set_a(targetSubsong);
 
         // Now, if the code RTS's, it will land at $0110, enable IRQs, and spin.
@@ -615,6 +595,7 @@ uint32_t doRSIDStep(int16_t *out_interleaved, uint32_t frames, uint32_t sample_r
 
         // We run until we have exhausted the cycles allocated for THIS sample
         synth_prep_per_step(); // <--- do not delete this otherwise NO audio output (it handles volume over time main mixer)
+
         while(cyc_accumulator >= 1.0) {
             int inst_cycles = cpuStep();
             if(inst_cycles <= 0) break;
@@ -622,45 +603,42 @@ uint32_t doRSIDStep(int16_t *out_interleaved, uint32_t frames, uint32_t sample_r
             // 1. Advance Hardware by instruction time
             vic_step(inst_cycles);
             cia_step_all(inst_cycles);
-            sid_clock_cycles(inst_cycles);
+            //sid_clock_cycles(inst_cycles);
             cyc_accumulator -= (double)inst_cycles;
 
             // 2. Handle NMIs (Edge Triggered)
-            uint8_t cia2_nmi = (CIA2_IRQ_LINE > 0);
-            if (cia2_nmi && !prev_cia2_nmi) {
-                // Acknowledge the edge immediately
-                prev_cia2_nmi = 1;
 
-                // Trigger NMI
+            uint8_t cia2_asserted = (CIA2_IRQ_LINE != 0);
+            uint8_t nmi_pin = cia2_asserted ? 0 : 1;
+            static uint8_t prev_nmi_pin = 1;
+
+            if (prev_nmi_pin == 1 && nmi_pin == 0) {
                 cpu_nmi();
-
-                // NMIs take 7 cycles to push state to stack
-                vic_step(7);
-                cia_step_all(7);
-                sid_clock_cycles(7);
-                cyc_accumulator -= 7.0;
-            } else if (!cia2_nmi) {
-                // Reset the edge detection when the line goes high again
-                prev_cia2_nmi = 0;
+                //vic_step(7);
+                //cia_step_all(7);
+                //cyc_accumulator -= 7.0;
             }
+
+            prev_nmi_pin = nmi_pin;
+
 
             // 3. Handle IRQs (Level Triggered)
             if (!getIFlagStatus())            {
                 if (VIC_IRQ_LINE || CIA1_IRQ_LINE) {
                     cpu_irq();
                     // These 7 cycles MUST be accounted for in the budget
-                    vic_step(7);
-                    cia_step_all(7);
-                    sid_clock_cycles(7);
-                    cyc_accumulator -= 7.0;
+                    //vic_step(7);
+                    //cia_step_all(7);
+                    //sid_clock_cycles(7);
+                    //cyc_accumulator -= 7.0;
                 }
             }
         }
 
         // 4. Render
         int16_t L, R;
-        sid_render_sample_noadvance(&L, &R);
-        //sid_render_sample(&L, &R);
+        //sid_render_sample_noadvance(&L, &R);
+        sid_render_sample(&L, &R);
         out_interleaved[i*2 + 0] = L;
         out_interleaved[i*2 + 1] = R;
     }

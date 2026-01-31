@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include <stdint.h>
 #include "sid8579.h"
 #include "bus.h"
 #include <string.h>
@@ -9,8 +9,8 @@ volatile unsigned long CHIPCONFIGS = 0;
 
 #define SIDHV_CHANNEL_STEREO (1u<<0) // you can map this properly later
 
-//static unsigned char SidChipType[2] = { Chip6581, Chip6581 };
-static unsigned char SidChipType[2] = { Chip8580, Chip8580 };
+static unsigned char SidChipType[2] = { Chip6581, Chip6581 };
+//static unsigned char SidChipType[2] = { Chip8580, Chip8580 };
 static unsigned char SidVoicesEn[2] = { 0x7, 0x7 };
 
 void SetSidChipTypes(unsigned char chip, unsigned char type){ SidChipType[chip & 1] = type; }
@@ -297,7 +297,6 @@ static void sidPoke(int reg, unsigned char val){
 
 void sid_write(int chip, uint8_t reg, uint8_t v){
     (void)chip;
-    //printf("[SID] $%04X = %02X\n", reg, v);
     sidPoke(reg, v);
 }
 
@@ -309,10 +308,10 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
     //synth_prep_per_step();
     int chiplen = 1;
     if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
-
+    int outf = 0;
+    int outo = 0;
     for(int chip=0; chip<chiplen; chip++){
-        int outf = 0;
-        int outo = 0;
+
 
         unsigned char tVoice = 0x7;
         if(bDualChipMode==1){
@@ -366,7 +365,7 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
                 if(osc[chip][refosc].counter < 0x8000000) triout ^= 0xff;
             }
 
-            byte outv = 0xFF;
+            byte outv = 0xff;
             if(osc[chip][v].wave & 0x10) outv &= triout;
             if(osc[chip][v].wave & 0x20) outv &= sawout;
             if(osc[chip][v].wave & 0x40) outv &= plsout;
