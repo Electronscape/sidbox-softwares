@@ -114,38 +114,10 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.s: cmake_forc
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.s"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/sid8579.c -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.s
 
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: CMakeFiles/playerformats-test.dir/flags.make
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: CMakeFiles/playerformats-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o"
-	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o -MF CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o.d -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c
-
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.i"
-	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c > CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.i
-
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.s"
-	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.s
-
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o: CMakeFiles/playerformats-test.dir/flags.make
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o: CMakeFiles/playerformats-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o"
-	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o -MF CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o.d -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c
-
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.i"
-	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c > CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.i
-
-CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.s"
-	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.s
-
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o: CMakeFiles/playerformats-test.dir/flags.make
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cia.c
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o: CMakeFiles/playerformats-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o -MF CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o.d -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/cia.c
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.i: cmake_force
@@ -159,7 +131,7 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.s: cmake_force
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o: CMakeFiles/playerformats-test.dir/flags.make
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/vic.c
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o: CMakeFiles/playerformats-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o -MF CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o.d -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/vic.c
 
 CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.i: cmake_force
@@ -170,15 +142,43 @@ CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.s"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/vic.c -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.s
 
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: CMakeFiles/playerformats-test.dir/flags.make
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o: CMakeFiles/playerformats-test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o -MF CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o.d -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c
+
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.i"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c > CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.i
+
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.s"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/bus.c -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.s
+
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o: CMakeFiles/playerformats-test.dir/flags.make
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o: /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o: CMakeFiles/playerformats-test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o -MF CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o.d -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o -c /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c
+
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.i"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c > CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.i
+
+CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.s"
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sidbox/players/sidplay/playsid.c -o CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.s
+
 # Object files for target playerformats-test
 playerformats__test_OBJECTS = \
 "CMakeFiles/playerformats-test.dir/main.c.o" \
 "CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o" \
 "CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o" \
-"CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o" \
-"CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o" \
 "CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o" \
-"CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o"
+"CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o" \
+"CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o" \
+"CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o"
 
 # External object files for target playerformats-test
 playerformats__test_EXTERNAL_OBJECTS =
@@ -186,10 +186,10 @@ playerformats__test_EXTERNAL_OBJECTS =
 playerformats-test: CMakeFiles/playerformats-test.dir/main.c.o
 playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cpu6502.c.o
 playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/sid8579.c.o
-playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o
-playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o
 playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/cia.c.o
 playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/vic.c.o
+playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/bus.c.o
+playerformats-test: CMakeFiles/playerformats-test.dir/sidbox/players/sidplay/playsid.c.o
 playerformats-test: CMakeFiles/playerformats-test.dir/build.make
 playerformats-test: CMakeFiles/playerformats-test.dir/compiler_depend.ts
 playerformats-test: /usr/lib64/libasound.so
