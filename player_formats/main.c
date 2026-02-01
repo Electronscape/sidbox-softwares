@@ -108,6 +108,41 @@ static const uint8_t prog_vic_irq[] = {
 
 uint8_t playmode_sidtype = SIDPLAY_PLAYMODE_PSID;   // 0 = PSID, 1 = RSID, 2 = some crazy thing i dunno yet
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+static int run_cmd_capture(const char *cmd, char *out, size_t out_sz){
+    FILE *p = popen(cmd, "r");
+    if(!p) return 0;
+
+    size_t n = fread(out, 1, out_sz - 1, p);
+    out[n] = 0;
+
+    int rc = pclose(p);
+    if(rc != 0) return 0;
+
+    // trim trailing newline
+    while(n > 0 && (out[n-1] == '\n' || out[n-1] == '\r')) out[--n] = 0;
+    return (n > 0);
+}
+
+int linux_open_file_dialog(char *path_out, size_t path_out_sz){
+    // You can add filters like: --filter "SID files (*.sid)" --filter "All files (*)"
+    const char *cmd = "kdialog --getopenfilename /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sid_tunes \"*.sid|SID files (*.sid)\" \"*|All files\"";
+    return run_cmd_capture(cmd, path_out, path_out_sz);
+}
+
+
 int main(){
 
     char sidfilename[256];
@@ -151,7 +186,7 @@ int main(){
 
     /* Set hardware parameters */
 
-snd_pcm_sw_params_alloca(&sw);
+    snd_pcm_sw_params_alloca(&sw);
     // SW params: start quickly, wake us quickly
     snd_pcm_sw_params_current(pcm_handle, sw);
 
@@ -186,18 +221,58 @@ snd_pcm_sw_params_alloca(&sw);
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){  // TEST AREA //
-        sprintf(sidfilename, "../../rsid_Chimera.sid"); // <-- RSID - plays now :)
-        sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
-        sprintf(sidfilename, "../../rsid_rooter.sid");  // <-- RSID - it PLAYS but only if we choose song 2, never works on song 1 (tho it is there it worked on a buggy RSID play) lol :)
-        sprintf(sidfilename, "../../rsid_rorrol.sid");    // <-- RSID - plays now :)
-        sprintf(sidfilename, "../../rsid_MARRS_Mix.sid");     // <-- ALSO PLAYS!! YEY
-        sprintf(sidfilename, "../../rsid_Flippy.sid");    // THIS PLAYS TOO! WHOOHOO
-        sprintf(sidfilename, "../../rsid_Freak_Out.sid");
-        sprintf(sidfilename, "../../rsid_Digi.sid");
-        sprintf(sidfilename, "../../rsid_One_on_One_Jordan_vs_Bird.sid");
-        sprintf(sidfilename, "../../rsid_Mega_Apocalypse.sid");
-        sprintf(sidfilename, "../../rsid_Great_Giana_Sisters.sid");
+        //sprintf(sidfilename, "../../rsid_Chimera.sid"); // <-- RSID - plays now :)
+        //sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
+        //sprintf(sidfilename, "../../rsid_rooter.sid");  // <-- RSID - it PLAYS but only if we choose song 2, never works on song 1 (tho it is there it worked on a buggy RSID play) lol :)
+        //sprintf(sidfilename, "../../rsid_rorrol.sid");    // <-- RSID - plays now :)
+        //sprintf(sidfilename, "../../rsid_MARRS_Mix.sid");     // <-- ALSO PLAYS!! YEY
+        //sprintf(sidfilename, "../../rsid_Flippy.sid");    // THIS PLAYS TOO! WHOOHOO
+        //sprintf(sidfilename, "../../rsid_Freak_Out.sid");
+        //sprintf(sidfilename, "../../rsid_Digi.sid");
+        //sprintf(sidfilename, "../../rsid_One_on_One_Jordan_vs_Bird.sid");
+        //sprintf(sidfilename, "../../rsid_Mega_Apocalypse.sid");
+        //sprintf(sidfilename, "../../rsid_Great_Giana_Sisters.sid");
+        //sprintf(sidfilename, "../../rsid_RoboCop.sid");
+        //sprintf(sidfilename, "../../rsid_RoboCop.sid");
+        //sprintf(sidfilename, "../../rsid_Having_Sex.sid");
+        sprintf(sidfilename, "../../rsid_Jevers_Bannys_and_the_Master_Mixers.sid");
+
+
+        char path[4096];
+        if (linux_open_file_dialog(path, sizeof(path))) {
+            printf("Picked: %s\n", path);
+            sprintf(sidfilename, path);
+        } else {
+            printf("Cancelled or failed\n");
+            return 0;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         PlaySID_InitRSID(sidfilename);
 
