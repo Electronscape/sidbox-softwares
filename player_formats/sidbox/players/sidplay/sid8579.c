@@ -90,7 +90,7 @@ static uint8_t vol_dac[2];
 static uint8_t vol_last[2];
 static int32_t digi_dc[2];   // for optional DC blocking
 
-#define DIGI_GAIN 1800
+#define DIGI_GAIN 1000
 
 
 __attribute__((aligned(32)))

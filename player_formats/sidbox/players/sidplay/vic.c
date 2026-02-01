@@ -5,8 +5,8 @@
 #include "vic.h"
 
 // --- Constants ---
-#define VIC_PAL_CYCLES   64
-#define VIC_PAL_LINES    308
+#define VIC_PAL_CYCLES   63
+#define VIC_PAL_LINES    312    // i got bitch slapped by GPT! lol
 
 #define VIC_NTSC_CYCLES  65
 #define VIC_NTSC_LINES   263

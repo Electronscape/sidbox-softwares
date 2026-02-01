@@ -326,6 +326,58 @@ static int LoadRSIDFromFile(const char *filename){
 }
 
 
+// 'startsong' from header is 1..songs (usually). Treat 0 as 1.
+static inline uint8_t rsid_pick_song(uint16_t header_start, uint16_t header_songs, int user_song_1based)
+{
+    int s = user_song_1based;
+
+    if (s <= 0) s = (header_start > 0) ? (int)header_start : 0;
+    if (s < 0) s = 0;
+    if (header_songs > 0 && s > (int)header_songs) s = (int)header_songs;
+
+    //return (uint8_t)s; // <-- 1-based
+    return(uint8_t) 0;
+}
+
+
+static inline uint8_t clamp_u8(int v, int lo, int hi){
+    if (v < lo) return (uint8_t)lo;
+    if (v > hi) return (uint8_t)hi;
+    return (uint8_t)v;
+}
+
+// songs_count = header.songs (NOT minus 1)
+// startSong_1based = header.startSong (1..songs)
+static inline uint8_t rsid_pick_song0(int startSong_1based, int songs_count, int user_song0)
+{
+    int max0 = (songs_count > 0) ? (songs_count - 1) : 0;
+
+    int s0;
+    if (user_song0 >= 0) {
+        s0 = user_song0;
+    } else {
+        // header is 1-based, convert to 0-based
+        s0 = (startSong_1based > 0) ? (startSong_1based - 1) : 0;
+    }
+
+    return clamp_u8(s0, 0, max0);
+}
+
+static inline void c64_tick_1cycle(void);
+static void c64_run_cycles(uint32_t cycles)
+{
+    for (uint32_t i = 0; i < cycles; i++) {
+        c64_tick_1cycle();   // your working 1-cycle master tick
+    }
+}
+
+static void rsid_boot_kernel_window(void)
+{
+    // After cpuReset(), let KERNAL do its init work.
+    // Roughly: run ~ 1–3 frames worth of CPU cycles.
+    // PAL: ~985248 cycles/sec, ~19656 cycles/frame at 50Hz.
+    c64_run_cycles(19656 * 2);  // ~2 frames
+}
 
 
 int PlaySID_InitRSID(const char *filename){
@@ -397,46 +449,40 @@ int PlaySID_InitRSID(const char *filename){
 
     if (rsid_have_roms) {
         // Decide start address (Init takes priority over Load)
-        uint16_t start_addr = init_addr ? init_addr : load_addr;
+        const uint16_t start_addr = init_addr ? init_addr : load_addr;
 
-        // 1. Write a Trampoline at $0110 (Stack page, usually safe-ish low area)
-        // Code: CLI (58) ; JMP $0110 (4C 10 01)
+        // Trampoline at $0110: CLI ; JMP $0110  (idle loop with IRQs enabled)
         bus_write8(0x0110, 0x58);
         bus_write8(0x0111, 0x4C);
         bus_write8(0x0112, 0x10);
         bus_write8(0x0113, 0x01);
 
-        // 2. Perform standard Reset (initializes registers/flags)
+        // Reset CPU so it fetches vectors etc.
         cpuReset();
 
-        // 3. Manually Setup Stack for a "Return" to the Trampoline
-        // We simulate that "JSR start_addr" was called.
-        // Stack Pointer starts at 0xFF after reset.
+        // Let KERNAL run a tiny bit (optional, but keep since you added it)
+        rsid_boot_kernel_window();
+
+        // Fake a "JSR start_addr" return so RTS lands at $0110
         cpu_set_sp(0xFF);
-
-        // Push Return Address $0110. (RTS expects RetAddr-1, so $010F)
-        // High Byte (01)
         cpu_push_byte(0x01);
-        // Low Byte (0F)
-        cpu_push_byte(0x0F);
+        cpu_push_byte(0x0F);     // $010F so RTS -> $0110
 
-        // 4. Set PC to the Init routine
+        // Select song (0-based) and set regs BEFORE entering init
+        const int user_song0 = 0; // set -1 to use header default
+        const uint8_t song0 = rsid_pick_song0(startsong, subsongs, user_song0);
+
+        cpu_set_a(song0);
+        cpu_set_x(0);
+        cpu_set_y(0);
+
+        // Jump into init/load code and let it run under your normal tick loop
         cpuSetPC(start_addr);
 
-        // 5. Set Accumulator to Subsong (Standard RSID convention)
-
-        byte targetSubsong = (startsong > 0) ? (startsong - 1) : 0;
-
-        //targetSubsong+=3;
-
-        cpu_set_a(targetSubsong);
-
-        // Now, if the code RTS's, it will land at $0110, enable IRQs, and spin.
-        // If it doesn't RTS, it just runs.
     } else {
-        // No ROMs: Standard Sandbox behavior
         cpu_force_cli();
     }
+
 
     return 1;
 }
@@ -587,9 +633,8 @@ uint32_t doPlaySidStep(int16_t *out_interleaved, uint32_t frames){
 
 
 
-
-
-
+static uint8_t g_pending_nmi = 0;
+static uint8_t g_pending_irq = 0;
 
 static int      g_cpu_debt = 0;        // cycles remaining in current instruction
 static uint8_t  g_prev_nmi_pin = 1;    // edge detect for CIA2->NMI
@@ -599,13 +644,14 @@ static inline void c64_tick_1cycle(void)
     // 1) always advance hardware time
     vic_step(1);
     cia_step_all(1);
-    sid_clock_cycles(1);
+    //sid_clock_cycles(1);
 
-    // 2) CPU stall gating
+    // CALL ONCE (important: vic_cpu_can_run_this_cycle() consumes stall)
+    const int cpu_can_run = vic_cpu_can_run_this_cycle();
 
     // 2) CPU only runs if VIC allows it
     if (g_cpu_debt <= 0) {
-        if (vic_cpu_can_run_this_cycle()) {
+        if (cpu_can_run) {
             int inst = cpuStep();          // returns cycles cost
             if (inst <= 0) inst = 1;
             g_cpu_debt = inst - 1;         // we already spent 1 cycle right now
@@ -615,12 +661,10 @@ static inline void c64_tick_1cycle(void)
         }
     } else {
         // mid-instruction: still only burn debt if VIC allows CPU to progress
-        if (vic_cpu_can_run_this_cycle()) {
+        if (cpu_can_run) {
             g_cpu_debt--;
         }
     }
-
-
 
     // 3) interrupt sampling (same as before)
     uint8_t cia2_asserted = (CIA2_IRQ_LINE != 0);
@@ -629,34 +673,22 @@ static inline void c64_tick_1cycle(void)
     if (g_prev_nmi_pin == 1 && nmi_pin == 0) {
         cpu_nmi();
 
-        // burn 7 cycles of "sequence time"
-        for (int k = 0; k < 7; k++) {
-            vic_step(1);
-            cia_step_all(1);
-            sid_clock_cycles(1);
-        }
-
-        g_cpu_debt = 0;
+        // PAY the interrupt entry time instead of "free" entry
+        // (7 cycles total; we are already inside 1 master tick -> 6 left)
+        g_cpu_debt = 7 - 1;
+        g_prev_nmi_pin = nmi_pin;
+        return;
     }
     g_prev_nmi_pin = nmi_pin;
 
     if (!getIFlagStatus()) {
         if (VIC_IRQ_LINE || CIA1_IRQ_LINE) {
             cpu_irq();
-
-            for (int k = 0; k < 7; k++) {
-                vic_step(1);
-                cia_step_all(1);
-                sid_clock_cycles(1);
-            }
-
-            g_cpu_debt = 0;
+            g_cpu_debt = 7 - 1;
+            return;
         }
     }
 }
-
-
-
 
 
 
@@ -684,9 +716,9 @@ uint32_t doRSIDStep(int16_t *out_interleaved, uint32_t frames, uint32_t sample_r
 
         // render: DO NOT advance SID here
         int16_t L, R;
-        synth_prep_per_step(); // now it sees the SID writes that just happened
-        sid_render_sample_noadvance(&L, &R);
-        //sid_render_sample(&L, &R);
+        synth_prep_per_step(); // [PLEASE DO NOT REMOVE THIS!!! EVER!! ] now it sees the SID writes that just happened
+        //sid_render_sample_noadvance(&L, &R);
+        sid_render_sample(&L, &R);  // im using this as internally the timers are on tick perfectly
 
         out_interleaved[i*2 + 0] = L;
         out_interleaved[i*2 + 1] = R;
