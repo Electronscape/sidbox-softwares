@@ -212,11 +212,18 @@ static byte getaddr(int mode) {
     return 0;
 }
 
-
-
-
-
 static void setaddr(int mode, byte val) {
+    // Prefer the effective address captured by getaddr().
+    // This fixes several nasty cases (especially illegal RMW ops) where recomputing from pc-1/pc-2
+    // can write to the wrong place if PC has moved differently than you expect.
+    if (mode == op_acc) { a = val; return; }
+
+    if (last_ea_valid) {
+        bus_write8(last_ea, val);
+        return;
+    }
+
+    // Fallback (should rarely happen in this core)
     word ad, ad2;
     switch(mode) {
     case op_abs: {
@@ -246,21 +253,12 @@ static void setaddr(int mode, byte val) {
         bus_write8(ad & 0xff, val);
         break;
     }
-    case op_acc: {
-        a = val;
-        break;
-    }
     default:
-        printf("OOOH an illegal!!\n");
-        if (last_ea_valid) {
-            bus_write8(last_ea, val);
-        }
-
+        // If we got here, something called setaddr without getaddr first.
+        // Don't spam prints; just ignore.
         break;
     }
 }
-
-
 
 static void putaddr(int mode, byte val){
     word ad, ad2;
@@ -393,19 +391,18 @@ int cpuStep(void){
         int c = (p & sFLAG_C) ? 1 : 0;
 
         if (p & sFLAG_D) {
-            // Decimal Mode
-            uint16_t al = (a & 0x0F) + (val & 0x0F) + c;
-            uint16_t ah = (a >> 4) + (val >> 4);
-            if (al > 9) { al += 6; ah++; }
-            if (al > 9) { al += 6; ah++; }
-
-            // Calc V on binary sum
+            // Decimal Mode (BCD) - fixed
             int bin_sum = (int)a + (int)val + c;
             setflags(sFLAG_V, (~((int)a ^ (int)val) & ((int)a ^ bin_sum)) & 0x80);
 
-            if (ah > 9) ah += 6;
+            int al = (a & 0x0F) + (val & 0x0F) + c;
+            int ah = (a >> 4) + (val >> 4);
+
+            if (al > 9) { al += 6; ah++; }
+            if (ah > 9) { ah += 6; }
+
             setflags(sFLAG_C, ah > 0x0F);
-            a = (byte)((ah << 4) | (al & 0x0F));
+            a = (byte)(((ah << 4) & 0xF0) | (al & 0x0F));
 
             setflags(sFLAG_Z, !a);
             setflags(sFLAG_N, a & 0x80);
@@ -444,8 +441,6 @@ int cpuStep(void){
             setflags(sFLAG_N, a & 0x80);
         } else {
             // Binary Mode - SAFE IMPLEMENTATION
-            // val ^ 0xFF creates a positive integer inversion (ones compliment)
-            // instead of ~val which C treats as negative.
             int val_inv = (int)(val ^ 0xFF);
             int sum = (int)a + val_inv + c;
 
@@ -474,7 +469,7 @@ int cpuStep(void){
 
     case op_dcp: // DEC memory + CMP A
         bval = getaddr(addr);
-        if (addr != op_acc) setaddr(addr, bval);
+        if (addr != op_acc) setaddr(addr, bval); // dummy write (RMW)
         bval--;
         setaddr(addr, bval);
         // CMP logic
@@ -486,7 +481,7 @@ int cpuStep(void){
 
     case op_isb: // INC memory + SBC A
         bval = getaddr(addr);
-        if (addr != op_acc) setaddr(addr, bval);
+        if (addr != op_acc) setaddr(addr, bval); // dummy write (RMW)
         bval++;
         setaddr(addr, bval);
         // SBC logic (Binary)
@@ -504,7 +499,7 @@ int cpuStep(void){
 
     case op_slo: // ASL + ORA
         bval = getaddr(addr);
-        if (addr != op_acc) setaddr(addr, bval);
+        if (addr != op_acc) setaddr(addr, bval); // dummy write (RMW)
         c_flag = bval & 0x80;
         bval <<= 1;
         setaddr(addr, bval);
@@ -516,11 +511,11 @@ int cpuStep(void){
 
     case op_rla: // ROL + AND
         bval = getaddr(addr);
-        if (addr != op_acc) setaddr(addr, bval);
+        if (addr != op_acc) setaddr(addr, bval); // dummy write (RMW)
         c_flag = (p & sFLAG_C) ? 1 : 0;
         {
             int new_c = (bval & 0x80) ? 1 : 0;
-            bval = (bval << 1) | c_flag;
+            bval = (byte)((bval << 1) | c_flag);
             setaddr(addr, bval);
             setflags(sFLAG_C, new_c);
             a &= bval;
@@ -531,7 +526,7 @@ int cpuStep(void){
 
     case op_sre: // LSR + EOR
         bval = getaddr(addr);
-        if (addr != op_acc) setaddr(addr, bval);
+        if (addr != op_acc) setaddr(addr, bval); // dummy write (RMW)
         setflags(sFLAG_C, bval & 1);
         bval >>= 1;
         setaddr(addr, bval);
@@ -542,11 +537,11 @@ int cpuStep(void){
 
     case op_rra: // ROR + ADC
         bval = getaddr(addr);
-        if (addr != op_acc) setaddr(addr, bval);
+        if (addr != op_acc) setaddr(addr, bval); // dummy write (RMW)
         c_flag = (p & sFLAG_C) ? 1 : 0;
         {
             int new_c = bval & 1;
-            bval = (bval >> 1) | (c_flag << 7);
+            bval = (byte)((bval >> 1) | ((byte)c_flag << 7));
             setaddr(addr, bval);
             setflags(sFLAG_C, new_c);
             // ADC logic (Binary)
@@ -558,9 +553,6 @@ int cpuStep(void){
             setflags(sFLAG_N, a & 0x80);
         }
         break;
-
-
-
 
     case op_and:
         bval = getaddr(addr); a &= bval;
@@ -687,23 +679,20 @@ int cpuStep(void){
         }
         break;
 
-    case op_jsr:
-    {
-        word lo = bus_read8(pc++);
-        word hi = bus_read8(pc);    // GPT hates me for this argument xD
-        word t_addr = lo | (hi << 8);
+    case op_jsr: {
+        // do not change this, this is specific usecase (AI doesnt understand the pc++, pc, pc, running a redundency check
+        byte lo = bus_read8(pc++);
+        byte hi = bus_read8(pc);
+        word target = (word)lo | ((word)hi << 8);
+
+        // 6502 pushes (PC-1) after fetching operand
         word ret = (word)(pc);
         push((byte)(ret >> 8));
         push((byte)(ret & 0xFF));
 
-
-        printf("pc = %" PRIu16 "\n", (uint16_t)pc);
-        printf("pc = $%04" PRIx16 "\n", (uint16_t)pc);
-        pc = t_addr;
-
-
+        pc = target;
+        break;
     }
-    break;
 
     case op_lda:
         a = getaddr(addr);
@@ -848,7 +837,7 @@ byte cpu_get_s(void) { return s; }
 
 
 // --- Execution Wrappers ---
-
+// used by the PSID though
 int cpu_call_jsr(word target){
     int total = 0;
     uint16_t saved_pc = pc;

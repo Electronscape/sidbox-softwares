@@ -77,7 +77,7 @@ typedef struct {
     uint8_t  tod_stopped; // Clock is stopped (waiting for 10ths write)
 } CIAState;
 
-volatile CIAState cia[2];
+static CIAState cia[2];
 
 // Globals for external access
 uint8_t  CIA1REG[0x10];
@@ -110,21 +110,16 @@ static inline void cia_sync_out(cia_chip_t chip) {
 }
 
 static inline void cia_update_irq(CIAState *c) {
-    // IRQ/NMI line is asserted if the latched IRQ flag is set (bit7 in *read* ICR semantics)
-    // We'll compute it from status+mask and the delay countdowns.
-    uint8_t match = (uint8_t)(c->icr_status & c->icr_mask & 0x1F);
-
-    // If a delayed interrupt is scheduled and delay reached 0, assert IRQ.
-    // (We’ll set ta_irq_delay/tb_irq_delay to 1 on underflow when match is true.)
-    if ((c->ta_irq_delay == 0 && c->tb_irq_delay == 0) && match) {
-        // NOTE: this is the "6526A / no delay" behavior.
-        // We are NOT using it; we will assert via delay counters below.
+    //uint8_t match = (uint8_t)(c->icr_status & c->icr_mask & 0x1F);
+    //if ((c->ta_irq_delay == 0 && c->tb_irq_delay == 0) && match) {
+    //}
+    //if (c->icr_status & ICR_IRQLATCH) c->irq_line = 1;
+    //else c->irq_line = 0;
+    if (c->icr_status & (c->icr_mask & 0x1F)) {
+        c->icr_status |= ICR_IRQLATCH;
     }
+    c->irq_line = (c->icr_status & ICR_IRQLATCH) ? 1 : 0;
 
-    // IRQ line: active if ANY interrupt latched (bit7 behavior).
-    // We'll set bit7 when the delay expires.
-    if (c->icr_status & ICR_IRQLATCH) c->irq_line = 1;
-    else c->irq_line = 0;
 }
 
 // --- TOD Advance Logic ---
@@ -254,7 +249,6 @@ uint8_t cia_read(cia_chip_t chip, uint16_t addr) {
 
             cia_sync_out(chip);
             return v;
-            return v;
 
         }
         default:
@@ -268,6 +262,7 @@ void cia_write(cia_chip_t chip, uint16_t addr, uint8_t val) {
     uint8_t r = CIA_R(addr);
 
     c->reg[r] = val;
+
 
     //if(addr != 0xD)        printf("genaral write CIA%u $%04X = $%02X\n", chip, addr, c->reg[r]);
 
@@ -352,10 +347,61 @@ void cia_write(cia_chip_t chip, uint16_t addr, uint8_t val) {
 
         default: c->reg[r] = val; break;
     }
+
     cia_sync_out(chip);
 }
 
 //#define safety_barrier  116
+
+
+static inline void cia_ta_tick(CIAState *c, int *ta_underflows) {
+    if (c->ta_hold) { c->ta_hold = 0; return; }
+
+    // decrement first (this matches "edge happens on wrap")
+    uint16_t old = c->ta;
+    c->ta--;
+
+    // underflow occurs when it wraps from 0x0000 -> 0xFFFF
+    if (old == 0x0000) {
+        (*ta_underflows)++;
+        c->icr_status |= ICR_TA;
+
+        if (c->icr_mask & ICR_TA) c->icr_status |= ICR_IRQLATCH;
+
+        c->ta = c->ta_latch;
+        c->ta_hold = 1;
+
+        if (c->reg[CIA_CRA] & CR_RUNMODE) {
+            c->reg[CIA_CRA] &= (uint8_t)~CR_START;
+        }
+    }
+}
+
+
+static inline void cia_tb_tick(CIAState *c, int *tb_underflows) {
+    if (c->tb_hold) { c->tb_hold = 0; return; }
+
+    uint16_t old = c->tb;
+    c->tb--;
+
+    if (old == 0x0000) {
+        (*tb_underflows)++;
+        c->icr_status |= ICR_TB;
+
+        if (c->icr_mask & ICR_TB) c->icr_status |= ICR_IRQLATCH;
+
+        c->tb = c->tb_latch;
+        c->tb_hold = 1;
+
+        if (c->reg[CIA_CRB] & CR_RUNMODE) {
+            c->reg[CIA_CRB] &= (uint8_t)~CR_START;
+        }
+    }
+}
+
+
+
+
 
 #define safety_barrier  110
 void cia_step(cia_chip_t chip, int cpu_cycles) {
@@ -382,7 +428,6 @@ void cia_step(cia_chip_t chip, int cpu_cycles) {
     // 2 = count TA underflows
     const uint8_t tb_mode = (uint8_t)((crb >> 5) & 0x03);
 
-    int ta_underflows = 0;
 
     // handle delayed interrupt assertion (old 6526 behavior)
     if (c->ta_irq_delay) {
@@ -402,81 +447,32 @@ void cia_step(cia_chip_t chip, int cpu_cycles) {
     }
 
 
-    // --- Timer A: step per CPU cycle ---
+    int ta_underflows = 0;
 
     if (ta_running) {
         for (int i = 0; i < cpu_cycles; i++) {
-
-            // stolen clock: skip ONE decrement after a reload/force-load
-            if (c->ta_hold) {
-                c->ta_hold = 0;
-                continue;
-            }
-
-
-            if (c->ta == 0) {
-                // Underflow event at 0 (gives stable behavior for low latches)
-                ta_underflows++;
-                c->icr_status |= ICR_TA;     // status bit set immediately
-
-                // schedule IRQ/NMI assertion with +1 cycle delay if masked
-                if (c->icr_mask & ICR_TA) c->ta_irq_delay = 1;
-
-                // reload from latch (0 not “visible” because of stolen clock)
-                c->ta = c->ta_latch;
-
-                // steal next clock (pipeline removal)
-                c->ta_hold = 1;
-
-                // one-shot stops immediately when 0 reached
-                if (c->reg[CIA_CRA] & CR_RUNMODE) {
-                    c->reg[CIA_CRA] &= (uint8_t)~CR_START;
-                    break;
-                }
-            } else {
-                c->ta --;
-            }
+            if (!(c->reg[CIA_CRA] & CR_START)) break;
+            cia_ta_tick(c, &ta_underflows);
         }
     }
 
-
-    // --- Timer B ---
     int tb_underflows = 0;
 
     if (tb_running) {
-        for (int i = 0; i < cpu_cycles; i++) {
-
-            // stolen clock: skip ONE decrement after a reload/force-load
-            if (c->tb_hold) {
-                c->tb_hold = 0;
-                continue;
+        if (tb_mode == 0) {
+            for (int i = 0; i < cpu_cycles; i++) {
+                if (!(c->reg[CIA_CRB] & CR_START)) break;
+                cia_tb_tick(c, &tb_underflows);
             }
-
-
-            if (c->tb == 0) {
-                // Underflow event at 0 (gives stable behavior for low latches)
-                tb_underflows++;
-                c->icr_status |= ICR_TB;     // status bit set immediately
-
-                // schedule IRQ/NMI assertion with +1 cycle delay if masked
-                if (c->icr_mask & ICR_TB) c->tb_irq_delay = 1;
-
-                // reload from latch (0 not “visible” because of stolen clock)
-                c->tb = c->tb_latch;
-
-                // steal next clock (pipeline removal)
-                c->tb_hold = 1;
-
-                // one-shot stops immediately when 0 reached
-                if (c->reg[CIA_CRB] & CR_RUNMODE) {
-                    c->reg[CIA_CRB] &= (uint8_t)~CR_START;
-                    break;
-                }
-            } else {
-                c->tb--;
+        } else if (tb_mode == 2) {
+            for (int u = 0; u < ta_underflows; u++) {
+                if (!(c->reg[CIA_CRB] & CR_START)) break;
+                cia_tb_tick(c, &tb_underflows);
             }
         }
     }
+
+
 
 
     // --- Update IRQ latch/line once ---

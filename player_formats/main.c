@@ -116,9 +116,15 @@ int main(){
 
 
     snd_pcm_t *pcm_handle;
+    snd_pcm_sw_params_t *sw;
     snd_pcm_hw_params_t *params;
     unsigned int rate = AUDIO_MIX_FREQ;
     int err;
+
+
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    snd_pcm_hw_params_malloc(&params);
 
 
 
@@ -127,16 +133,40 @@ int main(){
         fprintf(stderr, "Error opening PCM device: %s\n", snd_strerror(err));
         return 1;
     }
-    setvbuf(stdout, NULL, _IONBF, 0);
-    /* Set hardware parameters */
-    snd_pcm_hw_params_malloc(&params);
     snd_pcm_hw_params_any(pcm_handle, params);
     snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE);
     snd_pcm_hw_params_set_channels(pcm_handle, params, 2);
+
     snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0);
     snd_pcm_hw_params(pcm_handle, params);
     snd_pcm_hw_params_free(params);
+
+    snd_pcm_uframes_t period = 128;
+    snd_pcm_uframes_t bufferv = period * 2;
+
+
+    snd_pcm_hw_params_set_period_size_near(pcm_handle, params, &period, 0);
+    snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &bufferv);
+
+    /* Set hardware parameters */
+
+snd_pcm_sw_params_alloca(&sw);
+    // SW params: start quickly, wake us quickly
+    snd_pcm_sw_params_current(pcm_handle, sw);
+
+    // Start as soon as we have 1 period queued (or even 1 frame)
+    snd_pcm_sw_params_set_start_threshold(pcm_handle, sw, period);
+
+    // Wake up when at least 1 period is free
+    snd_pcm_sw_params_set_avail_min(pcm_handle, sw, period);
+
+    // Apply SW params
+    err = snd_pcm_sw_params(pcm_handle, sw);
+    if (err < 0) {
+        fprintf(stderr, "snd_pcm_sw_params failed: %s\n", snd_strerror(err));
+        return -1;
+    }
 
 
     playmode_sidtype = SIDPLAY_PLAYMODE_PSID;

@@ -23,6 +23,9 @@ void    vic_step(int cpu_cycles);
 // helpers
 static inline uint8_t vic_irq_asserted(void){ return VIC_IRQ_LINE; }
 void    vic_clear_irq(void);
+uint8_t vic_cpu_stall(void);
+int vic_cpu_can_run_this_cycle(void);
+
 
 #ifdef __cplusplus
 }

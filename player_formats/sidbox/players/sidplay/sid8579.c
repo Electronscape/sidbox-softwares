@@ -86,6 +86,13 @@ static struct sidosc osc[2][3];
 __attribute__((aligned(32)))
 static struct sidflt filter[2];
 
+static uint8_t vol_dac[2];
+static uint8_t vol_last[2];
+static int32_t digi_dc[2];   // for optional DC blocking
+
+#define DIGI_GAIN 1800
+
+
 __attribute__((aligned(32)))
 static const float attackTimes[16] = {
         0.0022528606f, 0.0080099577f, 0.0157696042f, 0.0237795619f,
@@ -204,87 +211,99 @@ static void sidPoke(int reg, unsigned char val){
     else if(reg <= 20) voice = 2;
 
     switch(reg){
-    case 0x00: case 0x07: case 0x0E:
-        if(!bSidPlay2SIDmode){
-            sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff00) + val;
-            sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff00) + val;
-        } else {
-            sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff00) + val;
+        case 0x00: case 0x07: case 0x0E:
+            if(!bSidPlay2SIDmode){
+                sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff00) + val;
+                sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff00) + val;
+            } else {
+                sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff00) + val;
+            }
+            break;
+
+        case 0x01: case 0x08: case 0x0F:
+            if(!bSidPlay2SIDmode){
+                sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff) + ((dword)val << 8);
+                sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff) + ((dword)val << 8);
+            } else {
+                sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff) + ((dword)val << 8);
+            }
+            break;
+
+        case 0x02: case 0x09: case 0x10:
+            if(!bSidPlay2SIDmode){
+                sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff00) + val;
+                sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff00) + val;
+            } else {
+                sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff00) + val;
+            }
+            break;
+
+        case 0x03: case 0x0A: case 0x11:
+            if(!bSidPlay2SIDmode){
+                sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff) + ((dword)val << 8);
+                sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff) + ((dword)val << 8);
+            } else {
+                sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff) + ((dword)val << 8);
+            }
+            break;
+
+        case 0x04: case 0x0B: case 0x12:
+            if(!bSidPlay2SIDmode){
+                sid[0].v[voice].wave = val;
+                if((val & 0x01) == 0) osc[0][voice].envphase = 3;
+                else if(osc[0][voice].envphase == 3) osc[0][voice].envphase = 0;
+
+                sid[1].v[voice].wave = val;
+                if((val & 0x01) == 0) osc[1][voice].envphase = 3;
+                else if(osc[1][voice].envphase == 3) osc[1][voice].envphase = 0;
+            } else {
+                sid[dualChip].v[voice].wave = val;
+                if((val & 0x01) == 0) osc[dualChip][voice].envphase = 3;
+                else if(osc[dualChip][voice].envphase == 3) osc[dualChip][voice].envphase = 0;
+            }
+            break;
+
+        case 0x05: case 0x0C: case 0x13:
+            if(!bSidPlay2SIDmode){ sid[0].v[voice].ad = val; sid[1].v[voice].ad = val; }
+            else sid[dualChip].v[voice].ad = val;
+            break;
+
+        case 0x06: case 0x0D: case 0x14:
+            if(!bSidPlay2SIDmode){ sid[0].v[voice].sr = val; sid[1].v[voice].sr = val; }
+            else sid[dualChip].v[voice].sr = val;
+            break;
+
+        case 0x15:
+            if(!bSidPlay2SIDmode) sid[0].ffreqlo = val;
+            else sid[dualChip].ffreqlo = val;
+            break;
+
+        case 0x16:
+            if(!bSidPlay2SIDmode) sid[0].ffreqhi = val;
+            else sid[dualChip].ffreqhi = val;
+            break;
+
+        case 0x17:
+            if(!bSidPlay2SIDmode) sid[0].res_ftv = val;
+            else sid[dualChip].res_ftv = val;
+            break;
+
+        case 0x18: {
+            uint8_t newv = val & 0x0F;
+
+            if (bSidPlay2SIDmode) {
+                sid[dualChip].ftp_vol = val;
+                vol_dac[dualChip] = newv;
+            } else {
+                sid[0].ftp_vol = val;
+                vol_dac[0] = newv;
+                // IMPORTANT: you mirror SID regs to chip1 later,
+                // mirror the digi nibble too (otherwise chip1 stays stale)
+                vol_dac[1] = newv;
+            }
+            break;
         }
-        break;
 
-    case 0x01: case 0x08: case 0x0F:
-        if(!bSidPlay2SIDmode){
-            sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff) + ((dword)val << 8);
-            sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff) + ((dword)val << 8);
-        } else {
-            sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff) + ((dword)val << 8);
-        }
-        break;
-
-    case 0x02: case 0x09: case 0x10:
-        if(!bSidPlay2SIDmode){
-            sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff00) + val;
-            sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff00) + val;
-        } else {
-            sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff00) + val;
-        }
-        break;
-
-    case 0x03: case 0x0A: case 0x11:
-        if(!bSidPlay2SIDmode){
-            sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff) + ((dword)val << 8);
-            sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff) + ((dword)val << 8);
-        } else {
-            sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff) + ((dword)val << 8);
-        }
-        break;
-
-    case 0x04: case 0x0B: case 0x12:
-        if(!bSidPlay2SIDmode){
-            sid[0].v[voice].wave = val;
-            if((val & 0x01) == 0) osc[0][voice].envphase = 3;
-            else if(osc[0][voice].envphase == 3) osc[0][voice].envphase = 0;
-
-            sid[1].v[voice].wave = val;
-            if((val & 0x01) == 0) osc[1][voice].envphase = 3;
-            else if(osc[1][voice].envphase == 3) osc[1][voice].envphase = 0;
-        } else {
-            sid[dualChip].v[voice].wave = val;
-            if((val & 0x01) == 0) osc[dualChip][voice].envphase = 3;
-            else if(osc[dualChip][voice].envphase == 3) osc[dualChip][voice].envphase = 0;
-        }
-        break;
-
-    case 0x05: case 0x0C: case 0x13:
-        if(!bSidPlay2SIDmode){ sid[0].v[voice].ad = val; sid[1].v[voice].ad = val; }
-        else sid[dualChip].v[voice].ad = val;
-        break;
-
-    case 0x06: case 0x0D: case 0x14:
-        if(!bSidPlay2SIDmode){ sid[0].v[voice].sr = val; sid[1].v[voice].sr = val; }
-        else sid[dualChip].v[voice].sr = val;
-        break;
-
-    case 0x15:
-        if(!bSidPlay2SIDmode) sid[0].ffreqlo = val;
-        else sid[dualChip].ffreqlo = val;
-        break;
-
-    case 0x16:
-        if(!bSidPlay2SIDmode) sid[0].ffreqhi = val;
-        else sid[dualChip].ffreqhi = val;
-        break;
-
-    case 0x17:
-        if(!bSidPlay2SIDmode) sid[0].res_ftv = val;
-        else sid[dualChip].res_ftv = val;
-        break;
-
-    case 0x18:
-        if(bSidPlay2SIDmode) sid[dualChip].ftp_vol = val;
-        else sid[0].ftp_vol = val;
-        break;
     }
 
     if(!bSidPlay2SIDmode){
@@ -417,6 +436,13 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
         if(filter[chip].h_ena) outf += pfloat_ConvertToInt(filter[chip].h);
 
         int mixed = filter[chip].vol * (outo + outf);
+
+        /// digi-compensators ////////////////////////
+        int digi = ((int)vol_dac[chip] - 8);
+        mixed += digi * DIGI_GAIN;
+
+
+        /////////////////////////////////////////////
 
         if(!(CHIPCONFIGS & SIDHV_CHANNEL_STEREO)){
             finalL += mixed;

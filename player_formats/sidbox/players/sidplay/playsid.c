@@ -583,64 +583,199 @@ uint32_t doPlaySidStep(int16_t *out_interleaved, uint32_t frames){
     return frames;
 }
 
+
+
+
+
+
+
+
+
+static int      g_cpu_debt = 0;        // cycles remaining in current instruction
+static uint8_t  g_prev_nmi_pin = 1;    // edge detect for CIA2->NMI
+
+static inline void c64_tick_1cycle(void)
+{
+    // 1) always advance hardware time
+    vic_step(1);
+    cia_step_all(1);
+    sid_clock_cycles(1);
+
+    // 2) CPU stall gating
+
+    // 2) CPU only runs if VIC allows it
+    if (g_cpu_debt <= 0) {
+        if (vic_cpu_can_run_this_cycle()) {
+            int inst = cpuStep();          // returns cycles cost
+            if (inst <= 0) inst = 1;
+            g_cpu_debt = inst - 1;         // we already spent 1 cycle right now
+        } else {
+            // VIC stole this cycle, CPU does nothing
+            g_cpu_debt = 0;
+        }
+    } else {
+        // mid-instruction: still only burn debt if VIC allows CPU to progress
+        if (vic_cpu_can_run_this_cycle()) {
+            g_cpu_debt--;
+        }
+    }
+
+
+
+    // 3) interrupt sampling (same as before)
+    uint8_t cia2_asserted = (CIA2_IRQ_LINE != 0);
+    uint8_t nmi_pin = cia2_asserted ? 0 : 1;
+
+    if (g_prev_nmi_pin == 1 && nmi_pin == 0) {
+        cpu_nmi();
+
+        // burn 7 cycles of "sequence time"
+        for (int k = 0; k < 7; k++) {
+            vic_step(1);
+            cia_step_all(1);
+            sid_clock_cycles(1);
+        }
+
+        g_cpu_debt = 0;
+    }
+    g_prev_nmi_pin = nmi_pin;
+
+    if (!getIFlagStatus()) {
+        if (VIC_IRQ_LINE || CIA1_IRQ_LINE) {
+            cpu_irq();
+
+            for (int k = 0; k < 7; k++) {
+                vic_step(1);
+                cia_step_all(1);
+                sid_clock_cycles(1);
+            }
+
+            g_cpu_debt = 0;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
 uint32_t doRSIDStep(int16_t *out_interleaved, uint32_t frames, uint32_t sample_rate) {
     if(!out_interleaved || frames == 0 || sample_rate == 0) return 0;
 
     const double cycles_per_sample = (double)C64_CPU_HZ_PAL / (double)sample_rate;
     static double cyc_accumulator = 0;
     static uint8_t prev_cia2_nmi = 0;
+    static uint32_t sampletimer = 0;
 
     for(uint32_t i = 0; i < frames; i++) {
         cyc_accumulator += cycles_per_sample;
 
         // We run until we have exhausted the cycles allocated for THIS sample
-        synth_prep_per_step(); // <--- do not delete this otherwise NO audio output (it handles volume over time main mixer)
 
-        while(cyc_accumulator >= 1.0) {
+
+        while (cyc_accumulator >= 1.0) {
+            c64_tick_1cycle();
+            cyc_accumulator -= 1.0;
+        }
+
+        // render: DO NOT advance SID here
+        int16_t L, R;
+        synth_prep_per_step(); // now it sees the SID writes that just happened
+        sid_render_sample_noadvance(&L, &R);
+        //sid_render_sample(&L, &R);
+
+        out_interleaved[i*2 + 0] = L;
+        out_interleaved[i*2 + 1] = R;
+
+
+
+
+        sampletimer++;
+        if(sampletimer>44100){
+            printf(".");
+            sampletimer=0;
+        }
+    }
+
+    return frames;
+}
+
+
+
+
+uint32_t doRSIDStep2(int16_t *out_interleaved, uint32_t frames, uint32_t sample_rate) {
+    if(!out_interleaved || frames == 0 || sample_rate == 0) return 0;
+
+    const double cycles_per_sample = (double)C64_CPU_HZ_PAL / (double)sample_rate;
+    static double cyc_accumulator = 0;
+    static uint8_t prev_cia2_nmi = 0;
+    static uint32_t sampletimer = 0;
+
+    for(uint32_t i = 0; i < frames; i++) {
+        cyc_accumulator += cycles_per_sample;
+
+        // We run until we have exhausted the cycles allocated for THIS sample
+
+
+        while (cyc_accumulator >= 1.0) {
             int inst_cycles = cpuStep();
-            if(inst_cycles <= 0) break;
+            if (inst_cycles <= 0) break;
 
-            // 1. Advance Hardware by instruction time
             vic_step(inst_cycles);
             cia_step_all(inst_cycles);
-            //sid_clock_cycles(inst_cycles);
+
+            sid_clock_cycles(inst_cycles);   // <-- PUT THIS BACK
+            synth_prep_per_step(); // now it sees the SID writes that just happened
+
+
             cyc_accumulator -= (double)inst_cycles;
 
-            // 2. Handle NMIs (Edge Triggered)
-
+            // NMI edge
             uint8_t cia2_asserted = (CIA2_IRQ_LINE != 0);
             uint8_t nmi_pin = cia2_asserted ? 0 : 1;
-            static uint8_t prev_nmi_pin = 1;
 
+            static uint8_t prev_nmi_pin = 1;
             if (prev_nmi_pin == 1 && nmi_pin == 0) {
                 cpu_nmi();
-                //vic_step(7);
-                //cia_step_all(7);
-                //cyc_accumulator -= 7.0;
-            }
 
+                vic_step(7);
+                cia_step_all(7);
+                sid_clock_cycles(7);         // <-- AND THIS
+                cyc_accumulator -= 7.0;
+            }
             prev_nmi_pin = nmi_pin;
 
-
-            // 3. Handle IRQs (Level Triggered)
-            if (!getIFlagStatus())            {
+            // IRQ level
+            if (!getIFlagStatus()) {
                 if (VIC_IRQ_LINE || CIA1_IRQ_LINE) {
                     cpu_irq();
-                    // These 7 cycles MUST be accounted for in the budget
-                    //vic_step(7);
-                    //cia_step_all(7);
-                    //sid_clock_cycles(7);
-                    //cyc_accumulator -= 7.0;
+
+                    vic_step(7);
+                    cia_step_all(7);
+                    sid_clock_cycles(7);     // <-- AND THIS
+                    cyc_accumulator -= 7.0;
                 }
             }
         }
 
-        // 4. Render
+        // render: DO NOT advance SID here
         int16_t L, R;
-        //sid_render_sample_noadvance(&L, &R);
-        sid_render_sample(&L, &R);
+        sid_render_sample_noadvance(&L, &R);
         out_interleaved[i*2 + 0] = L;
         out_interleaved[i*2 + 1] = R;
+
+
+
+
+        sampletimer++;
+        if(sampletimer>44100){
+            printf(".");
+            sampletimer=0;
+        }
     }
 
     return frames;

@@ -143,7 +143,6 @@ uint8_t bus_read8(uint16_t addr) {
 void bus_write8(uint16_t addr, uint8_t v) {
     C64RAM[addr] = v;
 
-
     if (playmode_sidtype == SIDPLAY_PLAYMODE_PSID) {
         if (addr >= 0xD400 && addr <= 0xD41F) sid_write(0, addr & 0x1F, v);
         return;

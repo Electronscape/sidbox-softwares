@@ -5,11 +5,14 @@
 #include "vic.h"
 
 // --- Constants ---
-#define VIC_PAL_CYCLES   63
-#define VIC_PAL_LINES    311
+#define VIC_PAL_CYCLES   64
+#define VIC_PAL_LINES    308
 
 #define VIC_NTSC_CYCLES  65
 #define VIC_NTSC_LINES   263
+
+static int vic_stall = 0;
+
 
 uint32_t VIC_MACHINE_CYCLES = VIC_PAL_CYCLES;
 uint32_t VIC_MACHINE_LINES  = VIC_PAL_LINES;
@@ -138,19 +141,48 @@ void vic_write(uint16_t addr, uint8_t val) {
     }
 }
 
-void vic_step(int cpu_cycles) {
-    VIC_CYC_ACC += (uint32_t)cpu_cycles;
+
+
+
+uint8_t vic_cpu_stall(void) {
+    return (vic_stall > 0);
+}
+
+int vic_cpu_can_run_this_cycle(void) {
+    if (vic_stall > 0) {
+        vic_stall--;          // steal THIS CPU cycle
+        return 0;             // CPU does NOT run
+    }
+    return 1;                 // CPU may run
+}
+
+static inline int vic_badline(void) {
+    uint16_t r = VICRASTER;
+    uint8_t d011 = VICREG[0x11];
+
+    if (!(d011 & 0x10)) return 0;          // display enabled?
+    if (r < 0x30 || r > 0xF7) return 0;    // visible badline region (PAL)
+    if ((r & 7) != (d011 & 7)) return 0;   // yscroll match
+    return 1;
+}
+
+
+
+
+
+
+
+
+void vic_step(int cycles) {
+    VIC_CYC_ACC += (uint32_t)cycles;
 
     while (VIC_CYC_ACC >= VIC_MACHINE_CYCLES) {
         VIC_CYC_ACC -= VIC_MACHINE_CYCLES;
 
         VICRASTER++;
-        if (VICRASTER >= VIC_MACHINE_LINES) {
-            VICRASTER = 0;
-        }
+        if (VICRASTER >= VIC_MACHINE_LINES) VICRASTER = 0;
 
-        // Logic Check: On every line change, the trigger gate resets.
-        // This is how "Raster IRQs" actually cycle.
+        // Raster IRQ compare logic (yours)
         uint16_t cmp = vic_get_raster_cmp();
         if (VICRASTER == cmp) {
             if (!raster_irq_triggered) {
@@ -160,6 +192,11 @@ void vic_step(int cpu_cycles) {
             }
         } else {
             raster_irq_triggered = 0;
+        }
+
+        // Add stalls at start of badline
+        if (vic_badline()) {
+            vic_stall += 40;   // cheap-but-effective model
         }
     }
 }

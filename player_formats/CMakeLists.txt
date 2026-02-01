@@ -28,6 +28,17 @@ find_package(ALSA REQUIRED)
 
 target_link_libraries(playerformats-test PRIVATE ALSA::ALSA)
 
+target_compile_options(playerformats-test PRIVATE
+  -Wall -Wextra
+  -Wshadow
+  -Wconversion -Wsign-conversion
+  -Wformat=2
+  -Wno-unused-parameter
+  -Wno-unused-variable
+  -Wno-unused-function
+)
+
+
 include(GNUInstallDirs)
 install(TARGETS playerformats-test
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
