@@ -170,7 +170,7 @@ snd_pcm_sw_params_alloca(&sw);
 
 
     playmode_sidtype = SIDPLAY_PLAYMODE_PSID;
-    //playmode_sidtype = SIDPLAY_PLAYMODE_RSID;
+    playmode_sidtype = SIDPLAY_PLAYMODE_RSID;
 
     /////////////////////////// TEST ////////////////////////////////////////////////////////////
     if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){  // TEST AREA //
@@ -188,12 +188,16 @@ snd_pcm_sw_params_alloca(&sw);
 
     if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){  // TEST AREA //
         sprintf(sidfilename, "../../rsid_Chimera.sid"); // <-- RSID - plays now :)
-        //sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
+        sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
         sprintf(sidfilename, "../../rsid_rooter.sid");  // <-- RSID - it PLAYS but only if we choose song 2, never works on song 1 (tho it is there it worked on a buggy RSID play) lol :)
         sprintf(sidfilename, "../../rsid_rorrol.sid");    // <-- RSID - plays now :)
-        //sprintf(sidfilename, "../../rsid_MARRS_Mix.sid");     // <-- ALSO PLAYS!! YEY
-        //sprintf(sidfilename, "../../rsid_Flippy.sid");    // THIS PLAYS TOO! WHOOHOO
-        //sprintf(sidfilename, "../../rsid_Freak_Out.sid");
+        sprintf(sidfilename, "../../rsid_MARRS_Mix.sid");     // <-- ALSO PLAYS!! YEY
+        sprintf(sidfilename, "../../rsid_Flippy.sid");    // THIS PLAYS TOO! WHOOHOO
+        sprintf(sidfilename, "../../rsid_Freak_Out.sid");
+        sprintf(sidfilename, "../../rsid_Digi.sid");
+        sprintf(sidfilename, "../../rsid_One_on_One_Jordan_vs_Bird.sid");
+        sprintf(sidfilename, "../../rsid_Mega_Apocalypse.sid");
+        sprintf(sidfilename, "../../rsid_Great_Giana_Sisters.sid");
 
         PlaySID_InitRSID(sidfilename);
 

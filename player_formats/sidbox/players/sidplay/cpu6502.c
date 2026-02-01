@@ -816,6 +816,10 @@ void cpu_force_cli(void){
     p &= (byte)~sFLAG_I;
 }
 
+void cpu_force_sei(void) {
+    p |= sFLAG_I;
+}
+
 // External Access helpers
 void cpu_set_regs(byte A, byte X, byte Y) { a = A; x = X; y = Y; }
 void cpu_set_a(byte A) { a = A; }

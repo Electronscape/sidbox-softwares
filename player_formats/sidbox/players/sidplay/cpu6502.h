@@ -30,6 +30,7 @@ void cpu_set_regs(byte A, byte X, byte Y);
 
 void cpu_irq(void);
 void cpu_force_cli(void);
+void cpu_force_sei(void);
 
 int  cpu_call_jsr(word target);  // call subroutine without resetting CPU
 int  cpu_call_jsr_resetting(word target, byte A); // legacy helper (optional)

@@ -240,27 +240,20 @@ static void c64Init(void){
 }
 
 
-
-
-
-static int LoadRSIDFromFile(const char *filename){
-    char tstring[64];
+static int LoadRSIDHeaderOnly(const char *filename, uint16_t *dataOffsetOut)
+{
     FILE *f = fopen(filename, "rb");
     if(!f) return 0;
 
     uint8_t hdr[124];
-    if(fread(hdr, 1, 124, f) != 124){
-        fclose(f);
-        return 0;
-    }
+    if(fread(hdr, 1, 124, f) != 124){ fclose(f); return 0; }
 
-    // Must be RSID
     if(!(hdr[0]=='R' && hdr[1]=='S' && hdr[2]=='I' && hdr[3]=='D')){
         fclose(f);
         return 0;
     }
 
-    uint16_t dataOffset = rd_u16be(&hdr[6]);
+    *dataOffsetOut = rd_u16be(&hdr[6]);
     load_addr  = rd_u16be(&hdr[8]);
     init_addr  = rd_u16be(&hdr[10]);
     play_addr  = rd_u16be(&hdr[12]);
@@ -268,42 +261,25 @@ static int LoadRSIDFromFile(const char *filename){
     startsong  = (byte)(rd_u16be(&hdr[16]));
     speed      = hdr[0x15];
 
-    memset(tstring, 0x00, 64);
-    int i=0;
-    for(i = 0; i < 32; i ++ ) tstring[i] = hdr[22 + i]; tstring[i] = 0;
-    printf("Song name: %s\n", tstring);
+    fclose(f);
+    return 1;
+}
 
-    for(i = 0; i < 32; i ++ ) tstring[i] = hdr[54 + i]; tstring[i] = 0;
-    printf("   Author: %s\n", tstring);
+static int LoadRSIDDataOnly(const char *filename, uint16_t dataOffset)
+{
+    FILE *f = fopen(filename, "rb");
+    if(!f) return 0;
 
-    for(i = 0; i < 32; i ++ ) tstring[i] = hdr[86 + i]; tstring[i] = 0;
-    printf(" Released: %s\n", tstring);
-
-
-    printf(" Load Addr: 0x%04X\n", load_addr);
-    printf(" Init Addr: 0x%04X\n", init_addr);
-    printf(" Play Addr: 0x%04X\n", play_addr);
-    printf(" sub songs: 0x%04X\n", subsongs);
-    printf("start song: 0x%04X\n", startsong);
-    printf("     speed: 0x%04X\n", speed);
-
-
-    //char     name[32];      // 22
-    //char     author[32];    // 54
-    //char     released[32];  // 96
-
-    // RSID rules-ish: play often 0, init often 0 in header (then you RESET into load area)
-    // We'll handle gracefully.
-
+    // seek to data
     fseek(f, dataOffset, SEEK_SET);
 
+    // load address may be 0 => first 2 bytes of data
     if(load_addr == 0){
         uint8_t lo = (uint8_t)fgetc(f);
         uint8_t hi = (uint8_t)fgetc(f);
         load_addr = (word)(lo | (hi << 8));
     }
 
-    // Stream into RAM
     uint32_t addr = load_addr;
     int c;
     while((c = fgetc(f)) != EOF){
@@ -313,17 +289,15 @@ static int LoadRSIDFromFile(const char *filename){
 
     fclose(f);
 
-    //// now ready to start the CPU bits
-
-    // Minimal C64-ish IO visible defaults (you already do this in LoadProgram; RSID expects it)
+    // minimal I/O config (keep yours)
     bus_write8(0x0000, 0x2F);
     bus_write8(0x0001, 0x37);
 
-      // Prime audio
     synth_prep_per_step();
-
     return 1;
 }
+
+
 
 
 // 'startsong' from header is 1..songs (usually). Treat 0 as 1.
@@ -379,114 +353,105 @@ static void rsid_boot_kernel_window(void)
     c64_run_cycles(19656 * 2);  // ~2 frames
 }
 
+static void rsid_quiesce_irqs_after_boot(void)
+{
+    // 1) CPU: force interrupts masked
+    cpu_force_sei();   // you likely already have cpu_force_cli(); add SEI twin
 
-int PlaySID_InitRSID(const char *filename){
-    // volume poke like your code (both chips)
-    bus_write8(0xD418, 0xff);
-    bus_write8(0xD438, 0xff);
-    bus_write8(0xD418, 0xff);
-    bus_write8(0xD438, 0xff);
-    bus_write8(0xD418, 0xff);
-    bus_write8(0xD438, 0xff);
+    // 2) VIC: disable + clear
+    bus_write8(0xD01A, 0x00);   // IRQ mask off
+    bus_write8(0xD019, 0x0F);   // ACK any pending (write-1-to-clear bits)
+
+    // 3) CIA1: disable all sources + clear latched status
+    cia_write(CIA_CHIP_1, CIA_ICR, 0x7F);   // clear mask bits (bit7=0 => clear)
+    (void)cia_read(CIA_CHIP_1, CIA_ICR);    // read clears status + IRQLATCH in your CIA
+
+    // stop timers (optional but helps “clean slate”)
+    cia_write(CIA_CHIP_1, CIA_CRA, 0x00);
+    cia_write(CIA_CHIP_1, CIA_CRB, 0x00);
+
+    // 4) CIA2: same
+    cia_write(CIA_CHIP_2, CIA_ICR, 0x7F);
+    (void)cia_read(CIA_CHIP_2, CIA_ICR);
+    cia_write(CIA_CHIP_2, CIA_CRA, 0x00);
+    cia_write(CIA_CHIP_2, CIA_CRB, 0x00);
+
+    // ensure globals update if your cia_sync_out depends on writes
+    cia_step_all(0);
+}
 
 
-
-
+int PlaySID_InitRSID(const char *filename)
+{
     clear64KRam();
     restartSidChipModes();
     synth_init((uint32_t)mixing_frequency);
     vic_reset();
     cia_reset_all();
 
-
-    // Try to load ROMs from common filenames in the working directory.
-    // (We can't ship these; user must supply their own dumps.)
     rsid_have_roms = bus_load_roms("../../basic.rom", "../../kernal.rom", "../../chargen.rom");
-    if (rsid_have_roms) {
-        printf("[RSID] ROMs loaded: basic.rom + kernal.rom + chargen.rom\n");
-    } else {
-        printf("[RSID] ROMs NOT found. Running in ROM-less sandbox (many RSIDs will fail).\n");
-    }
 
-    if(!LoadRSIDFromFile(filename)){
-        fprintf(stderr, "PlaySID_InitRSID: failed loading %s\n", filename);
+    uint16_t dataOffset = 0;
+    if(!LoadRSIDHeaderOnly(filename, &dataOffset)){
+        fprintf(stderr, "PlaySID_InitRSID: failed reading header %s\n", filename);
         return 0;
     }
 
-
-    // If no ROMs, we fake a system IRQ source (VIC raster) and chain into $0314.
-    // With real ROMs present, let the tune + KERNAL handle IRQ sources normally.
-
     if (!rsid_have_roms) {
-        printf("I HUNGER FOR DE ROMZ!\n");
-        rsid_enable_vic_50hz_raster_irq(50);   // try 0 or 100; either is fine
+        rsid_enable_vic_50hz_raster_irq(50);
         rsid_install_vic_irq_trampoline();
-    }
-
-    // CRITICAL FIX: Pre-fill KERNAL vectors.
-    // Since we skip the KERNAL boot sequence ($FCE2), these are 0x0000 in RAM.
-    // If the SID tries to hook the IRQ by chaining $0314, it will crash.
-    // We set them to the standard C64 KERNAL defaults:
-    if (rsid_have_roms) {
-        bus_write16(0x0314, 0xEA31); // IRQ: Standard Hardware ISR
-        bus_write16(0x0316, 0xFE66); // BRK: Standard NMI/BRK return
-        bus_write16(0x0318, 0xFE47); // NMI: Standard NMI Handler
-    }
-
-
-
-    printf("[RAMVEC] IRQ0314=$%04X NMI0318=$%04X BRK0316=$%04X\n",
-           bus_read16(0x0314),
-           bus_read16(0x0318),
-           bus_read16(0x0316));
-
-
-    ticks = 0;
-    timeplay = 0;
-    PlaySID_ResetCycleCounters();
-
-
-
-    if (rsid_have_roms) {
-        // Decide start address (Init takes priority over Load)
-        const uint16_t start_addr = init_addr ? init_addr : load_addr;
-
-        // Trampoline at $0110: CLI ; JMP $0110  (idle loop with IRQs enabled)
-        bus_write8(0x0110, 0x58);
-        bus_write8(0x0111, 0x4C);
-        bus_write8(0x0112, 0x10);
-        bus_write8(0x0113, 0x01);
-
-        // Reset CPU so it fetches vectors etc.
-        cpuReset();
-
-        // Let KERNAL run a tiny bit (optional, but keep since you added it)
-        rsid_boot_kernel_window();
-
-        // Fake a "JSR start_addr" return so RTS lands at $0110
-        cpu_set_sp(0xFF);
-        cpu_push_byte(0x01);
-        cpu_push_byte(0x0F);     // $010F so RTS -> $0110
-
-        // Select song (0-based) and set regs BEFORE entering init
-        const int user_song0 = 0; // set -1 to use header default
-        const uint8_t song0 = rsid_pick_song0(startsong, subsongs, user_song0);
-
-        cpu_set_a(song0);
-        cpu_set_x(0);
-        cpu_set_y(0);
-
-        // Jump into init/load code and let it run under your normal tick loop
-        cpuSetPC(start_addr);
-
-    } else {
+        // In ROM-less mode you probably want to load immediately (no KERNAL anyway)
+        if(!LoadRSIDDataOnly(filename, dataOffset)) return 0;
         cpu_force_cli();
+        return 1;
     }
 
+    // ROMs present: do the KERNAL reset/init first
+    cpuReset();
+    rsid_boot_kernel_window();
+
+    // STOP interrupts while we load/patch/start the tune
+    cpu_force_sei();
+
+    // Clear pending IRQ latches ONLY (do NOT disable enables/masks)
+    bus_write8(0xD019, 0x0F);               // VIC: clear pending sources
+    (void)cia_read(CIA_CHIP_1, CIA_ICR);    // CIA: clear pending latch+flags
+    (void)cia_read(CIA_CHIP_2, CIA_ICR);
+
+    // NOW load the RSID program after KERNAL has done its scribbling
+    if(!LoadRSIDDataOnly(filename, dataOffset)){
+        fprintf(stderr, "PlaySID_InitRSID: failed loading data %s\n", filename);
+        return 0;
+    }
+
+    // Your $0110 trampoline (CLI; JMP $0110)
+    bus_write8(0x0110, 0x58);
+    bus_write8(0x0111, 0x4C);
+    bus_write8(0x0112, 0x10);
+    bus_write8(0x0113, 0x01);
+
+    // Return-to-$0110 setup
+    cpu_set_sp(0xFF);
+    cpu_push_byte(0x01);
+    cpu_push_byte(0x0F);
+
+    // pick song (0-based)
+    const int user_song0 = 0;
+    const uint8_t song0 = rsid_pick_song0(startsong, subsongs, user_song0);
+
+    cpu_set_a(song0);
+    cpu_set_x(0);
+    cpu_set_y(0);
+
+    // IMPORTANT: re-enable interrupts before starting init in case init never RTS's
+    //cpu_force_cli();
+
+    // jump into init/load address
+    const uint16_t start_addr = init_addr ? init_addr : load_addr;
+    cpuSetPC(start_addr);
 
     return 1;
 }
-
 
 
 
