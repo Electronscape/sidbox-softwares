@@ -6,6 +6,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 #define CIA_R(a)       ((uint8_t)((a) & 0x0F))
 
 // Registers

@@ -217,7 +217,7 @@ int main(){
     }
 
     if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){  // TEST AREA //
-        if(!PlaySID_InitRSID(sidfilename, 1)){
+        if(!PlaySID_InitRSID(sidfilename, 0)){
             printf("Failed to init SID: %s\n", sidfilename);
             snd_pcm_close(pcm_handle);
             return 2;
