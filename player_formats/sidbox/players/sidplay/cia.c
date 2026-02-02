@@ -5,6 +5,9 @@
 #include <string.h>
 
 // ===== Internal Constants =====
+#define USE_TOD     0
+#define USE_SERIAL  0
+
 
 typedef struct {
     uint8_t  reg[0x10];
@@ -24,12 +27,9 @@ typedef struct {
     uint8_t  ta_irq_delay;   // old 6526: interrupt asserted 1 cycle after underflow if masked
     uint8_t  tb_irq_delay;
 
-
-
-    uint8_t ta_reload_pending;
-    uint8_t tb_reload_pending;
-
-
+    uint8_t  ta_reload_pending;
+    uint8_t  tb_reload_pending;
+#if(USE_TOD)
     // --- TOD Clock Internal State ---
     uint8_t  tod_10ths, tod_sec, tod_min, tod_hr;
     uint8_t  latch_10ths, latch_sec, latch_min, latch_hr;
@@ -38,36 +38,28 @@ typedef struct {
     int32_t  tod_tick_cnt;
     uint8_t  tod_latched; // Clock is frozen for reading
     uint8_t  tod_stopped; // Clock is stopped (waiting for 10ths write)
+#endif
 } CIAState;
 
 static CIAState cia[2];
 
 // Globals for external access
-uint8_t  CIA1REG[0x10];
-uint16_t CIA1_TA, CIA1_TB;
 uint8_t  CIA1_IRQ_LINE;
-
-uint8_t  CIA2REG[0x10];
-uint16_t CIA2_TA, CIA2_TB;
 uint8_t  CIA2_IRQ_LINE;
 
 
-// --- Internal Helper Functions ---
 
-static inline uint8_t to_bcd(uint8_t val) { return ((val / 10) << 4) | (val % 10); }
+// --- Internal Helper Functions ---
+#if(USE_TOD)
+static inline uint8_t to_bcd  (uint8_t val) { return ((val / 10) << 4) | (val % 10);   }
 static inline uint8_t from_bcd(uint8_t val) { return ((val >> 4) * 10) + (val & 0x0F); }
+#endif
 
 static inline void cia_sync_out(cia_chip_t chip) {
     CIAState *c = &cia[chip];
     if (chip == CIA_CHIP_1) {
-        memcpy(CIA1REG, c->reg, 0x10);
-        CIA1_TA = (uint16_t)c->ta;
-        CIA1_TB = (uint16_t)c->tb;
         CIA1_IRQ_LINE = c->irq_line;
     } else {
-        memcpy(CIA2REG, c->reg, 0x10);
-        CIA2_TA = (uint16_t)c->ta;
-        CIA2_TB = (uint16_t)c->tb;
         CIA2_IRQ_LINE = c->irq_line;
     }
 }
@@ -85,6 +77,7 @@ static inline void cia_update_irq(CIAState *c) {
 
 }
 
+#if(USE_TOD)
 // --- TOD Advance Logic ---
 static void cia_advance_tod(CIAState *c) {
     if (c->tod_stopped) return;
@@ -115,6 +108,7 @@ static void cia_advance_tod(CIAState *c) {
         cia_update_irq(c);
     }
 }
+#endif
 
 // --- Core API ---
 
@@ -130,11 +124,12 @@ void cia_reset(cia_chip_t chip) {
     c->ta = 0xFFFF;
     c->tb = 0xFFFF;
 
+#if(USE_TOD)
     // 3. TOD State
     // Hardware Detail: TOD is halted until 10ths is written.
     c->tod_stopped = 1;
     c->tod_latched = 0;
-
+#endif
     // 4. Input/Output (Crucial for Keyboard/Joystick scanning)
     // On reset, DDR registers are 0 (all pins are inputs)
     // PRA and PRB usually default to 0xFF (pull-ups)
@@ -189,6 +184,7 @@ uint8_t cia_read(cia_chip_t chip, uint16_t addr) {
             return v;
         }
 
+#if(USE_TOD)
         case CIA_TOD10:
             c->tod_latched = 0; // Unlatches the clock
             return to_bcd(c->tod_latched ? c->latch_10ths : c->tod_10ths);
@@ -201,7 +197,7 @@ uint8_t cia_read(cia_chip_t chip, uint16_t addr) {
                 c->tod_latched = 1;
             }
             return to_bcd(c->latch_hr);
-
+#endif
         case CIA_ICR: {
             uint8_t v = (uint8_t)(c->icr_status & 0x1F);
             if (c->icr_status & ICR_IRQLATCH) v |= 0x80;
@@ -260,6 +256,7 @@ void cia_write(cia_chip_t chip, uint16_t addr, uint8_t val) {
 
             break;
 
+#if(USE_TOD)
         case CIA_TOD10:
             if (c->reg[CIA_CRB] & 0x80) c->alm_10ths = from_bcd(val);
             else { c->tod_10ths = from_bcd(val); c->tod_stopped = 0; }
@@ -276,13 +273,14 @@ void cia_write(cia_chip_t chip, uint16_t addr, uint8_t val) {
             if (c->reg[CIA_CRB] & 0x80) c->alm_hr = from_bcd(val);
             else { c->tod_hr = from_bcd(val); c->tod_stopped = 1; }
             break;
-
+#endif
+#if(USE_SERIAL)
         case CIA_SDR:
             c->reg[CIA_SDR] = val;
             //c->icr_pending |= ICR_SP; // Writing SDR triggers Serial IRQ
             cia_update_irq(c);
             break;
-
+#endif
         case CIA_ICR:
             if (val & 0x80) c->icr_mask |= (val & 0x7F);
             else c->icr_mask &= ~(val & 0x7F);
@@ -371,6 +369,7 @@ void cia_step(cia_chip_t chip, int cpu_cycles) {
     CIAState *c = &cia[chip];
     if (cpu_cycles <= 0) return;
 
+    #if(USE_TOD)
     // --- TOD Clock Step (unchanged, still coarse) ---
     c->tod_tick_cnt += cpu_cycles;
     int tod_threshold = (c->reg[CIA_CRA] & CR_TODIN) ? 16431 : 19705;
@@ -378,7 +377,7 @@ void cia_step(cia_chip_t chip, int cpu_cycles) {
         c->tod_tick_cnt -= tod_threshold;
         cia_advance_tod(c);
     }
-
+#endif
     // --- Decode modes up front ---
     const uint8_t cra = c->reg[CIA_CRA];
     const uint8_t crb = c->reg[CIA_CRB];
@@ -444,12 +443,8 @@ void cia_step(cia_chip_t chip, int cpu_cycles) {
     // Refresh Globals
     if (chip == CIA_CHIP_1) {
         CIA1_IRQ_LINE = c->irq_line;
-        CIA1_TA = (uint16_t)c->ta;
-        CIA1_TB = (uint16_t)c->tb;
     } else {
         CIA2_IRQ_LINE = c->irq_line;
-        CIA2_TA = (uint16_t)c->ta;
-        CIA2_TB = (uint16_t)c->tb;
     }
 }
 

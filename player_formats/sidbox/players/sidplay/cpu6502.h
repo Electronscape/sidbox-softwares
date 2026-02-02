@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-#define C64_CPU_HZ_PAL  985248u
-#define C64_CPU_HZ_NTSC 1022727u
+#define     C64_CPU_HZ_PAL      985248u
+#define     C64_CPU_HZ_NTSC     1022727u
 
 typedef uint8_t  byte;
 typedef uint16_t word;

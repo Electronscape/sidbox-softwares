@@ -23,20 +23,20 @@ static inline uint8_t cpu_port_eff(void){
 }
 
 // Banking bits
-static inline int loram_on(uint8_t p){ return (p & 0x01) != 0; }
-static inline int hiram_on(uint8_t p){ return (p & 0x02) != 0; }
-static inline int charen_on(uint8_t p){ return (p & 0x04) != 0; }
+static inline int loram_on(uint8_t p)  { return (p & 0x01) != 0; }
+static inline int hiram_on(uint8_t p)  { return (p & 0x02) != 0; }
+static inline int charen_on(uint8_t p) { return (p & 0x04) != 0; }
 
-static int seen_basic_read = 0;
-static int seen_kernal_read = 0;
+static int seen_basic_read   = 0;
+static int seen_kernal_read  = 0;
 static int seen_chargen_read = 0;
 
 // ROM images
-static uint8_t rom_basic[0x2000];
-static uint8_t rom_kernal[0x2000];
+static uint8_t rom_basic  [0x2000];
+static uint8_t rom_kernal [0x2000];
 static uint8_t rom_chargen[0x1000];
-static int have_basic = 0;
-static int have_kernal = 0;
+static int have_basic   = 0;
+static int have_kernal  = 0;
 static int have_chargen = 0;
 
 static int load_file_exact(const char *path, uint8_t *dst, size_t want){
@@ -140,22 +140,20 @@ uint8_t bus_read8(uint16_t addr) {
     return C64RAM[addr];
 }
 
+
 void bus_write8(uint16_t addr, uint8_t v) {
     C64RAM[addr] = v;
 
+
     if (playmode_sidtype == SIDPLAY_PLAYMODE_PSID) {
-        if (addr >= 0xD400 && addr <= 0xD41F) sid_write(0, addr & 0x1F, v);
+        if (addr >= 0xD400 && addr <= 0xD7FF) sid_write( addr, v);
         return;
     }
 
     const uint8_t p = cpu_port_eff();
 
-
-
-    if (addr == 0x0000) { cpu_ddr = v; return; }
+    if (addr == 0x0000) { cpu_ddr  = v; return; }
     if (addr == 0x0001) { cpu_port = v; return; }
-
-
 
     if (charen_on(p) && (loram_on(p) || hiram_on(p))) {
         // VIC-II Mirroring
@@ -166,14 +164,7 @@ void bus_write8(uint16_t addr, uint8_t v) {
 
         // SID 1 & 2 Mirroring (ranges from $D400 to $D7FF)
         if (addr >= 0xD400 && addr <= 0xD7FF) {
-            // Standard SID 1
-            if ((addr & 0xFFE0) == 0xD400) {
-                sid_write(0, addr & 0x1F, v);
-            }
-            // Dual SID / Mirror checks
-            else if ((addr & 0xFFE0) == 0xD420) {
-                sid_write(1, addr & 0x1F, v);
-            }
+            sid_write( addr, v);
             return;
         }
 

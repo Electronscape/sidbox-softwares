@@ -12,7 +12,7 @@ extern "C" {
 #define Chip8580 1
 
 // Called by bus when SID regs written
-void sid_write(int chip, uint8_t reg, uint8_t v);
+void sid_write(uint16_t reg, uint8_t v);
 
 // Called by player to (re)init synth
 void synth_init(uint32_t mixfrq);

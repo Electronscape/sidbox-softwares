@@ -50,15 +50,9 @@ typedef enum {
 } cia_chip_t;
 
 // --- CIA1 globals (DC00) ---
-extern uint8_t  CIA1REG[0x10];
-extern uint16_t CIA1_TA;
-extern uint16_t CIA1_TB;
 extern uint8_t  CIA1_IRQ_LINE;
 
 // --- CIA2 globals (DD00) ---
-extern uint8_t  CIA2REG[0x10];
-extern uint16_t CIA2_TA;
-extern uint16_t CIA2_TB;
 extern uint8_t  CIA2_IRQ_LINE;
 
 // Reset both or individually

@@ -19,7 +19,7 @@ void SetSidChipVoices(unsigned char chip, unsigned char voices){ SidVoicesEn[chi
 unsigned char GetSidChipVoices(unsigned char chip){ return SidVoicesEn[chip & 1]; }
 
 static unsigned char bDualChipMode = 1;        // 1=single, 2=dual detected
-static unsigned char bSidPlay2SIDmode = 0;     // address-based "2SID mode"
+unsigned char bSidPlay2SIDmode = 0;     // address-based "2SID mode"
 static int mixing_frequency;
 static int freqmul;
 static int filtmul_1, filtmul_2;
@@ -134,8 +134,9 @@ static void CalcFilts(void){
 }
 
 void restartSidChipModes(void){
-    bSidPlay2SIDmode = 0;
+    //bSidPlay2SIDmode = 0;
     bDualChipMode = 1;
+    printf("is this being reset???");
 }
 
 void synth_init(uint32_t mixfrq){
@@ -197,11 +198,13 @@ void synth_prep_per_step(void){
 // Your sidPoke logic, exposed as "sid_write"
 static void sidPoke(int reg, unsigned char val){
     int voice = 0;
-    int dualChip = 0;
+    int sidchipIndex = 0;
 
     if(reg >= 32){
-        bSidPlay2SIDmode = 1;
-        dualChip = 1;
+        //if(bSidPlay2SIDmode) printf("using 2SIDS!\n");
+        //bSidPlay2SIDmode = 1;
+
+        sidchipIndex = 1;
         reg -= 32;
         if(bDualChipMode != 2) bDualChipMode = 2;
     }
@@ -216,7 +219,7 @@ static void sidPoke(int reg, unsigned char val){
                 sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff00) + val;
                 sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff00) + val;
             } else {
-                sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff00) + val;
+                sid[sidchipIndex].v[voice].freq = (sid[sidchipIndex].v[voice].freq & 0xff00) + val;
             }
             break;
 
@@ -225,7 +228,7 @@ static void sidPoke(int reg, unsigned char val){
                 sid[0].v[voice].freq = (sid[0].v[voice].freq & 0xff) + ((dword)val << 8);
                 sid[1].v[voice].freq = (sid[1].v[voice].freq & 0xff) + ((dword)val << 8);
             } else {
-                sid[dualChip].v[voice].freq = (sid[dualChip].v[voice].freq & 0xff) + ((dword)val << 8);
+                sid[sidchipIndex].v[voice].freq = (sid[sidchipIndex].v[voice].freq & 0xff) + ((dword)val << 8);
             }
             break;
 
@@ -234,7 +237,7 @@ static void sidPoke(int reg, unsigned char val){
                 sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff00) + val;
                 sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff00) + val;
             } else {
-                sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff00) + val;
+                sid[sidchipIndex].v[voice].pulse = (sid[sidchipIndex].v[voice].pulse & 0xff00) + val;
             }
             break;
 
@@ -243,7 +246,7 @@ static void sidPoke(int reg, unsigned char val){
                 sid[0].v[voice].pulse = (sid[0].v[voice].pulse & 0xff) + ((dword)val << 8);
                 sid[1].v[voice].pulse = (sid[1].v[voice].pulse & 0xff) + ((dword)val << 8);
             } else {
-                sid[dualChip].v[voice].pulse = (sid[dualChip].v[voice].pulse & 0xff) + ((dword)val << 8);
+                sid[sidchipIndex].v[voice].pulse = (sid[sidchipIndex].v[voice].pulse & 0xff) + ((dword)val << 8);
             }
             break;
 
@@ -257,43 +260,43 @@ static void sidPoke(int reg, unsigned char val){
                 if((val & 0x01) == 0) osc[1][voice].envphase = 3;
                 else if(osc[1][voice].envphase == 3) osc[1][voice].envphase = 0;
             } else {
-                sid[dualChip].v[voice].wave = val;
-                if((val & 0x01) == 0) osc[dualChip][voice].envphase = 3;
-                else if(osc[dualChip][voice].envphase == 3) osc[dualChip][voice].envphase = 0;
+                sid[sidchipIndex].v[voice].wave = val;
+                if((val & 0x01) == 0) osc[sidchipIndex][voice].envphase = 3;
+                else if(osc[sidchipIndex][voice].envphase == 3) osc[sidchipIndex][voice].envphase = 0;
             }
             break;
 
         case 0x05: case 0x0C: case 0x13:
             if(!bSidPlay2SIDmode){ sid[0].v[voice].ad = val; sid[1].v[voice].ad = val; }
-            else sid[dualChip].v[voice].ad = val;
+            else sid[sidchipIndex].v[voice].ad = val;
             break;
 
         case 0x06: case 0x0D: case 0x14:
             if(!bSidPlay2SIDmode){ sid[0].v[voice].sr = val; sid[1].v[voice].sr = val; }
-            else sid[dualChip].v[voice].sr = val;
+            else sid[sidchipIndex].v[voice].sr = val;
             break;
 
         case 0x15:
             if(!bSidPlay2SIDmode) sid[0].ffreqlo = val;
-            else sid[dualChip].ffreqlo = val;
+            else sid[sidchipIndex].ffreqlo = val;
             break;
 
         case 0x16:
             if(!bSidPlay2SIDmode) sid[0].ffreqhi = val;
-            else sid[dualChip].ffreqhi = val;
+            else sid[sidchipIndex].ffreqhi = val;
             break;
 
         case 0x17:
             if(!bSidPlay2SIDmode) sid[0].res_ftv = val;
-            else sid[dualChip].res_ftv = val;
+            else sid[sidchipIndex].res_ftv = val;
             break;
 
         case 0x18: {
             uint8_t newv = val & 0x0F;
 
             if (bSidPlay2SIDmode) {
-                sid[dualChip].ftp_vol = val;
-                vol_dac[dualChip] = newv;
+                sid[sidchipIndex].ftp_vol = val;
+                vol_dac[sidchipIndex] = newv;
             } else {
                 sid[0].ftp_vol = val;
                 vol_dac[0] = newv;
@@ -314,9 +317,20 @@ static void sidPoke(int reg, unsigned char val){
     }
 }
 
-void sid_write(int chip, uint8_t reg, uint8_t v){
-    (void)chip;
-    sidPoke(reg, v);
+extern uint16_t g_sid2_base;
+
+void sid_write(uint16_t addr, uint8_t v){
+    // SID1 mirrors: D400-D41F across D400-D7FF
+    if ((addr & 0xFFE0) == 0xD400) {
+        sidPoke((int)(addr & 0x1F), v);
+        return;
+    }
+
+    // SID2 at D420 (your chosen base)
+    if ((addr & 0xFFE0) == 0xD420) {
+        sidPoke(32 + (int)(addr & 0x1F), v);
+        return;
+    }
 }
 
 // --- Render one stereo sample (your sidMixer, but one-shot) ---
@@ -327,11 +341,9 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
     //synth_prep_per_step();
     int chiplen = 1;
     if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
-    int outf = 0;
-    int outo = 0;
     for(int chip=0; chip<chiplen; chip++){
-
-
+        int outf = 0;
+        int outo = 0;
         unsigned char tVoice = 0x7;
         if(bDualChipMode==1){
             tVoice = (unsigned char)(GetSidChipVoices((unsigned char)chip) & 0x7);

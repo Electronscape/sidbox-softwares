@@ -16,152 +16,142 @@
 
 #define PCM_DEVICE "default"
 
+//////////////// SYSTEM FILE REQUESTER /////////////////////////////////
+/// \brief prog_hello
 
-static const uint8_t prog_hello[] = {
-    0xA2, 0x00,             // LDX #$00
-    // loop:
-    0xBD, 0x10, 0x08,       // LDA msg,X
-    0xF0, 0x07,             // BEQ done
-    0x8D, 0xD2, 0xFF,       // STA $FFD2
-    0xE8,                   // INX
-    0x4C, 0x02, 0x08,       // JMP loop
-    // done:
-    0x4C, 0x00, 0x08,       // JMP $0800
-    // msg at $0810:
-    'H','E','L','L','O',' ','6','5','0','2','\n',0
-};
 
-static const uint8_t prog_vic_irq[] = {
-    // --- $0800 MAIN ---
-    0x78,                   // SEI
-    0xA9, 0x00,             // LDA #$00
-    0x85, 0x02,             // STA $02        ; counter = 0
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <errno.h>
 
-    // raster compare = 100
-    0xA9, 0x64,             // LDA #$64
-    0x8D, 0x12, 0xD0,       // STA $D012      ; raster low
-    0xAD, 0x11, 0xD0,       // LDA $D011
-    0x29, 0x7F,             // AND #$7F       ; clear raster high bit latch
-    0x8D, 0x11, 0xD0,       // STA $D011
 
-    // clear pending raster IRQ
-    0xA9, 0x01,             // LDA #$01
-    0x8D, 0x19, 0xD0,       // STA $D019      ; W1C bit0
+static char g_last_dir[PATH_MAX] =
+    "/mnt/LinuxDatas/work/sidbox-softwares/player_formats/sid_tunes";
 
-    // enable raster IRQ
-    0xA9, 0x01,             // LDA #$01
-    0x8D, 0x1A, 0xD0,       // STA $D01A
+static void strip_newlines(char *s){
+    if (!s) return;
+    size_t n = strlen(s);
+    while (n && (s[n-1] == '\n' || s[n-1] == '\r')) s[--n] = 0;
+}
 
-    // (optional extra safety ack right before CLI)
-    0xA9, 0x01,             // LDA #$01
-    0x8D, 0x19, 0xD0,       // STA $D019
+static void path_dirname_inplace(char *path){
+    if (!path || !*path) return;
+    strip_newlines(path);
+    char *slash = strrchr(path, '/');
+    if (!slash) return;
+    if (slash == path) path[1] = 0;  // keep "/"
+    else *slash = 0;
+}
 
-    0x58,                   // CLI
+static void ensure_dir_exists(const char *dir){
+    if (!dir || !*dir) return;
+    char tmp[PATH_MAX];
+    snprintf(tmp, sizeof(tmp), "%s", dir);
+    for (char *p = tmp + 1; *p; ++p) {
+        if (*p == '/') {
+            *p = 0;
+            mkdir(tmp, 0755);
+            *p = '/';
+        }
+    }
+    mkdir(tmp, 0755);
+}
 
-    // spin forever at $081D
-    0x4C, 0x1D, 0x08,       // JMP $081D
+static int get_config_paths(char *out_dir, size_t out_dir_sz, char *out_file, size_t out_file_sz){
+    const char *xdg = getenv("XDG_CONFIG_HOME");
+    const char *home = getenv("HOME");
+    if (xdg && *xdg) {
+        snprintf(out_dir,  out_dir_sz,  "%s/sidbox_player", xdg);
+    } else if (home && *home) {
+        snprintf(out_dir,  out_dir_sz,  "%s/.config/sidbox_player", home);
+    } else {
+        return 0;
+    }
+    snprintf(out_file, out_file_sz, "%s/lastdir.txt", out_dir);
+    return 1;
+}
 
-    // --- pad from $0820 .. $08FF (0xE0 bytes) ---
-    // 224 NOPs (0xEA)
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
-    0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,0xEA,
+void rsid_lastdir_load(void){
+    char dir[PATH_MAX], file[PATH_MAX];
+    if (!get_config_paths(dir, sizeof(dir), file, sizeof(file))) return;
+    FILE *f = fopen(file, "rb");
+    if (!f) return;
+    char buf[PATH_MAX];
+    if (fgets(buf, sizeof(buf), f)) {
+        strip_newlines(buf);
+        if (buf[0] == '/' && buf[1] != 0) {   // basic sanity
+            snprintf(g_last_dir, sizeof(g_last_dir), "%s", buf);
+        }
+    }
+    fclose(f);
+}
 
-    // --- $0900 IRQ HANDLER ---
-    0x48,                   // PHA
-    0x8A, 0x48,             // TXA / PHA
-    0x98, 0x48,             // TYA / PHA
+void rsid_lastdir_save(void){
+    char dir[PATH_MAX], file[PATH_MAX];
+    if (!get_config_paths(dir, sizeof(dir), file, sizeof(file))) return;
+    ensure_dir_exists(dir);
+    FILE *f = fopen(file, "wb");
+    if (!f) return;
+    fputs(g_last_dir, f);
+    fputc('\n', f);
+    fclose(f);
+}
 
-    0xE6, 0x02,             // INC $02
-    0xA5, 0x02,             // LDA $02
-    0xC9, 0x32,             // CMP #$32       ; 50 interrupts ~= 1 second at 50Hz
-    0xD0, 0x0C,             // BNE skip_print
+int pick_sid_file(char *out_path, size_t out_sz){
+    if (!out_path || out_sz == 0) return 0;
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd),
+             "kdialog --getopenfilename \"%s\" \"*.sid|SID files (*.sid)\" \"*|All files\"",
+             g_last_dir);
 
-    0xA9, 0x00,             // LDA #$00
-    0x85, 0x02,             // STA $02
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return 0;
 
-    0xA9, '*',             // LDA #'*'
-    0x8D, 0xF0, 0xD7,       // STA $D7F0
-    0xA9, '_',             // LDA #'\n'
-    0x8D, 0xF0, 0xD7,       // STA $D7F0
+    if (!fgets(out_path, (int)out_sz, fp)) {
+        pclose(fp);
+        return 0;
+    }
 
-    // skip_print:
-    0xA9, 0x01,             // LDA #$01
-    0x8D, 0x19, 0xD0,       // STA $D019      ; ACK raster IRQ
+    int rc = pclose(fp);
 
-    0x68, 0xA8,             // PLA / TAY
-    0x68, 0xAA,             // PLA / TAX
-    0x68,                   // PLA
-    0x40                    // RTI
-};
+    strip_newlines(out_path);
 
+    // user cancelled
+    if (out_path[0] == 0 || rc != 0) return 0;
+
+    // update last dir
+    char tmp[PATH_MAX];
+    snprintf(tmp, sizeof(tmp), "%s", out_path);
+    path_dirname_inplace(tmp);
+    snprintf(g_last_dir, sizeof(g_last_dir), "%s", tmp);
+
+    // persist it
+    rsid_lastdir_save();
+
+    return 1;
+}
+
+// defaultings
 uint8_t playmode_sidtype = SIDPLAY_PLAYMODE_PSID;   // 0 = PSID, 1 = RSID, 2 = some crazy thing i dunno yet
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-static int run_cmd_capture(const char *cmd, char *out, size_t out_sz){
-    FILE *p = popen(cmd, "r");
-    if(!p) return 0;
-
-    size_t n = fread(out, 1, out_sz - 1, p);
-    out[n] = 0;
-
-    int rc = pclose(p);
-    if(rc != 0) return 0;
-
-    // trim trailing newline
-    while(n > 0 && (out[n-1] == '\n' || out[n-1] == '\r')) out[--n] = 0;
-    return (n > 0);
-}
-
-int linux_open_file_dialog(char *path_out, size_t path_out_sz){
-    // You can add filters like: --filter "SID files (*.sid)" --filter "All files (*)"
-    const char *cmd = "kdialog --getopenfilename /mnt/LinuxDatas/work/sidbox-softwares/player_formats/sid_tunes \"*.sid|SID files (*.sid)\" \"*|All files\"";
-    return run_cmd_capture(cmd, path_out, path_out_sz);
-}
-
-
 int main(){
-
     char sidfilename[256];
     uint32_t length;
 
+    setvbuf(stdout, NULL, _IONBF, 0);
 
-
+    // audio setup ##########################################################
     snd_pcm_t *pcm_handle;
     snd_pcm_sw_params_t *sw;
     snd_pcm_hw_params_t *params;
     unsigned int rate = AUDIO_MIX_FREQ;
     int err;
 
-
-    setvbuf(stdout, NULL, _IONBF, 0);
-
     snd_pcm_hw_params_malloc(&params);
-
-
 
     /* Open PCM device for playback */
     if ((err = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
@@ -203,17 +193,22 @@ int main(){
         return -1;
     }
 
+    // AUDIO SETUP SUCCESSFULL ------------------------
 
-    playmode_sidtype = SIDPLAY_PLAYMODE_PSID;
-    playmode_sidtype = SIDPLAY_PLAYMODE_RSID;
+    /////// SELECT A FILE NOW ETH ////////////////////////////////////
+    rsid_lastdir_load();
+    char path[4096];
+    if (pick_sid_file(path, sizeof(path))) {
+        printf("Picked: %s\n", path);
+        sprintf(sidfilename, path);
+    } else {
+        printf("Cancelled or failed\n");
+        return 0;
+    }
+    playmode_sidtype = CheckSIDType(sidfilename);
 
     /////////////////////////// TEST ////////////////////////////////////////////////////////////
     if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){  // TEST AREA //
-        sprintf(sidfilename, "../../Auf_Wiedersehen_Monty.sid");
-        //sprintf(sidfilename, "../../Sonic_the_Hedgehog.sid");
-        //sprintf(sidfilename, "../../PayDay-Ingame_tune.sid");
-        //sprintf(sidfilename, "../../Euro_Trash.sid");
-
         if(!PlaySID_Init(sidfilename, 0)){
             printf("Failed to init SID: %s\n", sidfilename);
             snd_pcm_close(pcm_handle);
@@ -221,80 +216,18 @@ int main(){
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){  // TEST AREA //
-        //sprintf(sidfilename, "../../rsid_Chimera.sid"); // <-- RSID - plays now :)
-        //sprintf(sidfilename, "../../rsid_Robox.sid");   // <-- RSID - Actually plays :O
-        //sprintf(sidfilename, "../../rsid_rooter.sid");  // <-- RSID - it PLAYS but only if we choose song 2, never works on song 1 (tho it is there it worked on a buggy RSID play) lol :)
-        //sprintf(sidfilename, "../../rsid_rorrol.sid");    // <-- RSID - plays now :)
-        //sprintf(sidfilename, "../../rsid_MARRS_Mix.sid");     // <-- ALSO PLAYS!! YEY
-        //sprintf(sidfilename, "../../rsid_Flippy.sid");    // THIS PLAYS TOO! WHOOHOO
-        //sprintf(sidfilename, "../../rsid_Freak_Out.sid");
-        //sprintf(sidfilename, "../../rsid_Digi.sid");
-        //sprintf(sidfilename, "../../rsid_One_on_One_Jordan_vs_Bird.sid");
-        //sprintf(sidfilename, "../../rsid_Mega_Apocalypse.sid");
-        //sprintf(sidfilename, "../../rsid_Great_Giana_Sisters.sid");
-        //sprintf(sidfilename, "../../rsid_RoboCop.sid");
-        //sprintf(sidfilename, "../../rsid_RoboCop.sid");
-        //sprintf(sidfilename, "../../rsid_Having_Sex.sid");
-        sprintf(sidfilename, "../../rsid_Jevers_Bannys_and_the_Master_Mixers.sid");
-
-
-        char path[4096];
-        if (linux_open_file_dialog(path, sizeof(path))) {
-            printf("Picked: %s\n", path);
-            sprintf(sidfilename, path);
-        } else {
-            printf("Cancelled or failed\n");
-            return 0;
+        if(!PlaySID_InitRSID(sidfilename, 1)){
+            printf("Failed to init SID: %s\n", sidfilename);
+            snd_pcm_close(pcm_handle);
+            return 2;
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        PlaySID_InitRSID(sidfilename);
-
-
-        /*
-            // flimsy song select, doesnt work though but its okay
-        uint8_t s = (uint8_t)(3 + 1);
-
-        bus_write8(0x0002, s);     // you already touch $02, some code might read it
-        bus_write8(0x0030, s);     // random-ish zp slot some players use
-        bus_write8(0x033C, s);     // kernal workspace-ish
-        bus_write8(0x033D, 0x00);  // sometimes hi byte / flags
-        */
-
-        //PlaySID_LoadProgramRAW(prog_vic_irq, sizeof(prog_vic_irq), 0x0800, 0x0800, 0x0900, 0x0800); //
     }
 
 
     /////////////////////////// [END TEST] ////////////////////////////////////////////////////////
     /* Prepare buffer and generate PWM (SID-style) audio */
-    int16_t buffer[4096];                         /* stereo interleaved frames */
-    //playsid_start_tune(3);
+    int16_t buffer[1024];                         /* stereo interleaved frames */
 
 
 
@@ -332,10 +265,7 @@ int main(){
             fprintf(stderr, "Write error: %s\n", snd_strerror((int)written));
             break;
         }
-
     }
-
-
 
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);

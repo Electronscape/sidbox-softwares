@@ -26,6 +26,7 @@ uint8_t  VIC_IRQ_LINE;
 // --- Internal State ---
 static uint8_t  VIC_RASTER_CMP_LO;
 static uint8_t  VIC_RASTER_CMP_HI;
+
 // Hardware Detail: Raster IRQ stays triggered as long as the match is true
 // and the latch isn't cleared.
 static uint8_t  raster_irq_triggered;
@@ -72,22 +73,20 @@ uint8_t vic_read(uint16_t addr) {
     uint8_t r = VIC_R(addr);
 
     switch (r) {
-    case 0x11:
-        // Bit 7 is the 9th bit of the REAL raster counter
-        return (VICREG[0x11] & 0x7F) | ((VICRASTER & 0x100) >> 1);
+        case 0x11:  // Bit 7 is the 9th bit of the REAL raster counter
+            return (VICREG[0x11] & 0x7F) | ((VICRASTER & 0x100) >> 1);
 
-    case 0x12:
-        // Low 8 bits of REAL raster counter
-        return (uint8_t)(VICRASTER & 0xFF);
+        case 0x12:  // Low 8 bits of REAL raster counter
+            return (uint8_t)(VICRASTER & 0xFF);
 
-    case 0x19:
-        return VICREG[0x19] | 0x70; // Bits 4-6 are hardwired to 1
+        case 0x19:
+            return VICREG[0x19] | 0x70; // Bits 4-6 are hardwired to 1
 
-    case 0x1A:
-        return VICREG[0x1A] | 0xF0; // Bits 4-7 are hardwired to 1
+        case 0x1A:
+            return VICREG[0x1A] | 0xF0; // Bits 4-7 are hardwired to 1
 
-    default:
-        return VICREG[r];
+        default:
+            return VICREG[r];
     }
 }
 
@@ -95,54 +94,51 @@ void vic_write(uint16_t addr, uint8_t val) {
     uint8_t r = VIC_R(addr);
 
     switch (r) {
-    case 0x11:
-        VIC_RASTER_CMP_HI = (val & 0x80) >> 7;
-        VICREG[0x11] = val;
-        // Re-check for match immediately (crucial for stable rasters)
-        if (VICRASTER == vic_get_raster_cmp()) {
-            if (!raster_irq_triggered) {
-                VICREG[0x19] |= 0x01;
-                raster_irq_triggered = 1;
-                vic_update_irq();
+        case 0x11:
+            VIC_RASTER_CMP_HI = (val & 0x80) >> 7;
+            VICREG[0x11] = val;
+            // Re-check for match immediately (crucial for stable rasters)
+            if (VICRASTER == vic_get_raster_cmp()) {
+                if (!raster_irq_triggered) {
+                    VICREG[0x19] |= 0x01;
+                    raster_irq_triggered = 1;
+                    vic_update_irq();
+                }
+            } else {
+                raster_irq_triggered = 0;
             }
-        } else {
-            raster_irq_triggered = 0;
-        }
-        break;
+            break;
 
-    case 0x12:
-        VIC_RASTER_CMP_LO = val;
-        if (VICRASTER == vic_get_raster_cmp()) {
-            if (!raster_irq_triggered) {
-                VICREG[0x19] |= 0x01;
-                raster_irq_triggered = 1;
-                vic_update_irq();
+        case 0x12:
+            VIC_RASTER_CMP_LO = val;
+            if (VICRASTER == vic_get_raster_cmp()) {
+                if (!raster_irq_triggered) {
+                    VICREG[0x19] |= 0x01;
+                    raster_irq_triggered = 1;
+                    vic_update_irq();
+                }
+            } else {
+                raster_irq_triggered = 0;
             }
-        } else {
-            raster_irq_triggered = 0;
-        }
-        break;
+            break;
 
-    case 0x19:
-        // ACK BUG FIX: Writing 1 clears the bit, but ONLY if the match condition
-        // is no longer true. We just clear the status bits here.
-        VICREG[0x19] &= ~(val & 0x0F);
-        vic_update_irq();
-        break;
+        case 0x19:
+            // ACK BUG FIX: Writing 1 clears the bit, but ONLY if the match condition
+            // is no longer true. We just clear the status bits here.
+            VICREG[0x19] &= ~(val & 0x0F);
+            vic_update_irq();
+            break;
 
-    case 0x1A:
-        VICREG[0x1A] = val | 0xF0;
-        vic_update_irq();
-        break;
+        case 0x1A:
+            VICREG[0x1A] = val | 0xF0;
+            vic_update_irq();
+            break;
 
-    default:
-        VICREG[r] = val;
-        break;
+        default:
+            VICREG[r] = val;
+            break;
     }
 }
-
-
-
 
 uint8_t vic_cpu_stall(void) {
     return (vic_stall > 0);
@@ -165,12 +161,6 @@ static inline int vic_badline(void) {
     if ((r & 7) != (d011 & 7)) return 0;   // yscroll match
     return 1;
 }
-
-
-
-
-
-
 
 
 void vic_step(int cycles) {

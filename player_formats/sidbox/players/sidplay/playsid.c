@@ -15,11 +15,8 @@ static long ticks = 0;
 static unsigned long nRefreshCIA = 20000;
 static int mixing_frequency = AUDIO_MIX_FREQ;
 
-// crude "timekeeping"
-static long timeplay = 0;
-
-static uint32_t last_play_cycles = 0;
-static uint64_t total_cycles = 0;
+extern uint8_t bSidPlay2SIDmode;
+uint16_t g_sid2_base = 0;   // 0 = no SID2
 
 // Whether user-supplied ROMs were loaded (BASIC/KERNAL/CHARGEN)
 static int rsid_have_roms = 0;
@@ -103,37 +100,27 @@ static void rsid_install_vic_irq_trampoline(void){
 
 // Enable one raster IRQ per frame (≈50Hz PAL-ish in your VIC model).
 static void rsid_enable_vic_50hz_raster_irq(uint8_t raster_line){
-    // set compare line
-    bus_write8(0xD012, raster_line);
-
-    // clear high-bit latch in $D011 compare (bit7)
-    uint8_t d011 = bus_read8(0xD011);
+    bus_write8(0xD012, raster_line);    // set compare line
+    uint8_t d011 = bus_read8(0xD011);   // clear high-bit latch in $D011 compare (bit7)
     d011 &= 0x7F;
     bus_write8(0xD011, d011);
-
-    // clear pending raster IRQ
-    bus_write8(0xD019, 0x01);
-
-    // enable raster IRQ
-    bus_write8(0xD01A, 0x01);
-
-    // clear again right before we let CPU run (reduces "start burst")
-    bus_write8(0xD019, 0x01);
+    bus_write8(0xD019, 0x01);           // clear pending raster IRQ
+    bus_write8(0xD01A, 0x01);           // enable raster IRQ
+    bus_write8(0xD019, 0x01);           // clear again right before we let CPU run (reduces "start burst")
 }
-
 
 
 #pragma pack(push,1)
 typedef struct {
-    char     magic[4];     // "PSID" or "RSID"
-    uint16_t version;      // big-endian
-    uint16_t dataOffset;   // big-endian
-    uint16_t loadAddress;  // big-endian (0 = read from first 2 data bytes)
-    uint16_t initAddress;  // big-endian (RSID often 0)
-    uint16_t playAddress;  // big-endian (RSID often 0)
-    uint16_t songs;        // big-endian
-    uint16_t startSong;    // big-endian
-    uint32_t speed;        // big-endian bitfield // 19-22
+    char     magic[4];      // "PSID" or "RSID"
+    uint16_t version;       // big-endian
+    uint16_t dataOffset;    // big-endian
+    uint16_t loadAddress;   // big-endian (0 = read from first 2 data bytes)
+    uint16_t initAddress;   // big-endian (RSID often 0)
+    uint16_t playAddress;   // big-endian (RSID often 0)
+    uint16_t songs;         // big-endian
+    uint16_t startSong;     // big-endian
+    uint32_t speed;         // big-endian bitfield // 19-22
     char     name[32];      // 22
     char     author[32];    // 54
     char     released[32];  // 86
@@ -141,16 +128,16 @@ typedef struct {
 } SIDHeader;
 #pragma pack(pop)
 
-static uint16_t be16(uint16_t v){ return (uint16_t)((v >> 8) | (v << 8)); }
-static uint32_t be32(uint32_t v){
-    return ((v>>24)&0x000000FF) | ((v>>8)&0x0000FF00) | ((v<<8)&0x00FF0000) | ((v<<24)&0xFF000000);
+static inline uint8_t clamp_u8(int v, int lo, int hi){
+    if (v < lo) return (uint8_t)lo;
+    if (v > hi) return (uint8_t)hi;
+    return (uint8_t)v;
 }
 
-
-
+static uint16_t be16(uint16_t v){ return (uint16_t)((v >> 8) | (v << 8)); }
+static uint32_t be32(uint32_t v){ return ((v>>24)&0x000000FF) | ((v>>8)&0x0000FF00) | ((v<<8)&0x00FF0000) | ((v<<24)&0xFF000000); }
 
 static inline uint16_t rd_u16be(const uint8_t *p){ return (uint16_t)(p[0] << 8) | p[1]; }
-// PSID loader
 
 
 static int LoadSIDFromFile(const char *filename){
@@ -211,19 +198,6 @@ static int LoadSIDFromFile(const char *filename){
     return 1;
 }
 
-uint32_t PlaySID_GetLastPlayCycles(void){
-    return last_play_cycles;
-}
-
-uint64_t PlaySID_GetTotalCycles(void){
-    return total_cycles;
-}
-
-void PlaySID_ResetCycleCounters(void){
-    last_play_cycles = 0;
-    total_cycles = 0;
-}
-
 
 static void c64Init(void){
     clear64KRam();
@@ -232,16 +206,80 @@ static void c64Init(void){
     cpuReset();
     vic_reset();
     cia_reset_all();
-
-
     // volume poke like your code (both chips)
     bus_write8(0xD418, 15);
     bus_write8(0xD438, 15);
 }
 
 
-static int LoadRSIDHeaderOnly(const char *filename, uint16_t *dataOffsetOut)
-{
+int CheckSIDType(const char *filename){
+    FILE *f = fopen(filename, "rb");
+    if(!f) return 0;
+    uint8_t hdr[124];
+    memset(hdr, 0, sizeof(hdr));
+    // Need at least 4 bytes for magic
+    if(fread(hdr, 1, 4, f) != 4){
+        fclose(f);
+        return 0;
+    }
+    bSidPlay2SIDmode = 0;
+    g_sid2_base = 0;
+    // --- PSID ---
+    if(hdr[0]=='P' && hdr[1]=='S' && hdr[2]=='I' && hdr[3]=='D'){
+        // Read rest of header so we can see version + sid2 fields
+        if(fread(hdr + 4, 1, 124 - 4, f) != (124 - 4)){
+            fclose(f);
+            return 0;
+        }
+        uint16_t ver = rd_u16be(&hdr[4]);   // PSID version (big-endian)
+        // Only PSID v3+ has secondSIDAddress (offset 0x7A)
+        if(ver >= 3){
+            uint8_t sid2 = hdr[0x7A];       // secondSIDAddress (encoded as $Dxx0 => xx=sid2)
+            // Valid values are even; 0 means "no SID2"
+            if(sid2 != 0 && ((sid2 & 1) == 0)){
+                uint16_t base = (uint16_t)(0xD000u | ((uint16_t)sid2 << 4)); // $Dxx0
+                // Keep it sane: only accept bases where 2SID commonly lives
+                if(base >= 0xD420 && base <= 0xDFE0){
+                    g_sid2_base = base;
+                    bSidPlay2SIDmode = 1;
+                }
+            }
+        }
+        fclose(f);
+        return SIDPLAY_PLAYMODE_PSID;
+    }
+
+    // --- RSID ---
+    if(hdr[0]=='R' && hdr[1]=='S' && hdr[2]=='I' && hdr[3]=='D'){
+        if(fread(hdr + 4, 1, 124 - 4, f) != (124 - 4)){
+            fclose(f);
+            return 0;
+        }
+
+        uint16_t ver = rd_u16be(&hdr[4]);   // RSID version (big-endian)
+
+        // RSID v2+ also has secondSIDAddress at 0x7A (same header layout)
+        if(ver >= 2){
+            uint8_t sid2 = hdr[0x7A];
+            if(sid2 != 0 && ((sid2 & 1) == 0)){
+                uint16_t base = (uint16_t)(0xD000u | ((uint16_t)sid2 << 4)); // $Dxx0
+                if(base >= 0xD420 && base <= 0xDFE0){
+                    g_sid2_base = base;
+                    bSidPlay2SIDmode = 1;
+                }
+            }
+        }
+
+        fclose(f);
+        return SIDPLAY_PLAYMODE_RSID;
+    }
+
+    fclose(f);
+    return 0;
+}
+
+
+static int LoadRSIDHeaderOnly(const char *filename, uint16_t *dataOffsetOut){
     FILE *f = fopen(filename, "rb");
     if(!f) return 0;
 
@@ -265,8 +303,7 @@ static int LoadRSIDHeaderOnly(const char *filename, uint16_t *dataOffsetOut)
     return 1;
 }
 
-static int LoadRSIDDataOnly(const char *filename, uint16_t dataOffset)
-{
+static int LoadRSIDDataOnly(const char *filename, uint16_t dataOffset){
     FILE *f = fopen(filename, "rb");
     if(!f) return 0;
 
@@ -299,33 +336,10 @@ static int LoadRSIDDataOnly(const char *filename, uint16_t dataOffset)
 
 
 
-
-// 'startsong' from header is 1..songs (usually). Treat 0 as 1.
-static inline uint8_t rsid_pick_song(uint16_t header_start, uint16_t header_songs, int user_song_1based)
-{
-    int s = user_song_1based;
-
-    if (s <= 0) s = (header_start > 0) ? (int)header_start : 0;
-    if (s < 0) s = 0;
-    if (header_songs > 0 && s > (int)header_songs) s = (int)header_songs;
-
-    //return (uint8_t)s; // <-- 1-based
-    return(uint8_t) 0;
-}
-
-
-static inline uint8_t clamp_u8(int v, int lo, int hi){
-    if (v < lo) return (uint8_t)lo;
-    if (v > hi) return (uint8_t)hi;
-    return (uint8_t)v;
-}
-
 // songs_count = header.songs (NOT minus 1)
 // startSong_1based = header.startSong (1..songs)
-static inline uint8_t rsid_pick_song0(int startSong_1based, int songs_count, int user_song0)
-{
+static inline uint8_t rsid_pick_song0(int startSong_1based, int songs_count, int user_song0){
     int max0 = (songs_count > 0) ? (songs_count - 1) : 0;
-
     int s0;
     if (user_song0 >= 0) {
         s0 = user_song0;
@@ -333,56 +347,26 @@ static inline uint8_t rsid_pick_song0(int startSong_1based, int songs_count, int
         // header is 1-based, convert to 0-based
         s0 = (startSong_1based > 0) ? (startSong_1based - 1) : 0;
     }
-
     return clamp_u8(s0, 0, max0);
 }
 
 static inline void c64_tick_1cycle(void);
-static void c64_run_cycles(uint32_t cycles)
-{
+static void c64_run_cycles(uint32_t cycles){
     for (uint32_t i = 0; i < cycles; i++) {
         c64_tick_1cycle();   // your working 1-cycle master tick
     }
 }
 
-static void rsid_boot_kernel_window(void)
-{
+static void rsid_boot_kernel_window(void){
     // After cpuReset(), let KERNAL do its init work.
     // Roughly: run ~ 1–3 frames worth of CPU cycles.
     // PAL: ~985248 cycles/sec, ~19656 cycles/frame at 50Hz.
     c64_run_cycles(19656 * 2);  // ~2 frames
 }
 
-static void rsid_quiesce_irqs_after_boot(void)
-{
-    // 1) CPU: force interrupts masked
-    cpu_force_sei();   // you likely already have cpu_force_cli(); add SEI twin
-
-    // 2) VIC: disable + clear
-    bus_write8(0xD01A, 0x00);   // IRQ mask off
-    bus_write8(0xD019, 0x0F);   // ACK any pending (write-1-to-clear bits)
-
-    // 3) CIA1: disable all sources + clear latched status
-    cia_write(CIA_CHIP_1, CIA_ICR, 0x7F);   // clear mask bits (bit7=0 => clear)
-    (void)cia_read(CIA_CHIP_1, CIA_ICR);    // read clears status + IRQLATCH in your CIA
-
-    // stop timers (optional but helps “clean slate”)
-    cia_write(CIA_CHIP_1, CIA_CRA, 0x00);
-    cia_write(CIA_CHIP_1, CIA_CRB, 0x00);
-
-    // 4) CIA2: same
-    cia_write(CIA_CHIP_2, CIA_ICR, 0x7F);
-    (void)cia_read(CIA_CHIP_2, CIA_ICR);
-    cia_write(CIA_CHIP_2, CIA_CRA, 0x00);
-    cia_write(CIA_CHIP_2, CIA_CRB, 0x00);
-
-    // ensure globals update if your cia_sync_out depends on writes
-    cia_step_all(0);
-}
 
 
-int PlaySID_InitRSID(const char *filename)
-{
+int PlaySID_InitRSID(const char *filename, uint8_t subsong){
     clear64KRam();
     restartSidChipModes();
     synth_init((uint32_t)mixing_frequency);
@@ -436,7 +420,7 @@ int PlaySID_InitRSID(const char *filename)
     cpu_push_byte(0x0F);
 
     // pick song (0-based)
-    const int user_song0 = 0;
+    const int user_song0 = subsong;
     const uint8_t song0 = rsid_pick_song0(startsong, subsongs, user_song0);
 
     cpu_set_a(song0);
@@ -472,81 +456,18 @@ int PlaySID_InitRSID(const char *filename)
 
 int PlaySID_Init(const char *filename, int subsong){
     c64Init();
-
     if(!LoadSIDFromFile(filename)){
         fprintf(stderr, "PlaySID_Init: failed loading %s\n", filename);
         return 0;
     }
-
     if(subsong < 0) subsong = startsong;
-
     ticks = 0;
-    timeplay = 0;
-
-    PlaySID_ResetCycleCounters();
     cpu_call_jsr_resetting(init_addr, (byte)subsong);
     synth_prep_per_step(); // prime osc/filter based on regs after init
-
     return 1;
 }
 
-
-
-int PlaySID_LoadProgram(const uint8_t *bytes, size_t len,
-                        int prg_has_loadaddr,
-                        uint16_t load_addr,
-                        uint16_t reset_vec,
-                        uint16_t irq_vec,
-                        uint16_t nmi_vec)
-{
-    if (!bytes || len == 0) return 0;
-
-    // Power-on baseline
-    c64Init();
-
-    const uint8_t *code = bytes;
-    size_t code_len = len;
-
-    if (prg_has_loadaddr){
-        if (len < 3) return 0;
-        load_addr = (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));
-        code      = bytes + 2;
-        code_len  = len - 2;
-    }
-
-    // Load code into RAM (wrap like real 16-bit address space)
-    uint16_t a = load_addr;
-    for (size_t i = 0; i < code_len; i++){
-        bus_write8(a, code[i]);
-        a = (uint16_t)(a + 1);
-    }
-
-    // Minimal "sane-ish" C64 defaults (optional but helps some code)
-    // 6510 port: $0000 DDR, $0001 data. Common default makes IO visible.
-    bus_write8(0x0000, 0x2F);
-    bus_write8(0x0001, 0x37);
-
-    // Set vectors in RAM
-    // NMI  = $FFFA/$FFFB
-    // RESET= $FFFC/$FFFD
-    // IRQ  = $FFFE/$FFFF
-    bus_write16(0xFFFA, nmi_vec);
-    bus_write16(0xFFFC, reset_vec);
-    bus_write16(0xFFFE, irq_vec);
-
-    // Now reset CPU; it will fetch RESET vector from $FFFC
-    cpuReset();
-
-    // Prime audio like your PSID init does (optional)
-    synth_prep_per_step();
-
-    return 1;
-}
-
-
-// Your STM32 version derived ticks from CIA timer ($DC04/$DC05) after play call.
-// We'll do the same: after cpuJSR(play_addr,0), read those bytes from memory.
-// If zero => default 20000us => ~50Hz.
+////////////////// P_SID ROUTER /////////////////////////////////////////////////////
 static inline void refresh_ticks_from_cia(void){
     int gm1 = bus_read8(0xDC04);
     int gm2 = bus_read8(0xDC05);
@@ -561,19 +482,11 @@ static inline void refresh_ticks_from_cia(void){
 static inline void call_psid_play(void){
     // Most tunes expect this each call:
     cpu_set_regs(0, 0, 0);
-    last_play_cycles = (uint32_t)cpu_call_jsr(play_addr);
-    total_cycles += last_play_cycles;
+    cpu_call_jsr(play_addr);
 }
 
-
-
-
-
-
-////////////////// P_SID ROUTER /////////////////////////////////////////////////////
 uint32_t doPlaySidStep(int16_t *out_interleaved, uint32_t frames){
     if(!out_interleaved || frames == 0) return 0;
-
     for(uint32_t i=0; i<frames; i++){
         if(ticks <= 0){
             // simple PSID player
@@ -581,15 +494,12 @@ uint32_t doPlaySidStep(int16_t *out_interleaved, uint32_t frames){
             refresh_ticks_from_cia();
             synth_prep_per_step();
         }
-
         int16_t L, R;
         sid_render_sample(&L, &R);
 
         out_interleaved[i*2 + 0] = L;
         out_interleaved[i*2 + 1] = R;
-
         ticks--;
-        timeplay++;
     }
     return frames;
 }
@@ -687,105 +597,52 @@ uint32_t doRSIDStep(int16_t *out_interleaved, uint32_t frames, uint32_t sample_r
 
         out_interleaved[i*2 + 0] = L;
         out_interleaved[i*2 + 1] = R;
-
-
-
-
-        sampletimer++;
-        if(sampletimer>44100){
-            printf(".");
-            sampletimer=0;
-        }
     }
 
     return frames;
 }
 
+void playsid_switch_subsong_rsid_soft(uint8_t song0)
+{
+    // If your init_addr is 0 in RSID header, you’re usually not meant to do this.
+    //if (!init_addr) return 0;
 
+    // 1) mask CPU IRQs
+    cpu_force_sei();
 
+    // 2) clear VIC pending IRQ flags (don’t necessarily change mask)
+    bus_write8(0xD019, 0x0F);
 
-uint32_t doRSIDStep2(int16_t *out_interleaved, uint32_t frames, uint32_t sample_rate) {
-    if(!out_interleaved || frames == 0 || sample_rate == 0) return 0;
+    // 3) clear CIA pending latches + stop timers
+    cia_write(CIA_CHIP_1, 0x0D /*ICR*/, 0x7F); (void)cia_read(CIA_CHIP_1, 0x0D);
+    cia_write(CIA_CHIP_2, 0x0D /*ICR*/, 0x7F); (void)cia_read(CIA_CHIP_2, 0x0D);
 
-    const double cycles_per_sample = (double)C64_CPU_HZ_PAL / (double)sample_rate;
-    static double cyc_accumulator = 0;
-    static uint8_t prev_cia2_nmi = 0;
-    static uint32_t sampletimer = 0;
+    cia_write(CIA_CHIP_1, 0x0E /*CRA*/, 0x00);
+    cia_write(CIA_CHIP_1, 0x0F /*CRB*/, 0x00);
+    cia_write(CIA_CHIP_2, 0x0E /*CRA*/, 0x00);
+    cia_write(CIA_CHIP_2, 0x0F /*CRB*/, 0x00);
 
-    for(uint32_t i = 0; i < frames; i++) {
-        cyc_accumulator += cycles_per_sample;
+    // 4) Silence SID1 regs quickly (key ones)
+    for (uint16_t r = 0; r <= 0x18; r++) bus_write8(0xD400 + r, 0x00);
+    bus_write8(0xD418, 0x00);
 
-        // We run until we have exhausted the cycles allocated for THIS sample
-
-
-        while (cyc_accumulator >= 1.0) {
-            int inst_cycles = cpuStep();
-            if (inst_cycles <= 0) break;
-
-            vic_step(inst_cycles);
-            cia_step_all(inst_cycles);
-
-            sid_clock_cycles(inst_cycles);   // <-- PUT THIS BACK
-            synth_prep_per_step(); // now it sees the SID writes that just happened
-
-
-            cyc_accumulator -= (double)inst_cycles;
-
-            // NMI edge
-            uint8_t cia2_asserted = (CIA2_IRQ_LINE != 0);
-            uint8_t nmi_pin = cia2_asserted ? 0 : 1;
-
-            static uint8_t prev_nmi_pin = 1;
-            if (prev_nmi_pin == 1 && nmi_pin == 0) {
-                cpu_nmi();
-
-                vic_step(7);
-                cia_step_all(7);
-                sid_clock_cycles(7);         // <-- AND THIS
-                cyc_accumulator -= 7.0;
-            }
-            prev_nmi_pin = nmi_pin;
-
-            // IRQ level
-            if (!getIFlagStatus()) {
-                if (VIC_IRQ_LINE || CIA1_IRQ_LINE) {
-                    cpu_irq();
-
-                    vic_step(7);
-                    cia_step_all(7);
-                    sid_clock_cycles(7);     // <-- AND THIS
-                    cyc_accumulator -= 7.0;
-                }
-            }
-        }
-
-        // render: DO NOT advance SID here
-        int16_t L, R;
-        sid_render_sample_noadvance(&L, &R);
-        out_interleaved[i*2 + 0] = L;
-        out_interleaved[i*2 + 1] = R;
-
-
-
-
-        sampletimer++;
-        if(sampletimer>44100){
-            printf(".");
-            sampletimer=0;
-        }
+    // If you have 2SID active at D420 (your current setup):
+    if (bSidPlay2SIDmode) {
+        for (uint16_t r = 0; r <= 0x18; r++) bus_write8(0xD420 + r, 0x00);
+        bus_write8(0xD438, 0x00);
     }
 
-    return frames;
-}
+    // Call init like a “driver”: A = subsong, X/Y often 0
+    cpu_set_regs(song0, 0, 0);
+    //cpu_call_jsr_resetting(init_addr, 0);
+    cpu_call_jsr(init_addr);// if that sets PC correctly
 
+    // Let tune re-enable interrupts if it wants; otherwise you can
+    // enable here (depends on your environment):
+    cpu_force_cli();
 
-void playsid_start_tune(int subtune){   // this should just switch the sub tune without needing to reload the file
-    if (!init_addr) return;
-
-    //cpuReset();           // set pc from $FFFC or cpu_reset_to()
-    PlaySID_ResetCycleCounters();
-    cpu_set_regs((byte)subtune, 0, 0);  // common: A=subtune
-    cpu_call_jsr(init_addr);
-    refresh_ticks_from_cia();
+    // Prime synth after writes
     synth_prep_per_step();
+
+
 }
