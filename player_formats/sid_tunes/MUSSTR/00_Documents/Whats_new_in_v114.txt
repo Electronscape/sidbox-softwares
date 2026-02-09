@@ -1,0 +1,19 @@
+What's new in Version 1.14
+==========================
+
+1. Some new music added: See list below:
+
+Lazy_Mode\Laconic.mus
+Lazy_Mode\Laconic.str
+Lazy_Mode\Nice_to_Know.mus
+Lazy_Mode\Nice_to_Know.str
+
+2. One file removed (since was a bad file):
+
+Sub_Roc_3-D\One_of_These_Days_B.mus
+
+3. Added SidNews #6 newsletter. See list below (still looking for #10):
+
+00_SidNews\SidNews06.txt
+
+4. A few files renamed or moved.

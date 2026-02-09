@@ -1,0 +1,1245 @@
+@echo off
+
+IF EXIST Whats_new_in_v133.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v133.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.33
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN BJ_Pools\Long_Distance_Runaround_B.mus  BJ_Pools\Long_Distance_Runaround.mus
+REN BJ_Pools\Long_Distance_Runaround_B.wds  BJ_Pools\Long_Distance_Runaround.wds
+REN Bobbye\Final_Countdown_C.mus  Bobbye\Final_Countdown.mus
+REN Bobbye\Final_Countdown_C.wds  Bobbye\Final_Countdown.wds
+REN Bobbye\Manhattan_Serenade.mus  Bobbye\Manhattan_Serenade_A.mus
+REN Bobbye\Manhattan.mus  Bobbye\Manhattan_Serenade_B.mus
+REN Bobbye\Twilight_Zone_A.mus  Bobbye\Twilight_Zone.mus
+REN Bobbye\Your_Wildest_Dreams_B.mus  Bobbye\Your_Wildest_Dreams.mus
+REN Bobbye\Your_Wildest_Dreams_B.wds  Bobbye\Your_Wildest_Dreams.wds
+REN Bob_Umfer\Pastores_a_Belen_B.mus  Bob_Umfer\Pastores_a_Belen.mus
+REN Bob_Umfer\Pastores_a_Belen_B.wds  Bob_Umfer\Pastores_a_Belen.wds
+REN Brian_M_Szepatowski\Star_Trek_II_Wrath_of_Khan_A.mus  Brian_M_Szepatowski\Star_Trek_II_Wrath_of_Khan.mus
+REN Brian_M_Szepatowski\Star_Trek_II_Wrath_of_Khan_A.str  Brian_M_Szepatowski\Star_Trek_II_Wrath_of_Khan.str
+REN Brian_Meagher_-BrianM1-\I_Hear_you_Now_A.mus  Brian_Meagher_-BrianM1-\I_Hear_you_Now.mus
+REN Brian_Meagher_-BrianM1-\I_Hear_you_Now_B.str  Brian_Meagher_-BrianM1-\I_Hear_you_Now.str
+REN Corky_Cochran\Bird_in_a_Giden_Cage_A.mus  Corky_Cochran\Bird_in_a_Giden_Cage.mus
+REN Dan_Barrett\White_Room_B.mus  Dan_Barrett\White_Room.mus
+REN Dan_Barrett\White_Room_B.str  Dan_Barrett\White_Room.str
+REN Dan_Barrett\White_Room_B.wds  Dan_Barrett\White_Room.wds
+REN Daspf\More_Today_than_Yesterday_B.mus  Daspf\More_Today_than_Yesterday.mus
+REN Dave_Marquis\Nocturne_Op10_N01.mus  Dave_Marquis\Nocturne_Op10_No1.mus
+REN Dave_Marquis\Anitras_Dance.mus  Dave_Marquis\Anitras_Dance_A.mus
+REN Dave_Marquis\Anvil_Chorus.mus  Dave_Marquis\Anvil_Chorus_A.mus
+REN Dave_Marquis\Ballet_of_the_Unhatched_Chickens.mus  Dave_Marquis\Ballet_of_the_Unhatched_Chickens_A.mus
+REN Dave_Marquis\Ciribiribin.mus  Dave_Marquis\Ciribiribin_B.mus
+REN Dave_Marquis\Concerto_in_A_Minor.mus  Dave_Marquis\Concerto_in_A_Minor_A.mus
+REN Dave_Marquis\Eine_Kleine_Nachtmusik.mus  Dave_Marquis\Eine_Kleine_Nachtmusik_A.mus
+REN Dave_Marquis\Etude_in_C_Minor_Op10_No12.mus  Dave_Marquis\Etude_in_C_Minor_Op10_No12_A.mus
+REN Dave_Marquis\Fur_Elise.mus  Dave_Marquis\Fur_Elise_A.mus
+REN Dave_Marquis\Intermezzo.mus  Dave_Marquis\Intermezzo_A.mus
+REN Dave_Marquis\Knight_Rupert_Op68_No12.mus  Dave_Marquis\Knight_Rupert_Op68_No12_A.mus
+REN Dave_Marquis\Nocturne.mus  Dave_Marquis\Nocturne_A.mus
+REN Dave_Marquis\Old_Castle.mus  Dave_Marquis\Old_Castle_A.mus
+REN Dave_Marquis\Pizzicato_Polka.mus  Dave_Marquis\Pizzicato_Polka_A.mus
+REN Dave_Marquis\Promenade.mus  Dave_Marquis\Promenade_A.mus
+REN Dave_Marquis\Sabre_Dance.mus  Dave_Marquis\Sabre_Dance_A.mus
+REN Dave_Marquis\Tarantella.mus  Dave_Marquis\Tarantella_A.mus
+REN Dave_Marquis\Tuileries.mus  Dave_Marquis\Tuileries_A.mus
+REN Dave_Marquis\Waltz_of_the_Flowers.mus  Dave_Marquis\Waltz_of_the_Flowers_A.mus
+REN Dave_Marquis\Poet_and_Peasant.mus  Dave_Marquis\Poet_and_Peasant_Overture_A.mus
+REN DC_Star_and_Cpr\Genesis\Brazilian_B.mus  DC_Star_and_Cpr\Genesis\Brazilian.mus
+REN DC_Star_and_Cpr\Blue_Christmas_A.mus  DC_Star_and_Cpr\Blue_Christmas.mus
+REN DC_Star_and_Cpr\Blue_Christmas_A.wds  DC_Star_and_Cpr\Blue_Christmas.wds
+REN DC_Star_and_Cpr\Merry_Christmas_Darling_A.mus  DC_Star_and_Cpr\Merry_Christmas_Darling.mus
+REN DC_Star_and_Cpr\Merry_Christmas_Darling_A.wds  DC_Star_and_Cpr\Merry_Christmas_Darling.wds
+REN DC_Star_and_Cpr\O_Holy_Night_A.mus  DC_Star_and_Cpr\O_Holy_Night.mus
+REN DC_Star_and_Cpr\O_Holy_Night_A.str  DC_Star_and_Cpr\O_Holy_Night.str
+REN DC_Star_and_Cpr\O_Holy_Night_A.wds  DC_Star_and_Cpr\O_Holy_Night.wds
+REN DC_Star_and_Cpr\Other_Side_of_the_World_B.mus  DC_Star_and_Cpr\Other_Side_of_the_World.mus
+REN DC_Star_and_Cpr\Other_Side_of_the_World_B.wds  DC_Star_and_Cpr\Other_Side_of_the_World.wds
+REN DC_Star_and_Cpr\She_Drives_me_Crazy_A.mus  DC_Star_and_Cpr\She_Drives_me_Crazy.mus
+REN DC_Star_and_Cpr\She_Drives_me_Crazy_A.str  DC_Star_and_Cpr\She_Drives_me_Crazy.str
+REN DC_Star_and_Cpr\She_Drives_me_Crazy_A.wds  DC_Star_and_Cpr\She_Drives_me_Crazy.wds
+REN DC_Star_and_Cpr\Something_so_Strong_B.mus  DC_Star_and_Cpr\Something_so_Strong.mus
+REN DC_Star_and_Cpr\Something_so_Strong_B.wds  DC_Star_and_Cpr\Something_so_Strong.wds
+REN DC_Star_and_Cpr\Sweet_Sixteen_B.mus  DC_Star_and_Cpr\Sweet_Sixteen.mus
+REN DC_Star_and_Cpr\Sweet_Sixteen_B.wds  DC_Star_and_Cpr\Sweet_Sixteen.wds
+REN DC_Star_and_Cpr\What_Child_is_this_A.mus  DC_Star_and_Cpr\What_Child_is_this.mus
+REN DC_Star_and_Cpr\What_Child_is_this_A.wds  DC_Star_and_Cpr\What_Child_is_this.wds
+REN DC_Star_and_Cpr\When_Smokey_Sings_B.mus  DC_Star_and_Cpr\When_Smokey_Sings.mus
+REN DC_Star_and_Cpr\When_Smokey_Sings_B.str  DC_Star_and_Cpr\When_Smokey_Sings.str
+REN DC_Star_and_Cpr\When_Smokey_Sings_B.wds  DC_Star_and_Cpr\When_Smokey_Sings.wds
+REN DC_Star_and_Cpr\With_or_Without_You_A.mus  DC_Star_and_Cpr\With_or_Without_You.mus
+REN DC_Star_and_Cpr\With_or_Without_You_A.wds  DC_Star_and_Cpr\With_or_Without_You.wds
+REN DC_Starr\Mystic_Memory_A.mus  DC_Starr\Mystic_Memory.mus
+REN DC_Starr\Mystic_Memory_A.str  DC_Starr\Mystic_Memory.str
+REN Dean_Schold\Pinocchio_an_Actors_Life_for_me_B.mus  Dean_Schold\Pinocchio_an_Actors_Life_for_me.mus
+REN Dean_Schold\Pinocchio_an_Actors_Life_for_me_B.wds  Dean_Schold\Pinocchio_an_Actors_Life_for_me.wds
+REN Eugenes1\Something_in_your_Eyes_B.mus  Eugenes1\Something_in_your_Eyes.mus
+REN Eugenes1\Something_in_your_Eyes_B.wds  Eugenes1\Something_in_your_Eyes.wds
+REN Fred_Micoff\Here_Comes_the_Sun_A.mus  Fred_Micoff\Here_Comes_the_Sun.mus
+REN Gary_O\Therell_be_Sad_Songs_B.mus  Gary_O\Therell_be_Sad_Songs.mus
+REN Gary_O\Therell_be_Sad_Songs_B.wds  Gary_O\Therell_be_Sad_Songs.wds
+REN Glass_Soul\Brown_Eyed_Girl_B.mus  Glass_Soul\Brown_Eyed_Girl.mus
+REN Glass_Soul\Brown_Eyed_Girl_B.wds  Glass_Soul\Brown_Eyed_Girl.wds
+REN Glass_Soul\Dont_let_the_Sun_Catch_you_Crying_B.mus  Glass_Soul\Dont_let_the_Sun_Catch_you_Crying.mus
+REN Glass_Soul\Dont_let_the_Sun_Catch_you_Crying_B.wds  Glass_Soul\Dont_let_the_Sun_Catch_you_Crying.wds
+REN Glass_Soul\Please_Please_me_B.mus  Glass_Soul\Please_Please_me.mus
+REN Glass_Soul\Please_Please_me_B.wds  Glass_Soul\Please_Please_me.wds
+REN Glass_Soul\Sunshine_Superman_B.mus  Glass_Soul\Sunshine_Superman.mus
+REN Glass_Soul\Sunshine_Superman_B.wds  Glass_Soul\Sunshine_Superman.wds
+REN Glass_Soul\Where_have_all_the_Flowers_Gone_B.mus  Glass_Soul\Where_have_all_the_Flowers_Gone.mus
+REN Glass_Soul\Where_have_all_the_Flowers_Gone_B.wds  Glass_Soul\Where_have_all_the_Flowers_Gone.wds
+REN Grey_Mouser\Brazilian_A.mus  Grey_Mouser\Brazilian.mus
+REN Grey_Mouser\Keep_it_Dark_A.mus  Grey_Mouser\Keep_it_Dark.mus
+REN Grey_Mouser\Love_You_to_A.mus  Grey_Mouser\Love_You_to.mus
+REN Grey_Mouser\South_Side_of_the_Sky_A.mus  Grey_Mouser\South_Side_of_the_Sky.mus
+REN Harry_Barnum\Mrs_Robinson_A.mus  Harry_Barnum\Mrs_Robinson.mus
+REN Harry_Barnum\Mrs_Robinson_B.str  Harry_Barnum\Mrs_Robinson.str
+REN Harry_Bratt\Concerto_in_C_Major_P16_1st_Movement_A.mus  Harry_Bratt\Concerto_in_C_Major_P16_1st_Movement.mus
+REN HarryF2\Dont_Bet_your_Money_on_de_Shanghai_A.mus  HarryF2\Dont_Bet_your_Money_on_de_Shanghai.mus
+REN HarryF2\Glendy_Burk_A.mus  HarryF2\Glendy_Burk.mus
+REN HarryF2\If_youve_Only_got_a_Moustache_A.mus  HarryF2\If_youve_Only_got_a_Moustache.mus
+REN HarryF2\May_the_Red_Rose_live_Always_A.mus  HarryF2\May_the_Red_Rose_live_Always.mus
+REN HarryF2\Open_thy_Lattice_Love_A.mus  HarryF2\Open_thy_Lattice_Love.mus
+REN HarryF2\Song_of_All_Songs_A.mus  HarryF2\Song_of_All_Songs.mus
+REN HarryF2\Thats_Whats_the_Matter_A.mus  HarryF2\Thats_Whats_the_Matter.mus
+REN HarryF2\There_are_plenty_of_Fish_in_the_Sea_A.mus  HarryF2\There_are_plenty_of_Fish_in_the_Sea.mus
+REN HarryF2\There_is_a_Tavern_in_the_Town_A.mus  HarryF2\There_is_a_Tavern_in_the_Town.mus
+REN HarryF2\Village_Maiden_A.mus  HarryF2\Village_Maiden.mus
+REN HarryF2\When_this_Dreadful_War_is_Ended_A.mus  HarryF2\When_this_Dreadful_War_is_Ended.mus
+REN HarryF2\Wilt_thou_be_Gone_Love_A.mus  HarryF2\Wilt_thou_be_Gone_Love.mus
+REN Jari_A_Kaarima\Bookie_Oogie_Oogie.mus  Jari_A_Kaarima\Boogie_Oogie_Oogie.mus
+REN Jason_Pierce\Alices_Song_B.mus  Jason_Pierce\Alices_Song.mus
+REN Jason_Pierce\Alices_Song_B.wds  Jason_Pierce\Alices_Song.wds
+REN Jason_Pierce\She_Loves_You_B.mus  Jason_Pierce\She_Loves_You.mus
+REN Jason_Pierce\She_Loves_You_B.wds  Jason_Pierce\She_Loves_You.wds
+REN Jason_Pierce\Up_up_and_Away_B.mus  Jason_Pierce\Up_Up_and_Away.mus
+REN Jason_Pierce\Up_up_and_Away_B.wds  Jason_Pierce\Up_Up_and_Away.wds
+REN Jerry_Roth_-Dr_J-\Blue_Christmas_A.mus  Jerry_Roth_-Dr_J-\Blue_Christmas.mus
+REN Jim_Masterson\Get_the_Balance_Right_B.mus  Jim_Masterson\Get_the_Balance_Right.mus
+REN Jim_Masterson\Get_the_Balance_Right_B.wds  Jim_Masterson\Get_the_Balance_Right.wds
+REN Jim_Masterson\Love_is_the_Seventh_Wave_B.mus  Jim_Masterson\Love_is_the_Seventh_Wave.mus
+REN Jim_Masterson\Love_is_the_Seventh_Wave_B.wds  Jim_Masterson\Love_is_the_Seventh_Wave.wds
+REN Jim_Masterson\The_Metro_B.mus  Jim_Masterson\The_Metro.mus
+REN Jim_Masterson\The_Metro_B.wds  Jim_Masterson\The_Metro.wds
+REN John_E_Roache\Cascades_B.mus  John_E_Roache\Cascades.mus
+REN John_E_Roache\Chrysanthemum_B.mus  John_E_Roache\Chrysanthemum.mus
+REN John_E_Roache\Cleopha_B.mus  John_E_Roache\Cleopha.mus
+REN John_E_Roache\Easy_Winners_B.mus  John_E_Roache\Easy_Winners.mus
+REN John_E_Roache\Elite_Syncopations_B.mus John_E_Roache\Elite_Syncopations.mus
+REN John_E_Roache\Entertainer_A.mus  John_E_Roache\Entertainer.mus
+REN John_E_Roache\Eugenia_B.mus  John_E_Roache\Eugenia.mus
+REN John_E_Roache\Excelsior_Rag_B.mus  John_E_Roache\Excelsior_Rag.mus
+REN John_E_Roache\Favorite_A.mus  John_E_Roache\Favorite.mus
+REN John_E_Roache\Fig_Leaf_Rag_B.mus  John_E_Roache\Fig_Leaf_Rag.mus
+REN John_E_Roache\Gladiolus_Rag_A.mus  John_E_Roache\Gladiolus_Rag.mus
+REN John_E_Roache\Heliotrope_Bouquet_B.mus John_E_Roache\Heliotrope_Bouquet.mus
+REN John_E_Roache\Leola_A.mus  John_E_Roache\Leola.mus
+REN John_E_Roache\Maple_Leaf_Rag_B.mus  John_E_Roache\Maple_Leaf_Rag.mus
+REN John_E_Roache\Meteor_Rag_B.mus  John_E_Roache\Meteor_Rag.mus
+REN John_E_Roache\New_Rag_B.mus  John_E_Roache\New_Rag.mus
+REN John_E_Roache\Original_Rags_B.mus  John_E_Roache\Original_Rags.mus
+REN John_E_Roache\Peacherine_Rag_B.mus  John_E_Roache\Peacherine_Rag.mus
+REN John_E_Roache\Rag-Time_Dance_B.mus  John_E_Roache\Rag-Time_Dance.mus
+REN John_E_Roache\Rosebud_March_B.mus  John_E_Roache\Rosebud_March.mus
+REN John_E_Roache\Sensation_Rag_A.mus  John_E_Roache\Sensation_Rag.mus
+REN John_E_Roache\St_Louis_Rag_B.mus  John_E_Roache\St_Louis_Rag.mus
+REN John_E_Roache\Stoptime_Rag_B.mus  John_E_Roache\Stoptime_Rag.mus
+REN John_E_Roache\Top_Liner_Rag_B.mus  John_E_Roache\Top_Liner_Rag.mus
+REN John_E_Roache\Wall_Street_Rag_A.mus  John_E_Roache\Wall_Street_Rag.mus
+REN Joseph_A_Grau\First_Christmas_A.mus  Joseph_A_Grau\First_Christmas.mus
+REN Kenneth_Barsky\Try_to_Remember_A.mus  Kenneth_Barsky\Try_to_Remember.mus
+REN Kenneth_Barsky\Try_to_Remember_A.str  Kenneth_Barsky\Try_to_Remember.str
+REN Kenneth_Barsky\Try_to_Remember_A.wds  Kenneth_Barsky\Try_to_Remember.wds
+REN L_Clements\Baseball_Game_B.mus  L_Clements\Baseball_Game.mus
+REN L_Clements\Baseball_Game_B.wds  L_Clements\Baseball_Game.wds
+REN L_Clements\Doctor_is_in_B.mus  L_Clements\Doctor_is_in.mus
+REN L_Clements\Doctor_is_in_B.wds  L_Clements\Doctor_is_in.mus
+REN L_Clements\Happiness_B.mus  L_Clements\Happiness.mus
+REN L_Clements\Happiness_B.wds  L_Clements\Happiness.wds
+REN L_Clements\Little_Known_Facts_B.mus  L_Clements\Little_Known_Facts.mus
+REN L_Clements\Little_Known_Facts_B.wds  L_Clements\Little_Known_Facts.wds
+REN L_Clements\My_Blanket_and_Me_B.mus  L_Clements\My_Blanket_and_Me.mus
+REN L_Clements\My_Blanket_and_Me_B.wds  L_Clements\My_Blanket_and_Me.wds
+REN Lee_C_Dickinson\My_Mammy_A.mus         Lee_C_Dickinson\My_Mammy.mus
+REN Lee_C_Dickinson\My_Mammy_B.wds         Lee_C_Dickinson\My_Mammy.mus
+REN Lyric\Cherokee_Memory_A.mus  Lyric\Cherokee_Memory.mus
+REN Lyric\Cherokee_Memory_A.str  Lyric\Cherokee_Memory.str
+REN Lyric\Dancing_Shoes_B.mus  Lyric\Dancing_Shoes.mus
+REN Lyric\Dancing_Shoes_B.wds  Lyric\Dancing_Shoes.wds
+REN Lyric\El_Condor_Pasa_B.mus  Lyric\El_Condor_Pasa.mus
+REN Lyric\El_Condor_Pasa_B.wds  Lyric\El_Condor_Pasa.wds
+REN Lyric\Goodnight_Saigon_B.mus  Lyric\Goodnight_Saigon.mus
+REN Lyric\Goodnight_Saigon_B.str  Lyric\Goodnight_Saigon.str
+REN Lyric\Goodnight_Saigon_B.wds  Lyric\Goodnight_Saigon.wds
+REN Lyric\Last_Date_B.mus  Lyric\Last_Date.mus
+REN Lyric\Shepherds_A.mus  Lyric\Shepherds.mus
+REN Lyric\Shepherds_A.wds  Lyric\Shepherds.wds
+REN Lyric\Swan_Lake_B.mus  Lyric\Swan_Lake.mus
+REN Lyric\Swan_Lake_B.str  Lyric\Swan_Lake.str
+REN Macbeth\Sunday_Bloody_Sunday_B.mus  Macbeth\Sunday_Bloody_Sunday.mus
+REN Macbeth\Sunday_Bloody_Sunday_B.wds  Macbeth\Sunday_Bloody_Sunday.wds
+REN Marvin_Jones\Variations_on_Glow_Worm_A.mus  Marvin_Jones\Variations_on_Glow_Worm.mus
+REN Marvin_Jones\Variations_on_Glow_Worm_B.wds  Marvin_Jones\Variations_on_Glow_Worm.wds
+REN Melody\Isnt_Life_Strange_B.mus  Melody\Isnt_Life_Strange.mus
+REN Melody\Lets_Hear_it_for_the_Boy_B.mus  Melody\Lets_Hear_it_for_the_Boy.mus
+REN Melody\Man_who_Shot_Liberty_Valance_B.mus  Melody\Man_who_Shot_Liberty_Valance.mus
+REN Melody\Man_who_Shot_Liberty_Valance_B.wds  Melody\Man_who_Shot_Liberty_Valance.wds
+REN Misc\Anon\Because_A.mus  Misc\Anon\Because.mus
+REN Misc\Anon\Because_A.str  Misc\Anon\Because.str
+REN Misc\Anon\Have_Thine_own_way_Lord_A.mus  Misc\Anon\Have_Thine_own_way_Lord.mus
+REN Misc\Anon\Have_Thine_own_way_Lord_A.wds  Misc\Anon\Have_Thine_own_way_Lord.wds
+REN Misc\Anon\I_Wanna_be_a_Sysop_Blues_B.mus  Misc\Anon\I_Wanna_be_a_Sysop_Blues.mus
+REN Misc\Anon\I_Wanna_be_a_Sysop_Blues_B.wds  Misc\Anon\I_Wanna_be_a_Sysop_Blues.wds
+REN Misc\Anon\Id_Rather_have_Jesus_A.mus  Misc\Anon\Id_Rather_have_Jesus.mus
+REN Misc\Anon\Id_Rather_have_Jesus_A.wds  Misc\Anon\Id_Rather_have_Jesus.wds
+REN Misc\Anon\Ive_a_Home_Beyond_the_River_A.mus  Misc\Anon\Ive_a_Home_Beyond_the_River.mus
+REN Misc\Anon\Ive_a_Home_Beyond_the_River_A.wds  Misc\Anon\Ive_a_Home_Beyond_the_River.wds
+REN Misc\Anon\Jump_A.mus  Misc\Anon\Jump.mus
+REN Misc\Anon\Jump_A.str  Misc\Anon\Jump.str
+REN Misc\Anon\Luckenbach.mus  Misc\Anon\Luckenbach_Texas.mus
+REN Misc\Anon\O_How_he_Loves_you_and_me_A.mus  Misc\Anon\O_How_he_Loves_you_and_me.mus
+REN Misc\Anon\O_How_he_Loves_you_and_me_A.wds  Misc\Anon\O_How_he_Loves_you_and_me.wds
+REN Misc\Anon\Praise_Him_A.mus  Misc\Anon\Praise_Him.mus
+REN Misc\Anon\Praise_Him_A.wds  Misc\Anon\Praise_Him.wds
+REN Misc\Anon\Red_River_Valley_B.mus  Misc\Anon\Red_River_Valley.mus
+REN Misc\Anon\Southern_Nights_B.mus  Misc\Anon\Southern_Nights.mus
+REN Misc\Anon\Southern_Nights_B.wds  Misc\Anon\Southern_Nights.wds
+REN Misc\Anon\Pastores_a_)Beken.mus  Misc\Anon\Pastores_a_Beken.mus
+REN Misc\Anon\Pastores_a_)Beken.wds  Misc\Anon\Pastores_a_Beken.wds
+REN Misc\Anon_Blank\Silent_Night.mus  Misc\Anon_Blank\Silent_Night_A.mus
+REN Misc\A\Jingle_Bells_A.mus  Misc\A\Jingle_Bells.mus
+REN Misc\A\Silent_Night_A.mus  Misc\A\Silent_Night.mus
+REN Misc\B\Carol_of_the_Bagpipers_B.mus  Misc\B\Carol_of_the_Bagpipers.mus
+REN Misc\B\Carol_of_the_Bagpipers_B.wds  Misc\B\Carol_of_the_Bagpipers.wds
+REN Misc\C\Wonderful_Tonight_A.mus  Misc\C\Wonderful_Tonight.mus
+REN Misc\C\Wonderful_Tonight_A.wds  Misc\C\Wonderful_Tonight.wds
+REN Misc\D\American_Pie_B.mus  Misc\D\American_Pie.mus
+REN Misc\D\American_Pie_B.wds  Misc\D\American_Pie.wds
+REN Misc\D\Ballad_of_Jet_Clampett.mus  Misc\D\Ballad_of_Jed_Clampett.mus
+REN Misc\F\Gilgarra_Mountain_A.mus  Misc\F\Gilgarra_Mountain.mus
+REN Misc\F\Gilgarra_Mountain_A.wds  Misc\F\Gilgarra_Mountain.wds
+REN Misc\K\We_got_the_Beat_A.mus  Misc\K\We_got_the_Beat.mus
+REN Misc\L\Sim_Sholom_B.mus  Misc\L\Sim_Sholom.mus
+REN Misc\L\Sim_Sholom_B.wds  Misc\L\Sim_Sholom.wds
+REN Misc\M\If_you_could_Read_my_Mind_B.mus  Misc\M\If_you_could_Read_my_Mind.mus
+REN Misc\M\If_you_could_Read_my_Mind_B.wds  Misc\M\If_you_could_Read_my_Mind.wds
+REN Misc\P\Nights_are_Forever_Without_you_B.mus  Misc\P\Nights_are_Forever_Without_you.mus
+REN Misc\P\Nights_are_Forever_Without_you_B.wds  Misc\P\Nights_are_Forever_Without_you.wds
+REN Misc\Qsid_Countdown\QSID_04_Sweet_Child_of_Mind.mus  Misc\Qsid_Countdown\QSID_04_Sweet_Child_of_Mine.mus
+REN Misc\Qsid_Countdown\QSID_04_Sweet_Child_of_Mind.wds  Misc\Qsid_Countdown\QSID_04_Sweet_Child_of_Mine.wds
+REN Misc\S\La_Bamba_B.mus  Misc\S\La_Bamba.mus
+REN Misc\S\La_Bamba_B.wds  Misc\S\La_Bamba.wds
+REN Ms_Guitar\Comfortably_Numb_A.mus  Ms_Guitar\Comfortably_Numb.mus
+REN Ms_Guitar\Comfortably_Numb_A.wds  Ms_Guitar\Comfortably_Numb.wds
+REN Ms_Guitar\Dont_Fear_the_Reaper_B.mus  Ms_Guitar\Dont_Fear_the_Reaper.mus
+REN Ms_Guitar\Dont_Fear_the_Reaper_B.wds  Ms_Guitar\Dont_Fear_the_Reaper.wds
+REN Ms_Guitar\Here_I_go_Again_B.mus  Ms_Guitar\Here_I_go_Again.mus
+REN Ms_Guitar\Here_I_go_Again_B.wds  Ms_Guitar\Here_I_go_Again.wds
+REN Ms_Guitar\Spirit_of_Radio_B.mus  Ms_Guitar\Spirit_of_Radio.mus
+REN Ms_Guitar\Spirit_of_Radio_B.wds  Ms_Guitar\Spirit_of_Radio.wds
+REN Ms_Guitar\Still_of_the_Night_B.mus  Ms_Guitar\Still_of_the_Night.mus
+REN Ms_Guitar\Still_of_the_Night_B.wds  Ms_Guitar\Still_of_the_Night.wds
+REN Nick_Zelinsky\Christmas_for_Cowboys_A.mus  Nick_Zelinsky\Christmas_for_Cowboys.mus
+REN Nick_Zelinsky\Christmas_for_Cowboys_A.str  Nick_Zelinsky\Christmas_for_Cowboys.str
+REN Nick_Zelinsky\Christmas_for_Cowboys_A.wds  Nick_Zelinsky\Christmas_for_Cowboys.wds
+REN Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer_A.mus  Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer.mus
+REN Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer_A.wds  Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer.wds
+REN Nick_Zelinsky\Space_Age_Santa_Claus_A.mus  Nick_Zelinsky\Space_Age_Santa_Claus.mus
+REN Nick_Zelinsky\Space_Age_Santa_Claus_A.str  Nick_Zelinsky\Space_Age_Santa_Claus.str
+REN Nick_Zelinsky\Space_Age_Santa_Claus_A.wds  Nick_Zelinsky\Space_Age_Santa_Claus.wds
+REN Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme_B.mus  Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme.mus
+REN Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme_B.str  Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme.str
+REN Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme_B.wds  Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme.wds
+REN Nick_Zelinsky\We_Built_this_City_A.mus  Nick_Zelinsky\We_Built_this_City.mus
+REN Nick_Zelinsky\We_Built_this_City_B.str  Nick_Zelinsky\We_Built_this_City.str
+REN Nick_Zelinsky\We_need_a_Little_Christmas_A.mus  Nick_Zelinsky\We_need_a_Little_Christmas.mus
+REN Nick_Zelinsky\We_need_a_Little_Christmas_A.wds  Nick_Zelinsky\We_need_a_Little_Christmas.wds
+REN Paul_Trauth\Back_in_the_USSR_A.mus  Paul_Trauth\Back_in_the_USSR.mus
+REN Paul_Trauth\Back_in_the_USSR_B.wds  Paul_Trauth\Back_in_the_USSR.wds
+REN Paul_Trauth\Elanor_Rigby_B.mus  Paul_Trauth\Elanor_Rigby.mus
+REN Paul_Trauth\Elanor_Rigby_B.wds  Paul_Trauth\Elanor_Rigby.wds
+REN Pgunn\For_the_Good_Times_B.mus  Pgunn\For_the_Good_Times.mus
+REN Pgunn\For_the_Good_Times_B.wds  Pgunn\For_the_Good_Times.wds
+REN Roger_Ambill\Hawaii_5-0_A.mus  Roger_Ambill\Hawaii_5-0.mus
+REN Ron_Zyna\Phantom_of_the_Opera_B.mus  Ron_Zyna\Phantom_of_the_Opera.mus
+REN Ron_Zyna\Phantom_of_the_Opera_B.wds  Ron_Zyna\Phantom_of_the_Opera.wds
+REN Russ_Fisher\One_OClock_Jump_B.mus  Russ_Fisher\One_OClock_Jump.mus
+REN Sadist_-Madman-_-Mike_Madsen-\Back_in_the_USSR_A.mus  Sadist_-Madman-_-Mike_Madsen-\Back_in_the_USSR.mus
+REN Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life_A.mus  Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life.mus
+REN Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life_A.wds  Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life.wds
+REN Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds_A.mus  Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds.mus
+REN Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds_A.wds  Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds.wds
+REN Sadist_-Madman-_-Mike_Madsen-\Ob-la-di_A.mus  Sadist_-Madman-_-Mike_Madsen-\Ob-la-di.mus
+REN Sadist_-Madman-_-Mike_Madsen-\Ob-la-di_A.wds  Sadist_-Madman-_-Mike_Madsen-\Ob-la-di.wds
+REN Sadist_-Madman-_-Mike_Madsen-\Pour_some_Sugar_on_me_A.mus  Sadist_-Madman-_-Mike_Madsen-\Pour_some_Sugar_on_me.mus
+REN Sadist_-Madman-_-Mike_Madsen-\Pour_some_Sugar_on_me_B.wds  Sadist_-Madman-_-Mike_Madsen-\Pour_some_Sugar_on_me.wds
+REN Sadist_-Madman-_-Mike_Madsen-\Revolution_B.mus  Sadist_-Madman-_-Mike_Madsen-\Revolution.mus
+REN Saint_Bob1\Sentinel_A.mus  Saint_Bob1\Sentinel.mus
+REN Saint_Bob1\Sentinel_A.str  Saint_Bob1\Sentinel.str
+REN Saint_Bob1\Word_in_Private_B.mus  Saint_Bob1\Word_in_Private.mus
+REN Saint_Bob1\Word_in_Private_B.str  Saint_Bob1\Word_in_Private.str
+REN Sandy_C\Dont_Bother_me_I_cant_Cope_B.mus  Sandy_C\Dont_Bother_me_I_cant_Cope.mus
+REN Sandy_C\Dont_Bother_me_I_cant_Cope_B.wds  Sandy_C\Dont_Bother_me_I_cant_Cope.wds
+REN Sean_Fields\This_Song_just_Six_Words_Long.mus  Sean_Fields\This_Songs_just_Six_Words_Long.mus
+REN Sean_Fields\This_Song_just_Six_Words_Long.wds  Sean_Fields\This_Songs_just_Six_Words_Long.wds
+REN Spiecher\Stand_by_me_B.mus  Spiecher\Stand_by_me.mus
+REN Spiecher\Stand_by_me_B.wds  Spiecher\Stand_by_me.wds
+REN Spiecher\Wild_Blue_Yonder_A.mus  Spiecher\Wild_Blue_Yonder.mus
+REN Stampmagic\The_Simpsons_B.mus  Stampmagic\The_Simpsons.mus
+REN Stampmagic\The_Simpsons_B.str  Stampmagic\The_Simpsons.str
+REN Steve_Cunningham\And_I_Love_Her_A.mus  Steve_Cunningham\And_I_Love_Her.mus
+REN Steve_Cunningham\And_I_Love_Her_B.str  Steve_Cunningham\And_I_Love_Her.str
+REN Steven_Emsley\Come_Sail_Away_A.mus  Steven_Emsley\Come_Sail_Away.mus
+REN Syl\Teddy_Bears_Picnic_B.mus  Syl\Teddy_Bears_Picnic.mus
+REN Syl\Teddy_Bears_Picnic_B.wds  Syl\Teddy_Bears_Picnic.wds
+REN Syl\Two_Violins_in_A_Minor_B.mus  Syl\Two_Violins_in_A_Minor.mus
+REN Syl\Two_Violins_in_A_Minor_B.str  Syl\Two_Violins_in_A_Minor.str
+REN Syl\Violin_Concerto_in_A_Minor_No1_Allegro_A.mus  Syl\Violin_Concerto_in_A_Minor_No1_Allegro_Mono.mus
+REN Syl\Violin_Concerto_in_A_Minor_No1_Allegro_B.mus  Syl\Violin_Concerto_in_A_Minor_No1_Allegro_Stereo.mus
+REN Syl\Violin_Concerto_in_A_Minor_No1_Allegro_B.str  Syl\Violin_Concerto_in_A_Minor_No1_Allegro_Stereo.mus
+REN Syl\Violin_Concerto_in_A_Minor_No2_Andante_A.mus  Syl\Violin_Concerto_in_A_Minor_No2_Andante_Mono.mus
+REN Syl\Violin_Concerto_in_A_Minor_No2_Andante_B.mus  Syl\Violin_Concerto_in_A_Minor_No2_Andante_Stereo.mus
+REN Syl\Violin_Concerto_in_A_Minor_No2_Andante_B.str  Syl\Violin_Concerto_in_A_Minor_No2_Andante_Stereo.str
+REN Syl\Violin_Concerto_in_A_Minor_No3_Allegro_Assai_A.mus  Syl\Violin_Concerto_in_A_Minor_No3_Allegro_Assai_Mono.mus
+REN Syl\Violin_Concerto_in_A_Minor_No3_Allegro_Assai_B.mus  Syl\Violin_Concerto_in_A_Minor_No3_Allegro_Assai_Stereo.mus
+REN Syl\Violin_Concerto_in_A_Minor_No3_Allegro_Assai_B.str  Syl\Violin_Concerto_in_A_Minor_No3_Allegro_Assai_Stereo.str
+REN Tom_B24\Crying_B.mus  Tom_B24\Crying.mus
+REN Tom_B24\Do_you_Want_to_Dance_B.mus  Tom_B24\Do_you_Want_to_Dance.mus
+REN Tom_B24\Hang_on_Sloopy_B.mus  Tom_B24\Hang_on_Sloopy.mus
+REN Tom_B24\Hundred_Pounds_of_Clay_B.mus  Tom_B24\Hundred_Pounds_of_Clay.mus
+REN Tom_B24\I_saw_her_Standing_There_B.mus  Tom_B24\I_saw_her_Standing_There.mus
+REN Tom_B24\Judy_in_Disguise_B.mus  Tom_B24\Judy_in_Disguise.mus
+REN Tom_B24\Just_One_Look_B.mus  Tom_B24\Just_One_Look.mus
+REN Tom_B24\My_Boyfriends_Back_B.mus  Tom_B24\My_Boyfriends_Back.mus
+REN Tom_B24\Rock_and_Roll_is_Here_to_Stay_B.mus  Tom_B24\Rock_and_Roll_is_Here_to_Stay.mus
+REN Tom_B24\Think_Summer_B.mus  Tom_B24\Think_Summer.mus
+REN Tom_B24\Think_Summer_B.wds  Tom_B24\Think_Summer.wds
+REN Uncle_Slam\Call_of_Ktulu_B.mus  Uncle_Slam\Call_of_Ktulu.mus
+REN Uncle_Slam\Flight_of_Icarus_A.mus   Uncle_Slam\Flight_of_Icarus.mus
+REN Uncle_Slam\Flight_of_Icarus_B.wds   Uncle_Slam\Flight_of_Icarus.wds
+REN Victor_Street_Music\Alabama_Medley_A.mus  Victor_Street_Music\Alabama_Medley.mus
+REN Victor_Street_Music\Alabama_Medley_A.str  Victor_Street_Music\Alabama_Medley.str
+REN Wesley_Noles\Lines_upon_a_Tranquil_Brow_A.mus  Wesley_Noles\Lines_upon_a_Tranquil_Brow.mus
+REN Wesley_Noles\Lines_upon_a_Tranquil_Brow_B.wds  Wesley_Noles\Lines_upon_a_Tranquil_Brow.wds
+REN Whole_Note\Suite_VII_G_Minor\Gigue_A.mus  Whole_Note\Suite_VII_G_Minor\Gigue.mus
+REN Whole_Note\Suite_VII_G_Minor\Gigue_A.str  Whole_Note\Suite_VII_G_Minor\Gigue.str
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+DEL Jim_Masterson\High_on_Emotion.mus
+DEL Jim_Masterson\High_on_Emotion.wds
+MOVE Kenneth_Barsky\High_on_Emotion.mus  Jim_Masterson\High_on_Emotion.mus
+MOVE Kenneth_Barsky\High_on_Emotion.wds  Jim_Masterson\High_on_Emotion.wds
+MOVE Misc\K\Ding_Dong_the_Witch_is_Dead.str  Kenneth_Barsky\Ding_Dong_the_Witch_is_Dead.str
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+:Same as A_Brown\Double_Vision.mus
+DEL Misc\Anon_Blank\Foreigner.mus
+
+:Same as Andy_Clements\Splish_Splash.mus
+DEL Misc\Anon\Splish_Splash.mus
+
+:Same as BJ_Pools\Long_Distance_Runaround.mus
+DEL BJ_Pools\Long_Distance_Runaround_A.mus
+DEL BJ_Pools\Long_Distance_Runaround_A.wds
+:Same as BJ_Pools\Pour_some_Sugar_on_me_B.mus
+DEL BJ_Pools\Pour_some_Sugar_on_me_C.mus
+REN Pour_some_Sugar_on_me_D.mus Pour_some_Sugar_on_me_C.mus
+REN Pour_some_Sugar_on_me_D.str Pour_some_Sugar_on_me_C.str
+REN Pour_some_Sugar_on_me_D.wds Pour_some_Sugar_on_me_C.wds
+
+:Same as Bob_Huffman\O_come_all_ye_Faithful.mus
+DEL Misc\O_come_all_ye_Faithful_C.mus
+DEL Misc\O_come_all_ye_Faithful_C.wds
+
+:Same as Bob_Umfer\Pastores_a_Belen.mus
+DEL Bob_Umfer\Pastores_a_Belen_B.mus
+
+:Same as Bobbye\Christmas_Around_the_World.mus
+DEL Bobbye\Its_Christmas_all_Around_the_World.mus
+DEL Bobbye\Its_Christmas_all_Around_the_World.wds
+:Same as Bobbye\Final_Countdown.mus
+DEL Bobbye\Final_Countdown_A.mus
+DEL Bobbye\Final_Countdown_A.wds
+DEL Bobbye\Final_Countdown_B.mus
+DEL Bobbye\Final_Countdown_B.wds
+:Same as Bobbye\I_Have_Dreamed_B.mus
+DEL Bobbye\I_Have_Dreamed_A.mus
+DEL Bobbye\I_Have_Dreamed_A.wds
+REN Bobbye\I_Have_Dreamed_B.mus  Bobbye\I_Have_Dreamed_A.mus
+REN Bobbye\I_Have_Dreamed_B.wds  Bobbye\I_Have_Dreamed_A.wds
+REN Bobbye\I_Have_Dreamed_C.mus  Bobbye\I_Have_Dreamed_B.mus
+REN Bobbye\I_Have_Dreamed_C.str  Bobbye\I_Have_Dreamed_B.str
+REN Bobbye\I_Have_Dreamed_C.wds  Bobbye\I_Have_Dreamed_B.wds
+:Same as Bobbye\I_Love_RocknRoll.mus
+DEL Bobbye\I_Love_Rock_and_Roll.mus
+:Same as Bobbye\Twilight_Zone.mus
+DEL Bobbye\Twilight_Zone_B.mus
+:Same as Bobbye\Your_Wildest_Dreams.mus
+DEL Bobbye\Your_Wildest_Dreams_A.mus
+DEL Bobbye\Your_Wildest_Dreams_A.wds
+
+:Same as Bobbye\Santa_Claus\Every_Christmas_Eve.mus
+DEL Bobbye\Santa_Claus_B\Every_Christmas_Eve.mus
+:Same as Bobbye\Santa_Claus\Giving_Santas_Theme.mus
+DEL Bobbye\Santa_Claus_B\Giving.mus
+:Same as Bobbye\Santa_Claus\Its_Christmas_Again.mus
+DEL Bobbye\Santa_Claus_B\Its_Christmas_Again.mus
+:Same as Bobbye\Santa_Claus\March_of_the_Elves.mus
+DEL Bobbye\Santa_Claus_B\March_of_the_Elves.mus
+:Same as Bobbye\Santa_Claus\Patches_Theme.mus
+DEL Bobbye\Santa_Claus_B\Patches_Theme.mus
+:Same as Bobbye\Santa_Claus\Sleighride_over_Manhattan.mus
+DEL Bobbye\Santa_Claus_B\Sleighride_over_Manhattan.mus
+:Same as Bobbye\Santa_Claus\Thank_You_Santa.mus
+DEL Bobbye\Santa_Claus_B\Thank_You_Santa.mus
+RMDIR Bobbye\Santa_Claus_B
+
+:Same as PK_Labs\First_Noel.mus
+DEL Brian_Barrett_-Psycho_K-\First_Noel.mus
+
+:Same as Brian_M_Szepatowski\Star_Trek_II_Wrath_of_Khan_A.mus
+DEL Brian_M_Szepatowski\Star_Trek_II_Wrath_of_Khan_B.mus
+
+:Same as Brian_Meagher_-BrianM1-\I_Hear_you_Now.mus
+DEL Brian_Meagher_-BrianM1-\I_Hear_you_Now_B.mus
+
+:Same as Corky_Cochran\Bird_in_a_Giden_Cage.mus
+DEL Corky_Cochran\Bird_in_a_Giden_Cage_B.mus
+
+:Same as Dan_Barrett\White_Room.mus
+DEL Dan_Barrett\White_Room_A.mus
+
+:Same as Dave_Marquis\University_Fight_Songs\Fight_for_LSU.mus
+DEL Dave_Marquis\Fight_for_LSU.mus
+:Same as Dave_Marquis\University_Fight_Songs\The_Aggie_War_Hymn.mus
+DEL Dave_Marquis\Aggie_War_Hymn.mus
+
+:Same as Daspf\More_Today_than_Yesterday.mus
+DEL Daspf\More_Today_than_Yesterday_A.mus
+
+:Same as Daspf\Wipe_Out_A.mus
+DEL Daspf\Surfer.mus
+
+:Same as David_Strauss_-Li_Dave-\The_Weight.mus
+DEL David_Strauss_-Li_Dave-\Weight.mus
+
+:Same as Sean_Fields\This_Songs_just_Six_Words_Long.mus
+DEL DC_Holmes\This_Songs_just_Six_Words_Long.mus
+DEL DC_Holmes\This_Songs_just_Six_Words_Long.wds
+
+:Same as DC_Star\Brazilian.mus
+DEL DC_Star_and_Cpr\Genesis\Brazilian_B.mus
+:Same as DC_Star_and_Cpr\Billy_Joel\Baby_Grand_A.mus
+DEL DC_Star_and_Cpr\Baby_Grand.mus
+DEL DC_Star_and_Cpr\Baby_Grand.wds
+:Same as DC_Star_and_Cpr\Faith\Father_Figure.mus
+DEL DC_Star_and_Cpr\Father_Figure_-alt-.mus
+DEL DC_Star_and_Cpr\Father_Figure_-alt-.str
+DEL DC_Star_and_Cpr\Father_Figure_-alt-.wds
+:Same as DC_Star_and_Cpr\Blue_Christmas.mus
+DEL DC_Star_and_Cpr\Blue_Christmas_B.mus
+:Same as DC_Star_and_Cpr\Merry_Christmas_Darling.mus
+DEL DC_Star_and_Cpr\Merry_Christmas_Darling_B.mus
+:Same as DC_Star_and_Cpr\O_Holy_Night.mus
+DEL DC_Star_and_Cpr\O_Holy_Night_B.mus
+:Same as DC_Star_and_Cpr\Other_Side_of_the_World.mus
+DEL DC_Star_and_Cpr\Other_Side_of_the_World_A.mus
+DEL DC_Star_and_Cpr\Other_Side_of_the_World_A.wds
+:Same as DC_Star_and_Cpr\She_Drives_me_Crazy.mus
+DEL DC_Star_and_Cpr\She_Drives_me_Crazy_B.mus
+:Same as DC_Star_and_Cpr\Something_so_Strong.mus
+DEL DC_Star_and_Cpr\Something_so_Strong_A.mus
+DEL DC_Star_and_Cpr\Something_so_Strong_A.wds
+:Same as DC_Star_and_Cpr\Sweet_Sixteen.mus
+DEL DC_Star_and_Cpr\Sweet_Sixteen_A.mus
+DEL DC_Star_and_Cpr\Sweet_Sixteen_A.wds
+:Same as DC_Star_and_Cpr\Top_Gun_Anthem_A.mus
+DEL DC_Star_and_Cpr\Top_Gun_Anthem_D.mus
+:Same as DC_Star_and_Cpr\What_Child_is_this.mus
+DEL DC_Star_and_Cpr\What_Child_is_this_B.mus
+:Same as DC_Star_and_Cpr\When_Smokey_Sings.mus
+DEL DC_Star_and_Cpr\When_Smokey_Sings_A.mus
+DEL DC_Star_and_Cpr\When_Smokey_Sings_A.wds
+:Same as Michael_French\With_or_Without_You_A.mus
+DEL DC_Star_and_Cpr\With_or_Without_You_B.mus
+
+:Same as DC_Starr\Mystic_Memory.str
+DEL DC_Starr\Mystic_Memory_B.str
+
+:Same as Dean_Schold\Pinocchio_an_Actors_Life_for_me.mus
+DEL Dean_Schold\Pinocchio_an_Actors_Life_for_me_A.mus
+DEL Dean_Schold\Pinocchio_an_Actors_Life_for_me_A.wds
+
+:Same as Eugenes1\Something_in_your_Eyes.mus
+DEL Eugenes1\Something_in_your_Eyes_A.mus
+DEL Eugenes1\Something_in_your_Eyes_A.wds
+
+:Same as Fred_Micoff\Here_Comes_the_Sun.mus and str is BAD
+DEL Fred_Micoff\Here_Comes_the_Sun_B.mus
+DEL Fred_Micoff\Here_Comes_the_Sun_B.str
+
+:Same as Gary_O\Therell_be_Sad_Songs.mus
+DEL Gary_O\Therell_be_Sad_Songs_A.mus
+
+:Same as Glass_Soul\Brown_Eyed_Girl.mus
+DEL Glass_Soul\Brown_Eyed_Girl_A.mus
+DEL Glass_Soul\Brown_Eyed_Girl_A.wds
+:Same as Glass_Soul\Dont_let_the_Sun_Catch_you_Crying.mus
+DEL Glass_Soul\Dont_let_the_Sun_Catch_you_Crying_A.mus
+DEL Glass_Soul\Dont_let_the_Sun_Catch_you_Crying_A.wds
+:Same as Glass_Soul\Please_Please_me.mus
+DEL Glass_Soul\Please_Please_me_A.mus
+DEL Glass_Soul\Please_Please_me_A.wds
+:Same as Glass_Soul\Sunshine_Superman.mus
+DEL Glass_Soul\Sunshine_Superman_A.mus
+DEL Glass_Soul\Sunshine_Superman_A.wds
+:Same as Glass_Soul\Where_have_all_the_Flowers_Gone.mus
+DEL Glass_Soul\Where_have_all_the_Flowers_Gone_A.mus
+DEL Glass_Soul\Where_have_all_the_Flowers_Gone_A.wds
+
+:Same as Grey_Mouser\Abacab_B.mus
+DEL Grey_Mouser\Abacab_C.mus
+:Same as Grey_Mouser\Brazilian.mus
+DEL Grey_Mouser\Brazilian_B.mus
+:Same as Grey_Mouser\Keep_it_Dark.mus
+DEL Grey_Mouser\Keep_it_Dark_B.mus
+:Same as Grey_Mouser\Love_You_to.mus
+DEL Grey_Mouser\Love_You_to_B.mus
+:Same as Grey_Mouser\South_Side_of_the_Sky.mus
+DEL Grey_Mouser\South_Side_of_the_Sky_B.mus
+
+:Same as Harry_Barnum\Mrs_Robinson.mus
+DEL Harry_Barnum\Mrs_Robinson_B.mus
+
+:Same as Harry_Bratt\Concerto_in_C_Major_P16_1st_Movement.mus
+DEL Harry_Bratt\Concerto_in_C_Major_P16_1st_Movement_B.mus
+
+:Same as Harry_Bratt\Oneirocritical_Osprey_and_Free_Will.mus
+DEL Harry_Bratt\Last_Free_California_Condor.mus
+
+:Same as HarryF2\Dont_Bet_your_Money_on_de_Shanghai.mus
+DEL HarryF2\Dont_Bet_your_Money_on_de_Shanghai_B.mus
+:Same as HarryF2\Glendy_Burk.mus
+DEL HarryF2\Glendy_Burk_B.mus
+:Same as HarryF2\If_youve_Only_got_a_Moustache.mus
+DEL HarryF2\If_youve_Only_got_a_Moustache_B.mus
+:Same as HarryF2\May_the_Red_Rose_live_Always.mus
+DEL HarryF2\May_the_Red_Rose_live_Always_B.mus
+:Same as HarryF2\Open_thy_Lattice_Love.mus
+DEL HarryF2\Open_thy_Lattice_Love_B.mus
+:Same as HarryF2\Song_of_All_Songs.mus
+DEL HarryF2\Song_of_All_Songs_B.mus
+:Same as HarryF2\Thats_Whats_the_Matter.mus
+DEL HarryF2\Thats_Whats_the_Matter_B.mus
+:Same as HarryF2\There_are_plenty_of_Fish_in_the_Sea.mus
+DEL HarryF2\There_are_plenty_of_Fish_in_the_Sea_B.mus
+:Same as HarryF2\There_is_a_Tavern_in_the_Town.mus
+DEL HarryF2\There_is_a_Tavern_in_the_Town_B.mus
+:Same as HarryF2\Village_Maiden.mus
+DEL HarryF2\Village_Maiden_B.mus
+:Same as HarryF2\When_this_Dreadful_War_is_Ended.mus
+DEL HarryF2\When_this_Dreadful_War_is_Ended_B.mus
+:Same as HarryF2\Wilt_thou_be_Gone_Love.mus
+DEL HarryF2\Wilt_thou_be_Gone_Love_B.mus
+
+:Same as Jason_Pierce\Alices_Song.mus
+DEL Jason_Pierce\Alices_Song_A.mus
+DEL Jason_Pierce\Alices_Song_A.wds
+:Same as Jason_Pierce\She_Loves_You.mus
+DEL Jason_Pierce\She_Loves_You_A.mus
+DEL Jason_Pierce\She_Loves_You_A.wds
+:Same as Jason_Pierce\Up_up_and_Away.mus
+DEL Jason_Pierce\Up_Up_and_Away_A.mus
+DEL Jason_Pierce\Up_Up_and_Away_A.wds
+
+:Same as Jerry_Roth_-Dr_J-\Blue_Christmas_A.mus 
+DEL Jerry_Roth_-Dr_J-\Blue_Christmas_B.mus
+:Same as Jerry_Roth_-Dr_J-\Pipeline_A.mus
+DEL Jerry_Roth_-Dr_J-\Pipeline_C.mus
+DEL Jerry_Roth_-Dr_J-\The_Surfer.mus
+
+:Same as Jim_and_Carole_Dietz\Jingle_Bell_Rock_C.mus
+DEL Jim_and_Carole_Dietz\Jingle_Bell_Rock_B.mus
+REN Jim_and_Carole_Dietz\Jingle_Bell_Rock_C.mus  Jim_and_Carole_Dietz\Jingle_Bell_Rock_B.mus
+
+:Same as Jim_Masterson\Get_the_Balance_Right.mus
+DEL Jim_Masterson\Get_the_Balance_Right_A.mus
+DEL Jim_Masterson\Get_the_Balance_Right_A.wds
+:Same as Jim_Masterson\Love_is_the_Seventh_Wave.mus
+DEL Jim_Masterson\Love_is_the_Seventh_Wave_A.mus
+DEL Jim_Masterson\Love_is_the_Seventh_Wave_A.wds
+:Same as Jim_Masterson\The_Metro.mus
+DEL Jim_Masterson\The_Metro_A.mus
+DEL Jim_Masterson\The_Metro_A.wds
+
+:Same as Jim_-Jim_Brock-_-KCORB-\Christmas\Away_in_a_Manger.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Away_in_a_Manger.mus
+:Same as Jim_-Jim_Brock-_-KCORB-\Christmas\Christmas_in_Dixie.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Christmas_in_Dixie.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Christmas_in_Dixie.str
+DEL Jim_-Jim_Brock-_-KCORB-\Christmas_in_Dixie.wds
+:Same as Jim_-Jim_Brock-_-KCORB-\Christmas\I_Heard_the_Bells.mus
+DEL Jim_-Jim_Brock-_-KCORB-\I_Heard_the_Bells.mus
+:Same as Jim_-Jim_Brock-_-KCORB-\Christmas\Jolly_Old_St_Nicholas.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Jolly_Old_St_Nicholas.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Jolly_Old_St_Nicholas.wds
+:Same as Jim_-Jim_Brock-_-KCORB-\Christmas\Let_it_Snow.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Let_it_Snow.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Let_it_Snow.wds
+:Same as Jim_-Jim_Brock-_-KCORB-\Christmas\Rocking_Around_the_Christmas_Tree.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Rockin_Around_the_Xmas_Tree.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Rockin_Around_the_Xmas_Tree.wds
+
+:Same as BJ_Pools\Sweet_Child_o_Mine_B.mus
+DEL Jimi_O\Sweet_Child_of_Mine.mus
+
+:Same as John_E_Roache\Cascades.mus
+DEL John_E_Roache\Cascades_A.mus
+:Same as John_E_Roache\Chrysanthemum.mus
+DEL John_E_Roache\Chrysanthemum_A.mus
+:Same as John_E_Roache\Cleopha.mus
+DEL John_E_Roache\Cleopha_B.mus
+:Same as John_E_Roache\Easy_Winners.mus
+DEL John_E_Roache\Easy_Winners_A.mus
+:Same as John_E_Roache\Easy_Winners.mus
+DEL John_E_Roache\Easy_Winners_C.mus
+:Same as John_E_Roache\Elite_Syncopations.mus
+DEL John_E_Roache\Elite_Syncopations_A.mus
+:Same as John_E_Roache\Entertainer.mus
+DEL John_E_Roache\Entertainer_B.mus
+:Same as John_E_Roache\Eugenia.mus
+DEL John_E_Roache\Eugenia_A.mus
+:Same as John_E_Roache\Excelsior_Rag.mus
+DEL John_E_Roache\Excelsior_Rag_A.mus
+:Same as John_E_Roache\Favorite.mus
+DEL John_E_Roache\Favorite_B.mus
+:Same as John_E_Roache\Fig_Leaf_Rag.mus
+DEL John_E_Roache\Fig_Leaf_Rag_A.mus
+:Same as John_E_Roache\Fresh_Aire_B.mus
+DEL John_E_Roache\Moonscape.mus
+:Same as John_E_Roache\Gladiolus_Rag.mus
+DEL John_E_Roache\Gladiolus_Rag_B.mus
+:Same as John_E_Roache\Heliotrope_Bouquet.mus
+DEL John_E_Roache\Heliotrope_Bouquet_A.mus
+:Same as John_E_Roache\Leola.mus
+DEL John_E_Roache\Leola_B.mus
+:Same as John_E_Roache\Magnetic_Rag_B.mus
+DEL John_E_Roache\Magnetic_Rag_C.mus
+REN John_E_Roache\Magnetic_Rag_B.mus  John_E_Roache\Magnetic_Rag_C.mus
+:Same as John_E_Roache\Maple_Leaf_Rag.mus
+DEL John_E_Roache\Maple_Leaf_Rag_A.mus
+:Same as John_E_Roache\Meteor_Rag.mus
+DEL John_E_Roache\Meteor_Rag_A.mus
+:Same as John_E_Roache\New_Rag.mus
+DEL John_E_Roache\New_Rag_A.mus
+:Same as John_E_Roache\Original_Rags.mus
+DEL John_E_Roache\Original_Rags_A.mus
+:Same as John_E_Roache\Peacherine_Rag.mus
+DEL John_E_Roache\Peacherine_Rag_A.mus
+:Same as John_E_Roache\Pine_Apple_Rag.mus
+DEL John_E_Roache\Pineapple_Rag.mus
+:Same as John_E_Roache\Rag-Time_Dance.mus
+DEL John_E_Roache\Rag-Time_Dance_A.mus
+DEL John_E_Roache\Rag-Time_Dance_C.mus
+:Same as John_E_Roache\Rosebud_March.mus
+DEL John_E_Roache\Rosebud_March_A.mus
+:Same as John_E_Roache\Sensation_Rag.mus
+DEL John_E_Roache\Sensation_Rag_B.mus
+:Same as John_E_Roache\Solace_B.mus
+DEL John_E_Roache\Solace_C.mus
+:Same as John_E_Roache\St_Louis_Rag.mus
+DEL John_E_Roache\St_Louis_Rag_A.mus
+:Same as John_E_Roache\Stoptime_Rag.mus
+DEL John_E_Roache\Stoptime_Rag_A.mus
+:Same as John_E_Roache\Top_Liner_Rag.mus
+DEL John_E_Roache\Top_Liner_Rag_A.mus
+:Same as John_E_Roache\Wall_Street_Rag.mus
+DEL John_E_Roache\Wall_Street_Rag_B.mus
+
+:Same as Jon_Rafalak\Not_12-8_B.mus
+DEL Jon_Rafalak\Not_12-8_C.mus
+
+:Same as Joseph_A_Grau\Bergeronette.mus
+DEL Joseph_A_Grau\Prancer.mus
+:Same as Joseph_A_Grau\First_Christmas.mus
+DEL Joseph_A_Grau\First_Christmas_B.mus
+
+:Same as Kenneth_Barsky\Ding_Dong_the_Witch_is_Dead.mus
+DEL Misc\K\Ding_Dong_the_Witch_is_Dead.mus
+DEL Misc\K\Ding_Dong_the_Witch_is_Dead.wds
+:Same as Kenneth_Barsky\Try_to_Remember.mus
+DEL Kenneth_Barsky\Try_to_Remember_B.mus
+DEL Kenneth_Barsky\Try_to_Remember_B.wds
+
+:Same as Tom_B24\Cajun_Fiddle.mus
+DEL Kuddlebear\Cajun_Fiddle.mus
+
+:Same as L_Clements\Baseball_Game.mus
+DEL L_Clements\Baseball_Game_A.mus
+:Same as L_Clements\Doctor_is_in.mus
+DEL L_Clements\Doctor_is_in_A.mus
+:Same as L_Clements\Happiness.mus
+DEL L_Clements\Happiness_A.mus
+:Same as L_Clements\Little_Known_Facts.mus
+DEL L_Clements\Little_Known_Facts_A.mus
+:Same as L_Clements\My_Blanket_and_Me.mus
+DEL L_Clements\My_Blanket_and_Me_A.mus
+
+:Out of sync with the mus file
+DEL Laura\Black_Water.str
+
+:Same as Lee_C_Dickinson\My_Mammy.mus
+DEL Lee_C_Dickinson\My_Mammy_B.mus
+:Same as Lee_C_Dickinson\Red_Roses_for_a_Blue_Lady.mus
+DEL Lee_C_Dickinson\Red_Roses.mus
+DEL Lee_C_Dickinson\Red_Roses.wds
+
+:Same as Lincoln_Craig\Star_Wars.mus
+DEL Lincoln_Craig\May_the_Force_be_with_you.mus
+
+:Same as Lyric\Carol_for_East_and_West_Sing_we_Christmas.mus
+DEL Lyric\Sing_we_Christmas.mus
+:Same as Lyric\Cherokee_Memory.mus
+DEL Lyric\Cherokee_Memory_B.mus
+DEL Lyric\Cherokee_Memory_B.str
+:Same as Lyric\Dancing_Shoes.mus
+DEL Lyric\Dancing_Shoes_A.mus
+DEL Lyric\Dancing_Shoes_A.wds
+:Same as Lyric\El_Condor_Pasa.mus
+DEL Lyric\El_Condor_Pasa_A.mus
+DEL Lyric\El_Condor_Pasa_A.wds
+:Same as Lyric\Goodnight_Saigon.mus
+DEL Lyric\Goodnight_Saigon_A.mus
+DEL Lyric\Goodnight_Saigon_A.wds
+:Same as Lyric\Last_Date.mus
+DEL Lyric\Last_Date_A.mus
+:Same as Lyric\Pastorale.mus
+DEL Lyric\Reflections.mus
+DEL Lyric\Reflections.str
+:Same as Lyric\Shepherds.mus
+DEL Lyric\Shepherds_B.mus
+:Same as Lyric\Swan_Lake.mus
+DEL Lyric\Swan_Lake_A.mus
+DEL Lyric\Swan_Lake_A.str
+
+:Same as Macbeth\Sunday_Bloody_Sunday.mus
+DEL Macbeth\Sunday_Bloody_Sunday_A.mus
+
+:Same as Marte_Brengle\Baa_Baa_Black_Sheep.mus
+DEL Marte_Brengle\Daves_Dreams.mus
+
+:Same as Marvin_Jones\Variations_on_Glow_Worm.mus
+DEL Marvin_Jones\Variations_on_Glow_Worm_B.mus
+
+:Same as Melody\Stand_by_my_Woman_Man.mus
+DEL Melody\Im_a_Stand_by_my_Woman_Man.mus
+DEL Melody\Im_a_Stand_by_my_Woman_Man.wds
+:Same as Melody\Isnt_Life_Strange.mus
+DEL Melody\Isnt_Life_Strange_A.mus
+:Same as Melody\Lets_Hear_it_for_the_Boy.mus
+DEL Melody\Lets_Hear_it_for_the_Boy_A.mus
+:Same as Melody\Man_who_Shot_Liberty_Valance.mus
+DEL Melody\Man_who_Shot_Liberty_Valance_A.mus
+DEL Melody\Man_who_Shot_Liberty_Valance_A.wds
+
+:Same as Mike_Generali\Sonata_da_Chiesa_Op3_No7.mus
+DEL Mike_Generali\Sonata_da_Chiesa_Op3_No7_B.mus
+REN Mike_Generali\Sonata_da_Chiesa_Op3_No7.mus  Mike_Generali\Sonata_da_Chiesa_Op3_No7_B.mus
+
+:Same as DC_Star_and_Cpr\Died_in_your_Arms.mus
+DEL Mike_Price\Died_in_your_Arms.mus
+DEL Mike_Price\Died_in_your_Arms.wds
+:Same as DC_Star_and_Cpr\Hip_to_be_Square.mus
+DEL Mike_Price\Hip_to_be_Square.mus
+DEL Mike_Price\Hip_to_be_Square.wds
+:Same as DC_Star_and_Cpr\Lean_on_me.mus
+DEL Mike_Price\Lean_on_Me.mus
+DEL Mike_Price\Lean_on_Me.wds
+:Same as Nick_Zelinsky\Greatest_American_Hero.mus
+DEL Mike_Price\Greatest_American.mus
+RMDIR Mike_Price
+
+: Various Misc\Anon\ tunes that are also in Dave_Marquis\
+DEL Misc\Anon\Dance_of_the_Reed_Flutes.mus
+DEL Misc\Anon\Frailach.mus
+DEL Misc\Anon\March.mus
+DEL Misc\Anon\Nocturne.mus
+DEL Misc\Anon\Old_Castle.mus
+DEL Misc\Anon\Prelude_in_G_Minor_Op23_No5.mus
+DEL Misc\Anon\Spring_Song_Op62_No6.mus
+DEL Misc\Anon\Turkish_March.mus
+
+:Same as Grey_Mouser\Stranger_in_a_Strange_Land.mus
+DEL Misc\Anon\Stranger_in_a_Strange_Land.mus
+
+:Same as Misc\Anon\Because.mus
+DEL Misc\Anon\Because_B.mus
+:Same as Misc\Anon\Have_Thine_own_way_Lord.mus
+DEL Misc\Anon\Have_Thine_own_way_Lord_B.mus
+DEL Misc\Anon\Have_Thine_own_way_Lord_B.wds
+:Same as Misc\Anon\I_Wanna_be_a_Sysop_Blues.mus
+DEL Misc\Anon\I_Wanna_be_a_Sysop_Blues_A.mus
+DEL Misc\Anon\I_Wanna_be_a_Sysop_Blues_A.wds
+:Same as Misc\Anon\Id_Rather_have_Jesus.mus
+DEL Misc\Anon\Id_Rather_have_Jesus_B.mus
+DEL Misc\Anon\Id_Rather_have_Jesus_B.wds
+:Same as Misc\Anon\Ive_a_Home_Beyond_the_River.mus
+DEL Misc\Anon\Ive_a_Home_Beyond_the_River_B.mus
+DEL Misc\Anon\Ive_a_Home_Beyond_the_River_B.wds
+:Same as Misc\Anon\Jump.mus
+DEL Misc\Anon\Jump_B.mus
+:Same as Misc\Anon\Luckenbach_Texas.mus
+DEL Misc\Anon\Luckenback_Texas.mus
+:Same as Misc\Anon\O_How_he_Loves_you_and_me.mus
+DEL Misc\Anon\O_How_he_Loves_you_and_me_B.mus
+DEL Misc\Anon\O_How_he_Loves_you_and_me_B.wds
+:Same as Misc\Anon\Praise_Him.mus
+DEL Misc\Anon\Praise_Him_B.mus
+:Same as Misc\Anon\Red_River_Valley.mus
+DEL Misc\Anon\Red_River_Valley_A.mus
+:Same as Misc\Anon\Southern_Nights.mus
+DEL Misc\Anon\Southern_Nights_A.mus
+DEL Misc\Anon\Southern_Nights_A.wds
+
+:Same as Bob_Retelle\Entry_of_the_Gladiators.mus
+DEL Misc\Anon\Entry_of_the_Gladiators.mus
+:Same as Robert_S_Shaw_-Bob_Shaw-_-Juky-\Fanfare_II.mus
+DEL Misc\Anon\Fanfare_II.mus
+:Same as Brian_M_Szepatowski\Ghostbusters.mus
+DEL Misc\Anon\Ghostbusters.mus
+:Same as Misc\F\Happy_Days.mus
+DEL Misc\Anon\Happy_Days.mus
+:Same as Nick_Zelinsky\Here_comes_the_King_Budweiser_Beer_A.mus
+DEL Misc\Anon\Here_comes_the_King.mus
+DEL Misc\Anon\Here_comes_the_King.wds
+:Same as Misc\G\Hungarian_Rhapsody_No2.mus
+DEL Misc\Anon\Hungarian_Rhapsody_No2.mus
+:Same as Robert_S_Shaw_-Bob_Shaw-_-Juky-\Trumpet_Tune_and_Air.mus
+DEL Misc\Anon\Trumpet_Solo_and_Air.mus
+:Same as Misc\R\Victors_March.mus
+DEL Misc\Anon\Victors_March.mus
+:Same as Misc\H\God_didnt_make_Honkeytonk_Angels.mus
+DEL Misc\Anon\Wild_Side_of_Life.mus
+
+:Same as Misc\A\Nightshift.mus
+DEL Misc\Anon_Blank\Night_Shift.mus
+:Same as Misc\Anon\Fughetta.mus
+DEL Misc\Anon_Blank\Fughetta.mus
+:Same as Symphoni\Chorous_from_Handels_Messiah.mus
+DEL Misc\Anon_Blank\Chorus.mus
+:Same as Lazy_Mode\Surplusage.mus
+DEL Misc\Anon_Blank\Surplus.mus
+:Same as Misc\Anon\Oh_Really.mus
+DEL Misc\Anon_Blank\Wrap_Finger.mus
+
+:Same as Misc\A\Jingle_Bells.mus
+DEL Misc\A\Jingle_Bells_B.mus
+:Same as Misc\A\Silent_Night.mus
+DEL Misc\A\Silent_Night_B.mus
+
+:Same as Misc\B\Carol_of_the_Bagpipers.mus
+DEL Misc\B\Carol_of_the_Bagpipers_A.mus
+DEL Misc\B\Carol_of_the_Bagpipers_A.wds
+:Same as Michael_French\You_give_Love_a_Bad_Name.mus
+DEL Misc\B\You_give_Love_a_Bad_Name.mus
+
+:Same as Misc\C\1812_Overture.mus
+DEL Misc\C\1812_Overture_Short.mus
+:Same as Misc\C\Black_Dog.mus
+DEL Misc\F\Black_Dog.mus
+MOVE Misc\C\Black_Dog.mus  Misc\F\Black_Dog.mus
+:Same as Dave_Stewart\Meet_the_Flintstones.mus
+DEL Misc\C\Flintstones.mus
+:Same as Misc\G\Macgyver_A.mus
+DEL Misc\C\Macgyver_B.mus
+REN Misc\C\Macgyver_C.mus  Misc\C\Macgyver_B.mus
+:Same as Misc\M\Scarlet_Ribbons.mus
+DEL Misc\C\Scarlet_Ribbons.mus
+DEL Misc\C\Scarlet_Ribbons.wds
+:Same as Misc\C\Wonderful_Tonight.mus
+DEL Misc\C\Wonderful_Tonight_B.mus
+DEL Misc\C\Wonderful_Tonight_B.wds
+
+:Same as Misc\D\American_Pie.mus
+DEL Misc\D\American_Pie_A.mus
+DEL Misc\D\American_Pie_A.wds
+:Same as Laura\Black_Water.mus
+DEL Misc\D\Black_Water.mus
+DEL Misc\D\Black_Water.wds
+:Same as SC\Through_the_Years.mus
+DEL Misc\D\Through_the_Years.mus
+DEL Misc\D\Through_the_Years.wds
+
+:Same as Bob_Huffman\Carol_of_the_Bells.mus
+DEL Misc\Data_Dugout_BBS\Carol_of_the_Bells.mus
+:Same as Bob_Huffman\Do_you_Hear_what_I_Hear.mus
+DEL Misc\Data_Dugout_BBS\Do_you_Hear_what_I_Hear.mus
+:Same as Bob_Huffman\God_Rest_ye_Merry_Gentlemen.mus
+DEL Misc\Data_Dugout_BBS\God_Rest_ye_Merry_Gentlemen.mus
+:Same as Bob_Huffman\Little_Drummer_Boy.mus
+DEL Misc\Data_Dugout_BBS\Little_Drummer_Boy.mus
+:Same as Bobbye\Christmas_Around_the_World.mus
+DEL Misc\Data_Dugout_BBS\Its_Christmas_all_Around_the_World.mus
+:Same as Bobbye\Its_Christmas_all_Around_the_World.mus
+DEL Misc\Data_Dugout_BBS\Its_Christmas_all_Around_the_World.mus
+:Same as Bobbye\Toyland.mus
+DEL Misc\Data_Dugout_BBS\Toyland.mus
+:Same as Les_Herrman\Winter_Wonderland.mus
+DEL Misc\Data_Dugout_BBS\Winter_Wonderland.mus
+:Same as Misc\Anon\Christmas_Medley.mus
+DEL Misc\Data_Dugout_BBS\Christmas_Medley.mus
+:Same as Misc\Anon\Christmas_Song.mus
+DEL Misc\Data_Dugout_BBS\Chestnut_Roating_on_an_Open_Fire.mus
+:Same as Bobbye\Santa_Claus\Making_Toys.mus
+DEL Misc\Data_Dugout_BBS\Making_Toys.mus
+
+:Various Misc\Digger tunes
+:Same as Bobbye\Peter_Gunn.mus
+DEL Misc\Digger\Peter_Gunn.mus
+:Same as Brian_M_Szepatowski\Dune_A.mus
+DEL Misc\Digger\Dune.mus
+:Same as Brian_M_Szepatowski\Raiders_March.mus
+DEL Misc\Digger\Raiders_March.mus
+:Same as Brian_M_Szepatowski\Short_Rounds_Theme.mus
+DEL Misc\Digger\Short_Rounds_Theme.mus
+:Same as Brian_M_Szepatowski\Star_Trek.mus
+DEL Misc\Digger\Star_Trek.mus
+:Same as Craig_Chamberlain\Mule.mus
+DEL Misc\Digger\MULE_Theme.mus
+:Same as Dave_Marquis\Richmond_Rag.mus
+DEL Misc\Digger\Richmond_Rag.mus
+:Same as DC_Star_and_Cpr\Devil_Inside.mus
+DEL Misc\Digger\Devil_Inside.mus
+:Same as DC_Star_and_Cpr\Music_Box_Dancer_B.mus
+DEL Misc\Digger\Music_Box_Dancer.mus
+:Same as DC_Star_and_Cpr\Thriller.mus
+DEL Misc\Digger\Thriller.mus
+:Same as DC_Star_and_Cpr\Top_Gun_Anthem_C.mus
+DEL Misc\Digger\Top_Gun.mus
+:Same as Gary_Galloway\Dallas.mus
+DEL Misc\Digger\Dallas.mus
+:Same as Jerry_Brady\Liberty_Bell_March.mus
+DEL Misc\Digger\Liberty_Bell_March.mus
+:Same as Marvin_Jones\Ghost_Riders_in_the_Sky_B.mus
+DEL Misc\Digger\Ghostriders_in_the_Sky.mus
+:Same as Michael_French\California_Girls.mus
+DEL Misc\Digger\California_Girls.mus
+:Same as Michael_French\Spanish_Fly.mus
+DEL Misc\Digger\Spanish_Fly.mus
+:Same as Misc\C\Macgyver_A.mus
+DEL Misc\Digger\MacGyver.mus
+:Same as Misc\S\James_Bond_Theme.mus and Misc\L\James_Bond_Theme.mus
+DEL Misc\Digger\James_Bond_Theme.mus
+:Same as Misc\M\Linus_and_Lucy.mus
+DEL Misc\Digger\Peanuts.mus
+:Same as Misc\K\Under_the_Double_Eagle_March.mus
+DEL Misc\Digger\Under_the_Double_Eagle_March.mus
+:Same as Paul_Labeaud\Venus_de_Milo.mus
+DEL Misc\Digger\Venus_de_Milo.mus
+:Same as Steak\Planet_Earth_B.mus
+DEL Misc\Digger\Planet_Earth.mus
+:Same as Terry_Woll\The_Rose.mus
+DEL Misc\Digger\The_Rose.mus
+
+:Same as Bobbye\Twilight_Zone_A.mus
+DEL Misc\E\Twilight_Zone.mus
+
+:Same as Misc\F\Gilgarra_Mountain.mus
+DEL Misc\F\Gilgarra_Mountain_B.mus
+DEL Misc\F\Gilgarra_Mountain_B.wds
+:Same as HarryF2\Hard_Times_come_again_No_More.mus
+DEL Misc\F\Hard_Times_come_again_no_more.mus
+
+:Same as Br0wn_Cow\Tears_are_not_Enough.mus
+DEL Misc\G\Tears_are_not_Enough.mus
+
+:Same as BlkPanther\Danger_Zone.mus
+DEL Misc\H\Danger_Zone.mus
+:Same as Misc\F\Enola_Gay_A.mus
+DEL Misc\H\Enola_Gay.mus
+:Same as DC_Star_and_Cpr\Nikita_and_Candle_in_the_Wind.mus
+DEL Misc\H\Nikita_and_Candle_in_the_Wind.mus
+
+:Same as Bob_Huffman\Bumble_Boogie_B.mus
+DEL Misc\K\Bumble_Bookie.mus
+:Same as Misc\K\We_got_the_Beat.mus
+DEL Misc\K\We_got_the_Beat_B.mus
+
+:Same as Misc\L\Sim_Sholom.wds
+DEL Misc\L\Sim_Sholom_A.wds
+
+:Same as Misc\M\If_you_could_Read_my_Mind.mus
+DEL Misc\M\If_you_could_Read_my_Mind_A.mus
+DEL Misc\M\If_you_could_Read_my_Mind_A.wds
+:Same as Misc\G\Living_on_a_Prayer_A.mus
+DEL Misc\M\Livin_on_a_Prayer.mus
+
+:Same as Misc\P\Nights_are_Forever_Without_you.mus
+DEL Misc\P\Nights_are_Forever_Without_you_A.mus
+DEL Misc\P\Nights_are_Forever_Without_you_A.wds
+
+:Same as Brian_M_Szepatowski\Miami_Vice_A.mus
+DEL Misc\R\Miami_Vice.mus
+:Same as Misc\H\Sweet_Dreams_B.mus
+DEL Misc\R\Sweet_Dreams.mus
+
+:Same as Brian_Meagher_-BrianM1-\Easy_Lover.mus
+DEL Misc\S\Easy_Lover.mus
+:Same as Michael_French\Going_to_California.mus
+DEL Misc\S\Going_to_California.mus
+:Same as Misc\L\James_Bond_Theme.mus
+DEL Misc\S\James_Bond_Theme.mus
+:Same Misc\S\La_Bamba.mus
+DEL Misc\S\La_Bamba_A.mus
+DEL Misc\S\La_Bamba_A.wds
+:Same as Jerry_Roth_-Dr_J-\Material_Girl.mus
+DEL Misc\S\Material_Girl.mus
+
+: All of Misc\SidPlay can go
+:Same as Dave_Stewart\Hogans_Heros.mus
+DEL Misc\SidPlay\Hogans_Heroes.mus
+:Same as Brian_L_Copeland\Humoresque_A.mus
+DEL Misc\SidPlay\Humoresque.mus
+:Same as Dr_D\Jazorik_Full_Version.mus
+DEL Misc\SidPlay\Jazorik.mus
+:Same as A_Brown\Kids_in_America.mus
+DEL Misc\SidPlay\Kids_in_America.mus
+:Same as A_Brown\Out_of_Touch_A.mus
+DEL Misc\SidPlay\Out_of_Touch.mus
+:Same as Dr_D\Paths_Theme.mus
+DEL Misc\SidPlay\Paths_to_Nowhere.mus
+:Same as Nick_Zelinsky\Pink_Panther.mus
+DEL Misc\SidPlay\Pink_Panther.mus
+:Same as Nick_Zelinsky\Ripleys.mus
+DEL Misc\SidPlay\Ripleys.mus
+:Same as Misc\R\Take_me_Home.mus
+DEL Misc\SidPlay\Take_me_Home.mus
+:Same as Misc\M\Take_on_me.mus
+DEL Misc\SidPlay\Take_on_Me.mus
+:Same as Lucky_and_Confuzed\Thats_what_Friends_are_for.mus
+DEL Misc\SidPlay\Thats_what_Friends_are_for.mus
+:Same as Nick_Zelinsky\We_are_the_World.mus
+DEL Misc\SidPlay\We_are_the_World.mus
+:Same as Misc\K\What_you_Need.mus
+DEL Misc\SidPlay\What_You_need.mus
+:Same as Alex_Morales\Yo_Ho_a_Pirates_Life_for_me.mus
+DEL Misc\SidPlay\Yo_Ho.mus
+RMDIR Misc\SidPlay
+
+:Same as Misc\A\Fugue_in_A.mus
+DEL Misc\T\Fugue_in_A.mus
+
+:Same as Harry_B\By_the_Time_I_get_to_Phoenix.mus
+DEL Misc\W\By_the_Time_I_get_to_Phoenix.mus
+:Same as Misc\Anon\Pink_Elephants.mus
+DEL Misc\W\Pink_Elephants.mus
+DEL Misc\W\Pink_Elephants.wds
+
+:Same as Ms_Guitar\Comfortably_Numb.mus
+DEL Ms_Guitar\Comfortably_Numb_B.mus
+DEL Ms_Guitar\Comfortably_Numb_B.wds
+:Same as Ms_Guitar\Dont_Fear_the_Reaper.mus
+DEL Ms_Guitar\Dont_Fear_the_Reaper_A.mus
+DEL Ms_Guitar\Dont_Fear_the_Reaper_A.wds
+:Same as Ms_Guitar\Here_I_go_Again.mus
+DEL Ms_Guitar\Here_I_go_Again_A.mus
+DEL Ms_Guitar\Here_I_go_Again_A.wds
+:Same as Ms_Guitar\Spirit_of_Radio.mus
+DEL Ms_Guitar\Spirit_of_Radio_A.mus
+DEL Ms_Guitar\Spirit_of_Radio_A.wds
+:Same as Ms_Guitar\Still_of_the_Night.mus
+DEL Ms_Guitar\Still_of_the_Night_A.mus
+DEL Ms_Guitar\Still_of_the_Night_A.wds
+
+:Same as Nick_Zelinsky\Ballad_of_Gilligans_Isle.mus
+DEL Nick_Zelinsky\Ballad_of_Gilligans_Isle_B.mus
+DEL Nick_Zelinsky\Ballad_of_Gilligans_Isle_B.wds
+REN Nick_Zelinsky\Ballad_of_Gilligans_Isle_C.mus  Nick_Zelinsky\Ballad_of_Gilligans_Isle_B.mus
+REN Nick_Zelinsky\Ballad_of_Gilligans_Isle_C.wds  Nick_Zelinsky\Ballad_of_Gilligans_Isle_B.wds
+
+:Same as Nick_Zelinsky\Christmas_for_Cowboys.mus
+DEL Nick_Zelinsky\Christmas_for_Cowboys_B.mus
+:Same as Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer.mus
+DEL Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer_B.mus
+:Same as Nick_Zelinsky\Home_for_the_Holidays_B.mus
+DEL Nick_Zelinsky\Home_for_the_Holidays_C.mus
+:Same as Nick_Zelinsky\Space_Age_Santa_Claus.mus
+DEL Nick_Zelinsky\Space_Age_Santa_Claus_B.mus
+:Same as Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme.mus
+DEL Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme_A.mus
+DEL Nick_Zelinsky\Tastes_like_a_Soft_Drink_Fresca_Theme_A.wds
+:Same as Nick_Zelinsky\We_Built_this_City.mus
+DEL Nick_Zelinsky\We_Built_this_City_B.mus
+:Same as Nick_Zelinsky\We_need_a_Little_Christmas.mus
+DEL Nick_Zelinsky\We_need_a_Little_Christmas_B.mus
+
+:Same as Paul_Kanagie\Dance_Hall_Days.mus
+DEL Misc\N\Dance_Hall_Days.mus
+
+:Same as Paul_Trauth\Back_in_the_USSR.mus
+DEL Paul_Trauth\Back_in_the_USSR_A.mus
+:Same as Paul_Trauth\Elanor_Rigby.mus
+DEL Paul_Trauth\Elanor_Rigby_A.mus
+DEL Paul_Trauth\Elanor_Rigby_A.wds
+
+:Same as Pgunn\For_the_Good_Times.mus
+DEL Pgunn\For_the_Good_Times_A.mus
+DEL Pgunn\For_the_Good_Times_A.wds
+
+:Same as Power3\YYZ.mus
+DEL Misc\S\YYZ.mus
+
+:Same as Rick_Sterling\Rock_and_Roll.mus
+DEL Misc\D\Get_Down.mus
+
+:Same as Roger_Ambill\Hawaii_5-0.mus
+DEL Roger_Ambill\Hawaii_5-0_B.mus
+
+:Same as Ron_Zyna\Phantom_of_the_Opera.mus
+DEL Ron_Zyna\Phantom_of_the_Opera_A.mus
+DEL Ron_Zyna\Phantom_of_the_Opera_A.wds
+
+:Same as Russ_Fisher\One_OClock_Jump.mus
+DEL Russ_Fisher\One_OClock_Jump_A.mus
+
+:Same as Sadist_-Madman-_-Mike_Madsen-\Back_in_the_USSR.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Back_in_the_USSR_B.mus
+:Same as Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life_B.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Day_in_the_Life_B.wds
+:Same as Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds_B.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Lucy_in_the_Sky_with_Diamonds_B.wds
+:Same as Sadist_-Madman-_-Mike_Madsen-\Ob-la-di.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Ob-la-di_B.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Ob-la-di_B.wds
+:Same as Sadist_-Madman-_-Mike_Madsen-\Pour_some_Sugar_on_me.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Pour_some_Sugar_on_me_B.mus
+:Same as Sadist_-Madman-_-Mike_Madsen-\Revolution.mus
+DEL Sadist_-Madman-_-Mike_Madsen-\Revolution_A.mus
+
+:Same as Saint_Bob1\Sentinel.mus
+DEL Saint_Bob1\Sentinel_B.mus
+DEL Saint_Bob1\Sentinel_B.str
+:Same as Saint_Bob1\Word_in_Private.mus
+DEL Saint_Bob1\Word_in_Private_A.mus
+DEL Saint_Bob1\Word_in_Private_A.str
+
+:Same as Sandy_C\Dont_Bother_me_I_cant_Cope.mus
+DEL Sandy_C\Dont_Bother_me_I_cant_Cope_A.mus
+DEL Sandy_C\Dont_Bother_me_I_cant_Cope_A.wds
+
+:Same as BJ_Pools\When_the_Children_Cry.mus
+DEL Sean_Robinson_-Frosty-\When_the_Children_Cry.mus
+:Same as Bobbye\Twilight_Zone_A.mus
+DEL Sean_Robinson_-Frosty-\Twilight_Zone.mus
+:Same as Lucky_and_Confuzed\Conga.mus
+DEL Sean_Robinson_-Frosty-\Conga.mus
+:Same as Nick_Zelinsky\Ice_Castles_B.mus
+DEL Sean_Robinson_-Frosty-\Through_the_Eyes_of_Love_Ice_Castles.mus
+:Same as Sadist_-Madman-_-Mike_Madsen-\Janies_got_a_Gun.mus
+DEL Sean_Robinson_-Frosty-\Janies_got_a_Gun.mus
+:Same as Sean_Fields\Close_my_Eyes_Forever.mus
+DEL Sean_Robinson_-Frosty-\Close_my_Eyes_Forever.mus
+MOVE Sean_Robinson_-Frosty-\18_and_Life.mus  Misc\R\18_and_Life.mus
+RMDIR Sean_Robinson_-Frosty-
+
+:Same as Sileo\Jaeger.mus
+DEL Sileo\Der_Jaeger.mus
+DEL Sileo\Der_Jaeger.wds
+
+:Same as Spiecher\Stand_by_me.mus
+DEL Spiecher\Stand_by_me_A.mus
+DEL Spiecher\Stand_by_me_A.wds
+:Same as Spiecher\Wild_Blue_Yonder.mus
+DEL Spiecher\Wild_Blue_Yonder_B.mus
+
+:Same as Stampmagic\The_Simpsons.mus
+DEL Stampmagic\The_Simpsons_A.mus
+
+:Same as Steve_Cunningham\And_I_Love_Her.mus
+DEL Steve_Cunningham\And_I_Love_Her_B.mus
+
+:Same as Steven_Emsley\Come_Sail_Away.mus
+DEL Steven_Emsley\Come_Sail_Away_B.mus
+
+:Same as Syl\Teddy_Bears_Picnic.mus
+DEL Syl\Teddy_Bears_Picnic_A.mus
+DEL Syl\Teddy_Bears_Picnic_A.wds
+:Same as Syl\Two_Violins_in_A_Minor.mus
+DEL Syl\Two_Violins_in_A_Minor_A.mus
+DEL Syl\Two_Violins_in_A_Minor_A.str
+
+:Same as Tom_B24\Crying.mus
+DEL Tom_B24\Crying_A.mus
+:Same as Tom_B24\Do_you_Want_to_Dance.mus
+DEL Tom_B24\Do_you_Want_to_Dance_A.mus
+:Same as Tom_B24\Hang_on_Sloopy.mus
+DEL Tom_B24\Hang_on_Sloopy_A.mus
+:Same as Tom_B24\Hundred_Pounds_of_Clay.mus
+DEL Tom_B24\Hundred_Pounds_of_Clay_A.mus
+:Same as Tom_B24\I_saw_her_Standing_There.mus
+DEL Tom_B24\I_saw_her_Standing_There_A.mus
+:Same as Tom_B24\Judy_in_Disguise.mus
+DEL Tom_B24\Judy_in_Disguise_A.mus
+:Same as Tom_B24\Just_One_Look.mus
+DEL Tom_B24\Just_One_Look_A.mus
+:Same as Tom_B24\Kansas_City_C.mus
+DEL Tom_B24\Kansas_City_B.mus
+REN Tom_B24\Kansas_City_C.mus  Tom_B24\Kansas_City_B.mus
+:Same as Tom_B24\My_Boyfriends_Back.mus
+DEL Tom_B24\My_Boyfriends_Back_A.mus
+:Same as Tom_B24\Rock_and_Roll_is_Here_to_Stay.mus
+DEL Tom_B24\Rock_and_Roll_is_Here_to_Stay_A.mus
+:Same as Tom_B24\Think_Summer.mus
+DEL Tom_B24\Think_Summer_A.mus
+DEL Tom_B24\Think_Summer_A.wds
+
+:Same as Uncle_Slam\Call_of_Ktulu.mus
+DEL Uncle_Slam\Call_of_Ktulu_A.mus
+:Same as Uncle_Slam\Flight_of_Icarus.mus
+DEL Uncle_Slam\Flight_of_Icarus_B.mus
+
+:Same as Victor_Street_Music\Alabama_Medley.mus
+DEL Victor_Street_Music\Alabama_Medley_B.mus
+
+:Same as Wesley_Noles\Lines_upon_a_Tranquil_Brow.mus
+DEL Wesley_Noles\Lines_upon_a_Tranquil_Brow_B.mus
+
+:Same as Whole_Note\Suite_VII_G_Minor\Gigue.mus
+DEL Whole_Note\Suite_VII_G_Minor\Gigue_B.mus
+DEL Whole_Note\Suite_VII_G_Minor\Gigue_B.str
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v133.txt  00_Documents\Whats_new_in_v133.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_133.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.33 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

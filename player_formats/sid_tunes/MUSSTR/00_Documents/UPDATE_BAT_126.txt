@@ -1,0 +1,246 @@
+@echo off
+
+IF EXIST Whats_new_in_v126.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v126.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.26
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\B\Close_to_You.mus Misc\T\Close_to_You.mus
+MOVE Misc\B\Close_to_You.wds Misc\T\Close_to_You.wds
+MOVE Misc\B\Forever.mus Misc\T\Forever.mus
+MOVE Misc\B\I_Walk_the_Line.mus Misc\T\I_Walk_the_Line.mus
+MOVE Misc\H\Beautiful_Dreamer.mus Harry\Beautiful_Dreamer.mus
+MOVE Misc\H\Beautiful_Dreamer.str Harry\Beautiful_Dreamer.str
+MOVE Misc\H\Beautiful_Dreamer.wds Harry\Beautiful_Dreamer.wds
+MOVE Misc\H\Carry_me_Back_to_Ol_Virginny.mus Harry\Carry_me_Back_to_Ol_Virginny.mus
+MOVE Misc\H\Carry_me_Back_to_Ol_Virginny.str Harry\Carry_me_Back_to_Ol_Virginny.str
+MOVE Misc\H\Carry_me_Back_to_Ol_Virginny.wds Harry\Carry_me_Back_to_Ol_Virginny.wds
+MOVE Misc\H\Oh_Susanna.mus Harry\Oh_Susanna.mus
+MOVE Misc\H\Oh_Susanna.str Harry\Oh_Susanna.str
+MOVE Misc\H\Oh_Susanna.wds Harry\Oh_Susanna.wds
+MOVE Misc\H\Final_Countdown.mus Dan_Hays\Final_Countdown.mus
+MOVE Misc\H\Love_Boat.mus Dan_Hays\Love_Boat.mus
+MOVE Misc\H\Olympic_Fanfare.mus Dan_Hays\Olympic_Fanfare.mus
+MOVE Misc\H\Portasound.mus Dan_Hays\Portasound.mus
+MOVE Misc\H\Song_of_All_Songs.mus Harry\Song_of_All_Songs.mus
+MOVE Misc\H\Song_of_All_Songs.str Harry\Song_of_All_Songs.str
+MOVE Misc\H\Song_of_All_Songs.wds Harry\Song_of_All_Songs.wds
+MOVE Misc\M\Onward_Christian_Soldiers.mus QuakerOtis\Onward_Christian_Soldiers.mus
+MOVE Misc\M\Onward_Christian_Soldiers.wds QuakerOtis\Onward_Christian_Soldiers.wds
+MOVE Misc\P\Bumble_Boogie.mus David_Pike\Bumble_Boogie.mus
+MOVE Misc\P\Sonata_Op2_No1.mus David_Pike\Sonata_Op2_No1.mus
+MOVE Misc\P\Toccata.mus David_Pike\Toccata.mus
+MOVE Misc\T\Unanswered_Prayers.mus Michael_Tardy\Unanswered_Prayers.mus
+MOVE Misc\T\Unanswered_Prayers.str Michael_Tardy\Unanswered_Prayers.str
+MOVE Misc\T\Unanswered_Prayers.wds Michael_Tardy\Unanswered_Prayers.wds
+MOVE Misc\R\Not_12-8.mus Jon_Rafalak\Not_12-8_C.mus
+MOVE Misc\R\59th_St_Bridge_Song.mus Rich_Johnson_-Cathouse-\59th_St_Bridge_Song.mus
+MOVE Misc\R\Homeword_Bound.mus Rich_Johnson_-Cathouse-\Homeword_Bound.mus
+MOVE Misc\S\Return_to_Innocence.mus Bob_Closson\Return_to_Innocence.mus
+MOVE Misc\S\Return_to_Innocence.str Bob_Closson\Return_to_Innocence.str
+MOVE Misc\S\Return_to_Innocence.wds Bob_Closson\Return_to_Innocence.wds
+MOVE Misc\V\Hooked_on_Classics.mus Tim_Vaudt_-Timv6-\Hooked_on_Classics.mus
+MOVE Misc\W\Prove_it_all_Night.mus Robert_Willis\Prove_it_all_Night_B.mus
+MOVE Misc\W\Prove_it_all_Night.wds Robert_Willis\Prove_it_all_Night_B.wds
+
+MKDIR James_Clay
+MOVE Misc\C\Going_for_the_One.mus James_Clay\Going_for_the_One.mus
+MOVE Misc\C\Home_by_the_Sea.mus James_Clay\Home_by_the_Sea.mus
+MOVE Misc\C\The_Fish.mus James_Clay\The_Fish.mus
+MOVE Misc\C\The_Roof_is_Leaking.mus James_Clay\The_Roof_is_Leaking.mus
+MOVE Misc\C\West_Side.mus James_Clay\West_Side.mus
+MKDIR Edhead
+MOVE Misc\E\Alexander.mus Edhead\Alexander.mus
+MOVE Misc\E\Blue_Boogie.mus Edhead\Blue_Boogie.mus
+MOVE Misc\E\Blue_Boogie.wds Edhead\Blue_Boogie.wds
+MOVE Misc\E\Come_Home_Father.mus Edhead\Come_Home_Father.mus
+MOVE Misc\E\Hey_Tomorrow.mus Edhead\Hey_Tomorrow.mus
+MOVE Misc\E\Hey_Tomorrow.wds Edhead\Hey_Tomorrow.wds
+MOVE Misc\E\Please_go_Away_and_let_me_Sleep.mus Edhead\Please_go_Away_and_let_me_Sleep.mus
+MKDIR TS_Frank
+MOVE Misc\F\Behind_the_WaterfallL.mus TS_Frank\Behind_the_Waterfall.mus
+MOVE Misc\F\Gabriel_Faure.mus TS_Frank\Gabriel_Faure.mus
+MOVE Misc\F\Goldberg_Variations.mus TS_Frank\Goldberg_Variations.mus
+MOVE Misc\F\James_Bond_Theme.mus TS_Frank\James_Bond_Theme.mus
+MOVE Misc\F\LA_Law_A.mus TS_Frank\LA_Law_A.mus
+MOVE Misc\F\LA_Law_B.mus TS_Frank\LA_Law_B.mus
+MKDIR Herb_D1_and_Cindy_J
+MOVE Misc\H\As_Tears_go_by.mus Herb_D1_and_Cindy_J\As_Tears_go_by.mus
+MOVE Misc\H\As_Tears_go_by.wds Herb_D1_and_Cindy_J\As_Tears_go_by.wds
+MOVE Misc\H\Cabaret_Part_1.mus Herb_D1_and_Cindy_J\Cabaret_Part_1.mus
+MOVE Misc\H\Cabaret_Part_2.mus Herb_D1_and_Cindy_J\Cabaret_Part_2.mus
+MOVE Misc\H\Paper_Roses.mus Herb_D1_and_Cindy_J\Paper_Roses.mus
+MOVE Misc\H\Paper_Roses.wds Herb_D1_and_Cindy_J\Paper_Roses.wds
+MOVE Misc\H\Red_River_Valley.mus Herb_D1_and_Cindy_J\Red_River_Valley.mus
+MKDIR Ken_Lovell
+MOVE Misc\L\Are_you_Lonesome_Tonight.mus Ken_Lovell\Are_you_Lonesome_Tonight.mus
+MOVE Misc\L\Black_and_White_Rag.mus Ken_Lovell\Black_and_White_Rag.mus
+MOVE Misc\L\Bowery_Rag.mus Ken_Lovell\Bowery_Rag.mus
+MOVE Misc\L\Easy_Winners.mus Ken_Lovell\Easy_Winners.mus
+MOVE Misc\L\Original_Rags.mus Ken_Lovell\Original_Rags.mus
+MKDIR George_Perlinger
+MOVE Misc\P\American_Pie.mus George_Perlinger\American_Pie.mus
+MOVE Misc\P\Babe.mus George_Perlinger\Babe.mus
+MOVE Misc\P\Dust_in_the_Wind.mus George_Perlinger\Dust_in_the_Wind.mus
+MOVE Misc\P\Hotel_California.mus George_Perlinger\Hotel_California.mus
+MOVE Misc\P\Stay_the_Night.mus George_Perlinger\Stay_the_Night.mus
+MKDIR P_Rossing
+MOVE Misc\R\Brothers_in_Arms_A.mus P_Rossing\Brothers_in_Arms_A.mus
+MOVE Misc\R\Brothers_in_Arms_A.wds P_Rossing\Brothers_in_Arms_A.wds
+MOVE Misc\R\Brothers_in_Arms_B.mus P_Rossing\Brothers_in_Arms_B.mus
+MOVE Misc\R\Brothers_in_Arms_B.wds P_Rossing\Brothers_in_Arms_B.wds
+MOVE Misc\R\Snowbird.mus P_Rossing\Snowbird.mus
+MOVE Misc\R\Sunrunner.mus P_Rossing\Sunrunner.mus
+MOVE Misc\R\Uptown_Girl.mus P_Rossing\Uptown_Girl.mus
+MOVE Misc\R\Why_Worry.mus P_Rossing\Why_Worry.mus
+MKDIR John_Sharp
+MOVE Misc\S\Are_we_Ourselves.mus John_Sharp\Are_we_Ourselves.mus
+MOVE Misc\S\Captain_of_Her_Heart.mus John_Sharp\Captain_of_Her_Heart.mus
+MOVE Misc\S\Lapti_Nek.mus John_Sharp\Lapti_Nek.mus
+MOVE Misc\S\Raindrops_keep_Fallin_on_my_Head.mus John_Sharp\Raindrops_keep_Fallin_on_my_Head.mus
+MOVE Misc\S\Star_Wars.mus John_Sharp\Star_Wars.mus
+MKDIR SC
+MOVE Misc\C\Funeral_March.mus SC\Funeral_March.mus
+MOVE Misc\C\Funeral_March.str SC\Funeral_March.str
+MOVE Misc\S\Funny_how_Time_Slips_away.mus SC\Funny_how_Time_Slips_away.mus
+MOVE Misc\S\Funny_how_Time_Slips_away.str SC\Funny_how_Time_Slips_away.str
+MOVE Misc\S\Funny_how_Time_Slips_away.wds SC\Funny_how_Time_Slips_away.wds
+MOVE Misc\S\Lady_Holiday.mus SC\Lady_Holiday.mus
+MOVE Misc\S\Lady_Holiday.str SC\Lady_Holiday.str
+MOVE Misc\S\Mournful_Waltz.mus SC\Mournful_Waltz.mus
+MOVE Misc\S\Six_Little_Ducks.mus SC\Six_Little_Ducks.mus
+MOVE Misc\S\Six_Little_Ducks.wds SC\Six_Little_Ducks.wds
+MOVE Misc\S\Through_the_Years.mus SC\Through_the_Years.mus
+MOVE Misc\S\Through_the_Years.str SC\Through_the_Years.str
+MOVE Misc\S\Through_the_Years.wds SC\Through_the_Years.wds
+MKDIR Scott_Stone
+MOVE Misc\S\Dick_Van_Dike_Theme.mus Scott_Stone\Dick_Van_Dike_Theme.mus
+MOVE Misc\S\I_Love_Lucy.mus Scott_Stone\I_Love_Lucy.mus
+MOVE Misc\S\I_Love_Lucy.wds Scott_Stone\I_Love_Lucy.wds
+MOVE Misc\S\Maria.mus Scott_Stone\Maria.mus
+MOVE Misc\S\Maria.wds Scott_Stone\Maria.wds
+MOVE Misc\S\Popeye_the_Sailor.mus Scott_Stone\Popeye_the_Sailor.mus
+MOVE Misc\S\Popeye_the_Sailor.wds Scott_Stone\Popeye_the_Sailor.wds
+MOVE Misc\S\Sixteen_going_on_Seventeen.mus Scott_Stone\Sixteen_going_on_Seventeen.mus
+MOVE Misc\S\Sixteen_going_on_Seventeen.wds Scott_Stone\Sixteen_going_on_Seventeen.wds
+MOVE Misc\S\Something_Good.mus Scott_Stone\Something_Good.mus
+MOVE Misc\S\Something_Good.wds Scott_Stone\Something_Good.wds
+MKDIR Simple_Syd
+MOVE Misc\S\Anna_and_Brazil.mus Simple_Syd\Anna_and_Brazil.mus
+MOVE Misc\S\Anna_and_Brazil.str Simple_Syd\Anna_and_Brazil.str
+MOVE Misc\S\El_Relicario.mus Simple_Syd\El_Relicario.mus
+MOVE Misc\S\El_Relicario.str Simple_Syd\El_Relicario.str
+MOVE Misc\S\Jalousie.mus Simple_Syd\Jalousie.mus
+MOVE Misc\S\Jalousie.str Simple_Syd\Jalousie.str
+MOVE Misc\S\Latin-Type_Rhythm.mus Simple_Syd\Latin-Type_Rhythm.mus
+MOVE Misc\S\Latin-Type_Rhythm.str Simple_Syd\Latin-Type_Rhythm.str
+MOVE Misc\S\Siboney.mus Simple_Syd\Siboney.mus
+MOVE Misc\S\Siboney.str Simple_Syd\Siboney.str
+MOVE Misc\S\Three_Tunes_with_a_Cha-Cha_Beat.mus Simple_Syd\Three_Tunes_with_a_Cha-Cha_Beat.mus
+MOVE Misc\S\Three_Tunes_with_a_Cha-Cha_Beat.str Simple_Syd\Three_Tunes_with_a_Cha-Cha_Beat.str
+MKDIR Sondance
+MOVE Misc\S\Beau_Soir.mus Sondance\Beau_Soir.mus
+MOVE Misc\S\PDQ_Allemande_Left.mus Sondance\PDQ_Allemande_Left.mus
+MOVE Misc\S\PDQ_Andre_Gigue.mus Sondance\PDQ_Andre_Gigue.mus
+MOVE Misc\S\PDQ_Corrate.mus Sondance\PDQ_Corrate.mus
+MOVE Misc\S\PDQ_Oh_Courante.mus Sondance\PDQ_Oh_Courante.mus
+MKDIR JT
+MOVE Misc\J\Es_ist_ein_ros_Entsprungen.mus JT\Es_ist_ein_ros_Entsprungen.mus
+MOVE Misc\J\Es_ist_ein_ros_Entsprungen.wds JT\Es_ist_ein_ros_Entsprungen.wds
+MOVE Misc\T\Ave_Verum_Corpus.mus JT\Ave_Verum_Corpus.mus
+MOVE Misc\T\Ave_Verum_Corpus.str JT\Ave_Verum_Corpus.str
+MOVE Misc\T\Beschluss.mus JT\Beschluss.mus
+MOVE Misc\T\Beschluss.str JT\Beschluss.str
+MOVE Misc\T\Coventry_Carol.mus JT\Coventry_Carol.mus
+MOVE Misc\T\Coventry_Carol.wds JT\Coventry_Carol.wds
+MOVE Misc\T\Stars_that_Twinkle_and_Shine.mus JT\Stars_that_Twinkle_and_Shine.mus
+MOVE Misc\T\Stars_that_Twinkle_and_Shine.wds JT\Stars_that_Twinkle_and_Shine.wds
+MKDIR Tweek
+MOVE Misc\T\Day_by_Day.mus Tweek\Day_by_Day.mus
+MOVE Misc\T\How_the_West_was_Won.mus Tweek\How_the_West_was_Won.mus
+MOVE Misc\T\How_the_West_was_Won.str Tweek\How_the_West_was_Won.str
+MOVE Misc\T\Louie_Louie.mus Tweek\Louie_Louie.mus
+MOVE Misc\T\Teen_Angel.mus Tweek\Teen_Angel.mus
+MOVE Misc\T\Venus.mus Tweek\Venus.mus
+MKDIR James_Vanee_-Vector10-
+MOVE Misc\V\Electric_Blue.mus James_Vanee_-Vector10-\Electric_Blue.mus
+MOVE Misc\V\Endless_Summer_Nights.mus James_Vanee_-Vector10-\Endless_Summer_Nights.mus
+MOVE Misc\V\I_get_Weak.mus James_Vanee_-Vector10-\I_get_Weak.mus
+MOVE Misc\V\Every_Rose_has_its_Thorn.mus James_Vanee_-Vector10-\Every_Rose_has_its_Thorn.mus
+MOVE Misc\V\Every_Rose_has_its_Thorn.mus James_Vanee_-Vector10-\Every_Rose_has_its_Thorn.mus
+MOVE Misc\V\Every_Rose_has_its_Thorn.mus James_Vanee_-Vector10-\Every_Rose_has_its_Thorn.mus
+MOVE Misc\V\Finish_what_You_Started.mus James_Vanee_-Vector10-\Finish_what_You_Started.mus
+MOVE Misc\V\Finish_what_You_Started.str James_Vanee_-Vector10-\Finish_what_You_Started.str
+MOVE Misc\V\Finish_what_You_Started.wds James_Vanee_-Vector10-\Finish_what_You_Started.wds
+MKDIR Ultradeath
+MOVE Misc\U\Battery.mus Ultradeath\Battery.mus
+MOVE Misc\U\Battery.str Ultradeath\Battery.str
+MOVE Misc\U\Caprice_No24.mus Ultradeath\Caprice_No24.mus
+MOVE Misc\U\Dee.mus Ultradeath\Dee.mus
+MOVE Misc\U\Shadows_Without_Light.mus Ultradeath\Shadows_Without_Light.mus
+MOVE Misc\U\Wierd_Sid_1.mus Ultradeath\Wierd_Sid_1.mus
+MOVE Misc\U\Wierd_Sid_2.mus Ultradeath\Wierd_Sid_2.mus
+
+MOVE Misc\B\Dont_be_Cruel_(Wait_52_Seconds).mus Misc\S\Dont_be_Cruel_(Wait_52_Seconds).mus
+MOVE Misc\B\Dont_be_Cruel_(Wait_52_Seconds).str Misc\S\Dont_be_Cruel_(Wait_52_Seconds).str
+MOVE Misc\B\Dont_be_Cruel_(Wait_52_Seconds).wds Misc\S\Dont_be_Cruel_(Wait_52_Seconds).wds
+
+MKDIR Misc\Qsid_Countdown
+MOVE Qsid_Countdown\QSID_01_Close_my_Eyes_Forever.mus Misc\Qsid_CountdownQSID_01_Close_my_Eyes_Forever.mus
+MOVE Qsid_Countdown\QSID_01_Close_my_Eyes_Forever.wds Misc\Qsid_CountdownQSID_01_Close_my_Eyes_Forever.wds
+MOVE Qsid_Countdown\QSID_02_Wish_you_were_Here.mus Misc\Qsid_CountdownQSID_02_Wish_you_were_Here.mus
+MOVE Qsid_Countdown\QSID_02_Wish_you_were_Here.wds Misc\Qsid_CountdownQSID_02_Wish_you_were_Here.wds
+MOVE Qsid_Countdown\QSID_03_Layla.mus Misc\Qsid_CountdownQSID_03_Layla.mus
+MOVE Qsid_Countdown\QSID_03_Layla.wds Misc\Qsid_CountdownQSID_03_Layla.wds
+MOVE Qsid_Countdown\QSID_04_Sweet_Child_of_Mind.mus Misc\Qsid_CountdownQSID_04_Sweet_Child_of_Mind.mus
+MOVE Qsid_Countdown\QSID_04_Sweet_Child_of_Mind.wds Misc\Qsid_CountdownQSID_04_Sweet_Child_of_Mind.wds
+MOVE Qsid_Countdown\QSID_05_Stationary_Ark.mus Misc\Qsid_CountdownQSID_05_Stationary_Ark.mus
+MOVE Qsid_Countdown\QSID_05_Yellow_Submarine.mus Misc\Qsid_CountdownQSID_05_Yellow_Submarine.mus
+MOVE Qsid_Countdown\QSID_05_Yellow_Submarine.wds Misc\Qsid_CountdownQSID_05_Yellow_Submarine.wds
+MOVE Qsid_Countdown\QSID_06_Mystery_Train.mus Misc\Qsid_CountdownQSID_06_Mystery_Train.mus
+MOVE Qsid_Countdown\QSID_07_Immigrant_Song.mus Misc\Qsid_CountdownQSID_07_Immigrant_Song.mus
+MOVE Qsid_Countdown\QSID_07_Immigrant_Song.wds Misc\Qsid_CountdownQSID_07_Immigrant_Song.wds
+MOVE Qsid_Countdown\QSID_08_Call_of_Ktulu.mus Misc\Qsid_CountdownQSID_08_Call_of_Ktulu.mus
+MOVE Qsid_Countdown\QSID_09_Baby_Elephant_Walk.mus Misc\Qsid_CountdownQSID_09_Baby_Elephant_Walk.mus
+MOVE Qsid_Countdown\QSID_10_Heat_of_the_Moment.mus Misc\Qsid_CountdownQSID_10_Heat_of_the_Moment.mus
+RMDIR Qsid_Countdown
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Misc\Anon\Stepping_Stone.mus
+::: actually Carl_Benton\Im_not_Your_Stepping_Stone.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v126.txt  00_Documents\Whats_new_in_v126.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_126.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.26 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

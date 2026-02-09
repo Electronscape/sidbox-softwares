@@ -1,0 +1,83 @@
+
+IF EXIST Whats_new_in_v108.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v108.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.8
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+:: These Bobbye tunes are replaced by Boobye\Jesus_Christ_Superstar\ ::
+DEL Bobbye\Everythings_Alright.mus
+DEL Bobbye\Hosanna.mus
+DEL Bobbye\I_dont_know_how_to_Love_Him.mus 
+DEL Bobbye\I_Only_Want_to_Say.mus
+DEL Bobbye\King_Herods_Song.mus
+DEL Bobbye\Pilates_Dream.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+DEL  DC_Star_and_Cpr\Could_I_have_this_Dance.mus
+MOVE Updated\DC_Star_and_Cpr_Could_I_have_this_Dance.mus  DC_Star_and_Cpr\Could_I_have_this_Dance.mus
+DEL  DC_Star_and_Cpr\Devil_Inside.mus
+MOVE Updated\DC_Star_and_Cpr_Devil_Inside.mus  DC_Star_and_Cpr\Devil_Inside.mus
+DEL  DC_Star_and_Cpr\She_Drives_me_Crazy_A.mus
+MOVE Updated\DC_Star_and_Cpr_She_Drives_me_Crazy_A.mus  DC_Star_and_Cpr\She_Drives_me_Crazy_A.mus
+DEL  DC_Star_and_Cpr\Wishing_Well.mus
+MOVE Updated\DC_Star_and_Cpr_Wishing_Well.mus  DC_Star_and_Cpr\Wishing_Well.mus
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE A_Brown\Space_Oddity.mus  A_Brown\Space_Oddity_A.mus
+MOVE BJ_Pools\Angie.mus  BJ_Pools\Angie_A.mus
+MOVE BJ_Pools\Angie.wds  BJ_Pools\Angie_A.wds
+MOVE BJ_Pools\Excitable.mus  BJ_Pools\Excitable_A.mus
+MOVE BJ_Pools\Excitable.wds  BJ_Pools\Excitable_A.wds
+MOVE BJ_Pools\Start_me_up.mus  BJ_Pools\Start_me_up_A.mus
+MOVE Bobbye\Youve_Lost_that_Lovin_Feeling.mus  Bobbye\Youve_Lost_that_Lovin_Feeling_A.mus
+MOVE Dean_Schold\Pinocchio_an_Actors_Life_for_me.mus  Dean_Schold\Pinocchio_an_Actors_Life_for_me_A.mus
+MOVE Dean_Schold\Pinocchio_an_Actors_Life_for_me.wds  Dean_Schold\Pinocchio_an_Actors_Life_for_me_A.wds
+MOVE Diz_Cop\True_Colors.mus  Diz_Cop\True_Colors_A.mus
+MOVE John_E_Roach\Entertainer.mus  John_E_Roach\Entertainer_A.mus
+MOVE John_E_Roach\Gladiolus_Rag.mus  John_E_Roach\Gladiolus_Rag_A.mus
+MOVE Misc\Anon\O_come_all_ye_Faithful.mus  Misc\Anon\O_come_all_ye_Faithful_A.mus
+MOVE Misc\Anon\O_come_all_ye_Faithful.wds  Misc\Anon\O_come_all_ye_Faithful_A.wds
+MOVE Misc\B\Baa_Baa_Black_Sheep.mus  Marte_Brengle\Baa_Baa_Black_Sheep.mus
+MOVE Misc\B\Sonata_No5_for_Organ.mus  Marte_Brengle\Sonata_No5_for_Organ.mus
+MOVE Misc\B\Candle_in_the_Wind.mus  Marte_Brengle\Candle_in_the_Wind.mus
+MOVE Misc\B\Roller_Derby_Queen.mus  Marte_Brengle\Roller_Derby_Queen.mus
+MOVE Paul_Labeaud\Science_Fiction_Double_Feature.mus  Paul_Labeaud\Rocky_Horror\Science_Fiction_Double_Feature_B.mus
+MOVE Paul_Labeaud\Science_Fiction_Double_Feature.wds  Paul_Labeaud\Rocky_Horror\Science_Fiction_Double_Feature_B.wds
+MOVE Paul_Labeaud\Time_Warp.mus  Paul_Labeaud\Rocky_Horror\Time_Warp_B.mus
+MOVE Paul_Labeaud\Time_Warp.wds  Paul_Labeaud\Rocky_Horror\Time_Warp_B.wds
+MOVE Paul_Labeaud\Charles_Atlas_Song.mus  Paul_Labeaud\Rocky_Horror\Charles_Atlas_Song.mus
+MOVE Paul_Labeaud\Eddies_Teddy.mus  Paul_Labeaud\Rocky_Horror\Eddies_Teddy.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+DEL 00_Documents\Alias_List.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+MOVE Whats_new_in_v108.txt  00_Documents\Whats_new_in_v108.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_108.txt
+
+RMDIR Updated
+
+ECHO.
+ECHO CGSC UPDATE to v1.8 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

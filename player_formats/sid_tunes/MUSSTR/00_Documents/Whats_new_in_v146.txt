@@ -1,0 +1,55 @@
+What's new in Version 1.46
+==========================
+
+This update contains 40 MUS & 1 STR new files.
+
+1. Some new music added: See list below:
+
+Cicada\Night_Before_Christmas.mus
+Cicada\When_Santa_Claus_gets_your_Letter.mus
+DC_Starr\Away_in_a_Manger.mus
+DC_Starr\Blue_Christmas.mus
+DC_Starr\Christmas_Waltz.mus
+DC_Starr\Coventry_Carol_B.mus
+DC_Starr\Frosty_the_Snowman.mus
+DC_Starr\I_saw_Three_Ships.mus
+Dr_D\Frocus.mus
+Dr_D\Frocus_Remix.mus
+Gallanteer\Blessed_Francis_Holy_Father.mus
+Gallanteer\Blessed_Francis_Holy_Father.str
+GregoryD5\O_Christmas_Tree.mus
+GregoryD5\Patapan.mus
+Gustave\National_Anthem_of_Afghanistan.mus
+Michael_Cole\Offertory.mus
+Michael_Cole\Three_Hymns_of_National_Faith.mus
+Misc\A\Holly_and_the_Ivy.mus
+Misc\Anon\Android_Phil.mus
+Misc\Anon_Films\We_need_a_Little_Christmas.mus
+Misc\D\Il_Est_Ne.mus
+Misc\F\Jesus_Name_above_all_Names.mus
+Misc\G\Christmas_Medley.mus
+Misc\K\Jingle_Bells.mus
+Misc\L\Holiday_Road.mus
+Misc\S\Let_there_be_Peace_on_Earth.mus
+Misc\Z\Silent_Night.mus
+Misc\Z\We_Three_Kings_of_Orient_are.mus
+Music_Man3\First_Noel.mus
+Music_Man3\Have_a_Holly_Jolly_Christmas.mus
+Music_Man3\Silver_Bells.mus
+Olivine\Have_Yourself_a_Merry_Little_Christmas.mus
+Olivine\Let_it_Snow.mus
+Olivine\O_Christmas_Tree.mus
+Olivine\Silver_Bells.mus
+Olivine\Sleigh_Ride.mus
+Rob_White_-Nu2Sids-_-Robie2-\Go_Tell_it_on_the_Mountain.mus
+Sid_Editor\Angel_of_God.mus
+Stephen_Shoemaker\He_Lives.mus
+Texas1ady1\Amazing_Grace.mus
+Zeke4\Christmas_Day_B.mus
+
+
+2. Three authors moved out of the Misc folders:
+
+GregoryD5
+Michael_Cole
+Vic_Menchaca

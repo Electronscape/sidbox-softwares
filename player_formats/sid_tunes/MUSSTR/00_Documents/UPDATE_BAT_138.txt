@@ -1,0 +1,218 @@
+@echo off
+
+IF EXIST Whats_new_in_v138.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v138.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.38
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN A_Brown\Red_Rubbler_Ball_by_the_Cyrkle.mus  A_Brown\Red_Rubber_Ball_by_the_Cyrkle.mus
+REN Allan_Weseman\Ancident_of_Days.mus  Allan_Weseman\Ancient_of_Days.mus
+REN Allan_Weseman\Ancident_of_Days.wds  Allan_Weseman\Ancient_of_Days.wds
+REN Allan_Weseman\Ill_tell_the_Wordl_that_Im_a_Christian.mus  Allan_Weseman\Ill_tell_the_World_that_Im_a_Christian.mus
+REN Allan_Weseman\Ill_tell_the_Wordl_that_Im_a_Christian.wds  Allan_Weseman\Ill_tell_the_World_that_Im_a_Christian.wds
+REN Chuck_Knights\Magie_May.mus  Chuck_Knights\Maggie_May.mus
+REN Chuck_Knights\Pirates_of_Penzance\01_Opening_Chorus_of_Prirates_and_Solo.mus  Chuck_Knights\Pirates_of_Penzance\01_Opening_Chorus_of_Pirates_and_Solo.mus
+REN Chuck_Knights\Pirates_of_Penzance\07_Song_Frederic_and_Chorus_of_Grils.mus  Chuck_Knights\Pirates_of_Penzance\07_Song_Frederic_and_Chorus_of_Girls.mus
+REN Chuck_Knights\Pirates_of_Penzance\08_Song_Mable_and_Chorus_of_Grils.mus  Chuck_Knights\Pirates_of_Penzance\08_Song_Mable_and_Chorus_of_Girls.mus
+REN Chuck_Knights\Pirates_of_Penzance\09_Song_Edith_Kate_Chorus_of_Grils.mus  Chuck_Knights\Pirates_of_Penzance\09_Song_Edith_Kate_Chorus_of_Girls.mus
+REN Chuck_Knights\Pirates_of_Penzance\11_Fred_Chorus_of_Grils_and_Pirates.mus  Chuck_Knights\Pirates_of_Penzance\11_Fred_Chorus_of_Girls_and_Pirates.mus
+MOVE Chuck_Knights\Anthem.mus  Chuck_Knights\Chess\Anthem.mus
+MOVE Chuck_Knights\Chess.mus  Chuck_Knights\Chess\Chess.mus
+MOVE Chuck_Knights\Embassy_Lament.mus  Chuck_Knights\Chess\Embassy_Lament.mus
+MOVE Chuck_Knights\Heaven_Help_My_Heart.mus  Chuck_Knights\Chess\Heaven_Help_My_Heart.mus
+MOVE Chuck_Knights\I_know_Him_so_Well.mus  Chuck_Knights\Chess\I_know_Him_so_Well.mus
+MOVE Chuck_Knights\Merano.mus  Chuck_Knights\Chess\Merano.mus
+MOVE Chuck_Knights\Mountain_Duet.mus  Chuck_Knights\Chess\Mountain_Duet.mus
+MOVE Chuck_Knights\One_Night_in_Bangkok.mus  Chuck_Knights\Chess\One_Night_in_Bangkok.mus
+MOVE Chuck_Knights\One_Night_in_Bangkok.wds  Chuck_Knights\Chess\One_Night_in_Bangkok.wds
+MOVE Chuck_Knights\Pity_the_Child.mus  Chuck_Knights\Chess\Pity_the_Child.mus
+MOVE Chuck_Knights\Quartet.mus  Chuck_Knights\Chess\Quartet.mus
+MOVE Chuck_Knights\Where_I_want_to_Be.mus  Chuck_Knights\Chess\Where_I_want_to_Be.mus
+MOVE Chuck_Knights\You_and_I.mus  Chuck_Knights\Chess\You_and_I.mus
+MOVE Chuck_Knights\At_the_End_of_the_Day.mus  Chuck_Knights\Les_Miserables\At_the_End_of_the_Day.mus
+MOVE Chuck_Knights\Bring_Him_Home.mus  Chuck_Knights\Les_Miserables\Bring_Him_Home.mus
+MOVE Chuck_Knights\Castle_on_a_Cloud.mus  Chuck_Knights\Les_Miserables\Castle_on_a_Cloud.mus
+MOVE Chuck_Knights\Castle_on_a_Cloud.wds  Chuck_Knights\Les_Miserables\Castle_on_a_Cloud.wds
+MOVE Chuck_Knights\Do_You_hear_the_People_Sing.mus  Chuck_Knights\Les_Miserables\Do_You_hear_the_People_Sing.mus
+MOVE Chuck_Knights\Drink_with_Me.mus  Chuck_Knights\Les_Miserables\Drink_with_Me.mus
+MOVE Chuck_Knights\Empty_Chairs_at_Empty_Tables.mus  Chuck_Knights\Les_Miserables\Empty_Chairs_at_Empty_Tables.mus
+MOVE Chuck_Knights\Heart_Full_of_Love.mus  Chuck_Knights\Les_Miserables\Heart_Full_of_Love.mus
+MOVE Chuck_Knights\In_My_Life.mus  Chuck_Knights\Les_Miserables\In_My_Life.mus
+MOVE Chuck_Knights\I_Dreamed_a_Dream.mus  Chuck_Knights\Les_Miserables\I_Dreamed_a_Dream.mus
+MOVE Chuck_Knights\Little_Fall_of_Rain.mus  Chuck_Knights\Les_Miserables\Little_Fall_of_Rain.mus
+MOVE Chuck_Knights\Master_of_the_House.mus  Chuck_Knights\Les_Miserables\Master_of_the_House.mus
+MOVE Chuck_Knights\On_My_Own.mus  Chuck_Knights\Les_Miserables\On_My_Own.mus
+MOVE Chuck_Knights\Stars.mus  Chuck_Knights\Les_Miserables\Stars.mus
+MOVE Chuck_Knights\Who_am_I.mus  Chuck_Knights\Les_Miserables\Who_am_I.mus
+MOVE Chuck_Knights\Dies_Irae.mus  Chuck_Knights\Requiem\Dies_Irae.mus
+MOVE Chuck_Knights\Hosanna.mus  Chuck_Knights\Requiem\Hosanna.mus
+MOVE Chuck_Knights\Ingemisco_Lacrimosa.mus  Chuck_Knights\Requiem\Ingemisco_Lacrimosa.mus
+MOVE Chuck_Knights\Lux_Aeterna_and_Libera_Me.mus  Chuck_Knights\Requiem\Lux_Aeterna_and_Libera_Me.mus
+MOVE Chuck_Knights\Offertorium.mus  Chuck_Knights\Requiem\Offertorium.mus
+MOVE Chuck_Knights\Pie_Jesu.mus  Chuck_Knights\Requiem\Pie_Jesu.mus
+MOVE Chuck_Knights\Recordare.mus  Chuck_Knights\Requiem\Recordare.mus
+MOVE Chuck_Knights\Requiem_Kyrie.mus  Chuck_Knights\Requiem\Requiem_Kyrie.mus
+MOVE Chuck_Knights\Rex_Tremendae.mus  Chuck_Knights\Requiem\Rex_Tremendae.mus
+REN Corky_Cochran\Bird_in_a_Giden_Cage.mus  Corky_Cochran\Bird_in_a_Gilded_Cage.mus
+REN Corky_Cochran\Break_the_News_to_Monther.mus  Corky_Cochran\Break_the_News_to_Mother.mus
+REN Dave\Help_me_make_it_Though_the_Night.mus  Dave\Help_me_make_it_Through_the_Night.mus
+REN Dave\Help_me_make_it_Though_the_Night.str  Dave\Help_me_make_it_Through_the_Night.str
+REN Dave\Help_me_make_it_Though_the_Night.wds  Dave\Help_me_make_it_Through_the_Night.wds
+REN Dave_Marquis\Rhapsody_in_Blue.mus  Rhapsody_in_Blue_A.mus
+REN Dave_Marquis\Phapsody_in_Blue.mus  Rhapsody_in_Blue_B.mus
+REN Dave_Marquis\Tritsch_Tratsch_Polka.mus  Dave_Marquis\Tritsch_Tratsch_Polka_A.mus
+REN Dave_Marquis\Tritsch-Tratsch_Polka.mus  Dave_Marquis\Tritsch_Tratsch_Polka_B.mus
+REN Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movment_Alegro_Moderato_Pt1.mus  Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movement_Alegro_Moderato_Pt1.mus
+REN Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movment_Alegro_Moderato_Pt2.mus  Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movement_Alegro_Moderato_Pt2.mus
+REN Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movment_Alegro_Moderato_Pt3.mus  Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movement_Alegro_Moderato_Pt3.mus
+REN Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movment_Alegro_Moderato_Pt4.mus  Dave_Marquis\Violin_Concerto_in_D_Op35_1st_Movement_Alegro_Moderato_Pt4.mus
+REN Dave_Marquis\Violin_Concerto_in_D_Op35_2nd_Movment_Andante.mus  Dave_Marquis\Violin_Concerto_in_D_Op35_2nd_Movement_Andante.mus
+REN Dave_Marquis\Violin_Concerto_in_D_Op35_3rd_Movment_Allegro_Vivacissimo.mus  Dave_Marquis\Violin_Concerto_in_D_Op35_3rd_Movement_Allegro_Vivacissimo.mus
+REN Dave_Marquis\William_Tell_Overture_Calm.mus Dave_Marquis\William_Tell_Overture_Calm_A.mus
+REN Dave_Marquis\William_Tell_Overture_Dawn.mus Dave_Marquis\William_Tell_Overture_Dawn_A.mus
+REN Dave_Marquis\William_Tell_Overture_Finale.mus Dave_Marquis\William_Tell_Overture_Finale_A.mus
+REN Dave_Marquis\William_Tell_Overture_Storm.mus Dave_Marquis\William_Tell_Overture_Storm_A.mus
+REN Dave_Marquis\William_Tell_Overtune_Calm.mus Dave_Marquis\William_Tell_Overture_Calm_B.mus
+REN Dave_Marquis\William_Tell_Overtune_Dawn.mus Dave_Marquis\William_Tell_Overture_Dawn_B.mus
+REN Dave_Marquis\William_Tell_Overtune_Finale.mus Dave_Marquis\William_Tell_Overture_Finale_B.mus
+REN Dave_Marquis\William_Tell_Overtune_Storm.mus Dave_Marquis\William_Tell_Overture_Storm_B.mus
+REN DC_Star_and_Cpr\Come_Dream_with_me_Tongiht.mus  DC_Star_and_Cpr\Come_Dream_with_me_Tonight.mus
+REN DC_Starr\Allegretoo_in_G_Major.mus  DC_Starr\Allegretto_in_G_Major.mus
+REN DC_Starr\Allegretoo_in_G_Major.str  DC_Starr\Allegretto_in_G_Major.str
+REN Don_Graham\Pomp_and_Circumanstance_March_No1.mus  Don_Graham\Pomp_and_Circumstance_March_No1.mus
+REN Firth\Rocky_Horror\Sweet_Transvertite.mus  Firth\Rocky_Horror\Sweet_Transvestite.mus
+REN Firth\Rocky_Horror\Sweet_Transvertite.wds  Firth\Rocky_Horror\Sweet_Transvestite.wds
+REN Glen\Josephine_Johnsone_Rag_A.mus  Glen\Josephine_Johnson_Rag_A.mus
+REN Glen\Josephine_Johnsone_Rag_A.str  Glen\Josephine_Johnson_Rag_A.str
+REN Glen\Josephine_Johnsone_Rag_B.mus  Glen\Josephine_Johnson_Rag_B.mus
+REN Glen\Josephine_Johnsone_Rag_B.str  Glen\Josephine_Johnson_Rag_B.str
+REN Gustave\Let_the_Sunshire_in.mus  Gustave\Let_the_Sunshine_in.mus
+REN Gustave\Let_the_Sunshire_in.wds  Gustave\Let_the_Sunshine_in.wds
+REN Hal_Scheidt\Possum_amd_Taters.mus  Hal_Scheidt\Possum_and_Taters.mus
+REN Hal_Scheidt\Possum_amd_Taters.str  Hal_Scheidt\Possum_and_Taters.str
+REN Harry_Bratt\HB\Straberry.mus  Harry_Bratt\HB\Strawberry.mus
+REN Harry_Bratt\HB\vicar1.mus  Harry_Bratt\HB\Vicar1.mus
+REN Jim_Masterson\Those_Wedding_Bells_shall_not_Ring_OutL.mus  Jim_Masterson\Those_Wedding_Bells_shall_not_Ring_Out.mus
+MOVE Jimi_O\Alive_and_Kickin.mus  Rajin_Cajun\Alive_and_Kickin.mus
+REN Ken_Fuller\Ballad_of_Ronand_Reagan.mus  Ken_Fuller\Ballad_of_Ronald_Reagan.mus
+REN Ken_Fuller\Ballad_of_Ronand_Reagan.wds  Ken_Fuller\Ballad_of_Ronald_Reagan.wds
+REN Lyric\Fance_Free.mus  Lyric\Fancy_Free.mus
+REN Lyric\Johhny_One_Note.mus  Lyric\Johnny_One_Note.mus
+REN Lyric\Johhny_One_Note.wds  Lyric\Johnny_One_Note.wds
+REN Lyric\Stike_up_the_Band.mus  Lyric\Strike_up_the_Band.mus
+REN Lyric\Symphony_No4_Breakng_Away.mus  Lyric\Symphony_No4_Breaking_Away.mus
+REN Melody\Grease\There_are_Worse_Things_I_cound_do.mus  Melody\Grease\There_are_Worse_Things_I_could_do.mus
+REN Mets5\Gay_Ninties_Rag.mus  Mets5\Gay_Nineties_Rag.mus
+REN Michael_French\Quadrphenia.mus  Michael_French\Quadrophenia.mus
+REN Mike_Generali\Give_my_Regards_to_Broardway.mus  Mike_Generali\Give_my_Regards_to_Broadway.mus
+REN Misc\Anon\Blossom_Blallet.mus  Misc\Anon\Blossom_Ballet.mus
+REN Misc\Anon\Go_tell_Auny_Rhody_the_Old_Grey_Goose_is_Dead.mus  Misc\Anon\Go_tell_Aunt_Rhody_the_Old_Grey_Goose_is_Dead.mus
+REN Misc\Anon\I_Heard_the_Bells_on_Chistmas.mus  Misc\Anon\I_Heard_the_Bells_on_Christmas.mus
+REN Misc\Anon_Films\Fascinatting_Rhythm.mus  Misc\Anon_Films\Fascinating_Rhythm.mus
+REN Misc\Anon_Films\Get_me_to_the_Chruch_on_Time.mus  Misc\Anon_Films\Get_me_to_the_Church_on_Time.mus
+REN Misc\B\Mozert_Sonata_in_C_K545.mus  Misc\B\Mozart_Sonata_in_C_K545.mus
+REN Misc\C\Road_to_Lisdonvarna.mus  Misc\C\Road_to_Lisdoonvarna.mus
+REN Misc\C\The_Natural_Rermix.mus  Misc\C\The_Natural_Remix.mus
+REN Misc\D\Porge_and_Bess_Part1.mus  Misc\D\Porgy_and_Bess_Part1.mus
+REN Misc\D\Porge_and_Bess_Part2.mus  Misc\D\Porgy_and_Bess_Part2.mus
+REN Misc\H\Dee_(BAD).mus  Misc\H\Dee_(8580_Sid).mus
+REN Misc\I\What_a_Man_Loves_a_Woman.mus  Misc\I\When_a_Man_Loves_a_Woman.mus
+REN Misc\K\Greatests_American_Hero.mus  Misc\K\Greatest_American_Hero.mus
+REN Misc\K\Mull_of_Kiintyre.mus  Misc\K\Mull_of_Kintyre.mus
+REN Misc\K\Mull_of_Kiintyre.wds  Misc\K\Mull_of_Kintyre.wds
+REN Misc\L\St_James_Imfirmary.mus  Misc\L\St_James_Infirmary.mus
+MOVE Misc\M\Eighteen_Wheels_and_a_Dozen_Roses.mus  Misc\Anon\Eighteen_Wheels_and_a_Dozen_Roses.mus
+MOVE Misc\M\Eighteen_Wheels_and_a_Dozen_Roses.str  Misc\Anon\Eighteen_Wheels_and_a_Dozen_Roses.str
+MOVE Misc\M\Eighteen_Wheels_and_a_Dozen_Roses.wds  Misc\Anon\Eighteen_Wheels_and_a_Dozen_Roses.wds
+REN Misc\N\Maramatha_Marathon.mus  Misc\N\Maranatha_Marathon.mus
+REN Misc\N\Maramatha_Marathon.wds  Misc\N\Maranatha_Marathon.wds
+REN Misc\S\Fighetta_in_B_Flat_and_Staccato_Duo.mus  Misc\S\Fughetta_in_B_Flat_and_Staccato_Duo.mus
+MOVE Misc\S\Four_Landlers.mus  MOVE Misc\Anon\Four_Landlers.mus
+MOVE Misc\S\Lock_Lomand.mus  Misc\T\Lock_Lomond.mus
+MOVE Misc\S\Mozart_Sonatina_No1.mus  Misc\Anon\Mozart_Sonatina_No1.mus
+MOVE Misc\S\We_Three_Kings.mus  Misc\Anon\We_Three_Kings.mus
+MOVE Misc\T\Forever.mus  Misc\B\Forever.mus
+MOVE Misc\V\At_this_Moment.mus  Misc\Anon\At_this_Moment.mus
+REN Nick_Zelinsky\Voyage_to)_the_Bottom_of_the_Sea.mus  Nick_Zelinsky\Voyage_to_the_Bottom_of_the_Sea.mus
+REN Ol_Railbird\Granduation_Day.mus  Ol_Railbird\Graduation_Day.mus
+MOVE Omega_Factor\Doctor_Who_C.mus  Misc\C\Doctor_Who.mus
+MOVE Omega_Factor\Doctor_Who_C.str  Misc\C\Doctor_Who.str
+MOVE Omega_Factor\Doctor_Who_Remix.mus  Misc\C\Doctor_Who_Remix.mus
+MOVE Parody_Man\Go_you_Blue_Van.mus  Misc\C\Go_you_Blue_Van.mus
+MOVE Parody_Man\Go_you_Blue_Van.str  Misc\C\Go_you_Blue_Van.str
+MOVE Parody_Man\Go_you_Blue_Van.wds  Misc\C\Go_you_Blue_Van.wds
+MOVE Paul_Labeaud\The_Rose_a_Space_Epic.mus  Misc\D\The_Rose_a_Space_Epic.musstr
+MOVE Paul_Labeaud\The_Rose_a_Space_Epic.wds  Misc\D\The_Rose_a_Space_Epic.wds
+MOVE Paul_Labeaud\Yuk_Yuk_Produckshuns.mus  Misc\D\Yuk_Yuk_Produckshuns.mus
+MOVE Paul_Labeaud\Yuk_Yuk_Produckshuns.str  Misc\D\Yuk_Yuk_Produckshuns.str
+REN Ransom1\Two_Tradiitional_Christmas_Songs.mus  Ransom1\Two_Traditional_Christmas_Songs.mus
+REN Robert_S_Shaw_-Bob_Shaw-_-Juky-\Spainish_Harlem.mus  Robert_S_Shaw_-Bob_Shaw-_-Juky-\Spanish_Harlem.mus
+REN Steak\This_Felling_will_Last_Forever.mus  Steak\This_Feeling_will_Last_Forever.mus
+REN Spice\Youve_got_a_Friend.mus  Spice\Youve_got_a_Friend_B.mus
+REN Spice\Youve_got_a_Friend.wds  Spice\Youve_got_a_Friend_B.wds
+REN Suicidal_Software\Cagney_and_Lacey_A.mus  Suicidal_Software\Cagney_and_Lacey.mus
+REN Syl\Bouree_II.mus  Syl\Bourree_II.mus
+REN Syl\Fantasy_and_Fuge_in_C_Makor.mus  Syl\Fuge_from_Fantasy_and_Fuge_in_C_Major_A.mus
+REN Syl\Fuge_from_Fantasy_and_Fuge_in_C_Major.mus  Syl\Fuge_from_Fantasy_and_Fuge_in_C_Major_B.mus
+REN Syl\Her_Komer_dine_arme_smaa.mus  Syl\Her_Kommer_dine_arme_smaa.mus
+REN Syl\Her_Komer_dine_arme_smaa.wds  Syl\Her_Kommer_dine_arme_smaa.wds
+REN Symphoni\Chorous_from_Handels_Messiah.mus  Symphoni\Chorus_from_Handels_Messiah.mus
+MOVE The_Trooper\Welcome_to_the_Jungle.mus  Misc\P\Welcome_to_the_Jungle.mus
+REN Tollman_-Jeff_Goll-\Canno_in_D.mus  Tollman_-Jeff_Goll-\Cannon_in_D.mus
+REN Tollman_-Jeff_Goll-\Canno_in_D.str  Tollman_-Jeff_Goll-\Cannon_in_D.str
+REN Tollman_-Jeff_Goll-\Hallelujah_Chorus.mus  Tollman_-Jeff_Goll-\Hallelujah_Chorus_A.mus
+REN Tollman_-Jeff_Goll-\Hallelujah_Chorus.str  Tollman_-Jeff_Goll-\Hallelujah_Chorus_A.str
+REN Tollman_-Jeff_Goll-\Hallelujah_Cowboys.mus  Tollman_-Jeff_Goll-\Hallelujah_Chorus_B.mus
+REN Tollman_-Jeff_Goll-\Hallelujah_Cowboys.str  Tollman_-Jeff_Goll-\Hallelujah_Chorus_B.str
+REN Tollman_-Jeff_Goll-\Hallelujah_Cowboys.wds  Tollman_-Jeff_Goll-\Hallelujah_Chorus_B.wds
+MOVE Tom_B24\Hey_wont_Yoy_Play_another_Game.mus  Misc\M\Hey_wont_You_Play_another_Game.mus
+REN Tom_Duda\1st_Momement_Sonata_in_A_Major_K305.mus  Tom_Duda\1st_Movement_Sonata_in_A_Major_K305.mus
+REN Tom_Duda\2nd_Momement_Sonata_in_A_Major_K305.mus  Tom_Duda\2nd_Movement_Sonata_in_A_Major_K305.mus
+REN Uncle_Slam\Bouree_in_E_Minor.mus  Uncle_Slam\Bourree_in_E_Minor.mus
+REN Veeger\All_I_hae_to_do_is_Dream.mus  Veeger\All_I_have_to_do_is_Dream.mus
+REN Wesley_Noles\Praeludium_om_G_Major_for_Organ.mus  Wesley_Noles\Praeludium_in_G_Major_for_Organ.mus
+MOVE Whole_Note\Youve_got_a_Friend_A.mus  Spice\Youve_got_a_Friend_A.mus
+MOVE Whole_Note\Youve_got_a_Friend_A.wds  Spice\Youve_got_a_Friend_A.wds
+REN Whole_Note\Youve_got_a_Friend_B.mus  Whole_Note\Youve_got_a_Friend.mus
+REN Whole_Note\Youve_got_a_Friend_B.wds  Whole_Note\Youve_got_a_Friend.wds
+REN Zauber\Andante_from_Suprise_Symphony.mus  Zauber\Andante_from_Surprise_Symphony.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+:: Song cut short
+DEL Suicidal_Software\Cagney_and_Lacey_B.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v138.txt  00_Documents\Whats_new_in_v138.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_138.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.38 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

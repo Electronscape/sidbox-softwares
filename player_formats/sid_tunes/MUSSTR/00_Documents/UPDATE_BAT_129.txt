@@ -1,0 +1,53 @@
+@echo off
+
+IF EXIST Whats_new_in_v129.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v129.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.29
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+: Confirmed by Glenn Holmer
+MOVE Misc\Anon\Vent.mus Sileo\Vent.mus
+: Confirmed by Kent Sullivan
+MOVE Misc\S\Harmonious_Blacksmith.mus Sileo\Harmonious_Blacksmith.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Marvin_Jones__Whirlpool_Galaxy_M5.mus Marvin_Jones_Whirlpool_Galaxy_M5.mus
+MOVE /y Updated\Whole_Note__Long_and_Winding_Road.mus Whole_Note\Long_and_Winding_Road.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+MOVE 00_Commodore64\Magic_Sid_Machine.d64 00_Commodore64\Magic_Sid_Machine_v10.d64
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v129.txt  00_Documents\Whats_new_in_v129.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_129.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.29 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

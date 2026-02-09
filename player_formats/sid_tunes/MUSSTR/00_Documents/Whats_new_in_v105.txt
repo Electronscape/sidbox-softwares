@@ -1,0 +1,51 @@
+What's new in Version 1.5
+=========================
+
+1. Some new music added: See list below:
+
+
+A_Brown\Superstar.mus
+Datasid_-Troy_Rutter-\Jump_Jive_an_Wail.mus
+Datasid_-Troy_Rutter-\My_Heart_will_go_on.mus
+DC_Starr\Star_Trek_IV_Voyage_Home.mus
+DC_Star_and_Cpr\Bad.str
+DG_Barker\Abide_with_me.mus
+DG_Barker\Abide_with_me.wds
+DG_Barker\Amazing_Grace.mus
+DG_Barker\Amazing_Grace.wds
+DG_Barker\Battle_Hymn_of_the_Republic.mus
+DG_Barker\Battle_Hymn_of_the_Republic.wds
+DG_Barker\B_I_B_L_E.mus
+DG_Barker\B_I_B_L_E.wds
+DG_Barker\Down_by_the_Riverside.mus
+DG_Barker\Down_by_the_Riverside.wds
+DG_Barker\Do_Lord.mus
+DG_Barker\Do_Lord.wds
+DG_Barker\Go_Tell_it_on_the_Mountain.mus
+DG_Barker\Go_Tell_it_on_the_Mountain.wds
+DG_Barker\Holy_Holy_Holy.mus
+DG_Barker\Holy_Holy_Holy.wds
+DG_Barker\Jesus_Loves_me.mus
+DG_Barker\Jesus_Loves_me.wds
+DG_Barker\Kum_by_Yah.mus
+DG_Barker\Kum_by_Yah.wds
+DG_Barker\Nearer_my_God_to_thee.mus
+DG_Barker\Nearer_my_God_to_thee.wds
+DG_Barker\Old_Rugged_Cross.mus
+DG_Barker\Old_Rugged_Cross.wds
+DG_Barker\Rock_of_Ages.mus
+DG_Barker\Rock_of_Ages.wds
+DG_Barker\Zaccheus.mus
+DG_Barker\Zaccheus.wds
+Diz_Cop\Lyin_Eyes.mus
+Ed_Grimely\Away_in_a_Manger.mus
+Ed_Grimely\Away_in_a_Manger.str
+Ed_Grimely\Away_in_a_Manger.wds
+Jerry_Roth_-Dr_J-\Jingle_Bell_Rock.str
+Jerry_Roth_-Dr_J-\Jingle_Bell_Rock.wds
+Marvin_Jones\Never_on_Sunday.mus
+Marvin_Jones\Never_on_Sunday.wds
+Misc\B\Ben.wds
+Misc\L\Superkit_1541.mus
+Red Software\Red_Music.mus
+Red Software\Rendez-vous.mus

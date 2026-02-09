@@ -1,0 +1,180 @@
+@echo off
+
+IF EXIST Whats_new_in_v118.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v118.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.18
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE DC_Star_and_Cpr\1-2-3.mus DC_Star_and_Cpr\Miami_Sound_Machine\1-2-3.mus
+MOVE DC_Star_and_Cpr\1-2-3.str DC_Star_and_Cpr\Miami_Sound_Machine\1-2-3.str
+MOVE DC_Star_and_Cpr\1-2-3.wds DC_Star_and_Cpr\Miami_Sound_Machine\1-2-3.wds
+MOVE DC_Star_and_Cpr\Anything_she_does.mus DC_Star_and_Cpr\Genesis\Anything_she_does.mus
+MOVE DC_Star_and_Cpr\Anything_she_does.wds DC_Star_and_Cpr\Genesis\Anything_she_does.wds
+MOVE DC_Star_and_Cpr\Genesis\Brazilian.mus DC_Star_and_Cpr\Genesis\Brazilian_B.mus
+MOVE DC_Star_and_Cpr\Brazilian.mus DC_Star_and_Cpr\Genesis\Brazilian_A.mus
+MOVE DC_Star_and_Cpr\Big_Bad_Wolf.mus DC_Star_and_Cpr\Pictures\Big_Bad_Wolf.mus
+MOVE DC_Star_and_Cpr\Big_Bad_Wolf.wds DC_Star_and_Cpr\Pictures\Big_Bad_Wolf.wds
+MOVE DC_Star_and_Cpr\Once_upon_a_Dream.mus DC_Star_and_Cpr\Pictures\Once_upon_a_Dream.mus
+MOVE DC_Star_and_Cpr\Once_upon_a_Dream.wds DC_Star_and_Cpr\Pictures\Once_upon_a_Dream.wds
+MOVE DC_Star_and_Cpr\Stay_the_Night.mus DC_Star_and_Cpr\Pictures\Stay_the_Night.mus
+MOVE DC_Star_and_Cpr\Stay_the_Night.wds DC_Star_and_Cpr\Pictures\Stay_the_Night.wds
+MOVE DC_Star_and_Cpr\Being_Green.mus DC_Star_and_Cpr\Pictures\Being_Green.mus
+MOVE DC_Star_and_Cpr\Being_Green.wds DC_Star_and_Cpr\Pictures\Being_Green.wds
+MKDIR DC_Star_and_Cpr\Barbra_Striesand
+MOVE DC_Star_and_Cpr\Evergreen.mus DC_Star_and_Cpr\Barbra_Striesand\Evergreen.mus
+MOVE DC_Star_and_Cpr\Evergreen.str DC_Star_and_Cpr\Barbra_Striesand\Evergreen.str
+MOVE DC_Star_and_Cpr\Evergreen.wds DC_Star_and_Cpr\Barbra_Striesand\Evergreen.wds
+MOVE DC_Star_and_Cpr\Guilty.mus DC_Star_and_Cpr\Barbra_Striesand\Guilty.mus
+MOVE DC_Star_and_Cpr\Guilty.str DC_Star_and_Cpr\Barbra_Striesand\Guilty.str
+MOVE DC_Star_and_Cpr\Guilty.wds DC_Star_and_Cpr\Barbra_Striesand\Guilty.wds
+MOVE DC_Star_and_Cpr\Over_the_Rainbow.mus DC_Star_and_Cpr\Barbra_Striesand\Over_the_Rainbow.mus
+MOVE DC_Star_and_Cpr\Over_the_Rainbow.str DC_Star_and_Cpr\Barbra_Striesand\Over_the_Rainbow.str
+MOVE DC_Star_and_Cpr\Over_the_Rainbow.wds DC_Star_and_Cpr\Barbra_Striesand\Over_the_Rainbow.wds
+MOVE DC_Star_and_Cpr\People.mus DC_Star_and_Cpr\Barbra_Striesand\People.mus
+MOVE DC_Star_and_Cpr\People.str DC_Star_and_Cpr\Barbra_Striesand\People.str
+MOVE DC_Star_and_Cpr\People.wds DC_Star_and_Cpr\Barbra_Striesand\People.wds
+MOVE DC_Star_and_Cpr\Somethings_Coming.mus DC_Star_and_Cpr\Barbra_Striesand\Somethings_Coming.mus
+MOVE DC_Star_and_Cpr\Somethings_Coming.str DC_Star_and_Cpr\Barbra_Striesand\Somethings_Coming.str
+MOVE DC_Star_and_Cpr\Somethings_Coming.wds DC_Star_and_Cpr\Barbra_Striesand\Somethings_Coming.wds
+MOVE DC_Star_and_Cpr\Somewhere.mus DC_Star_and_Cpr\Barbra_Striesand\Somewhere.mus
+MOVE DC_Star_and_Cpr\Somewhere.str DC_Star_and_Cpr\Barbra_Striesand\Somewhere.str
+MOVE DC_Star_and_Cpr\Somewhere.wds DC_Star_and_Cpr\Barbra_Striesand\Somewhere.wds
+MOVE DC_Star_and_Cpr\You_Light_up_my_Life.mus  DC_Star_and_Cpr\You_Light_up_my_Life_A.mus
+MOVE DC_Starr\Stardust.mus DC_Star_and_Cpr\Stardust.mus
+MOVE DC_Starr\Stardust.str DC_Star_and_Cpr\Stardust.str
+MOVE DC_Starr\We_Three_Kings_of_Orient_are.mus DC_Star_and_Cpr\We_Three_Kings_of_Orient_are.mus
+MOVE DC_Starr\We_Three_Kings_of_Orient_are.wds DC_Star_and_Cpr\We_Three_Kings_of_Orient_are.wds
+MKDIR DC_Star
+MOVE DC_Starr\Dial_my_Heart.mus DC_Star\Dial_my_Heart.mus
+MOVE DC_Starr\Dial_my_Heart.wds DC_Star\Dial_my_Heart.wds
+MOVE DC_Starr\Dont_Look_Back.mus DC_Star\Dont_Look_Back.mus
+MOVE DC_Starr\Dont_Look_Back.str DC_Star\Dont_Look_Back.str
+MOVE DC_Starr\Dont_Look_Back.wds DC_Star\Dont_Look_Back.wds
+MOVE DC_Starr\Double_Vision.mus DC_Star\Double_Vision.mus
+MOVE DC_Starr\Double_Vision.str DC_Star\Double_Vision.str
+MOVE DC_Starr\Double_Vision.wds DC_Star\Double_Vision.wds
+MOVE DC_Starr\Dust_in_the_Wind.mus DC_Star\Dust_in_the_Wind.mus
+MOVE DC_Starr\Dust_in_the_Wind.str DC_Star\Dust_in_the_Wind.str
+MOVE DC_Starr\Electric_Youth.mus DC_Star\Electric_Youth.mus
+MOVE DC_Starr\End_of_the_Innocence.mus DC_Star\End_of_the_Innocence.mus
+MOVE DC_Starr\End_of_the_Innocence.str DC_Star\End_of_the_Innocence.str
+MOVE DC_Starr\End_of_the_Innocence.wds DC_Star\End_of_the_Innocence.wds
+MOVE DC_Starr\Hanging_Tough.mus DC_Star\Hanging_Tough.mus
+MOVE DC_Starr\Hanging_Tough.wds DC_Star\Hanging_Tough.wds
+MOVE DC_Starr\Ill_be_Loving_you_Forever.mus DC_Star\Ill_be_Loving_you_Forever.mus
+MOVE DC_Starr\Ill_be_Loving_you_Forever.wds DC_Star\Ill_be_Loving_you_Forever.wds
+MOVE DC_Starr\Interview_with_DC_Star.mus DC_Star\Interview_with_DC_Star.mus
+MOVE DC_Starr\Interview_with_DC_Star.wds DC_Star\Interview_with_DC_Star.wds
+MOVE DC_Starr\I_saw_Three_Ships.mus DC_Star\I_saw_Three_Ships.mus
+MOVE DC_Starr\I_saw_Three_Ships.wds DC_Star\I_saw_Three_Ships.wds
+MOVE DC_Starr\Lost_in_your_Eyes.mus DC_Star\Lost_in_your_Eyes_(BAD).mus
+MOVE DC_Starr\Nostalgia.mus DC_Star\Nostalgia.mus
+MOVE DC_Starr\Our_House.mus DC_Star\Our_House.mus
+MOVE DC_Starr\Our_House.str DC_Star\Our_House.str
+MOVE DC_Starr\Our_House.wds DC_Star\Our_House.wds
+MOVE DC_Starr\Real_Love.mus DC_Star\Real_Love.mus
+MOVE DC_Starr\Real_Love.wds DC_Star\Real_Love.wds
+MOVE DC_Starr\Rock_On.mus DC_Star\Rock_On.mus
+MOVE DC_Starr\Rock_On.str DC_Star\Rock_On.str
+MOVE DC_Starr\Rock_On.wds DC_Star\Rock_On.wds
+MOVE DC_Starr\Soldier_of_Love.mus DC_Star\Soldier_of_Love.mus
+MOVE DC_Starr\Soldier_of_Love.wds DC_Star\Soldier_of_Love.wds
+MOVE DC_Starr\Thinking_of_You.mus DC_Star\Thinking_of_You.mus
+MOVE DC_Starr\Thinking_of_You.wds DC_Star\Thinking_of_You.wds
+MOVE DC_Starr\This_Time_I_know_its_for_Real.mus DC_Star\This_Time_I_know_its_for_Real.mus
+MOVE DC_Starr\This_Time_I_know_its_for_Real.str DC_Star\This_Time_I_know_its_for_Real.str
+MOVE DC_Starr\This_Time_I_know_its_for_Real.wds DC_Star\This_Time_I_know_its_for_Real.wds
+MOVE DC_Starr\Toy_Soldiers.mus DC_Star\Toy_Soldiers.mus
+MOVE DC_Starr\Toy_Soldiers.wds DC_Star\Toy_Soldiers.wds
+MOVE DC_Starr\Will_you_Love_me_Tomorrow.mus DC_Star\Will_you_Love_me_Tomorrow.mus
+MOVE DC_Starr\Will_you_Love_me_Tomorrow.wds DC_Star\Will_you_Love_me_Tomorrow.wds
+MOVE DC_Starr\You_are_the_Girl.mus DC_Star\You_are_the_Girl.mus
+MOVE DC_Starr\You_are_the_Girl.wds DC_Star\You_are_the_Girl.wds
+MOVE Jerry_Roth_-Dr_J-\Long_Tall_Sally.mus Jerry_Roth_-Dr_J-\Long_Tall_Sally_B.mus
+MOVE Jerry_Roth_-Dr_J-\Long_Tall_Sally.str Jerry_Roth_-Dr_J-\Long_Tall_Sally_B.str
+MOVE Misc\P\Boogie_Woogie_Bugle_Boy.mus Eric_T_Prentice\Boogie_Woogie_Bugle_Boy.mus
+MOVE Misc\P\Boogie_Woogie_Bugle_Boy.str Eric_T_Prentice\Boogie_Woogie_Bugle_Boy.str
+MOVE Misc\P\Cool.mus Eric_T_Prentice\Cool.mus
+MOVE Misc\P\Cool.str Eric_T_Prentice\Cool.str
+MOVE Misc\P\Cool.wds Eric_T_Prentice\Cool.wds
+MOVE Misc\P\I_Believe.mus Eric_T_Prentice\I_Believe.mus
+MOVE Misc\P\Toccata_and_Fugue_in_D_Minor.mus Eric_T_Prentice\Toccata_and_Fugue_in_D_Minor.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\DC_Starr__Another_Day_in_Paradise.mus DC_Starr\Another_Day_in_Paradise.mus
+MOVE /y Updated\DC_Starr__Hold_On.mus DC_Starr\Hold_On.mus
+MOVE /y Updated\DC_Starr__Lost_in_Love.mus DC_Starr\Lost_in_Love.mus
+MOVE /y Updated\DC_Starr__Mystic_Memory.mus DC_Starr\Mystic_Memory.mus
+MOVE /y Updated\DC_Starr__Runnin_Down_a_Dream.mus DC_Starr\Runnin_Down_a_Dream.mus
+MOVE /y Updated\DC_Starr__Soldier_of_Love.mus DC_Starr\Soldier_of_Love.mus
+MOVE /y Updated\DC_Starr__Thinking_of_You.mus DC_Starr\Thinking_of_You.mus
+MOVE /y Updated\DC_Starr__Toy_Soldiers.mus DC_Starr\Toy_Soldiers.mus
+MOVE /y Updated\DC_Starr__Waiting_for_a_Girl_like_You.mus DC_Starr\Waiting_for_a_Girl_like_You.mus
+MOVE /y Updated\DC_Starr__We_Didnt_Start_the_Fire.mus DC_Starr\We_Didnt_Start_the_Fire.mus
+MOVE /y Updated\DC_Starr__Wind_Beneath_my_Wings.mus DC_Starr\Wind_Beneath_my_Wings.mus
+MOVE /y Updated\DC_Star_and_Cpr__Be_still_my_Beating_Heart.mus DC_Star_and_Cpr\Be_still_my_Beating_Heart.mus
+MOVE /y Updated\DC_Star_and_Cpr__Broken_Wings.mus DC_Star_and_Cpr\Broken_Wings.mus
+MOVE /y Updated\DC_Star_and_Cpr__Catch_me_Im_Falling.mus DC_Star_and_Cpr\Catch_me_Im_Falling.mus
+MOVE /y Updated\DC_Star_and_Cpr__Couldve_Been.mus DC_Star_and_Cpr\Couldve_Been.mus
+MOVE /y Updated\DC_Star_and_Cpr__Devil_Inside.mus DC_Star_and_Cpr\Devil_Inside.mus
+MOVE /y Updated\DC_Star_and_Cpr__Dont_Shed_a_Tear.mus DC_Star_and_Cpr\Dont_Shed_a_Tear.mus
+MOVE /y Updated\DC_Star_and_Cpr__Dont_Stop.mus DC_Star_and_Cpr\Dont_Stop.mus
+MOVE /y Updated\DC_Star_and_Cpr__Hippy_Hippy_Shake.mus DC_Star_and_Cpr\Hippy_Hippy_Shake.mus
+MOVE /y Updated\DC_Star_and_Cpr__Ill_Always_Love_You.mus DC_Star_and_Cpr\Ill_Always_Love_You.mus
+MOVE /y Updated\DC_Star_and_Cpr__Ill_Follow_the_Sun.mus DC_Star_and_Cpr\Ill_Follow_the_Sun.mus
+MOVE /y Updated\DC_Star_and_Cpr__I_dont_Wanna_Live_Without_your_Love.mus DC_Star_and_Cpr\I_dont_Wanna_Live_Without_your_Love.mus
+MOVE /y Updated\DC_Star_and_Cpr__I_Just_cant_Stop_Loving_You.mus DC_Star_and_Cpr\I_Just_cant_Stop_Loving_You.mus
+MOVE /y Updated\DC_Star_and_Cpr__I_saw_him_Standing_There.mus DC_Star_and_Cpr\I_saw_him_Standing_There.mus
+MOVE /y Updated\DC_Star_and_Cpr__I_wanna_be_the_One.mus DC_Star_and_Cpr\I_wanna_be_the_One.mus
+MOVE /y Updated\DC_Star_and_Cpr__Knocked_Out.mus DC_Star_and_Cpr\Knocked_Out.mus
+MOVE /y Updated\DC_Star_and_Cpr__Miami_Sound_Machine__Stay_Away.mus DC_Star_and_Cpr\Miami_Sound_Machine\Stay_Away.mus
+MOVE /y Updated\DC_Star_and_Cpr__More_than_You_Know.mus DC_Star_and_Cpr\More_than_You_Know.mus
+MOVE /y Updated\DC_Star_and_Cpr__Never_Ending_Story.mus DC_Star_and_Cpr\Never_Ending_Story.mus
+MOVE /y Updated\DC_Star_and_Cpr__Olympic_Spirit.mus DC_Star_and_Cpr\Olympic_Spirit.mus
+MOVE /y Updated\DC_Star_and_Cpr__On_the_Wings_of_Love.mus DC_Star_and_Cpr\On_the_Wings_of_Love.mus
+MOVE /y Updated\DC_Star_and_Cpr__Say_its_Gonna_Rain.mus DC_Star_and_Cpr\Say_its_Gonna_Rain.mus
+MOVE /y Updated\DC_Star_and_Cpr__Seasons_Change.mus DC_Star_and_Cpr\Seasons_Change.mus
+MOVE /y Updated\DC_Star_and_Cpr__Shake_your_Love.mus DC_Star_and_Cpr\Shake_your_Love.mus
+MOVE /y Updated\DC_Star_and_Cpr__Tunnel_of_Love.mus DC_Star_and_Cpr\Tunnel_of_Love.mus
+MOVE /y Updated\DC_Star_and_Cpr__Two_Hearts.mus DC_Star_and_Cpr\Two_Hearts.mus
+MOVE /y Updated\DC_Star_and_Cpr__What_I_am.mus DC_Star_and_Cpr\What_I_am.mus
+MOVE /y Updated\DC_Star_and_Cpr__Where_do_Broken_Hearts_go.mus DC_Star_and_Cpr\Where_do_Broken_Hearts_go.mus
+MOVE /y Updated\Glass_Soul__Chapel_of_Love.mus Glass_Soul\Chapel_of_Love.mus
+MOVE /y Updated\Misc__H__Sleigh_Ride.mus Misc\H\Sleigh_Ride.mus
+MOVE /y Updated\Spiecher__All_I_have_to_do_is_Dream.mus Spiecher\All_I_have_to_do_is_Dream.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+ 
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v118.txt  00_Documents\Whats_new_in_v118.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_118.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.18 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

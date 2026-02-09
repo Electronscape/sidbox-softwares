@@ -1,0 +1,229 @@
+SIDPLAYER NEWS #12  June 1987 
+
+ANSWERS TO SOME COMMON QUESTIONS 
+
+This documentation file presents answers to some of the most commonly asked 
+questions about Sidplayer. 
+
+
+Q: What is Sidplayer? 
+A: Sidplayer is a music system for the Commodore 64 and 128 computers.  The 
+system includes an Editor program that lets you create song files, a Player 
+program that lets you play songs done by you or other people, and other 
+utilities. 
+
+Q: Do you need a player program to hear the songs? 
+A: Yes, a player is needed.  There is no SYS call that starts the playing. 
+
+Q: What are some player programs and where can I get them? 
+A: The first player is KPLAY, which features a piano keyboard display with keys 
+highlighted in colors to show the notes playing.  The next player is MPLAY 
+(Multiplay) which can be set to automatically play several songs.  The MAGIC 
+SID MACHINE player can also autoplay several songs.  Another player is 
+SINGALONG, which plays a Sidplayer song that has an accompanying words file.  
+It displays the lyrics and changes them in time with the music.  The SIDPIC 
+player can display a picture while it plays a song.  The STEREO SID PLAYER can 
+play two songs simultaneously if you install a second SID chip in your computer 
+to get six voices.  These players can be downloaded from the various commercial 
+services and from BBS's.  Over 2000 Sidplayer songs are also available from the 
+services and BBS's. 
+
+Q: What are the different kinds of Sidplayer files? 
+A: The music file for a Sidplayer song is identified by a .MUS filename 
+extension.  A Singalong song has a music file and a corresponding words file.  
+The filename for the words file is the same as for the music file except that 
+the .MUS extension is replaced by a .WDS extension.  A picture file for a song 
+also has the same filename but with a .PIC filename extension.  Sometimes these 
+files are bundled into special self-dissolving library files.  A .SAL file 
+contains the music and words files for one song.  Just LOAD the .SAL file and 
+RUN it, and it will write the .MUS and .WDS files to your disk.  A .PIL file 
+dissolves into .MUS and .PIC files.  A .WPL dissolves into .MUS, .WDS, and .PIC 
+files for one song. 
+
+Q: How do I make songs? 
+A: You need to use the Sidplayer Editor.  The original Editor is published in 
+the book "All About the Commodore 64, Volume Two" by Craig Chamberlain, 
+published by COMPUTE! Books.  The book is $16.95 and also contains sections on 
+Advanced BASIC, bitmapped graphics utilities, and sprite animation utilities.  
+Sidplayer is also published in COMPUTE!'s "The Complete 64," a book and disk 
+combination for $29.95 which also contains Speedscript and other popular 
+COMPUTE! programs. 
+
+Q: Where can I download the Editor? 
+A: The Editor is a copyrighted commercial program and is not in the Public 
+Domain.  It should not be on any telecommunication services or BBS's.  Only 
+those who purchase the book are supposed to have and use the Editor.  If you 
+buy Volume Two and don't want to type in the programs or order the disk for the 
+book, COMPUTE! does allow you to copy the programs from someone else. 
+
+Q: Do you have to know music in order to create songs? 
+A: If you have the sheet music for a song, the Editor is designed so that you 
+can enter the song without having to understand all of the markings.  There is 
+also a chapter on beginning music theory in case you want to learn about it. 
+
+Q: Where do you find sheet music? 
+A: The most suitable kind of sheet music to use is piano sheet music.  Piano 
+sheet music for classical works and contemporary songs can be found at stores 
+which sell just sheet music as well as at some stores which sell instruments 
+and at some record stores.  Also, many libraries have sheet music and there is 
+even a magazine that consists of several sheet music selections each month. 
+
+Q: What is the Enhanced Sidplayer? 
+A: The Editor was completely rewritten to be faster and include new editing 
+features and new sound commands.  It is published with a new Player and other 
+utilities in the book "COMPUTE!'s Music System for the Commodore 128 and 64: 
+The Enhanced Sidplayer."  It is a book and disk combination priced at $24.95.  
+The disk contains Commodore 128 versions on one side and Commodore 64 versions 
+on the other.  See SIDNEWS #7 for a complete description of this product. 
+
+Q: Are the songs compatible? 
+A: The Enhanced Sidplayer can play songs created by the original Sidplayer 
+Editor.  The earlier Sidplayer, however, cannot play songs created by the 
+Enhanced Editor that use any of the new command or note features.  Enhanced 
+songs can be played only on the Enhanced Player. 
+
+Q: Okay then, where can I download the Enhanced Player? 
+A: COMPUTE! has decided not to allow the Enhanced Player to be freely 
+distributed.  COMPUTE! owns the copyright and feels that a Public Domain player 
+would be counterproductive to sales and would weaken the copyright.  Anyone 
+wishing to use the Enhanced Sidplayer machine language playing routines in a 
+program to be distributed must get written permission from COMPUTE!.  Thus far 
+COMPUTE! has not granted such permission to anyone.  So, the Enhanced Player 
+should not be on any services or BBS's, and to get it you have to buy the new 
+book. 
+
+Q: If I get the Enhanced Sidplayer, most other people won't be able to play the 
+songs I make, so shouldn't I get the original Sidplayer instead? 
+A: Songs created on the Enhanced Editor will be compatible with the earlier 
+players as long as you do not use certain commands and note features.  The new 
+Editor was rewritten from scratch completely in machine language, and includes 
+the most requested new editing features that make song entry much easier and 
+less tedious.  Some people find that they can enter songs in half the time that 
+it took them on the original Editor.  The Enhanced Editor is significantly 
+easier and more fun to use, and is definitely easier for a beginner, so it 
+would be the better choice.  The 263 pages of text in the new book also 
+describe the music system more thoroughly than the 100 pages of actual text on 
+Sidplayer in Volume Two. 
+
+Q: Which note features and commands in the Enhanced Sidplayer should I avoid 
+using so that the songs I create will be playable on the earlier players? 
+A: Do not use the following Enhanced note features:  double sharps, double 
+flats, dotted thirty second notes, sixty fourth notes, triplet durations, 
+double dotted durations, and utility-voice durations.  Also do not use phrases 
+16 through 23 and do not use any of the fourteen new commands: HLD, PVD, PVR, 
+P&V, RTP, LFO, RUP, RDN, SRC, DST, SCA, MAX, UTV, and JIF (most of these are 
+advanced commands and would not be used by a beginner anyways).  If you take 
+care not to use these note features and commands in a song, the song will play 
+fine on any of the earlier players. 
+
+Q: Is there a way to tell Enhanced songs from other Sidplayer songs? 
+A: It has become a common practice to use the Lira symbol (British pound sign) 
+at the end of the song filename, just before the .MUS extension, to identify a 
+song as using Enhanced features.  If a song without the Lira in the filename is 
+played on an earlier player and seems to screw up, playing at the wrong tempo 
+for example, it could be an indication that the song is actually an Enhanced 
+song. 
+
+Q: I can't find the Enhanced Sidplayer book in any stores at all, and I have 
+looked.  I keep waiting and it doesn't show up.  I'm getting pretty upset about 
+it.  What's the deal? 
+A: The bookstores do not seem to be automatically stocking the new book.  You 
+can try to special order the book, but there have been cases where people have 
+been told that the bookstore can't get the book, even from B. Dalton's and 
+Waldenbooks stores.  Probably your best bet is to order direct from the 
+publisher.  People have reported receiving their order in two weeks so this way 
+may also be the fastest.  See the information at the end of this file for the 
+phone number to call.  If you special order the book, be sure to give the full 
+title and the ISBN number.  Note: As of this writing, the author still hasn't 
+seen the book in a store himself. 
+
+Q: How do you make a words file for a song? 
+A: You need to use a word processor to create a text file and then run the text 
+file through a special conversion utility.  You also need to put special 
+commands in the music file indicating where the words should change.  It is 
+explained in detail in Chapter 17 of the new book. 
+
+Q: How do you make a picture file for a song? 
+A: Just take a Doodle or Koala Pad picture and rename it to have the name of 
+the music file but with the .PIC extension. 
+
+Q: How large a file can the Enhanced Player handle? 
+A: First of all, the largest size file that can be created is 150 blocks, on 
+the Commodore 128 version of the Enhanced Editor.  The Commodore 128 version of 
+the Enhanced Player can play a music file up to 150 blocks long.  The Commodore 
+64 version can also play one up to 150 blocks long provided there are few songs 
+on the disk (the disk directory takes up some memory).  A words file does not 
+change the size limit on the Commodore 128 version but it does reduce the size 
+limit on the Commodore 64 version.  A picture file has no effect on maximum 
+song size on either version. 
+
+Q: I have a song that won't play on the Enhanced Player.  It just stops. 
+A: It is probably stopping with a Clobber error.  Play it in the Enhanced 
+Editor to check for sure.  About 99% of all the earlier songs should play on 
+the Enhanced Player.  Those that stop with a Clobber error are using too many 
+commands between the notes, and the computer is not able to keep up with the 
+music.  Cautions against this practice were given in Volume Two.  The Enhanced 
+Player is more sensitive to Clobber errors than the earlier players, and a song 
+which came close to causing a Clobber error on the earlier players may actually 
+cause one on the new player.  Also, the Commodore 128 version is slightly more 
+sensitive to Clobber errors than the Commodore 64 version.  A song which causes 
+the Clobber error can be edited to not use so many commands between notes and 
+thereby eliminate the problem.  See page 139 of the new book for more 
+information. 
+
+Q: Some songs sound a little different on the Enhanced Player.  They don't 
+sound bad, but just different somehow. 
+A: Yes, there are some subtle timing differences having to do with the added 
+features, and the differences are noticeable on some songs. 
+
+Q: What are the waveform and envelope settings to get a piano sound? 
+A: There are none.  The SID chip oscillators cannot produce a realistic piano 
+sound.  The waveform produced by a piano does not conform to the simple pulse, 
+sawtooth, and triangle waves supported by the SID chip, it is different in 
+different octaves, and it changes shape during the course of a note and 
+according to how hard the piano key was struck.  The waveform is too complex 
+for the SID chip to emulate.  Some other instruments which can't be emulated 
+very well are saxophone and acoustic guitar.  Although the SID chip could 
+produce a fairly good piano sound from a digitized sample, this technique uses 
+too much memory and processing time and won't work with Sidplayer.  The best 
+you can do is experiment with different settings and different sounds until you 
+find something that sounds good.  The type and style of the music also makes a 
+difference.  A sound will sound more like an acoustic guitar, for instance, if 
+the music itself is the kind that would be played on an acoustic guitar.  If 
+you want a more convincing piano sound on a computer, get an Amiga. 
+
+Q: Are you going to do a Sidplayer for the Amiga? 
+A: No. 
+
+
+Books by Craig Chamberlain: 
+
+"All About the Commodore 64, Volume One" (a tutorial in the BASIC language), 
+$12.95, ISBN 0-942386-40-X 
+
+"All About the Commodore 64, Volume Two" (advanced BASIC and graphics and music 
+utilities to give you the power of machine language with the convenience of 
+BASIC, including the original Sidplayer), $16.95, ISBN 0-942386-45-0 
+
+"COMPUTE!'s Music System for the Commodore 128 and 64: The Enhanced Sidplayer" 
+(a book and disk combination containing the complete Enhanced Sidplayer 
+system), $24.95, ISBN 0-87455-074-2 
+
+
+COMPUTE!'s Toll Free Order Number: 1-800-346-6767 
+In New York, (212) 887-8525 
+
+COMPUTE!'s Toll Free Number for Dealer Orders: 1-800-638-3822 
+In New York, (212) 887-8566 
+
+COMPUTE! Books 
+P.O. Box 5038 
+F.D.R. Station 
+New York, NY 10150 
+
+
+Sidplayer is currently the most popular non-MIDI music system for the Commodore 
+64 and 128 computers.  At $24.95, the Enhanced Sidplayer has more features and 
+costs less than other commercial music systems, and it is better documented.  
+Most people find it worth the price, and find it worthwhile to get the book for 
+the documentation. 

@@ -1,0 +1,114 @@
+SIDPLAYER NEWS #8  February 1987 
+
+THE ENHANCED SIDPLAYER - ERRORS AND CORRECTIONS 
+
+"COMPUTE!'s Music System for the Commodore 128 and 64: The Enhanced Sidplayer" 
+By Craig Chamberlain 
+Published by COMPUTE! Books 
+ISBN 0-87455-074-2 
+Book and disk combination  $24.95 
+
+
+Sidplayer, the popular music system for the Commodore 64, has been completely 
+rewritten to support new editing and song playing features, and to run on the 
+Commodore 128 and 64 computers.  See Sidnews #7 for more information about this 
+new product.  The following documentation file lists the known typographical 
+errors, omissions, program bugs, reported problems, and suggested improvements. 
+
+TEXT 
+1. (vi) Under the Acknowledgments heading, Stan Halaby's name is misspelled as 
+Stan Halavy. 
+2. (vi) The following two paragraphs were omitted from the Foreword, and should 
+follow the Acknowledgments: 
+
+ABOUT THE AUTHORS 
+Craig Chamberlain is a senior at the University of Michigan, majoring in 
+Computer Science.  Harry Bratt is also a senior at the University of Michigan 
+and is majoring in Linguistics and Philosophy. 
+
+For this version of Sidplayer, Craig wrote all of the programs and the text, 
+and Harry designed the Editor including its screens. 
+
+3. (18) After Figure 2-4, the sentence should state that eight octaves 
+(numbered 0-7) can be displayed. 
+4. (40) The section titled Resume Playing should mention that the Resume 
+feature is also not available if the song stopped playing due to an error. 
+5. (69) Under Decrement Measure-Marker numbers, the message that appears in the 
+message window is DECREMENTED not DECREMENT. 
+6. (76) The "." key to select a dotted duration is not listed in the keystroke 
+summary. 
+7. (76) The meanings for INST/DEL and SHIFT-INST/DEL are reversed in the 
+keystroke summary. 
+8. (190) In Figure 14-9, a sharp sign is missing on the last C note in the 
+first measure.  The notes should be labeled C, C#, F#, and C#. 
+9. (258) Under VDP and VRT, an undocumented feature of the P&V command is that 
+it will allow vibrato and pulse width vibrato to continue during a rest. 
+10. (262) The filename of a Koalapad format picture file must be padded with 
+spaces to a length of 16 characters for the Rename to work. 
+
+The chart listing instrument parameters on page 349 of Volume Two was omitted 
+because it isn't possible to emulate instruments realistically on the SID chip 
+and because the settings give different effects on different SID chips.  There 
+are no "magic numbers" to give you the sounds of various instruments.  A 
+parameter list is a helpful starting place for creating sounds, but sometimes 
+such a list discourages experimentation.  The best way to find new settings is 
+to experiment and to examine settings in other songs. 
+
+DISK 
+1. The Player freezes up when it opens the directory and an error such as 
+Device Not Present occurs. 
+2. The Editor does not detect if a non-music file is loaded when the "*" 
+wildcard has been used in the load filename, so the error NOT A MUSIC FILE is 
+never reported.  What often happens with wildcard usage is that the .WDS file 
+for a song gets loaded instead, and the Editor crashes when an attempt is made 
+to display the notes.  The best advice is to not use wildcards when a song file 
+has a corresponding words or picture file. 
+3. On the Command Screen, the F7 feature to advance to the next occurrence of a 
+particular command with any value is not reliable for DEF and CAL commands. 
+4. The C128 version of the SID COPIER utility will crash under some 
+circumstances.  This is possibly caused by the program not having as many free 
+blocks to copy as displayed.  Try leaving 50 blocks free. 
+5. The sync mode sample song TPI14 is missing from the disk. 
+
+REPORTED PROBLEMS 
+1. Those with a good musical ear will notice slight timing differences in songs 
+played on the new Player and Editor.  This is probably a result of necessary 
+code changes to support the new features.  Try playing any problem songs on a 
+screen without sprites to see if the timing is better. 
+2. A few existing songs may stop playing on the new Player due to a Clobber 
+error.  This error occurs when too many commands are placed between notes.  A 
+sure way to get this error is to define phrases at the beginning of a voice 
+which are not used until later in the song.  This is not a good practice, and 
+warnings about this practice were included in Volume Two and in other 
+documentation.  Fifteen or twenty commands at the beginning of each voice are 
+just too many for Sidplayer to process in one jiffy.  With the new playing 
+code, songs which came close to causing a Clobber error before may actually do 
+so now.  Songs with this problem can be restructured so that they will be 
+playable on the new Player. 
+3. Some people have reported differences in filtering effects on the new Player 
+compared to the earlier players.  This is being investigated. 
+
+SUGGESTED IMPROVEMENTS 
+1. On the Player, have the Return key work like the F1 key so that it may also 
+be used to select songs. 
+2. On the Player, when playing a song with words and a picture and the P key is 
+pressed to go from a full picture to a split picture, the Singalong words 
+always appear in the window, even when it was the text lines that were last 
+displayed.  Have the program remember whether words or text lines were last 
+displayed, and redisplay them accordingly. 
+3. On the Player, remove the dancing dots that are visible at the bottom of the 
+screen when a song is playing on a Commodore 128 in 64 or 128 mode. 
+
+STATUS 
+The errors in the text may be fixed if there is a reprint.  The program bugs 
+will be investigated and fixed, and a new master disk will be produced if there 
+is a disk reprint.  The suggested improvements have already been implemented, 
+and cleanup on other programs such as the SID MENU is being considered. 
+
+The author would appreciate being informed of any other errors found in the 
+book or disk.  He may be contacted on the following telecommunication services: 
+
+Delphi       CRAIGCH 
+PlayNET      Craig C5 
+Compuserve   72240,114 
+QuantumLink  CraigC12 

@@ -1,0 +1,118 @@
+@echo off
+
+IF EXIST Whats_new_in_v117.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v117.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.17
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE David_Strauss_-Li_Dave-\Led_Zeppelin\Babe_Im_Gonna_Leave_You_A.mus David_Strauss_-Li_Dave-\Led_Zeppelin\Babe_Im_Gonna_Leave_You.mus
+MOVE David_Strauss_-Li_Dave-\Led_Zeppelin\Babe_Im_Gonna_Leave_You_B.mus David_Strauss_-Li_Dave-\Led_Zeppelin\Babe_Im_Gonna_Leave_You.str
+MOVE David_Strauss_-Li_Dave-\Led_Zeppelin\Good_Times_Bad_Times_A.mus David_Strauss_-Li_Dave-\Led_Zeppelin\Good_Times_Bad_Times.mus
+MOVE David_Strauss_-Li_Dave-\Led_Zeppelin\Good_Times_Bad_Times_B.mus David_Strauss_-Li_Dave-\Led_Zeppelin\Good_Times_Bad_Times.str
+MOVE David_Strauss_-Li_Dave-\Led_Zeppelin\When_the_Levee_Breaks_A.mus David_Strauss_-Li_Dave-\Led_Zeppelin\When_the_Levee_Breaks.mus
+MOVE David_Strauss_-Li_Dave-\Led_Zeppelin\When_the_Levee_Breaks_B.mus David_Strauss_-Li_Dave-\Led_Zeppelin\When_the_Levee_Breaks.str
+MOVE DC_Star_and_Cpr\Billy_Joel\Code_of_Silence.mus DC_Star_and_Cpr\Billy_Joel\Code_of_Silence_A.mus
+MOVE DC_Star_and_Cpr\Billy_Joel\Code_of_Silence.wds DC_Star_and_Cpr\Billy_Joel\Code_of_Silence_A.wds
+MOVE L_Clements\Baseball_Game.mus L_Clements\Baseball_Game_A.mus
+MOVE L_Clements\Baseball_Game.wds L_Clements\Baseball_Game_A.wds
+MOVE Les_Herrman\Frosty_the_Snowman.mus Les_Herrman\Frosty_the_Snowman_A.mus
+MOVE Les_Herrman\Frosty_the_Snowman.str Les_Herrman\Frosty_the_Snowman_A.str
+MOVE Les_Herrman\Frosty_the_Snowman.wds Les_Herrman\Frosty_the_Snowman_A.wds
+MOVE Lyric\Dont_ask_me_not.mus Lyric\Dont_ask_me_Why.mus
+MOVE Lyric\Dont_ask_me_not.str Lyric\Dont_ask_me_Why.str
+MOVE Lyric\Dont_ask_me_not.wds Lyric\Dont_ask_me_Why.wds
+MOVE Lyric\Goodnight_Saigon.mus Lyric\Goodnight_Saigon_a.mus
+MOVE Lyric\Goodnight_Saigon.wds Lyric\Goodnight_Saigon_A.wds
+MOVE Lyric\My_Heart_Belongs_to_Daddy.mus Lyric\My_Heart_Belongs_to_Daddy_B.mus
+MOVE Kenneth_Barsky\Boundless_Expanse_of_the_Sea.mus Kenneth_Barsky\Boundless_Expanse_of_the_Sea_A.mus
+MOVE Kenneth_Barsky\Down_Along_the_Mother_Volga.mus Kenneth_Barsky\Down_Along_the_Mother_Volga_A.mus
+MOVE Kenneth_Barsky\Little_Bell.mus Kenneth_Barsky\Little_Bell_A.mus
+MOVE Kenneth_Barsky\Slender_Mountain_Ash.mus Kenneth_Barsky\Slender_Mountain_Ash_A.mus
+MOVE Kenneth_Barsky\Song_of_the_Volga_Boatmen.mus Kenneth_Barsky\Song_of_the_Volga_Boatmen_A.mus
+MOVE Kenneth_Barsky\Un_Bel_Di.mus Kenneth_Barsky\Un_Bel_Di_A.mus
+MOVE Kenneth_Barsky\Un_Bel_Di.str Kenneth_Barsky\Un_Bel_Di_A.str
+MOVE Marvin_Jones\Variations_on_Glow_Worm.mus Marvin_Jones\Variations_on_Glow_Worm_A.mus
+MOVE Misc\H\You_Really_got_Me.mus HarryF2\You_Really_got_Me.mus
+MOVE Misc\E\Wedding_Song.mus Elgar\Wedding_Song.mus
+MOVE Misc\E\Wedding_Song.wds Elgar\Wedding_Song.wds
+MOVE Misc\E\You_Belong_in_my_Heart.mus Emarbekay\You_Belong_in_my_Heart.mus
+MOVE Music_Man3\Bill_Bailey.mus Music_Man3\Bill_Bailey_A.mus
+MOVE Nick_Zelinsky\It_makes_me_Giggle.wd Nick_Zelinsky\It_makes_me_Giggle.wds
+MOVE Paul_Labeaud\Jellicle_Song_the_Naming_of_Cats.mus Paul_Labeaud\Jellicle_Song_the_Naming_of_Cats_A.mus
+MOVE Rohan2\Autumn_Leaves.mus Rohan2\Autumn_Leaves.str
+MOVE Rohan2\Autumn_Leaves_B.mus Rohan2\Autumn_Leaves.mus
+: proper title
+move Yip\Yip_unknown_tune01.mus Yip\Marble_Madness.mus
+MKDIR Karz
+MOVE Misc\K\Be_Prepared.mus Karz\Be_Prepared.mus
+MOVE Misc\K\Be_Prepared.wds Karz\Be_Prepared.wds
+MOVE Misc\K\Hunting_Song.mus Karz\Hunting_Song.mus
+MOVE Misc\K\Hunting_Song.wds Karz\Hunting_Song.wds
+MOVE Misc\K\In_Old_Mexico.mus Karz\In_Old_Mexico.mus
+MOVE Misc\K\In_Old_Mexico.wds Karz\In_Old_Mexico.wds
+MOVE Misc\K\Patience.mus Karz\Patience.mus
+MOVE Misc\K\Patience.wds Karz\Patience.wds
+MOVE Jim\Dear_Me.mus Jim_-Jim_Brock-_-KCORB-\Dear_Me.mus
+MOVE Jim\Dear_Me.str Jim_-Jim_Brock-_-KCORB-\Dear_Me.str
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Bob_Umfer__Ave_Maria.mus Bob_Umfer\Ave_Maria.mus
+MOVE /y Updated\Bobbye__Smoke_Rings.mus Bobbye\Smoke_Rings.mus
+MOVE /y Updated\Digital_Man__Rivendell.mus Digital_Man\Rivendell.mus
+MOVE /y Updated\Hawkwind_3__Lakeside_Park_A.mus Hawkwind_3\Lakeside_Park_A.mus
+MOVE /y Updated\Lyric__Baby_Elephant_Walk_B.mus Lyric\Baby_Elephant_Walk_B.mus
+MOVE /y Updated\Melody__Pretty_Little_Angel_Eyes.mus Melody\Pretty_Little_Angel_Eyes.mus
+MOVE /y Updated\Nick_Zelinsky__Singing_in_the_Rain.mus Nick_Zelinsky\Singing_in_the_Rain.mus
+MOVE /y Updated\Tom_B24__Bright_Lights_Big_City.mus Tom_B24\Bright_Lights_Big_City.mus
+MOVE /y Updated\Tom_B24__Kentucky_Babe.mus Tom_B24\Kentucky_Babe.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+: I think you can rename dir Red_Software, it's Jeroen "Red" Kimmel =)
+MOVE Red_Software Jeroen_Kimmel_-Red_Software-
+
+::::::::::
+: DELETE :
+::::::::::
+: same as Craig_Chamberlain\Two_Part_Invention_No13.mus
+del Misc\Anon\Commodore_64_Theme.mus
+ 
+: same as Bob_Retelle\Entry_of_the_Gladiators.mus
+del Misc\Anon\Entry_of_the_Gladiators.mus
+ 
+: same song, just offset in memory
+del Bob_Retelle\She_Works_Hard_for_the_Money_A.mus
+move Bob_Retelle\She_Works_Hard_for_the_Money_B.mus Bob_Retelle\She_Works_Hard_for_the_Money.mus
+ 
+: same as Jerry_Brady\Bye_Bye_Blues.mus
+del Misc\Anon\Bye_Bye_Blues.mus
+ 
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+MOVE Whats_new_in_v117.txt  00_Documents\Whats_new_in_v117.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_117.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.17 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,60 @@
+@echo off
+
+IF EXIST Whats_new_in_v124.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v124.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.24
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\J\Battle_Hymn_of_the_Republic.mus Marvin_Jones\Battle_Hymn_of_the_Republic.mus
+MOVE Nick_Zelinsky\Red_Baron_B.mus Nick_Zelinsky\Red_Baron.mus
+MOVE Nick_Zelinsky\Red_Baron_B.str Nick_Zelinsky\Red_Baron.str
+MOVE Nick_Zelinsky\Trolley_Song_B.mus Nick_Zelinsky\Trolley_Song.mus
+MOVE Nick_Zelinsky\Trolley_Song_B.str Nick_Zelinsky\Trolley_Song.str
+MOVE Nick_Zelinsky\Trolley_Song_B.wds Nick_Zelinsky\Trolley_Song.wds
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+REM replaced by Misc\K\Like_a_Surgeon.mus
+DEL Misc\Anon\Like_a_Surgeon.mus
+DEL Nick_Zelinsky\Red_Baron_A.mus
+DEL Nick_Zelinsky\Trolley_Song_A.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+MKDIR DC_Star\No_Jacket
+MOVE DC_Starr\No_Jacket\*.* DC_Star\No_Jacket\.
+CD DC_Starr
+RMDIR No_Jacket
+CD ..
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v124.txt  00_Documents\Whats_new_in_v124.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_124.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.24 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

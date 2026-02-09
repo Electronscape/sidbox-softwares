@@ -1,0 +1,105 @@
+@echo off
+
+IF EXIST Whats_new_in_v147.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v147.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.47
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN Chuck_Knights\Wabderlust.mus  Chuck_Knights\Wanderlust.mus
+REN Chuck_Knights\Walk_like_a_Lady.mus  Chuck_Knights\Walks_like_a_Lady.mus
+REN DC_Starr\When_I_could_come_Home_to_You.mus  DC_Starr\When_I_could_come_Home_to_You_(BAD).mus
+REN DC_Starr\When_I_could_come_Home_to_You.str  DC_Starr\When_I_could_come_Home_to_You_(BAD).str
+REN DC_Starr\When_I_could_come_Home_to_You.wds  DC_Starr\When_I_could_come_Home_to_You_(BAD).wds
+REN Les_Herrman\Dont_let_the_Sun_go_Down_on_me.mus  Les_Herrman\Dont_let_the_Sun_go_Down_on_me_A.mus
+REN Les_Herrman\Dont_let_the_Sun_go_Down_on_me.wds  Les_Herrman\Dont_let_the_Sun_go_Down_on_me_A.wds
+REN Misc\A\New_Wave_Jazz_Part_2_A.mus  Misc\A\New_Wave_Jazz_Part_2.mus
+MOVE Misc\H\Christmas_Time_is_Here.mus  James_Lee_Hicks\Christmas_Time_is_Here.mus
+MOVE Misc\H\Karma_Chameleon.mus  James_Lee_Hicks\Karma_Chameleon.mus
+MOVE Misc\H\Linus_and_Lucy.mus  James_Lee_Hicks\Linus_and_Lucy.mus
+MOVE Misc\K\Day-O.mus  Katt\Day-O.mus
+MOVE Misc\K\Carrie.mus  Katt\Carrie.mus
+MOVE Misc\K\California_Dreaming.mus  Katt\California_Dreaming.mus
+MOVE Misc\S\Sad_Songs.mus  Yosemite_Sam\Sad_Songs.mus
+MKDIR Shel
+MOVE Misc\S\Gregs_Theme.mus  Shel\Gregs_Theme.mus
+MOVE Misc\S\Gregs_Theme.str  Shel\Gregs_Theme.str
+MOVE Misc\S\Rock_It.mus  Shel\Rock_It.mus
+MOVE Misc\S\Shels_Tune.mus  Shel\Shels_Tune.mus
+MOVE Misc\S\Shels_Tune.str  Shel\Shels_Tune.str
+MOVE Misc\S\Shels_Tune.wds  Shel\Shels_Tune.wds
+MOVE Misc\S\Waterfall.mus  Shel\Waterfall.mus
+MOVE Misc\S\Waterfall.str  Shel\Waterfall.str
+REN Nick_Zelinsky\Sometimes_in_Winter.mus  Nick_Zelinsky\Sometimes_in_Winter_A.mus
+REN Nick_Zelinsky\We_could_Be_Together.mus  Nick_Zelinsky\We_could_Be_Together_A.mus
+REN Paul_Labeaud\Kiss.mus  Paul_Labeaud\Kiss_A.mus
+REN Paul_Labeaud\Somewhere_thats_Green.mus  Paul_Labeaud\Somewhere_thats_Green_A.mus
+REN Paul_Labeaud\Somewhere_thats_Green.str  Paul_Labeaud\Somewhere_thats_Green_A.str
+REN Paul_Labeaud\Somewhere_thats_Green.wds  Paul_Labeaud\Somewhere_thats_Green_A.wds
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Colin_Roth__Minuet_in_G.mus Colin_Roth\Minuet_in_G.mus
+MOVE /y Updated\DC_and_Bert__Lay_your_Hands_on_me_A.mus DC_and_Bert\Lay_your_Hands_on_me_A.mus
+MOVE /y Updated\DC_and_Bert__We_can_Last_Forever.mus DC_and_Bert\We_can_Last_Forever.mus
+MOVE /y Updated\DC_Star_and_Cpr__Fast_Car.mus DC_Star_and_Cpr\Fast_Car.mus
+MOVE /y Updated\DC_Star_and_Cpr__Make_me_Lose_Control.mus DC_Star_and_Cpr\Make_me_Lose_Control.mus
+MOVE /y Updated\DC_Star_and_Cpr__Sign_Your_Name.mus DC_Star_and_Cpr\Sign_Your_Name.mus
+MOVE /y Updated\DC_Star_and_Cpr__Waiting_for_a_Star_to_Fall.mus DC_Star_and_Cpr\Waiting_for_a_Star_to_Fall.mus
+MOVE /y Updated\Macbeth__In_Gods_Country.mus  Macbeth\In_Gods_Country.mus
+MOVE /y Updated\Macbeth__October.mus Macbeth\October.mus
+MOVE /y Updated\Martin_Desrochers_-Scammer-__If_you_Leave.mus Martin_Desrochers_-Scammer-\If_you_Leave.mus
+MOVE /y Updated\Martin_Desrochers_-Scammer-__See_You.mus Martin_Desrochers_-Scammer-\See_You.mus
+MOVE /y Updated\Martin_Desrochers_-Scammer-__Somebody.mus Martin_Desrochers_-Scammer-\Somebody.mus
+MOVE /y Updated\MC_Far_and_Clr__Buffalo_Stance.mus MC_Far_and_Clr\Buffalo_Stance.mus
+MOVE /y Updated\MC_Far_and_Clr__Every_Little_Step.mus MC_Far_and_Clr\Every_Little_Step.mus
+MOVE /y Updated\Tom_Duda__1st_Movement_Sonata_in_A_Major_K305.mus Tom_Duda\1st_Movement_Sonata_in_A_Major_K305.mus
+MOVE /y Updated\Tom_Duda__2nd_Movement_Sonata_in_A_Major_K305.mus Tom_Duda\2nd_Movement_Sonata_in_A_Major_K305.mus
+MOVE /y Updated\Vaxman1__Murder_She_Wrote.mus Vaxman1\Murder_She_Wrote.mus
+MOVE /y Updated\Willie10__Sussudio.mus Willie10\Sussudio.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+REN Wiffy WiffyD
+REN DC_Star_and_Cpr\Barbra_Striesand DC_Star_and_Cpr\Barbra_Streisand
+
+::::::::::
+: DELETE :
+::::::::::
+: Same as Daspf\Wipe_Out_A.mus
+DEL Daspf\The_Surfer.mus
+: Should only be 3 voice version, not stereo
+DEL Frank_Prindle\Bridge_Over_Troubled_Water_A.str
+: Same as Cicada\Night_Before_Christmas.mus
+DEL Sammy_Snake\Night_Before_Christmas.mus
+: Transfer corrupted version of Dr_D\Newwave_Jazz_Part_2.mus
+DEL Misc\A\New_Wave_Jazz_Part_2_B.mus
+: New version at Martin_Desrochers_-Scammer-\Secret.mus
+DEL Misc\Anon\Secret.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v147.txt  00_Documents\Whats_new_in_v147.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_147.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.47 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,3113 @@
+Disk: SIDfest '87 (Columbus, OH) -- All-American SIDs.d64
+0 "ALL AMERICAN SID" A1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+4    "USA ANTHEM.MUS"   PRG
+40   "USA ANTHEM.PIC"   PRG
+13   "ALL AMERICA1.MUS" PRG
+5    "GOLDN SLIPPR.MUS" PRG
+3    "GOLDN SLIPPR.WDS" PRG
+16   "STARS/STRIPE.MUS" PRG
+7    "GO BUCKS!.MUS"    PRG
+4    "GO BUCKS!.WDS"    PRG
+7    "SUMMER/CHAS.MUS"  PRG
+7    "RUN 4 ROSES.MUS"  PRG
+4    "RUN 4 ROSES.WDS"  PRG
+40   "RUN 4 ROSES.PIC"  PRG
+14   "HOE-DOWN.MUS"     PRG
+4    "STREET/CAIRO.MUS" PRG
+5    "STREET/CAIRO.WDS" PRG
+6    "LET PEACE.MUS"    PRG
+8    "HOTTIME/TOWN.MUS" PRG
+6    "HOTTIME/TOWN.WDS" PRG
+12   "HOMECOMING.MUS"   PRG
+12   "MICHIGAN.MUS"     PRG
+40   "MICHIGAN.PIC"     PRG
+8    "ABRAHAM/JOHN.MUS" PRG
+4    "ABRAHAM/JOHN.WDS" PRG
+9    "SEMPER FIDEL.MUS" PRG
+7    "WHOOPEE.MUS"      PRG
+5    "WHOOPEE.WDS"      PRG
+6    "SWEET/CALIF.MUS"  PRG
+8    "HANDS ACROSS.MUS" PRG
+8    "HANDS ACROSS.WDS" PRG
+19   "ALL AMERICA2.MUS" PRG
+40   "ALL AMERICA2.PIC" PRG
+5    "TA-RA-RA.MUS"     PRG
+4    "TA-RA-RA.WDS"     PRG
+6    "YANKEE D/BOY.MUS" PRG
+4    "GOD BLESS AM.MUS" PRG
+40   "GOD BLESS AM.PIC" PRG
+12   "LIBERTY BELL.MUS" PRG
+5    "NO NO.MUS"        PRG
+9    "NO NO.WDS"        PRG
+6    "WALK ALONE.MUS"   PRG
+2    "WALK ALONE.WDS"   PRG
+35   "LYDIA.MUS"        PRG
+8    "OLD BALLGAME.MUS" PRG
+4    "SUNNY/SIDE.MUS"   PRG
+3    "SUNNY/SIDE.WDS"   PRG
+8    "OLMANRIVER.MUS"   PRG
+13   "AMERICA.MUS"      PRG
+6    "AMERICA.WDS"      PRG
+8    "BATTLE HYMN.MUS"  PRG
+40   "BATTLE HYMN.PIC"  PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Christmas SIDs Side A.d64
+0 "CHRISTMAS SID   " X1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "CAROLING-ING.MUS" PRG
+40   "CAROLING-ING.PIC" PRG
+4    "JINGLE BELLS.MUS" PRG
+4    "JINGLE BELLS.WDS" PRG
+7    "HOME/HOLIDAY.MUS" PRG
+4    "SANTA/TOWN.MUS"   PRG
+40   "SANTA/TOWN.PIC"   PRG
+5    "SANTA/TOWN.WDS"   PRG
+3    "HOUSETOPS.MUS"    PRG
+4    "HOUSETOPS.WDS"    PRG
+4    "MERRY LITTLE.MUS" PRG
+5    "MERRY LITTLE.WDS" PRG
+4    "LET IT SNOW.MUS"  PRG
+40   "LET IT SNOW.PIC"  PRG
+3    "LET IT SNOW.WDS"  PRG
+5    "CHESTNUTS.MUS"    PRG
+3    "CHESTNUTS.WDS"    PRG
+4    "RUDOLPH.MUS"      PRG
+40   "RUDOLPH.PIC"      PRG
+3    "RUDOLPH.WDS"      PRG
+6    "ROCKIN TREE.MUS"  PRG
+4    "ROCKIN TREE.WDS"  PRG
+5    "MOMMY/SANTA.MUS"  PRG
+3    "MOMMY/SANTA.WDS"  PRG
+3    "WONDERLAND.MUS"   PRG
+40   "WONDERLAND.PIC"   PRG
+8    "DRUMMER BOY.MUS"  PRG
+4    "DRUMMER BOY.WDS"  PRG
+7    "NUTTIN/XMAS.MUS"  PRG
+37   "NUTTIN/XMAS.PIC"  PRG
+5    "NUTTIN/XMAS.WDS"  PRG
+4    "HERE COMES.MUS"   PRG
+5    "HERE COMES.WDS"   PRG
+5    "JINGLE ROCK.MUS"  PRG
+4    "2FRONT TEETH.MUS" PRG
+5    "2FRONT TEETH.WDS" PRG
+5    "CHIPMUNK.MUS"     PRG
+40   "CHIPMUNK.PIC"     PRG
+3    "CHIPMUNK.WDS"     PRG
+4    "SILVER BELLS.MUS" PRG
+4    "SILVER BELLS.WDS" PRG
+6    "FROSTY.MUS"       PRG
+40   "FROSTY.PIC"       PRG
+5    "BLUE XMAS.MUS"    PRG
+4    "BLUE XMAS.WDS"    PRG
+15   "SLEIGH RIDE.MUS"  PRG
+8    "GRANDMA/DEER.MUS" PRG
+8    "GRANDMA/DEER.WDS" PRG
+6    "PARADE.MUS"       PRG
+40   "PARADE.PIC"       PRG
+7    "WHITE CHRST.MUS"  PRG
+4    "WHITE CHRST.WDS"  PRG
+3    "WE WISH YOU.MUS"  PRG
+40   "WE WISH YOU.PIC"  PRG
+5    "WE WISH YOU.WDS"  PRG
+5 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Christmas SIDs Side B.d64
+0 "CHRISTMAS SID   " X2 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+4    "CAROLOFBELLS.MUS" PRG
+3    "CAROLOFBELLS.WDS" PRG
+40   "CAROLOFBELLS.PIC" PRG
+4    "COME CAROLNG.MUS" PRG
+4    "COME CAROLNG.WDS" PRG
+15   "HALLELUJAH.MUS"   PRG
+3    "DECK HALLS.MUS"   PRG
+40   "DECK HALLS.PIC"   PRG
+4    "DECK HALLS.WDS"   PRG
+2    "STAR CAROL.MUS"   PRG
+3    "JOY TO WORLD.MUS" PRG
+3    "JOY TO WORLD.WDS" PRG
+2    "ANGELUS.MUS"      PRG
+6    "12DAYS/XMAS.MUS"  PRG
+40   "12DAYS/XMAS.PIC"  PRG
+10   "12DAYS/XMAS.WDS"  PRG
+2    "HEARD'BELLS.MUS"  PRG
+3    "BETHLEHEM.MUS"    PRG
+4    "BETHLEHEM.WDS"    PRG
+3    "ANGELS ON HI.MUS" PRG
+40   "ANGELS ON HI.PIC" PRG
+4    "EMMANUEL.MUS"     PRG
+3    "EMMANUEL.WDS"     PRG
+2    "AWAY MANGER.MUS"  PRG
+4    "WHAT CHILD.MUS"   PRG
+3    "WHAT CHILD.WDS"   PRG
+4    "TANNENBAUM.MUS"   PRG
+40   "TANNENBAUM.PIC"   PRG
+4    "TANNENBAUM.WDS"   PRG
+6    "PANIS ANGL'S.MUS" PRG
+4    "GOD REST YE.MUS"  PRG
+4    "GOD REST YE.WDS"  PRG
+3    "WE 3 KINGS.MUS"   PRG
+3    "FIRST NOEL.MUS"   PRG
+40   "FIRST NOEL.PIC"   PRG
+14   "SING/XMAS.MUS"    PRG
+6    "SING/XMAS.WDS"    PRG
+4    "HARK/HERALD.MUS"  PRG
+3    "HARK/HERALD.WDS"  PRG
+2    "LULLAY CHILD.MUS" PRG
+3    "HOLLY/IVY.MUS"    PRG
+3    "HOLLY/IVY.WDS"    PRG
+3    "KLING GLOK'N.MUS" PRG
+37   "KLING GLOK'N.PIC" PRG
+6    "DO YOU HEAR.MUS"  PRG
+5    "DO YOU HEAR.WDS"  PRG
+7    "MERRYMOZART.MUS"  PRG
+4    "FAITHFUL.MUS"     PRG
+40   "FAITHFUL.PIC"     PRG
+4    "FAITHFUL.WDS"     PRG
+20   "VISITORS.MUS"     PRG
+4    "MIDNIGHT CLR.MUS" PRG
+3    "MIDNIGHT CLR.WDS" PRG
+8    "AVE MARIA.MUS"    PRG
+4    "SILENT NIGHT.MUS" PRG
+40   "SILENT NIGHT.PIC" PRG
+3    "SILENT NIGHT.WDS" PRG
+5    "O HOLY NIGHT.MUS" PRG
+3 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Commemorative Album from SDAs.d64
+0 "ALBUM MASTER    " AM 2A
+2    "READER"           PRG
+6    "CREDITS"          SEQ
+5    "COLUMBUS1.TXT"    SEQ
+4    "MY/SONG.MUS"      PRG
+37   "MY/SONG.PIC"      PRG
+11   "HELLO/COLUMB.MUS" PRG
+7    "HELLO/COLUMB.WDS" PRG
+9    "CONTUSION.MUS"    PRG
+17   "HAND/BLKSMTH.MUS" PRG
+10   "SAY/GOODBYE.MUS"  PRG
+6    "SAY/GOODBYE.WDS"  PRG
+9    "LUCILLE.MUS"      PRG
+9    "OVRTUR/TOMMY.MUS" PRG
+5    "COLUMBUS2.TXT"    SEQ
+9    "OLD/TENN.MUS"     PRG
+5    "OLD/TENN.WDS"     PRG
+32   "PRELUDEINE.MUS"   PRG
+13   "TBQB/BLUES.MUS"   PRG
+8    "SUTHERN/NITE.MUS" PRG
+13   "AILEEN/AROON.MUS" PRG
+37   "AILEEN/AROON.PIC" PRG
+15   "MASTR/SRVNT.MUS"  PRG
+7    "MASTR/SRVNT.WDS"  PRG
+5    "COLUMBUS3.TXT"    SEQ
+16   "DEBUSSY/CC.MUS"   PRG
+11   "CLAS/REUNION.MUS" PRG
+6    "CLAS/REUNION.WDS" PRG
+15   "BETHENA.MUS"      PRG
+37   "BETHENA.PIC"      PRG
+12   "MANHATTAN.MUS"    PRG
+10   "PEGGYSUE.MUS"     PRG
+2    "PEGGYSUE.WDS"     PRG
+20   "DUEL/BANJO.MUS"   PRG
+5    "ALLEGRETTO.MUS"   PRG
+5    "COLUMBUS4.TXT"    SEQ
+7    "WHEN/LOVED.MUS"   PRG
+32   "DEL/MAR/RAG.MUS"  PRG
+7    "B/STRANGER.MUS"   PRG
+7    "B/STRANGER.WDS"   PRG
+35   "HAYDN.MUS"        PRG
+6    "HYMNE.MUS"        PRG
+18   "CAN-CAN.MUS"      PRG
+37   "CAN-CAN.PIC"      PRG
+13   "+++\DUKE/CNT.MUS" PRG
+8    "MISBEHAVIN.MUS"   PRG
+18   "C SHOUT.MUS"      PRG
+14   "\CHILI SAUCE.MUS" PRG
+17   "\TWINKLIN.MUS"    PRG
+18   "\DEUCES WILD.MUS" PRG
+7 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Commemorative Collection.d64
+0 "SIDFEST 87      " 87 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    "`   OFFICIAL   `" SEQ
+0    "`  SHOW  DISK  `" SEQ
+0    "` 27 JUNE 1987 `" SEQ
+0    "````````````````" SEQ
+0    "( MANY  THANKS )" SEQ
+0    "(    TO ALL    )" SEQ
+0    "( CONTRIBUTORS )" SEQ
+0    "(  AND KERMIT  )" SEQ
+0    "(    AND TO    )" SEQ
+0    "( QUANTUM LINK )" SEQ
+0    "````````````````" SEQ
+48   "SIDPIC V3.4"      PRG
+0    "----------------" SEQ
+3    "SPRINT FILE READ" PRG
+38   "SIDPIC V3.DOC.ES" SEQ
+38   "SIDPIC V3.DOC.SS" PRG
+0    "````````````````" SEQ
+8    "EYES.MUS"         PRG
+4    "EYES.WDS"         PRG
+40   "BACH DM T/F.MUS"  PRG
+6    "FARRELLS.MUS"     PRG
+3    "FARRELLS.WDS"     PRG
+12   "TELEMANIV.MUS"    PRG
+10   "CAMELOT.MUS"      PRG
+6    "CAMELOT.WDS"      PRG
+7    "YELLOW RIBON.MUS" PRG
+9    "LONG TRAIN.MUS"   PRG
+5    "LONG TRAIN.WDS"   PRG
+13   "ELTRIPILI.MUS"    PRG
+4    "YANKEEDOODLE.MUS" PRG
+13   "YANKEEDOODLE.WDS" PRG
+5    "YOUREYES.MUS"     PRG
+15   "DEAD/ALIVE.MUS"   PRG
+6    "DEAD/ALIVE.WDS"   PRG
+12   "JOHN B GOODE.MUS" PRG
+6    "HERSHEY BAR.MUS"  PRG
+2    "HERSHEY BAR.WDS"  PRG
+10   "LETS GO.MUS"      PRG
+16   "FLOWER RED.MUS"   PRG
+10   "FLOWER RED.WDS"   PRG
+9    "PARADISI.MUS"     PRG
+8    "LOVE SONG.MUS"    PRG
+5    "LOVE SONG.WDS"    PRG
+9    "CHIPS.MUS"        PRG
+9    "GRAND NIGHT.MUS"  PRG
+5    "GRAND NIGHT.WDS"  PRG
+36   "SLAUGHTER.MUS"    PRG
+0    "````````````````" SEQ
+0    "` NOT FOR SALE `" SEQ
+0    "````````````````" SEQ
+234 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Country & Folk SIDs.d64
+0 "COUNTRY FOLK    " M2 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+5    "GHOST RIDERS.MUS" PRG
+5    "GHOST RIDERS.WDS" PRG
+3    "THIS LAND.MUS"    PRG
+3    "THIS LAND.WDS"    PRG
+37   "THIS LAND.PIC"    PRG
+8    "HELLO AGAIN.MUS"  PRG
+4    "HELLO AGAIN.WDS"  PRG
+7    "SPURS.MUS"        PRG
+5    "SPURS.WDS"        PRG
+14   "THE GAMBLER.MUS"  PRG
+5    "REDRIVER VAL.MUS" PRG
+2    "REDRIVER VAL.WDS" PRG
+37   "REDRIVER VAL.PIC" PRG
+5    "BLOWIN WIND.MUS"  PRG
+4    "BLOWIN WIND.WDS"  PRG
+10   "CECILIA.MUS"      PRG
+4    "CECILIA.WDS"      PRG
+10   "BATTLE.MUS"       PRG
+9    "BATTLE.WDS"       PRG
+4    "WALK/LINE.MUS"    PRG
+4    "WALK/LINE.WDS"    PRG
+11   "WRECK/FITZ.MUS"   PRG
+11   "WRECK/FITZ.WDS"   PRG
+10   "DIXIE.MUS"        PRG
+5    "DIXIE.WDS"        PRG
+6    "ELVIRA.MUS"       PRG
+8    "TUMBLEWEEDS.MUS"  PRG
+5    "TUMBLEWEEDS.WDS"  PRG
+10   "3X A LADY.MUS"    PRG
+4    "3X A LADY.WDS"    PRG
+10   "I GOT IT.MUS"     PRG
+5    "I GOT IT.WDS"     PRG
+7    "HARD HUMBLE.MUS"  PRG
+6    "HARD HUMBLE.WDS"  PRG
+12   "DREAMER.MUS"      PRG
+6    "DREAMER.WDS"      PRG
+13   "TENN/RVR.MUS"     PRG
+7    "TENN/RVR.WDS"     PRG
+9    "EL PASO.MUS"      PRG
+7    "JET PLANE.MUS"    PRG
+6    "JET PLANE.WDS"    PRG
+9    "COUNTRY ROAD.MUS" PRG
+4    "COUNTRY ROAD.WDS" PRG
+7    "VATICAN.MUS"      PRG
+4    "VATICAN.WDS"      PRG
+9    "SWEETCAROL.MUS"   PRG
+5    "SWEETCAROL.WDS"   PRG
+4    "CITY/NEW ORL.MUS" PRG
+9    "CITY/NEW ORL.WDS" PRG
+12   "MT. GREENERY.MUS" PRG
+8    "LADY.MUS"         PRG
+4    "LADY.WDS"         PRG
+37   "LADY.PIC"         PRG
+7    "BE PREPARED.MUS"  PRG
+4    "BE PREPARED.WDS"  PRG
+7    "SEND/CLOWNS.MUS"  PRG
+3    "SEND/CLOWNS.WDS"  PRG
+20   "COWARD.MUS"       PRG
+6    "TIME/BOTTLE.MUS"  PRG
+4    "TIME/BOTTLE.WDS"  PRG
+12   "ROCKY/HIGH.MUS"   PRG
+8    "ROCKY/HIGH.WDS"   PRG
+7    "DAYDREAM.MUS"     PRG
+3    "DAYDREAM.WDS"     PRG
+8    "HUNTING.MUS"      PRG
+4    "HUNTING.WDS"      PRG
+6    "SUNSHINE.MUS"     PRG
+4    "SUNSHINE.WDS"     PRG
+10   "CRACKLINROSY.MUS" PRG
+7    "CRACKLINROSY.WDS" PRG
+4    "FENCE ME IN.MUS"  PRG
+6    "ALWAYS/MIND.MUS"  PRG
+4    "ALWAYS/MIND.WDS"  PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Dr. J's SIDs.d64
+0 "DR. J SIDS      " MUSIC
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" USR 
+8    "ALL MY LOVIN.MUS" PRG
+7    "ALNFAMLY/RMX.MUS" PRG
+5    "BENNY HILL.MUS"   PRG
+3    "CHOP.MUS"         PRG
+25   "ELVIS/TRBUTE.MUS" PRG
+40   "ELVIS/TRBUTE.PIC" PRG
+9    "FUN FUN FUN.MUS"  PRG
+8    "GET AROUND.MUS"   PRG
+8    "GRBALFIR.RMX.MUS" PRG
+7    "HEART/SOUL.MUS"   PRG
+7    "HOLD UR HAND.MUS" PRG
+10   "HONKEY TONK.MUS"  PRG
+6    "HOW DO TO ME.MUS" PRG
+9    "I WILL/BEATL.MUS" PRG
+12   "JOHN B GOODE.MUS" PRG
+8    "KODACHROME.MUS"   PRG
+9    "LNG TL SALLY.MUS" PRG
+4    "LOV/LETRSAND.MUS" PRG
+9    "MATERIALGIRL.MUS" PRG
+7    "ONE FINE DAY.MUS" PRG
+9    "PIPELINE.MUS"     PRG
+6    "SANTA.MUS"        PRG
+6    "SAWHER/BEATL.MUS" PRG
+5    "THE STRIPPER.MUS" PRG
+37   "THE STRIPPER.PIC" PRG
+8    "SURFER GIRL.MUS"  PRG
+20   "TWENTIES.MUS"     PRG
+6    "TWISTNSHOUT.MUS"  PRG
+8    "VENUS.MUS"        PRG
+5    "WHAT A DAY.MUS"   PRG
+7    "WHEN/LOVED.MUS"   PRG
+9    "WHO PUT BOMP.MUS" PRG
+6    "WILD WEEKEND.MUS" PRG
+0    "````````````````" USR 
+49   "ELVIS/TRBUTE.SDA" PRG
+26   "THE STRIPPER.SDA" PRG
+0    "````````````````" USR 
+10   "JOHN B GOODE.STR" PRG
+6    "WILD WEEKEND.STR" PRG
+0    "````````````````" USR 
+198 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Harry Bratt's Unfinished Works.d64
+0 "HB UNFIN SYMPHNY" HB 2A
+32   "SID PLAYER.64"    PRG
+3    "HB SONGS.DOC"     SEQ
+4    "OVE7.MUS"         PRG
+4    "ETALPLUS.MUS"     PRG
+2    "NOISE+4.MUS"      PRG
+2    "OH WELL 1.MUS"    PRG
+1    "FRED.MUS"         PRG
+1    "TSICHNIGLERB.MUS" PRG
+2    "SICK.MUS"         PRG
+2    "TRITE2.MUS"       PRG
+2    "SCRINGE2.MUS"     PRG
+2    "DUET1.MUS"        PRG
+1    "GA.MUS"           PRG
+1    "DADAA2.MUS"       PRG
+3    "FOURTH6.MUS"      PRG
+3    "ANT2.MUS"         PRG
+4    "CELLULITE5.MUS"   PRG
+2    "AVODAH1.MUS"      PRG
+2    "WORM2.MUS"        PRG
+2    "YUCH2.MUS"        PRG
+1    "TRASH1.MUS"       PRG
+1    "MOOICHIDO.MUS"    PRG
+2    "ENT2.MUS"         PRG
+1    "OOH1.MUS"         PRG
+2    "BUD1.MUS"         PRG
+1    "GFDS1.MUS"        PRG
+3    "AARDVARK5.MUS"    PRG
+2    "AARDVARK5.WDS"    PRG
+2    "NO - OH SHIT.MUS" PRG
+2    "...MORE TEXT.MUS" PRG
+2    "...MORE SHIT.MUS" PRG
+2    "DUDE WROP1.MUS"   PRG
+2    "TURNED ON 3.MUS"  PRG
+1    "CHORDS1.MUS"      PRG
+2    "CHORDS2.MUS"      PRG
+2    "CHORDS3.MUS"      PRG
+2    "ALGONQ1.MUS"      PRG
+4    "MULLIONS7.MUS"    PRG
+2    "WAW2.MUS"         PRG
+2    "OBNOXIOUS.MUS"    PRG
+2    "BOVREF1.MUS"      PRG
+2    "PLUCK1.MUS"       PRG
+2    "GLOOP2.MUS"       PRG
+1    "SHITBORN2.MUS"    PRG
+2    "HELDSCHMERZ1.MUS" PRG
+2    "YIPPEE1.MUS"      PRG
+4    "YIPPEE3.MUS"      PRG
+2    "DEGLOP.MUS"       PRG
+2    "BUDUM2.MUS"       PRG
+2    "ZOUQUOZ1.MUS"     PRG
+2    "COON-OWNER2.MUS"  PRG
+2    "DITTY1.MUS"       PRG
+1    "KEEN1.MUS"        PRG
+2    "YUCCHH1.MUS"      PRG
+2    "MAC1.MUS"         PRG
+1    "MREJ1.MUS"        PRG
+1    "MREJ2.MUS"        PRG
+2    "FIN1.MUS"         PRG
+2    "NOROCK1.MUS"      PRG
+3    "GAZELLE3.MUS"     PRG
+3    "GLUMPF3.MUS"      PRG
+2    "BAN1.MUS"         PRG
+2    "STRAWBERRY1.MUS"  PRG
+3    "COMDUDE3.MUS"     PRG
+4    "D&K&U1.MUS"       PRG
+1    "BLECH1.MUS"       PRG
+3    "STUMOC1.MUS"      PRG
+2    "O.MUS"            PRG
+1    "OH1.MUS"          PRG
+2    "HARM1.MUS"        PRG
+2    "D58IWAN1.MUS"     PRG
+2    "BUS1.MUS"         PRG
+2    "HUNGER1.MUS"      PRG
+2    "FRIC1.MUS"        PRG
+2    "GLUNG1.MUS"       PRG
+1    "WAQ1.MUS"         PRG
+2    "SITGAR1.MUS"      PRG
+1    "GOMAC1.MUS"       PRG
+1    "DRUMB1.MUS"       PRG
+2    "DUKDIPPLES2.MUS"  PRG
+2    "ALTY.MUS"         PRG
+2    "YIZHIBI1.MUS"     PRG
+2    "FUDGECORDS1.MUS"  PRG
+2    "TYCDAB2.MUS"      PRG
+2    "IRIDES1.MUS"      PRG
+3    "HOP1.MUS"         PRG
+5    "HOP4.MUS"         PRG
+1    "FREUDE.MUS"       PRG
+1    "CHOR1.MUS"        PRG
+5    "TRI1.MUS"         PRG
+2    "MESS1.MUS"        PRG
+1    "ALL1.MUS"         PRG
+4    "STRANGER1.MUS"    PRG
+4    "KIEVL3.MUS"       PRG
+5    "KIEVR3.MUS"       PRG
+2    "TELEMANN1.MUS"    PRG
+2    "BOCCH P28.MUS"    PRG
+2    "FIVE2.MUS"        PRG
+2    "UNF1.MUS"         PRG
+13   "MOLD7.MUS"        PRG
+8    "SCHERZO5.MUS"     PRG
+3    "LARG4.MUS"        PRG
+6    "ARIA2.MUS"        PRG
+3    "DVOR7-3-1.MUS"    PRG
+3    "DVOR7-3-2.MUS"    PRG
+3    "DVOR7-3-3.MUS"    PRG
+17   "BC5A.MUS"         PRG
+8    "BC53-8.MUS"       PRG
+3    "MOZ2.MUS"         PRG
+1    "GOODBADUGLY1.MUS" PRG
+7    "WAT1-3.MUS"       PRG
+6    "WAT3-3.MUS"       PRG
+4    "WAT4-3.MUS"       PRG
+4    "WAT7-2.MUS"       PRG
+2    "WAT9-1.MUS"       PRG
+3    "ANDANTE2.MUS"     PRG
+1    "SUPER1.MUS"       PRG
+3    "BARHOE2.MUS"      PRG
+2    "BLUE3.MUS"        PRG
+2    "JOUST1.MUS"       PRG
+3    "PEAS20-3.MUS"     PRG
+3    "PEAS24-2.MUS"     PRG
+2    "NOTEXT-1.MUS"     PRG
+2    "KILG1.MUS"        PRG
+3    "WELSH!.MUS"       PRG
+3    "COFF2-1.MUS"      PRG
+1    "VICAR1.MUS"       PRG
+8    "PERUECK4.MUS"     PRG
+3    "COLD1.MUS"        PRG
+4    "COPL2.MUS"        PRG
+8    "BARBER5.MUS"      PRG
+2    "MAD3.MUS"         PRG
+2    "CHAI2.MUS"        PRG
+3    "SHEBEL1.MUS"      PRG
+3    "JAIL3.MUS"        PRG
+271 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Ragtime & Jazz SIDs.d64
+0 "RAGTIME & JAZZ  " M1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+13   "ENTERTAINER.MUS"  PRG
+40   "ENTERTAINER.PIC"  PRG
+28   "CORNERPOCKET.MUS" PRG
+14   "RAG-T DANCE.MUS"  PRG
+22   "TOMCAT.MUS"       PRG
+12   "COTTONTAIL.MUS"   PRG
+14   "ELITE SYNC.MUS"   PRG
+9    "FRESH AIRE 3.MUS" PRG
+12   "K.P.STOMP.MUS"    PRG
+12   "PINEAPPLE.MUS"    PRG
+40   "PINEAPPLE.PIC"    PRG
+14   "STOPTIME RAG.MUS" PRG
+7    "MISS/MUD.MUS"     PRG
+14   "EZWINNERS.MUS"    PRG
+12   "MUSKRAT.MUS"      PRG
+12   "NEW RAG.MUS"      PRG
+14   "KITTEN KEYS.MUS"  PRG
+10   "PALM LEAF.MUS"    PRG
+40   "PALM LEAF.PIC"    PRG
+11   "WEEPN WILLOW.MUS" PRG
+8    "FRESH AIRE 4.MUS" PRG
+12   "EXCELSIOR.MUS"    PRG
+11   "DIZZYFINGERS.MUS" PRG
+6    "MIDNITE/MOSC.MUS" PRG
+40   "MIDNITE/MOSC.PIC" PRG
+14   "SOMETHING.MUS"    PRG
+14   "ENTRTNRS RAG.MUS" PRG
+9    "FRESH AIRE 2.MUS" PRG
+12   "AMER.BEAUTY.MUS"  PRG
+26   "HOBSON ST..MUS"   PRG
+10   "ROSEBUD.MUS"      PRG
+11   "PATRICIA.MUS"     PRG
+18   "C SHOUT.MUS"      PRG
+19   "FRESH AIRE 1.MUS" PRG
+11   "NIGHTINGALE.MUS"  PRG
+16   "CANTINA.MUS"      PRG
+3 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Rockin' Sid Side A.d64
+0 "ROCKIN' SID     " P1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+5    "R/R MUSIC.MUS"    PRG
+7    "MY WAY.MUS"       PRG
+5    "MY WAY.WDS"       PRG
+7    "LIGHT FIRE.MUS"   PRG
+4    "LIGHT FIRE.WDS"   PRG
+9    "SUPERTROUPER.MUS" PRG
+2    "CALCONDOR.MUS"    PRG
+40   "CALCONDOR.PIC"    PRG
+5    "THE WANDERER.MUS" PRG
+5    "THE WANDERER.WDS" PRG
+8    "BALLS O FIRE.MUS" PRG
+6    "DOWNTOWN.MUS"     PRG
+7    "DOWNTOWN.WDS"     PRG
+7    "BOYFRENDBAK.MUS"  PRG
+13   "DONT HAVE U.MUS"  PRG
+5    "DONT HAVE U.WDS"  PRG
+6    "JOHNNY.MUS"       PRG
+6    "ITSY BITSY.MUS"   PRG
+6    "ITSY BITSY.WDS"   PRG
+11   "FEELINGS.MUS"     PRG
+3    "FEELINGS.WDS"     PRG
+14   "PEOPLE ARE.MUS"   PRG
+12   "CHIQUITITA.MUS"   PRG
+7    "CHIQUITITA.WDS"   PRG
+9    "HEY JUDE.MUS"     PRG
+5    "CONCERTO.MUS"     PRG
+4    "CONCERTO.WDS"     PRG
+10   "BEEP BEEP.MUS"    PRG
+6    "BEEP BEEP.WDS"    PRG
+6    "OUTHEAD.MUS"      PRG
+4    "OUTHEAD.WDS"      PRG
+13   "WHAT I SAY.MUS"   PRG
+7    "RUNAWAY.MUS"      PRG
+5    "RUNAWAY.WDS"      PRG
+5    "YELLOW RIBBN.MUS" PRG
+12   "BRIDGE.MUS"       PRG
+40   "BRIDGE.PIC"       PRG
+4    "BRIDGE.WDS"       PRG
+9    "CRY/LTL BIT.MUS"  PRG
+20   "RISING SUN.MUS"   PRG
+4    "RISING SUN.WDS"   PRG
+6    "BARBARA ANN.MUS"  PRG
+7    "THE ROSE.MUS"     PRG
+3    "THE ROSE.WDS"     PRG
+11   "CLASSICALGAS.MUS" PRG
+8    "TW NEVER.MUS"     PRG
+5    "TW NEVER.WDS"     PRG
+9    "WHO PUT BOMP.MUS" PRG
+5    "THE DAYS.MUS"     PRG
+8    "THE DAYS.WDS"     PRG
+6    "JUST ANOTHER.MUS" PRG
+11   "FEELING.MUS"      PRG
+6    "FEELING.WDS"      PRG
+5    "HELP.MUS"         PRG
+4    "FOOLS/RUSH.MUS"   PRG
+2    "FOOLS/RUSH.WDS"   PRG
+5    "OLD FRIENDS.MUS"  PRG
+20   "CEILING.MUS"      PRG
+8    "CEILING.WDS"      PRG
+6    "QUE SERA.MUS"     PRG
+5    "QUE SERA.WDS"     PRG
+5    "BBERRY HILL.MUS"  PRG
+9    "RAIN.MUS"         PRG
+4    "RAIN.WDS"         PRG
+25   "ELVIS/TRBUTE.MUS" PRG
+40   "ELVIS/TRBUTE.PIC" PRG
+4 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Rockin' Sid Side B.d64
+0 "ROCKIN' SID     " P2 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+6    "ALLEY OOP.MUS"    PRG
+6    "ALLEY OOP.WDS"    PRG
+4    "DONE/MY SONG.MUS" PRG
+6    "JUST BEGUN.MUS"   PRG
+4    "JUST BEGUN.WDS"   PRG
+6    "TWISTNSHOUT.MUS"  PRG
+6    "JEAN.MUS"         PRG
+4    "JEAN.WDS"         PRG
+10   "NEW YORK.MUS"     PRG
+37   "NEW YORK.PIC"     PRG
+9    "SCRBRGH FAIR.MUS" PRG
+10   "HOW CAN I.MUS"    PRG
+6    "HOW CAN I.WDS"    PRG
+8    "SAY U SAY ME.MUS" PRG
+6    "AT THE HOP.MUS"   PRG
+4    "AT THE HOP.WDS"   PRG
+10   "ANDANTE 2.MUS"    PRG
+6    "BOJANGLES.MUS"    PRG
+6    "BOJANGLES.WDS"    PRG
+9    "MORNING.MUS"      PRG
+3    "MORNING.WDS"      PRG
+6    "DECOR/LIFE.MUS"   PRG
+5    "DECOR/LIFE.WDS"   PRG
+6    "PROUDMARY.MUS"    PRG
+5    "STAND BY ME.MUS"  PRG
+4    "STAND BY ME.WDS"  PRG
+6    "CHANCESARE.MUS"   PRG
+7    "DREAMIN.MUS"      PRG
+3    "DREAMIN.WDS"      PRG
+8    "ALL MY LOVIN.MUS" PRG
+9    "LONGEST TIME.MUS" PRG
+7    "LONGEST TIME.WDS" PRG
+8    "5TH BEETHOVN.MUS" PRG
+40   "5TH BEETHOVN.PIC" PRG
+4    "SATURDAY AM.MUS"  PRG
+10   "FERNANDO.MUS"     PRG
+8    "FERNANDO.WDS"     PRG
+5    "LOVE ME DO.MUS"   PRG
+8    "RUNAROUNDSUE.MUS" PRG
+5    "RUNAROUNDSUE.WDS" PRG
+6    "JUST CALLED.MUS"  PRG
+10   "SILENCE.MUS"      PRG
+6    "SILENCE.WDS"      PRG
+8    "AMADEUS.MUS"      PRG
+10   "DIANA.MUS"        PRG
+7    "DIANA.WDS"        PRG
+5    "WHAT A DAY.MUS"   PRG
+8    "SOUL/INSPIR.MUS"  PRG
+5    "SOUL/INSPIR.WDS"  PRG
+7    "YELLOW BRICK.MUS" PRG
+7    "ALL WE KNOW.MUS"  PRG
+3    "ALL WE KNOW.WDS"  PRG
+8    "SURFER GIRL.MUS"  PRG
+8    "YELLOW SUB.MUS"   PRG
+5    "YELLOW SUB.WDS"   PRG
+7    "BALLERINA.MUS"    PRG
+6    "STRAWBERRY.MUS"   PRG
+5    "STRAWBERRY.WDS"   PRG
+37   "STRAWBERRY.PIC"   PRG
+4    "GROOVY.MUS"       PRG
+8    "LADY GODIVA.MUS"  PRG
+5    "LADY GODIVA.WDS"  PRG
+94   "EXCERPTS.MUS"     PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Show Time Side A.d64
+0 "IT'S SHOW TIME  " T1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+26   "AMERICAN.MUS"     PRG
+7    "A-ME-RI-CA.MUS"   PRG
+6    "A-ME-RI-CA.WDS"   PRG
+40   "A-ME-RI-CA.PIC"   PRG
+5    "OKLAHOMA.MUS"     PRG
+4    "OKLAHOMA.WDS"     PRG
+5    "APRIL/PARIS.MUS"  PRG
+10   "GALACTICA.MUS"    PRG
+40   "GALACTICA.PIC"    PRG
+5    "CHORUS LINE.MUS"  PRG<
+8    "GOLDFINGER.MUS"   PRG
+3    "GOLDFINGER.WDS"   PRG
+9    "TIME GOES BY.MUS" PRG
+40   "TIME GOES BY.PIC" PRG
+12   "ZORBA.MUS"        PRG
+4    "42ND ST.MUS"      PRG
+4    "42ND ST.WDS"      PRG
+11   "CHARIOTS.MUS"     PRG
+40   "CHARIOTS.PIC"     PRG
+3    "BELLS.SM.MUS"     PRG
+5    "PICNIC.MUS"       PRG
+3    "PICNIC.WDS"       PRG
+37   "PICNIC.PIC"       PRG
+11   "TROMBONES.MUS"    PRG
+5    "LIVE TWICE.MUS"   PRG
+3    "LIVE TWICE.WDS"   PRG
+5    "PINK PANTHER.MUS" PRG
+40   "PINK PANTHER.PIC" PRG
+5    "NADIA.MUS"        PRG
+3    "CHEERS.MUS"       PRG
+4    "CHEERS.WDS"       PRG
+18   "BEN HUR CHAR.MUS" PRG
+5    "BEAUTIFUL.MUS"    PRG
+4    "BEAUTIFUL.WDS"    PRG
+15   "THEME ET.MUS"     PRG
+40   "THEME ET.PIC"     PRG
+5    "LOOK-RAINBOW.MUS" PRG
+5    "LOOK-RAINBOW.WDS" PRG
+8    "ALL/FAMILY.MUS"   PRG
+40   "ALL/FAMILY.PIC"   PRG
+6    "LOVE STORY.MUS"   PRG
+5    "LOVE STORY.WDS"   PRG
+34   "BALD MOUNT.MUS"   PRG
+2 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Show Time Side B.d64
+0 "IT'S SHOW TIME  " T2 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+4    "LOOK ME OVER.MUS" PRG
+4    "LOOK ME OVER.WDS" PRG
+10   "MRS ROBINSON.MUS" PRG
+6    "MOD MAJ GEN.MUS"  PRG
+37   "MOD MAJ GEN.PIC"  PRG
+7    "AXLE F.F.MUS"     PRG
+9    "RAIDERS/INDI.MUS" PRG
+40   "RAIDERS/INDI.PIC" PRG
+7    "MAME.MUS"         PRG
+5    "MAME.WDS"         PRG
+5    "HAWAII 5-0.MUS"   PRG
+9    "SIDESTEP.MUS"     PRG
+7    "SIDESTEP.WDS"     PRG
+8    "RAIN-SPAIN.MUS"   PRG
+9    "2001/DEODATO.MUS" PRG
+40   "2001/DEODATO.PIC" PRG
+11   "MEMORIES.MUS"     PRG
+4    "MEMORIES.WDS"     PRG
+3    "WINE/ROSES.MUS"   PRG
+6    "ARGENTINA.MUS"    PRG
+37   "ARGENTINA.PIC"    PRG
+6    "SAY/IN LOVE.MUS"  PRG
+4    "SAY/IN LOVE.WDS"  PRG
+5    "REMEMBER.MUS"     PRG
+5    "REMEMBER.WDS"     PRG
+5    "WAY WE WERE.MUS"  PRG
+7    "JAMES BOND.MUS"   PRG
+40   "JAMES BOND.PIC"   PRG
+5    "FIDDLER/ROOF.MUS" PRG
+13   "HOUSE/TEXAS.MUS"  PRG
+7    "HOUSE/TEXAS.WDS"  PRG
+6    "SUMMER/PLACE.MUS" PRG
+10   "THIRD MAN.MUS"    PRG
+6    "THIRD MAN.WDS"    PRG
+12   "MIAMI VICE.MUS"   PRG
+40   "MIAMI VICE.PIC"   PRG
+8    "EYE OF TIGER.MUS" PRG
+5    "DEAR HEART.MUS"   PRG
+3    "DEAR HEART.WDS"   PRG
+26   "STAR TREK.MUS"    PRG
+40   "STAR TREK.PIC"    PRG
+36   "HENRY VIII.MUS"   PRG
+20   "SOUNDOFMUSIC.MUS" PRG
+12   "SOUNDOFMUSIC.WDS" PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Sids for Kids Side A.d64
+0 "SIDS FOR KIDS   " K1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+6    "ENTRY/GLAD.MUS"   PRG
+37   "ENTRY/GLAD.PIC"   PRG
+45   "DISNEYLAND.MUS"   PRG
+29   "DISNEYLAND.WDS"   PRG
+7    "RUBBER DUCK.MUS"  PRG
+5    "RUBBER DUCK.WDS"  PRG
+12   "GHOSTBUSTERS.MUS" PRG
+40   "GHOSTBUSTERS.PIC" PRG
+8    "MUSIC DANCER.MUS" PRG
+5    "HEIGH-HO.MUS"     PRG
+3    "HEIGH-HO.WDS"     PRG
+5    "SESAME ST.MUS"    PRG
+37   "SESAME ST.PIC"    PRG
+51   "MARY POPPINS.MUS" PRG
+31   "MARY POPPINS.WDS" PRG
+3    "BEAR OVR MTN.MUS" PRG
+2    "BEAR OVR MTN.WDS" PRG
+2    "LOONEY TUNES.MUS" PRG
+40   "LOONEY TUNES.PIC" PRG
+7    "WHISTLE-WORK.MUS" PRG
+5    "WHISTLE-WORK.WDS" PRG
+8    "HAPPYSONG.MUS"    PRG
+6    "PUFF.MUS"         PRG
+7    "PUFF.WDS"         PRG
+8    "TEDDY/PICNIC.MUS" PRG
+3    "TEDDY/PICNIC.WDS" PRG
+40   "TEDDY/PICNIC.PIC" PRG
+6    "GILLIGAN.MUS"     PRG
+3    "GILLIGAN.WDS"     PRG
+8    "DAVY CROCKET.MUS" PRG
+6    "DAVY CROCKET.WDS" PRG
+9    "RAINBOW.MUS"      PRG
+5    "RAINBOW.WDS"      PRG
+5    "PEANUTS.MUS"      PRG<
+40   "PEANUTS.PIC"      PRG
+4    "3 BLIND MICE.MUS" PRG
+3    "3 BLIND MICE.WDS" PRG
+3    "SMALL WORLD.MUS"  PRG
+2    "SMALL WORLD.WDS"  PRG
+4    "DREAM/WISH.MUS"   PRG
+2    "DREAM/WISH.WDS"   PRG
+37   "DREAM/WISH.PIC"   PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Sids for Kids Side B.d64
+0 "SIDS FOR KIDS   " K2 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+21   "WIZARD/OZ.MUS"    PRG
+19   "WIZARD/OZ.WDS"    PRG
+40   "WIZARD/OZ.PIC"    PRG
+6    "CASPER.MUS"       PRG
+5    "CASPER.WDS"       PRG
+11   "BATMAN.MUS"       PRG
+40   "BATMAN.PIC"       PRG
+49   "DISNEY MUSIC.MUS" PRG
+25   "DISNEY MUSIC.WDS" PRG
+7    "KERMIT.MUS"       PRG
+4    "KERMIT.WDS"       PRG
+40   "KERMIT.PIC"       PRG
+8    "RADISH.MUS"       PRG
+6    "RADISH.WDS"       PRG
+9    "BABY ELEPHNT.MUS" PRG
+9    "HELLO MUDDAH.MUS" PRG
+5    "HELLO MUDDAH.WDS" PRG
+5    "UNICORN.MUS"      PRG
+10   "UNICORN.WDS"      PRG
+40   "UNICORN.PIC"      PRG
+8    "MUPPET THEME.MUS" PRG
+3    "MUPPET THEME.WDS" PRG
+3    "SIXPENCE.MUS"     PRG
+2    "SIXPENCE.WDS"     PRG
+3    "DISNEY/PIRAT.MUS" PRG<
+40   "DISNEY/PIRAT.PIC" PRG
+6    "GUM/BEDPOST.MUS"  PRG
+10   "GUM/BEDPOST.WDS"  PRG
+5    "TRASH.MUS"        PRG
+6    "PEOPLE EATER.MUS" PRG
+8    "PEOPLE EATER.WDS" PRG
+8    "BIG BAD WOLF.MUS" PRG
+9    "BIG BAD WOLF.WDS" PRG
+3    "CASEY JR.MUS"     PRG<
+40   "CASEY JR.PIC"     PRG
+2    "CALLIOPE.MUS"     PRG
+7    "HIPPOPOTAMUS.MUS" PRG
+6    "HIPPOPOTAMUS.WDS" PRG
+9    "SOMEOUTTH.MUS"    PRG
+4    "SOMEOUTTH.WDS"    PRG
+40   "SOMEOUTTH.PIC"    PRG
+5    "CHOPSTICKS.MUS"   PRG
+4 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- Swing 'n' Sway SIDs.d64
+0 "SWING 'N SWAY   " S1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+7    "FUNMUSIC.MUS"     PRG
+3    "ANYTHING GO.MUS"  PRG
+12   "CHINATOWN.MUS"    PRG
+7    "CHINATOWN.WDS"    PRG
+37   "CHINATOWN.PIC"    PRG
+7    "SERE/BLUE.MUS"    PRG
+8    "CLARINET.MUS"     PRG
+5    "SWINGONASTAR.MUS" PRG
+6    "SWINGONASTAR.WDS" PRG
+4    "SEPTEMBER.MUS"    PRG
+3    "SATIN DOLL.MUS"   PRG
+6    "C. CHOO CHOO.MUS" PRG
+40   "C. CHOO CHOO.PIC" PRG
+9    "BLUE DANUBE.MUS"  PRG
+5    "STRIPPER.MUS"     PRG
+6    "SONG O INDIA.MUS" PRG
+6    "ALLEY CAT.MUS"    PRG
+40   "ALLEY CAT.PIC"    PRG
+7    "SUMMERTIME.MUS"   PRG
+4    "HELENA POLKA.MUS" PRG
+10   "NUTTIN.MUS"       PRG
+5    "NUTTIN.WDS"       PRG
+7    "BLUE-MOON.MUS"    PRG
+9    "WHIPPED CRM.MUS"  PRG
+40   "WHIPPED CRM.PIC"  PRG
+4    "COPPERSMITH.MUS"  PRG
+10   "SYNC/CLOCK.MUS"   PRG
+20   "TWENTIES.MUS"     PRG
+6    "SHANTY TOWN.MUS"  PRG
+4    "SHANTY TOWN.WDS"  PRG
+10   "COW BOOGIE.MUS"   PRG
+5    "TIJUANA TAXI.MUS" PRG
+40   "TIJUANA TAXI.PIC" PRG
+6    "ABADBAHNMOON.MUS" PRG
+14   "TYPEWRITER.MUS"   PRG
+7    "MUSIC/GIRLS.MUS"  PRG
+5    "MUSIC/GIRLS.WDS"  PRG
+8    "MOONLIGHT.MUS"    PRG
+4    "POLKA.MUS"        PRG
+3    "BYE BYE BLUE.MUS" PRG
+40   "BYE BYE BLUE.PIC" PRG
+5    "GLOW WORM.MUS"    PRG
+5    "MISBEHAVIN.MUS"   PRG
+20   "BUMBLEBOOGIE.MUS" PRG
+10   "BEER BARREL.MUS"  PRG
+5    "BEER BARREL.WDS"  PRG
+5    "SPANISH EYES.MUS" PRG
+5    "STOMPIN.MUS"      PRG
+7    "STARDUST.MUS"     PRG
+6    "STARDUST.WDS"     PRG
+37   "STARDUST.PIC"     PRG
+6 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- The Classics Side A.d64
+0 "THE CLASSICS    " C1 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+21   "HOOK CLASSIC.MUS" PRG
+40   "HOOK CLASSIC.PIC" PRG
+15   "WINTER.MUS"       PRG
+5    "BADINERIE.MUS"    PRG
+12   "WATER MUSIC.MUS"  PRG
+39   "BACH T AND F.MUS" PRG
+40   "BACH T AND F.PIC" PRG
+15   "TURK RONDO.MUS"   PRG
+11   "PATHETIQUE.MUS"   PRG
+7    "MOMENT MUSIC.MUS" PRG
+17   "FANTIMP.MUS"      PRG
+40   "FANTIMP.PIC"      PRG
+39   "KEY.CONCERTO.MUS" PRG
+9    "HUNG DANCE.MUS"   PRG
+13   "MORNING MOOD.MUS" PRG
+40   "MORNING MOOD.PIC" PRG
+24   "BACH DOUBLE.MUS"  PRG
+7    "MINUET MOZRT.MUS" PRG
+11   "HAYDN SONATA.MUS" PRG
+19   "HUMORESQUE.MUS"   PRG
+40   "HUMORESQUE.PIC"   PRG
+24   "FUER ELISE.MUS"   PRG<
+100  "D MINOR.MUS"      PRG
+2 BLOCKS FREE.
+
+Disk: SIDfest '87 (Columbus, OH) -- The Classics Side B.d64
+0 "THE CLASSICS    " C2 2A
+0    "****************" SEQ
+0    "*   C.C.C.O.   *" SEQ
+0    "*              *" SEQ
+0    "*  SIDFEST 87  *" SEQ
+0    "*              *" SEQ
+0    "* COLUMBUS  OH *" SEQ
+0    "****************" SEQ
+0    ":   DISK BY:   :" SEQ
+0    ": CAROLE DIETZ :" SEQ
+0    "````````````````" SEQ
+0    "`  LOAD '*'.8  `" SEQ
+0    "`   AND  RUN   `" SEQ
+0    "````````````````" SEQ
+42   "SIDPIC V2.5"      PRG
+0    "````````````````" SEQ
+3    "SPRINT FILE READ" PRG
+29   "SIDPIC.DOC V2"    SEQ
+0    "````````````````" SEQ
+12   "GRAND MARCH.MUS"  PRG
+6    "TOREADOR.MUS"     PRG<
+7    "MINUET IN G.MUS"  PRG
+11   "BAGATELLE.MUS"    PRG
+11   "MOONLIGHT.MUS"    PRG
+37   "MOONLIGHT.PIC"    PRG
+20   "BARBER OVERT.MUS" PRG
+16   "LITTLE FUGUE.MUS" PRG
+25   "6 VARIATIONS.MUS" PRG
+14   "BUMBLEBEE.MUS"    PRG
+40   "BUMBLEBEE.PIC"    PRG
+4    "FIGARO.MUS"       PRG
+39   "BRANDENBURG3.MUS" PRG
+29   "BRANDENBURG4.MUS" PRG
+18   "CLAIR DE.MUS"     PRG
+37   "CLAIR DE.PIC"     PRG
+24   "DMIN/HANDEL.MUS"  PRG
+45   "BACH VIOLIN.MUS"  PRG
+7    "HABANERA.MUS"     PRG
+19   "MOZARTFUGE.MUS"   PRG
+22   "VIVAL/STRING.MUS" PRG
+13   "1812.MUS"         PRG
+40   "1812.PIC"         PRG
+93   "PETER & WOLF.MUS" PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '88 (Philadelphia, PA) -- Classical Collection (from SDA).d64
+0 "PHILLY '88 SDA  "    2A
+5    "WALTZ.MUS"        PRG
+4    "WALTZ.STR"        PRG
+11   "CANON D.MUS"      PRG
+6    "CANON D.STR"      PRG
+8    "EVE IN CNTRY.MUS" PRG
+8    "EVE IN CNTRY.STR" PRG
+16   "SHEEP/GRAZE\.MUS" PRG
+13   "SHEEP/GRAZE\.STR" PRG
+3    "SHEEP/GRAZE\.WDS" PRG
+7    "TANGO/D.MUS"      PRG
+5    "TANGO/D.STR"      PRG
+14   "RONDO.MUS"        PRG
+13   "RONDO.STR"        PRG
+7    "AVANT/MOURIR.MUS" PRG
+6    "AVANT/MOURIR.STR" PRG
+6    "BACH BOURREE.MUS" PRG
+5    "BACH BOURREE.STR" PRG
+11   "HORSE MUSIC.MUS"  PRG
+10   "HORSE MUSIC.STR"  PRG
+506 BLOCKS FREE.
+
+Disk: SIDfest '88 (Philadelphia, PA) -- Commemorative Collection.d64
+0 "PHILA SIDFEST SR" F1 2A
+3    "STEREO10/11 BOOT" PRG
+1    "SIDSTEREO.CONFIG" PRG
+11   "STEREOLOADER"     PRG
+110  "STEREOPLAYERV10"  PRG
+5    "DOC.VIEWER"       PRG
+9    "NOTICE.1.ERRATA"  SEQ
+20   "NOTICE.UPDATES"   SEQ
+40   "NOTICE1"          SEQ
+31   "NOTICE2"          SEQ
+20   "NOTICE3"          SEQ
+12   "SIDFEST.MUS"      PRG
+56   "SIDFEST.WDS"      PRG
+10   "SIDFEST.STR"      PRG
+12   "BACK TO KID.MUS"  PRG
+11   "BACK TO KID.STR"  PRG
+5    "BACK TO KID.WDS"  PRG
+10   "CUANTOLEGUST.MUS" PRG
+7    "CUANTOLEGUST.STR" PRG
+6    "CUANTOLEGUST.WDS" PRG
+7    "DETOUR.MUS"       PRG
+7    "DETOUR.STR"       PRG
+6    "EITHER.MUS"       PRG
+6    "IN A HURRY.MUS"   PRG
+13   "IN AMERICA.MUS"   PRG
+12   "IN AMERICA.STR"   PRG
+8    "IN AMERICA.WDS"   PRG
+9    "KILLING ME.MUS"   PRG
+7    "KILLING ME.STR"   PRG
+15   "LOVE BITES.MUS"   PRG
+17   "LOVE BITES.STR"   PRG
+7    "LOVE BITES.WDS"   PRG
+20   "NEUTRON.MUS"      PRG
+18   "NEUTRON.STR"      PRG
+8    "NEUTRON.WDS"      PRG
+8    "QLINK/CONNEC.MUS" PRG
+5    "QLINK/CONNEC.WDS" PRG
+12   "SPACE ODDITY.MUS" PRG
+28   "SPACE ODDITY.WDS" PRG
+3    "SURPLUSAGE.MUS"   PRG
+7    "SOUL.MUS"         PRG
+7    "MUS OF NITE.MUS"  PRG
+6    "MUS OF NITE.WDS"  PRG
+49 BLOCKS FREE.
+
+Disk: SIDfest '88 (Philadelphia, PA) -- Commemorative Stereo Album Side A.d64
+0 "PHILA SIDFEST SR" F1 2A
+3    "STEREO10/11 BOOT" PRG
+11   "STEREOLOADER"     PRG
+110  "STEREOPLAYERV10"  PRG
+1    "SIDSTEREO.CONFIG" PRG
+5    "DOC.VIEWER"       PRG
+9    "NOTICE.1.ERRATA"  SEQ
+20   "NOTICE.UPDATES"   SEQ
+40   "NOTICE1"          SEQ
+31   "NOTICE2"          SEQ
+20   "NOTICE3"          SEQ
+12   "SIDFEST.MUS"      PRG
+56   "SIDFEST.WDS"      PRG
+10   "SIDFEST.STR"      PRG
+12   "BACK TO KID.MUS"  PRG
+11   "BACK TO KID.STR"  PRG
+5    "BACK TO KID.WDS"  PRG
+10   "CUANTOLEGUST.MUS" PRG
+7    "CUANTOLEGUST.STR" PRG
+6    "CUANTOLEGUST.WDS" PRG
+7    "DETOUR.MUS"       PRG
+7    "DETOUR.STR"       PRG
+6    "EITHER.MUS"       PRG
+6    "IN A HURRY.MUS"   PRG
+13   "IN AMERICA.MUS"   PRG
+12   "IN AMERICA.STR"   PRG
+8    "IN AMERICA.WDS"   PRG
+9    "KILLING ME.MUS"   PRG
+7    "KILLING ME.STR"   PRG
+15   "LOVE BITES.MUS"   PRG
+17   "LOVE BITES.STR"   PRG
+7    "LOVE BITES.WDS"   PRG
+20   "NEUTRON.MUS"      PRG
+18   "NEUTRON.STR"      PRG
+8    "NEUTRON.WDS"      PRG
+8    "QLINK/CONNEC.MUS" PRG
+5    "QLINK/CONNEC.WDS" PRG
+12   "SPACE ODDITY.MUS" PRG
+28   "SPACE ODDITY.WDS" PRG
+3    "SURPLUSAGE.MUS"   PRG
+7    "SOUL.MUS"         PRG
+7    "MUS OF NITE.MUS"  PRG
+6    "MUS OF NITE.WDS"  PRG
+49 BLOCKS FREE.
+
+Disk: SIDfest '88 (Philadelphia, PA) -- Commemorative Stereo Album Side B.d64
+0 "PHILA SIDFEST ST" F2 2A
+13   "TEARUSAPART.MUS"  PRG
+4    "TEARUSAPART.WDS"  PRG
+10   "WANNA/DANCE.MUS"  PRG
+8    "WANNA/DANCE.WDS"  PRG
+11   "WITCHY WOMAN.MUS" PRG
+9    "WITCHY WOMAN.STR" PRG
+4    "WITCHY WOMAN.WDS" PRG
+10   "SIDIBLEW.MUS"     PRG
+6    "SIDIBLEW.WDS"     PRG
+6    "PAPER.MUS"        PRG
+13   "CFBACHTHEME.MUS"  PRG
+37   "CFBACHTHEME.PIC"  PRG
+11   "HORSE MUSIC.MUS"  PRG
+6    "BACH BOURREE.MUS" PRG
+28   "RONDO D MAJ.MUS"  PRG
+17   "NOCTURNE27-1.MUS" PRG
+51   "SONATAOP2NO1.MUS" PRG
+10   "SAKURA.MUS"       PRG
+18   "BOLLING.MUS"      PRG
+14   "SONATINA F+.MUS"  PRG
+5    "WALTZ.MUS"        PRG
+4    "WALTZ.STR"        PRG
+11   "CANON D.MUS"      PRG
+6    "CANON D.STR"      PRG
+8    "EVE IN CNTRY.MUS" PRG
+8    "EVE IN CNTRY.STR" PRG
+16   "SHEEP/GRAZE\.MUS" PRG
+13   "SHEEP/GRAZE\.STR" PRG
+3    "SHEEP/GRAZE\.WDS" PRG
+7    "TANGO/D.MUS"      PRG
+5    "TANGO/D.STR"      PRG
+14   "RONDO.MUS"        PRG
+13   "RONDO.STR"        PRG
+7    "AVANT/MOURIR.MUS" PRG
+6    "AVANT/MOURIR.STR" PRG
+5    "BACH BOURREE.STR" PRG
+10   "HORSE MUSIC.STR"  PRG
+11   "7 BRIDGES RD.MUS" PRG
+11   "7 BRIDGES RD.STR" PRG
+3    "7 BRIDGES RD.WDS" PRG
+11   "BROKEN WINGS.MUS" PRG
+7    "BROKEN WINGS.STR" PRG
+8    "BROKEN WINGS.WDS" PRG
+16   "GRACE/BEAUT\.MUS" PRG
+15   "GRACE/BEAUT\.STR" PRG
+10   "MIDNIGHT.MUS"     PRG
+8    "MIDNIGHT.STR"     PRG
+6    "MIDNITE GIRL.MUS" PRG
+5    "MIDNITE GIRL.STR" PRG
+7    "MIDNITE GIRL.WDS" PRG
+11   "NOT 12/8.MUS"     PRG
+10   "NOT 12/8.STR"     PRG
+9    "SHUT.MUS"         PRG
+8    "SHUT.STR"         PRG
+6    "SHUT.WDS"         PRG
+6    "LEIA.MUS"         PRG
+6    "LEIA.STR"         PRG
+40   "LEIA.PIC"         PRG
+7    "STEAL/ENTER.MUS"  PRG
+7    "STEAL/ENTER.STR"  PRG
+9 BLOCKS FREE.
+
+Disk: SIDfest '88 (Richmond, VA) -- Commemorative Album Side A.d64
+0 "SIDFEST'88-SIDE1" F1 2A
+5    "IN RICHMOND.MUS"  PRG
+21   "IN RICHMOND.WDS"  PRG
+8    "AMADEUS.MUS"      PRG
+7    "TEEN IN LOVE.MUS" PRG
+17   "WALK/SUNSHNE.MUS" PRG
+6    "WALK/SUNSHNE.WDS" PRG
+16   "TROLLEY SONG.MUS" PRG
+8    "TROLLEY SONG.WDS" PRG
+8    "GREATEST/ALL.MUS" PRG
+8    "FEST AGAIN.MUS"   PRG
+7    "FEST AGAIN.WDS"   PRG
+10   "WISHING/HERE.MUS" PRG
+13   "WISHING/HERE.WDS" PRG
+14   "BE THE ONE.MUS"   PRG
+9    "BE THE ONE.WDS"   PRG
+10   "CELEBRATION.MUS"  PRG
+52   "CELEBRATION.WDS"  PRG
+12   "RED BARON.MUS"    PRG
+6    "DIXIE/DOWN.WDS"   PRG
+7    "DIXIE/DOWN.MUS"   PRG
+7    "MISTY.MUS"        PRG
+5    "MISTY.WDS"        PRG
+4    "\EASY/HARD.WDS"   PRG
+8    "\EASY/HARD.MUS"   PRG
+4    "IN RICHMOND.STR"  PRG
+8    "AMADEUS.STR"      PRG
+7    "TEEN IN LOVE.STR" PRG
+14   "WALK/SUNSHNE.STR" PRG
+15   "TROLLEY SONG.STR" PRG
+8    "GREATEST/ALL.STR" PRG
+8    "FEST AGAIN.STR"   PRG
+10   "WISHING/HERE.STR" PRG
+14   "BE THE ONE.STR"   PRG
+7    "CELEBRATION.STR"  PRG
+12   "RED BARON.STR"    PRG
+6    "DIXIE/DOWN.STR"   PRG
+6    "MISTY.STR"        PRG
+8    "\EASY/HARD.STR"   PRG
+9    "BAGATELLE.MUS"    PRG
+30   "BEETH/ADAGIO.MUS" PRG
+3    "CAJUN/RMX.MUS"    PRG
+9    "COMESAILAWAY.MUS" PRG
+12   "DAMAGE INC.MUS"   PRG
+21   "DREAMS/CAR.MUS"   PRG
+12   "FT WORTH.MUS"     PRG
+4    "FT WORTH.WDS"     PRG
+12   "FOUR PIECES.MUS"  PRG
+2    "HILADDIE5.MUS"    PRG
+12   "HINDEMITH.MUS"    PRG
+7    "INV-BMINOR.MUS"   PRG
+13   "LA TENDRE.MUS"    PRG
+20   "MCPARK.MUS"       PRG
+10   "MCPARK.WDS"       PRG
+8    "MAGNIFICAT.MUS"   PRG
+7    "OBERON.MUS"       PRG
+7    "POLONAISE.MUS"    PRG
+8    "RED RIVER.MUS"    PRG
+7    "RED RIVER.WDS"    PRG
+14   "RUM TUM.MUS"      PRG
+13   "SYN/CLOCK.MUS"    PRG
+29 BLOCKS FREE.
+
+Disk: SIDfest '88 (Richmond, VA) -- Commemorative Album Side B.d64
+0 "SIDFEST'88-SIDE2" F2 2A
+11   "TUCSON.MUS"       PRG
+9    "TUCSON.WDS"       PRG
+8    "VIKING.MUS"       PRG
+24   "VIERNE1.MUS"      PRG
+21   "VIERNE2.MUS"      PRG
+33   "VIERNE3.MUS"      PRG
+7    "WHEN/FAB.MUS"     PRG
+18   "WTC2-8.MUS"       PRG
+16   "EASY STREET.MUS"  PRG
+15   "EASY STREET.STR"  PRG
+10   "EASY STREET.WDS"  PRG
+5    "REFLECTIONS.MUS"  PRG
+4    "REFLECTIONS.STR"  PRG
+40   "REFLECTIONS.PIC"  PRG
+9    "CHEROKEE.MUS"     PRG
+8    "CHEROKEE.STR"     PRG
+11   "RAINBOW.MUS"      PRG
+12   "RAINBOW.STR"      PRG
+10   "TOCCATA.MUS"      PRG
+13   "TOCCATA.STR"      PRG
+14   "JESUJOY.MUS"      PRG
+9    "JESUJOY.STR"      PRG
+5    "COUP/DUET.MUS"    PRG
+5    "COUP/DUET.STR"    PRG
+8    "SPARKS.MUS"       PRG
+7    "SPARKS.STR"       PRG
+13   "KANON.MUS"        PRG
+11   "KANON.STR"        PRG
+6    "REUNITED.STR"     PRG
+6    "REUNITED.WDS"     PRG
+7    "REUNITED.MUS"     PRG
+16   "LIBERTY.MUS"      PRG
+17   "LIBERTY.STR"      PRG
+6    "BESCHLUSS.MUS"    PRG
+6    "BESCHLUSS.STR"    PRG
+1    "="                USR 
+58   "EXTENDED.V2"      PRG
+27   "DIVERTIMENTO.MUS" PRG
+8    "HEY JUDE\.MUS"    PRG
+6    "HEY JUDE\.WDS"    PRG
+6    "UPANDAWAY.MUS"    PRG
+4    "UPANDAWAY.WDS"    PRG
+10   "WINDMILLS.MUS"    PRG
+7    "WINDMILLS.WDS"    PRG
+4    "LUNARIS.MUS"      PRG
+5    "LUNARIS II.MUS"   PRG
+11   "XMASFUGUE.MUS"    PRG
+97 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Classical Album Side A.d64
+0 "CLASSICAL MONO  " CM 2A
+8    "MONO PROGRAM"     SEQ
+3    "R.HORN"           PRG
+0    "----------------" PRG
+14   "JCF/RONDO.MUS"    PRG
+40   "JCF/RONDO.PIC"    PRG
+7    "BEAU SOIR.MUS"    PRG
+38   "FLUTE SON 6.MUS"  PRG
+8    "LAST SPRING.MUS"  PRG
+37   "CLEMENTI.MUS"     PRG
+14   "TRIO SONATA.MUS"  PRG
+40   "TRIO SONATA.PIC"  PRG
+3    "GIGGE.MUS"        PRG
+4    "SCHUMANNOP15.MUS" PRG
+11   "LE RAPPEL.MUS"    PRG
+28   "BLUE DANUBE.MUS"  PRG
+15   "SONATA K47.MUS"   PRG
+7    "VISI DARTE.MUS"   PRG
+11   "ADAGIO/FMAJ.MUS"  PRG
+14   "PR-D FLT MAJ.MUS" PRG
+15   "FANTASIA.MUS"     PRG
+40   "FANTASIA.PIC"     PRG
+307 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Classical Album Side B.d64
+0 "CLASSICAL STEREO" CS 2A
+7    "STEREO PROGRAM"   SEQ
+0    "----------------" PRG
+5    "GRAZIOSO.MUS"     PRG
+5    "GRAZIOSO.STR"     PRG
+29   "PERPETUAL MO.MUS" PRG
+28   "PERPETUAL MO.STR" PRG
+10   "AVE MARIA.MUS"    PRG
+9    "AVE MARIA.STR"    PRG
+2    "VIRGINALS.MUS"    PRG
+40   "VIRGINALS.PIC"    PRG
+3    "VIRGINALS.STR"    PRG
+28   "VIVALDI SAMP.MUS" PRG
+25   "VIVALDI SAMP.STR" PRG
+11   "SCHERAZADE.MUS"   PRG
+9    "SCHERAZADE.STR"   PRG
+14   "MILITARY MAR.MUS" PRG
+11   "MILITARY MAR.STR" PRG
+8    "FCHOOP.MUS"       PRG
+5    "FCHOOP.STR"       PRG
+30   "CHACONNE.MUS"     PRG
+34   "CHACONNE.STR"     PRG
+5    "CONTRASTS.MUS"    PRG
+5    "CONTRASTS.STR"    PRG
+10   "CRYSTAL.MUS"      PRG
+40   "CRYSTAL.PIC"      PRG
+11   "CRYSTAL.STR"      PRG
+14   "PR-D FLT MAJ.MUS" PRG
+13   "PR-D FLT MAJ.STR" PRG
+51   "GROSSE FUGUE.MUS" PRG
+47   "GROSSE FUGUE.STR" PRG
+16   "WAR MARCH.MUS"    PRG
+16   "WAR MARCH.STR"    PRG
+123 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Commemorative Album Side A.d64
+0 "NO FEST MASTER  " MS 2A
+2    "STEREOPLAYER10.3" PRG
+1    "SIDSTEREO.CONFIG" PRG
+1    "STEREO BOOTER"    PRG
+7    "STEREOTITLE"      PRG
+5    "STEREOPLAYERFAST" PRG
+111  "STEREOPLAYERV10"  PRG
+3    "GG/JJ DOCS"       SEQ
+5    "CJAM.MUS"         PRG
+30   "CJAM.PGG"         PRG
+4    "CJAM.STR"         PRG
+6    "/WONDER.MUS"      PRG
+5    "/WONDER.STR"      PRG
+3    "/WONDER.WDS"      PRG
+8    "BLACK WATER.MUS"  PRG
+7    "BLACK WATER.STR"  PRG
+22   "BLACK WATER.WDS"  PRG
+15   "/CAJUNCOOKIN.MUS" PRG
+10   "/CAJUNCOOKIN.STR" PRG
+6    "/LOOK OVER.MUS"   PRG
+6    "OPEN ARMS.MUS"    PRG
+8    "OPEN ARMS.STR"    PRG
+4    "OPEN ARMS.WDS"    PRG
+19   "LIGHT.MUS"        PRG
+5    "CAJUN MOON.MUS"   PRG
+5    "CAJUN MOON.STR"   PRG
+6    "CAJUN MOON.WDS"   PRG
+17   "CLASSGAS.MUS"     PRG
+16   "CLASSGAS.STR"     PRG
+26   "RAMPART ST.MUS"   PRG
+26   "RAMPART ST.STR"   PRG
+13   "SKIMBLESHANK.MUS" PRG
+12   "SKIMBLESHANK.STR" PRG
+9    "STREET SCENE.MUS" PRG
+7    "STREET SCENE.STR" PRG
+12   "HERECOMESSUN.MUS" PRG
+9    "HERECOMESSUN.STR" PRG
+5    "HERECOMESSUN.WDS" PRG
+208 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Commemorative Album Side B.d64
+0 "N.O. SIDFEST 2  " 43 2A
+15   "76TROMBONES.MUS"  PRG
+16   "76TROMBONES.STR"  PRG
+8    "76TROMBONES.WDS"  PRG
+15   "/PSYCHO.MUS"      PRG
+15   "/PSYCHO.STR"      PRG
+8    "/LAST SPRING.MUS" PRG
+17   "/LAYLA.MUS"       PRG
+12   "ELECTRIC.MUS"     PRG
+6    "EQUINOXE4.MUS"    PRG
+2    "EQUINOXE4.STR"    PRG
+6    "I LIKE.MUS"       PRG
+2    "I LIKE.STR"       PRG
+8    "I LIKE.WDS"       PRG
+8    "IN THE BATH.MUS"  PRG
+7    "IN THE BATH.STR"  PRG
+21   "IN THE BATH.WDS"  PRG
+6    "STAY.MUS"         PRG
+13   "SYNCOPATIONS.MUS" PRG
+15   "WHEEL/SKY.MUS"    PRG
+5    "WHEEL/SKY.WDS"    PRG
+61   "/MARINER.MUS"     PRG
+14   "/MARINER.WDS"     PRG
+11   "/SAILING.MUS"     PRG
+6    "/SAILING.WDS"     PRG
+11   "/DREAM ON.MUS"    PRG
+9    "/MIND/THORNS.MUS" PRG
+7    "/MIND/THORNS.WDS" PRG
+14   "/WATER SLIDE.MUS" PRG
+20   "IMAGE.MUS"        PRG
+18   "IMAGE.STR"        PRG
+16   "E.RAW"            PRG
+46   "TARZAN.RAW"       PRG
+3    "/ELWALK.ANI"      PRG
+7    "/ELWALK.MUS"      PRG
+3    "/ELWALK.STR"      PRG
+3    "/DEP.ANI"         PRG
+40   "/DEP.PIC"         PRG
+10   "/DEP.MUS"         PRG
+1    "/DEP.SPT"         PRG
+7    "/DEP.STR"         PRG
+5    "CHEERS.MUS"       PRG
+11   "FOOTLOOSE.MUS"    PRG
+135 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Doc JM Side A.d64
+0 "DOCJM-1 SEL.    " JH 2A
+30   "ENHANCED SID-64"  PRG
+1    "----------------" USR 
+40   "MOONLITEFANT.PIC" PRG
+18   "MOONLITEFANT.MUS" PRG
+18   "MOONLITEFANT.STR" PRG
+8    "MOONSCAPE.MUS"    PRG
+40   "MOONSCAPE.PIC"    PRG
+2    "CALCONDOR.MUS"    PRG
+40   "CALCONDOR.PIC"    PRG
+26   "STARTREK2.MUS"    PRG
+40   "STARTREK2.PIC"    PRG
+6    "SWAN.MUS"         PRG
+40   "SWAN.PIC"         PRG
+40   "PRANCER.PIC"      PRG
+5    "PRANCER.MUS"      PRG
+40   "STAR TREK 3.PIC"  PRG
+13   "STAR TREK 3.MUS"  PRG
+12   "STAR TREK 3.STR"  PRG
+40   "DEATH.PIC"        PRG
+3    "DEATH.MUS"        PRG
+14   "XMASTABLOID.MUS"  PRG
+40   "XMASTABLOID.PIC"  PRG
+7    "RENAISSANCE.MUS"  PRG
+40   "RENAISSANCE.PIC"  PRG
+8    "STARTREK-TNG.MUS" PRG
+7    "STARTREK-TNG.STR" PRG
+40   "STARTREK-TNG.PIC" PRG
+46 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Doc JM Side B.d64
+0 "DOCJM-2 SEL.    " JJ 2A
+30   "ENHANCED SID-64"  PRG
+1    "----------------" USR 
+9    "THE SURFER.MUS"   PRG
+40   "THE SURFER.PIC"   PRG
+40   "EASTER.PIC"       PRG
+9    "EASTER.MUS"       PRG
+8    "EASTER.STR"       PRG
+5    "REFLECTIONS.MUS"  PRG
+4    "REFLECTIONS.STR"  PRG
+40   "REFLECTIONS.PIC"  PRG
+9    "CHEROKEE.MUS"     PRG
+8    "CHEROKEE.STR"     PRG
+40   "CHEROKEE.PIC"     PRG
+6    "CEREMONY.MUS"     PRG
+40   "CEREMONY.PIC"     PRG
+7    "GALAXY M51.MUS"   PRG
+40   "GALAXY M51.PIC"   PRG
+19   "OLYMPIC SPRT.MUS" PRG
+18   "OLYMPIC SPRT.STR" PRG
+40   "OLYMPIC SPRT.PIC" PRG
+6    "LEIA.MUS"         PRG
+6    "LEIA.STR"         PRG
+40   "LEIA.PIC"         PRG
+40   "MOZART.PIC"       PRG
+33   "MOZART.MUS"       PRG
+40   "ST TNG-2.PIC"     PRG
+8    "ST TNG-2.MUS"     PRG
+9    "ST TNG-2.STR"     PRG
+40   "IRISH CASTLE.PIC" PRG
+4    "IRISH CASTLE.MUS" PRG
+25 BLOCKS FREE.
+
+Disk: SIDfest '89 (New Orleans, LA) -- Doc JM Side C.d64
+0 "DOC JM-3 SEL.   " HM 2A
+30   "ENHANCED SID-64"  PRG
+1    "----------------" USR 
+40   "MAGIC FIRE.PIC"   PRG
+28   "MAGIC FIRE.STR"   PRG
+17   "MAGIC FIRE.MUS"   PRG
+23   "JAMES GALWAY.MUS" PRG
+40   "JAMES GALWAY.PIC" PRG
+22   "JAMES GALWAY.STR" PRG
+40   "FAR OUT.PIC"      PRG
+6    "FAR OUT.MUS"      PRG
+5    "FAR OUT.STR"      PRG
+40   "FANTASIA.PIC"     PRG
+15   "FANTASIA.MUS"     PRG
+10   "CRYSTAL.MUS"      PRG
+11   "CRYSTAL.STR"      PRG
+40   "CRYSTAL.PIC"      PRG
+296 BLOCKS FREE.
+
+Disk: SIDfest '90 (Las Vegas, NV) -- Songs from SDAs.d81
+0 "SIDFEST 1990 SDA" W2 3D
+0    "``````SDA 1`````" DEL 
+15   "A FANTASY.MUS"    PRG
+13   "A FANTASY.WDS"    PRG
+4    "AVE MARIA.MUS"    PRG
+16   "CON-XI-44.MUS"    PRG
+11   "CON-XI-44.STR"    PRG
+10   "CON-XI44-2.STR"   PRG
+17   "CON-XI44-2.MUS"   PRG
+11   "CRY/BABY.MUS"     PRG
+6    "CRY/BABY.WDS"     PRG
+30   "DANCE HOURS.MUS"  PRG
+19   "DANCE HOURS.STR"  PRG
+11   "DE BRISSAC.MUS"   PRG
+16   "FOUR GIGUES.MUS"  PRG
+13   "FOUR GIGUES.STR"  PRG
+8    "GERMANDANCES.MUS" PRG
+11   "GERMANDANCES.STR" PRG
+7    "HANDEL-ALL.MUS"   PRG
+0    "``````SDA 2`````" DEL 
+14   "HAYDN STRING.MUS" PRG
+8    "HAYDN STRING.STR" PRG
+15   "MAZURKA.MUS"      PRG
+11   "MAZURKA.STR"      PRG
+11   "/MONASTERY.MUS"   PRG
+8    "/MONASTERY.STR"   PRG
+4    "/MONASTERY.WDS"   PRG
+18   "/NOCT C-MIN.MUS"  PRG
+18   "/NOCT C-MIN.STR"  PRG
+9    "SCHUBERT.MUS"     PRG
+8    "SCHUBERT.STR"     PRG
+6    "LAST KISS.MUS"    PRG
+11   "NOTHIN2U.MUS"     PRG
+8    "NOTHIN2U.WDS"     PRG
+8    "POLONAISE.MUS"    PRG
+24   "/STAIRWAY.MUS"    PRG
+63   "/STAIRWAY.WDS"    PRG
+0    "``````SDA 3`````" DEL 
+10   "FEST MARCH.MUS"   PRG
+19   "FEST MARCH.PGG"   PRG
+12   "FEST MARCH.STR"   PRG
+20   "BANGKOK.MUS"      PRG
+18   "BANGKOK.STR"      PRG
+15   "BANGKOK.WDS"      PRG
+5    "CIRCUSCIRCUS.MUS" PRG
+4    "CIRCUSCIRCUS.STR" PRG
+5    "CIRCUSCIRCUS.WDS" PRG
+8    "CITY OF 2.MUS"    PRG
+7    "CITY OF 2.STR"    PRG
+10   "DOGS/ENGLISH.MUS" PRG
+8    "DOGS/ENGLISH.STR" PRG
+20   "DOGS/ENGLISH.WDS" PRG
+0    "``````SDA 4`````" DEL 
+8    "/SATIN DOLL.MUS"  PRG
+7    "/SATIN DOLL.STR"  PRG
+13   "SHOUT DEVIL.MUS"  PRG
+14   "SHOUT DEVIL.STR"  PRG
+9    "SHOUT DEVIL.WDS"  PRG
+23   "TIME TO KILL.MUS" PRG
+21   "TIME TO KILL.STR" PRG
+6    "TIME TO KILL.WDS" PRG
+5    "VEGASFEST.MUS"    PRG
+4    "VEGASFEST.STR"    PRG
+2    "VEGASFEST.WDS"    PRG
+8    "WILL U LUVME.MUS" PRG
+7    "WILL U LUVME.STR" PRG
+20   "YYZ.MUS"          PRG
+19   "YYZ.STR"          PRG
+0    "``````SDA 5`````" DEL 
+20   "18 AND LIFE.MUS"  PRG
+8    "18 AND LIFE.WDS"  PRG
+7    "ETERNITY.MUS"     PRG
+6    "ETERNITY.STR"     PRG
+13   "HURRI/SEASON.MUS" PRG
+9    "HURRI/SEASON.WDS" PRG
+11   "/I/STARLIGHT.MUS" PRG
+10   "/I/STARLIGHT.STR" PRG
+11   "/I/STARLIGHT.WDS" PRG
+15   "JAZ VEGAS.MUS"    PRG
+12   "JAZ VEGAS.STR"    PRG
+10   "LASTNIGHT.MUS"    PRG
+8    "LASTNIGHT.STR"    PRG
+8    "LASTNIGHT.WDS"    PRG
+2223 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Classical SIDs Side A (mono).d64
+0 "VF CLASS MONO   " CM 2A
+2    "STEREOPLAYER10.3" PRG
+2    "STEREO BOOTER"    PRG
+7    "STEREOTITLE"      PRG
+5    "STEREOPLAYER1541" PRG
+6    "STEREOPLAYER1581" PRG
+111  "STEREOPLAYERV10"  PRG
+1    "SIDSTEREO.CONFIG" PRG
+2    "DIES IRAE.MUS"    PRG
+4    "SA HOO.MUS"       PRG
+3    "ABSENCE.MUS"      PRG
+3    "ABSENCE.WDS"      PRG
+6    "WYNKFYLDS.MUS"    PRG
+28   "CIACONNA/V13.MUS" PRG
+8    "SONATA K178.MUS"  PRG
+4    "LA LUTINE.MUS"    PRG
+5    "BOUREE/E MIN.MUS" PRG
+7    "GOLD-VAR-1.MUS"   PRG
+18   "WTC2-24.MUS"      PRG
+9    "JSB/PRE1.MUS"     PRG
+7    "SINFO10.MUS"      PRG
+13   "PRELUDE 14.MUS"   PRG
+14   "TOC/IN/A.MUS"     PRG
+5    "MXNXSTRXNDXS.MUS" PRG
+7    "SECOND ACTE.MUS"  PRG
+5    "TROISIEME.MUS"    PRG
+8    "QUATRIEME.MUS"    PRG
+10   "CINQUIEME.MUS"    PRG
+11   "DE BRISSAC.MUS"   PRG
+10   "DE LA TOUR.MUS"   PRG
+12   "LEGIPTIENNE.MUS"  PRG
+6    "NICHELMANN.MUS"   PRG
+3    "SERENADE.MUS"     PRG
+5    "MOZ/MIN1.MUS"     PRG
+8    "HAY/MIN.MUS"      PRG
+13   "HAYDN/DRIP.MUS"   PRG
+34   "/HAYDNTRM1ST.MUS" PRG
+33   "/BETHOVEN 6A.MUS" PRG
+35   "/BETHOVEN 6B.MUS" PRG
+15   "/BETHOVEN 6C.MUS" PRG
+15   "/BETHOVEN 6D.MUS" PRG
+30   "/BETHOVEN 6E.MUS" PRG
+5    "KABAL/RMX.MUS"    PRG
+13   "MOUSSORGSKY.MUS"  PRG
+37   "MOUSSORGSKY.PGG"  PRG
+6    "ELFIN GRIEG.MUS"  PRG
+11   "/FLUTE DANCE.MUS" PRG
+23   "REFLECTIONS.MUS"  PRG
+12   "IN/RUSSIA.MUS"    PRG
+3    "GEBOREN.MUS"      PRG
+16   "CAGE/DUCHAMP.MUS" PRG
+8 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Classical SIDs Side B (stereo).d64
+0 "VF CLASS STEREO " CS 2A
+11   "ALEPH EGO.MUS"    PRG
+8    "ALEPH EGO.WDS"    PRG
+8    "ALEPH EGO.STR"    PRG
+3    "PAVANA/SLBRY.MUS" PRG
+2    "PAVANA/SLBRY.STR" PRG
+4    "BASSA IMP.MUS"    PRG
+4    "BASSA IMP.STR"    PRG
+67   "/CHROMATIC.MUS"   PRG
+29   "/CHROMATIC.STR"   PRG
+14   "/FANTASIEINE.MUS" PRG
+40   "/FANTASIEINE.PIC" PRG
+7    "/FANTASIEINE.STR" PRG
+8    "SICILIANO.MUS"    PRG
+9    "SICILIANO.STR"    PRG
+8    "BOURREE-MAR.MUS"  PRG
+8    "BOURREE-MAR.STR"  PRG
+15   "/HAY/RON.MUS"     PRG
+14   "/HAY/RON.STR"     PRG
+34   "/FREDERICK.MUS"   PRG
+38   "/FREDERICK.STR"   PRG
+15   "MOZ/DIV/1-3.MUS"  PRG
+12   "MOZ/DIV/1-3.STR"  PRG
+5    "/FOLLOW DRUM.MUS" PRG
+4    "/FOLLOW DRUM.STR" PRG
+30   "/HEBRIDES.MUS"    PRG
+29   "/HEBRIDES.STR"    PRG
+4    "NIGHT WIND.MUS"   PRG
+3    "NIGHT WIND.STR"   PRG
+13   "GOPAK.MUS"        PRG
+11   "GOPAK.STR"        PRG
+17   "TCHAI/SLEEP.MUS"  PRG
+37   "TCHAI/SLEEP.PGG"  PRG
+18   "TCHAI/SLEEP.STR"  PRG
+19   "/FIRE DANCE.MUS"  PRG
+26   "/FIRE DANCE.STR"  PRG
+10   "/ANVILCHORUS.MUS" PRG
+10   "/ANVILCHORUS.STR" PRG
+17   "/SPRINGTIME.MUS"  PRG
+40   "/SPRINGTIME.PIC"  PRG
+11   "/SPRINGTIME.STR"  PRG
+2 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Commemorative Collection -- Las Vegas retrospective Side A (mono).d64
+0 "LAS VEGAS       " 01 2A
+2    "STEREOPLAYER10.3" PRG
+1    "SIDSTEREO.CONFIG" PRG
+1    "STEREO BOOTER"    PRG
+5    "STEREOPLAYERFAST" PRG
+111  "STEREOPLAYERV10"  PRG
+7    "STEREOTITLE"      PRG
+15   "A FANTASY.MUS"    PRG
+13   "A FANTASY.WDS"    PRG
+4    "AVE MARIA.MUS"    PRG
+11   "CRY/BABY.MUS"     PRG
+6    "CRY/BABY.WDS"     PRG
+11   "DE BRISSAC.MUS"   PRG
+20   "18 AND LIFE.MUS"  PRG
+8    "18 AND LIFE.WDS"  PRG
+7    "HANDEL-ALL.MUS"   PRG
+13   "HURRI/SEASON.MUS" PRG
+9    "HURRI/SEASON.WDS" PRG
+6    "LAST KISS.MUS"    PRG
+11   "NOTHIN2U.MUS"     PRG
+8    "NOTHIN2U.WDS"     PRG
+8    "POLONAISE.MUS"    PRG
+20   "RUSH-YYZ.MUS"     PRG
+24   "/STAIRWAY.MUS"    PRG
+63   "/STAIRWAY.WDS"    PRG
+12   "THE CASCADES.MUS" PRG
+21   "THE CASCADES.PGG" PRG
+8    "THRILLER.MUS"     PRG
+7    "THRILLER.WDS"     PRG
+21   "TIMETOKILL.MUS"   PRG
+6    "TIMETOKILL.WDS"   PRG
+15   "TIME-WARP.MUS"    PRG
+17   "VOGUE.MUS"        PRG
+10   "VOGUE.WDS"        PRG
+163 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Commemorative Collection -- Las Vegas retrospective Side B (stereo).d64
+0 "LAS VEGAS       " 02 2A
+16   "CON-XI-44.MUS"    PRG
+11   "CON-XI-44.STR"    PRG
+17   "CON-XI44-2.MUS"   PRG
+10   "CON-XI44-2.STR"   PRG
+36   "DANCE HOURS.MUS"  PRG
+19   "DANCE HOURS.STR"  PRG
+16   "FOUR GIGUES.MUS"  PRG
+13   "FOUR GIGUES.STR"  PRG
+8    "GERMANDANCES.MUS" PRG
+11   "GERMANDANCES.STR" PRG
+14   "HAYDN STRING.MUS" PRG
+8    "HAYDN STRING.STR" PRG
+15   "MAZURKA.MUS"      PRG
+11   "MAZURKA.STR"      PRG
+11   "/MONASTERY.MUS"   PRG
+8    "/MONASTERY.STR"   PRG
+4    "/MONASTERY.WDS"   PRG
+18   "/NOCT C-MIN.MUS"  PRG
+18   "/NOCT C-MIN.STR"  PRG
+9    "SCHUBERT.MUS"     PRG
+8    "SCHUBERT.STR"     PRG
+10   "FEST MARCH.MUS"   PRG
+19   "FEST MARCH.PGG"   PRG
+12   "FEST MARCH.STR"   PRG
+20   "BANGKOK.MUS"      PRG
+18   "BANGKOK.STR"      PRG
+15   "BANGKOK.WDS"      PRG
+5    "CIRCUSCIRCUS.MUS" PRG
+4    "CIRCUSCIRCUS.STR" PRG
+5    "CIRCUSCIRCUS.WDS" PRG
+8    "/CITY OF 2.MUS"   PRG
+7    "/CITY OF 2.STR"   PRG
+10   "DOGS/ENGLISH.MUS" PRG
+8    "DOGS/ENGLISH.STR" PRG
+20   "DOGS/ENGLISH.WDS" PRG
+8    "/SATIN DOLL.MUS"  PRG
+7    "/SATIN DOLL.STR"  PRG
+13   "SHOUT DEVIL.MUS"  PRG
+14   "SHOUT DEVIL.STR"  PRG
+9    "SHOUT DEVIL.WDS"  PRG
+23   "TIME TO KILL.MUS" PRG
+21   "TIME TO KILL.STR" PRG
+6    "TIME TO KILL.WDS" PRG
+5    "VEGASFEST.MUS"    PRG
+4    "VEGASFEST.STR"    PRG
+2    "VEGASFEST.WDS"    PRG
+8    "WILL U LUVME.MUS" PRG
+7    "WILL U LUVME.STR" PRG
+20   "YYZ.MUS"          PRG
+19   "YYZ.STR"          PRG
+7    "ETERNITY.MUS"     PRG
+6    "ETERNITY.STR"     PRG
+43 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Commemorative Collection Side A (mono).d64
+0 "VF 1990         " VF 2A
+2    "STEREOPLAYER10.3" PRG
+2    "STEREO BOOTER"    PRG
+5    "STEREOPLAYER1541" PRG
+6    "STEREOPLAYER1581" PRG
+111  "STEREOPLAYERV10"  PRG
+7    "STEREOTITLE"      PRG
+1    "SIDSTEREO.CONFIG" PRG
+6    "SARABANDE.MUS"    PRG
+14   "SARABANDE.PJJ"    PRG
+23   "BEAT IT.MUS"      PRG
+10   "CRAZY LOVE.MUS"   PRG
+4    "CRAZY LOVE.WDS"   PRG
+11   "INDEFINITE.MUS"   PRG
+25   "MYSTICAL PHG.MUS" PRG
+12   "NEWSIDLER.MUS"    PRG
+13   "SONATA K189.MUS"  PRG
+8    "THE WOC SHOW.MUS" PRG
+6    "THE WOC SHOW.WDS" PRG
+398 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Commemorative Collection Side B (stereo).d64
+0 "VF 1990         " 02 2A
+8    "AWKWARD AGE.MUS"  PRG
+7    "AWKWARD AGE.STR"  PRG
+5    "AWKWARD AGE.WDS"  PRG
+16   "BACH/VIVALDI.MUS" PRG
+10   "BACH/VIVALDI.STR" PRG
+10   "CRAZY LOVE/S.MUS" PRG
+9    "CRAZY LOVE/S.STR" PRG
+4    "CRAZY LOVE/S.WDS" PRG
+12   "CRISTOFORI.MUS"   PRG
+13   "CRISTOFORI.STR"   PRG
+24   "FADE 2 BLACK.MUS" PRG
+23   "FADE 2 BLACK.STR" PRG
+3    "FADE 2 BLACK.WDS" PRG
+16   "/FAUST WALTZ.MUS" PRG
+18   "/FAUST WALTZ.STR" PRG
+9    "KNOWHATIMEAN.MUS" PRG
+5    "KNOWHATIMEAN.STR" PRG
+5    "KNOWHATIMEAN.WDS" PRG
+30   "LAMB VARS/1.MUS"  PRG
+26   "LAMB VARS/1.STR"  PRG
+13   "NOCTURNE.MUS"     PRG
+9    "NOCTURNE.STR"     PRG
+32   "NOCTURNE.PGG"     PRG
+9    "OLEOAKTREE.MUS"   PRG
+8    "OLEOAKTREE.STR"   PRG
+7    "OLEOAKTREE.WDS"   PRG
+13   "/SIDDING.MUS"     PRG
+11   "/SIDDING.STR"     PRG
+24   "/SIDDING.WDS"     PRG
+10   "PEACH/ORANGE.MUS" PRG
+8    "PEACH/ORANGE.STR" PRG
+7    "PEACH/ORANGE.WDS" PRG
+10   "TOOT FUGUE.MUS"   PRG
+9    "TOOT FUGUE.STR"   PRG
+7    "WINDING ROAD.MUS" PRG
+5    "WINDING ROAD.STR" PRG
+4    "WINDING ROAD.WDS" PRG
+30   "YOUNG LUST.MUS"   PRG
+19   "YOUNG LUST.STR"   PRG
+30   "YOUNG LUST.PGG"   PRG
+146 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- New Orleans Classical Side A (mono).d64
+0 "CLASSICAL MONO  " CM 2A
+2    "STEREOPLAYER10.3" PRG
+1    "STEREO BOOTER"    PRG
+5    "STEREOPLAYERFAST" PRG
+7    "STEREOTITLE"      PRG
+1    "SIDSTEREO.CONFIG" PRG
+111  "STEREOPLAYERV10"  PRG
+8    "MONO PROGRAM"     SEQ
+3    "R.HORN"           PRG
+0    "----------------" PRG
+14   "JCF/RONDO.MUS"    PRG
+40   "JCF/RONDO.PIC"    PRG
+7    "BEAU SOIR.MUS"    PRG
+38   "FLUTE SON 6.MUS"  PRG
+8    "LAST SPRING.MUS"  PRG
+37   "CLEMENTI.MUS"     PRG
+14   "TRIO SONATA.MUS"  PRG
+40   "TRIO SONATA.PIC"  PRG
+3    "GIGGE.MUS"        PRG
+4    "SCHUMANNOP15.MUS" PRG
+11   "LE RAPPEL.MUS"    PRG
+28   "BLUE DANUBE.MUS"  PRG
+15   "SONATA K47.MUS"   PRG
+7    "VISI DARTE.MUS"   PRG
+11   "ADAGIO/FMAJ.MUS"  PRG
+14   "PR-D FLT MAJ.MUS" PRG
+15   "FANTASIA.MUS"     PRG
+40   "FANTASIA.PIC"     PRG
+180 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- New Orleans Classical Side B (stereo).d64
+0 "CLASSICAL STEREO" CS 2A
+7    "STEREO PROGRAM"   SEQ
+0    "----------------" PRG
+5    "GRAZIOSO.MUS"     PRG
+5    "GRAZIOSO.STR"     PRG
+29   "PERPETUAL MO.MUS" PRG
+28   "PERPETUAL MO.STR" PRG
+10   "AVE MARIA.MUS"    PRG
+9    "AVE MARIA.STR"    PRG
+2    "VIRGINALS.MUS"    PRG
+40   "VIRGINALS.PIC"    PRG
+3    "VIRGINALS.STR"    PRG
+28   "VIVALDI SAMP.MUS" PRG
+25   "VIVALDI SAMP.STR" PRG
+11   "SCHERAZADE.MUS"   PRG
+9    "SCHERAZADE.STR"   PRG
+14   "MILITARY MAR.MUS" PRG
+11   "MILITARY MAR.STR" PRG
+8    "FCHOOP.MUS"       PRG
+5    "FCHOOP.STR"       PRG
+30   "CHACONNE.MUS"     PRG
+34   "CHACONNE.STR"     PRG
+5    "CONTRASTS.MUS"    PRG
+5    "CONTRASTS.STR"    PRG
+10   "CRYSTAL.MUS"      PRG
+40   "CRYSTAL.PIC"      PRG
+11   "CRYSTAL.STR"      PRG
+14   "PR-D FLT MAJ.MUS" PRG
+13   "PR-D FLT MAJ.STR" PRG
+51   "GROSSE FUGUE.MUS" PRG
+47   "GROSSE FUGUE.STR" PRG
+16   "WAR MARCH.MUS"    PRG
+16   "WAR MARCH.STR"    PRG
+123 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Original SIDs Side A (mono).d64
+0 "ORIGINAL SIDS   " Q1 2A
+2    "STEREOPLAYER10.3" PRG
+2    "STEREO BOOTER"    PRG
+5    "STEREOPLAYER1541" PRG
+6    "STEREOPLAYER1581" PRG
+111  "STEREOPLAYERV10"  PRG
+7    "STEREOTITLE"      PRG
+1    "SIDSTEREO.CONFIG" PRG
+12   "/HELLS ANGEL.MUS" PRG
+9    "/HELLS ANGEL.WDS" PRG
+12   "/SAND CASTLE.MUS" PRG
+6    "ALLEGRO 15.MUS"   PRG
+7    "ALLEGRO 16.MUS"   PRG
+5    "ALLEGRO 17.MUS"   PRG
+6    "ALLEGRO 18.MUS"   PRG
+5    "ALLEGRO 19.MUS"   PRG
+7    "ALLEGRO 20.MUS"   PRG
+6    "ALLEGRO 21.MUS"   PRG
+7    "ALLEGRO 22.MUS"   PRG
+8    "ALLEGRO 23.MUS"   PRG
+3    "AT TIMES.MUS"     PRG
+5    "BEGINNINGS.MUS"   PRG
+5    "COSMICCHIMES.MUS" PRG
+6    "DAMSEL/DRAGN.MUS" PRG
+6    "DICHOS.MUS"       PRG
+3    "DICHOS.WDS"       PRG
+4    "DONT WANNA.MUS"   PRG
+4    "DRUM CADENCE.MUS" PRG
+5    "DUMP MONSTER.MUS" PRG
+10   "DUSK.MUS"         PRG
+4    "ELRICS THEME.MUS" PRG
+7    "EVERYTHING.MUS"   PRG
+9    "EVERYTHING.WDS"   PRG
+5    "FANTASY.MUS"      PRG
+9    "FORGET.MUS"       PRG
+3    "HANDLEWITHCR.MUS" PRG
+5    "HAPPINESS.MUS"    PRG
+10   "HARD GOODBYE.MUS" PRG
+8    "HARD GOODBYE.WDS" PRG
+20   "HOT STUFF.MUS"    PRG
+8    "HUH EH.MUS"       PRG
+6    "IRISH BALLAD.MUS" PRG
+9    "ITS OVER.MUS"     PRG
+9    "ITS OVER.WDS"     PRG
+6    "JAM.MUS"          PRG
+3    "LIFE SOURCE.MUS"  PRG
+4    "LIGHTING.MUS"     PRG
+4    "LOVEBEAT.MUS"     PRG
+3    "LULLABYE/LIA.MUS" PRG
+7    "MELANCHOLIA2.MUS" PRG
+14   "MOBILIZATION.MUS" PRG
+13   "MOVEMENT.MUS"     PRG
+5    "MYSTICMEMORY.MUS" PRG
+8    "NEUROSYNTH.MUS"   PRG
+26   "ONTHEHORIZON.MUS" PRG
+5    "OPUS NO. 1.MUS"   PRG
+5    "OVER KILL.MUS"    PRG
+4    "PLASMATIC.MUS"    PRG
+9    "QUESTION AIR.MUS" PRG
+4    "RACE.MUS"         PRG
+5    "REPETITION.MUS"   PRG
+4    "ROCKPILE.MUS"     PRG
+10   "ROMANCE.MUS"      PRG
+4    "ROMANCE.WDS"      PRG
+9    "ROSE.MUS"         PRG
+4    "SEARCHING.MUS"    PRG
+8    "SHRED/SHUFFL.MUS" PRG
+2    "SIN GIGUE.MUS"    PRG
+4    "SONGFORBRIAN.MUS" PRG
+4    "SUNBEAM.MUS"      PRG
+12   "VELOCITY.MUS"     PRG
+5    "WINDFALL.MUS"     PRG
+86 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Original SIDs Side B (stereo).d64
+0 "ORIGINAL SIDS II" Q2 2A
+12   "/2VAR.MUS"        PRG
+9    "/2VAR.STR"        PRG
+6    "/DRUNK/DROID.MUS" PRG
+6    "/DRUNK/DROID.WDS" PRG
+23   "/SONA FMAJ.MUS"   PRG
+65   "/SONA FMAJ.WDS"   PRG
+19   "/WINKOFANEYE.MUS" PRG
+6    "/WINKOFANEYE.WDS" PRG
+4    "B.D.BIMBO.MUS"    PRG
+8    "B.D.BIMBO.WDS"    PRG
+2    "DANS RAP.MUS"     PRG
+15   "DANS RAP.WDS"     PRG
+16   "DOCJM B-DAY.MUS"  PRG
+40   "DOCJM B-DAY.PIC"  PRG
+11   "DOCJM B-DAY.STR"  PRG
+7    "ELVEN HYMN.MUS"   PRG
+4    "ELVEN HYMN.WDS"   PRG
+10   "FURFS 2/MONO.MUS" PRG
+40   "FURFS 2/MONO.PIC" PRG
+13   "HURRI/SEASON.MUS" PRG
+11   "HURRI/SEASON.STR" PRG
+9    "HURRI/SEASON.WDS" PRG
+4    "IN A TREE.MUS"    PRG
+4    "IN A TREE.WDS"    PRG
+35   "LEONARDO.MUS"     PRG
+40   "LEONARDO.PIC"     PRG
+12   "LEONARDO.WDS"     PRG
+16   "OVERTURE-SQ.MUS"  PRG
+40   "OVERTURE-SQ.PIC"  PRG
+7    "PROJECTION.MUS"   PRG
+7    "PROJECTION.WDS"   PRG
+10   "RAISTLIN/.MUS"    PRG
+40   "RAISTLIN/.PIC"    PRG
+11   "RAISTLIN/.STR"    PRG
+4    "REMIX.MUS"        PRG
+40   "REMIX.PIC"        PRG
+6    "SHOOTINGSTAR.MUS" PRG
+6    "SHOOTINGSTAR.WDS" PRG
+43 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on DocJM Side A (mono).d64
+0 "DOCJM SID/PICS-1" D1 2A
+6    "SWAN.MUS"         PRG
+36   "SWAN.PGG"         PRG
+18   "MOONLITEFANT.MUS" PRG
+18   "MOONLITEFANT.STR" PRG
+24   "MOONLITEFANT.PGG" PRG
+19   "OLYMPIC SPRT.MUS" PRG
+18   "OLYMPIC SPRT.STR" PRG
+18   "OLYMPIC SPRT.PGG" PRG
+23   "CEREMONY.PGG"     PRG
+6    "CEREMONY.MUS"     PRG
+34   "THE SURFER.PGG"   PRG
+9    "THE SURFER.MUS"   PRG
+9    "CHEROKEE.MUS"     PRG
+8    "CHEROKEE.STR"     PRG
+34   "CHEROKEE.PGG"     PRG
+31   "STARTREK-TNG.PGG" PRG
+8    "STARTREK-TNG.MUS" PRG
+7    "STARTREK-TNG.STR" PRG
+7    "GALAXY M51.MUS"   PRG
+28   "GALAXY M51.PGG"   PRG
+4    "IRISH CASTLE.MUS" PRG
+37   "IRISH CASTLE.PGG" PRG
+23   "VIV/AMINOR.MUS"   PRG
+21   "VIV/AMINOR.PGG"   PRG
+22   "VIV/AMINOR.STR"   PRG
+29   "CHOPIN.PGG"       PRG
+16   "CHOPIN.MUS"       PRG
+14   "CHOPIN.STR"       PRG
+16   "/BRIGHT EYES.MUS" PRG
+22   "/BRIGHT EYES.PGG" PRG
+18   "/BRIGHT EYES.STR" PRG
+18   "/VALSETRISTE.PGG" PRG
+12   "/VALSETRISTE.MUS" PRG
+13   "/VALSETRISTE.STR" PRG
+38 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on DocJM Side B (stereo).d64
+0 "DOCJM SID/PICS-2" D2 2A
+19   "/ASTRA.MUS"       PRG
+30   "/ASTRA.PGG"       PRG
+13   "/ASTRA.STR"       PRG
+17   "MAGIC FIRE.MUS"   PRG
+25   "MAGIC FIRE.PGG"   PRG
+28   "MAGIC FIRE.STR"   PRG
+29   "DOLPHINS.PGG"     PRG
+21   "DOLPHINS.MUS"     PRG
+32   "DOLPHINS.STR"     PRG
+6    "FAR OUT.MUS"      PRG
+34   "FAR OUT.PGG"      PRG
+5    "FAR OUT.STR"      PRG
+28   "SIDROOMDUDES.PGG" PRG
+13   "SIDROOMDUDES.MUS" PRG
+12   "SIDROOMDUDES.STR" PRG
+10   "CRYSTAL.MUS"      PRG
+24   "CRYSTAL.PGG"      PRG
+11   "CRYSTAL.STR"      PRG
+37   "MOUSSORGSKY.PGG"  PRG
+12   "MOUSSORGSKY.MUS"  PRG
+10   "MOUSSORGSKY.STR"  PRG
+40   "/SPRINGTIME.PIC"  PRG
+17   "/SPRINGTIME.MUS"  PRG
+11   "/SPRINGTIME.STR"  PRG
+17   "TCHAI/SLEEP.MUS"  PRG
+37   "TCHAI/SLEEP.PGG"  PRG
+18   "TCHAI/SLEEP.STR"  PRG
+37   "/SWAN LAKE-1.PGG" PRG
+10   "/SWAN LAKE-1.MUS" PRG
+8    "/SWAN LAKE-1.STR" PRG
+28   "RAISTLIN/.PGG"    PRG
+10   "RAISTLIN/.MUS"    PRG
+11   "RAISTLIN/.STR"    PRG
+4 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on DrJ5 Side A (mono).d64
+0 "A               " 1  2A
+2    "STEREOPLAYER10.3" PRG
+8    "ALL MY LOVIN.MUS" PRG
+7    "ALNFAMLY/RMX.MUS" PRG
+6    "BABY LEFT ME.MUS" PRG
+6    "BIRTHDAY.MUS"     PRG
+5    "BLUE XMAS.MUS"    PRG
+5    "CONCRT THEME.MUS" PRG
+7    "DETOUR.MUS"       PRG
+25   "ELVIS/TRBUTE.MUS" PRG
+9    "FUN FUN FUN.MUS"  PRG
+8    "GET AROUND.MUS"   PRG
+8    "GRBALFIR.RMX.MUS" PRG
+7    "HEART/SOUL.MUS"   PRG
+9    "HLO MARY LOU.MUS" PRG
+7    "HOLD UR HAND.MUS" PRG
+10   "HONKEY TONK.MUS"  PRG
+6    "HOW DO TO ME.MUS" PRG
+9    "I WILL/BEATL.MUS" PRG
+6    "IMAGE OF GRL.MUS" PRG
+17   "JNGL BL ROCK.SAL" PRG
+12   "JOHN B GOODE.MUS" PRG
+8    "KODACHROME.MUS"   PRG
+6    "LAST KISS.MUS"    PRG
+11   "LIPSTK COLLR.MUS" PRG
+9    "LNG TL SALLY.MUS" PRG
+7    "LOTTA SHAKIN.MUS" PRG
+4    "LOV/LETRSAND.MUS" PRG
+9    "MATERIALGIRL.MUS" PRG
+7    "MYSTERYTRAIN.MUS" PRG
+6    "OLD TME ROCK.MUS" PRG
+6    "ONE FINE DAY.MUS" PRG
+7    "OUTER LIMITS.MUS" PRG
+9    "PIPELINE.MUS"     PRG
+11   "ROLL OVER BT.MUS" PRG
+6    "SANTA.MUS"        PRG
+6    "SAWHER/BEATL.MUS" PRG
+6    "SEA CRUISE.MUS"   PRG
+1    "SIDSTEREO.CONFIG" PRG
+7    "SLEEPWALK.MUS"    PRG
+1    "STEREO BOOTER"    PRG
+5    "STEREOPLAYERFAST" PRG
+111  "STEREOPLAYERV10"  PRG
+7    "STEREOTITLE"      PRG
+8    "SURFER GIRL.MUS"  PRG
+5    "THE STRIPPER.MUS" PRG
+10   "THE WANDERER.MUS" PRG
+20   "TWENTIES.MUS"     PRG
+6    "TWISTNSHOUT.MUS"  PRG
+8    "VENUS.MUS"        PRG
+5    "WHAT A DAY.MUS"   PRG
+7    "WHEN/LOVED.MUS"   PRG
+9    "WHO PUT BOMP.MUS" PRG
+6    "WILD WEEKEND.MUS" PRG
+9    "WIPE OUT.MUS"     PRG
+6    "WNTR WNDRLND.MUS" PRG
+136 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on DrJ5 Side B (stereo).d64
+0 "B               " 2  2A
+6    "BABY LEFT ME.MUS" PRG
+6    "BABY LEFT ME.STR" PRG
+7    "DETOUR.MUS"       PRG
+7    "DETOUR.STR"       PRG
+25   "ELVIS/TRBUTE.MUS" PRG
+40   "ELVIS/TRBUTE.PIC" PRG
+9    "HLO MARY LOU.MUS" PRG
+9    "HLO MARY LOU.STR" PRG
+1    "JNGL BL ROCK.MSW" PRG
+8    "JNGL BL ROCK.MUS" PRG
+17   "JNGL BL ROCK.SAL" PRG
+8    "JNGL BL ROCK.STR" PRG
+5    "JNGL BL ROCK.WDS" PRG
+11   "LIPSTK COLLR.MUS" PRG
+11   "LIPSTK COLLR.STR" PRG
+11   "ROLL OVER BT.MUS" PRG
+11   "ROLL OVER BT.STR" PRG
+7    "SLEEPWALK.MUS"    PRG
+7    "SLEEPWALK.STR"    PRG
+7    "TEEN IN LOVE.MUS" PRG
+7    "TEEN IN LOVE.STR" PRG
+429 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on Jabba Hutt Side A (mono).d64
+0 "JABBA HUTT MONO " JM 2A
+7    "GOLD ARIA.MUS"    PRG
+37   "GOLD ARIA.PIC"    PRG
+23   "GOLD 1-5.MUS"     PRG
+21   "GOLD 6-10.MUS"    PRG
+32   "GOLD 11-15.MUS"   PRG
+27   "GOLD 16-20.MUS"   PRG
+30   "GOLD 21-25.MUS"   PRG
+33   "GOLD 26-30.MUS"   PRG
+8    "TURKISH.MUS"      PRG
+4    "IRISH CASTLE.MUS" PRG
+40   "IRISH CASTLE.PIC" PRG
+28   "RONDO D MAJ.MUS"  PRG
+23   "CLEMENTI 372.MUS" PRG
+37   "CLEMENTI 372.PIC" PRG
+9    "GRADUS 25.MUS"    PRG
+40   "GRADUS 25.PIC"    PRG
+14   "/J HAYDN.MUS"     PRG
+40   "/J HAYDN.PIC"     PRG
+7    "MILITIS DUMP.MUS" PRG
+7    "BONAPARTE.MUS"    PRG
+8    "LA CHASSE.MUS"    PRG
+5    "BULGARIAN.MUS"    PRG
+6    "RIENS/1.MUS"      PRG
+37   "RIENS/1.PIC"      PRG
+5    "RIENS/2.MUS"      PRG
+6    "RIENS/3.MUS"      PRG
+10   "RIENS/4.MUS"      PRG
+3    "RIENS/5.MUS"      PRG
+5    "RIENS/6.MUS"      PRG
+6    "RIENS/7.MUS"      PRG
+4    "RIENS/8.MUS"      PRG
+9    "RIENS/9.MUS"      PRG
+5    "RIENS/10.MUS"     PRG
+11   "AQUILA.MUS"       PRG
+10   "CARO NOME.MUS"    PRG
+5    "SCHWABENTANZ.MUS" PRG
+15   "SPICECAKE.MUS"    PRG
+3    "DUBULA.MUS"       PRG
+3    "DUBULA.WDS"       PRG
+4    "\KOSTENSKO.MUS"   PRG
+4    "\ZBORENKA.MUS"    PRG
+12   "TEMPODIBALLO.MUS" PRG
+21   "ARIA VARIATA.MUS" PRG
+0 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on Jabba Hutt Side B (stereo).d64
+0 "JABBA HUTT STER " JS 2A
+6    "/MUFFAT S1.MUS"   PRG
+4    "/MUFFAT S1.STR"   PRG
+6    "/MUFFAT S2.MUS"   PRG
+5    "/MUFFAT S2.STR"   PRG
+5    "/MUFFAT S3.MUS"   PRG
+3    "/MUFFAT S3.STR"   PRG
+6    "/MUFFAT S4.MUS"   PRG
+4    "/MUFFAT S4.STR"   PRG
+5    "/MUFFAT S5.MUS"   PRG
+3    "/MUFFAT S5.STR"   PRG
+7    "/MUFFAT S6.MUS"   PRG
+4    "/MUFFAT S6.STR"   PRG
+8    "/MUFFAT S7.MUS"   PRG
+5    "/MUFFAT S7.STR"   PRG
+6    "/MUFFAT S8.MUS"   PRG
+3    "/MUFFAT S8.STR"   PRG
+6    "/MUFFAT S9.MUS"   PRG
+4    "/MUFFAT S9.STR"   PRG
+6    "/MUFFAT S10.MUS"  PRG
+4    "/MUFFAT S10.STR"  PRG
+6    "MOZART/GLASS.MUS" PRG
+3    "MOZART/GLASS.STR" PRG
+34   "/FREDERICK.MUS"   PRG
+38   "/FREDERICK.STR"   PRG
+3    "PAR UN MATIN.MUS" PRG
+2    "PAR UN MATIN.STR" PRG
+6    "ENVOLE.MUS"       PRG
+4    "ENVOLE.STR"       PRG
+5    "EXAUDET.MUS"      PRG
+4    "EXAUDET.STR"      PRG
+5    "MUSETTE.MUS"      PRG
+3    "MUSETTE.STR"      PRG
+3    "FOUGERE.MUS"      PRG
+2    "FOUGERE.STR"      PRG
+3    "AMOURS JEAN.MUS"  PRG
+2    "AMOURS JEAN.STR"  PRG
+5    "LEGERE.MUS"       PRG
+4    "LEGERE.STR"       PRG
+4    "AMINTE.MUS"       PRG
+4    "AMINTE.STR"       PRG
+6    "FILETTE.MUS"      PRG
+4    "FILETTE.STR"      PRG
+5    "MAMAN.MUS"        PRG
+5    "MAMAN.STR"        PRG
+7    "AU BOIS.MUS"      PRG
+6    "AU BOIS.STR"      PRG
+4    "PHILIS.MUS"       PRG
+2    "PHILIS.STR"       PRG
+4    "NON JE NE.MUS"    PRG
+3    "NON JE NE.STR"    PRG
+4    "SYLVIE.MUS"       PRG
+4    "SYLVIE.STR"       PRG
+6    "PRINTEMPS.MUS"    PRG
+4    "PRINTEMPS.STR"    PRG
+4    "JE CONNAIS.MUS"   PRG
+3    "JE CONNAIS.STR"   PRG
+3    "NANETTE.MUS"      PRG
+2    "NANETTE.STR"      PRG
+4    "CHAQUE CHOSE.MUS" PRG
+4    "CHAQUE CHOSE.STR" PRG
+3    "LISETTE.MUS"      PRG
+3    "LISETTE.STR"      PRG
+4    "LA MERE.MUS"      PRG
+3    "LA MERE.STR"      PRG
+21   "SCHUBERT.MUS"     PRG
+24   "SCHUBERT.STR"     PRG
+37   "SCHUBERT.PIC"     PRG
+26   "HUTT VARS.MUS"    PRG
+21   "HUTT VARS.STR"    PRG
+40   "HUTT VARS.PIC"    PRG
+4    "ENCORE.MUS"       PRG
+3    "ENCORE.STR"       PRG
+18   "TERPSICHORE.MUS"  PRG
+17   "TERPSICHORE.STR"  PRG
+3    "TERPSICHORE.WDS"  PRG
+7    "BARRICADES.MUS"   PRG
+10   "BARRICADES.STR"   PRG
+40   "BARRICADES.PIC"   PRG
+8    "/DORSETSHIRE.MUS" PRG
+5    "/DORSETSHIRE.STR" PRG
+8    "/IMP DAVIS.MUS"   PRG
+9    "/IMP DAVIS.STR"   PRG
+5    "DE LA GUERRE.MUS" PRG
+2    "DE LA GUERRE.STR" PRG
+7    "/HOW WILLING.MUS" PRG
+4    "/HOW WILLING.STR" PRG
+8 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on SylviaL Side A (mono).d64
+0 "SYLA            " G1 2A
+8    "/MADELON.MUS"     PRG
+6    "/MADELON.STR"     PRG
+12   "/SUNBURST.MUS"    PRG
+10   "/SUNBURST.STR"    PRG
+16   "/THE BANJO.MUS"   PRG
+14   "/THE BANJO.STR"   PRG
+30   "/HAYDN/DCON.MUS"  PRG
+23   "MOZ/DIV/1-1.MUS"  PRG
+19   "/HAYDN/DCON.STR"  PRG
+17   "MOZ/DIV/1-1.STR"  PRG
+13   "BEETH/4HANDS.MUS" PRG
+13   "MOZ/DIV/1-2.MUS"  PRG
+13   "BEETH/4HANDS.STR" PRG
+10   "MOZ/DIV/1-2.STR"  PRG
+15   "MOZ/DIV/1-3.MUS"  PRG
+12   "MOZ/DIV/1-3.STR"  PRG
+8    "SE TU DELLA.MUS"  PRG
+6    "SE TU DELLA.STR"  PRG
+3    "SE TU DELLA.WDS"  PRG
+4    "VALLET.MUS"       PRG
+3    "VALLET.STR"       PRG
+1    "CRICKETS.MUS"     PRG
+13   "/MOZ/VLN/DUO.MUS" PRG
+10   "/MOZ/VLN/DUO.STR" PRG
+8    "/SICILIANO.MUS"   PRG
+9    "/SICILIANO.STR"   PRG
+3    "KUSATSU.MUS"      PRG
+3    "KUSATSU.STR"      PRG
+4    "OSHIMA.MUS"       PRG
+1    "OSHIMA.STR"       PRG
+4    "SADO OKESA.MUS"   PRG
+2    "SADO OKESA.STR"   PRG
+4    "SIDDO BUSHI.MUS"  PRG
+1    "SIDDO BUSHI.STR"  PRG
+5    "YASUGI.MUS"       PRG
+4    "YASUGI.STR"       PRG
+3    "BURABURA.MUS"     PRG
+2    "BURABURA.STR"     PRG
+4    "NIKKO.MUS"        PRG
+1    "NIKKO.STR"        PRG
+4    "KISO.MUS"         PRG
+3    "KISO.STR"         PRG
+28   "/MOZFL-IND.MUS"   PRG
+11   "/MOZFL-IND.STR"   PRG
+10   "JC/VARIAT.MUS"    PRG
+22   "/SEVEN MADS.MUS"  PRG
+13   "/SEVEN MADS.WDS"  PRG
+23   "VIV/AMINOR.MUS"   PRG
+22   "VIV/AMINOR.STR"   PRG
+6    "HAYDN/SEREN.MUS"  PRG
+5    "GREENSLEEVES.MUS" PRG
+4    "PACKINGTONE.MUS"  PRG
+4    "WALSINGHAM.MUS"   PRG
+18   "MOZ/EK/RONDO.MUS" PRG
+40   "BACH/FL/GUIT.PIC" PRG
+10   "BACH/FL/GUIT.MUS" PRG
+27   "BACH/FL/GUIT.STR" PRG
+4    "MOZ/SLEEP.MUS"    PRG
+18   "HAYDN.20C.MUS"    PRG
+11   "MOZART.RUHE.MUS"  PRG
+6    "TIME.BOTTLE.MUS"  PRG
+4    "TIME.BOTTLE.STR"  PRG
+6    "ROSITA.MUS"       PRG
+28 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on SylviaL Side B (stereo).d64
+0 "SYLB            " G2 2A
+21   "\B/BRAND/3-2.MUS" PRG
+20   "\B/BRAND/3-2.STR" PRG
+6    "AVE VERUM.MUS"    PRG
+6    "AVE VERUM.STR"    PRG
+6    "EITHER.MUS"       PRG
+6    "KAJUN KLOG.MUS"   PRG
+8    "EARL.MUS"         PRG
+20   "HAYDN/LARK/4.MUS" PRG
+20   "HAYDN/LARK/4.STR" PRG
+13   "MOZ/FL/RONDO.MUS" PRG
+11   "MOZ/FL/RONDO.STR" PRG
+13   "ABBA/DREAM.MUS"   PRG
+11   "ABBA/DREAM.STR"   PRG
+4    "ABBA/DREAM.WDS"   PRG
+21   "BACHBRAND3/2.MUS" PRG
+20   "BACHBRAND3/2.STR" PRG
+9    "TELEFAN1/1.MUS"   PRG
+10   "TELEFAN1/2.MUS"   PRG
+9    "TELEFAN1/3.MUS"   PRG
+9    "TELEFAN1/4.MUS"   PRG
+11   "TELEFAN1/5.MUS"   PRG
+9    "TELEFAN1/6.MUS"   PRG
+3    "SOMMEIL.MUS"      PRG
+4    "CELEBRONS.MUS"    PRG
+13   "/SEVEN MADS.WDS"  PRG
+5    "GREENSLEEVES.MUS" PRG
+4    "PACKINGTONE.MUS"  PRG
+4    "WALSINGHAM.MUS"   PRG
+16   "BOHEMIA/RAG.MUS"  PRG
+16   "HOOK/SON/DNC.MUS" PRG
+7    "MUFFAT.MUS"       PRG
+14   "PATRICIA/RAG.MUS" PRG
+13   "WAKEUPMOZART.MUS" PRG
+19   "\CHAMPAGNE.MUS"   PRG
+10   "CHIAPANECAS.MUS"  PRG
+10   "LEOTOCCATA.MUS"   PRG
+28   "PARADISI.MUS"     PRG
+32   "PRELUDEINE.MUS"   PRG
+8    "SCRBROFAIR.MUS"   PRG
+21   "TEDDY/PICNIC.MUS" PRG
+5    "TEDDY/PICNIC.WDS" PRG
+14   "HAYDNQINC.MUS"    PRG
+13   "HAYDNQINC.STR"    PRG
+7    "VIVALDI/1-4.MUS"  PRG
+8    "VIVALDI/1-4.STR"  PRG
+4    "ROIS.MUS"         PRG
+3    "ROIS.WDS"         PRG
+3    "ROIS.STR"         PRG
+12   "REINDEERRAG.MUS"  PRG
+37   "REINDEERRAG.WDS"  PRG
+17   "HAYDNQINC/II.MUS" PRG
+11   "HAYDNQINC/II.STR" PRG
+6    "BACHAIR.MUS"      PRG
+5    "BACHAIR.STR"      PRG
+5    "VIVALDI/2-3.MUS"  PRG
+4    "VIVALDI/2-3.STR"  PRG
+10   "VIVALDI/4-4.MUS"  PRG
+9    "VIVALDI/4-4.STR"  PRG
+1 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on Whole Note Side A (mono).d64
+0 "WHOLE NOTE      " M  2A
+16   "HAND/BLKSMTH.MUS" PRG
+7    "SINFONIA/1.MUS"   PRG
+8    "SINFONIA/10.MUS"  PRG
+9    "SINFONIA/12.MUS"  PRG
+9    "SINFONIA/15.MUS"  PRG
+6    "IMAGINE.MUS"      PRG
+3    "IMAGINE.WDS"      PRG
+5    "FRIEND/4-RMX.WDS" PRG
+8    "FRIEND/4-RMX.MUS" PRG
+8    "MOONDANCE.MUS"    PRG
+8    "MOONDANCE.WDS"    PRG
+25   "DMIN/HANDEL.MUS"  PRG
+10   "ALLEGRO DMIN.MUS" PRG
+14   "MUSICALCLOCK.MUS" PRG
+10   "PARANOID.MUS"     PRG
+5    "OKLAHOMA.WDS"     PRG
+12   "OKLAHOMA.MUS"     PRG
+5    "BACH/MIN G.MUS"   PRG
+16   "HANDEL/PASS.MUS"  PRG
+5    "WHOOPEE TI.MUS"   PRG
+7    "WHOOPEE TI.WDS"   PRG
+5    "GRASS WONT.WDS"   PRG
+10   "GRASS WONT.MUS"   PRG
+9    "EBONY/IVORY.MUS"  PRG
+5    "EBONY/IVORY.WDS"  PRG
+10   "SONG SUNG.MUS"    PRG
+4    "WONDER/WORLD.WDS" PRG
+11   "WONDER/WORLD.MUS" PRG
+6    "SONG SUNG.WDS"    PRG
+6    "HELLO.MUS"        PRG
+5    "HELLO.WDS"        PRG
+9    "CIRCLE.MUS"       PRG
+2    "CIRCLE.WDS"       PRG
+7    "WOODPECKER.MUS"   PRG
+40   "WOODPECKER.PIC"   PRG
+6    "WOODPECKER.WDS"   PRG
+9    "CANNON D.MUS"     PRG
+11   "CANNON D.WDS"     PRG
+12   "JAM SESSION.WDS"  PRG
+12   "JAM SESSION.MUS"  PRG
+8    "MARCH MEDLEY.MUS" PRG
+2    "MARCH MEDLEY.WDS" PRG
+7    "MAX SILVER.WDS"   PRG
+5    "TRAIL TEARS.MUS"  PRG
+31   "TRAIL TEARS.WDS"  PRG
+8    "MAX SILVER.MUS"   PRG
+12   "HANDEL/FS7/1.MUS" PRG
+19   "HANDEL/FS7/2.MUS" PRG
+13   "HANDEL/FS7/3.MUS" PRG
+21   "HANDEL/FS7/4.MUS" PRG
+10   "ST ELSEWHERE.MUS" PRG
+15   "FANTASIA.MUS"     PRG
+40   "FANTASIA.PIC"     PRG
+8    "SCARLATTI.MUS"    PRG
+7    "IMPOSSIBLE.MUS"   PRG
+40   "IMPOSSIBLE.PIC"   PRG
+4    "IMPOSSIBLE.WDS"   PRG
+4    "FRESCOBALDI.MUS"  PRG
+15   "ZIPOLI.MUS"       PRG
+20 BLOCKS FREE.
+
+Disk: SIDfest '90 (Valley Forge, PA) -- Spotlight on Whole Note Side B (stereo).d64
+0 "WHOLE NOTE      " S  2A
+10   "DMIN/PRELUDE.MUS" PRG
+9    "DMIN/PRELUDE.STR" PRG
+13   "DMIN/PRELUDE.PGG" PRG
+6    "S.AM I BLUE.MUS"  PRG
+8    "S.AM I BLUE.STR"  PRG
+3    "S.AM I BLUE.WDS"  PRG
+10   "MARIONETTE.MUS"   PRG
+8    "MARIONETTE.STR"   PRG
+15   "\MUSKRAT RAM.MUS" PRG
+11   "\MUSKRAT RAM.STR" PRG
+41   "HUT/KIEV.MUS"     PRG
+35   "HUT/KIEV.STR"     PRG
+2    "HUT/KIEV.WDS"     PRG
+11   "CANON D.MUS"      PRG
+6    "CANON D.STR"      PRG
+8    "NOT MISSED.MUS"   PRG
+5    "NOT MISSED.STR"   PRG
+5    "NOT MISSED.WDS"   PRG
+21   "NUTROCKER.MUS"    PRG
+24   "NUTROCKER.STR"    PRG
+10   "PARANOID.MUS"     PRG
+11   "PARANOID.STR"     PRG
+21   "BLACK DOG.MUS"    PRG
+19   "BLACK DOG.STR"    PRG
+12   "/ROCK AGES.MUS"   PRG
+5    "/ROCK AGES.STR"   PRG
+13   "/KYRIE.MUS"       PRG
+13   "/KYRIE.STR"       PRG
+9    "/KYRIE.WDS"       PRG
+67   "/CHROMATIC.MUS"   PRG
+29   "/CHROMATIC.STR"   PRG
+16   "AJA.MUS"          PRG
+12   "AJA.STR"          PRG
+3    "AJA.WDS"          PRG
+6    "GMIN/GIGUE.MUS"   PRG
+4    "GMIN/GIGUE.STR"   PRG
+22   "GMIN/GIGUE.PGG"   PRG
+16   "GMIN/PASS.MUS"    PRG
+13   "GMIN/PASS.STR"    PRG
+23   "GMIN/PASS.PGG"    PRG
+12   "MOUSSORG/ST.MUS"  PRG
+10   "MOUSSORG/ST.STR"  PRG
+37   "MOUSSORG/ST.PGG"  PRG
+30 BLOCKS FREE.
+
+Disk: SIDfest '91 (Miami, FL) -- Classical SIDs from SDAs.d64
+0 "MIAMI '91 SDAS  "    2A
+0    "````MIAMI 1`````" DEL 
+3    "TC1"              SEQ
+31   "AMAJ/VARS.MUS"    PRG
+25   "AMAJ/VARS.STR"    PRG
+10   "BOCCHERINI.MUS"   PRG
+7    "BOCCHERINI.STR"   PRG
+18   "CARNAVAL.MUS"     PRG
+24   "CARNAVAL.STR"     PRG
+63   "CON 5.MUS"        PRG
+30   "CON 5.STR"        PRG
+0    "````MIAMI 2`````" DEL 
+3    "TC2"              SEQ
+6    "DER TOD.MUS"      PRG
+5    "DER TOD.STR"      PRG
+3    "DER TOD.WDS"      PRG
+16   "EGLOGUE.MUS"      PRG
+12   "EGLOGUE.STR"      PRG
+2    "EGLOGUE.WDS"      PRG
+16   "GIPSEIS RND.MUS"  PRG
+12   "GIPSEIS RND.STR"  PRG
+27   "MACH10BACH.MUS"   PRG
+26   "MACH10BACH.STR"   PRG
+21   "NORMA.MUS"        PRG
+19   "NORMA.STR"        PRG
+25   "VIVA MUSICA!.MUS" PRG
+23   "VIVA MUSICA!.STR" PRG
+0    "````MIAMI 3`````" DEL 
+2    "TCM"              SEQ
+9    "BACH-GOUNOD.MUS"  PRG
+15   "BACH BOYS.MUS"    PRG
+3    "BACH BOYS.WDS"    PRG
+11   "BARCAROLLE.MUS"   PRG
+8    "CHOPIN-POLON.MUS" PRG
+17   "EARLY GUITAR.MUS" PRG
+22   "ERVB-1.MUS"       PRG
+14   "SONATA R14.MUS"   PRG
+136 BLOCKS FREE.
+
+Disk: SIDfest '91 (Miami, FL) -- General Side 1.d64
+0 "MIAMI GEN1      " ¬RADD
+3    "TG1"              SEQ
+5    "ARCADE.MUS"       PRG
+12   "CARNIVALE.MUS"    PRG
+11   "CARNIVALE.STR"    PRG
+10   "CARNIVALE.WDS"    PRG
+7    "CINDY.MUS"        PRG
+8    "CINDY.STR"        PRG
+4    "CINDY.WDS"        PRG
+8    "COME TOGETHR.MUS" PRG
+7    "COME TOGETHR.STR" PRG
+6    "COME TOGETHR.WDS" PRG
+9    "DOMINO.MUS"       PRG
+8    "DOMINO.WDS"       PRG
+10   "DOOR V.MUS"       PRG
+9    "DOOR V.STR"       PRG
+7    "DREAMALITTLE.MUS" PRG
+5    "EAGLE/HAWK.MUS"   PRG
+3    "EAGLE/HAWK.STR"   PRG
+7    "GHOST RIDERS.MUS" PRG
+5    "GHOST RIDERS.STR" PRG
+13   "HIGHWAY2HELL.MUS" PRG
+8    "HIGHWAY2HELL.STR" PRG
+7    "HIGHWAY2HELL.WDS" PRG
+492 BLOCKS FREE.
+
+Disk: SIDfest '91 (Miami, FL) -- General Side 2.d64
+0 "MIAMI GEN2      "    2A
+3    "TG2"              SEQ
+24   "HOOKEDONC&V.MUS"  PRG
+39   "HOOKEDONC&V.STR"  PRG
+14   "HOOKEDONC&V.WDS"  PRG
+9    "LAST DANCE.MUS"   PRG
+8    "LAST DANCE.STR"   PRG
+9    "LAST DANCE.WDS"   PRG
+7    "LEVIATHAN.MUS"    PRG
+18   "LEVIATHAN.PGG"    PRG
+7    "LEVIATHAN.STR"    PRG
+5    "LEVIATHAN.WDS"    PRG
+17   "LIONTAMERRAG.MUS" PRG
+17   "LIONTAMERRAG.STR" PRG
+10   "MICABALLERO.MUS"  PRG
+9    "MICABALLERO.STR"  PRG
+5    "MICABALLERO.WDS"  PRG
+463 BLOCKS FREE.
+
+Disk: SIDfest '91 (Miami, FL) -- General Side 3.d64
+0 "MIAMI GEN3      "    2A
+3    "TG3"              SEQ
+17   "OLDIES.MUS"       PRG
+15   "OLDIES.STR"       PRG
+24   "PAPER.MUS"        PRG
+17   "SEASNS/ABYSS.MUS" PRG
+20   "SEASNS/ABYSS.STR" PRG
+6    "SEASNS/ABYSS.WDS" PRG
+16   "SKIMBLESHANK.MUS" PRG
+14   "SKIMBLESHANK.STR" PRG
+15   "SKIMBLESHANK.WDS" PRG
+9    "SWING/THINGS.MUS" PRG
+8    "SWING/THINGS.STR" PRG
+11   "VALENCIA.MUS"     PRG
+10   "VALENCIA.STR"     PRG
+8    "WHEELS.MUS"       PRG
+8    "WHEELS.STR"       PRG
+463 BLOCKS FREE.
+
+Disk: SIDfest '91 (Miami, FL) -- Songs collected unofficially by Colin Roth Side A.d64
+0 "SIDFEST         " W2 2A
+22   "CLEMENTI362.MUS"  PRG
+29   "CLOSE/EDGE.MUS"   PRG
+23   "CLOSE/EDGE.WDS"   PRG
+10   "FANTASIA 5.MUS"   PRG
+11   "GIGA.MUS"         PRG
+15   "JJACK FLASH.MUS"  PRG
+6    "JJACK FLASH.WDS"  PRG
+10   "JUST IMAGINE.MUS" PRG
+9    "MAKELOVINFUN.MUS" PRG
+3    "MAKELOVINFUN.WDS" PRG
+19   "SECOND.MUS"       PRG
+6    "SKYBIRD.MUS"      PRG
+3    "SKYBIRD.WDS"      PRG
+13   "10 ARIA 2.MUS"    PRG
+1    "FLUTE SET.MUS"    PRG
+22   "NOTHING ELSE.MUS" PRG
+7    "NOTHING ELSE.WDS" PRG
+5    "10 ARIA 2.WDS"    PRG
+10   "AUBERT.MUS"       PRG
+11   "FLUTESON-KOH.MUS" PRG
+22   "/CLEM-SON372.MUS" PRG
+2    "SEA CHANTY 2.MUS" PRG
+5    "OTME BULBUL.MUS"  PRG
+4    "TA GU.MUS"        PRG
+40   "DUSSEK.SDA"       PRG
+25   "DUSSEK/SQF.MUS"   PRG
+18   "DUSSEK/SQF.STR"   PRG
+4    "AUST-CZERNY.MUS"  PRG
+1    "PIANO.MUS"        PRG
+10   "VOLKMANN.MUS"     PRG
+6    "HELLER-OP471.MUS" PRG
+6    "VAR-ANSELM.MUS"   PRG
+24   "SAD BUT TRUE.MUS" PRG
+7    "SAD BUT TRUE.WDS" PRG
+5    "SCHUB-OP18-4.MUS" PRG
+3    "/FILII.MUS"       PRG
+5    "TARREGA PR 2.MUS" PRG
+15   "DAYDREAM.MUS"     PRG
+1    "/APRIL SKY.MUS"   PRG
+17   "/HELL PATROL.MUS" PRG
+3    "/HELL PATROL.WDS" PRG
+3    "VIR-MISC1.MUS"    PRG
+2    "CROFTPRELUDE.MUS" PRG
+3    "BACH-BMV977.MUS"  PRG
+23   "BEE1"             PRG
+13   "WIZ1"             PRG
+23   "BEE2"             PRG
+138 BLOCKS FREE.
+
+Disk: SIDfest '91 (Miami, FL) -- Songs collected unofficially by Colin Roth Side B.d64
+0 "MUSIC           " W2 2A
+3    "SUMER.MUS"        PRG
+3    "TANT.CON.JE.MUS"  PRG
+3    "BELLE.QUI.MUS"    PRG
+3    "VERIS.DULCIS.MUS" PRG
+4    "AH.ROBIN.MUS"     PRG
+4    "STELLA.MUS"       PRG
+8    "WORK/WEEKEND.MUS" PRG
+6    "ALLEGRO.MUS"      PRG
+8    "YRMYBESTFRND.MUS" PRG
+3    "LINDA.AMIGA.MUS"  PRG
+5    "LINDA.AMIGA.WDS"  PRG
+5    "SUMER.WDS"        PRG
+2    "TANT.CON.JE.WDS"  PRG
+3    "BELLE.QUI.WDS"    PRG
+7    "VERIS.DULCIS.WDS" PRG
+3    "AH.ROBIN.WDS"     PRG
+2    "STELLA.WDS"       PRG
+7    "WORK/WEEKEND.WDS" PRG
+16   "RUN W/DEVIL.MUS"  PRG
+5    "LOADER"           PRG
+7    "FAT BOTTOMED.MUS" PRG
+12   "WHENWETOUCH.MUS"  PRG
+118  "DRACULA.ARC"      PRG
+14   "ALL MY LUV.MUS"   PRG
+5    "ALL MY LUV.WDS"   PRG
+7    "WHENWETOUCH.WDS"  PRG
+7    "FAT BOTTOMED.WDS" PRG
+392 BLOCKS FREE.
+
+Disk: SIDfest '92 (Columbus, OH) -- Mono.d64
+0 "                " 00 2A
+3    "SCREEN"           SEQ
+22   "CLEMENTI362.MUS"  PRG
+29   "CLOSE/EDGE.MUS"   PRG
+23   "CLOSE/EDGE.WDS"   PRG
+10   "FANTASIA 5.MUS"   PRG
+11   "GIGA.MUS"         PRG
+15   "JJACK FLASH.MUS"  PRG
+6    "JJACK FLASH.WDS"  PRG
+10   "JUST IMAGINE.MUS" PRG
+9    "MAKELOVINFUN.MUS" PRG
+3    "MAKELOVINFUN.WDS" PRG
+19   "SECOND.MUS"       PRG
+6    "SKYBIRD.MUS"      PRG
+3    "SKYBIRD.WDS"      PRG
+495 BLOCKS FREE.
+
+Disk: SIDfest '92 (Columbus, OH) -- Stereo Side 1.d64
+0 "                " 00 2A
+3    "SCREEN"           SEQ
+9    "4 ROWS/JACKS.MUS" PRG
+8    "4 ROWS/JACKS.STR" PRG
+1    "AMBER.ANI"        PRG
+4    "AMBER.MUS"        PRG
+10   "AMBER.PGG"        PRG
+4    "AMBER.STR"        PRG
+8    "CALYPSO.MUS"      PRG
+7    "CALYPSO.STR"      PRG
+7    "CALYPSO.WDS"      PRG
+9    "CONCERTO.MUS"     PRG
+10   "CONCERTO.STR"     PRG
+10   "GO BLUE VAN.MUS"  PRG
+10   "GO BLUE VAN.STR"  PRG
+7    "GO BLUE VAN.WDS"  PRG
+7    "HITJACK.MUS"      PRG
+5    "HITJACK.STR"      PRG
+8    "HITJACK.WDS"      PRG
+12   "KANSASCITY.MUS"   PRG
+12   "KANSASCITY.STR"   PRG
+12   "LOVE/DRUG.MUS"    PRG
+10   "LOVE/DRUG.STR"    PRG
+7    "LOVE/DRUG.WDS"    PRG
+484 BLOCKS FREE.
+
+Disk: SIDfest '92 (Columbus, OH) -- Stereo Side 2.d64
+0 "                " 00 2A
+3    "SCREEN"           SEQ
+9    "MAKELOVINFUN.MUS" PRG
+7    "MAKELOVINFUN.STR" PRG
+3    "MAKELOVINFUN.WDS" PRG
+13   "MANHATTAN.MUS"    PRG
+25   "MANHATTAN.PGG"    PRG
+12   "MANHATTAN.STR"    PRG
+13   "PASSING TIME.MUS" PRG
+6    "PASSING TIME.STR" PRG
+20   "PASSING TIME.WDS" PRG
+18   "SIDFESTSTORY.MUS" PRG
+16   "SIDFESTSTORY.STR" PRG
+35   "SIDFESTSTORY.WDS" PRG
+227 BLOCKS FREE.

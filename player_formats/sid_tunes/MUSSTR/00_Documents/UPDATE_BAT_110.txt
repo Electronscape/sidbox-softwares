@@ -1,0 +1,50 @@
+@echo off
+
+IF EXIST Whats_new_in_v110.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v110.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.10
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\Anon\Living_Years.mus  BJ_Pools\Living_Years.mus
+MOVE Misc\Anon\Living_Years.str  BJ_Pools\Living_Years.str
+MOVE Misc\Anon\Living_Years.wds  BJ_Pools\Living_Years.wds
+MOVE Misc\D\Kawliga.mus  Jerry_Deel\Kawliga.mus
+MOVE Misc\D\Crying_in_the_Chapel.mus  Jerry_Deel\Crying_in_the_Chapel.mus
+MOVe Misc\L\First_Noel.mus  Brian_Barrett_-Psycho_K-\First_Noel.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\Alias_List.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+DEL 00_Documents\Extended_WDS.txt
+MOVE Whats_new_in_v110.txt  00_Documents\Whats_new_in_v110.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_110.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.10 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,259 @@
+@echo off
+
+IF EXIST Whats_new_in_v113.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v113.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.13
+ECHO.
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Misc\Anon_Blank\From_the_Distance.mus
+DEL Misc\G\Zeta_Piscium.mus
+DEL Misc\H\St_Elmos_Fire.mus
+DEL Misc\P\Vienna_Calling.wds
+DEL Sammy_Snake\Beth.mus
+DEL Sammy_Snake\Beth.str
+DEL Sammy_Snake\Beth.wds
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Bobbye\Lady.mus Bobbye\Lady_A.mus
+MOVE Dave_Schmoldt\American_in_Paris.mus Dave_Schmoldt\American_in_Paris_A.mus
+MOVE Jerry_Roth_-Dr_J-\Darktown_Strutters_Bal.mus Jerry_Roth_-Dr_J-\Darktown_Strutters_Ball.mus
+MOVE Michael_French\With_or_Without_You.mus Michael_French\With_or_Without_You_A.mus
+MOVE Misc\Anon_Classical_with_Date\1812_Festival_Overture_part1.mus Dave_Marquis\1812_Festival_Overture_part1.mus
+MOVE Misc\Anon_Classical_with_Date\1812_Festival_Overture_part2.mus Dave_Marquis\1812_Festival_Overture_part2.mus
+MOVE Misc\Anon_Classical_with_Date\1812_Festival_Overture_part3.mus Dave_Marquis\1812_Festival_Overture_part3.mus
+MOVE Misc\Anon_Classical_with_Date\1812_Festival_Overture_part4.mus Dave_Marquis\1812_Festival_Overture_part4.mus
+MOVE Misc\Anon_Classical_with_Date\Allegro_Moderato_1st_Movement.mus Dave_Marquis\Allegro_Moderato_1st_Movement.mus
+MOVE Misc\Anon_Classical_with_Date\Allegro_Moderato_2nd_Movement.mus Dave_Marquis\Allegro_Moderato_2nd_Movement.mus
+MOVE Misc\Anon_Classical_with_Date\Allegro_Moderato_3rd_Movement.mus Dave_Marquis\Allegro_Moderato_3rd_Movement.mus
+MOVE Misc\Anon_Classical_with_Date\Anitras_Dance.mus Dave_Marquis\Anitras_Dance.mus
+MOVE Misc\Anon_Classical_with_Date\Barcarolle.mus Dave_Marquis\Barcarolle.mus
+MOVE Misc\Anon_Classical_with_Date\Concertpiece_No2_in_D_Minor_Opus114_part1.mus Dave_Marquis\Concertpiece_No2_in_D_Minor_Opus114_part1.mus
+MOVE Misc\Anon_Classical_with_Date\Concertpiece_No2_in_D_Minor_Opus114_part2.mus Dave_Marquis\Concertpiece_No2_in_D_Minor_Opus114_part2.mus
+MOVE Misc\Anon_Classical_with_Date\Concertpiece_No2_in_D_Minor_Opus114_part3.mus Dave_Marquis\Concertpiece_No2_in_D_Minor_Opus114_part3.mus
+MOVE Misc\Anon_Classical_with_Date\Papillon_Op43_No1.mus Dave_Marquis\Papillon_Op43_No1.mus
+MOVE Misc\Anon_Classical_with_Date\Pathetique_Sonata_part1.mus Dave_Marquis\Pathetique_Sonata_part1.mus
+MOVE Misc\Anon_Classical_with_Date\Pathetique_Sonata_part2.mus Dave_Marquis\Pathetique_Sonata_part2.mus
+MOVE Misc\Anon_Classical_with_Date\Pathetique_Sonata_part3.mus Dave_Marquis\Pathetique_Sonata_part3.mus
+MOVE Misc\Anon_Classical_with_Date\Poet_and_Peasant.mus Dave_Marquis\Poet_and_Peasant.mus
+MOVE Misc\Anon_Classical_with_Date\Quintet_in_B_Minor_part1.mus Dave_Marquis\Quintet_in_B_Minor_part1.mus
+MOVE Misc\Anon_Classical_with_Date\Quintet_in_B_Minor_part2.mus Dave_Marquis\Quintet_in_B_Minor_part2.mus
+MOVE Misc\Anon_Classical_with_Date\Quintet_in_B_Minor_part3.mus Dave_Marquis\Quintet_in_B_Minor_part3.mus
+MOVE Misc\Anon_Classical_with_Date\Romeo_and_Juliet.mus Dave_Marquis\Romeo_and_Juliet.mus
+MOVE Misc\Anon_Classical_with_Date\Sleeping_Beauty.mus Dave_Marquis\Sleeping_Beauty.mus
+MOVE Misc\Anon_Classical_with_Date\Troika_en_Trainaux.mus Dave_Marquis\Troika_en_Trainaux.mus
+MOVE Misc\Anon_Classical_with_Date\Waltz_of_the_Flowers.mus Dave_Marquis\Waltz_of_the_Flowers.mus
+MOVE Misc\Anon_Classical_with_Date\William_Tell_Overtune_Calm.mus Dave_Marquis\William_Tell_Overtune_Calm.mus
+MOVE Misc\Anon_Classical_with_Date\William_Tell_Overtune_Dawn.mus Dave_Marquis\William_Tell_Overtune_Dawn.mus
+MOVE Misc\Anon_Classical_with_Date\William_Tell_Overtune_Finale.mus Dave_Marquis\William_Tell_Overtune_Finale.mus
+MOVE Misc\Anon_Classical_with_Date\William_Tell_Overtune_Storm.mus Dave_Marquis\William_Tell_Overtune_Storm.mus
+CD Misc
+RMDIR Anon_Classical_with_Date
+CD ..
+MOVE Misc\A\Bells_of_Ss_Marys.mus Misc\A\Bells_of_St_Marys.mus
+MOVE Misc\A\Drum_Cadence.mus Ampix_Metal_Inc\Drum_Cadence.mus
+MOVE Misc\A\Plasmatic_Dream.mus Ampix_Metal_Inc\Plasmatic_Dream.mus
+MOVE Misc\A\Without_you.mus Ampix_Metal_Inc\Without_you.mus
+MOVE Misc\A\Without_you.wds Ampix_Metal_Inc\Without_you.wds
+MOVE Misc\A\Band_on_the_Run.mus Axys\Band_on_the_Run.mus
+MOVE Misc\A\Macgyver.mus Axys\Macgyver.mus
+MOVE Misc\A\Rock_and_Roll_Music.mus Axys\Rock_and_Roll_Music.mus
+MOVE Misc\B\Anyway_you_want_it.mus BlkPanther\Anyway_you_want_it.mus
+MOVE Misc\B\Anyway_you_want_it.str BlkPanther\Anyway_you_want_it.str
+MOVE Misc\B\Danger_Zone.mus BlkPanther\Danger_Zone.mus
+MOVE Misc\B\Eternal_Flame.mus Misc\B\Eternal_Flame_A.mus
+MOVE Misc\B\Hello.mus BlkPanther\Hello.mus
+MOVE Misc\B\Open_Arms.mus BlkPanther\Open_Arms.mus
+MOVE Misc\C\May_the_Force_be_with_you.mus Lincoln_Craig\May_the_Force_be_with_you.mus
+MOVE Misc\C\Princess_Leias_Theme.mus Lincoln_Craig\Princess_Leias_Theme.mus
+MOVE Misc\C\Aint_Misbehaving.mus Lincoln_Craig\Aint_Misbehaving.mus
+MOVE Misc\C\Star_Wars.mus Lincoln_Craig\Star_Wars.mus
+MOVE Misc\C\Star_Wars.str Lincoln_Craig\Star_Wars.str
+MOVE Misc\H\Elements.mus Misc\H\Elements_A.mus
+MOVE Misc\H\Elements.wds Misc\H\Elements_A.wds
+MOVE Misc\L\Abracadabra.mus Ltworf5\Abracadabra.mus
+MOVE Misc\L\Broken_Wings.mus Ltworf5\Broken_Wings.mus
+MOVE Misc\L\Chattanooga_Choo_Choo.mus Ken_Lo\Chattanooga_Choo_Choo.mus
+MOVE Misc\L\Chattanooga_Choo_Choo.str Ken_Lo\Chattanooga_Choo_Choo.str
+MOVE Misc\L\Fur_Elise.mus Ken_Lo\Fur_Elise.mus
+MOVE Misc\L\Fur_Elise.str Ken_Lo\Fur_Elise.str
+MOVE Misc\M\Take_on_me.mus Misc\M\Take_on_me_A.mus
+MOVE Misc\M\Let_the_River_Run.mus Parody_Man\Let_the_River_Run.mus
+MOVE Misc\M\Let_the_River_Run.str Parody_Man\Let_the_River_Run.str
+MOVE Misc\M\Let_the_River_Run.wds Parody_Man\Let_the_River_Run.wds
+MOVE Misc\M\MULE_Remix.mus Parody_Man\MULE_Remix.mus
+MOVE Misc\T\Black_Magic.mus Thorny1\Black_Magic_A.mus
+MOVE Misc\V\Forever_in_Blue_Jeans.mus Victor_Street_Music\Forever_in_Blue_Jeans.mus
+MOVE Misc\V\Forever_in_Blue_Jeans.wds Victor_Street_Music\Forever_in_Blue_Jeans.wds
+MOVE Misc\V\Great_Balls_of_Fire.mus Victor_Street_Music\Great_Balls_of_Fire.mus
+MOVE Misc\V\Great_Balls_of_Fire.str Victor_Street_Music\Great_Balls_of_Fire.str
+MOVE Misc\V\Tie_a_Yellow_Ribbon_round_the_Ole_Oak_Tree.mus Victor_Street_Music\Tie_a_Yellow_Ribbon_round_the_Ole_Oak_Tree.mus
+MOVE Misc\V\Tie_a_Yellow_Ribbon_round_the_Ole_Oak_Tree.str Victor_Street_Music\Tie_a_Yellow_Ribbon_round_the_Ole_Oak_Tree.str
+MOVE Misc\V\Train_with_Whistle.mus Victor_Street_Music\Train_with_Whistle.mus
+MOVE Misc\V\Imagine.mus Veeger\Imagine.mus
+MOVE Misc\V\Moonlight_Sonata.mus Veeger\Moonlight_Sonata.mus
+MOVE Misc\V\Papagenos_Magic_Melody.mus Veeger\Papagenos_Magic_Melody.mus
+MOVE Nosfera_II\Man_Dogs_and_Englishmen.mus Nosfera_II\Mad_Dogs_and_Englishmen.mus
+MOVE Nosfera_II\Man_Dogs_and_Englishmen.str Nosfera_II\Mad_Dogs_and_Englishmen.str
+MOVE Nosfera_II\Man_Dogs_and_Englishmen.wds Nosfera_II\Mad_Dogs_and_Englishmen.wds
+MOVE Power3\Subdivisions.mus Misc\R\Subdivisions.mus
+MOVE Sid_Editor\Angel_of_Muisc_and_Phantom_of_the_Opera.mus Sid_Editor\Angel_of_Music_and_Phantom_of_the_Opera.mus
+MOVE Sid_Editor\Angel_of_Muisc_and_Phantom_of_the_Opera.str Sid_Editor\Angel_of_Music_and_Phantom_of_the_Opera.str
+MOVE Saint_Bob1\Life_is_a_Highway.mus Saint_Bob1\Life_is_a_Highway_A.mus
+MOVE Saint_Bob1\Life_is_a_Highway.wds Saint_Bob1\Life_is_a_Highway_A.wds
+
+REM Remove Puzzle Page Numbers
+
+MOVE Barbara_H_Schulak\Four_Landlers_(Puzzle_Page_066).mus Barbara_H_Schulak\Four_Landlers.mus
+MOVE Barbara_H_Schulak\Mozart_Sonatina_#1_(Puzzle_Page_064).mus Barbara_H_Schulak\Mozart_Sonatina_#1.mus
+MOVE Barbara_H_Schulak\We_Three_Kings_(Puzzle_Page_067).mus Barbara_H_Schulak\We_Three_Kings.mus
+
+CD Dave_Marquis
+MOVE Aggie_War_Hymn_(Puzzle_Page_184).mus Aggie_War_Hymn.mus
+MOVE Allegretto_(Puzzle_Page_159).mus Allegretto.mus
+MOVE Andaluza_(Puzzle_Page_097).mus Andaluza.mus
+MOVE Anvil_Chorus_(Puzzle_Page_133).mus Anvil_Chorus.mus
+MOVE Aragonaise_(Puzzle_Page_090).mus Aragonaise.mus
+MOVE Black_Cat_Rag_(Puzzle_Page_065_143).mus Black_Cat_Rag.mus
+MOVE Bourree_(Puzzle_Page_087).mus Bourree.mus
+MOVE Chaconne_Op62_(Puzzle_Page_101).mus Chaconne_Op62.mus
+MOVE Chant_Sans_Paroles_(Puzzle_Page_081).mus Chant_Sans_Paroles.mus
+MOVE Clementi_Op36_No2_(Puzzle_Page_Best).mus Clementi_Op36_No2.mus
+MOVE Cleopha_(Puzzle_Page_089_130).mus Cleopha.mus
+MOVE Concerto_in_A_Minor_(Puzzle_Page_108).mus Concerto_in_A_Minor.mus
+MOVE Coronation_March_(Puzzle_Page_120).mus Coronation_March.mus
+MOVE Courante_KV399_(Puzzle_Page_106).mus Courante_KV399.mus
+MOVE Cushion_Dance_(Puzzle_Page_126_143).mus Cushion_Dance.mus
+MOVE Czardas_(Puzzle_Page_128).mus Czardas.mus
+MOVE Democratic_Republic_of_Germany_(Puzzle_Page_168).mus Democratic_Republic_of_Germany.mus
+MOVE Diplomat_March_(Puzzle_Page_099).mus Diplomat_March.mus
+MOVE Divertimento_(Puzzle_Page_070).mus Divertimento.mus
+MOVE Fight_for_LSU_(Puzzle_Page_182).mus Fight_for_LSU.mus
+MOVE Finale_Overture_(Puzzle_Page_114).mus Finale_Overture.mus
+MOVE First_Day_of_Spring_(Puzzle_Page_167).mus First_Day_of_Spring.mus
+MOVE Fugue_No21_(Puzzle_Page_063).mus Fugue_No21.mus
+MOVE Galop_(Puzzle_Page_095_154_188_190_192_197).mus Galop.mus
+MOVE Grand_March_(Puzzle_Page_123).mus Grand_March.mus
+MOVE Grand_Waltz_(Puzzle_Page_110).mus Grand_Waltz.mus
+MOVE Hoosier_Rag_(Puzzle_Page_088).mus Hoosier_Rag.mus
+MOVE Hulls_Victory_(Puzzle_Page_157).mus Hulls_Victory.mus
+MOVE In_the_Good_Old_Summertime_(Puzzle_Page_181).mus In_the_Good_Old_Summertime.mus
+MOVE Inspired_(Puzzle_Page_121).mus Inspired.mus
+MOVE Intermezzo_(Puzzle_Page_113_132).mus Intermezzo.mus
+MOVE Invitation_to_the_Dance_(Puzzle_Page_112).mus Invitation_to_the_Dance.mus
+MOVE Jack_Tar_March_(Puzzle_Page_104).mus Jack_Tar_March.mus
+MOVE Knight_Rupert_Op68_No12_(Puzzle_Page_076).mus Knight_Rupert_Op68_No12.mus
+MOVE La_Banoline_(Puzzle_Page_083).mus La_Banoline.mus
+MOVE La_Lisjonjera_(Puzzle_Page_117).mus La_Lisjonjera.mus
+MOVE Le_Coucou_(Puzzle_Page_084).mus Le_Coucou.mus
+MOVE Les_Moissonneurs_(Puzzle_Page_094).mus Les_Moissonneurs.mus
+MOVE Lonely_Heart_(Puzzle_Page_143).mus Lonely_Heart.mus
+MOVE March_of_the_Dwarfs_(Puzzle_Page_082).mus March_of_the_Dwarfs.mus
+MOVE March_Op54_(Puzzle_Page_102).mus March_Op54.mus
+MOVE Mazukra_in_B_Flat_(Puzzle_Page_169).mus Mazukra_in_B_Flat.mus
+MOVE Menuet_and_Trio_(Puzzle_Page_156).mus Menuet_and_Trio.mus
+MOVE Menuett_(Puzzle_Page_119_131).mus Menuett.mus
+MOVE Minuet_in_G_(Puzzle_Page_116).mus Minuet_in_G.mus
+MOVE Minuetto_with_Variations_(Puzzle_Page_103).mus Minuetto_with_Variations.mus
+MOVE Musette_(Puzzle_Page_077).mus Musette.mus
+MOVE Music_Box_(Puzzle_Page_086).mus Music_Box.mus
+MOVE Musical_Snuff_Box_(Puzzle_Page_143).mus Musical_Snuff_Box.mus
+MOVE Nocturne_Op10_N01_(Puzzle_Page_074).mus Nocturne_Op10_N01.mus
+MOVE Persian_Dance_(Puzzle_Page_127_176_177).mus Persian_Dance.mus
+MOVE Pilgrims_Chorus_(Puzzle_Page_109).mus Pilgrims_Chorus.mus
+MOVE Polka_(Puzzle_Page_136).mus Polka.mus
+MOVE Polka_Mazurka_(Puzzle_Page_138).mus Polka_Mazurka.mus
+MOVE Polonaise_(Puzzle_Page_071).mus Polonaise.mus
+MOVE Polonaise_No6_(Puzzle_Page_105).mus Polonaise_No6.mus
+MOVE Polonaise_Op75_No1_(Puzzle_Page_085).mus Polonaise_Op75_No1.mus
+MOVE Ricercata_Divertimento_(Puzzle_Page_137).mus Ricercata_Divertimento.mus
+MOVE Richmond_Rag_(Puzzle_Page_129_175).mus Richmond_Rag.mus
+MOVE Rondeau_(Puzzle_Page_096).mus Rondeau.mus
+MOVE Sabre_Dance_(Puzzle_Page_125).mus Sabre_Dance.mus
+MOVE Scherzo_Op16_No2_(Puzzle_Page_073).mus Scherzo_Op16_No2.mus
+MOVE Sonata_Allegretto_(Puzzle_Page_092).mus Sonata_Allegretto.mus
+MOVE Sonata_for_Violone_(Puzzle_Page_143).mus Sonata_for_Violone.mus
+MOVE Sonata_GF_Handel_(Puzzle_Page_080).mus Sonata_GF_Handel.mus
+MOVE Sonata_Longo_93_(Puzzle_Page_098).mus Sonata_Longo_93.mus
+MOVE Spinning_Song_(Puzzle_Page_072).mus Spinning_Song.mus
+MOVE Tamourin_(Puzzle_Page_075).mus Tambourin.mus
+MOVE Thr_Hunt_(Puzzle_Page_093).mus The_Hunt.mus
+MOVE Three_Ravens_(Puzzle_Page_134).mus Three_Ravens.mus
+MOVE Toccata_1st_Movement_(Puzzle_Page_078_180).mus Toccata_1st_Movement.mus
+MOVE Totally_Different_Rag_(Puzzle_Page_069).mus Totally_Different_Rag.mus
+MOVE Trepak_Russian_Dance_(Puzzle_Page_079).mus Trepak_Russian_Dance.mus
+MOVE Untitled_(Puzzle_Page_091_107).mus Untitled_091.mus
+MOVE Untitled_(Puzzle_Page_122).mus Untitled_122.mus
+MOVE Untitled_(Puzzle_Page_158).mus Untitled_158.mus
+MOVE Wireless_Rag_(Puzzle_Page_068_143).mus Wireless_Rag.mus
+CD ..
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\BJ_Pools__Armageddon_It.mus  BJ_Pools\Armageddon_It.mus
+MOVE /y Updated\BJ_Pools__Coming_Home.mus  BJ_Pools\Coming_Home.mus
+MOVE /y Updated\Dave_Burkus_-Mmcss-__Tiptoe_Through_the_Tulips_with_me.mus  Dave_Burkus_-Mmcss-\Tiptoe_Through_the_Tulips_with_me.mus
+MOVE /y Updated\DC_Star_and_Cpr__Circle_in_the_Sand.mus  DC_Star_and_Cpr\Circle_in_the_Sand.mus
+MOVE /y Updated\DC_Star_and_Cpr__James_Bond_Medley.mus  DC_Star_and_Cpr\James_Bond_Medley.mus
+MOVE /y Updated\DC_Star_and_Cpr__Miami_Sound_Machine__Anything_for_You.mus  DC_Star_and_Cpr\Miami_Sound_Machine\Anything_for_You.mus
+MOVE /y Updated\Firth__Fight_Fiercely_Harvard.mus  Firth\Fight_Fiercely_Harvard.mus
+MOVE /y Updated\Firth__Wiener_Schnitzel_Waltz.mus  Firth\Wiener_Schnitzel_Waltz.mus
+MOVE /y Updated\Glass_Soul__Lay_Down_Sally.mus  Glass_Soul\Lay_Down_Sally.mus
+MOVE /y Updated\Jim_and_Carole_Dietz__Yankee_Doodle.mus  Jim_and_Carole_Dietz\Yankee_Doodle.mus
+MOVE /y Updated\Mark_-AD_II-_Dickenson__Youre_the_Devil_in_Disguise.wds  Mark_-AD_II-_Dickenson\Youre_the_Devil_in_Disguise.wds
+MOVE /y Updated\Melody__Lydia.mus  Melody\Lydia.mus
+MOVE /y Updated\Melody__Road_goes_Ever_on.mus  Melody\Road_goes_Ever_on.mus
+MOVE /y Updated\Melody__Upon_the_Hearth_the_Fire_is_Red.mus  Melody\Upon_the_Hearth_the_Fire_is_Red.mus
+MOVE /y Updated\Misc__F__Fly_by_Night.mus  Misc\F\Fly_by_Night.mus
+MOVE /y Updated\Misc__G__Help_me_make_it_Through.mus  Misc\G\Help_me_make_it_Through.mus
+MOVE /y Updated\Misc__M__Ten_Little_Indians.mus  Misc\M\Ten_Little_Indians.mus
+MOVE /y Updated\Misc__P__Nights_are_Forever_Without_you.mus  Misc\P\Nights_are_Forever_Without_you.mus
+MOVE /y Updated\Power3__Subdivisions.mus  Power3\Subdivisions.mus
+MOVE /y Updated\Saint_Bob1__End_of_the_Road.mus  Saint_Bob1\End_of_the_Road.mus
+MOVE /y Updated\Sean_Fields__I_think_Im_a_Clone_Now.mus  Sean_Fields\I_think_Im_a_Clone_Now.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+MOVE John_E_Roach John_E_Roache
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Commodore64\00readme.txt
+DEL 00_Commodore64\SidPic.d64
+DEL 00_Commodore64\StereoA.d64
+DEL 00_Commodore64\StereoB.d64
+MOVE Commodore64_00readme.txt 00_Commodore64\00readme.txt
+MOVE SidPic_v12.d64 00_Commodore64\SidPic_v12.d64
+MOVE SidPic_v25.d64 00_Commodore64\SidPic_v25.d64
+MOVE SidPic_v34.d64 00_Commodore64\SidPic_v34.d64
+MOVE Stereo_Player_080.d64 00_Commodore64\Stereo_Player_080.d64
+MOVE Stereo_Player_103.d64 00_Commodore64\Stereo_Player_103.d64
+DEL 00_Documents\Alias_List.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v113.txt  00_Documents\Whats_new_in_v113.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_113.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.13 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

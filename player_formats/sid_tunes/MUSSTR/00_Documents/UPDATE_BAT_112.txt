@@ -1,0 +1,47 @@
+@echo off
+
+IF EXIST Whats_new_in_v112.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v112.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.12
+ECHO.
+
+::::::::::
+: DELETE :
+::::::::::
+REM Bad Stereo File
+DEL Nick_Zelinsky\Living_Years.str
+DEL DC_Star_and_Cpr\Paradise_City.str
+DEL DC_Star_and_Cpr\Say_you_Will.str
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\Alias_List.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v112.txt  00_Documents\Whats_new_in_v112.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_112.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.12 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

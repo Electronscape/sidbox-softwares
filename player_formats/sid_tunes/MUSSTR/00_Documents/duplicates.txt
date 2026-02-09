@@ -1,0 +1,161 @@
+There are a number of known duplicates in the collection.
+The reason for keeping both is as below:
+
+QSID Countdown
+==============
+These were released as a set, so keeping the version with the QSID text as well as the original.
+
+Misc\Qsid_Countdown\QSID_01_Close_my_Eyes_Forever.mus  Sean_Fields\Close_my_Eyes_Forever.mus  
+Misc\Qsid_Countdown\QSID_02_Wish_you_were_Here.mus     Archmagus_-Rob_Wygand-\Wish_you_were_Here_A.mus
+Misc\Qsid_Countdown\QSID_03_Layla.mus                  DC_Holmes\Layla.mus
+Misc\Qsid_Countdown\QSID_04_Sweet_Child_of_Mine.mus    BJ_Pools\Sweet_Child_o_Mine_B.mus
+Misc\Qsid_Countdown\QSID_05_Yellow_Submarine.mus       DC_Star_and_Cpr\Pictures\Yellow_Submarine.mus
+Misc\Qsid_Countdown\QSID_05_Stationary_Ark.mus         Misc\M\Stationary_Ark.mus
+Misc\Qsid_Countdown\QSID_06_Mystery_Train.mus          Jerry_Roth_-Dr_J-\Mystery_Train.mus
+Misc\Qsid_Countdown\QSID_07_Immigrant_Song.mus         Sadist_-Madman-_-Mike_Madsen-\Immigrant_Song.mus
+Misc\Qsid_Countdown\QSID_08_Call_of_Ktulu.mus          Uncle_Slam\Call_of_Ktulu.mus
+Misc\Qsid_Countdown\QSID_09_Baby_Elephant_Walk.mus     Lyric\Baby_Elephant_Walk_B.mus
+Misc\Qsid_Countdown\QSID_10_Heat_of_the_Moment.mus     Misc\S\Heat_of_the_Moment.mus
+
+
+Alternative Words
+=================
+These either have different words or a version with parody words.
+
+Altered_Ego\Walk_like_a_Grandmaw.mus                                  Nick_Zelinsky\Walk_like_an_Egyptian.mus
+Bobbye\Mammas_dont_let_your_Babies_grow_up_to_be_QGuides.mus          Bobbye\Mammas_dont_let_your_Babies_grow_up_to_be_Cowboys.mus
+Bobbye\Send_in_the_Clones.mus                                         Bobbye\Send_in_the_Clowns.mus
+Datasid_-Troy_Rutter-\Hate_to_See_Cher.mus                            DC_Star_and_Cpr\Hip_to_be_Square.mus
+Datasid_-Troy_Rutter-\Its_a_Hell_Hole_after_all.mus                   Nick_Zelinsky\Its_a_Small_World.mus
+DC_Star_and_Cpr\Life_on_Quantumlink.mus                               DC_Star_and_Cpr\Where_do_I_begin.mus
+Misc\Anon\My_Bologna.mus                                              Lyric\My_Sharona.mus
+Misc\W\Club_called_ICPUG.mus                                          Dean_Schold\House_of_the_Rising_Sun.mus
+Nick_Zelinsky\This_Old_Q-Link.mus                                     Nick_Zelinsky\This_Old_Guitar.mus
+Sean_Fields\This_Songs_just_Six_Words_Long.mus                        DC_Holmes\Got_my_Mind_set_on_you.mus
+Spiecher\Rainbow_Connection_A.mus                                     Spiecher\Rainbow_Connection_B.mus
+Stewart_Meyers\12_Redneck_Days_of_Christmas.mus                       Stewart_Meyers\12_Days_of_Christmas.mus
+Stewart_Meyers\Along_the_Grand_Canal.mus                              DC_Star_and_Cpr\What_Child_is_this.mus
+Stewart_Meyers\Babylon_Pie.mus                                        Jim_Masterson\American_Pie_A.mus
+Stewart_Meyers\Ballad_of_Cyrano_Jones.mus                             Nick_Zelinsky\Ballad_of_Jed_Clampett_Beverly_Hillbillies.mus
+Stewart_Meyers\Ben_Sisko.mus                                          Bobbye\Fernando_A.mus
+Stewart_Meyers\Bill_Gates_Song.mus                                    Misc\Anon\Christmas_Song.mus
+Stewart_Meyers\Capitol_Steps_Song.mus                                 Les_Herrman\Impossible_Dream_C.mus
+Stewart_Meyers\Chaostime_in_the_City.mus                              Misc\Data_Dugout_BBS\Silver_Bells.mus
+Stewart_Meyers\Chipwonk_Song_(BAD).mus                                Dean_Schold\Chipmunk_Song.mus
+Stewart_Meyers\Christmas_Time_is_Coming_Around.mus                    Etienne\Santa_Claus_is_Coming_to_Town.mus
+Stewart_Meyers\Clinton_Bash.mus                                       Spiecher\Monster_Mash.mus
+Stewart_Meyers\Coward_of_the_Daleks.mus                               Tom_B24\Coward_of_the_County.mus
+Stewart_Meyers\Ding_Fries_are_Done.mus                                Bob_Huffman\Carol_of_the_Bells.mus
+Stewart_Meyers\Doctor_the_Eighth.mus                                  Nick_Zelinsky\Im_Henry_the_VIII_I_am.mus
+Stewart_Meyers\Doctor_the_Magic_Time_Lord.mus                         Nick_Zelinsky\Puff_the_Magic_Dragon.mus
+Stewart_Meyers\Eat_It.mus                                             George_Bounacos\Beat_it.mus
+Stewart_Meyers\Frosty_the_Dopeman.mus                                 Les_Herrman\Frosty_the_Snowman_B.mus
+Stewart_Meyers\Grandma_got_Hung_Over_Drinking_Rainier.mus             Nick_Zelinsky\Grandma_got_Runover_by_a_Reindeer.mus
+Stewart_Meyers\Happily_Addicted_to_the_Web.mus                        Misc\R\Winter_Wonderland.mus
+Stewart_Meyers\Hello_Mudduh_Hello_Faddah.mus                          Bobbye\Hello_Mudduh.mus
+Stewart_Meyers\I_came_upom_a_Roadkill_Deer.mus                        Bob_Huffman\It_came_upon_the_Midnight_Clear.mus
+Stewart_Meyers\Im_Looking_over_my_Dead_Dog_Rover.mus                  NeilH4\Im_Looking_over_a_4_Leaf_Clover.mus
+Stewart_Meyers\Jadzia_Dax_Tribute_Song.mus                            DC_Star_and_Cpr\Candle_in_the_Wind.mus
+Stewart_Meyers\Last_of_the_Babylon_Stations.mus                       Lyric\Wreck_of_the_Edmund_Fitzgerald.mus
+Stewart_Meyers\Lieberman_Song.mus                                     Stewart_Meyers\Have_a_no_Deal_a.mus
+Stewart_Meyers\Newt_Gingrich_is_Running.mus                           Etienne\Santa_Claus_is_Coming_to_Town.mus
+Stewart_Meyers\Oh_What_a_Show.mus                                     DC_Starr\Oh_what_a_Night.mus
+Stewart_Meyers\Restroom_Door_said_Gentlemen.mus                       Stewart_Meyers\Oh_Stop_ye_Bustling_Shoppers.mus
+Stewart_Meyers\Rudolph_the_Brown_Nosed_Reindeer.mus                   Misc\Anon\Rudolph_the_Red_Nosed_Reindeer.mus
+Stewart_Meyers\Saturday.mus                                           Ml_Surface\Yesterday.mus
+Stewart_Meyers\Secret_Asian_Man.mus                                   Nick_Zelinsky\Secret_Agent_Man.mus
+Stewart_Meyers\Spinball_Wizard.mus                                    Michael_French\Pinball_Wizard.mus
+Stewart_Meyers\Subpoenaville.mus                                      Lyric\Margaritaville.mus
+Stewart_Meyers\Teddy_the_Red_Nosed_Senator.mus                        Misc\Anon\Rudolph_the_Red_Nosed_Reindeer.mus
+Stewart_Meyers\Thats_Science_Fiction.mus                              Ernest_True\Thats_Entertainment.mus
+Stewart_Meyers\The_Master.mus                                         Paul_Labeaud\Dentist.mus
+Stewart_Meyers\Voyager_Bunch.mus                                      Nick_Zelinsky\Brady_Bunch.mus
+Stewart_Meyers\We_want_our_DS9.mus                                    Dean_Schold\Money_for_Nothing.mus
+Stewart_Meyers\Webster_Bernie_and_Mike.mus                            Nick_Zelinsky\Abraham_Martin_and_John_A.mus
+Stewart_Meyers\Wreck_the_Malls.mus                                    Misc\Anon\Deck_the_Halls_with_Boughs_of_Holly.mus
+Stewart_Meyers\You_can_Sue.mus                                        Misc\Anon\Jingle_Bells_A.mus
+The_Mad_Sidder\Mammas_dont_let_Your_Babies_Grow_up_to_be_No-Daks.mus  Ron_Doss\Mammas_dont_let_your_Babies_Grow_Up_to_be_Cowboys.mus
+The_Mad_Sidder\Off_the_Road_Again.mus                                 Tom_B24\On_the_Road_Again_C.mus
+The_Mad_Sidder\The_Rambler.mus                                        The_Mad_Sidder\The_Gambler.mus
+Waynel\The_Day_the_Bell_System_Died.mus                               Jim_Masterson\American_Pie_A.mus
+Whole_Note\Happy_Birthday_Quantum_Link_B.mus                          Whole_Note\Moondance_C.mus
+Whole_Note\Sid_I_Blew.mus                                             Whole_Note\Song_Sung_Blue.mus
+
+
+Normal and Ext Words
+====================
+One version has normal words and one version has extended words.
+
+DC_and_Bert\Right_here_Waiting.mus              DC_Star\Right_Here_Waiting.mus
+Lyndie\Stranded_A.mus                           Lyndie\Stranded_B.mus
+Nick_Zelinsky\Everybody_have_Fun_Tonight_A.mus  Nick_Zelinsky\Everybody_have_Fun_Tonight_B.mus
+Nick_Zelinsky\Muppet_Show_A.mus                 Nick_Zelinsky\Muppet_Show_B.mus
+
+
+Additional Stereo
+=================
+When there are two versions, one mono and one stereo, with the mus file the same in both, then usually only the stereo version is kept.
+However, when the stereo file is an addition by a different author than the original mono then both versions have been kept.
+
+Kenneth_Barsky\Battlestar_Galactica.mus+str   Brian_M_Szepatowski\Battlestar_Galactica_A.mus       
+Jerry_Roth_-Dr_J-\Long_Tall_Sally_B.mus+str   Jerry_Roth_-Dr_J-\Long_Tall_Sally_A.mus
+
+
+Others to Keep
+==============
+These are where I've decided to keep both for various reasons.
+
+This tune is provided as both a stereo version and two separate files.
+Craig_Chamberlain\Axel_F.mus+str              Craig_Chamberlain\Axel_F_(Left).mus and Craig_Chamberlain\Axel_F_(Right).mus
+
+Since they are part of a set, will keep both. Also III is mono and IV is stereo.
+DC_Starr\Star_Trek_III_Prologue.mus                   DC_Starr\Star_Trek_IV_Prologue.mus
+
+Both versions have different Ext wds.
+DC_Star_and_Cpr\Love_in_the_First_Degree_A.mus        DC_Star_and_Cpr\Love_in_the_First_Degree_B.mus
+
+Both versions have different Ext wds.
+Ed_Grimely\Grandma_got_Runover_by_a_Reindeer_A.mus    Ed_Grimely\Grandma_got_Runover_by_a_Reindeer_B.mus
+
+The 5 lines of text is different in these 3 identical tunes.
+Harry_Bratt\HB\More_Shit1.mus    Harry_Bratt\HB\More_Shit2.mus    Harry_Bratt\HB\More_Text.mus
+
+Deliberate mono and stereo versions that are part of a set of 3 tunes. Only this one has identical mus file, so kept both.
+Syl\Violin_Concerto_in_A_Minor_No2_Andante_Mono.mus   Syl\Violin_Concerto_in_A_Minor_No2_Andante_Stereo.mus
+
+
+Tune same but Stereo different
+==============================
+These have the same mus tune but the str stereo tune is different.
+
+David_Strauss_-Li_Dave-\Led_Zeppelin\Babe_Im_Gonna_Leave_You_A.mus    David_Strauss_-Li_Dave-\Led_Zeppelin\Babe_Im_Gonna_Leave_You_B.mus
+Jerry_Roth_-Dr_J-\Wild_Weekend_A.mus    Jerry_Roth_-Dr_J-\Wild_Weekend_B.mus
+
+
+The Rest
+========
+These are where I can't decide which is the best to keep.  Would aim to keep the one by the original author, when the authors differ.
+
+Dale_Clark\Picnic.mus                     Ettie_Wells\Picnic.mus
+Dave_Marquis\Ciribiribin_B.mus            Kenneth_Barsky\Go_Down_Moses.mus
+Dave_Marquis\Pizzicato_Polka_A.mus        Frank_Higgins\Pizzicato_Polka.mus
+Dave_Marquis\Tritsch_Tratsch_Polka_B.mus  Frank_Higgins\Tritsch_Tratsch_Polka.mus
+Dave_S2\76_Trombones.mus                  Dave_Stewart\76_Trombones.mus
+Daniel_Hardisky\Perpetuum_Mobile.mus      Misc\Anon\Android_Phil.mus
+Elgar\Here_comes_Santa_Claus.mus          Sammy_Snake\Here_comes_Santa_Claus.mus
+Eugenes1\Any_Day_Now.mus                  Gene\Any_Day_Now.mus
+Eugenes1\Cajun_Moon.mus                   Gene\Cajun_Moon.mus
+Eugenes1\Downtown_Train.mus               Gene\Downtown_Train.mus
+Eugenes1\I_Loved_em_Every_One.mus         Gene\I_Loved_em_Every_One.mus
+Eugenes1\Iko_Iko.mus                      Gene\Iko_Iko.mus
+Eugenes1\Lost_in_the_Fifties_Tonight.mus  Gene\Lost_in_the_Fifties_Tonight.mus
+Eugenes1\Maggie_May.mus                   Gene\Maggie_May.mus
+Eugenes1\Nightshift.mus                   Gene\Nightshift.mus
+FatalCharm\Jingle_Bell_Rock.mus           Sammy_Snake\Jingle_Bell_Rock.mus
+Jari_A_Kaarima\Boogie_Oogie_Oogie.mus     Roth_Ladoad\Boogie_Oogie_Oogie.mus
+Laura\America.mus                         Lyric\America.mus
+Laura\Ghosts.mus                          Lyric\Ghosts.mus
+Misc\M\Take_on_me.mus                     Misc\O\Take_on_Me.mus
+Robert_Willis\Tambourin.mus               Z_Axis\Tambourin.mus
+Roth\Helena_Polka.mus                     Roth_Ladoad\Helena_Polka.mus
+Teletran\Fugue_in_A.mus                   Misc\A\Fugue_in_A.mus

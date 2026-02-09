@@ -1,0 +1,60 @@
+@echo off
+
+IF EXIST Whats_new_in_v141.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v141.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.41
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Jerry_Roth_-Dr_J-\Wild_Weekend.mus  Jerry_Roth_-Dr_J-\Wild_Weekend_A.mus
+MOVE Jerry_Roth_-Dr_J-\Wild_Weekend.str  Jerry_Roth_-Dr_J-\Wild_Weekend_A.str
+MOVE Misc\A\Candle_in_the_Wind.mus  Thy_Ace\Candle_in_the_Wind.mus
+MOVE Misc\A\Eleanore_Rigby.mus  Thy_Ace\Eleanore_Rigby.mus
+MOVE Misc\A\Eleanore_Rigby.wds  Thy_Ace\Eleanore_Rigby.wds
+MOVE Misc\A\Shadow_will_Rock.mus  Thy_Ace\Shadow_will_Rock.mus
+MOVE Misc\A\Yesterday.mus  Thy_Ace\Yesterday.mus
+MOVE Misc\B\Sonata_in_C_Major_K545.mus  Gerald_Bilodeau\Sonata_in_C_Major_K545.mus
+MOVE Misc\E\Master_and_Servant.mus  The_Edge\Master_and_Servant.mus
+MOVE Misc\E\Papa_dont_Preach.mus  The_Edge\Papa_dont_Preach.mus
+MOVE Misc\E\Papa_dont_Preach.str  The_Edge\Papa_dont_Preach.str
+MOVE Misc\M\Yellow_Submarine.mus  Misc\M\Yellow_Submarine_A.mus
+MOVE Gerald_Bilodeau\Sontata_in_C_K545.mus  Misc\B\Sonata_in_C_K545.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\John_E_Roache__Solace_A.mus  John_E_Roache\Solace_A.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v141.txt  00_Documents\Whats_new_in_v141.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_141.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.41 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

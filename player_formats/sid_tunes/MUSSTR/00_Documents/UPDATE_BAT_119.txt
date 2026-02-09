@@ -1,0 +1,93 @@
+@echo off
+
+IF EXIST Whats_new_in_v119.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v119.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.19
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE DC_Starr\Get_Fiddler.mus DC\Get_Fiddler.mus
+MOVE DC_Starr\Electric_Youth.str DC_Star\Electric_Youth.str
+MOVE DC_Starr\Electric_Youth.wds DC_Star\Electric_Youth.wds
+DEL DC_Star\Soldier_of_Love.mus
+MOVE DC_Starr\Soldier_of_Love.mus DC_Star\Soldier_of_Love.mus
+MOVE DC_Starr\Soldier_of_Love.str DC_Star\Soldier_of_Love.str
+DEL DC_Star\Toy_Soldiers.mus
+MOVE DC_Starr\Toy_Soldiers.mus DC_Star\Toy_Soldiers.mus
+MOVE DC_Starr\Toy_Soldiers.wds DC_Star\Toy_Soldiers.wds
+MOVE DC_Starr\Express_Yourself.mus DC_Star\Express_Yourself.mus
+MOVE DC_Starr\Express_Yourself.ste DC_Star\Express_Yourself.str
+MOVE DC_Starr\Express_Yourself.wds DC_Star\Express_Yourself.wds
+MOVE DC_Starr\Prelude_in_D_Flat_Major.mus DC_Star\Prelude_in_D_Flat_Major.mus
+MOVE DC_Starr\Prelude_in_D_Flat_Major.str DC_Star\Prelude_in_D_Flat_Major.str
+MOVE DC_Starr\Reflections.mus DC_Star\Reflections.mus
+MOVE DC_Starr\Room_to_Move.mus DC_Star\Room_to_Move.mus
+MOVE DC_Starr\Room_to_Move.str DC_Star\Room_to_Move.str
+MOVE DC_Starr\Room_to_Move.wds DC_Star\Room_to_Move.wds
+MOVE DC_Starr\Thinking_of_You.mus DC_Star\Thinking_of_You.mus
+MOVE DC_Starr\Thinking_of_You.str DC_Star\Thinking_of_You.str
+MOVE DC_Starr\Wind_Beneath_my_Wings.mus DC_Star\Wind_Beneath_my_Wings.mus
+MOVE DC_Starr\Wind_Beneath_my_Wings.str DC_Star\Wind_Beneath_my_Wings.str
+MOVE DC_Starr\Wind_Beneath_my_Wings.wds DC_Star\Wind_Beneath_my_Wings.wds
+MOVE Misc\R\Hurricane_Season.mus Jon_Rafalak\Hurricane_Season.mus
+MOVE Misc\R\Hurricane_Season.str Jon_Rafalak\Hurricane_Season.str
+MOVE Misc\R\Hurricane_Season.wds Jon_Rafalak\Hurricane_Season.wds
+MOVE Misc\R\Not_12-8_B.mus Jon_Rafalak\Not_12-8.mus
+MOVE Misc\R\Rainbow.mus Jon_Rafalak\Rainbow.mus
+MOVE Misc\R\Rainbow.str Jon_Rafalak\Rainbow.str
+
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\BJ_Pools__Candle_in_the_Wind.mus BJ_Pools\Candle_in_the_Wind.mus
+MOVE /y Updated\Bob_Huffman__Christmas_Carol.mus Bob_Huffman\Christmas_Carol.mus
+MOVE /y Updated\DC_Star_and_Cpr__Brilliant_Disguise.mus DC_Star_and_Cpr\Brilliant_Disguise.mus
+MOVE /y Updated\DC_Star_and_Cpr__Cherry_Bomb.mus DC_Star_and_Cpr\Cherry_Bomb.mus
+MOVE /y Updated\DC_Star_and_Cpr__Distant_Early_Warning.mus DC_Star_and_Cpr\Distant_Early_Warning.mus
+MOVE /y Updated\DC_Star_and_Cpr__Dont_Look_Down.mus DC_Star_and_Cpr\Dont_Look_Down.mus
+MOVE /y Updated\DC_Star_and_Cpr__Honestly.mus DC_Star_and_Cpr\Honestly.mus
+MOVE /y Updated\DC_Star_and_Cpr__Ive_been_in_Love_Before.mus DC_Star_and_Cpr\Ive_been_in_Love_Before.mus
+MOVE /y Updated\DC_Star_and_Cpr__La_Villa_Strangiato.mus DC_Star_and_Cpr\La_Villa_Strangiato.mus
+MOVE /y Updated\DC_Star_and_Cpr__Love_Power.mus DC_Star_and_Cpr\Love_Power.mus
+MOVE /y Updated\DC_Star_and_Cpr__Miami_Sound_Machine__Betcha_Say_That.mus DC_Star_and_Cpr\Miami_Sound_Machine\Betcha_Say_That.mus
+MOVE /y Updated\DC_Star_and_Cpr__Red_Barchetta.mus DC_Star_and_Cpr\Red_Barchetta.mus
+MOVE /y Updated\DC_Star__Hanging_Tough.mus DC_Star\Hanging_Tough.mus
+MOVE /y Updated\DC_Star__This_Time_I_know_its_for_Real.mus DC_Star\This_Time_I_know_its_for_Real.mus
+MOVE /y Updated\DC_Star__Will_you_Love_me_Tomorrow.mus DC_Star\Will_you_Love_me_Tomorrow.mus
+MOVE /y Updated\Utah_Blaine__Carol_of_the_Birds.mus Utah_Blaine\Carol_of_the_Birds.mus
+MOVE /y Updated\Zeke4__Christmas_Day.mus Zeke4\Christmas_Day.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL DC_Star\Lost_in_your_Eyes_(BAD).mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v119.txt  00_Documents\Whats_new_in_v119.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_119.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.19 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,144 @@
+@echo off
+
+IF EXIST Whats_new_in_v109.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v109.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.9
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+: Actually a ripoff of Raymond_Day\Sailing.mus
+DEL Misc\A\Sailing.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+DEL Craig_Chamberlain\Fuer_Elise.mus
+MOVE Updated\Craig_Chamberlain__Fuer_Elise.mus  Craig_Chamberlain\Fuer_Elise.mus
+DEL DC_Holmes\Got_my_Mind_set_on_you.mus
+MOVE Updated\DC_Holmes__Got_my_Mind_set_on_you.mus  DC_Holmes\Got_my_Mind_set_on_you.mus
+DEL DC_Star_and_Cpr\Big_Love.mus
+MOVE Updated\DC_Star_and_Cpr__Big_Love.mus  DC_Star_and_Cpr\Big_Love.mus
+DEL DC_Star_and_Cpr\Dont_Mean_Nothing.mus
+MOVE Updated\DC_Star_and_Cpr__Dont_Mean_Nothing.mus  DC_Star_and_Cpr\Dont_Mean_Nothing.mus
+DEL DC_Star_and_Cpr\Dont_Shed_A_Tear.mus
+MOVE Updated\DC_Star_and_Cpr__Dont_Shed_A_Tear.mus  DC_Star_and_Cpr\Dont_Shed_A_Tear.mus
+DEL DC_Star_and_Cpr\Get_that_Love.mus
+MOVE Updated\DC_Star_and_Cpr__Get_that_Love.mus  DC_Star_and_Cpr\Get_that_Love.mus
+DEL DC_Star_and_Cpr\I_Heard_a_Rumour.mus
+MOVE Updated\DC_Star_and_Cpr__I_Heard_a_Rumour.mus  DC_Star_and_Cpr\I_Heard_a_Rumour.mus
+DEL DC_Star_and_Cpr\I_Just_cant_Stop_Loving_You.mus
+MOVE Updated\DC_Star_and_Cpr__I_Just_cant_Stop_Loving_You.mus  DC_Star_and_Cpr\I_Just_cant_Stop_Loving_You.mus
+DEL DC_Star_and_Cpr\Miami_Sound_Machine\Conga.mus
+MOVE Updated\DC_Star_and_Cpr__Miami_Sound_Machine__Conga.mus  DC_Star_and_Cpr\Miami_Sound_Machine\Conga.mus
+DEL DC_Star_and_Cpr\Say_you_Will.mus
+MOVE Updated\DC_Star_and_Cpr__Say_you_Will.mus  DC_Star_and_Cpr\Say_you_Will.mus
+DEL Diz_Cop\I_Know_what_I_Know.mus
+MOVE Updated\Diz_Cop__I_Know_what_I_Know.mus  Diz_Cop\I_Know_what_I_Know.mus
+DEL Glass_Soul\Guilty.mus
+MOVE Updated\Glass_Soul__Guilty.mus  Glass_Soul\Guilty.mus
+DEL Glass_Soul\I_want_to_Hold_your_Hand.mus
+MOVE Updated\Glass_Soul__I_want_to_Hold_your_Hand.mus  Glass_Soul\I_want_to_Hold_your_Hand.mus
+DEL Jim_Masterson\Centerfield.mus
+MOVE Updated\Jim_Masterson__Centerfield.mus  Jim_Masterson\Centerfield.mus
+DEL Jim_Masterson\Freedom_of_Choice.mus
+MOVE Updated\Jim_Masterson__Freedom_of_Choice.mus  Jim_Masterson\Freedom_of_Choice.mus
+DEL Melody\Man_in_Motion.mus
+MOVE Updated\Melody__Man_in_Motion.mus  Melody\Man_in_Motion.mus
+DEL Melody\Were_not_Gonna_Take_it.mus
+MOVE Updated\Melody__Were_not_Gonna_Take_it.mus  Melody\Were_not_Gonna_Take_it.mus
+DEL Sandy_C\Coming_in_and_out_of_your_Life.mus
+MOVE Updated\Sandy_C__Coming_in_and_out_of_your_Life.mus  Sandy_C\Coming_in_and_out_of_your_Life.mus
+
+::::::::::::::::::::::::
+MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Bobbye\To_sort_Bobbye  Bobbye\Santa_Claus_B
+MOVE Bobbye\Final_Countdown.mus  Bobbye\Final_Countdown_A.mus
+MOVE Bobbye\Final_Countdown.wds  Bobbye\Final_Countdown_A.wds
+MOVE Bobbye\I_ave_Dreamed_B.mus  Bobbye\I_Have_Dreamed_B.mus
+MOVE Brian_Meagher_-BrianM1-\I_Hear_you_Know.mus  Brian_Meagher_-BrianM1-\I_Hear_you_Now_A.mus
+MOVE DC_Star_and_Cpr\With_or_Without_You.mus  DC_Star_and_Cpr\With_or_Without_You_A.mus
+MOVE DC_Star_and_Cpr\With_or_Without_You.wds  DC_Star_and_Cpr\With_or_Without_You_A.wds
+MOVE Eugenes1\Band_on_the_Run.mus  Eugenes1\Band_on_the_Run_A.mus
+MOVE Fred_Micoff\Here_Comes_the_Sun.mus  Fred_Micoff\Here_Comes_the_Sun_A.mus
+MOVE Grey_Mouser\Abacab.mus  Grey_Mouser\Abacab_A.mus
+MOVE Harry_Barnum\Mrs_Robinson.mus  Harry_Barnum\Mrs_Robinson_A.mus
+MOVE Jim_Masterson\Get_the_Balance_Right.mus  Jim_Masterson\Get_the_Balance_Right_A.mus
+MOVE Jim_Masterson\Get_the_Balance_Right.wds  Jim_Masterson\Get_the_Balance_Right_A.wds
+MOVE Jim_Masterson\Love_is_the_Seventh_Wave.mus  Jim_Masterson\Love_is_the_Seventh_Wave_A.mus
+MOVE Jim_Masterson\Love_is_the_Seventh_Wave.wds  Jim_Masterson\Love_is_the_Seventh_Wave_A.wds
+MOVE Lyric\Shenandoah.mus  Lyric\Shenandoah_A.mus
+MOVE Lyric\Shenandoah.str  Lyric\Shenandoah_A.str
+MOVE Misc\Anon\Christmas_Around_the_World.mus  Bobbye\Christmas_Around_the_World.mus
+MOVE Misc\Anon\Christmas_Around_the_World.wds  Bobbye\Christmas_Around_the_World.wds
+MOVE Misc\Anon_Pic\Down_Under.mus  DC_Star_and_Cpr\Pictures\Down_Under.mus
+MOVE Misc\Anon_Pic\Land_of_Confusion.mus  DC_Star_and_Cpr\Pictures\Land_of_Confusion.mus
+MOVE Misc\Anon_Pic\Love_is_Forever.mus  DC_Star_and_Cpr\Pictures\Love_is_Forever.mus
+MOVE Misc\Anon_Pic\Love_is_Forever.wds  DC_Star_and_Cpr\Pictures\Love_is_Forever.wds
+MOVE Misc\Anon_Pic\Time_Fall.mus  DC_Star_and_Cpr\Pictures\The_Next_Time_I_Fall.mus
+MOVE Misc\Anon_Pic\Yellow_Submarine.mus  DC_Star_and_Cpr\Pictures\Yellow_Submarine.mus
+MOVE Misc\Anon_Pic\Yellow_Submarine.wds  DC_Star_and_Cpr\Pictures\Yellow_Submarine.wds
+MOVE Misc\C\Dear_Mr_Jesus.mus  DC_Star_and_Cpr\Dear_Mr_Jesus.mus
+MOVE Misc\C\Hell_Patrol.wds  Colin_Roth\Hell_Patrol.wds
+MOVE Misc\D\It_was_a_Very_Good_Year.mus  Yoda_Dayve\It_was_a_Very_Good_Year.mus
+MOVE Misc\D\Light_my_Fire.mus  Yoda_Dayve\Light_my_Fire.mus
+MOVE Misc\D\Lucy_in_the_Sky_with_Diamonds.mus  Yoda_Dayve\Lucy_in_the_Sky_with_Diamonds.mus
+MOVE Misc\E\Kolly_Coppersmith_Polka.mus  Misc\T\Jolly_Coppersmith_Polka.mus
+MOVE Misc\F\Michigan_State_Fight_Song.mus  Ron_Faulds\Michigan_State_Fight_Song.mus
+MOVE Misc\H\In_a_Hurry.mus  Joseph_A_Grau\In_a_Hurry.mus
+MOVE Misc\H\Night_they_Drove_Old_Dixie_Home.mus  Bobbye\Night_they_Drove_Old_Dixie_Home.mus
+MOVE Misc\H\Safety_Dance.mus  BJ_Pools\Safety_Dance.mus
+MOVE Misc\H\Safety_Dance.str  BJ_Pools\Safety_Dance.str
+MOVE Misc\H\Toccata.mus  Joseph_A_Grau\Toccata.mus
+MOVE Misc\R\Stand_by_me.mus  Robbie\Stand_by_me.mus
+MOVE Misc\R\Brothers_in_Arms.mus  Misc\R\Brothers_in_Arms_A.mus
+MOVE Misc\R\Brothers_in_Arms.wds  Misc\R\Brothers_in_Arms_A.wds
+MOVE Misc\S\So_Alive.mus  BJ_Pools\So_Alive.mus
+MOVE Misc\W\Your_Chreating_Heart.mus  Misc\W\Your_Cheating_Heart.mus
+MOVE Nick_Zelinsky\Take_me_Home_Country_Roads.mus  Nick_Zelinsky\Take_me_Home_Country_Roads_A.mus
+MOVE Nick_Zelinsky\Take_me_Home_Country_Roads.str  Nick_Zelinsky\Take_me_Home_Country_Roads_A.str
+MOVE Nick_Zelinsky\Take_me_Home_Country_Roads.wds  Nick_Zelinsky\Take_me_Home_Country_Roads_A.wds
+MOVE Nick_Zelinsky\We_Built_this_City.mus  Nick_Zelinsky\We_Built_this_City_A.mus
+MOVE Paul_Labeaud\Strawberry_Fields_Forever.mus  Paul_Labeaud\Strawberry_Fields_Forever_A.mus
+MOVE Sadist_-Madman-_-Mike_Madsen-\I_am_the_Walrus.mus  Sadist_-Madman-_-Mike_Madsen-\I_am_the_Walrus_A.mus
+MOVE Sadist_-Madman-_-Mike_Madsen-\I_am_the_Walrus.wds  Sadist_-Madman-_-Mike_Madsen-\I_am_the_Walrus_A.wds
+MOVE Sadist_-Madman-_-Mike_Madsen-\Ob-la-di.mus  Sadist_-Madman-_-Mike_Madsen-\Ob-la-di_A.mus
+MOVE Sadist_-Madman-_-Mike_Madsen-\Ob-la-di.wds  Sadist_-Madman-_-Mike_Madsen-\Ob-la-di_A.wds
+MOVE Sebastian_Hill\Octopusses_Garden.mus  Sebastian_Hill\Octopusses_Garden_A.mus
+MOVE Spiecher\Stand_by_me.mus  Spiecher\Stand_by_me_A.mus
+MOVE Spiecher\Stand_by_me.wds  Spiecher\Stand_by_me_A.wds
+MOVE Steve_Cunningham\And_I_Love_Her.mus  Steve_Cunningham\And_I_Love_Her_A.mus
+MOVE Terry\Suicide_is_Painless_(MASH)_A.mus  Terry\Suicide_is_Painless_(MASH).mus
+MOVE Tollman\Have_a_Holly_Jolly_Christmas.mus  Tollman\Have_a_Holly_Jolly_Christmas_A.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Commodore64\00readme.txt
+MOVE 00_Commodore64\00readme.new.txt  00_Commodore64\00readme.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+DEL 00_Documents\Extended_WDS.txt
+MOVE Extended_WDS.txt  00_Documents\Extended_WDS.txt
+MOVE Whats_new_in_v109.txt  00_Documents\Whats_new_in_v109.txt
+MOVE book_review.txt  00_Documents\book_review.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_109.txt
+
+RMDIR Updated
+
+ECHO.
+ECHO CGSC UPDATE to v1.9 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

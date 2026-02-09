@@ -1,0 +1,132 @@
+
+IF EXIST Whats_new_in_v103.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v103.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.3
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+DEL Sammy_Snake\Walk_this_Way.mus
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE DC_Star_and_Cpr\Dont_make_mr_Wait_for_Love.mus  DC_Star_and_Cpr\Dont_make_me_Wait_for_Love.mus
+MOVE DC_Star_and_Cpr\Dont_make_mr_Wait_for_Love.str  DC_Star_and_Cpr\Dont_make_me_Wait_for_Love.str
+MOVE DC_Star_and_Cpr\Dont_make_mr_Wait_for_Love.wds  DC_Star_and_Cpr\Dont_make_me_Wait_for_Love.wds
+MOVE DC_Star_and_Cpr\Cross_my_Hroken_Heart.mus  DC_Star_and_Cpr\Cross_my_Broken_Heart.mus
+MOVE DC_Star_and_Cpr\Cross_my_Hroken_Heart.wds  DC_Star_and_Cpr\Cross_my_Broken_Heart.wds
+MOVE Diz_Cop\When_you_Wsh_upon_a_Star.mus  Diz_Cop\When_you_Wish_upon_a_Star.mus
+MOVE Eugenes1\Only_the_Goodd_Die_Young.mus  Eugenes1\Only_the_Good_Die_Young.mus
+MOVE Sileo\Fantasie_Impromptu_in_C_Major.mus  Sileo\Fantasie_Impromptu_in_C_Minor.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+DEL BJ_Pools\Angie.mus
+MOVE Updated\BJ_Pools__Angie.mus  BJ_Pools\Angie.mus
+DEL BJ_Pools\Sharp_Dressed_Man.mus
+MOVE Updated\BJ_Pools__Sharp_Dressed_Man.mus  BJ_Pools\Sharp_Dressed_Man.mus
+DEL BJ_Pools\Too_Rolling_Stoned.mus
+MOVE Updated\BJ_Pools__Too_Rolling_Stoned.mus  BJ_Pools\Too_Rolling_Stoned.mus
+DEL DC_Star_and_Cpr\Cross_my_Broken_Heart.mus
+MOVE Updated\DC_Star_and_Cpr__Cross_my_Broken_Heart.mus  DC_Star_and_Cpr\Cross_my_Broken_Heart.mus
+MOVE Updated\DC_Star_and_Cpr__Cross_my_Broken_Heart.str  DC_Star_and_Cpr\Cross_my_Broken_Heart.str
+DEL DC_Star_and_Cpr\Never_Say_Goodbye.mus
+MOVE Updated\DC_Star_and_Cpr__Never_Say_Goodbye.mus  DC_Star_and_Cpr\Never_Say_Goodbye.mus
+DEL DC_Star_and_Cpr\One_Heartbeat.mus
+MOVE Updated\DC_Star_and_Cpr__One_Heartbeat.mus  DC_Star_and_Cpr\One_Heartbeat.mus
+DEL DC_Star_and_Cpr\Walking_Down_the_Street.mus
+MOVE Updated\DC_Star_and_Cpr__Walking_Down_the_Street.mus  DC_Star_and_Cpr\Walking_Down_the_Street.mus
+DEL DC_Star_and_Cpr\You_Belong_to_the_City.mus
+MOVE Updated\DC_Star_and_Cpr__You_Belong_to_the_City.mus  DC_Star_and_Cpr\You_Belong_to_the_City.mus
+MOVE Updated\DC_Star_and_Cpr__You_Belong_to_the_City.str  DC_Star_and_Cpr\You_Belong_to_the_City.str
+DEL Melody\Self_Control.mus
+MOVE Updated\Melody__Self_Control.mus  Melody\Self_Control.mus
+DEL Misc\B\Rocky_Mountain_High.mus
+MOVE Updated\Misc_B__Rocky_Mountain_High.mus  Misc\B\Rocky_Mountain_High.mus
+DEL Ms_Guitar\All_Along_the_Watchtower.mus
+MOVE Updated\Ms_Guitar__All_Along_the_Watchtower.mus  Ms_Guitar\All_Along_the_Watchtower.mus
+MOVE Updated\Ms_Guitar__All_Along_the_Watchtower.wds  Ms_Guitar\All_Along_the_Watchtower.wds
+DEL Nick_Zelinsky\Charlies_Angels.mus
+MOVE Updated\Nick_Zelinsky__Charlies_Angels.mus  Nick_Zelinsky\Charlies_Angels.mus
+MOVE Updated\Nick_Zelinsky__Charlies_Angels.str  Nick_Zelinsky\Charlies_Angels.str
+DEL Nick_Zelinsky\Combat.mus
+MOVE Updated\Nick_Zelinsky__Combat.mus  Nick_Zelinsky\Combat.mus
+
+::::::::::::::::::::
+: REORGANIZE TUNES :
+::::::::::::::::::::
+MOVE DC_Star_and_Cpr\Shakedown.mus  DC_Star_and_Cpr\Shakedown_A.mus
+MOVE DC_Star_and_Cpr\Shakedown.wds  DC_Star_and_Cpr\Shakedown_A.wds
+MOVE Grey_Mouser\Welcome_to_the_Jungle.mus  Grey_Mouser\Welcome_to_the_Jungle_A.mus
+MOVE John_E_Roach\Cascades.mus  John_E_Roach\Cascades_A.mus
+MOVE John_E_Roach\Chrysanthemum.mus  John_E_Roach\Chrysanthemum_A.mus
+MOVE John_E_Roach\Easy_Winners.mus  John_E_Roach\Easy_Winners_A.mus
+MOVE John_E_Roach\Elite_Syncopations.mus  John_E_Roach\Elite_Syncopations_A.mus
+MOVE John_E_Roach\Excelsior_Rag.mus  John_E_Roach\Excelsior_Rag_A.mus
+MOVE John_E_Roach\Fig_Leaf_Rag.mus  John_E_Roach\Fig_Leaf_Rag_A.mus
+MOVE John_E_Roach\Heliotrope_Bouquet.mus  John_E_Roach\Heliotrope_Bouquet_A.mus
+MOVE John_E_Roach\Kitten_on_the_Keys.mus  John_E_Roach\Kitten_on_the_Keys_A.mus
+MOVE John_E_Roach\Little_Rock_Getaway.mus  John_E_Roach\Little_Rock_Getaway_A.mus
+MOVE John_E_Roach\Maple_Leaf_Rag.mus  John_E_Roach\Maple_Leaf_Rag_A.mus
+MOVE John_E_Roach\Meteor_Rag.mus  John_E_Roach\Meteor_Rag_A.mus
+MOVE John_E_Roach\New_Rag.mus  John_E_Roach\New_Rag_A.mus
+MOVE John_E_Roach\Original_Rag.mus  John_E_Roach\Original_Rag_A.mus
+MOVE John_E_Roach\Peacherine_Rag.mus  John_E_Roach\Peacherine_Rag_A.mus
+MOVE John_E_Roach\Rosebud_March.mus  John_E_Roach\Rosebud_March_A.mus
+MOVE John_E_Roach\Solace.mus  John_E_Roach\Solace_A.mus
+MOVE John_E_Roach\St_Louis_Rag.mus  John_E_Roach\St_Louis_Rag_A.mus
+MOVE John_E_Roach\Stoptime_Rag.mus  John_E_Roach\Stoptime_Rag_A.mus
+MOVE John_E_Roach\Top_Liner_Rag.mus  John_E_Roach\Top_Liner_Rag_A.mus
+MOVE Melody\Isnt_Life_Strange.mus  Melody\Isnt_Life_Strange_A.mus
+MOVE Misc\A\Long_and_Winding_Road.mus  JR_Allen\Long_and_Winding_Road.mus
+MOVE Misc\A\Song_for_Chuck_Berry.mus  JR_Allen\Song_for_Chuck_Berry.mus
+MOVE Misc\F\LA_Law.mus  Misc\F\LA_Law_A.mus
+MOVE Misc\S\Nobodys_Girl.mus  Sidney2\Nobodys_Girl.mus
+MOVE Misc\S\Nobodys_Girl.str  Sidney2\Nobodys_Girl.str
+MOVE Misc\S\Nobodys_Girl.wds  Sidney2\Nobodys_Girl.wds
+MOVE Misc\Q\Beetle_Boogie.mus  QuakerOtis\Beetle_Boogie.mus
+MOVE Misc\Q\Favorite.mus  QuakerOtis\Favorite.mus
+MOVE Nick_Zelinsky\Whos_that_Girl.mus  Nick_Zelinsky\Whos_that_Girl_A.mus
+MOVE Nick_Zelinsky\Whos_that_Girl.wds  Nick_Zelinsky\Whos_that_Girl_A.wds
+MOVE Steak\5150.mus  Steak\5150_A.mus
+MOVE Steak\5150.wds  Steak\5150_A.wds
+MOVE Tom_B24\Honky_Tonk_Saturday_Night.mus  Tom_B24\Honky_Tonk_Saturday_Night_A.mus
+MOVE Tom_B24\Honky_Tonk_Saturday_Night.str  Tom_B24\Honky_Tonk_Saturday_Night_A.str
+MOVE Tom_B24\Honky_Tonk_Saturday_Night.wds  Tom_B24\Honky_Tonk_Saturday_Night_A.wds
+MOVE Uncle_Slam\March_of_the_SOD.mus  Uncle_Slam\March_of_the_SOD_A.mus
+MOVE Uncle_Slam\Master_of_Puppets.mus  Uncle_Slam\Master_of_Puppets_A.mus
+MOVE Uncle_Slam\One.mus  Uncle_Slam\One_A.mus
+MOVE Uncle_Slam\Orion.mus  Uncle_Slam\Orion_A.mus
+
+::::::::::::::::::
+: RENAME AUTHORS :
+::::::::::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v103.txt  00_Documents\Whats_new_in_v103.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_103.txt
+RD Updated
+
+
+
+ECHO.
+ECHO CGSC UPDATE to v1.3 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

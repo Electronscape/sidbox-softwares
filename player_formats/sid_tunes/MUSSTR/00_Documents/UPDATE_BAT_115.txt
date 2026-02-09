@@ -1,0 +1,54 @@
+@echo off
+
+IF EXIST Whats_new_in_v115.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v115.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.15
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Craig_Chamberlain\Free_the_Birds.mus Craig_Chamberlain\Feed_the_Birds.mus
+MOVE Bobbye\Evil_Ways.mus Bobbye\Evil_Ways_A.mus
+MOVE Bobbye\Evil_Ways.wds Bobbye\Evil_Ways_A.wds
+MOVE Tom_B24\Crying.mus Tom_B24\Crying_A.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Melody__Every_Day.mus Melody\Every_Day.mus
+MOVE /y Updated\Melody__Lightning_Strikes.mus Melody\Lightning_Strikes.mus
+MOVE /y Updated\Melody__Night_has_a_Thousand_Eyes.mus Melody\Night_has_a_Thousand_Eyes.mus
+MOVE /y Updated\Spiecher__Cant_get_used_to_Losing_you.mus Spiecher\Cant_get_used_to_Losing_you.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v115.txt  00_Documents\Whats_new_in_v115.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_115.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.15 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

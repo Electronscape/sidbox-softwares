@@ -1,0 +1,43 @@
+
+IF EXIST Whats_new_in_v107.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v107.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.7
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\C\Hell_Patrol.mus  Colin_Roth\Hell_Patrol.mus
+MOVE Misc\S\Mr_Scary.mus  Skulleader\Mr_Scary.mus
+MOVE Sadist_-Madman-_-Mike_Madsen-\One.mus  Sadist_-Madman-_-Mike_Madsen-\One_A.mus
+MOVE Uncle_Slam\Call_of_Ktulu.mus  Uncle_Slam\Call_of_Ktulu_A.mus
+MOVE Misc\S\Surfin_the_Mindwaves.mus  Spellbreaker\Surfin_the_Mindwaves.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v107.txt  00_Documents\Whats_new_in_v107.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_107.txt
+
+
+
+ECHO.
+ECHO CGSC UPDATE to v1.7 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

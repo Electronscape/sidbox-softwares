@@ -1,0 +1,129 @@
+SIDPLAYER NEWS FILE #2  11/85 
+
+Welcome to the second news file for Sidplayer.  This document contains full 
+instructions on how to use Multiplay (MPLAY), an autoplayer for Sidplayer 
+songs.  The program plays up to 51 songs in any order selected. 
+
+The KPLAY and MPLAY players and the Sidplayer songs are intended for 
+everyone's enjoyment, and may be freely distributed. 
+
+Sidplayer songs are created using the Sidplayer Editor by Harry Bratt.  The 
+Editor is found in the book "ALL ABOUT THE COMMODORE 64, VOLUME TWO" by Craig 
+Chamberlain, published by COMPUTE! Books.  A disk for the book is also 
+available from COMPUTE!. 
+
+The Editor is a copyrighted, commercially sold program to be used only by the 
+purchasers of Volume Two.  It is not in the Public Domain and should not be 
+freely distributed. 
+
+Please respect the legitimate expectation of the authors for a fair return on 
+their efforts.  Thank you. 
+
+Multiplay is a machine language program with a BASIC header.  To run 
+Multiplay, enter the command LOAD "MPLAY",8 followed by the command RUN after 
+the program has loaded. 
+
+If MPLAY is the first file on your disk (the first file appearing in the 
+directory), you can load it using the command LOAD "M*",8.  To make MPLAY be 
+the first file on a disk, SAVE it to a newly formatted disk. 
+
+Having MPLAY be the first file also makes it convenient to use the Commodore 
+Run/Stop autoload and run feature on some fast loader cartridges. 
+
+When you run MPLAY, it will list in three columns the names of all the 
+Sidplayer songs on the disk.  Sidplayer songs are identified by a .MUS 
+extender at the end of their filename.  The .MUS extender, however, will not 
+be shown with the names on the screen. 
+
+If there are no Sidplayer songs on the disk, the program will print the 
+message NO MUSIC FILES ON DISK - INSERT ANOTHER DISK AND PRESS F5.  After you 
+insert a new disk and press F5, the program will search for song names in the 
+new directory and list them in the columns. 
+
+Each of the three columns can display up to seventeen songs.  If the disk 
+contains more than 3*17=51 songs, the extra songs will not be listed and the 
+border will be set to gray as a warning. 
+
+Multiplay can play only those songs that are listed in the columns.  For this 
+reason it is strongly suggested that you never put more than 51 Sidplayer 
+songs on a disk side.  Catalogs for Sidplayer songs are released after every 
+50 songs to help encourage this practice. 
+
+After the songs are listed, an arrow cursor will appear at the top left song 
+name.  You can use the cursor movement keys to move the cursor to any row and 
+column position. 
+
+To select a song, move the cursor to the name of the song and press F1.  The 
+song name will change to be displayed in reverse letters.  Additional songs 
+can be selected simply by moving the cursor to them and pressing F1. 
+
+The order in which songs are selected is significant.  Multiplay remembers the 
+order in which you select the songs, and later will play them in that order. 
+If you want to hear the songs in a certain order, be sure to select them in 
+that order. 
+
+To cancel a selection, move the cursor back to the song name and press F1 
+again.  The reverse letters will switch back to normal to confirm that the 
+song is no longer selected. 
+
+One of the nicest features of Multiplay is that you can set it to play all of 
+the songs on the disk.  To do this, just press F3.  This causes the cursor to 
+run through the columns and select each song not already selected. 
+
+The F3 feature does not change the playing order of the songs that were 
+already selected.  Thus, if you want to play all the songs on the disk but 
+want to hear certain songs first, you can select them using F1 and then press 
+F3 to select the remaining songs. 
+
+You may also cancel individual songs after using F3, in case you want to hear 
+all the songs on the disk except one or two.  For example, this feature is 
+handy if you want to play all the songs on the disk but two of the files are 
+the left and right halves of a song for two computers.  These files are 
+intended to be played simultaneously, not separately, and can be canceled by 
+F1 after F3 has been pressed. 
+
+To cancel all of the selections and start over again, press F4 (shifted F3). 
+All of the song names will be restored to normal letters. 
+
+Once you have made your selections, press F7 to start the playing.  The 
+program will switch to the playing screen, load the first song and print its 
+text lines, and start playing.  When the song is done, Multiplay will 
+automatically load the next song in the sequence and start playing it.  This 
+will continue until all of the songs have been played.  Multiplay then returns 
+to the screen with the song names. 
+
+To stop a song before it is done playing and make Multiplay skip to the next 
+song, press any key other than a function key, such as the space bar.  The 
+playing will stop, and the next song in the sequence will be loaded and played. 
+
+If you press one of the function keys to stop the playing, Multiplay will 
+return to the song name screen rather than continue with the next song.  The 
+cursor will point at the song that had been playing. 
+
+When you want to hear songs on another disk, insert the new disk and press F5. 
+A new listing of song names in three columns will be printed, and the program 
+will be ready for you to make your new selections. 
+
+Here is a summary of the meanings of the function keys: 
+
+F1 SELECT OR CANCEL A SONG 
+F3 SELECT ALL REMAINING SONGS 
+F4 CANCEL ALL SONGS 
+F5 NEW DISK DIRECTORY 
+F7 START PLAYING IN ORDER SELECTED 
+
+Pressing the F7 key will not do anything if no songs have been selected. 
+
+There are two other special features built into Multiplay.  The F8 key can be 
+used to start the playing, just like F7, but it will cause the playing to be 
+continuous.  This means that after all of the songs have been played, 
+Multiplay will recycle back to the first one and start all over again, 
+forever, until a function key is pressed. 
+
+The other feature is that whereas F7 always makes the playing start at the 
+beginning of the sequence, F8 can be used to make the playing continue at a 
+song that was stopped.  For example, if the fourth song in a sequence is being 
+played when you press a function key, the playing can be restarted at that 
+song by pressing F8 rather than F7. 
+
+When you are done using Multiplay, press Run/Stop Restore to return to BASIC. 

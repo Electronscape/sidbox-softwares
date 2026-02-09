@@ -1,0 +1,61 @@
+@echo off
+
+IF EXIST Whats_new_in_v136.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v136.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.36
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN Misc\Anon\Gold_Bless_the_Master_of_this_House.mus  Misc\Anon\God_Bless_the_Master_of_this_House.mus
+REN Misc\Anon\Gold_Bless_the_Master_of_this_House.wds  Misc\Anon\God_Bless_the_Master_of_this_House.wds
+REN Misc\Anon\Gomer_Pile.mus  Misc\Anon\Gomer_Pyle.mus
+MOVE Anon\If_I_were_a_Rich_Man.mus  Anon_Films\If_I_were_a_Rich_Man.mus
+REN Misc\NWACUA_Christmas  Misc\Christmas_Around_the_World
+REN Raymond_Day\Entertainer.mus  Raymond_Day\Entertainer_A.mus
+REN Raymond_Day\Sailing.mus  Raymond_Day\Sailing_A.mus
+REN Zeke4\Desk_the_Halls.mus  Zeke4\Deck_the_Halls.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Dave_Stewart__76_Trombones.mus  Dave_Stewart\76_Trombones.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+: Does not go with mus file, actually same as Nick_Zelinsky\Ghostbusters_B.str
+DEL Brian_M_Szepatowski\Ghostbusters.str
+: Actually by Raymond Day
+DEL Misc\D\Sailing.mus
+: Same as DC_Star_and_Cpr\La_Bamba_Remix.str
+DEL Misc\Anon\La_Bamba.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v136.txt  00_Documents\Whats_new_in_v136.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_136.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.36 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

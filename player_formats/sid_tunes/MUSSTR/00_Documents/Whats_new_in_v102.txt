@@ -1,0 +1,30 @@
+What's new in Version 1.2
+=========================
+
+1. Some music moved from Misc to other locations.
+
+2. Some new music added: See list below:
+
+
+Dave_S2\Ride_the_Train.mus
+Gustave\Prelude_to_Act_3_and_Bridal_Chorus.mus
+Misc\F\Darlington_County.mus
+Misc\S\Goldberg_Variation_No2.mus
+Neil_Baldwin\Lost_in_Space_tune01.mus
+Neil_Baldwin\Lost_in_Space_tune02.mus
+Neil_Baldwin\Lost_in_Space_tune03.mus
+Neil_Baldwin\Lost_in_Space_tune04.mus
+Yip\BMX_Kidz_tune04.mus
+Yip\Scroll_Machine_tune01.mus
+Yip\Scroll_Machine_tune02.mus
+Yip\Scroll_Machine_tune03.mus
+Yip\Scroll_Machine_tune04.mus
+Yip\Scroll_Machine_tune05.mus
+Yip\Scroll_Machine_tune06.mus
+Yip\Scroll_Machine_tune07.mus
+Yip\Scroll_Machine_tune08.mus
+Yip\Scroll_Machine_tune09.mus
+Yip\Scroll_Machine_tune10.mus
+Yip\Uuno_Turhapuro_tune01.mus
+Yip\Uuno_Turhapuro_tune02.mus
+Yip\Yip_unknown_tune01.mus

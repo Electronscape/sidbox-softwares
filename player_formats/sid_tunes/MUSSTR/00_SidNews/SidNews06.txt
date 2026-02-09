@@ -1,0 +1,141 @@
+SIDPLAYER NEWS FILE #6  March 1986
+
+this documentation file describes how to use the magic sid
+machine, a utility for loading, playing, and cataloging
+sidplayer songs.  msm will automatically load and play up to
+144 songs, far more than you will probably be able to get on
+a disk.  the program, and this documentation file, were
+written by terry kryger.
+
+the most recent version, msm 2.2, features an updated m/l
+play routine provided by craig chamberlain.  among other
+improvements, f-x defaults to 'on' for less background
+noise.
+
+when run, msm displays a menu of seven options:
+
+  1. create or update a directory file
+
+  2. choose songs from directory file
+
+  3. choose songs (no directory file)
+
+  4. play all songs in directory file
+
+  5. play all songs on disk (no file)
+
+  6. send directory file to printer
+
+  7. end
+
+
+create or update a directory file
+
+the 'directory file' is not the same thing as the disk
+directory. it is a special directory, originally created by
+the msm program, of all the sidplayer songs on the disk.
+
+when you select this option, the program will search for all
+files on the disk having the '.mus' filename extension.  it
+will ignore any files not having the extension, even if they
+are sidplayer songs, so don't forget the '.mus' at the end
+of the filename.  similarly, any non-sidplayer files (seq
+files, for instance) that mistakenly have the .mus
+extension, will be read into the directory but will not load
+properly, causing the program to crash.
+
+after all the sidplayer songs are found, you will have the
+option to alphabetize the names for your song directory.  a
+sequential file called 'sidcat' will then be written to the
+disk.  having this directory file on the disk eliminates the
+time-consuming process of checking the whole disk each time
+you run the program.  use this option anytime you save
+another song on the disk, to keep the file updated.
+
+
+choose songs from directory file
+
+when you select this option, the program will list all the
+songs in the 'directory file' created with option 1.  if no
+'sidcat' file exists, you will be reminded to create one.
+
+the songs are displayed on screens of 26 songs each.  to
+choose the songs, type in the letters corresponding to the
+songs in the order you want to hear them.  the song names
+will be highlighted as they are selected.  the same song can
+also be selected to play more than once.
+
+if more than 26 songs are on the disk, a reminder appears at
+the bottom of the screen.  press the f7 function key to
+bring up the next screen of titles.  the f7 key will cycle
+through all the screens as many times as you wish, allowing
+you to make selections each time.  when you return to a
+screen, your previous choices will still be highlighted.
+
+press the return key at any time to cancel your selections
+and go back to the menu.  when you are finished choosing
+songs, press the space bar to start playing.
+
+you can stop any song while it is playing and go on to the
+next selection by pressing the space bar.  pressing the
+up-arrow key will cancel any remaining selections and return
+you to the menu.
+
+you may safely use this option after inserting a different
+disk, as the current 'sidcat' directory file is loaded each
+time the option is selected.
+
+
+choose songs (no directory)
+
+after searching the disk directory for .mus files, this
+option works just like the above option.
+
+
+play all songs in directory file
+
+the songs will be played in alphabetical order if the song
+directory was sorted.  otherwise they will be played in the
+same sequence as they appear on the disk.
+
+
+play all songs on disk (no file)
+
+this option plays all the songs in same sequence as they
+appear on the disk. the directory file is not used.
+
+
+send directory file to printer
+
+choose this option if you would like to print the names of
+the songs in the song directory file.
+
+
+end
+
+when you are done playing songs, choose this option to exit
+the program and return to basic.
+
+
+if you are using the epyx fastload cartridge and find that
+you are having trouble creating a directory file, unplug
+(don't just disable) the cartridge for this operation.  it
+will work fine for reading the files, but for some reason it
+doesn't always like to write the sidcat file.  the mach 5
+cartridge and (as far as i know) other fastloaders work
+fine.
+
+credit goes to dave schmoldt, who originally wrote the core
+of this program for use with master composer files (magic
+music machine).
+
+undying thanks to craig chamberlain for his terrific book
+"all about the commodore 64, volume two" published by
+compute! books, which contains the sidplayer utilities.  i
+particularly appreciate the support he continues to give by
+way of new utilities, music, and advice.
+
+
+terry kryger (terryk)
+
+                          * * *

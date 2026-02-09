@@ -1,0 +1,163 @@
+@echo off
+
+IF EXIST Whats_new_in_v120.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v120.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.20
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Bobbye\Fernando.mus Bobbye\Fernando_A.mus
+MOVE Bobbye\Fernando.wds Bobbye\Fernando_A.wds
+MOVE Bobbye\Jesus_Christ_Superstar.mus Bobbye\Jesus_Christ_Superstar\Jesus_Christ_Superstar_B.mus
+MOVE Bobbye\Jesus_Christ_Superstar\Jesus_Christ_Superstar.mus Bobbye\Jesus_Christ_Superstar\Jesus_Christ_Superstar_A.mus
+MOVE Bobbye\Jesus_Christ_Superstar\Jesus_Christ_Superstar.wds Bobbye\Jesus_Christ_Superstar\Jesus_Christ_Superstar_A.wds
+MOVE Bobbye\Maneater.wds Bobbye\Maneater_A.wds
+MOVE Bobbye\Speak_Softly_Love.mus Bobbye\Speak_Softly_Love_A.mus
+MOVE Bobbye\Your_Wildest_Dreams.mus Bobbye\Your_Wildest_Dreams_A.mus
+MOVE John_C_Mackey\Little_Fugue_in_G_Minor.mus John_C_Mackey\Little_Fugue_in_G_Minor_A.mus
+MOVE "Lyric\Big Shot.mus" Lyric\Big_Shot.mus
+MOVE L_Clements\Youre_a_Good_Man_Carlie_Brown.mus L_Clements\Youre_a_Good_Man_Charlie_Brown.mus
+MOVE L_Clements\Youre_a_Good_Man_Carlie_Brown.wds L_Clements\Youre_a_Good_Man_Charlie_Brown.wds
+MOVE Marte_Brengle\Sonata_No5_for_Organ.mus Marte_Brengle\Sonata_No5_for_Organ_A.mus
+MOVE Marte_Brengle\Money.mus Marte_Brengle\Money_A.mus
+MOVE Misc\Anon_Pic\15_or_6_to_4.mus DC_Star_and_Cpr\15_or_6_to_4.mus
+MOVE Misc\Anon_Pic\Scarborough_Fair.mus DC_Star_and_Cpr\Scarborough_Fair.mus
+MOVE Misc\Anon_Pic\Sound_of_Music.mus DC_Star_and_Cpr\Sound_of_Music_D.mus
+MOVE Misc\Anon_Pic\Still_Love.mus DC_Star_and_Cpr\Still_Love.mus
+MOVE Misc\Anon_Pic\This_Time.mus DC_Star_and_Cpr\This_Time.mus
+Move Misc\Anon\I_Wanna_be_a_Sysop_Blues.mus Misc\Anon\I_Wanna_be_a_Sysop_Blues_A.mus
+Move Misc\Anon\I_Wanna_be_a_Sysop_Blues.wds Misc\Anon\I_Wanna_be_a_Sysop_Blues_A.wds
+MOVE Misc\A\Abbey_Road_Medley.mus JR_Allen\Abbey_Road_Medley.mus
+MOVE Misc\A\Pastoral_Symphony.mus Gary_Alder\Pastoral_Symphony.mus
+MOVE Misc\A\Prelude_and_Fugue_in_C_Minor.mus Gary_Alder\Prelude_and_Fugue_in_C_Minor.mus
+MOVE Misc\A\Sonata_in_A_Major.mus Gary_Alder\Sonata_in_A_Major.mus
+MOVE Misc\F\Fiddler_on_the_Roof.mus Russ_Fisher\Fiddler_on_the_Roof.mus
+MOVE Misc\F\Peter_and_the_Wolf.mus Russ_Fisher\Peter_and_the_Wolf.mus
+MOVE Misc\F\Twilight_in_Turkey.mus Russ_Fisher\Twilight_in_Turkey.mus
+MKDIR Joe_Friedman
+MOVE Misc\F\Brahms_Symphony_No1_in_C_Minor.mus Joe_Friedman\Brahms_Symphony_No1_in_C_Minor.mus
+MOVE Misc\F\Brahms_Symphony_No1_in_C_Minor.str Joe_Friedman\Brahms_Symphony_No1_in_C_Minor.str
+MOVE Misc\F\Cest_la_Vie.mus Joe_Friedman\Cest_la_Vie.mus
+MOVE Misc\F\Cest_la_Vie.wds Joe_Friedman\Cest_la_Vie.wds
+MOVE Misc\F\Michelle.mus Joe_Friedman\Michelle.mus
+MOVE Misc\F\Michelle.str Joe_Friedman\Michelle.str
+MOVE Misc\F\Michelle.wds Joe_Friedman\Michelle.wds
+MOVE Misc\F\When_Im_Sixty_Four.mus Joe_Friedman\When_Im_Sixty_Four.mus
+MOVE Misc\F\When_Im_Sixty_Four.wds Joe_Friedman\When_Im_Sixty_Four.wds
+MOVE Misc\F\Word_Up.mus Joe_Friedman\Word_Up.mus
+MOVE Misc\K\Goodbye_Yellow_Brick_Road.mus Ken_Fuller\Goodbye_Yellow_Brick_Road.mus
+MOVE Misc\K\Stranger.mus Ken_Fuller\Stranger.mus
+MOVE Misc\K\Today.mus Ken_Fuller\Today.mus
+MOVE Misc\K\Vincent.mus Ken_Fuller\Vincent.mus
+MOVE Misc\M\Say_you_Say_me.mus David_Mundo\Say_you_Say_me.mus
+MOVE Misc\M\Sussudio.mus David_Mundo\Sussudio.mus
+MOVE Misc\Anon\My_Homes_in_Alabama_A.mus Misc\Anon\My_Homes_in_Alabama.mus
+MOVE Misc\Anon\O_come_all_ye_Faithful_B.mus Misc\Anon\O_come_all_ye_Faithful.mus
+MOVE Paul_Labeaud\All_for_the_Best.mus Paul_Labeaud\All_for_the_Best_A.mus
+MOVE Paul_Labeaud\Sometimes_it_Snows_in_April.mus Paul_Labeaud\Sometimes_it_Snows_in_April_A.mus
+MOVE Whole_Note\Sinfonia_No10.mus Whole_Note\Sinfonia\Sinfonia_No10.mus
+MOVE Whole_Note\Sinfonia_No12.mus Whole_Note\Sinfonia\Sinfonia_No12.mus
+MOVE Whole_Note\Sinfonia_No13.mus Whole_Note\Sinfonia\Sinfonia_No13.mus
+MOVE Whole_Note\Sinfonia_No15.mus Whole_Note\Sinfonia\Sinfonia_No15.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Bill_Sayre__Proud_Mary.mus Bill_Sayre\Proud_Mary.mus
+MOVE /y Updated\Dave_Schmoldt__Up_on_the_Housetop.mus Dave_Schmoldt\Up_on_the_Housetop.mus
+MOVE /y Updated\Englis_OGlade__Seeds_Grow_to_Plants.mus Englis_OGlade\Seeds_Grow_to_Plants.mus
+MOVE /y Updated\Gary_Oglesby__Talk_with_you_Baby.mus Gary_Oglesby\Talk_with_you_Baby.mus
+MOVE /y Updated\Lyric__My_Sharona.mus Lyric\My_Sharona.mus
+MOVE /y Updated\Lyric__Weve_got_Tonight.mus Lyric\Weve_got_Tonight.mus
+MOVE /y Updated\Misc__Anon__Christmas_Song.wds Misc\Anon\Christmas_Song.wds
+MOVE /y Updated\Misc__Anon__Deck_the_Halls_with_Boughs_of_Holly.wds Misc\Anon\Deck_the_Halls_with_Boughs_of_Holly.wds
+MOVE /y Updated\Misc__Anon__Here_we_come_a_Caroling.wds Misc\Anon\Here_we_come_a_Caroling.wds
+MOVE /y Updated\Misc__Anon__Let_it_Snow.wds Misc\Anon\Let_it_Snow.wds
+MOVE /y Updated\Misc__Anon__Silver_Bells.wds Misc\Anon\Silver_Bells.wds
+MOVE /y Updated\Misc__Anon__Twelve_Days_of_Christmas.wds Misc\Anon\Twelve_Days_of_Christmas.wds
+MOVE /y Updated\Misc__Anon__Up_on_the_Housetop.wds Misc\Anon\Up_on_the_Housetop.wds
+MOVE /y Updated\Misc__Anon__We_wish_you_a_Merry_Christmas.wds Misc\Anon\We_wish_you_a_Merry_Christmas.wds
+MOVE /y Updated\Misc__A__Jingle_Bells.mus Misc\A\Jingle_Bells.mus
+MOVE /y Updated\Misc__D__Taxi.mus Misc\D\Taxi.mus
+MOVE /y Updated\Misc__L__St_James_Imfirmary.mus Misc\L\St_James_Imfirmary.mus
+MOVE /y Updated\Nick_Zelinsky__Farrells_is_Fabulos_Fun.mus Nick_Zelinsky\Farrells_is_Fabulos_Fun.mus
+MOVE /y Updated\Nick_Zelinsky__Zachary_and_Jennifer.mus Nick_Zelinsky\Zachary_and_Jennifer.mus
+MOVE /y Updated\Robert_Willis__Seven_Landler.mus Robert_Willis\Seven_Landler.mus
+MOVE /y Updated\Tom_B24__End_of_the_World.mus Tom_B24\End_of_the_World.mus
+MOVE /y Updated\Tom_B24__England_Swings.mus Tom_B24\England_Swings.mus
+MOVE /y Updated\Whole_Note__And_the_Grass_wont_Pay_no_Mind.mus Whole_Note\And_the_Grass_wont_Pay_no_Mind.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Bobbye\Christmas_Tabloid.mus
+DEL Leif_Anderson\All_Creatures_of_our_God_and_King.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Angels_we_have_Heard_on_High.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Home_for_the_Holidays.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Home_for_the_Holidays.wds
+DEL Jim_-Jim_Brock-_-KCORB-\Ill_be_Home_for_Christmas.mus
+DEL Misc\Anon\Against.mus
+DEL Misc\Anon\Do_you_Hear_what_I_Hear.mus
+DEL Misc\Anon\Do_you_Hear_what_I_Hear.wds
+DEL Misc\Anon\God_Rest_ye_Merry_Gentlemen.mus
+DEL Misc\Anon\God_Rest_ye_Merry_Gentlemen.wds
+DEL Misc\Anon\Hark_the_Herald_Angels_Sing_A.mus
+DEL Misc\Anon\Hark_the_Herald_Angels_Sing_A.wds
+DEL Misc\Anon\Hark_the_Herald_Angels_Sing_B.mus
+DEL Misc\Anon\Hark_the_Herald_Angels_Sing_B.wds
+DEL Misc\Anon\It_came_upon_the_Midnight_Clear.mus
+DEL Misc\Anon\It_came_upon_the_Midnight_Clear.wds
+DEL Misc\Anon\Joy_to_the_World.mus
+DEL Misc\Anon\Joy_to_the_World.wds
+DEL Misc\Anon\My_Homes_in_Alabama_B.mus
+DEL Misc\Anon\O_come_all_ye_Faithful_A.mus
+DEL Misc\Anon\O_come_all_ye_Faithful_A.wds
+DEL Misc\Anon\O_Little_Town_of_Bethlehem.mus
+DEL Misc\Anon\O_Little_Town_of_Bethlehem.wds
+DEL Misc\Anon\O_Sacred_Head_now_Wounded.mus
+DEL Misc\Anon\Sentementalle.mus
+DEL Misc\Anon\Silent_Night.mus
+DEL Misc\Anon\Silent_Night.wds
+DEL Misc\Anon\What_Child_is_this.mus
+DEL Misc\Anon\What_Child_is_this.wds
+DEL Misc\Anon\When_I_Survey_the_Wondrous_Cross.mus
+DEL Misc\Anon\Little_Things.mus
+DEL Misc\Anon\Little_Things.wds
+DEL Misc\F\On_the_Street_where_you_Live.mus
+DEL Misc\L\Carol_of_the_Bells.mus
+DEL Misc\L\Carol_of_the_Bells.wds
+DEL Misc\L\Music_Box.mus
+DEL Misc\O\Little_Drummer_Boy.mus
+DEL Misc\O\Little_Drummer_Boy.wds
+DEL Misc\P\In_his_Love.mus
+DEL Paul_Labeaud\Take_on_Me_(Bad).mus
+DEL Tom_Valkos_-Thumper4-\Love_is_Blue_(Bad).mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v120.txt  00_Documents\Whats_new_in_v120.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_120.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.20 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

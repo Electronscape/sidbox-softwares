@@ -1,0 +1,139 @@
+SIDNEWS#16.SEQ SIDNEWS #16 - SUMMARY OF AUX COMMANDS FOR MIDIPLAYER
+By Craig Chamberlain 10/25/88
+
+
+The following chart tells the meaning or effect of each AUX command value.  It should prove very useful while you are editing songs for MIDIPLAYER.
+
+  AUX  DESCRIPTION
+    0  set key color black
+    1  set key color white
+    2  set key color red (default for voice 1)
+    3  set key color cyan
+    4  set key color purple
+    5  set key color green
+    6  set key color blue
+    7  set key color yellow (default for voice 2)
+    8  set key color orange
+    9  set key color brown
+   10  set key color light red
+   11  set key color dark gray
+   12  set key color medium gray
+   13  set key color light green
+   14  set key color light blue (default for voice 3)
+   15  set key color light gray
+
+   16  set voice channel 1 (default for voice 1)
+   17  set voice channel 2 (default for voice 2)
+   18  set voice channel 3 (default for voice 3)
+   19  set voice channel 4
+   20  set voice channel 5
+   21  set voice channel 6
+   22  set voice channel 7
+   23  set voice channel 8
+   24  set voice channel 9
+   25  set voice channel 10
+   26  set voice channel 11
+   27  set voice channel 12
+   28  set voice channel 13
+   29  set voice channel 14
+   30  set voice channel 15
+   31  set voice channel 16
+
+   32  transmit Omni mode off
+   33  transmit Omni mode on
+   34  transmit Poly mode on (Mono mode off)
+   35  transmit Mono mode on (Poly mode off) using all channels
+   36  transmit Mono mode on (Poly mode off) using 1 channel
+   37  transmit Mono mode on (Poly mode off) using 2 channels
+   38  transmit Mono mode on (Poly mode off) using 3 channels
+   39  transmit Mono mode on (Poly mode off) using 4 channels
+
+   40  transmit control change vibrato off
+   41  transmit control change vibrato on
+   42  transmit control change portamento off
+   43  transmit control change portamento on
+
+   44  transmit real-time message Start
+   45  transmit real-time message Continue
+   46  transmit real-time message Stop
+   47  transmit real-time message Timing Clock
+
+   48  transmit portamento time 0
+   49  transmit portamento time 8
+   50  transmit portamento time 16
+   51  transmit portamento time 24
+   52  transmit portamento time 32
+   53  transmit portamento time 40
+   54  transmit portamento time 48
+   55  transmit portamento time 56
+   56  transmit portamento time 64
+   57  transmit portamento time 72
+   58  transmit portamento time 80
+   59  transmit portamento time 88
+   60  transmit portamento time 96
+   61  transmit portamento time 104
+   62  transmit portamento time 112
+   63  transmit portamento time 120
+
+   64  set note on velocity 1 (not 0)
+   65  set note on velocity 8
+   66  set note on velocity 16
+   67  set note on velocity 24
+   68  set note on velocity 32
+   69  set note on velocity 40
+   70  set note on velocity 48
+   71  set note on velocity 56
+   72  set note on velocity 64 (default)
+   73  set note on velocity 72
+   74  set note on velocity 80
+   75  set note on velocity 88
+   76  set note on velocity 96
+   77  set note on velocity 104
+   78  set note on velocity 112
+   79  set note on velocity 120
+
+   80  transmit channel message 1 byte
+   81  transmit channel message 2 bytes
+   82  transmit channel message 3 bytes
+   83  transmit channel message 4 bytes
+   84  transmit channel message 5 bytes
+   85  transmit channel message 6 bytes
+   86  transmit channel message 7 bytes
+   87  transmit channel message 8 bytes
+   88  transmit channel message 9 bytes
+   89  transmit channel message 10 bytes
+   90  transmit channel message 11 bytes
+   91  transmit channel message 12 bytes
+   92  transmit channel message 13 bytes
+   93  transmit channel message 14 bytes
+   94  transmit channel message 15 bytes
+   95  transmit channel message 16 bytes
+
+   96  transmit system message 1 byte
+   97  transmit system message 2 bytes
+   98  transmit system message 3 bytes
+   99  transmit system message 4 bytes
+  100  transmit system message 5 bytes
+  101  transmit system message 6 bytes
+  102  transmit system message 7 bytes
+  103  transmit system message 8 bytes
+  104  transmit system message 9 bytes
+  105  transmit system message 10 bytes
+  106  transmit system message 11 bytes
+  107  transmit system message 12 bytes
+  108  transmit system message 13 bytes
+  109  transmit system message 14 bytes
+  110  transmit system message 15 bytes
+  111  transmit system message 16 bytes
+
+  112  set automatic time clock off (default)
+  113  set automatic time clock on
+
+  114  through
+  127  reserved for future expansion - DO NOT USE!
+
+  128  through
+  255  transmit program change 0 to 127
+
+
+Be sure to read "SIDNEWS #15 - Instructions for Creating Songs for MIDIPLAYER" for complete information on how to edit songs to take full advantage of the features of MIDIPLAYER.

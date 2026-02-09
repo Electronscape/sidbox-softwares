@@ -1,0 +1,193 @@
+SIDPLAYER NEWS #5  March 1986 
+
+Introducing Sidplayer Singalong, an exciting new way to enjoy Sidplayer songs. 
+Singalong is a special player for Sidplayer songs which displays song verses 
+that change in time with the music.  It is great for many different kinds of 
+songs including holiday, religious, popular, and comedy songs. 
+
+Note: The program will play only Singalong songs which have corresponding word 
+files on the same disk as the music files, and will not play other Sidplayer 
+songs. 
+
+This news file describes all of the features of the Singalong player, and also 
+tells you how to create your own Singalong songs. 
+
+The Singalong player was written by Bob Huffman and may be freely distributed, 
+along with Sidplayer songs. 
+
+Sidplayer is the music system published in "All About The Commodore 64, Volume 
+Two" by COMPUTE! Books.  Sidplayer songs are created using the Sidplayer 
+Editor, which is a copyrighted program that may not be freely distributed. 
+
+A Singalong song consists of a Sidplayer music file (with a .MUS filename 
+extension) and a words file which has the same filename except for a .WDS 
+extension in place of the .MUS extension. 
+
+When you run the Singalong player, it first reads the disk directory to find 
+all of the .WDS files on the disk.  If there are no .WDS files on the disk, 
+the program will ask you to insert another disk and press the function key f5 
+to rerun the program. 
+
+Once all of the .WDS files have been found, the program runs through the files 
+again to read the full title of each song. 
+
+The program next displays a menu listing the full titles of up to ten 
+Singalong songs, under the heading PAGE 1.  If there were more than ten .WDS 
+files on the disk, a prompt message will be printed at the bottom of the 
+screen indicating that you can press the space bar to see the next page of 
+songs. 
+
+To play a song, just press the appropriate letter key from A to J.  The 
+program will switch to a new screen, print the full title of the song, and try 
+to load the corresponding .MUS file for the song.  The Singalong player 
+requires that both the .MUS file and the corresponding .WDS file be on the 
+same disk.  If the .MUS file is not on the disk, the program will print an 
+error message, wait for you to press a key for acknowledgement, and return to 
+the song menu. 
+
+Always remember that both the .MUS and .WDS files for a Singalong song must be 
+on the same disk. 
+
+After the .MUS file for the song has been loaded, the program loads the .WDS 
+file.  If no error occurs, the program prints the text lines for the song and 
+starts playing the music. 
+
+The verses for the song are printed on two lines.  The current verse line is 
+printed in light blue, and the following verse line is printed in dark blue 
+under the current one.  This lets you read ahead one line. 
+
+When the song is done playing, the program returns to the song menu.  To stop 
+a song before it is done playing and return to the menu, press the space bar. 
+
+To repeat a song, just press the corresponding letter key again, and the 
+program will skip the loading process and play the song still in memory.  You 
+may also press the R key to replay the most recently loaded song, if that is 
+more convenient.  Note that the "R" key feature does not work when no song has 
+been loaded yet, or if an error occurred during the last attempt to load a 
+song. 
+
+Another feature of the Singalong player is that you can play all of the 
+Singalong songs on the disk with one keystroke.  Just press the "*" key to 
+select the autoplay mode.  The program will load and play each Singalong song 
+on the disk in the order they appear in the song menu. 
+
+While songs are being played in the autoplay mode, you may press the space bar 
+to stop a song and advance to the next one.  To stop the playing and return to 
+the song menu instead, press the f7 function key. 
+
+When you are done playing songs on one disk and want to play songs on another 
+disk, insert the new disk and press the f5 function key to make the program 
+run again.  To exit from the program, press Run/Stop Restore. 
+
+
+To create a Singalong song, you must use a word processor to enter the verse 
+lines in a text file, run a conversion program to convert the text file into a 
+.WDS file, and embed special "flag" commands at the appropriate places in the 
+music to signal where the verse lines should change. 
+
+Begin by using the Sidplayer Editor to enter the notes of the song in the 
+normal way.  When you are done editing the notes and commands in the song, 
+insert a FLG 1 command at each place where the next verse line is to be 
+printed.  This needs to be done on only one voice.  Be sure that there is at 
+least one note between each FLG command.  Save the .MUS file when you are done. 
+
+The next step is to create the text file containing the verse lines.  Two 
+different types of word processors are supported; Easyscript and other 
+compatible word processors (such as Paperclip) which create a SEQ file, and 
+Speedscript, which creates a PRG file. 
+
+Enter the verse lines of the song, one line for each FLG command in the music, 
+with a carriage return at the end of each line.  Upper and lower case letters 
+may be used. 
+
+Be careful to not let a line contain more than 38 characters, as the Singalong 
+player cannot handle longer lines.  Also, if the song plays a lead-in before 
+the verses start, a blank line at the beginning of the file may be necessary, 
+depending on where the first FLG command was used.  Save the text file when 
+you are done. 
+
+Now run either the ES/WDS conversion program if you used Easyscript or a 
+compatible word processor, or SS/WDS if you used Speedscript.  The program 
+will first ask you for the name of the text file.  Enter the filename and wait 
+for the file to load. 
+
+Next the program asks for the title of the song.  This is the full title that 
+is printed in the Singalong song menu.  It may be up to 36 characters long. 
+The program will not let you type characters that may not be used in the title. 
+
+The program will then ask for the filename of the words file to be produced, 
+
+excluding the .WDS extension.  This name should be the same as the root name 
+of the corresponding .MUS file, and may be up to 12 characters long. 
+
+If you also used the root name for the text file, you may instead just press 
+Return and the program will add the .WDS extension to that name to form the 
+filename. 
+
+The program begins the conversion process by scratching an earlier version of 
+the .WDS file if it exists.  The screen is then changed to the colors used in 
+the Singalong player and the text lines are printed to the screen as they are 
+converted. 
+
+If a line is detected to have more than 38 characters, an error message will 
+be printed, the incomplete .WDS file will be scratched, and the program will 
+end.  A verse line may not exceed 38 printable characters, or the printing 
+will be screwed up in the Singalong player. 
+
+After the conversion is done and the .WDS file has been completely written, it 
+is a good idea to play the song with the .WDS file all the way through at 
+least once, to check that the verse lines match up properly and that none have 
+been missed. 
+
+One final touch for a Singalong song is to add color or reverse printing to 
+the verses.  When the Singalong player prints each verse line, it always 
+resets the cursor color to light blue or dark blue as appropriate.  To change 
+the color for the rest of the line, just insert the appropriate character code 
+in the line.  Refer to the chart below for the proper character codes. 
+
+If you are using Speedscript, the character codes cannot be entered directly, 
+so a slightly different scheme is used.  When you want to enter a color or 
+reverse lettering code, first press the Lira (English pound sign) key while 
+holding down the CTRL key.  Speedscript will then prompt you to press a format 
+key.  Press the appropriate letter key as shown in the chart below. 
+
+ CHR   SS 
+CODE  KEY  EFFECT 
+
+ 144   K   BLACK 
+   5   W   WHITE 
+  28   R   RED 
+ 159   C   CYAN 
+ 156   P   PURPLE 
+  30   G   GREEN 
+  31   B   BLUE 
+ 158   Y   YELLOW 
+ 129   O   ORANGE 
+
+ 149   N   BROWN 
+ 150   r   LIGHT RED 
+ 151   d   DARK GRAY 
+ 152   m   MEDIUM GRAY 
+ 153   g   LIGHT GREEN 
+ 154   b   LIGHT BLUE 
+ 155   l   LIGHT GRAY 
+  18   V   REVERSE ON 
+ 146   v   REVERSE OFF 
+
+This scheme is pretty straightforward and logical.  The letters usually match 
+the color name, and upper and lower case denote a dark or light color. 
+
+Even though these control codes do not increase the printed length of a verse 
+line, they are each counted as one character by the conversion programs.  A 
+conversion program may therefore report the error that a line has more than 38 
+characters when in fact the number of printed characters does not exceed 38. 
+To get around this problem, change the a a larger value, such as 48.  Just be 
+extra careful, then, that the number of letters and other printable characters 
+in each verse line does not exceed 38. 
+
+This concludes the documentation for Sidplayer Singalong.  We hope you enjoy 
+the new dimension of fun that Singalong brings to Sidplayer music. 
+
+For any questions on how to use the Sidplayer Editor, or more information on 
+the FLG command and how to add Sidplayer music to your own programs, please 
+refer to Volume Two. 

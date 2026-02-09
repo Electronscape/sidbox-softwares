@@ -1,0 +1,104 @@
+@echo off
+
+IF EXIST Whats_new_in_v144.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v144.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.44
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Corky_Cochran\Ballin_the_Jack.mus  Corky_Cochran\Anon\Ballin_the_Jack.mus
+MOVE Corky_Cochran\Hello_My_Baby.mus  Corky_Cochran\Anon\Hello_My_Baby.mus
+MOVE Corky_Cochran\Hot_Time_in_the_Old_Town_Tonight.mus  Corky_Cochran\Anon\Hot_Time_in_the_Old_Town_Tonight.mus
+MOVE Corky_Cochran\Pack_up_your_Troubles_in_your_Old_Kit_Bag.mus  Corky_Cochran\Anon\Pack_up_your_Troubles_in_your_Old_Kit_Bag.mus
+MOVE Corky_Cochran\Show_me_the_Way_to_go_Home.mus  Corky_Cochran\Anon\Show_me_the_Way_to_go_Home.mus
+MOVE Corky_Cochran\Theres_a_Tavern_in_the_Town.mus  Corky_Cochran\Traditional_Song\Theres_a_Tavern_in_the_Town.mus
+MOVE Corky_Cochran\Waiting_for_the_Robert_E_Lee.mus  Corky_Cochran\Anon\Waiting_for_the_Robert_E_Lee.mus
+REN Corky_Cochran\Im_a_Yankee_Doodle_Dandy.mus  Corky_Cochran\Im_a_Yankee_Doodle_Dandy_A.mus
+REN Corky_Cochran\Over_There.mus  Corky_Cochran\Over_There_A.mus
+MOVE Dave_Marquis\Symphony_No25_in_G_Minor_1st_Movement_Allegro_con_Brio.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No25_in_G_Minor_1st_Movement_Allegro_con_Brio.mus
+MOVE Dave_Marquis\Symphony_No25_in_G_Minor_2nd_Movement_Andante.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No25_in_G_Minor_2nd_Movement_Andante.mus
+MOVE Dave_Marquis\Symphony_No25_in_G_Minor_3rd_Movement_Minuetto.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No25_in_G_Minor_3rd_Movement_Minuetto.mus
+MOVE Dave_Marquis\Symphony_No25_in_G_Minor_4th_Movement_Allegro.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No25_in_G_Minor_4th_Movement_Allegro.mus
+MOVE Dave_Marquis\Symphony_No25_in_G_Minor_K183.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No25_in_G_Minor_K183.mus
+MOVE Dave_Marquis\Symphony_No40_in_G_Minor_1st_Movement_Allegro.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No40_in_G_Minor_1st_Movement_Allegro.mus
+MOVE Dave_Marquis\Symphony_No40_in_G_Minor_2nd_Movement_Andante.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No40_in_G_Minor_2nd_Movement_Andante.mus
+MOVE Dave_Marquis\Symphony_No40_in_G_Minor_3rd_Movement_Allegretto.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No40_in_G_Minor_3rd_Movement_Allegretto.mus
+MOVE Dave_Marquis\Symphony_No40_in_G_Minor_4th_Movement_Allegro_Assai.mus  Dave_Marquis\Amadeus_Symphonies\Symphony_No40_in_G_Minor_4th_Movement_Allegro_Assai.mus
+REN Dave_Marquis\Amazing_Grace.mus  Dave_Marquis\Amazing_Grace_A.mus
+REN Dave_Marquis\Battle_Hymn_of_the_Republic.mus  Dave_Marquis\Battle_Hymn_of_the_Republic_A.mus
+REN Dave_Marquis\Battle_Hymn_of_the_Republic.wds  Dave_Marquis\Battle_Hymn_of_the_Republic_A.wds
+REN Jimi_O\Im_a_Country_Boy.mus  Jimi_O\Im_a_Country_Boy_A.mus
+REN Jimi_O\Im_a_Country_Boy.str  Jimi_O\Im_a_Country_Boy_A.str
+REN Jimi_O\Im_a_Country_Boy.wds  Jimi_O\Im_a_Country_Boy_A.wds
+REN Jimi_O\Im_just_a_Country_Boy.mus  Jimi_O\Im_a_Country_Boy_B.mus
+REN Jimi_O\Im_just_a_Country_Boy.str  Jimi_O\Im_a_Country_Boy_B.str
+REN Jimi_O\Im_just_a_Country_Boy.wds  Jimi_O\Im_a_Country_Boy_B.wds
+REN Kenneth_Barsky\Ayn_Keloheynu.mus  Kenneth_Barsky\Ayn_Keloheynu_A.mus
+REN Kenneth_Barsky\Ayn_Keloheynu.wds  Kenneth_Barsky\Ayn_Keloheynu_A.wds
+MOVE Anon\76_Trombones.mus  Anon_Films\76_Trombones.mus
+MOVE Anon\Fiddler_on_the_Roof.mus  Anon_Films\Fiddler_on_the_Roof.mus
+MOVE Anon\Lida_Rose.mus  Anon_Films\Lida_Rose.mus
+MOVE Anon\Christmas_Day_is_Come.mus  Anon_TradCarol\Christmas_Day_is_Come.mus
+MOVE Anon\Christmas_Day_is_Come.wds  Anon_TradCarol\Christmas_Day_is_Come.wds
+MOVE Anon\Ding_Dong.mus  Anon_TradCarol\Ding_Dong.mus
+MOVE Anon\Ding_Dong.wds  Anon_TradCarol\Ding_Dong.wds
+MOVE Anon\Ecoutons_donc_les_Aubades.mus  Anon_TradCarol\Ecoutons_donc_les_Aubades.mus
+MOVE Anon\Ecoutons_donc_les_Aubades.wds  Anon_TradCarol\Ecoutons_donc_les_Aubades.wds
+MOVE Anon\God_Bless_the_Master_of_this_House.mus  Anon_TradCarol\God_Bless_the_Master_of_this_House.mus
+MOVE Anon\God_Bless_the_Master_of_this_House.wds  Anon_TradCarol\God_Bless_the_Master_of_this_House.wds
+MOVE Anon\He_is_Born.mus  Anon_TradCarol\He_is_Born.mus
+MOVE Anon\He_is_Born.wds  Anon_TradCarol\He_is_Born.wds
+MOVE Anon\In_Dulci_Jubilo.mus  Anon_TradCarol\In_Dulci_Jubilo.mus
+MOVE Anon\Noel_des_Oiseaux.mus  Anon_TradCarol\Noel_des_Oiseaux.mus
+MOVE Anon\Noel_des_Oiseaux.wds  Anon_TradCarol\Noel_des_Oiseaux.wds
+MOVE Anon\O_Tannenbaum.mus  Anon_TradCarol\O_Tannenbaum.mus
+MOVE Anon\O_Tannenbaum.wds  Anon_TradCarol\O_Tannenbaum.wds
+MOVE Anon\Pastores_a_Beken.mus  Anon_TradCarol\Pastores_a_Beken.mus
+MOVE Anon\Pastores_a_Beken.wds  Anon_TradCarol\Pastores_a_Beken.wds
+MOVE Anon\Ritsch_Ratsch_Filibom.mus  Anon_TradCarol\Ritsch_Ratsch_Filibom.mus
+MOVE Anon\Ritsch_Ratsch_Filibom.wds  Anon_TradCarol\Ritsch_Ratsch_Filibom.wds
+MOVE Anon\Stefan_was_a_Stable_Boy.mus  Anon_TradCarol\Stefan_was_a_Stable_Boy.mus
+MOVE Anon\Stefan_was_a_Stable_Boy.wds  Anon_TradCarol\Stefan_was_a_Stable_Boy.wds
+MOVE Anon\Twelfth_Night_Song.mus  Anon_TradCarol\Twelfth_Night_Song.mus
+MOVE Anon\Twelfth_Night_Song.wds  Anon_TradCarol\Twelfth_Night_Song.wds
+REN Z_Axis\Scherzo_Sonaina_No4.mus  Z_Axis\Scherzo_Sonatina_No4.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+:: Duplicate of Whole_Note\Chantilly_Lace.mus
+DEL Whole_Note\Jam_Session.mus
+DEL Whole_Note\Jam_Session.wds
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v144.txt  00_Documents\Whats_new_in_v144.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_144.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.44 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

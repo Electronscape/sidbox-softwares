@@ -1,0 +1,128 @@
+			Enhanced Sidplayer, a Review:
+			----------------------------
+
+Every so often, Compute! Publications contradicts their own long-standing
+reputation for mediocrity and latches on to a real gem.  Such is the case
+with "The Enhanced Sidplayer" by Craig Chamberlain.  For those of you who
+are not familiar with Sidplayer, the original C64 SID music editor/player
+by Harry Bratt (first published as a type-in in "All about the Commodore 64,
+Volume 2; and later re-issued on disk with "The Complete 64"), this system
+is responsible for somewhere between 2000 and 3000 arrangements and
+compositions for the C64's SID chip now in the public domain.  No other music
+system for the C64 that I have seen is capable of squeezing such variety and
+sophistication from that lowly little 3-voice chip (a relatively obscure
+program called "Master Musician" comes as close as any, but is still missing
+many of the effects available here).
+
+So it has come to pass that Craig Chamberlain has completely re-written the
+package so as to incorporate everybody's "wish list" into the original.  The
+program is still faithful to the original (i.e. user's of the original
+Sidplayer will have no trouble using this updated version), and the book has
+been extensively revised to organize and present both old and new material
+in a highly understandable and educational manner.  The editor program itself
+is now largely machine-language for even faster editing (and the original was
+no slouch, either).  The player now fully supports accompanying singalong
+words and graphics.  Both C128 and C64 versions of all programs are included,
+and the C128 versions *do* take full advantage of the extra memory (again,
+not that the C64 version is incapable of long songs - 3-5 minute selections
+are run-of-the-mill for the C64 version).  The book includes tutorials on
+many aspects of music theory and notation.  For all it's complexity, the
+editor is amazingly simple to use, and music entry moves along at quite a
+rapid pace.
+
+One small problem - the Enhanced Sidplayer, because of it's more extensive
+command set, is capable of creating music files which the older (Sidplayer
+based) players will refuse to play (they quit playing somewhere in the
+song when an unidentified command is encountered).  There is no obvious way
+to tell an Enhanced Sidplayer music file which will crash the old players from
+one that won't.  The solution is to only use players which utilize the latest
+interpreter (i.e. the one that comes with Enhanced Sidplayer).
+
+Within the confines of these 80-column boundaries, I will restrict further
+review to a list of major topics covered by the book (and therefore supported
+by the editor).  This should give a more-than-adequate clue to the extensive
+capabilities within.  The book/disk (officially called "Compute!'s Music
+System for the Commodore 128 and 64") is $24.95 from Compute! Books.  The disk
+is not copy protected.  The book is 274 pages.  I am in no way affiliated with
+Compute!, just a very satisfied buyer.
+
+Introduction
+	The SID Chip, Compatibility, The Player, Song Selection, Song Playing,
+	Singalong Songs, Songs with Pictures, Filter Problems (and solutions),
+	Selecting Adjacent Songs, Continuous Playing, Changing Disks, How to
+	Use The Book
+Fundamentals of Music Theory
+	Notation, Pitch, Accidentals, Key Signatures, Durations, Dotted Notes,
+	Measures, Tempo, Rests, Ties and Slurs, Dynamics, Multiple Voices
+The Editor
+	Loading, Main Menu, Four Screens, Directory, Loading Song, Playing
+	Song, Slow Playing, Fast Forward, Playing at a Measure, Saving Song,
+	The Singalong Screen
+The Editing Screen
+	Voice Number, Measure Number, Key Signature, Staffs, Pitch, Duration,
+	Accidentals, Beats, Joystick Editing, Scrolling, Fast Scrolling,
+	Replace, Insert, Delete, Undelete, Backspace, Clear, Moving, Playing
+	on the Editing Screen, Rests, Tie/Slur, Measure Markers, Search for
+	a Measure, Cut and Paste, Key Repeat, Staff Type, Autoinsert, Auto-
+	matic Measure Numbering, Free Memory, Saving Your Custom Settings,
+	Help Screen
+The Command Screen
+	Tempo, Volume, Measure #, Search for Command, Update Mode, Help Screen
+The Display Screen
+	General, Measures, Phrases, Voice Columns, Playing on the Display
+	Screen, Demonstration
+A Sample Session
+	Sheet Music, Tempo, Volume, Key, Time, Measures, Note Entry, Editing,
+	Playing, Debugging, Commands, Display Screen, Save, Load
+Waveforms
+	Types, SID Chip Limitations, Waveform Command, Pulse Width, Pulse Width
+	Sweeping, Demonstrations
+Envelopes
+	Attach, Decay, Sustain, Release, Sustaining vs. Nonsustaining, Release
+	Point, Legato Style, Hold Time, Staccato Style, Demonstrations
+Repetition
+	Repeats (head and tail), Phrases (musical "subroutines"), Calling
+	Phrases, Nested Phrase Calls, Cross-Voice Phrase Calls, Da Capo,
+	Dal Segno, Coda, Advanced Applications
+Frequency and Waveform Effects
+	Portamento, Vibrato, Pulse Width Vibrato, Detuning, Transposing,
+	Synchronization, Ring Modulation, Demonstrations
+The Filter
+	Harmonics, Filter Mode, Cutoff, Resonance, Autofilter Mode, Filter
+	Cutoff Sweeping, Restrictions, Filter Variations among 64s and 128s
+	Demonstrations
+Modulation
+	Using the Envelope or Oscillator of Voice 3 to Modulate the Frequency,
+	Pulse Width, or Filter Cutoff of Another Voice; Software Generated
+	Waveform Modulation
+Advanced Music Theory
+	Tempo Change, Dynamics, Key Change, Staff Change, Time Signatures,
+	Partial Measures, Accidentals, Double Sharps and Flats, Double Dots,
+	Triplets, Grace Notes, Uncommon Durations and Utility Duration, Trills
+Advanced Commands and Techniques
+	Playing at Any Tempo, Utility Duration, Volume, Noise Waveform,
+	Waveform Combinations, Envelope, Pitch Bending, Playing Pitches While
+	Fading, Glide of Any Length, Portamento and Vibrato Simultaneously,
+	Detuning with Transposing, Synchronization with Portamento, Ring
+	Modulation with Portamento, Synchronization with Ring Modulation,
+	Filtered Ring-Modulation Tones, Changing the Piano-Key Color, Phonetics,
+	Musical Sculptures, More Than Three Voices, Playing a Song on Two
+	Computers
+Polyphony and Phrasing
+	Utility programs
+Singalong Songs
+	The Singalong Screen, Entering Words, The Flag Command, Color and
+	Reverse Printing in Verse Lines
+Merging Enhanced Sidplayer with BASIC Programs
+	Interrupt-Driven Playing, Load and Play Procedure, Synchronizing to
+	the Music, Demonstration, Multiple Songs, Compatibility
+Utility Programs
+	Music File Copier, Merging Songs, Extracting a Part of a Song
+Hints, Tips, and Suggestions
+	Suggestions and Shortcuts, Customizing the Editor, Enhanced Sidplayer
+	on Your Stereo, How to Create Picture Files, Original Compositions,
+	Where to Submit or Find More Sidplayer Songs
+
+							Sincerely,
+							Frank Prindle
+							Prindle@NADC.arpa

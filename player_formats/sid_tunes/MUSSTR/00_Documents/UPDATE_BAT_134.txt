@@ -1,0 +1,57 @@
+@echo off
+
+IF EXIST Whats_new_in_v134.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v134.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.34
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN James_Rye\Dust_in_the_Wind.mus  James_Rye\Dust_in_the_Wind_A.mus
+REN Misc\NWACUA_Christmas\Unidentified_1.mus  Misc\NWACUA_Christmas\Christos_Rozhdaetsa.mus
+REN Misc\NWACUA_Christmas\Unidentified_1.str  Misc\NWACUA_Christmas\Christos_Rozhdaetsa.str
+REN Misc\NWACUA_Christmas\Unidentified_2.mus  Misc\NWACUA_Christmas\Fum_Fum_Fum.mus
+REN Misc\NWACUA_Christmas\Unidentified_2.str  Misc\NWACUA_Christmas\Fum_Fum_Fum.str
+REN Misc\NWACUA_Christmas\Unidentified_3.mus  Misc\NWACUA_Christmas\In_Bethlehem_the_Lowly.mus
+REN Misc\NWACUA_Christmas\Unidentified_3.str  Misc\NWACUA_Christmas\In_Bethlehem_the_Lowly.str
+REN Whole_Note\Woody_Woodpecket_Song.mus  Whole_Note\Woody_Woodpecker_Song.mus
+REN Whole_Note\Woody_Woodpecket_Song.wds  Whole_Note\Woody_Woodpecker_Song.wds
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+MOVE Q-Link_Public_Domain_Software_Directory_1987_Spring.txt  00_Documents\Q-Link_Public_Domain_Software_Directory_1987_Spring.txt
+DEL 00_Commodore64\00readme.txt
+MOVE 00_Commodore64_00readme.txt  00_Commodore64\00readme.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v134.txt  00_Documents\Whats_new_in_v134.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_134.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.34 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

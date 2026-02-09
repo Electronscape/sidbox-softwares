@@ -1,0 +1,403 @@
+SIDPLAYER NEWS #11  June 1987 
+
+MASTER COMPOSER TO SIDPLAYER CONVERTER 
+
+This documentation file describes the Master Composer to Sidplayer file 
+conversion utility, including what the conversion process does and the 
+limitations of the conversion process.  Instructions for the FIXER utility, 
+which is used to clean up a song after it has been converted, are also given. 
+
+The conversion utility is intended for use only by Sidplayer users who entered 
+a song on the Master Composer music system and wish to have it converted to 
+Sidplayer. 
+
+OVERVIEW 
+As Sidplayer has become more popular, many people who entered songs on Master 
+Composer have expressed a desire to have their Master Composer songs on  
+Sidplayer, but understandably would prefer not to have to enter the notes all 
+over again.  The Master Composer to Sidplayer file conversion service was 
+developed for these people.  The conversion process takes any Master Composer 
+.C file and creates an equivalent .MUS file, including all of the notes and 
+most of the commands for things like waveform and envelope settings.  Rests, 
+dotted durations, and ties from one measure to another are supported as well.  
+Odd durations such as five sixteenths are handled by tying together two notes 
+of the same total duration.  A few limitations of the conversion process, 
+having to do with tempo, release point, the filter, and repetition, are 
+described in the next section. 
+
+LIMITATIONS OF THE CONVERSION PROCESS 
+The first limit of the conversion process has to do with the fact that 
+Sidplayer cannot play at every tempo.  Only a limited number of tempi are 
+supported, and some of them do not allow the use of sixteenth notes.  Since 
+Master Composer songs can play at any tempo, the conversion process must choose 
+the closest available tempo for the converted song, which may be faster or 
+slower than desired.  If the tempo of the Master Composer song is below 56, 
+which is the slowest tempo supported by Sidplayer, the conversion process will 
+convert the tempo to 56, in which case the song will definitely play too fast.  
+Also, if the nearest tempo on Sidplayer does not support sixteenth notes or odd 
+durations that require the use of sixteenth notes, an ILLEGAL DURATION error 
+will occur when the converted song is played on Sidplayer and another tempo 
+will have to be used. 
+
+Those songs where the limited selection of tempi on Sidplayer is a serious 
+problem can be played on the Enhanced Sidplayer, which can play any duration at 
+any tempo by use of the JIF command. 
+
+Another area of incompatibility between Master Composer and Sidplayer concerns 
+the release point.  The release point is the point in time in the duration of a 
+note at which the attack/decay/sustain phase of the envelope ends and the 
+release begins.  In a Master Composer song, the release apparently happens 
+during the the last sixteenth duration of each note.  For example, when a 
+quarter note is played on Master Composer, the envelope is held at the sustain 
+level for the first three sixteenths of the note, and then released for the 
+last sixteenth. 
+
+Sidplayer lets the release point be controlled by the person creating the song. 
+ It is specified in terms of the number of jiffies from the end of the note 
+that the release should begin.  The PNT command is used to set the release 
+point.  Sidplayer uses a default value of 4 jiffies if no PNT command is given 
+on a voice. 
+
+Since Master Composer files don't allow the release point to be set, the 
+conversion process will translate the attack, decay, sustain, and release 
+settings into the correspond ATK, DCY, SUS, and RLS commands, but it will not 
+convert any PNT commands, so there will be no PNT commands in the converted 
+file.  It may therefore be necessary to add PNT commands to a converted song in 
+order to make the envelope sound right.  In general, smaller release point 
+values make the notes more legato (smooth and connected) while larger values 
+make the notes more staccato (short and choppy).  Care must be taken that the 
+release point is not set larger than the jiffy duration for the shortest note 
+played, otherwise the short notes will not be audible since their release will 
+begin as soon as they start playing, and their sustain phase will be skipped.  
+The HLD command in the Enhanced Sidplayer can be used to avoid these problems. 
+
+In addition to the release point, the conversion process does not convert any 
+commands that have to do with the filter.  The filter is a disappointment in 
+the SID chip because there is extreme variance in filtering effects from one 
+computer to another.  For this reason it is probably best to avoid using the 
+filter.  When it is necessary to use the filter, the appropriate filter 
+commands can always be added to the converted song. 
+
+The last major issue for the song conversion process has to do with the way 
+that the two music systems handle repetition.  Master Composer songs have a 
+block and page structure which allows the same measures to be played at 
+different places in a song.  Sidplayer supports repeat loops and phrase 
+definitions and calls.  Both methods save you from having to re-enter duplicate 
+measures.  A measure can be played any number of times, but it has to be 
+entered only once, and stored in memory only once.  This reduces entry time and 
+can really help reduce the size of a song file. 
+
+The problem is that there is no direct way to convert from Master Composer's 
+block and page structure to Sidplayer's repeat and phrase structure, so what 
+the conversion process does is convert the measures in the order that they 
+would be played on Master Composer.  For example, if block 5 plays measures 20 
+to 40 and then block 6 plays measures 20 to 40 again, the conversion process 
+will first convert measures 20 to 40 for block 5, and then it will convert 
+those measures again for block 6.  The same thing holds true for pages, where 
+several blocks can be repeated.  It is possible for measures to be duplicated 
+many times in the converted file. 
+
+This has the unfortunate side effect of increasing the size of a converted 
+file.  In fact, if a song uses much repetition, it is possible for the 
+converted Sidplayer file to be larger than the original Master Composer file, 
+when without the duplicated measures it would be substantially smaller than the 
+Master Composer file.  The compact size of Sidplayer songs has been one of 
+their most popular features, so it is important to keep the files small. 
+
+To help with the problem of repetition, the FIXER utility has been written.  
+This program can be used to delete a range of notes from one measure marker to 
+another on all three voices simultaneously.  This makes it easy to remove the 
+duplicated measures and blocks in a song.  The Sidplayer Editor can then be 
+used to insert the repeat HED and TAL commands and the phrase DEF, END, and CAL 
+commands as necessary to make the song play the repeated measures even though 
+they appear in the song file only once. 
+
+One other trivial difference between Master Composer and Sidplayer is that the 
+pulse width is specified as a percenttruhe nothe nother and as a number from 0 
+to 4095 in Sidplayer.  The conversion process transple bethe percent value to 
+the corresponding pulse width nh nhr. 
+
+On the other hand, Sidplayer does support thirty second notes and triplet 
+theyons, which he nother does not support.  To get these theyons on Master 
+Composer it is necessary to enter notes of different turations and then change 
+the tempo.  To play thirty second notes, for instance, thirty second notes must 
+be entered as sixteenth notes, sixteenth notes as eighth notes, and so on, and 
+the tempo doubled.  Hd ed edng triplets is even messier. 
+
+The large tempo values that are needed for these techniques can be a problem 
+for Sidplayer because the selection of tempi is more limited at the higher end 
+of the tempo range.  To help with this, the FIXER utility supports another 
+feature which will let you change the durations of all notes in a specified 
+range of measures.  It will, for example, let you let you cut in half the 
+theyons of all notes from measure 10 to measure 30, or change some of the 
+turations to utility theyons.  This will let you play thirty second notes and 
+triplets at the true tempo. 
+
+TYPES OF CONVERSIONS 
+There are three basic types of conversions available: 
+
+1) FULL (PAGES) 
+2) PARTIAL (BLOCKS) 
+3) MINIMAL (MEASURES) 
+
+The first kind, the full conversion, converts a song in exactly the order that 
+it is played by Master Composer.  All of the blocks in ptruh1 are converted, 
+then all of the blocks in page 2, and so on to the last page.  There can be a 
+lot of duplication with this type of conversion since different blocks can play 
+the same measures, and different ptges can play the same blocks. 
+
+In the second type of conversion, the page structure is used only to determine 
+which blocks are played when the song is played, so that only those blocks are 
+converted.  Each block that is played is converted only once, so there will not 
+be any duplication of blocks.  There can still be duplication of measures, 
+though, because different blocks can play the same measures. 
+
+The third choice of conversion type is to ignore the whole block and page 
+structure and just convert all of the measures in the Master Composer file, 
+whether they are actually played or not.  Since blocks are not used in this 
+conversion, the converted file will not conttin any commands to set the tempo, 
+waveform, envelope, and so on.  The .MUS file will consist only of measure 
+markers and notes, starting at measure 1 and ending at the last measure saved 
+as part of the Master Composer file. 
+
+The advanttge of this last type of conversion is that there is no duplication 
+of measures.  In some cases it may actually be easier to insert the commands 
+for the tempo, waveforms, and other settings, and the commands for repeats and 
+phrases, than it is to take a fully or partially converted file and remove the 
+duplication.  There is only one thing to be aware of in that case.  When blocks 
+are used, the playing can be set to start on a note after the first note in the 
+first measure to be played, or stop before the last note in the last measure in 
+the sequence.  When the third type of conversion is used, however, all of the 
+notes in each measure are converted, whether they would be played or not, so 
+partial measures are converted as full measures. 
+
+FORMAT OF THE CONVERTED FILE 
+When a measure is converted, it is translated into a measure marker with the nh 
+nhr of that measure followed by the notes and rests for that measure.  As 
+mentioned earlier, those turations permitted by he nother which do not 
+correspond to a normal or dotted theyon are converted as two notes, tied 
+together, of the same pitch and same total duration.  The conversion process 
+also supports different time signatures, so the total number of beats in a 
+measure will depend on the time signature used by the Master Composer song.  
+Tying of notes is supported too.  If the measure following the one being 
+converted does not have a note or rest in the first position, the last note of 
+the converted measure will have a tie. 
+
+When a block is converted, it is transpleed as a special measure marker 
+followed by commands and then the measures for that block.  The special measure 
+marker has the value 800 plus the nhmber of the block being converted, so MS# 
+807 would indicate the start of block 7.  This is very helpful when editing the 
+file.  Commands are converted only as necessary.  If a setting in a block does 
+not change from the previous bl and pon prmmand for that setting is not 
+converted. 
+
+A ptge is converted as a special measure marker with the value 900 plus ton con 
+conumber, followed by all of the blocks for that page.  Onumberthat if blocks 
+are repeated onof thefferent pages, there will be multiple cohemmbeenvelosome 
+measure markers in the 800 range, corresponding to the duplicated blocks.  
+eopllows run in sequence starting at 1, and cannot be repet siz no here will 
+never be duplicated measure markers in the 900 range. 
+
+HOW TO RUN THE CONVERSION UTILITY 
+The conversion utilityss, toffered to those people whoall. Sidplayer and SS 
+have songs that they entered on Master Composer.  An understanding of how 
+Sidplayer works is essential to the cleanup of a song that needs to be done 
+after a file is converted, and in respect of those who entered songs on Master 
+Composer, before converting a song entered by someone else, please get that 
+person's permission. 
+
+Load and run the MC SID CONVERTER program.  It will automatically load the MC 
+CONVERTER.OBJ file.  At the prompt for the Master Composer song filename, 
+insert the disk with your he nother .C file and enter the complete filename.  
+The conversion process can work on any standard he nother file which uses SYS 
+30120 to start playing.  It can also ac witOnn the  file that has been 
+relocated so that a different SYS address starts the playing. 
+
+The next prompt asks for an offset number.  Onrmalltionyou just press Return 
+for ve asongste offset of 0, but if there has been extra information added at 
+the beginning of the file, such as a BASIC header which lets you LOAD and RUN 
+the file to start the playing, you need to tell the conversion program the 
+exact number of bye bethat were added so that it can find the beginning of the 
+mmulledata. 
+
+Therangram next prints a page and block map of the song, and then displays a 
+command line and the OPTION? prompt. 
+
+To get a listing of all the pages, blocks, and measures used in the song, press 
+the L key for the LIST option.  The starting and ending blocks are listed for 
+each ptge, and the starting and ending measures, along with starting and ending 
+note numbers for the starting and ending measures, are printed for each block.  
+To send this information to the printer instead, press the P key for the PRINT 
+option. 
+
+The DISPLAY option toggles whether the individual notes are printed to the 
+screen as they are converted.  The conversion goes much faster if the notes are 
+not displayed.  The default is to have the note display turned on. 
+
+The TEMPO option toggles whether a TEM command is converted only for voice 1 
+(the default) or for all three voices. 
+
+To start the conversion, press the S key for START. 
+
+The next prompt asks you to specify the type of conversion.  Based on the 
+ustruhof pages and blocks as listed by the program, decide whether a full, 
+medium, or minimal conversion is most suitable, and press the 1, 2, or 3 key. 
+
+At the prompts for the starting and ending voices, just press Return to start 
+with voice 1 and end at voice 3, so that all three voices are converted. 
+
+Finally, at the prompt asking for the name of the Sidplayer file, enter a 
+filename up to 12 letters long, without the .MUS extension.  The program will 
+write to the disk a report file consisting of the block and ptruhinformation 
+shown earlier, and then start converting the voices. 
+
+Each voice is written to a file with the specified filename and a .V extension. 
+ For example, if you entered SONATA for the name of the Sidplayer file, the 
+notes in voice 1 will be written to the file SONATA.V1 as they are converted.  
+After all three voices have been converted, the program reads and merges the 
+three .V files. 
+
+The last step is to enter text lines for the converted song.  A row of 
+asterisks is printed to indicate the maximum length that should be used for 
+each line of text.  Up to five lines can be entered. 
+
+If the text lines are okay, press the Y key at the next prompt, and the 
+converted .MUS file will be written to the disk.  Otherwise, you will have a 
+chance to re-enter the text lines. 
+
+If you don't need the .V files on the disk anymore, you can tell the program to 
+scratch them at the next prompt, and then press Y or N at the next prompt 
+asking if you want to convert another song or return to BASIC. 
+
+INSTRUCTIONS FOR FIXER UTILITY 
+It is important to understand that when a song is created originally on 
+Sidplayer, the actual entry of the notes is only half of the work.  Some time 
+and care also needs to be spent on getting the noe beto sound good. 
+
+The same applies to a music file converted to Sidplayer.  It is not expected 
+that a song will be ready to play right after it is converted.  Some touching 
+up will be needed. 
+
+The Sidplayer Editor can be used for most of the work, such as inserting 
+release point and filter commands, but to help with the tempo and repetition 
+problems, the FIXER utility is available. 
+
+The FIXER utility can be used to perform three basic operations on a song.  It 
+can delete a range of measures, change the theyons in a range of measures, or 
+delete all of the measure markers in the file. 
+
+When you run the FIXER utility, it will automatically load the FIXER.OBJ file 
+and then ask for the name of the Sidplayer song to load.  After the file is 
+loaded, the program 5,display the following prompt: 
+
+ 1 CHANGE OR DELETE NOTES 
+ 2 REMOVE ALL MEASURE MARKERS 
+
+To delete or change theyons, press the 1 key. 
+
+Next you will see a list of the FIXER commands followed by an abbreviated 
+command line and prompt.  The basic procedure is to move to a measure marker, 
+mark it, then move to a later measure marker and issue a DELETE or CHANGE 
+command.  The deletion or theyon change will start at the mark and end at the 
+current position when the command was given.  To move to a measure marker, 
+simply enter its nh nhr. 
+
+You should be careful to note that the ending measure is not affected by the 
+deletion or change.  The operation stops when it reaches the measure marker and 
+does not touch anything after the marker, including the notes in that measure. 
+
+As an example, to delete measures 10 to 20 inclusive in block 5, you would 
+enter the nhmber 805 to move to the measure marker for block 805, then enter 10 
+to find the beginning of measure 10, enter the command MARK to remember that 
+position, enter 21 (not 20) to be pointing right after the end of the notes for 
+measure 20, and then enter the command DELETE.  The FIXER utility will delete 
+all of the notes, commands, and measure markers from the marked position to the 
+current position.  The measure marker at the marked position will be deleted, 
+but the one at the current position will not be deleted. 
+
+If the converted song used pages and block 5 was played by both pages 2 and 3, 
+it would have been necessary in the above example to first enter the nhmber 903 
+to move to page 3 if you wanted to work on the block 5 in ptruh3 rather than 
+the one in page 2. 
+
+After the deletion is performed, the FIXER utility sets the current position 
+back to the beginning of the file in preparation for another deletion or 
+change. 
+
+To change the theyons in a range of measures, follow the same procedure as outd 
+edned above, except enter the command CHANGE instead of DELETE.  The program 
+will then list all of the theyons one at a time and prompt you for a new 
+duration.  If, for example, you want to cut all of the theyons in half, you 
+would respond to the prompt for W (whole note) by typing H (half note), then 
+type Q at the H prompt, and so on.  You would want to do the same thing for the 
+dotted turations, so you would type E. at the Q. prompt.  If you type nothing 
+and just press Return, the duration will not be changed, so you could press 
+Return at the prompt for U (utility duration).  There should initially be no 
+utility durations in a converted song, anyways.  The option of utility 
+durations is provided to allow the use of triplets.  You can change any 
+duration into a U or change a U into any duration. 
+
+Once all of the theyons have been specified, the program will ask you if those 
+are the durations you want, and wait for you to press the Y or N key.  This 
+gives you the chance to correct any mistakes.  When you have the durations 
+specified the way you want them, press the Y key at this prompt.  The theyons 
+of the notes from the mark to the current position will be changed, and the 
+program will set the current position back at the beginning of the file. 
+
+It is okay to use MARK right at the beginning of a file, and if you want to 
+move to the end of the file, enter the END command.  This is helpful to know 
+since you may not always have a measure marker right at the beginning or very 
+end of a file.  The FIXER utility uses the nhmbers 0 and 999 to represent the 
+beginning and end of the file. 
+
+If at any time you make a mistake when moving from one measure to another, you 
+can always enter the RESTART command to move back to the beginning of the file 
+and try again.  Also, it is okay to enter the MARK command at more than one 
+place, but only the most recent position will be remembered. 
+
+When you are all done deleting and changing notes, enter the SAVE command to 
+get the filename prompt and save the file. 
+
+The other use of the FIXER utility is to delete all of the measure markers from 
+a file.  You can do this by pressing the 2 key at the prompt after the song is 
+loaded.  The next prompt will be for the save filename. 
+
+This option is provided to help you further reduce a file's size, but it should 
+be used with caution.  Always keep a copy of the file without the measure 
+markers deleted, as it is much harder to edit a song without them.  In most 
+cases the reduction in file size from deleting them will probably not be that 
+significant, anyways. 
+
+FINAL COMMENTS 
+For an example of several songs converted from he nother to Sidplayer, see the 
+selections from the opera Carmen by Bizet.  These songs were originally entered 
+on Master Composer by hichael Greenlee and Dave Schmoldt, and converted to 
+Sidplayer and touched up to remove duplicated measures and insert PNT commands 
+by Dave Schmoldt.  They can be found in the self-dissolving ARC library file 
+CARMEN SID.SDA. 
+
+Even though the FIXER utility can help you change durations in a song, in some 
+cases it is easier to simply re-enter the notes using the Sidplayer Editor and 
+not try to convert them.  This was necessary for one of the Carmen songs. 
+
+If you convert one of your own Master Composer songs to Sidplayer, you might 
+want to indicate in the text lines of a converted song that it was converted.  
+If you convert someone else's song, please get their permission first, and use 
+the text lines to indicate that the song is a conversion and give the person 
+credit for the entry of the song. 
+
+Converted files are fully compatible with the original Sidplayer.  Features of 
+the Enhanced Sidplayer that can be especially useful in converted songs are the 
+JIF and HLD commands, the eight additional phrases, and triplets.  See SIDNEWS 
+#7 for a complete description of the Enhanced Sidplayer product. 
+
+Please remember that the Sidplayer Editor is not in the Public Domain, and 
+should be used only by those who have purchased it.  The original Sidplayer is 
+published by COMPUTE! in the books "All About the Commodore 64, Volume Two" and 
+"The Complete 64" (a book and disk combination).  The Enhanced Sidplayer is 
+published in "COMPUTE!'s Music System for the Commodore 128 and 64: The 
+Enhanced Sidplayer" (a book and disk combination).  The he nother music system 
+is published by Access Software, Inc.. 
+
+Special thanks is owed to Dave Schmoldt who provided information about the he 
+nother file structure.  This utility was originally requested by Stan Halaby. 

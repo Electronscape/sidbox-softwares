@@ -1,0 +1,55 @@
+@echo off
+
+IF EXIST Whats_new_in_v111.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v111.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.11
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+DEL Jim_-Jim_Brock-_-KCORB-\Rocking_Around_the_Xmas_Tree.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Rocking_Around_the_Xmas_Tree.wds
+DEL Jim_-Jim_Brock-_-KCORB-\Home_for_the_Holidays.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Home_for_the_Holidays.wds
+DEL Jim_-Jim_Brock-_-KCORB-\Let_it_Snow.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Let_it_Snow.wds
+DEL Jim_-Jim_Brock-_-KCORB-\Jolly_Old_St_Nicholas.mus
+DEL Jim_-Jim_Brock-_-KCORB-\Jolly_Old_St_Nicholas.wds
+
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE David_Pike\Sonata_R1.mus David_Pike\Sonata_R14.mus
+MOVE Whole_Note\Suite_VIII_G_Minor_Passacaglia.mus Whole_Note\Suite_VII_G_Minor\Passacaglia_B.mus
+MOVE Whole_Note\Suite_VIII_G_Minor_Gigue.mus Whole_Note\Suite_VII_G_Minor\Gigue_B.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\Alias_List.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v111.txt  00_Documents\Whats_new_in_v111.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_111.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.11 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

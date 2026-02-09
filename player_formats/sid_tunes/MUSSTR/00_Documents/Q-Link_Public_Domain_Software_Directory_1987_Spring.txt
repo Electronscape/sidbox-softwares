@@ -1,0 +1,872 @@
+Page,Section,Description,Filename,Uploader,Date
+39,SID CONTEMPORARY POP (Pre-50's),1930's/5 song medley,1930.mus,Daspf,09/23/86
+39,SID CONTEMPORARY POP (Pre-50's),Ain'tWeGotFun/Music,funmusic.mus,Daspf,10/14/86
+39,SID CONTEMPORARY POP (Pre-50's),Beat Me Daddy/8 2 the Bar,beat/daddy.mus,Lyric,01/10/87
+39,SID CONTEMPORARY POP (Pre-50's),Boogie Woogie Bugle Boy,boogiebugle.mus,Daspf,11/27/86
+39,SID CONTEMPORARY POP (Pre-50's),Bumble Boogie,bumble.mus,SYSOP JON,01/07/87
+39,SID CONTEMPORARY POP (Pre-50's),CowCow Boogie * Lyric,cow boogie.mus,Bobbye,01/28/87
+39,SID CONTEMPORARY POP (Pre-50's),Eye Opener-Bob Zurke,eye opener.mus,John r,01/13/87
+39,SID CONTEMPORARY POP (Pre-50's),Good Old Summer/Charlesto,sumchas.mus,Daspf,10/27/86
+39,SID CONTEMPORARY POP (Pre-50's),Mississippi Mud,miss/mud.mus,Lyric Note,02/17/87
+39,SID CONTEMPORARY POP (Pre-50's),Moonlight Serenade-G.MIII,moonlight.mus,Lyric,01/16/87
+39,SID CONTEMPORARY POP (Pre-50's),"Oh Johnny,Oh Johhy,Oh!",oh johnny.mus,Bobbye,02/08/87
+39,SID CONTEMPORARY POP (Pre-50's),On The Sunny Side/Street,sunny/street.mus,DaleC1,10/08/86
+39,SID CONTEMPORARY POP (Pre-50's),Satin Doll,satin doll.mus,DiskDrivr,02/22/87
+39,SID CONTEMPORARY POP (Pre-50's),Serenade In Blue,sere/blue.mus,Lyric,01/16/87
+39,SID CONTEMPORARY POP (Pre-50's),SophisticatdLady-EIIingtn,sophis-lady.mus,Dan24,03/09/87
+39,SID CONTEMPORARY POP (Pre-50's),Sophisticated Lady,slady.mus,Fwp,02/24/87
+39,SID CONTEMPORARY POP (Pre-50's),Stompin - Goodman,stompin.mus,Fwp,02/14/87
+39,SID CONTEMPORARY POP (Pre-50's),Why Don't you do it Right,do right.mus,Bobbye,02/08/87
+39,SID CONTEMPORARY POP (50's-60's),25 or 6 to 4-Chicago,25or6to4.mus,Kupkake,02/18/87
+39,SID CONTEMPORARY POP (50's-60's),All My Lovin-Beatles,all my lovin.mus,Dr J5,01/06/87
+39,SID CONTEMPORARY POP (50's-60's),Alley Cat,alleycat1.mus,Daspf,11/15/86
+39,SID CONTEMPORARY POP (50's-60's),Alley Cat remix,alleycat2.mus,Daspf,11/15/86
+39,SID CONTEMPORARY POP (50's-60's),And/Bird Can Sing-Beatles,birdcansing.mus,Sebas Hill,12/08/86
+39,SID CONTEMPORARY POP (50's-60's),Baby I'm Yours-BarbaraLew,baby im your.mus,JohnY5,01/21/87
+39,SID CONTEMPORARY POP (50's-60's),Beatles Medley,beatles.mus,Daspf,12/01/86
+39,SID CONTEMPORARY POP (50's-60's),Because - Beatles,because.mus,Sebas Hill,12/08/86
+39,SID CONTEMPORARY POP (50's-60's),Chances Are,chancesarc.mus,Daspf,01/21/87
+39,SID CONTEMPORARY POP (50's-60's),Color My World-Chicago,color.mus,SYSOP JON,01/07/87
+39,SID CONTEMPORARY POP (50's-60's),Dangling Conversation,conversation.mus,Yoda Dayve,12/28/86
+39,SID CONTEMPORARY POP (50's-60's),Day Tripper-Beatles,day tripper.mus,Collecting,12/08/86
+39,SID CONTEMPORARY POP (50's-60's),Day Tripper-Beatles,day tripper.mus,KJantiques,09/15/86
+39,SID CONTEMPORARY POP (50's-60's),Feelin' Groovy-59th St.Br,grovy.mus,SYSOP JON,01/07/87
+39,SID CONTEMPORARY POP (50's-60's),Flip Flop Bop-'58,flip flop.mus,Lyric,01/12/87
+39,SID CONTEMPORARY POP (50's-60's),From Me To You-Beatles,from me 2you.mus,Sebas Hill,11/30/86
+39,SID CONTEMPORARY POP (50's-60's),Girl - the Beatles,girl.mus,Sebas Hill,12/15/86
+39,SID CONTEMPORARY POP (50's-60's),Go Away Little Girl,go-away.mus,Terryw,01/31/87
+39,SID CONTEMPORARY POP (50's-60's),Golden Slumber-Beatles,goldenslumhr.mus,Sebas Hill,11/30/86
+39,SID CONTEMPORARY POP (50's-60's),Have You Heard-Duprees,haveyouhcard.mus,JohnY5,01/20/87
+39,SID CONTEMPORARY POP (50's-60's),Heart and Soul * Dr J5,heart/soul.mus,Dr J5,09/11/86
+39,SID CONTEMPORARY POP (50's-60's),Hello Goodbye - Beatles,hello gdbye.mus,KJantiques,09/15/86
+39,SID CONTEMPORARY POP (50's-60's),Hey Jude-Beatles,hey jude.mus,Brian Mack,10/30/86
+39,SID CONTEMPORARY POP (50's-60's),Hey Paula - Paul & Paula,hey paula.mus,JohnY5,01/14/87
+39,SID CONTEMPORARY POP (50's-60's),How do You Do What You Do,how do to me.mus,Dr J5,12/09/86
+39,SID CONTEMPORARY POP (50's-60's),I Saw Her Standing,sawher/beatl.mus,Dr J5,10/04/86
+39,SID CONTEMPORARY POP (50's-60's),I Want To Hold Your Hand,hold ur hand.mus,Dr J5,01/29/87
+39,SID CONTEMPORARY POP (50's-60's),I Will-Beatles,i will/beatl.mus,Dr J5,10/04/86
+39,SID CONTEMPORARY POP (50's-60's),I am The Walrus-Beatles,i am/walrus.mus,Collecting,12/08/86
+39,SID CONTEMPORARY POP (50's-60's),I'm Lookin Through You,lookinthru u.mus,Sebas Hill,11/30/86
+39,SID CONTEMPORARY POP (50's-60's),It Was A Very Good Year,good year.rnus,Yoda Dayve,11/30/86
+39,SID CONTEMPORARY POP (50's-60's),Joy To The World-3DogNite,jererniah.mus,Les H1,02/03/87
+40,SID CONTEMPORARY POP (50's-60's),Last Date,last date.mus,Lyric Note,01/31/87
+40,SID CONTEMPORARY POP (50's-60's),Last Date-Floyd Cramer,last date.mus,Lyric,01/12/87
+40,SID CONTEMPORARY POP (50's-60's),Let Me In-Y.Baker*daspf,let me in.mus,Daspf,02/07/87
+40,SID CONTEMPORARY POP (50's-60's),Louie Louie,louie louie.mus,Tweek,02/17/87
+40,SID CONTEMPORARY POP (50's-60's),Love Is Blue,love is biue.mus,Vetter,01/04/87
+40,SID CONTEMPORARY POP (50's-60's),Love Letters in the Sand,lov/letrsand.mus,Dr J5,01/31/87
+40,SID CONTEMPORARY POP (50's-60's),Love Me Do-Beatles,love me do.mus,Sebas Hill,11/30/86
+40,SID CONTEMPORARY POP (50's-60's),Lucy In The Sky W/Diamond,Iucy/in/sky.mus,Yoda Dayve,01/28/87
+40,SID CONTEMPORARY POP (50's-60's),Maxwell's Silver Hammer,maxwellhamer.mus,Sebas Hill,11/30/86
+40,SID CONTEMPORARY POP (50's-60's),Mr.Bojangles-J.J.Walker,bojangles.mus,Terryw,01/31/87
+40,SID CONTEMPORARY POP (50's-60's),Norwegian Wood-Beatles,nor. wood.mus,Yoda Dayve,01/28/87
+40,SID CONTEMPORARY POP (50's-60's),Nowhere Man-Beatles,nowhere man.mus,Sebas Hill,11/30/86
+40,SID CONTEMPORARY POP (50's-60's),On Broadway,on broadway.mus,Terryw,01/22/86
+40,SID CONTEMPORARY POP (50's-60's),P.S.I Love You-Beatles,psi love u.mus,Sebas Hill,11/30/86
+40,SID CONTEMPORARY POP (50's-60's),Proud Mary - CCR,proudmary.mus,Daspf,01/20/87
+40,SID CONTEMPORARY POP (50's-60's),Sheila - Tommy Roe*Daspf,sheila.mus,Daspf,01/28/87
+40,SID CONTEMPORARY POP (50's-60's),Spanish Eyes-Al Martino,spanish eyes.mus,Terryw,10/22/86
+40,SID CONTEMPORARY POP (50's-60's),Strawberry Fields,stwbrry flds.mus,FritzDeCat,10/07/86
+40,SID CONTEMPORARY POP (50's-60's),Teen Angel,teen angel.mus,Tweek,02/17/87
+40,SID CONTEMPORARY POP (50's-60's),Twist & Shout-Beatles,twistnshout.mus,Dr J5,01/11/87
+40,SID CONTEMPORARY POP (50's-60's),Venus,venus.mus,Tweek,02/25/87
+40,SID CONTEMPORARY POP (50's-60's),What Have They Done/MySon,melanie.mus,SYSOP JON,01/07/87
+40,SID CONTEMPORARY POP (50's-60's),When,whcn.mus,JohnY5,12/26/86
+40,SID CONTEMPORARY POP (50's-60's),Whiter Shade Of Pale,whiter shade.mus,HY GAIN,02/18/87
+40,SID CONTEMPORARY POP (50's-60's),Who'll Stop The Rain-CCR,stoptberain.sal,Daspf,12/01/86
+40,SID CONTEMPORARY POP (50's-60's),Will You Still Love Me...,luvmetomaro.mus,Diz Cop,10/12/86
+40,SID CONTEMPORARY POP (50's-60's),Wipeout * Daspf,wipeout.mus,Daspf,09/14/86
+40,SID CONTEMPORARY POP (50's-60's),Wouldn't It Be Nice-B.Boy,wouldntbnice.mus,Sloop j b,11/05/86
+40,SID CONTEMPORARY POP (50's-60's),Yesterday * Beatles,yesterday.mus,Sebas Hill,11/30/86
+40,SID CONTEMPORARY POP (50's-60's),You Never Give Me/Money,you neverl.mus,Collecting,12/08/86
+40,SID CONTEMPORARY POP (70's),At Seventeen-Janis Ian,seventeen.mus,Terryw,01/31/87
+40,SID CONTEMPORARY POP (70's),Cats In The Cradle,cats/cradle.mus,Collecting,11/13/86
+40,SID CONTEMPORARY POP (70's),Disguises-The Who,disguises.mus,PEPSIN,01/03/87
+40,SID CONTEMPORARY POP (70's),Don't Let/Sun Go Down,sungodown.mus,QWOP,11/30/86
+40,SID CONTEMPORARY POP (70's),Dont Let Sun Go Down/Me,sungodown 2.mus,QWOP,12/07/86
+40,SID CONTEMPORARY POP (70's),Echoes-PinkFloyd,echoes.mus,Pauldib,11/14/86
+40,SID CONTEMPORARY POP (70's),Feelings - Morris Albert,feelings.mus,Joef9,01/22/87
+40,SID CONTEMPORARY POP (70's),Going For The One-Yes,going.mus,ChuckC5,02/01/87
+40,SID CONTEMPORARY POP (70's),Goodbye Yellow Brick Road,yellow brick.mus,Chuckles2,11/26/86
+40,SID CONTEMPORARY POP (70's),Hey Nineteen- Steely Dan,hey nineteen.mus,Collecting,12/08/86
+40,SID CONTEMPORARY POP (70's),Higher Ground-S. Wonder,higherground.mus,Dan24,03/09/87
+40,SID CONTEMPORARY POP (70's),Hooked On Classics,hook-classic.mus,Joef9,11/14/86
+40,SID CONTEMPORARY POP (70's),Hooked On Classics (3pt),classics 123.mus,Joef9,02/07/87
+40,SID CONTEMPORARY POP (70's),Killing Me Softly/Song,killing.mus,Fwp,11/26/86
+40,SID CONTEMPORARY POP (70's),Leave It-YES,leave it.mus,Peggy r,10/06/86
+40,SID CONTEMPORARY POP (70's),Long Distance Runaroun-YE,distance.mus,Opal Adept,12/20/86
+40,SID CONTEMPORARY POP (70's),Music Box Dancer,music box.mus,DCSTARnCPR,02/15/87
+40,SID CONTEMPORARY POP (70's),Preacher/The Teacher-YES,preacher.mus,Opal Adept,12/20/86
+40,SID CONTEMPORARY POP (70's),Rhinestone Cowboy,cowboy.mus,NickZ,03/09/87
+40,SID CONTEMPORARY POP (70's),She's Out Of My Life,outofmylife.rnus,Terryw,10/22/86
+40,SID CONTEMPORARY POP (70's),Sister Christian,sister chris.mus,GeorgeL1 1,02/07/87
+40,SID CONTEMPORARY POP (70's),Sorry Seems/Hardest Word,hardestword.mus,QWOP,12/07/86
+40,SID CONTEMPORARY POP (70's),The Fish-Yes,the fish.mus,ChuckC5,02/01/87
+40,SID CONTEMPORARY POP (70's),Whipped Cream-Herb Alpert,whipped crm.mus,DREAM WHIP,12/30/86
+40,SID CONTEMPORARY POP (80's),(Oh) Pretty Woman,pretty woman.mus,Michael F,02/14/87
+40,SID CONTEMPORARY POP (80's),3 x a Lady-Lionel Richie,three t lady.mus,Boldar,12/07/86
+40,SID CONTEMPORARY POP (80's),ABBA-6 Songs,abba album.lnx,Carole d,12/27/86
+40,SID CONTEMPORARY POP (80's),Addicted To Love-R.Palmer,addict2love.mus,Command Cp,10/02/86
+40,SID CONTEMPORARY POP (80's),Are We Ourselves,r we selves.mus,Chardro,12/27/86
+40,SID CONTEMPORARY POP (80's),Born Again,born again.mus,JAY15,01/26/87
+40,SID CONTEMPORARY POP (80's),Capt of Her Heart,capt/heart.mus,Chardro,12/27/86
+40,SID CONTEMPORARY POP (80's),Conga-Miami Sound Machine,conga.mus,FritzDeCat,10/30/86
+40,SID CONTEMPORARY POP (80's),Dare Me-Pointer Sisters,dare me.mus,Whomaster,11/15/86
+40,SID CONTEMPORARY POP (80's),Dclcrious-Prince,delerious.mus,STEAK1,09/18/86
+40,SID CONTEMPORARY POP (80's),DifferentCorner,dif/comer.mus,FritzDeCat,10/07/86
+41,SID CONTEMPORARY POP (80's),Don't Cry-Asia,dont cry.mus,Brian Mack,10/20/86
+41,SID CONTEMPORARY POP (80's),Don't Talk to Strangers,dont talk.mus,STEAK1,09/17/86
+41,SID CONTEMPORARY POP (80's),Drive-The Cars,drive.mus,STEAK2,11/13/86
+41,SID CONTEMPORARY POP (80's),Everybody Have Fun Tonigh,everybody.mus,MadCityAce,02/21/87
+41,SID CONTEMPORARY POP (80's),Fool To Cry-Rolling Stone,fool to cry.mus,Sloop j b,11/30/86
+41,SID CONTEMPORARY POP (80's),For the Longest Time,longest time.mus,Peggy r,10/06/86
+41,SID CONTEMPORARY POP (80's),Fresh Aire * John r,fresh aire 4.mus,John r,01/09/87
+41,SID CONTEMPORARY POP (80's),Hang Fire (slow version),hangfireslow.mus,Sloop j b,11/30/86
+41,SID CONTEMPORARY POP (80's),Hello - Lionel Riehle,hello.mus,BlkPanther,01/14/87
+41,SID CONTEMPORARY POP (80's),Higher Love-Steve Winwood,higher love.mus,JJP1,01/25/87
+41,SID CONTEMPORARY POP (80's),Home By The Sea-Genesis,home sea.mus,ChuckC5,02/01/87
+41,SID CONTEMPORARY POP (80's),Honesty-B.Joel*JanetM,honesty10.mus,JanetM,10/16/86
+41,SID CONTEMPORARY POP (80's),Hungry Like The Wolf,hungrywlf.mus,Whatadude,10/25/86
+41,SID CONTEMPORARY POP (80's),I'm so excited-Pointer Si,so excited.mus,Steve Ham,12/02/86
+41,SID CONTEMPORARY POP (80's),InnocentMan-BJoel,innocentman.mus,Peggy r,10/06/86
+41,SID CONTEMPORARY POP (80's),Keeping/Faith -Joel,keepthefaith.mus,Peggy r,10/06/86
+41,SID CONTEMPORARY POP (80's),KidsAmer/Remix,kids-rear.mus,RobR,10/01/86
+41,SID CONTEMPORARY POP (80's),Kyrle/remix-MrMr,kyrie-rmx.mus,RobR,10/01/86
+41,SID CONTEMPORARY POP (80's),Leave a Tender Moment...,leavemoment.mus,Peggy r,10/06/86
+41,SID CONTEMPORARY POP (80's),Magic-Cars,magic.mus,BlkPanther,10/17/86
+41,SID CONTEMPORARY POP (80's),Modern Woman - Billy Joel,modern woman.mus,Michael F,12/09/86
+41,SID CONTEMPORARY POP (80's),Must Be An Angel,must b/angel.mus,Collecting,11/02/86
+41,SID CONTEMPORARY POP (80's),Night Shift-remixed,nightshiftv2.mus,Command Cp,11/25/86
+41,SID CONTEMPORARY POP (80's),No More Words-Berlin,no more word.mus,STEAK2,11/13/86
+41,SID CONTEMPORARY POP (80's),Notorious-DuranDuran,notorious.mus,Jason b3,12/24/86
+41,SID CONTEMPORARY POP (80's),Papa Don't Preach-Madonna,papa preach.mus,Kanaka,01/27/87
+41,SID CONTEMPORARY POP (80's),Raspberry Beret-Prince,rasp beret.mus,Thievco,11/15/86
+41,SID CONTEMPORARY POP (80's),Roof Is Leakingffironed,leakdroned.mus,ChuckC5,02/01/87
+41,SID CONTEMPORARY POP (80's),Sad Songs-Billy Ocean,sad songs.mus,JAY15,01/26/87
+41,SID CONTEMPORARY POP (80's),"Say You, Say Me",say u say me.mus,Demon1,02/17/87
+41,SID CONTEMPORARY POP (80's),Singer In/RockNRoll Band,singer/band.mus,Voidlndigo,10/20/86
+41,SID CONTEMPORARY POP (80's),Some Like It Hot,somelikehot.mus,Brian Mack,10/30/86
+41,SID CONTEMPORARY POP (80's),Something I Should Know?,isthere.mus,Whatadude,10/25/86
+41,SID CONTEMPORARY POP (80's),Sonata (Fresh Alre)*John,fresh aire 3.mus,John r,01/09/87
+41,SID CONTEMPORARY POP (80's),Stick Around,stick v2.mus,Q Deity,11/01/86
+41,SID CONTEMPORARY POP (80's),Sweet Dreams-Eurythmics,sweet dreams.mus,KennyJr,02/07/87
+41,SID CONTEMPORARY POP (80's),Take On Me- A-ha,take on me.mus,Voidlndigo,10/21/86
+41,SID CONTEMPORARY POP (80's),That's What Friends R For,friends.mus,Les H1,11/18/86
+41,SID CONTEMPORARY POP (80's),The Brazilian-Genesis,brazilian.mus,DCSTARnCPR,12/04/86
+41,SID CONTEMPORARY POP (80's),The Chauffeur-DuranDuran,chauffeur.mus,Whatadude,10/25/86
+41,SID CONTEMPORARY POP (80's),The West Side-PhilCollins,the westside.mus,ChuckC5,02/01/87
+41,SID CONTEMPORARY POP (80's),This Feeling Will Last...,this feeling.mus,STEAK2,11/16/86
+41,SID CONTEMPORARY POP (80's),True Colors-C.Lauper,true colors.mus,Diz Cop,11/12/86
+41,SID CONTEMPORARY POP (80's),Two Songs by O.M.D.,omd songs.lnx,Vangelis,02/02/87
+41,SID CONTEMPORARY POP (80's),UptownGiri-Billy Joel,uptown girl.mus,Peggy r,10/06/86
+41,SID CONTEMPORARY POP (80's),Vienna Calling-Falco,vienna v2.mus,Command Cp,11/25/86
+41,SID CONTEMPORARY POP (80's),Who's Johnny-EIDeBarge,johnny.mus,Diz Cop,02/03/87
+41,SID CONTEMPORARY POP (80's),Wings Of Love,wings o love.mus,JAY15,01/13/87
+41,SID CONTEMPORARY POP (80's),Word Up/Remixed,word up/rmx.mus,Trekie Fan,11/23/86
+41,SID CONTEMPORARY POP (80's),Words Get In the Way,words in way.mus,BlkPanther,10/17/86
+41,SID CONTEMPORARY POP (80's),Would I Lie 2 U-Eurythmic,wouldi lie2u.mus,Collecting,12/08/86
+41,SID CONTEMPORARY POP (80's),You Give Love a Bad Name,yougivelove.mus,Michael F,12/05/86
+41,SID CONTEMPORARY POP (80's),You Know I Love You,u no i luv u.mus,Jason b3,12/24/86
+41,SID CONTEMPORARY POP (80's),YourWildestDreams-M.Blues,your wildest.mus,Voidlndigo,10/21/86
+41,SID CONTEMPORARY Country,Are the Good Times Over..,good times.mus,Sibelius,01/04/87
+41,SID CONTEMPORARY Country,Arkansas Traveier*GaryO,arkansas.mus,Bobbye,02/08/87
+41,SID CONTEMPORARY Country,El Paso-Marty Robbins,el paso.mus,Sibelius,10/31/86
+41,SID CONTEMPORARY Country,Elvira-Silebius,elvira.mus,Sibelius,02/21/87
+41,SID CONTEMPORARY Country,First Hurt-F.Cramer*Lyric,first hurt.mus,Bobbye,02/08/87
+41,SID CONTEMPORARY Country,For The Good Times,thegoodtirncs.mus,Joe Willie,02/14/87
+41,SID CONTEMPORARY Country,Hang On-F.Cramer*Lyric,hang on.mus,Bobbye,01/28/87
+41,SID CONTEMPORARY Country,Happiest Girl in Whole US,happiestgirl.mus,Sibelius,03/05/87
+41,SID CONTEMPORARY Country,Help Me Make It Thru Nite,help me/nite.mus,Joe Willie,02/01/87
+41,SID CONTEMPORARY Country,I'll Be True To You,true to you.mus,Diz Cop,11/26/86
+41,SID CONTEMPORARY Country,Kisses & Tears-F.Cramer,kiss/tears.mus,Bobbye,02/08/87
+41,SID CONTEMPORARY Country,Losers' Weepers-F.Cramer,loser/weep.mus,Lyric,01/10/87
+41,SID CONTEMPORARY Country,Lucille - Kenny Rogers,lucille.mus,Sibelius,11/29/86
+42,SID CONTEMPORARY Country,Lucille - Kenny Rogers,lucille.mus,Joef9,11/24/86
+42,SID CONTEMPORARY Country,"Luckenbach,TX-Waylon J.",luckenbach.mus,Sibelius,12/17/86
+42,SID CONTEMPORARY Country,Makaing Up-F.Cramer*Lyric,making up.mus,Bobbye,01/28/87
+42,SID CONTEMPORARY Country,Make My Life With You,make my life.mus,Diz Cop,11/27/86
+42,SID CONTEMPORARY Country,On The Rebound-F.Cramer,on rebound.mus,Lyric,01/16/87
+42,SID CONTEMPORARY Country,Paper Roses-M.Osmand,paper roses.mus,Sibelius,01/27/87
+42,SID CONTEMPORARY Country,San Antonio Rose,s.a.rose.mus,Sunny G,02/06/87
+42,SID CONTEMPORARY Country,SHn Antonio Rose-Bob Will,sa rose.mus,Sibelius,10/31/86
+42,SID CONTEMPORARY Country,Take Me Home Tonight,home tonight.mus,Jason b3,12/02/86
+42,SID CONTEMPORARY Country,The Fightin Side Of Me,fightin side.mus,Joef9,11/30/86
+42,SID CONTEMPORARY Country,TheGambler-Kenny Rogers,the gambler.mus,CarlB3,10/01/86
+42,SID CONTEMPORARY Country,You're One IN A Million,yourtheone.sal,Diz Cop,01/11/87
+42,SID CONTEMPORARY Folk,Chinese Folk Tune,chinese.mus,Jabba Hutt,01/26/87
+42,SID CONTEMPORARY Folk,Dont Get Above Your Raisi,above/raisin.mus,Sibelius,01/19/87
+42,SID CONTEMPORARY Folk,Guitar Etude#3-D.Fogelber,guit/etude.mus,Lyric,01/16/87
+42,SID CONTEMPORARY Folk,Lazy Susan-D.Fogelberg,lazy susan.mus,Lyric,01/16/87
+42,SID CONTEMPORARY Folk,Le Reel Du Quebec,can reel.mus,Joef9,01/05/87
+42,SID CONTEMPORARY Folk,Let There Be Peace/Earth,let peace.mus,JimK11,11/26/86
+42,SID CONTEMPORARY Folk,Scarborough Fair-S.& G.,scrbrgh fair.mus,KJantiques,01/15/87
+42,SID CONTEMPORARY Folk,Turkish Folk Dance,turkish.mus,Jabba Hutt,01/26/87
+42,SID CONTEMPORARY Jazz,Ain't Misbehavin',misbehavin.mus,Lincoln C,03/03/87
+42,SID CONTEMPORARY Jazz,Asleep In The Dreamworld,dreamworld.mus,Tanis R,11/08/86
+42,SID CONTEMPORARY Jazz,Choo Choo Boogie,choochuboogi.mus,Collecting,12/08/86
+42,SID CONTEMPORARY Jazz,Choo Choo Boogie,chuchuboogie.mus,Collecting,12/08/86
+42,SID CONTEMPORARY Jazz,Feels So Good-Mangione,feel so good.mus,Bill5000,01/12/87
+42,SID CONTEMPORARY Jazz,Henry VIII-RickWakeman,henry viii.mus,ChuckC5,02/01/87
+42,SID CONTEMPORARY Jazz,Hymn/7th Galaxy-S.Corea,hymn galaxy.mus,ChuckC5,02/01/87
+42,SID CONTEMPORARY Jazz,I've Found A New Baby,ive found.mus,John r,01/13/87
+42,SID CONTEMPORARY Jazz,Magnetic Fields Pt.2-Jarr,magnetic-2.mus,Octavian,12/26/86
+42,SID CONTEMPORARY Jazz,Midnight In Moscow,midnite/mosc.mus,John r,01/13/87
+42,SID CONTEMPORARY Jazz,Muskrat Ramble-'Kid' Ory,muskrat.mus,John r,01/13/87
+42,SID CONTEMPORARY Jazz,Sunrunner-Bob James,sunrunner.mus,Peggy r,01/06/86
+42,SID CONTEMPORARY Jazz,Take Five,take five.mus,John r,01/20/87
+42,SID CONTEMPORARY Jazz,Until I Met You-Basie,until.mus,John r,01/20/87
+42,SID CONTEMPORARY Rock,2112 Album-Rush,2112.mus,HAWKWIND 3,11/22/86
+42,SID CONTEMPORARY Rock,Beast Of Burden-Stones,beast/burden.mus,Sloop j b,02/11/87
+42,SID CONTEMPORARY Rock,Closer To The Heart-Rush,closer/heart.mus,HAWKWIND 3,11/10/86
+42,SID CONTEMPORARY Rock,Dancing In The Dark,dancin dark.mus,Thievco,11/15/86
+42,SID CONTEMPORARY Rock,Finding My Way-Rush,find/my way.mus,HAWKWIND 3,10/27/86
+42,SID CONTEMPORARY Rock,FindingMyWay-Rush,find.my way.mus,HAWKWlND 3,10/02/86
+42,SID CONTEMPORARY Rock,GetltOn - Powerstation,get it on.mus,STEAK1,10/13/86
+42,SID CONTEMPORARY Rock,Hang Fire-Rolling Stones,hang fire.mus,Sloop j b,11/30/86
+42,SID CONTEMPORARY Rock,I Cant Hold Back-Survivor,hold back.mus,STEAK1,10/13/86
+42,SID CONTEMPORARY Rock,Lakeside Park-RUSH,lakesidepark.mus,HAWKWlND 3,12/07/86
+42,SID CONTEMPORARY Rock,Light My Fire-Doors,light fire.mus,Yoda Dayve,11/19/86
+42,SID CONTEMPORARY Rock,Love Walks In-Van Halen,love walks n.mus,STEAK2,11/13/86
+42,SID CONTEMPORARY Rock,Miss You-Rolling Stones,miss you.mus,Sloop j b,12/03/86
+42,SID CONTEMPORARY Rock,Panama-Van Halen,panama.mus,STEAK2,11/13/86
+42,SID CONTEMPORARY Rock,Pipeline- The Chantays,pipeline.mus,Dr J5,12/09/86
+42,SID CONTEMPORARY Rock,Red Barchetta-RUSH,rd barchetta.mus,Jason b3,12/13/86
+42,SID CONTEMPORARY Rock,Secrets-Van Halen,secrets.mus,STEAK2,11/13/86
+42,SID CONTEMPORARY Rock,So Lonely-Police,so lonely.mus,Michael F,11/16/86
+42,SID CONTEMPORARY Rock,Start Me Up-Rolling Stone,start me up.mus,Sloop j b,11/30/86
+42,SID CONTEMPORARY Rock,That Was Yesterday,yesterday.mus,Black Fire,01/02/86
+42,SID CONTEMPORARY Rock,Tumblin Dice,tumblng dice.mus,Sloop j b,02/15/87
+42,SID CONTEMPORARY Rock,Undercover (Night)-Stones,undercover.mus,Sloop j b,03/01/87
+42,SID CONTEMPORARY Rock,Vital Signs-RUSH,vital signs.mus,Michael F,12/03/86
+42,SID CLASSICAL/THEME Early Classical,Air on a G String - Bach,air g string.mus,John r,02/21/87
+42,SID CLASSICAL/THEME Early Classical,AnglaiseDance,anglaise.mus,Jabba Hutt,10/05/86
+42,SID CLASSICAL/THEME Early Classical,Aupres De Ma Blonde,aupres/blond.mus,Joef9,11/14/86
+43,SID CLASSICAL/THEME Early Classical,Bach 3 Pt.Inv.# 1-15,sinfonia.lnx,Whole Note,01/16/87
+43,SID CLASSICAL/THEME Early Classical,Bach Cantata/14voice]1of5,cantata vox.mus,MoiBeUs,01/04/87
+43,SID CLASSICAL/THEME Early Classical,Bach Cantata/14voice]2of5,cantata v3.mus,MoiBeUs,01/04/87
+43,SID CLASSICAL/THEME Early Classical,Bach Cantata/14volce]3of5,cantata v2c.mus,MoiBeUs,01/04/87
+43,SID CLASSICAL/THEME Early Classical,Bach Cantata/14voice]4of5,cantata oboe.mus,MoiBeUs,01/04/87
+43,SID CLASSICAL/THEME Early Classical,Bach Cantata/14voice]5of5,cantata hom.mus,MoiBeUs,01/04/87
+43,SID CLASSICAL/THEME Early Classical,Bach- Brandenberg #3 1stMo,brand.3-1.mus,BarryS2,02/12/87
+43,SID CLASSICAL/THEME Early Classical,Bach-DoubleViolinConcerto,bach double.mus,BarryS2,02/28/87
+43,SID CLASSICAL/THEME Early Classical,Bach-Prelude & Fugue#5WT,wtc1-5.mus,Sibelius,01/07/87
+43,SID CLASSICAL/THEME Early Classical,Bach-Prelude & Fugue#6WTC,wtc1-6.mus,Sibelius,01/22/87
+43,SID CLASSICAL/THEME Early Classical,BlessedAssurance,assurance.mus,Jabba Hutt,10/05/86
+43,SID CLASSICAL/THEME Early Classical,Boot 4 Mackay's BachDMin,d minor boot,Marvin1,10/09/86
+43,SID CLASSICAL/THEME Early Classical,Bourree E Minor,bourree/rmx.mus,Whole Note,12/28/86
+43,SID CLASSICAL/THEME Early Classical,Bourree996-Bach,bourree996.mus,Whole Note,10/15/86
+43,SID CLASSICAL/THEME Early Classical,Brandenburg #4* J .Mackey,brandenburg4.mus,Gustave,03/10/87
+43,SID CLASSICAL/THEME Early Classical,Canon 1/Art of Fugue-Bach,canone 1.mus,Semiquaver,01/24/87
+43,SID CLASSICAL/THEME Early Classical,Canon In D - Pachelbel,canon.mus,ZAK3,01/09/87
+43,SID CLASSICAL/THEME Early Classical,Concerto A min-Vivaldi,a minor.mus,BSAVE,10/02/86
+43,SID CLASSICAL/THEME Early Classical,Dussek Sonatina #3,dussek3.mus,Sibelius,01/04/87
+43,SID CLASSICAL/THEME Early Classical,Figaro- Mozart,figaro.mus,VictorM2,01/04/86
+43,SID CLASSICAL/THEME Early Classical,Flute Sonata #2 E Flat,b-fson-ii.mus,John r,02/21/87
+43,SID CLASSICAL/THEME Early Classical,For Children (6 files),bartok.sda,Srsinc,02/13/87
+43,SID CLASSICAL/THEME Early Classical,Fugue G Minor-Bach,g fugue.mus,Octavian,11/01/86
+43,SID CLASSICAL/THEME Early Classical,Fugue No 15 In G Major,fugue 15.mus,John r,02/21/87
+43,SID CLASSICAL/THEME Early Classical,Goldberg Variations No 29,goldberg.mus,John r,02/21/87
+43,SID CLASSICAL/THEME Early Classical,Gram plant'agll ochl,landini.mus,Srsinc,02/16/87
+43,SID CLASSICAL/THEME Early Classical,HaHelujah-Handel,hall.mus,David Kwan,10/15/86
+43,SID CLASSICAL/THEME Early Classical,Harpslcord Sonata-Arne,ame/6.mus,Sibelius,11/19/86
+43,SID CLASSICAL/THEME Early Classical,"Intermezzo,Op76 No4",brim 76.mus,Sibelius,12/27/86
+43,SID CLASSICAL/THEME Early Classical,Invention13-Bach/Comm.The,invent.13.mus,JJP,11/06/86
+43,SID CLASSICAL/THEME Early Classical,"Jesu,Joy of Mans Desire",joy.mus,ZAK3,01/09/87
+43,SID CLASSICAL/THEME Early Classical,Klavlerstruck * W.A.Mozart,klavier.rnus,ZAK3,01/09/87
+43,SID CLASSICAL/THEME Early Classical,La Chasse (The Hunt),Ia chasse.mus,Jabba Hutt,01/26/87
+43,SID CLASSICAL/THEME Early Classical,Larghetto/Polonaise,larg/polo.mus,Sibelius,12/20/86
+43,SID CLASSICAL/THEME Early Classical,Merry Xmas-Mozart,merrymozart.mus,Terryw,10/05/86
+43,SID CLASSICAL/THEME Early Classical,Minuet-Mozart,minuet.rnus,VictorM2,10/02/86
+43,SID CLASSICAL/THEME Early Classical,Moonlight Phantasy-Mozart,phantasy.mus,A Dent1,11/11/86
+43,SID CLASSICAL/THEME Early Classical,Pachelbel's Canon In D,canon in d.mus,John r,02/21/87
+43,SID CLASSICAL/THEME Early Classical,Piano sonata #3-W.A.Mozar,sonata 3.mus,ZAK3,01/09/87
+43,SID CLASSICAL/THEME Early Classical,Polka-GIinka,polka.mus,Jabba Hutt,10/05/86
+43,SID CLASSICAL/THEME Early Classical,Praeludium II - Bach,bach/prlude2.mus,TaRF,01/09/87
+43,SID CLASSICAL/THEME Early Classical,Prelude & Fugue 1,wtc1-1.mus,CarlB3,10/04/86
+43,SID CLASSICAL/THEME Early Classical,Prelude Fugue 2 - Bach,wtc1-2.mus,CarlB3,10/11/86
+43,SID CLASSICAL/THEME Early Classical,Prelude&Fugue #2/remlx,wtc1-2.mus,Semiquaver,01/25/87
+43,SID CLASSICAL/THEME Early Classical,Sonatina #2 - Dussek,dussek2.mus,Sibelius,11/30/86
+43,SID CLASSICAL/THEME Early Classical,Sonatina No. 4 - Slbelius,dussek4.mus,Sibelius,02/21/87
+43,SID CLASSICAL/THEME Early Classical,Sonatina1-Dussek,dussek1.mus,Sibelius,10/31/86
+43,SID CLASSICAL/THEME Early Classical,Studio-J.C.Bach,studio.mus,Patience1,10/21/86
+43,SID CLASSICAL/THEME Early Classical,Suite In D Minor-WholeNot,handel/dmin.mus,Whole Note,02/22/87
+43,SID CLASSICAL/THEME Early Classical,TrloSonata-Corelli,trio sonata.mus,BSAVE,10/02/86
+43,SID CLASSICAL/THEME Early Classical,Ut Re Mi Fa Sol La,ut.mus,Sibelius,01/18/87
+43,SID CLASSICAL/THEME Early Classical,Violin Concerto in E Mjr,violin.mus,John r,02/21/87
+43,SID CLASSICAL/THEME Early Classical,WTC Pre & Fug.#4-Bach,wtc1-4.mus,Sibelius,12/14/86
+43,SID CLASSICAL/THEME Early Classical,Well Temp Clavier,wtc1-3.mus,Sibelius,11/15/86
+43,SID CLASSICAL/THEME Early Classical,Well Tempered Clavier- 7,wtc1-7.mus,Sibelius,02/21/87
+43,SID CLASSICAL/THEME Early Classical,Well Tempered Clavier 8,wtc1-8.mus,Sibelius,02/22/87
+43,SID CLASSICAL/THEME Romantic and 20th Century,Arlos&Burlesc-Telemn,arioso.mus,Jabba Hutt,10/05/86
+43,SID CLASSICAL/THEME Romantic and 20th Century,Bridal Chorus-Wagner,prelude iii.mus,Gustave,01/26/86
+43,SID CLASSICAL/THEME Romantic and 20th Century,Byrd- A Voluntarie,voluntary42.mus,Sibelius,03/08/87
+43,SID CLASSICAL/THEME Romantic and 20th Century,Flight Of the Bumble Bee,bumble.mus,King Joyse,12/18/86
+43,SID CLASSICAL/THEME Romantic and 20th Century,Gertrudes Dream,gertrude.mus,Jabba Hutt,10/05/86
+43,SID CLASSICAL/THEME Romantic and 20th Century,Glory to Egypt/March,grand march.mus,Gustave,12/23/86
+43,SID CLASSICAL/THEME Romantic and 20th Century,Kamennoi/Ostrow-Rubinstel,kamennoi.mus,Marvin1,11/29/86
+43,SID CLASSICAL/THEME Romantic and 20th Century,Nocturne in Eflat-Chopin,noctume.mus,Herb D1,01/28/87
+43,SID CLASSICAL/THEME Romantic and 20th Century,Pictures 2 & 3,pictures2.mus,Fwp,02/22/87
+43,SID CLASSICAL/THEME Romantic and 20th Century,Poet & Peasant Overture,poet-peasant.mus,Tweek,03/04/87
+43,SID CLASSICAL/THEME Romantic and 20th Century,Prelude Lohengrin,prelude iii.mus,Gustave,10/08/86
+44,SID CLASSICAL/THEME Romantic and 20th Century,PreludeCMaj-Bach,prelude.mus,BSAVE,10/02/86
+44,SID CLASSICAL/THEME Romantic and 20th Century,Spinning Song,spinsong.mus,Puff Adder,03/01/87
+44,SID CLASSICAL/THEME Romantic and 20th Century,Sports and Diversions,satie.sda,Srsinc,02/13/87
+44,SID CLASSICAL/THEME Romantic and 20th Century,Typewriter-Leroy Anderson,typewriter.mus,Carole d,01/31/87
+44,SID CLASSICAL/THEME Romantic and 20th Century,ValseChrmatqu-Czerny,chromatique.mus,Jabba Hutt,10/05/86
+44,SID CLASSICAL/THEME Romantic and 20th Century,Vision Fugitive XVI,vf xvi.mus,Mr MiSki,02/26/87
+44,SID CLASSICAL/THEME Romantic and 20th Century,WaltzAMin-Grieg,waltz-a-min.mus,Terryw,10/05/86
+44,SID CLASSICAL/THEME Opera,"Beat Me,Beat Me-Mozart",batti.mus,Gustave,12/07/86
+44,SID CLASSICAL/THEME Opera,Bird Song from Pagllacci,bird song.mus,Gustave,03/10/87
+44,SID CLASSICAL/THEME Opera,Lohengrin (Bridal) -Wagne,prelude iii.mus,Gustave,11/22/86
+44,SID CLASSICAL/THEME Opera,Mephisto's Serenade/Faust,mephisto.mus,Gustave,12/10/86
+44,SID CLASSICAL/THEME Ragtime,Alabama Rag-Amella/J.Lamb,alabama.mus,John r,01/13/87
+44,SID CLASSICAL/THEME Ragtime,Bohemia Rag-Joseph Lamb,bohemia.mus,John r,01/13/87
+44,SID CLASSICAL/THEME Ragtime,Dizzy Fingers -Confrey,dizzyfingers.mus,John r,10/12/86
+44,SID CLASSICAL/THEME Ragtime,Entertainer-Joplin,entertainer.mus,John r,01/13/87
+44,SID CLASSICAL/THEME Ragtime,Entertainers Rag,entrtnrs rag.mus,Collecting,01/14/87
+44,SID CLASSICAL/THEME Ragtime,K.P.Stomp-JellyRollMorton,k.p.stomp.mus,Joef9,11/01/86
+44,SID CLASSICAL/THEME Ragtime,Maple Leaf Rag,maple.mus,ZAK3,01/09/87
+44,SID CLASSICAL/THEME Ragtime,The Entertainer * Bob Huf,entertain.mus,SYSOP JON,01/07/87
+44,SID CLASSICAL/THEME Ragtime,The Entertainer * Daspf,entertain.mus,Daspf,01/06/87
+44,SID CLASSICAL/THEME Ragtime,Tom Cat on Keys - Zurke,tomcat.mus,John r,10/02/86
+44,SID CLASSICAL/THEME Holiday and Religious,Amazing Grace,amazing.mus,StephenC1,12/04/86
+44,SID CLASSICAL/THEME Holiday and Religious,Battle Hymn of the Republ,battle hymn.mus,Marvin1,02/14/87
+44,SID CLASSICAL/THEME Holiday and Religious,CURVEs Xmas Album,xmas album,CURVE,12/14/86
+44,SID CLASSICAL/THEME Holiday and Religious,Home for The Holidays,home/holiday.mus,NickZ,10/22/86
+44,SID CLASSICAL/THEME Holiday and Religious,Jingle Bell Rock,jingle rock.mus,Carole d,12/05/86
+44,SID CLASSICAL/THEME Holiday and Religious,Look To The Rainbow-StPat,look-rainbow.sal,Terryw,03/04/87
+44,SID CLASSICAL/THEME Holiday and Religious,Mrs.Murphy's Chowder,murphy.mus,StephenC1,01/31/87
+44,SID CLASSICAL/THEME Holiday and Religious,Provencial Xmas Song,provnsong.mus,Lyric,12/07/86
+44,SID CLASSICAL/THEME Holiday and Religious,Semper Fidelis -Sousa,semper fidel.mus,Les H1,02/21/87
+44,SID CLASSICAL/THEME Holiday and Religious,Sleigh Ride - Anderson,sleigh ride.mus,Gustave,01/03/86
+44,SID CLASSICAL/THEME Holiday and Religious,Sleigh Ride-L.Anderson,sleigh ride.mus,King Joyse,12/18/86
+44,SID CLASSICAL/THEME Holiday and Religious,Stars & Stripes - Sousa,starsstripes.mus,Joef9,11/30/86
+44,SID CLASSICAL/THEME Holiday and Religious,Stars & Stripes by Sousa,stars/stripe.mus,Les H1,11/12/86
+44,SID CLASSICAL/THEME Holiday and Religious,The Irish Wedding,wedding.mus,StephenC1,01/31/87
+44,SID CLASSICAL/THEME Holiday and Religious,The Mulligan Guard,mulligan.1.mus,StephenC1,01/31/87
+44,SID CLASSICAL/THEME Holiday and Religious,Whence-French Carol,whence.mus,Lyric,12/07/86
+44,SID CLASSICAL/THEME Holiday and Religious,Xmas Album by CURVE,xmas album,CURVE,11/29/86
+44,SID CLASSICAL/THEME Movie/TV Theme,2 Star Wars Themes,starthemes.mus,Terryw,10/22/86
+44,SID CLASSICAL/THEME Movie/TV Theme,76 Trombones,trombones.mus,RonS14,12/27/86
+44,SID CLASSICAL/THEME Movie/TV Theme,A Time For Us-Romeo&Julie,time for us.mus,Yoda Dayve,11/30/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Age Of Aquarius from Hair,aquarius.mus,Fwp,11/06/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Age of Aquarius from Hair,aquarius.mus,Thievco,11/15/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Anywhere/Hrt Goes/Meggies,meggiestheme.mus,Patience1,10/21/86
+44,SID CLASSICAL/THEME Movie/TV Theme,AxelF/Beverly Hills Cop,axle f.f.mus,Sly Spy,01/18/87
+44,SID CLASSICAL/THEME Movie/TV Theme,Baby Elephant Walk,baby elef.mus,Brutus3,12/27/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Batman Theme,batman.mus,NickZ,01/18/87
+44,SID CLASSICAL/THEME Movie/TV Theme,Ben Hur Chariot Race Marc,ben hur char.mus,King Joyse,12/18/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Born Free,bomfree.mus,SYSOP JON,01/07/87
+44,SID CLASSICAL/THEME Movie/TV Theme,Chariots Of Fire-Vangelis,chariots.mus,SYSOP JON,01/07/87
+44,SID CLASSICAL/THEME Movie/TV Theme,Disney Main St Elec.Parad,elp.mus,Diz Cop,12/16/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Emmeline/Biue Lagoon Them,emmeline.mus,Patience1,10/21/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Evergreen,evergreen.mus,Mr MiSki,01/30/87
+44,SID CLASSICAL/THEME Movie/TV Theme,HELP from Beatles movie,help.mus,Sebas Hill,12/15/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Holding Out for a Hero,hero.rmx.mus,In Xanadu,02/01/87
+44,SID CLASSICAL/THEME Movie/TV Theme,It's a Small World,smallwld/rmx.mus,Diz Cop,10/12/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Lapti Nek,lapti nek.mus,Chardro,12/27/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Linus and Lucy,linus/lucy.mus,Chardro,12/27/86
+44,SID CLASSICAL/THEME Movie/TV Theme,Live and Let Die,live/let die.mus,Chardro,12/27/86
+45,SID CLASSICAL/THEME Movie/TV Theme,MacGyver Theme,macgyver.mus,DanF3,10/27/86
+45,SID CLASSICAL/THEME Movie/TV Theme,MacGyver Theme/Remixed,macgyver/rmx.mus,Jimbob2,01/03/87
+45,SID CLASSICAL/THEME Movie/TV Theme,"Mah-na, Mah-na (muppets)",mah-na.mus,NickZ,03/01/87
+45,SID CLASSICAL/THEME Movie/TV Theme,MiamiVice-Hammer,miami vice.mus,Big T Cat,10/08/86
+45,SID CLASSICAL/THEME Movie/TV Theme,NBC News-J.Williams,nbc news.mus,NickZ,10/02/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Nadia's Theme,nadia.mus,SYSOP JON,01/07/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Olympic Fanfare,olympic.mus,Dan Hays,02/19/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Once Upon A Time,ez3-onceupon.mus,Terryw,01/18/87
+45,SID CLASSICAL/THEME Movie/TV Theme,One Day At A Time Theme,one day/time.mus,Joef9,10/31/86
+45,SID CLASSICAL/THEME Movie/TV Theme,One Tin Soldier,billy-jack.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Over The Rainbow,wizard.mus,Thievco,11/15/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Raindrop Keep Fallin',raindrops.mus,Chardro,12/27/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Rockford Files Theme,rockford.mus,Biff Scarf,11/22/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Rockford Files*GaryO,rockford.mus,Bobbye,02/08/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Rocky Horror (ARCed),roc/horror.arc,FritzDeCat,11/11/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Runaway - Crime Story The,runaway.mus,Nomad9,03/02/87
+45,SID CLASSICAL/THEME Movie/TV Theme,"Sing, Sing A Song",sing.mus,Terryw,01/31/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Somewhere My Love*KennyJr,somewhere.mus,KennyJr,02/07/87
+45,SID CLASSICAL/THEME Movie/TV Theme,St.Elmos Fire*NickZ,stelmo/love.mus,NickZ,02/08/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Star Wars/Imp March,sw/imp march.mus,Chardro,12/27/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Summer Place Theme,summer/place.mus,Yoda Dayve,11/19/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Surry/Fringe On Top,surrey.mus,Joef9,10/31/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Take My Breath A way,take breth.mus,Diz Cop,10/12/86
+45,SID CLASSICAL/THEME Movie/TV Theme,The Natural*GaryO,the natural.mus,Bobbye,02/08/87
+45,SID CLASSICAL/THEME Movie/TV Theme,The Waltons Theme,the waltons.mus,Joef9,11/01/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme from E.T.,e.t. theme.mus,Joef9,11/02/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme from Hawaii Five-0,hawaii 5 o.mus,DiskDrivr,02/22/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme from Knots Landing,knot landing.mus,Dan Hays,02/25/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme from Love Boat,love boat.mus,Dan Hays,02/19/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme from St. Elsewhere,st elsewhere.mus,Nomad9,03/02/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme from Trap Door,trapdoor.mus,DiskDrivr,02/22/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme song from Ben,ben.mus,Tom T9,03/07/87
+45,SID CLASSICAL/THEME Movie/TV Theme,Theme song from Dallas,dallas.mus,Dan Hays,02/12/87
+45,SID CLASSICAL/THEME Movie/TV Theme,UltimaIII Shipwreck Isle,shipwrecked.mus,Lori W,10/20/86
+45,SID CLASSICAL/THEME Movie/TV Theme,When You Wish Upon A Star,wish/star.mus,Diz Cop,11/26/86
+45,SID CLASSICAL/THEME Movie/TV Theme,Zorba The Greek,zorba/greek.mus,Joef9,11/24/86
+45,SID CLASSICAL/THEME Show Tunes,All Good Gifts,allgoodgifts.mus,Joef9,10/11/86
+45,SID CLASSICAL/THEME Show Tunes,Blue Moon,blue-moon.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,Cabaret pt 2 of 2,cabaret 2.mus,Herb D1,12/27/86
+45,SID CLASSICAL/THEME Show Tunes,Cabaret-pt 1 of 2,cabaret 1.mus,Herb D1,12/27/86
+45,SID CLASSICAL/THEME Show Tunes,Day by Day - Godspell,day by day.mus,Tweek,02/17/87
+45,SID CLASSICAL/THEME Show Tunes,How Deep Is the Ocean,how deep is.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,How High the Moon,how-high-the.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,If l Love You,ifilovedyou.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,If We Only Have Love,jacques brel.mus,Terryw,10/22/86
+45,SID CLASSICAL/THEME Show Tunes,It Aint Necessarily So,it aint.mus,Fwp,10/08/86
+45,SID CLASSICAL/THEME Show Tunes,Memory from Cats,memory2.mus,SYSOP JON,01/07/87
+45,SID CLASSICAL/THEME Show Tunes,Might As Well Be Spring,mightaswell.mus,Terryw,01/31/87
+45,SID CLASSICAL/THEME Show Tunes,"Oh, What A Beautiful Morn",oh-what-a.mus,Terryw,01/31/87
+45,SID CLASSICAL/THEME Show Tunes,Old Man River,olmanriver.mus,Terryw,01/31/87
+45,SID CLASSICAL/THEME Show Tunes,Once Upon A Time,oncc-upon-a.mus,Terryw,01/31/87
+45,SID CLASSICAL/THEME Show Tunes,September Song,september.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,She-C.Aznavour,aznavour.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,Somebody Loves Me,somebodylovs.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,Star Trek II Theme,star trek.mus,Brian35,12/03/86
+45,SID CLASSICAL/THEME Show Tunes,The Rain In Spain,rain-spain.mus,Terryw,01/31/87
+45,SID CLASSICAL/THEME Show Tunes,Valse Triste,valse triste.mus,Sibelius,12/27/86
+45,SID CLASSICAL/THEME Show Tunes,What I Did For Love,what i did 4.mus,Brutus3,12/28/86
+45,SID CLASSICAL/THEME Show Tunes,Without A Song,withoutasong.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,Wouldnt It Be Loverly?,loverly.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,Yesterday/ I Was Young,hier encore.mus,Terryw,10/05/86
+45,SID CLASSICAL/THEME Show Tunes,Zorba The Greek,zorba.mus,SYSOP JON,01/07/87
+45,SID CLASSICAL/THEME Original and Other,3 Sid Pickins/rmx,3sid pickins.mus,Tim Buck2,10/08/86
+45,SID CLASSICAL/THEME Original and Other,Aloha Oe,aloha oe.mus,Joseppi,10/16/86
+45,SID CLASSICAL/THEME Original and Other,Anaconda,anaconda.mus,Tanis R,12/24/86
+46,SID CLASSICAL/THEME Original and Other,Arcade sounds,statix.mus,Tanis R,12/24/86
+46,SID CLASSICAL/THEME Original and Other,Clarinet Polka,clarinet.mus,Les Hl,01/19/87
+46,SID CLASSICAL/THEME Original and Other,Diddleysquat,diddleysquat.mus,Mr Miyagi,12/20/86
+46,SID CLASSICAL/THEME Original and Other,Drums/Rap sounds,s t a t I x.mus,Tanis R,01/01/87
+46,SID CLASSICAL/THEME Original and Other,Eggs,eggs.mus,Starmist,02/24/87
+46,SID CLASSICAL/THEME Original and Other,Exorcism by lmperlus,exorcism.mus,Imperius,11/12/86 
+46,SID CLASSICAL/THEME Original and Other,Halloween-MMax Hedrm,halloween.mus,MMax Hedrm,10/26/86
+46,SID CLASSICAL/THEME Original and Other,Imperial 7/Remixed,imperial 7/h.mus,Jabba Hutt,11/28/86
+46,SID CLASSICAL/THEME Original and Other,Imperial7,imperial7.mus,Imperius,10/15/86
+46,SID CLASSICAL/THEME Original and Other,Jazorik-remix by TanisR,jazorik/rmx.mus,Tanis R,12/15/86
+46,SID CLASSICAL/THEME Original and Other,Keep It Two Yourself-STEA,keep it two.mus,Jason b3,12/13/86
+46,SID CLASSICAL/THEME Original and Other,Mardi Gras,mardi gras.mus,Puff Adder,03/01/87
+46,SID CLASSICAL/THEME Original and Other,Mule remix,kick mix.mus,China Eyes,12/22/86
+46,SID CLASSICAL/THEME Original and Other,New Century,new century.mus,DiskDrivr,02/22/87
+46,SID CLASSICAL/THEME Original and Other,NewFriends(DrownUOut)STEA,new friends.mus,Jason b3,12/13/86
+46,SID CLASSICAL/THEME Original and Other,O Canada,o canada.mus,CarlB3,10/11/86
+46,SID CLASSICAL/THEME Original and Other,Pale Horse-Randy Schoen,pale horse.mus,Tanis R,11/08/86
+46,SID CLASSICAL/THEME Original and Other,Show That Work(Bug Theme),bug theme.mus,Dan Hays,03/01/87
+46,SID CLASSICAL/THEME Original and Other,Six Wives of Henry VIII,henry viii.mus,Lyric,01/16/87
+46,SID CLASSICAL/THEME Original and Other,Snuff,snuff.mus,Blip,02/09/87
+46,SID CLASSICAL/THEME Original and Other,Spawns Of Oyothtl,spawns/death.mus,JasonS4,10/02/86
+46,SID CLASSICAL/THEME Original and Other,Take Me Out/Ballgame,old ballgame.mus,FrankC8,10/28/86
+46,SID CLASSICAL/THEME Original and Other,Ultimalll Castle Of Death,death.mus,Sly Spy,11/01/86
+46,WORDS AND PICTURE POP (Pre-60's),42nd Street,42nd st.sal,Daspf,10/15/86
+46,WORDS AND PICTURE POP (Pre-60's),Boogie Woogie Bugle Boy,boogiebugle.sal,Daspf,12/25/86
+46,WORDS AND PICTURE POP (Pre-60's),Boogie Woogie Bugle Boy,boogiebugle.sal,Daspf,03/03/87
+46,WORDS AND PICTURE POP (Pre-60's),Have I Told You/Love You,haveitold.sal,Daspf,11/05/86
+46,WORDS AND PICTURE POP (Pre-60's),Hot Time/Old Town,hottime/town.sal,Collecting,01/31/87
+46,WORDS AND PICTURE POP (Pre-60's),It's Only a Shanty/Town,shanty town.sal,ETTIE W2,12/01/86
+46,WORDS AND PICTURE POP (Pre-60's),Itsy Bitsy/Bikini*Carole d,itsy bitsy.sal,Carole d,01/31/87
+46,WORDS AND PICTURE POP (Pre-60's),ltsy Bitsy/Bikini*Ransom1,itsy bikini.sal,Ransom1,02/01/87
+46,WORDS AND PICTURE POP (Pre-60's),Johnny B Goode-Chuck Berr,john b goode.sal,DeanS,12/09/86
+46,WORDS AND PICTURE POP (Pre-60's),Party Doll from 1957,partydoll.sal,Daspf,10/23/86
+46,WORDS AND PICTURE POP (Pre-60's),Short Shorts,shortshorts.sal,Daspf,03/03/87
+46,WORDS AND PICTURE POP (Pre-60's),Stardust * Bob Huffan,stardust.sal,SYSOP JON,01/27/87
+46,WORDS AND PICTURE POP (Pre-60's),Sunny Side of the Street,sunny/side.sal,DaleC1,10/08/86
+46,WORDS AND PICTURE POP (Pre-60's),Words - The BeeGees,words.sal,Daspf,12/27/86
+46,WORDS AND PICTURE POP (Pre-60's),Would You Like/Swing/Star,swingonastar.sal,Daspf,12/01/86
+46,WORDS AND PICTURE POP (Pre-60's),Your Sixteen-BobbySherman,sixteen.sal,NickZ2,03/09/87
+46,WORDS AND PICTURE POP (60's-70's),2 out of 3 Ain't Bad*Gary,2 out of 3.sal,Bobbye,02/08/87
+46,WORDS AND PICTURE POP (60's-70's),25 or 6 to 4-Chicago,25 or 6 to 4.sal,DCSTARnCPR,02/14/87
+46,WORDS AND PICTURE POP (60's-70's),As Tears Go By-Stones,tears go by.sal,Herb D1,01/28/87
+46,WORDS AND PICTURE POP (60's-70's),California Dreamin,dreamin.sal,NickZ,01/25/87
+46,WORDS AND PICTURE POP (60's-70's),Cats In The Cradle-Chapin,cradle.sal,Bobbye,12/05/86
+46,WORDS AND PICTURE POP (60's-70's),Cecilia - Paul Simon,cecilia.sal,Gustave,01/26/87
+46,WORDS AND PICTURE POP (60's-70's),Color My World-Chicago,colour/world.sal,DCSTARnCPR,02/14/87
+46,WORDS AND PICTURE POP (60's-70's),Come Down In Time-EltonJo,downtime.sal,SYSOP JON,01/07/87
+46,WORDS AND PICTURE POP (60's-70's),Commotion-Creedence CR,commotion.sal,Daspf,02/23/87
+46,WORDS AND PICTURE POP (60's-70's),Cracklin' Rosie-N.Diamond,cracklinrosy.sal,Diz Cop,01/11/87
+46,WORDS AND PICTURE POP (60's-70's),Daydream Believer,daydream.sal,Bobbye,01/15/87
+46,WORDS AND PICTURE POP (60's-70's),Diana,diana.sal,Carole d,01/31/87 
+46,WORDS AND PICTURE POP (60's-70's),Dominique - Singing Nun,dominique.sal,Herb D1,12/13/86
+46,WORDS AND PICTURE POP (60's-70's),Dont Have to Say/Love Me,love me.sal,Marvin1,10/04/86
+46,WORDS AND PICTURE POP (60's-70's),Dream Weaver - Wright,dream weaver.sal,Diz Cop,10/08/86
+46,WORDS AND PICTURE POP (60's-70's),East/Ginger Trees*GaryO,ginger.sal,Bobbye,01/28/87
+46,WORDS AND PICTURE POP (60's-70's),Feelings-Albert,feelings.sal,DaleC1,10/04/86
+46,WORDS AND PICTURE POP (60's-70's),Fly Like an Eagle-Miller,flylikeeagle.sal,Ray18,10/06/86
+46,WORDS AND PICTURE POP (60's-70's),Go Away Little Boy (boy?),go away.sal,Bobbye,01/15/87
+46,WORDS AND PICTURE POP (60's-70's),Goin Oout of My Head,outhead.sal,Bobbye,10/03/86
+46,WORDS AND PICTURE POP (60's-70's),Happy Together,together.sal,Bobbye,10/03/86
+46,WORDS AND PICTURE POP (60's-70's),Hooked On A Feeling,hooked.sal,Daspf,02/25/87
+46,WORDS AND PICTURE POP (60's-70's),House of the Rising Sun,house.sal,Bobbye,10/03/86
+46,WORDS AND PICTURE POP (60's-70's),I've Seen All Good People,good people.sal,Bobbye,02/26/87
+46,WORDS AND PICTURE POP (60's-70's),IF - Bread,if.sal,DCSTARnCPR,12/11/86
+46,WORDS AND PICTURE POP (60's-70's),If You Could Read My Mind,if you/read.sal,Diz Cop,11/27/86
+47,WORDS AND PICTURE POP (60's-70's),Jean - Rod McKucn,jean.sal,Daspf,12/25/86
+47,WORDS AND PICTURE POP (60's-70's),Lookin Out My Back Door,backdoor.sal,Daspf,12/01/86
+47,WORDS AND PICTURE POP (60's-70's),Lookin' Out Back Door-CCR,backdoor.sal,Daspf,09/29/86
+47,WORDS AND PICTURE POP (60's-70's),LoversConcerto,concerto.sal,Marvin1,10/04/86
+47,WORDS AND PICTURE POP (60's-70's),Madman Across The Water,madman.sal,Chuckles2,11/26/86
+47,WORDS AND PICTURE POP (60's-70's),Make It With You-Bread,makeit/you.sal,Lyric,10/04/86
+47,WORDS AND PICTURE POP (60's-70's),More Than I Can Say*GaryO,say.sal,Bobbye,02/08/87
+47,WORDS AND PICTURE POP (60's-70's),My Way - Sinatra,my way.sal,Gustave,10/01/86
+47,WORDS AND PICTURE POP (60's-70's),New Kid in Town,new/kid.sal,Lyric,10/08/86
+47,WORDS AND PICTURE POP (60's-70's),Only Love Can Break/Heart,breakurheart.sal,Diz Cop,12/10/86
+47,WORDS AND PICTURE POP (60's-70's),Piano Man-Billy Joel,piano man.sal,DCSTARnCPR,01/26/87
+47,WORDS AND PICTURE POP (60's-70's),Pianoman-Billy Joel,pianoman.sal,Lyric,12/12/86
+47,WORDS AND PICTURE POP (60's-70's),Red Roses For a Blue Lady,redroses.sal,Daspf,12/01/86
+47,WORDS AND PICTURE POP (60's-70's),Ruby Jean & Billy Lee,ruby jean.sal,Bobbye,02/08/87
+47,WORDS AND PICTURE POP (60's-70's),Run Around Sue,runaroundsue.sal,Carole d,01/31/87
+47,WORDS AND PICTURE POP (60's-70's),Shower The People-J.Taylo,shower/love.sal,Diz Cop,01/15/87
+47,WORDS AND PICTURE POP (60's-70's),Softly As I Leave You,softly-leave.sal,ETTIE W2,12/01/86
+47,WORDS AND PICTURE POP (60's-70's),Soul & Inspiration,soul/inspir.sal,Lyric,12/13/86
+47,WORDS AND PICTURE POP (60's-70's),Stand by Me 2 of 2,stand by me.mus,Mr MiSki,02/26/87
+47,WORDS AND PICTURE POP (60's-70's),Stand by me 1 of 2,stand by me.wds,Mr MiSki,02/26/87
+47,WORDS AND PICTURE POP (60's-70's),Sukiyaki,sukiyaki.sal,Lyric,12/13/86
+47,WORDS AND PICTURE POP (60's-70's),Sunny,sunny.sal,Daspf,09/20/86
+47,WORDS AND PICTURE POP (60's-70's),Sweet Caroline-Nell Diam.,sweetcarol.sal,Diz Cop,01/18/87
+47,WORDS AND PICTURE POP (60's-70's),Tequila Sunrise-Eagles,tequila.sal,Diz Cop,01/18/87
+47,WORDS AND PICTURE POP (60's-70's),The Best Of Me,best of me.sal,DCSTARnCPR,11/16/86
+47,WORDS AND PICTURE POP (60's-70's),Then (S)he Kissed Me,shekissedme.sal,Daspf,01/12/87
+47,WORDS AND PICTURE POP (60's-70's),Those Were the Days,the days.sal,Bobbye,10/03/86
+47,WORDS AND PICTURE POP (60's-70's),WE May Never Walk This Wa,again.sal,Bobbye,02/08/87
+47,WORDS AND PICTURE POP (60's-70's),Welcome To My World*Lyric,welcome.sal,Bobbye,02/26/87
+47,WORDS AND PICTURE POP (60's-70's),Who'll Stop The Rain-CCR,stoptherain.sal,Daspf,09/25/86
+47,WORDS AND PICTURE POP (60's-70's),You Are So Beautiful ToM,so beautiful.sal,DaleC1,12/01/86
+47,WORDS AND PICTURE POP (60's-70's),You Belong To Me-C.Simon,belong/me.sal,DCSTARnCPR,12/16/86
+47,WORDS AND PICTURE POP (60's-70's),You Dont Bring Me Flowers,flowers.sal,Bobbye,10/03/86
+47,WORDS AND PICTURE POP (60's-70's),You may Be Right-Billy Joe,u may b rite.sal,Lyric,12/13/86
+47,WORDS AND PICTURE POP (60's-70's),You'll Never Walk Alone,walk a1one.sal,Bobbye,10/03/86
+47,WORDS AND PICTURE POP (80's),All Night Long-L. Richie,all night.sal,NickZ,10/11/86
+47,WORDS AND PICTURE POP (80's),Arena Album(ARCed)-DuranD,arena.are,STEAK1,09/17/86
+47,WORDS AND PICTURE POP (80's),At This Moment-B. Vera,this moment.sal,DCSTARnCPR,02/15/87
+47,WORDS AND PICTURE POP (80's),At This Moment-Joel*GaryO,moment.sal,Bobbye,02/26/87
+47,WORDS AND PICTURE POP (80's),Ballerina Girl,ballerina.sal,DCSTARnCPR,02/15/87
+47,WORDS AND PICTURE POP (80's),Ballerina Girl-L.Richie,balrina/girl.sal,Whole Note,02/18/87
+47,WORDS AND PICTURE POP (80's),Broken Wings- Mr. Mister,broken wings.sal,STEAK1,09/25/86
+47,WORDS AND PICTURE POP (80's),Brothers/Arms- DireStraits,bro in anns.sal,Jimbob2,12/14/86
+47,WORDS AND PICTURE POP (80's),Caribbean Queen-B.Ocean,queen.sal,NickZ2,03/09/87
+47,WORDS AND PICTURE POP (80's),Chiquitita-.mus,chiquitita.mus,VictorM2,10/02/86
+47,WORDS AND PICTURE POP (80's),Chiquitita-.wds,chiquitita.wds,VictorM2,01/02/86
+47,WORDS AND PICTURE POP (80's),Coming In & Out Of Life,in/out/life.sal,DaleC1,10/14/86
+47,WORDS AND PICTURE POP (80's),Dancing On The Ceiling,ceiling-rrn.sal,NickZ,09/09/86
+47,WORDS AND PICTURE POP (80's),Dancing W/Mountains-Denve,mountain.sal,NickZ,01/25/87
+47,WORDS AND PICTURE POP (80's),Down Under,down under.sal,DCSTARnCPR,02/21/87
+47,WORDS AND PICTURE POP (80's),Elegy by Howard Jones,elegy.mus,STEAK1,09/17/86
+47,WORDS AND PICTURE POP (80's),Elegy by Howard Jones,elegy.wds,STEAK1,09/17/86
+47,WORDS AND PICTURE POP (80's),Falling In Love (Uh-Oh),falling.sal,NickZ,01/22/87 
+47,WORDS AND PICTURE POP (80's),Good Night Saigon-B Joel,gn saigon.sda,DCSTARnCPR,02/25/87
+47,WORDS AND PICTURE POP (80's),Hard Habit 2 Break-Chicag,hard habit.sal,DCSTARnCPR,02/02/87
+47,WORDS AND PICTURE POP (80's),Have Fun Tonight-W.Chung,fun/night.sal,NickZ2,03/00/87
+47,WORDS AND PICTURE POP (80's),Heartbeat-Don Johnson,heartbcat.sal,NickZ,02/10/87
+47,WORDS AND PICTURE POP (80's),Hip To Be Square-H.Lewis,hip/square.sal,DCSTARnCPR,03/02/87
+47,WORDS AND PICTURE POP (80's),Hungry For You- Police,hungry 4 you.sal,STEAK1,10/08/86
+47,WORDS AND PICTURE POP (80's),I Want To Know What Luv I,want to know.sal,Diz Cop,11/27/86
+47,WORDS AND PICTURE POP (80's),I've Been Searchin So Lon,so long.sal,Lyric,11/27/86
+47,WORDS AND PICTURE POP (80's),It Doesn't Matter,dsnt matter2.sal,Vangelis,10/04/86
+47,WORDS AND PICTURE POP (80's),Jacobs Ladder-H.Lewis,jacobsladder.sal,DCSTARnCPR,03/10/87
+47,WORDS AND PICTURE POP (80's),Just You 'N Me*GaryO,you n me.sal,Bobbye,01/28/87
+47,WORDS AND PICTURE POP (80's),Land Of Confusion-Genisis,confusion.sal,DCSTARnCPR,02/01/87
+47,WORDS AND PICTURE POP (80's),Love Is Forever*DCSTARnCP,love/forever.sal,DCSTARnCPR,01/10/87
+47,WORDS AND PICTURE POP (80's),Love Walks In-VanHalen,walks.sal,Lyre,10/15/86
+47,WORDS AND PICTURE POP (80's),Moondance by Van Morrison,moondance.sal,Whole Note,01/21/87
+47,WORDS AND PICTURE POP (80's),My Sharona *Lyric,my sharona.sal,Bobbye,02/26/87
+47,WORDS AND PICTURE POP (80's),Never Been to Spain,spain.sal,Bobbye,10/13/86
+47,WORDS AND PICTURE POP (80's),Next Time I Fall In Love,time/fall.sal,DCSTARnCPR,01/20/87
+48,WORDS AND PICTURE POP (80's),ON The Wings Of A Dream,wings/dream.sal,DCSTARnCPR,01/10/87
+48,WORDS AND PICTURE POP (80's),Oh No! -Lionel Richie,oh no.sal,Lyric,11/27/86
+48,WORDS AND PICTURE POP (80's),Piano Man-Billy Joel,piano man.sal,NickZ,01/14/87
+48,WORDS AND PICTURE POP (80's),Pink Cadillac-Springsteen,pink cad.sal,Lyric,10/04/86
+48,WORDS AND PICTURE POP (80's),Prcssure-B.Joei*Lyrlc,pressure.sal,Bobbye,02/26/87
+48,WORDS AND PICTURE POP (80's),Pridc-U2,pride.sal,STEAK1,10/12/86
+48,WORDS AND PICTURE POP (80's),Remember/Feeling-Chicago,FiJ ename: rem/feeling.sal,DCSTARnCPR,01/26/87
+48,WORDS AND PICTURE POP (80's),Runaway-DelShannon,runaway.sal,Lyre,10/06/86
+48,WORDS AND PICTURE POP (80's),Say I Love You In a Song,love in song.sal,ETTIE W2,10/03/86
+48,WORDS AND PICTURE POP (80's),Separate Lives-Phil Collin,separate.sal,STEAK1,09/24/86
+48,WORDS AND PICTURE POP (80's),Stay The Night,staythenite.sal,Bobbye,01/25/87
+48,WORDS AND PICTURE POP (80's),Stay The Night-Chicago,stay/night.sal,DCSTARnCPR,02/02/87
+48,WORDS AND PICTURE POP (80's),Thank U 4 Being A Friend,friend.sal,Lyric,01/16/87
+48,WORDS AND PICTURE POP (80's),Thats What Friends R For,friends r4.sal,Whole Note,11/08/86
+48,WORDS AND PICTURE POP (80's),The Edge Of Heaven-WHAM!,edge/heaven.sal,DCSTARnCPR,11/16/86
+48,WORDS AND PICTURE POP (80's),The Other Side Of Life,otherside.sal,Bobbye,01/25/87
+48,WORDS AND PICTURE POP (80's),The Way It Is-Hornsby,way it is.sal,DCSTARnCPR,03/04/87
+48,WORDS AND PICTURE POP (80's),This Is The Time-B.Joel,this time.sal,DCSTARnCPR,03/03/87
+48,WORDS AND PICTURE POP (80's),Throwing It All Away,throw/away.sal,DCSTARnCPR,11/23/86
+48,WORDS AND PICTURE POP (80's),True Blue,true blue.sal,NickZ,11/29/86
+48,WORDS AND PICTURE POP (80's),True Colors-Cyndi Lauper,true colors.sal,NickZ,11/08/86
+48,WORDS AND PICTURE POP (80's),True colors-C.Lauper,true colors.sal,Diz Cop,03/02/87
+48,WORDS AND PICTURE POP (80's),Walk Like An Egyptian,egyptian.sal,NickZ,01/10/87
+48,WORDS AND PICTURE POP (80's),Walk of Life-Dire Straits,walk of life.sal,Jimbob2,12/14/86
+48,WORDS AND PICTURE POP (80's),Where Have/Good Times/Gon,where have.wds,STEAK1,09/17/86
+48,WORDS AND PICTURE POP (80's),Where Have/Good Times/Gon,where have.mus,STEAK1,09/17/86
+48,WORDS AND PICTURE POP (80's),Will You Still Love Me,stillloveme.sal,DCSTARnCPR,02/02/87
+48,WORDS AND PICTURE POP (80's),Wind Beneath My Wings,wind/beneath.sal,Bobbye,02/08/87
+48,WORDS AND PICTURE POP (80's),Wishin You Were Here,wishing/here.sal,DCSTARnCPR,02/09/87
+48,WORDS AND PICTURE POP (80's),Words Get In The Way,words/way.sal,NickZ,01/13/87
+48,WORDS AND PICTURE POP (80's),You Decorated My Llfe*Diz,decor/life.sal,Diz Cop,01/28/87
+48,WORDS AND PICTURE POP (80's),You're My Home - B. Joel,youremyhome.sal,Lyric,10/08/86
+48,WORDS AND PICTURE Holiday and Religious,Adeste Fldeles[2of2],adeste.mus,Ingwe,11/16/86
+48,WORDS AND PICTURE Holiday and Religious,Adeste Fldelis]2of2,adeste.wds,Ingwe,11/16/86
+48,WORDS AND PICTURE Holiday and Religious,All I Want/Xmas/2 Teeth,2front teeth.sal,Carole d,12/05/86
+48,WORDS AND PICTURE Holiday and Religious,All I want/Xmas/2 Teeth,teeth.sal,Bobbye,12/05/86
+48,WORDS AND PICTURE Holiday and Religious,Blue Christmas,blue JIIIlas.sal,DCSTARnCPR,11/30/86
+48,WORDS AND PICTURE Holiday and Religious,Carol Of The Bells,carolofbells.sal,DCSTARnCPR,11/30/86
+48,WORDS AND PICTURE Holiday and Religious,Chinese Xmas Song,chinese song.sal,Lyric,11/23/86
+48,WORDS AND PICTURE Holiday and Religious,Christmas Piece-W.L.Reed,christmas.sal,Lyric,12/07/86
+48,WORDS AND PICTURE Holiday and Religious,Christmas Variations #2,chris2.sal,Bobbye,12/05/86
+48,WORDS AND PICTURE Holiday and Religious,EIShadai-music,elshad.mus,HarmanC,10/14/86
+48,WORDS AND PICTURE Holiday and Religious,EIShadai-words,elshad.wds,HarmanC,10/14/86
+48,WORDS AND PICTURE Holiday and Religious,God Rest Ye Merry Gentlem,gentlemen.sal,DCSTARnCPR,12/15/86
+48,WORDS AND PICTURE Holiday and Religious,Good King Wenceslas,good king.sal,DCSTARnCPR,12/16/86
+48,WORDS AND PICTURE Holiday and Religious,Happiness Is The Lord,happinessis.sal,Daspf,12/01/86
+48,WORDS AND PICTURE Holiday and Religious,Here Comes Santa Claus,here comes.sal,NickZ,11/25/86
+48,WORDS AND PICTURE Holiday and Religious,Home For The Holidays,holidays.sal,Al j,11/30/86
+48,WORDS AND PICTURE Holiday and Religious,I Saw Mommy Kissing Santa,mommy/santa.sal,NickZ,11/25/86
+48,WORDS AND PICTURE Holiday and Religious,I Saw Mommy Kissing Santa,kissng santa.sal,Carole d,12/05/86
+48,WORDS AND PICTURE Holiday and Religious,I Saw Three Ships,three ships.sal,DCSTARnCPR,12/16/86
+48,WORDS AND PICTURE Holiday and Religious,Lord Jesus Medley,lordjesus.sal,Daspf,12/10/86
+48,WORDS AND PICTURE Holiday and Religious,Merry Christmas Darling,merry JIIIlas.sal,DCSTARnCPR,12/04/86
+48,WORDS AND PICTURE Holiday and Religious,Nuttin' for Christmas,nuttin/xmas.sal,Carole d,12/05/86
+48,WORDS AND PICTURE Holiday and Religious,Oh Little town/Bethlehem,beth.sal,AI j,12/06/86
+48,WORDS AND PICTURE Holiday and Religious,Poor Wayfaring Stranger,stranger.sal,Marvin1,10/04/86
+48,WORDS AND PICTURE Holiday and Religious,Rudolph/Reindeer[1 of 3],rudolph.wds,Dragonslay,01/06/87
+48,WORDS AND PICTURE Holiday and Religious,Rudolph/Reindeer[2 of 3],rudolph.pic,Dragonslay,01/06/87
+48,WORDS AND PICTURE Holiday and Religious,Rudolph/Reindeer[3 of 3],rudolph.mus,Dragonslay,01/06/87
+48,WORDS AND PICTURE Holiday and Religious,Sleigh Ride-L.Anderson,sleigh ride.sal,John r,12/21/86
+48,WORDS AND PICTURE Holiday and Religious,The First Noel,first noel.sal,Al j,12/06/86
+48,WORDS AND PICTURE Holiday and Religious,The Shepherd-ArgentineXma,the shepherd.sal,Lyric,11/23/86
+48,WORDS AND PICTURE Holiday and Religious,The Star Carol,star carol.sal,DCSTARnCPR,12/04/86
+49,WORDS AND PICTURE Holiday and Religious,Unto Us/Child/Born-Handel,child/bom.sal,DCSTARnCPR,12/18/86
+49,WORDS AND PICTURE Holiday and Religious,We Need a Little Xmas,little/xmas.sal,NickZ,10/06/86
+49,WORDS AND PICTURE Holiday and Religious,We Three Kings Of Orient,three kings.sal,DCSTARnCPR,12/15/86
+49,WORDS AND PICTURE Holiday and Religious,What Child Is This,what child.sal,DCSTARnCPR,12/22/86
+49,WORDS AND PICTURE Holiday and Religious,When Santa Gets /Letter,santalletter.sal,NickZ,11/25/86
+49,WORDS AND PICTURE Holiday and Religious,When we all get 2 Heaven,when we all.sal,Ransom1,01/25/87
+49,WORDS AND PICTURE Holiday and Religious,Winter Wonderland,wonderland.sal,AI j,12/06/86
+49,WORDS AND PICTURE Holiday and Religious,Xmas Variations 1,christmas.sal,Bobbye,12/05/86
+49,WORDS AND PICTURE Movie/TV Theme,50 years of Disney,disney music.sal,DeanS,01/10/87
+49,WORDS AND PICTURE Movie/TV Theme,A Dream is a Wish,dream/wish.sal,Diz Cop,02/06/87
+49,WORDS AND PICTURE Movie/TV Theme,A Star Is Born (20files),closely.mus,bobbye,01/06/87
+49,WORDS AND PICTURE Movie/TV Theme,ATimeForUs,time for us.sal,DCSTARnCPR,12/28/86
+49,WORDS AND PICTURE Movie/TV Theme,Against All Odds *GaryO,odds.sal,Bobbye,02/26/87
+49,WORDS AND PICTURE Movie/TV Theme,All Time High - 007,all high.sal,NickZ,01/24/87
+49,WORDS AND PICTURE Movie/TV Theme,Aquarius - from Hair,aquarius.sal,Gustave,09/29/86
+49,WORDS AND PICTURE Movie/TV Theme,Bandstand Boogie,bandstand.sal,NickZ,10/13/86
+49,WORDS AND PICTURE Movie/TV Theme,Brothers Theme(Showtime),bros/rmx.sal,Marvin1,12/27/86
+49,WORDS AND PICTURE Movie/TV Theme,Candle On The Water,candle/water.sal,Diz Cop,02/06/87
+49,WORDS AND PICTURE Movie/TV Theme,Coming Around Again,coming/again.sal,DCSTARnCPR,02/15/87
+49,WORDS AND PICTURE Movie/TV Theme,DangerZone-Topgun,danger.sal,Bobbye,10/03/86
+49,WORDS AND PICTURE Movie/TV Theme,Disneyland medley,disneyland.sda,DCSTARnCPR,03/04/87
+49,WORDS AND PICTURE Movie/TV Theme,Easy To Be Hard- Hair,easyhard.sal,Bobbye,10/03/86
+49,WORDS AND PICTURE Movie/TV Theme,Endless Love-L. Richie,endless love.sal,DaleC1,10/13/86
+49,WORDS AND PICTURE Movie/TV Theme,Evergreen,evergreen.sal,Ray18,09/23/86
+49,WORDS AND PICTURE Movie/TV Theme,Exodus-Boone,exodus.sal,Bobbye,10/03/86
+49,WORDS AND PICTURE Movie/TV Theme,Footloose-K.Loggins,footloose.sal,NickZ,02/18/87
+49,WORDS AND PICTURE Movie/TV Theme,For All We Know,all we know.sal,DCSTARnCPR,11/27/86
+49,WORDS AND PICTURE Movie/TV Theme,For All We Know,all we know.sal,DCSTARnCPR,11/30/86
+49,WORDS AND PICTURE Movie/TV Theme,Fraggle Rock Theme,fraggle rock.sal,NickZ,01/14/87
+49,WORDS AND PICTURE Movie/TV Theme,Ghostbusters * NickZ,ghostbusters.sal,NickZ,09/17/86
+49,WORDS AND PICTURE Movie/TV Theme,Goldfinger (Bond) Theme,goldfinger.sal,NickZ,01/11/87
+49,WORDS AND PICTURE Movie/TV Theme,Happiness Hotel (Muppets),happy hotel.sal,NickZ,12/23/86
+49,WORDS AND PICTURE Movie/TV Theme,Hawaii 5 0 theme*NickZ,five-0.mus,NickZ2,03/09/87
+49,WORDS AND PICTURE Movie/TV Theme,Heaven In Your Eyes,heaven/eyes.sal,DCSTARnCPR,11/23/86
+49,WORDS AND PICTURE Movie/TV Theme,Hello Dolly,hellodolly.sal,Daspf,09/17/86
+49,WORDS AND PICTURE Movie/TV Theme,I Love My Wife,i love/wife.sal,Semiquaver,01/24/87
+49,WORDS AND PICTURE Movie/TV Theme,I Remember It Will / Gigi,remember.sal,Marvin 1,11/29/86
+49,WORDS AND PICTURE Movie/TV Theme,It's Not Easy/Green*DCSTA,being green.sal,DCSTARnCPR,01/16/87
+49,WORDS AND PICTURE Movie/TV Theme,Let the Sunshine In,sun in.sal,Gustave,09/29/86
+49,WORDS AND PICTURE Movie/TV Theme,Love Came For Me,love came.sal,Diz Cop,10/08/86
+49,WORDS AND PICTURE Movie/TV Theme,Love Came For Me/Splash,lovecame/rmx.sal,Diz Cop,03/03/87
+49,WORDS AND PICTURE Movie/TV Theme,Love Is Here To Stay,love is here.sal,Fwp,10/05/86
+49,WORDS AND PICTURE Movie/TV Theme,Love Story[1of2],love story.mus,EMS Tech,11/08/86
+49,WORDS AND PICTURE Movie/TV Theme,Makin Whoopee*Lyric,whoopee.sal,Bobbye,02/08/87
+49,WORDS AND PICTURE Movie/TV Theme,Marne,mame.sal,NickZ,01/26/87
+49,WORDS AND PICTURE Movie/TV Theme,Meledy From Oklahoma,oklahoma.lbr,Daspf,10/11/86
+49,WORDS AND PICTURE Movie/TV Theme,Mickey Mouse Club March,mmcm.sal,Diz Cop,02/17/87
+49,WORDS AND PICTURE Movie/TV Theme,Mousercise!,mousercise.sal,Diz Cop,02/06/87
+49,WORDS AND PICTURE Movie/TV Theme,Movin' Right Along-Muppet,movin.sal,NickZ,12/21/86
+49,WORDS AND PICTURE Movie/TV Theme,Muppet Babies Theme,muppet baby.sal,NickZ,01/19/87
+49,WORDS AND PICTURE Movie/TV Theme,Muppet Show Theme*NickZ,muppet theme.sal,NickZ,12/28/86
+49,WORDS AND PICTURE Movie/TV Theme,My Favorite Things,favorite.sal,SYSOP JON,01/07/87
+49,WORDS AND PICTURE Movie/TV Theme,My Mother The Car Theme,mother/car.sal,NickZ,12/06/86
+49,WORDS AND PICTURE Movie/TV Theme,Never On Sunday,sunday.sal,Marvin1,01/04/86 
+49,WORDS AND PICTURE Movie/TV Theme,Next Time I Fall In Love,next time.sal,NickZ,01/13/87 
+49,WORDS AND PICTURE Movie/TV Theme,Nobody Does It Better,better.sal,NickZ,01/18/87
+49,WORDS AND PICTURE Movie/TV Theme,"Oh,What a Beautiful Morn.",beautiful.sal,Daspf,01/12/87
+49,WORDS AND PICTURE Movie/TV Theme,Oklahoma!!,oklahorna.sal,Daspf,01/12/87
+49,WORDS AND PICTURE Movie/TV Theme,Once upon A Dream,once/dream.sal,DCSTARnCPR,03/07/87
+49,WORDS AND PICTURE Movie/TV Theme,Out Here On My Own/Fame,on my own.sal,DCSTARnCPR,12/15/86
+49,WORDS AND PICTURE Movie/TV Theme,Over The Rainbow p,rainbow.sal,Fwp,01/08/86
+49,WORDS AND PICTURE Movie/TV Theme,People Will Say We'r/Love,inlove.sal,Daspf,01/12/87
+49,WORDS AND PICTURE Movie/TV Theme,Saying Goodbye,say/goodbye.sal,NickZ,01/18/87
+49,WORDS AND PICTURE Movie/TV Theme,Scales/Arpeggios-Disney,scales.sal,Diz Cop,02/25/87
+49,WORDS AND PICTURE Movie/TV Theme,Somewhere Out There,out there.sal,Bobbye,02/26/87
+49,WORDS AND PICTURE Movie/TV Theme,Somewhere(WestSideStory),somewhere.sal,Bobbye,02/26/87
+49,WORDS AND PICTURE Movie/TV Theme,Sound Of Music (medley),soundofmusic.sal,DCSTARnCPR,02/15/87
+50,WORDS AND PICTURE Movie/TV Theme,Stand By Me,stand by me.sal,Diz Cop,02/17/87
+50,WORDS AND PICTURE Movie/TV Theme,Surrey w/ Fringe on Top,fringeontop.sal,Daspf,01/12/87
+50,WORDS AND PICTURE Movie/TV Theme,Sweet Surrender-J.Denver,sweet surr.sal,Diz Cop,03/02/87
+50,WORDS AND PICTURE Movie/TV Theme,Take My Breath Away,takemybreath.sal,RandallD2,11/19/86
+50,WORDS AND PICTURE Movie/TV Theme,Take My Breath Away,take breath.sal,Bobbye,09/10/86
+50,WORDS AND PICTURE Movie/TV Theme,The Bare Necessities,bare necess.sal,Diz Cop,02/17/87
+50,WORDS AND PICTURE Movie/TV Theme,The Patty Duke Theme,patty duke.sal,NickZ,12/06/86
+50,WORDS AND PICTURE Movie/TV Theme,Third Man Theme,third man.sal,Marvin1,11/29/86
+50,WORDS AND PICTURE Movie/TV Theme,Toreador (Carman) Eng.Wor,toreador.wds,Gustave,11/22/86
+50,WORDS AND PICTURE Movie/TV Theme,Toreador (Carman) FrchWor,votre toast.wds,Gustave,11/22/86
+50,WORDS AND PICTURE Movie/TV Theme,Toreador/CarmenEng,toreador.sal,Gustave,10/13/86
+50,WORDS AND PICTURE Movie/TV Theme,Toreador/CarmenFr,votre toast.sal,Gustave,10/13/86
+50,WORDS AND PICTURE Movie/TV Theme,Toreador/Votre Toast Musi,votre toast.mus,Gustave,11/22/86
+50,WORDS AND PICTURE Movie/TV Theme,Unchained Melody,unchained.sal,DCSTARnCPR,02/06/87
+50,WORDS AND PICTURE Movie/TV Theme,Wizard of OZ Medley*NickZ,wizard/oz.sal,DCSTARnCPR,01/11/87
+50,WORDS AND PICTURE Movie/TV Theme,Yellow Submarine-Beatles,yellow sub.sal,DCSTARnCPR,01/18/87
+50,WORDS AND PICTURE Movie/TV Theme,You Only Live Twice,Filenarne: live twice.sal,NickZ,01/18/87
+50,WORDS AND PICTURE Movie/TV Theme,3 times a Lady 2 of 2,3x a lady.wds,DCSTARnCPR,12/21/86
+50,WORDS AND PICTURE Movie/TV Theme,3 times a Lady 2 of 2,3x a lady.pil,DCSTARnCPR,12/21/86
+50,WORDS AND PICTURE Movie/TV Theme,5thOfBeethoven*EMS Tech,beethoven.pil,EMS Tech,10/05/86
+50,WORDS AND PICTURE Movie/TV Theme,Adventure on Earth (ET),earth advent.sda,DCSTARnCPR,03/01/87
+50,WORDS AND PICTURE Movie/TV Theme,Allentown music,allentown.mus,DerekP,12/27/86
+50,WORDS AND PICTURE Movie/TV Theme,Allentown picture,allentown.pic,DerekP,12/27/86
+50,WORDS AND PICTURE Movie/TV Theme,Allentown words,allentown.wds,DerekP,12/27/86
+50,WORDS AND PICTURE Movie/TV Theme,Amadeus/Quantum-picture,amadeus.lnx,MiamiSound,12/28/86
+50,WORDS AND PICTURE Movie/TV Theme,Another Brick In The Wall,the wall.pil,DCSTARnCPR,01/10/87
+50,WORDS AND PICTURE Movie/TV Theme,Batman Theme,batman.pil,DCSTARnCPR,02/01/87
+50,WORDS AND PICTURE Movie/TV Theme,Brit.Grenadiers/SgtMajor,sgt major.pil,Jabba Hutt,11/15/86
+50,WORDS AND PICTURE Movie/TV Theme,Casey Jones Jr.,casey jr.sda,DCSTARnCPR,03/05/87
+50,WORDS AND PICTURE Movie/TV Theme,Challenger,challenger.pil,DCSTARnCPR,01/24/87
+50,WORDS AND PICTURE Movie/TV Theme,ClementiSonatina/PenCandl,clementi.sda,Jabba Hutt,03/08/87
+50,WORDS AND PICTURE Movie/TV Theme,Conga/Q-picture,miamisound.lnx,MiamiSound,12/23/86
+50,WORDS AND PICTURE Movie/TV Theme,Coward of the County,coward.lnx,MiamiSound,12/28/86
+50,WORDS AND PICTURE Movie/TV Theme,Danger Zone,danger zone.pil,DCSTARnCPR,01/29/87
+50,WORDS AND PICTURE Movie/TV Theme,Gertrudes Dream,gertrude.pil,Jabba Hutt,11/15/86
+50,WORDS AND PICTURE Movie/TV Theme,Ghostbusters/Q-picture,ghostbusters.lnx,MiamiSound,12/23/86
+50,WORDS AND PICTURE Movie/TV Theme,Gilligans Island 1 of 2,gilligan.wds,DCSTARnCPR,01/13/87
+50,WORDS AND PICTURE Movie/TV Theme,Gilligans Island 2 of 2,gilligan.pil,DCSTARnCPR,01/13/87
+50,WORDS AND PICTURE Movie/TV Theme,Glory Of Love/Q-picture,gloryoflove.lnx,MiamiSound,12/23/86
+50,WORDS AND PICTURE Movie/TV Theme,I Just Called/Love You,just called.lnx,MiamiSound,12/23/86
+50,WORDS AND PICTURE Movie/TV Theme,I Love Her/Pagoda,i love her.pil,Jabba Hutt,11/15/86
+50,WORDS AND PICTURE Movie/TV Theme,It's Not Easy Being Green,kerrnit.wds,NickZ,01/14/87
+50,WORDS AND PICTURE Movie/TV Theme,It's Not Easy Being Green,kerrnit.pil,NickZ,01/14/87
+50,WORDS AND PICTURE Movie/TV Theme,Jabba Hutt,jabba hutt.sda,Jabba Hutt,03/08/87
+50,WORDS AND PICTURE Movie/TV Theme,Love Story,love story.sal,DCSTARnCPR,12/28/86
+50,WORDS AND PICTURE Movie/TV Theme,Money For Nothing,money/nothin.pil,DCSTARnCPR,01/12/87
+50,WORDS AND PICTURE Movie/TV Theme,Morning Has Broken,moming.wds,DCSTARnCPR,01/24/87
+50,WORDS AND PICTURE Movie/TV Theme,Morning Has Broken,moming.pil,DCSTARnCPR,01/24/87
+50,WORDS AND PICTURE Movie/TV Theme,"New York, New York",new york.pil,Dan24,12/02/86
+50,WORDS AND PICTURE Movie/TV Theme,"O Come, O Come Emmanuel",emmanuel.lnx,Carole d,12/05/86
+50,WORDS AND PICTURE Movie/TV Theme,Oh Tannenbaum,tannenbaum.lnx,Carole d,12/05/86
+50,WORDS AND PICTURE Movie/TV Theme,On The Wings Of a Dream,wings/dream.mus,DCSTARnCPR,01/13/87
+50,WORDS AND PICTURE Movie/TV Theme,On The Wings of a Dream,wings/dream.wds,DCSTARnCPR,01/11/87
+50,WORDS AND PICTURE Movie/TV Theme,On The Wings of a Dream,wings/drcam.pic,DCSTARnCPR,01/10/87
+50,WORDS AND PICTURE Movie/TV Theme,Over The Moon (ET),over moon.sda,DCSTARnCPR,02/28/87
+50,WORDS AND PICTURE Movie/TV Theme,PeanutsTheme.mus*,peanuts.mus,pchips,10/02/86
+50,WORDS AND PICTURE Movie/TV Theme,PeanutsTheme.pic*,peanuts.pic,Zipchips,10/02/86
+50,WORDS AND PICTURE Movie/TV Theme,Picnic/1of2,picnic.wds,ETTIE W2,10/14/86
+50,WORDS AND PICTURE Movie/TV Theme,Picnic/2of2,ticnic.pil,TTIEW2,10/14/86
+50,WORDS AND PICTURE Movie/TV Theme,Pinball Wizard - The Who,pinball wiz.pil,DCSTARnCPR,01/18/87
+50,WORDS AND PICTURE Movie/TV Theme,Pinball Wizard-The Who,pinball wiz.wds,DCSTARnCPR,01/18/87
+50,WORDS AND PICTURE Movie/TV Theme,Power Of Love/Q-plcture,power/love.lnx,iamiSound,12/23/86
+50,WORDS AND PICTURE Movie/TV Theme,Red River Valley]1 of 2],redriver val.pil,Herb D1,12/13/86
+50,WORDS AND PICTURE Movie/TV Theme,Red River Valley]2 of 2],redriver val.wds,Herb D1,12/13/86
+50,WORDS AND PICTURE Movie/TV Theme,Sidpic Theme-pic&mus,sidpic theme.pil,Droopy McC,12/08/86
+50,WORDS AND PICTURE Movie/TV Theme,Sid pic Theme-words,sidpic theme.wds,Droopy McC,12/08/86
+50,WORDS AND PICTURE Movie/TV Theme,Sleigh Ride-L.Anderson,sleigh ride.sal,Al j,12/06/86
+51,WORDS AND PICTURE Movie/TV Theme,Somewhere Out There,out there.sda,DCSTARnCPR,03/01/87
+51,WORDS AND PICTURE Movie/TV Theme,Sound Of Music,sound/music.sda,DCSTARnCPR,02/27/87
+51,WORDS AND PICTURE Movie/TV Theme,Star Trek Theme,star trek.pil,DocJM,03/05/87
+51,WORDS AND PICTURE Movie/TV Theme,Stripper*Dr.J*EMS Tech,stripper.pil,EMS Tech,10/05/86
+51,WORDS AND PICTURE Movie/TV Theme,Stripper/pic by Kermit,stripper.sda,NickZ,02/01/87
+51,WORDS AND PICTURE Movie/TV Theme,Superstar picture,superstar.pic,Kingocards,10/05/86
+51,WORDS AND PICTURE Movie/TV Theme,SweetLove-Anitaer,sweet love.pil,Dan24,12/04/86
+51,WORDS AND PICTURE Movie/TV Theme,SweetLove-Anita B,sweet love.wds,Dan24,12/04/86
+51,WORDS AND PICTURE Movie/TV Theme,The Stranger-B.Joel,the stranger.sda,DCSTARnCPR,02/26/87
+51,WORDS AND PICTURE Movie/TV Theme,Toyland,toyland.sal,Bobbye,12/05/86
+51,WORDS AND PICTURE Movie/TV Theme,Toyland,toyland.pic,Bobbye,12/05/86
+51,WORDS AND PICTURE Movie/TV Theme,Twilight Zone,twilightzone.pil,DCSTARnCPR,01/10/87
+51,WORDS AND PICTURE Movie/TV Theme,Walk Like an Egyptian,egyptian.wds,DCSTARnCPR,02/09/87
+51,WORDS AND PICTURE Movie/TV Theme,Walk Like an Egyptian,egyptian.pil,DCSTARnCPR,02/09/87
+51,WORDS AND PICTURE Movie/TV Theme,We Built this City,built/city 3.pil,The Spy 19,12/17/86
+51,WORDS AND PICTURE Movie/TV Theme,Whipped Cream,whipped crm.pil,DCSTARnCPR,01/20/87
+51,WORDS AND PICTURE Movie/TV Theme,White Christmas*John r,white chrst.sal,John r,12/21/86
+51,WORDS AND PICTURE Movie/TV Theme,Yo Ho(A Pirates Life),yo ho.sda,DCSTARnCPR,02/28/87
+51,WORDS AND PICTURE Country and Folk,Always On My Mind,always/mind.sal,Diz Cop,11/27/86
+51,WORDS AND PICTURE Country and Folk,Blow the Candles Out,blow/candles.sal,Lyric,11/23/86
+51,WORDS AND PICTURE Country and Folk,Bonnis Dunde-Scottish fol,bonnie dunde.sal,Lyric,11/23/86
+51,WORDS AND PICTURE Country and Folk,Bridge Over Troubled Water,bridge/water.sal,Collecting,01/14/87
+51,WORDS AND PICTURE Country and Folk,Bridge Over Troubled Water,bridge/water.sal,Madman Mac,10/06/86
+51,WORDS AND PICTURE Country and Folk,City Of New Orleans,city/new orl.sal,Whole Note,12/01/86
+51,WORDS AND PICTURE Country and Folk,Could I Have This Dance,i have dance.sal,DaleC1,10/15/86
+51,WORDS AND PICTURE Country and Folk,Downhill Stuff-J.Denver,downhill.sal,Marvin1,01/24/87
+51,WORDS AND PICTURE Country and Folk,For Baby -John Denver,for baby.sal,NickZ,10/05/86
+51,WORDS AND PICTURE Country and Folk,I.O.U.-K.Chater,i.o.u..sal,DaleC1,10/08/86
+51,WORDS AND PICTURE Country and Folk,If I Were A Carpenter,carpenter.sal,Bobbye,12/05/86
+51,WORDS AND PICTURE Country and Folk,Islands In The Stream,islands.sal,SYSHELP BH,02/18/87
+51,WORDS AND PICTURE Country and Folk,Joy At the Start-Fogelber,joy/start.sal,Lyric,01/16/87
+51,WORDS AND PICTURE Country and Folk,Longer-Fogelberg *Lyric,longer.sal,Bobbye,02/26/87
+51,WORDS AND PICTURE Country and Folk,Love Again-John Denver,love again.sal,Diz Cop,11/14/86
+51,WORDS AND PICTURE Country and Folk,Mangwani Mpulele-African,mangwani.sal,Jabba Hutt,02/18/87
+51,WORDS AND PICTURE Country and Folk,"Monday, Monday",monday.sal,Gustave,09/24/86
+51,WORDS AND PICTURE Country and Folk,Nexus-DFolgelber,nexus.sal,Lyric,10/04/86
+51,WORDS AND PICTURE Country and Folk,Paper roses 1 of 2,paper roses.pil,Herb D1,12/27/86
+51,WORDS AND PICTURE Country and Folk,Paper roses 2 of 2,paper roses.wds,Herb D1,12/27/86
+51,WORDS AND PICTURE Country and Folk,Phoenix -Fogelberg*Lyric,phoenix.sal,Bobbye,02/26/87
+51,WORDS AND PICTURE Country and Folk,Puff The Magic Dragon,puff.sal,Madman Mac,10/06/86
+51,WORDS AND PICTURE Country and Folk,Scarborough Fair,scarborough.sal,DCSTARnCPR,02/06/87
+51,WORDS AND PICTURE Country and Folk,Season Suite-John Denver,seasons.sal,NickZ,03/02/87
+51,WORDS AND PICTURE Country and Folk,TenneseeBirdwalk,bird walk.sal,CarlB3,10/01/86
+51,WORDS AND PICTURE Country and Folk,Thank God For Kids,thnkgod/kids.sal,Diz Cop,11/27/86
+51,WORDS AND PICTURE Country and Folk,The Love She Found In Me,love/in/me.sal,DaleC1,12/01/86
+51,WORDS AND PICTURE Country and Folk,The Wind Beneath My Wings,wind/wings.sal,DaleC1,12/01/86
+51,WORDS AND PICTURE Country and Folk,This Land Is Your Land,this land.sal,Madman Mac,10/06/86
+51,WORDS AND PICTURE Country and Folk,This Land Is Your Land,this land.sal,Daspf,02/16/87
+51,WORDS AND PICTURE Country and Folk,Tumblin tumbleweeds,tumbleweeds.sal,C VE,11/29/86
+51,WORDS AND PICTURE Country and Folk,Where/Flowers Gone,flowers gone.sal,Gustave,10/02/86
+51,WORDS AND PICTURE Country and Folk,Wind Beneath My Wings,wind beneath.sal,Diz Cop,01/08/86
+51,WORDS AND PICTURE Novelty and Other SID,Ab-C-DEF-GHI(Sesame St),ab-c-def.sal,NickZ,01/31/87
+51,WORDS AND PICTURE Novelty and Other SID,Aba Daba Honeymoon,abadbahnmoon.mus,Joef9,11/30/86
+51,WORDS AND PICTURE Novelty and Other SID,Addicted to Spuds-Wierd A,addict/spuds.sal,Command Cp,11/29/86
+51,WORDS AND PICTURE Novelty and Other SID,Alphabet Song,abc song.sal,DCSTARnCPR,01/28/87
+51,WORDS AND PICTURE Novelty and Other SID,Be Prepared-Tom Lehrer,prepared.sal,SYSOP JON,01/07/87
+51,WORDS AND PICTURE Novelty and Other SID,Beep Beep *Lyric,beep beep.sal,Bobbye,02/26/87
+51,WORDS AND PICTURE Novelty and Other SID,Beer Barrel Polka-Bob Huff,beer barrel.sal,SYSOP JON,01/07/87
+51,WORDS AND PICTURE Novelty and Other SID,C is for Cookie*NickZ,cookie.sal,NickZ,01/27/87
+51,WORDS AND PICTURE Novelty and Other SID,Cheeseburger-Jimmy Buffet,cheeseburger.sal,Lyric,12/13/86
+51,WORDS AND PICTURE Novelty and Other SID,Hall/Redskins-football,redskins.mus,StephenC1,12/04/86
+51,WORDS AND PICTURE Novelty and Other SID,Hello M' Baby,helo m/baby.sal,Lyric,12/14/86
+51,WORDS AND PICTURE Novelty and Other SID,House of Quantum Link,house qlink.sal,Bobbye,10/03/86
+51,WORDS AND PICTURE Novelty and Other SID,I Hold Your Hand In Mine,holdhand.sal,SYSOP JON,01/07/87
+51,WORDS AND PICTURE Novelty and Other SID,It's Hard to Be a SysOp,hard/sysop.sal,Lyric,10/04/R6
+52,WORDS AND PICTURE Novelty and Other SID,Misirlou *Lyric,misirlou.mus,Bobbye,02/26/87
+52,WORDS AND PICTURE Novelty and Other SID,Overalls/Murphys Chowder,overalls.sal,Collecting,02/21/87
+52,WORDS AND PICTURE Novelty and Other SID,Pollution-Tom Lehrer,pollution.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,Rubber Duckie(Sesame St),rubber duck.sal,NickZ,01/31/87
+52,WORDS AND PICTURE Novelty and Other SID,SMUT-Lehrer * Bob Huff,smut.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,She's My Girl-Lehrer,mygirl.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,Streets Of Cairo,street/cairo.sal,Collecting,02/21/87
+52,WORDS AND PICTURE Novelty and Other SID,Teddy Bear's Picnic,teddylpicnic.sal,DCSTARnCPR,01/24/87
+52,WORDS AND PICTURE Novelty and Other SID,The Curly Shuffle*Lyric,shuffle.sal,Bobbye,01/28/87
+52,WORDS AND PICTURE Novelty and Other SID,The Fox and The Geese,fox/geese.sal,Lyric,11/23/86
+52,WORDS AND PICTURE Novelty and Other SID,The Hunting Song-Lehrer,hunting.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,The Irish Ballad-Lehrer,ballad.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,The OI'Dope Peddler-Lehre,peddler.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,The Thing *Lyric,the thing.sal,Bobbye,02/26/87
+52,WORDS AND PICTURE Novelty and Other SID,The Vatican Rag-Lehrer,vatican.sal,SYSOP JON,01/07/87
+52,WORDS AND PICTURE Novelty and Other SID,Waltzing Matilda,fortech 91l.sal,Lyric,11/23/86
+52,WORDS AND PICTURE Novelty and Other SID,Wedding Bells/Not Ring,wedding bell.sal,Collecting,12/17/86
+52,WORDS AND PICTURE Novelty and Other SID,Why Dont We Get Drunk & ..,drunk.sal,DREAM WHIP,01/15/87
+60,THE WORKSHOP,9 to 5-Dolly Parton,9 to 5.mus,StephenC1,12/04/86
+60,THE WORKSHOP,All Through/Night(basic),all night,Joesson,02/19/87
+60,THE WORKSHOP,Hallelujah Chorus,hallelujah.mus,Cookie 84,11/15/86
+60,THE WORKSHOP,Infinate Palimpsest-Tanis,palimpsest.mus,Tanis R,12/13/86
+60,THE WORKSHOP,Jingle Bell Rock,jingle rock.sal,Al j,12/14/86
+60,THE WORKSHOP,Just You and Me,you n me.mus,Audi5000SE,01/09/87
+60,THE WORKSHOP,Love Story,lovestory.mus,Daspf,01/14/87
+60,THE WORKSHOP,Love Zone-Billy Ocean,love zone.mus,The kensai,11/07/86
+60,THE WORKSHOP,QBirthday Entry-DCSTAR/CP,life/qlink.sal,DCSTARnCPR,12/01/86
+60,THE WORKSHOP,QBirthday Entry-Dr JS,how q-link.sal,Dr J5,12/01/86
+60,THE WORKSHOP,QBirthday Entry-Max Rebo,q-birthday.sal,Max Rebo,12/02/86
+60,THE WORKSHOP,QBirthday Entry-NickZ,telecom.sal,NickZ,12/01/86
+60,THE WORKSHOP,QBirthday Entry-ShySparro,on q link.mus,Shy Sparrow,12/06/86
+60,THE WORKSHOP,QBirthday Entry-WholeNote,q-dancc.sal,Whole Note,11/27/86
+60,THE WORKSHOP,QBirthday entry-Gary O,talk w/you.sal,Lyric,11/27/86
+60,THE WORKSHOP,QBirthday entry1-Lyric,modem song.sal,Lyric,11/27/86
+60,THE WORKSHOP,QBirthday entry2-Lyric,modem song2.sal,Lyric,11/27/86
+60,THE WORKSHOP,Sloop John B,sloop john b.mus,Sloop j b,10/31/86
+60,THE WORKSHOP,Sloop John B -Beach Boys,sloop john b.mus,Sloop j b,10/21/86
+60,THE WORKSHOP,Variations/Scottish Air,variations.mus,Patience1,10/21/86
+60,THE WORKSHOP,Venus & Mars-McCartney,venus/mars.mus,Yoda Dayve,11/19/86
+60,THE WORKSHOP,Wouldn't It Be Nice,wouldntbnice.mus,Sloop j b,10/31/86

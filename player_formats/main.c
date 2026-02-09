@@ -104,7 +104,7 @@ int pick_sid_file(char *out_path, size_t out_sz){
     if (!out_path || out_sz == 0) return 0;
     char cmd[2048];
     snprintf(cmd, sizeof(cmd),
-             "kdialog --getopenfilename \"%s\" \"*.sid|SID files (*.sid)\" \"*|All files\"",
+             "kdialog --getopenfilename \"%s\" \"*|SID files (*)\" \"*|All files\"",
              g_last_dir);
 
     FILE *fp = popen(cmd, "r");
@@ -244,6 +244,7 @@ int main(){
         // ## FOR PSID PLAY ONLY call THIS and loop  #######################################################
         if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){
             doPlaySidStep(buffer, frames);    // <-- used in PSID playback
+
         }
         // ## END PSID ONLY SECTION -- commented out for testing RSID/Prog for now
 

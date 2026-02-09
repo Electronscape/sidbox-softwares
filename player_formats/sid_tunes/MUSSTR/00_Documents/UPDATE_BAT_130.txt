@@ -1,0 +1,134 @@
+@echo off
+
+IF EXIST Whats_new_in_v130.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v130.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.30
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE DC_Star_and_Cpr\Somewhere_Over_the_Rainbow.mus DC_Star_and_Cpr\Pictures\Somewhere_Over_the_Rainbow.mus
+MOVE DC_Star_and_Cpr\Somewhere_Over_the_Rainbow.wds DC_Star_and_Cpr\Pictures\Somewhere_Over_the_Rainbow.wds
+MOVE Ltworf5\Cats_in_the_Cradle.wds Ltworf5\California_Dreaming.wds
+MOVE Misc\Anon\Ebb_Tide.mus Misc\Midi-sid-con\Ebb_Tide.mus
+MOVE Misc\Anon\Ebb_Tide.str Misc\Midi-sid-con\Ebb_Tide.str
+MOVE Misc\Anon\Mame.mus Misc\Midi-sid-con\Mame.mus
+MOVE Misc\Anon\Mame.str Misc\Midi-sid-con\Mame.str
+MKDIR Misc\Anon_Films
+MOVE Misc\Anon\Ac-cent-tchu-ate_the_Positive.mus Misc\Anon_Films\Ac-cent-tchu-ate_the_Positive.mus
+MOVE Misc\Anon\Begin_the_Beguine.mus Misc\Anon_Films\Begin_the_Beguine.mus
+MOVE Misc\Anon\Fascinatting_Rhythm.mus Misc\Anon_Films\Fascinatting_Rhythm.mus
+MOVE Misc\Anon\Get_me_to_the_Chruch_on_Time.mus Misc\Anon_Films\Get_me_to_the_Chruch_on_Time.mus
+MOVE Misc\Anon\Hallelujah.mus Misc\Anon_Films\Hallelujah.mus
+MOVE Misc\Anon\Im_a_Yankee_Doodle_Dandy.mus Misc\Anon_Films\Im_a_Yankee_Doodle_Dandy.mus
+MOVE Misc\Anon\Im_just_Wild_about_Harry.mus Misc\Anon_Films\Im_just_Wild_about_Harry.mus
+MOVE Misc\Anon\Man_I_Love.mus Misc\Anon_Films\Man_I_Love.mus
+MOVE Misc\Anon\March_of_the_Toys.mus Misc\Anon_Films\March_of_the_Toys.mus
+MOVE Misc\Anon\Matchmaker.mus Misc\Anon_Films\Matchmaker.mus
+MOVE Misc\Anon\More.mus Misc\Anon_Films\More.mus
+MOVE Misc\Anon\New_York_New_York.mus Misc\Anon_Films\New_York_New_York.mus
+MOVE Misc\Anon\Notre_Dame_Victory_March.mus Misc\Anon_Films\Notre_Dame_Victory_March.mus
+MOVE Misc\Anon\Oklahoma.mus Misc\Anon_Films\Oklahoma.mus
+MOVE Misc\Anon\Ole_Buttermilk_Sky.mus Misc\Anon_Films\Ole_Buttermilk_Sky.mus
+MOVE Misc\Anon\One_for_My_Baby.mus Misc\Anon_Films\One_for_My_Baby.mus
+MOVE Misc\Anon\Que_Sera_Sera.mus Misc\Anon_Films\Que_Sera_Sera.mus
+MOVE Misc\Anon\Shall_we_Dance.mus Misc\Anon_Films\Shall_we_Dance.mus
+MOVE Misc\Anon\Soon.mus Misc\Anon_Films\Soon.mus
+MOVE Misc\Anon\Standing_on_the_Corner.mus Misc\Anon_Films\Standing_on_the_Corner.mus
+MOVE Misc\Anon\Strike_up_the_Band.mus Misc\Anon_Films\Strike_up_the_Band.mus
+MOVE Misc\Anon\Trolley_Song.mus Misc\Anon_Films\Trolley_Song.mus
+MOVE Misc\Anon\Youre_a_Grand_Old_Flag.mus Misc\Anon_Films\Youre_a_Grand_Old_Flag.mus
+MOVE Misc\Anon\Youre_an_Old_Smoothie.mus Misc\Anon_Films\Youre_an_Old_Smoothie.mus
+MOVE Misc\Anon_Pic\Jacobs_Ladder.mus DC_Star_and_Cpr\Jacobs_Ladder.mus
+MOVE Misc\G\Gigge.mus Arioso_G\Gigge.mus
+MOVE Misc\G\For_Two_Virginals.mus Arioso_G\For_Two_Virginals.mus
+MOVE Misc\G\For_Two_Virginals.str Arioso_G\For_Two_Virginals.str
+MOVE Misc\G\Bohemian_Rhapsody.mus Gnarf_Gnome\Bohemian_Rhapsody.mus
+MOVE Misc\G\Drunken_Android.mus Gnarf_Gnome\Drunken_Android.mus
+MOVE Misc\G\Drunken_Android.wds Gnarf_Gnome\Drunken_Android.wds
+MOVE Misc\K\Bridal_Chorus.mus Kirok\Bridal_Chorus.mus
+MOVE Misc\K\Merry_Farmer.mus Kirok\Merry_Farmer.mus
+MOVE Misc\K\Parade_of_the_Midgets.mus Kirok\Parade_of_the_Midgets.mus
+MOVE Misc\D\Spooks.mus Kirok\Spooks.mus
+MOVE Misc\M\Baby_dont_Forget_my_Number.mus MC_Far_and_Clr\Baby_dont_Forget_my_Number.mus
+MOVE Misc\M\Baby_dont_Forget_my_Number.str MC_Far_and_Clr\Baby_dont_Forget_my_Number.str
+MOVE Misc\M\Baby_dont_Forget_my_Number.wds MC_Far_and_Clr\Baby_dont_Forget_my_Number.wds
+MOVE Misc\M\Ill_be_Loving_You.mus MC_Far_and_Clr\Ill_be_Loving_You.mus
+MOVE Misc\M\On_our_Own.mus MC_Far_and_Clr\On_our_Own.mus
+MOVE Misc\M\On_our_Own.str MC_Far_and_Clr\On_our_Own.str
+MOVE Misc\M\On_our_Own.wds MC_Far_and_Clr\On_our_Own.wds
+MOVE Misc\M\Star_Spangled_Banner_A.mus MC_Far_and_Clr\Star_Spangled_Banner.mus
+MOVE Misc\M\Star_Spangled_Banner_A.wds MC_Far_and_Clr\Star_Spangled_Banner.wds
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\BJ_Pools__Alone.mus BJ_Pools\Alone.mus
+MOVE /y Updated\Blue_Adept__Welcome_to_the_Room_Sara.mus Blue_Adept\Welcome_to_the_Room_Sara.mus
+MOVE /y Updated\DC_Star_and_Cpr__It_would_take_a_Strong_Strong_Man.mus DC_Star_and_Cpr\It_would_take_a_Strong_Strong_Man.mus
+MOVE /y Updated\Glass_Soul__I_Know_a_Heartache_when_I_see_One.mus Glass_Soul\I_Know_a_Heartache_when_I_see_One.mus
+MOVE /y Updated\Glass_Soul__Monday_Monday_A.mus Glass_Soul\Monday_Monday_A.mus
+MOVE /y Updated\Glass_Soul__Suspicion.mus Glass_Soul\Suspicion.mus
+MOVE /y Updated\Jim_Masterson__Stepping_Out.mus Jim_Masterson\Stepping_Out.mus
+MOVE /y Updated\Marte_Brengle__Chloe.mus Marte_Brengle\Chloe.mus
+MOVE /y Marvin_Jones__This_is_My_Song.wds Marvin_Jones\This_is_My_Song.wds
+MOVE /y Updated\Melody__Till_the_Rivers_all_run_Dry.mus Melody\Till_the_Rivers_all_run_Dry.mus
+MOVE /y Updated\Misc__B__Feels_so_Good.mus Misc\B\Feels_so_Good.mus
+MOVE /y Updated\Misc__D__Heat_is_on.mus Misc\D\Heat_is_on.mus
+MOVE /y Updated\QuakerOtis__Hail_Columbia.wds QuakerOtis\Hail_Columbia.wds
+MOVE /y Updated\Spiecher__Sunshine_Lollipops_and_Rainbows.mus Spiecher\Sunshine_Lollipops_and_Rainbows.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+:Now a d81
+DEL "00_SIDfests\SIDfest '90 (Las Vegas, NV) -- Songs from SDAs.d64"
+
+: Same as DC_Star_and_Cpr\Pictures\Big_Bad_Wolf.mus
+DEL DC_Star_and_Cpr\Whos_Afraid_of_the_Big_Bad_Wolf.mus
+DEL DC_Star_and_Cpr\Whos_Afraid_of_the_Big_Bad_Wolf.wds
+
+DEL Bobbye\Your_Wildest_Dreams.wds
+
+DEL Misc\C\Sunny_Side_of_the_Street.wds
+
+: duplicate of Ken_Fuller\Vincent.wds
+DEL Misc\K\Vincent.wds
+
+DEL DC_Star\Cherish.wds
+DEL DC_Starr\Dangerous.wds
+DEL DC_Star_and_Cpr\Dont_wanna_Lose_You.wds
+
+DEL Misc\U\You_give_Love_a_Bad_Name.mus
+
+: Found better version
+DEL Terry_Woll\Wonderful_Wonderful_Copenhagen_-BAD-.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v130.txt  00_Documents\Whats_new_in_v130.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_130.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.30 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,87 @@
+@echo off
+
+IF EXIST Whats_new_in_v143.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v143.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.43
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN David_Taylor_-Super_Dave-\Youre_the_Inspiration.mus  David_Taylor_-Super_Dave-\Youre_the_Inspiration_A.mus
+REN Dez_Rat\Vegasest.mus  Dez_Rat\Vegasfest.mus
+REN Dez_Rat\Vegasest.str  Dez_Rat\Vegasfest.str
+REN Dez_Rat\Vegasest.wds  Dez_Rat\Vegasfest.wds
+REN Lucky_and_Confuzed\Crush_on_you.mus  Lucky_and_Confuzed\Crush_on_you_A.mus
+REN Lucky_and_Confuzed\Crush_on_you.wds  Lucky_and_Confuzed\Crush_on_you_A.wds
+MOVE John_C_Mackey\Brandenburg_Concerto_No4_in_G_Major.mus  John_C_Mackey\Brandenburg_Concerto\Brandenburg_Concerto_No4_in_G_Major_3rd_Movement_C.mus
+REN John_C_Mackey\Violin_and_Orchestra_3rd_Movement.mus  John_C_Mackey\Violin_and_Orchestra_3rd_Movement_A.mus
+REN John_C_Mackey\Violin_and_Orchestra_3rd_Movement.str  John_C_Mackey\Violin_and_Orchestra_3rd_Movement_A.str
+REN Jimi_O\We_wish_you_a_Merry_Christmas_A.mus  Jimi_O\We_wish_you_a_Merry_Christmas_1991.mus
+REN Jimi_O\We_wish_you_a_Merry_Christmas_A.wds  Jimi_O\We_wish_you_a_Merry_Christmas_1991.wds
+REN Jimi_O\We_wish_you_a_Merry_Christmas_B.mus  Jimi_O\We_wish_you_a_Merry_Christmas_1992.mus
+REN Jimi_O\We_wish_you_a_Merry_Christmas_B.wds  Jimi_O\We_wish_you_a_Merry_Christmas_1992.wds
+REN Kenneth_Barsky\Unchained_Melody.mus  Kenneth_Barsky\Unchained_Melody_A.mus
+REN Kenneth_Barsky\Unchained_Melody.wds  Kenneth_Barsky\Unchained_Melody_A.wds
+REN Kenneth_Barsky\We_got_Together.mus  Kenneth_Barsky\We_go_Together.mus
+REN Kenneth_Barsky\Yiddishe_Ma_Me.mus  Kenneth_Barsky\Yiddishe_Ma_Me_A.mus
+REN Kenneth_Barsky\Yiddishe_Ma_Me.wds  Kenneth_Barsky\Yiddishe_Ma_Me_A.wds
+REN Marvin_Jones\Variations_on_Glow_Worm_A.mus  Marvin_Jones\Variations_on_Glow_Worm.mus
+REN Marvin_Jones\Variations_on_Glow_Worm_A.str  Marvin_Jones\Variations_on_Glow_Worm.str
+MOVE Misc\A\Munsters_Dub_Mix.mus  Altered_Ego\Munsters_Dub_Mix.mus
+MOVE Misc\E\Ultima_III_Part_II.mus  Altered_Ego\Ultima_III_Part_II.mus
+MOVE Misc\E\Walk_like_a_Grandmaw.mus  Altered_Ego\Walk_like_a_Grandmaw.mus
+MOVE Misc\E\Walk_like_a_Grandmaw.wds  Altered_Ego\Walk_like_a_Grandmaw.wds
+MOVE Misc\D\Heat_is_on.mus  David_Dias\Heat_is_on.mus
+MOVE Misc\D\Rhythm_of_the_Night.mus  David_Dias\Rhythm_of_the_Night.mus
+MOVE Misc\D\We_dont_need_Another_Hero_Thunderdome.mus  David_Dias\We_dont_need_Another_Hero_Thunderdome.mus
+MOVE Misc\L\Christmas_Waltz.mus  John_Lane\Christmas_Waltz.mus
+MOVE Misc\L\Christmas_Waltz.str  John_Lane\Christmas_Waltz.str
+MOVE Misc\L\Christmas_Waltz.wds  John_Lane\Christmas_Waltz.wds
+MOVE Misc\L\Misty.mus  John_Lane\Misty.mus
+MOVE Misc\L\Misty.wds  John_Lane\Misty.wds
+MOVE Misc\L\The_Third_Man_Theme.mus  John_Lane\The_Third_Man_Theme.mus
+MOVE Misc\L\The_Third_Man_Theme.str  John_Lane\The_Third_Man_Theme.str
+REN Music_Man3\Carnival.mus  Music_Man3\Carnival_A.mus
+REN Robert_Higgins\Japanese_Koto.mus  Robert_Higgins\Japanese_Koto_A.mus
+REN Ron_McBrayer\Just_the_Way_your_are.mus  Ron_McBrayer\Just_the_Way_you_are.mus
+REN Roth_Ladoad\SID_Pickins_(BAD).mus  Roth_Ladoad\SID_Pickins_A.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Joseph_A_Grau__On_the_Banks_of_the_Wabash.mus  Joseph_A_Grau\On_the_Banks_of_the_Wabash.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+# Tune is bugged and just a copy of Crazy_Bill\Rock_Me_Amadeus.mus
+DEL CGSC\Misc\Digger\Rock_Me_Amadeus.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v143.txt  00_Documents\Whats_new_in_v143.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_143.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.43 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,142 @@
+@echo off
+
+IF EXIST Whats_new_in_v145.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v145.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.45
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN BJ_Pools\Heaven_Knows.mus  BJ_Pools\Heaven_Knows_A.mus
+REN Brian_L_Copeland\Exodue_XV.mus  Brian_L_Copeland\Exodus_XV.mus
+REN Brian_L_Copeland\Exodue_XV.wds  Brian_L_Copeland\Exodus_XV.wds
+REN Brian_M_Szepatowski\Chariots_of_Fire.mus  Brian_M_Szepatowski\Chariots_of_Fire_A.mus
+REN Diz_Cop\Electrical_Parade.mus  Diz_Cop\Electrical_Parade_A.mus
+REN Firth\Rocky_Horror\Charles_Atlas_Song.mus  Firth\Rocky_Horror\Charles_Atlas_Song_Reprise.mus
+REN Firth\Rocky_Horror\Charles_Atlas_Song.wds  Firth\Rocky_Horror\Charles_Atlas_Song_Reprise.wds
+REN Harry_Barnum\The_Preacher.mus  Harry_Barnum\The_Preacher_A.mus
+REN Mike_Generali\Brahms_Lullaby.mus  Mike_Generali\Brahms_Lullaby_21.mus
+REN Mike_Generali\Symphony_No5_in_C_Minor_1st_Movement.mus  Mike_Generali\Symphony_No5_in_C_Minor_1st_Movement_A.mus
+REN Misc\B\Nine_to_Five.mus  Misc\B\Nine_to_Five_A.mus
+REN Misc\G\Deck_the_Halls.mus  Misc\G\Deck_the_Halls_B.mus
+REN Music_Man3\Rhapsody_in_Blue.mus  Music_Man3\Rhapsody_in_Blue_A.mus
+REN Ol_Railbird\An_Old_Fashion_Christmas.mus  Ol_Railbird\An_Old_Fashion_Christmas_A.mus
+REN Sid_Editor\I_Believe.mus  Sid_Editor\I_Believe_A.mus
+REN Sid_Editor\I_Believe.str  Sid_Editor\I_Believe_A.str
+REN Symphoni\Greensleves.mus  Symphoni\Greensleeves.mus
+REN Whole_Note\Bourree.mus  Whole_Note\Bourree_A.mus
+MOVE Misc\B\Back_to_the_Street.mus  Ben_Trimmer\Back_to_the_Street.mus
+MOVE Misc\B\Fools_Gold.mus  Ben_Trimmer\Fools_Gold.mus
+MOVE Misc\B\Kings_Ransom.mus  Ben_Trimmer\Kings_Ransom.mus
+MOVE Misc\J\Search_is_Over.mus  Cindy_Jones\Search_is_Over.mus
+MOVE Misc\J\Send_in_the_Clowns.mus  Cindy_Jones\Send_in_the_Clowns.mus
+MOVE Misc\J\Total_Eclipse_of_the_Heart_A.mus  Cindy_Jones\Total_Eclipse_of_the_Heart_A.mus
+MOVE Misc\J\Total_Eclipse_of_the_Heart_A.wds  Cindy_Jones\Total_Eclipse_of_the_Heart_A.wds
+MOVE Misc\J\Total_Eclipse_of_the_Heart_B.mus  Cindy_Jones\Total_Eclipse_of_the_Heart_B.mus
+MOVE Misc\J\Total_Eclipse_of_the_Heart_B.wds  Cindy_Jones\Total_Eclipse_of_the_Heart_B.wds
+MOVE Misc\M\Etude_Op10_No9_F_Minor.mus  Don_Monson\Etude_Op10_No9_F_Minor.mus
+MOVE Misc\M\Hallelujah_Chorus.mus  Don_Monson\Hallelujah_Chorus.mus
+MOVE Misc\H\76_Trombones.mus  Habbys1\76_Trombones.mus
+MOVE Misc\H\76_Trombones.wds  Habbys1\76_Trombones.wds
+MOVE Misc\H\Easter_Parade.mus  Habbys1\Easter_Parade.mus
+MOVE Misc\H\Easter_Parade.wds  Habbys1\Easter_Parade.wds
+MOVE Misc\H\Its_Hard_to_be_Humble.mus  Habbys1\Its_Hard_to_be_Humble.mus
+MOVE Misc\H\Its_Hard_to_be_Humble.wds  Habbys1\Its_Hard_to_be_Humble.wds
+MKDIR Holger_Heimes
+MOVE Misc\H\Kornblumenblau.mus  Holger_Heimes\Kornblumenblau.mus
+MOVE Misc\H\Petite_Amoureuse.mus  Holger_Heimes\Petite_Amoureuse.mus
+MOVE Misc\H\Poem.mus  Holger_Heimes\Poem.mus
+MOVE Misc\H\Zauber_von_Paris.mus  Holger_Heimes\Zauber_von_Paris.mus
+MOVE Misc\J\French_Ditty.mus  Jac8\French_Ditty.mus
+MOVE Misc\J\My_Man.mus  Jac8\My_Man.mus
+MOVE Misc\J\My_Man.wds  Jac8\My_Man.wds
+MOVE Misc\J\Whispering.mus  Jac8\Whispering.mus
+MOVE Misc\J\Whispering.wds  Jac8\Whispering.wds
+MOVE Misc\O\Angels_we_have_Heard_on_High.mus  Jeff_Olsen\Angels_we_have_Heard_on_High.mus
+MOVE Misc\O\Angels_we_have_Heard_on_High.wds  Jeff_Olsen\Angels_we_have_Heard_on_High.wds
+MOVE Misc\O\Peacherine_Rag.mus  Jeff_Olsen\Peacherine_Rag.mus
+MKDIR John_Turner
+MOVE Misc\T\Lord_of_Salisbury_his_Pavin.mus  John_Turner\Lord_of_Salisbury_his_Pavin.mus
+MOVE Misc\T\Lord_of_Salisbury_his_Pavin.str  John_Turner\Lord_of_Salisbury_his_Pavin.str
+MOVE Misc\T\Corrente_e_Canzona.mus  John_Turner\Corrente_e_Canzona.mus
+MOVE Misc\T\Galiardo.mus  John_Turner\Galiardo.mus
+MOVE Misc\T\Sample_Music_for_Tuning.mus  John_Turner\Sample_Music_for_Tuning.mus
+MOVE Misc\T\Sample_Music_for_Tuning.str  John_Turner\Sample_Music_for_Tuning.str
+MOVE Misc\T\Two_Elizabethan_Dances.mus  John_Turner\Two_Elizabethan_Dances.mus
+MKDIR Johny5
+MOVE Misc\Y\When.mus  Johny5\When.mus
+MOVE Misc\J\Have_you_Heard.mus  Johny5\Have_you_Heard.mus
+MOVE Misc\J\Hey_Paula.mus  Johny5\Hey_Paula.mus
+MOVE Misc\J\Lodi.mus  Johny5\Lodi.mus
+MOVE Misc\J\Rock_and_Roll_is_Here_to_Stay.mus  Johny5\Rock_and_Roll_is_Here_to_Stay.mus
+MOVE Misc\C\Carolina_Shout.mus  Lincoln_B_Child\Carolina_Shout.mus
+MOVE Misc\C\Waltz_No5.mus  Lincoln_B_Child\Waltz_No5.mus
+MOVE Misc\N\Domino_Dancing.mus  Mark_Neale\Domino_Dancing.mus
+MOVE Misc\N\Sgt_Peppers_Lonely_Hearts_Club_Band.mus  Mark_Neale\Sgt_Peppers_Lonely_Hearts_Club_Band.mus
+MOVE Misc\N\Viewer_Mail.mus  Mark_Neale\Viewer_Mail.mus
+MKDIR Teletran
+MOVE Misc\T\Choral_Sym_No2.mus  Teletran\Choral_Sym_No2.mus
+MOVE Misc\T\Fugue_in_A.mus  Teletran\Fugue_in_A.mus
+MOVE Misc\T\Intermezzo_Sym_No3_1st_Movement.mus  Teletran\Intermezzo_Sym_No3_1st_Movement.mus
+MOVE Misc\T\Intermezzo_Sym_No3_Finale.mus  Teletran\Intermezzo_Sym_No3_Finale.mus
+
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Dave_Burkus_-Mmcss-__Flight_of_the_Bumble_Bee.mus  Dave_Burkus_-Mmcss-\Flight_of_the_Bumble_Bee.mus
+MOVE /y Updated\DC_Star_and_Cpr__Look_Away_B.mus  DC_Star_and_Cpr\Look_Away_B.mus
+MOVE /y Updated\DC_Star_and_Cpr__Teddy_Bears_Picnic.mus  DC_Star_and_Cpr\Teddy_Bears_Picnic.mus
+MOVE /y Updated\Misc__B__Rocky_Top.mus  Misc\B\Rocky_Top.mus
+MOVE /y Updated\QuakerOtis__Oh_Dear_What_can_the_Matter_Be.mus  QuakerOtis\Oh_Dear_What_can_the_Matter_Be.mus
+MOVE /y Updated\QuakerOtis__Skip_to_my_Lou.mus  QuakerOtis\Skip_to_my_Lou.mus
+MOVE /y Updated\Scott_Stone__Pennsylvania_Polka.mus  Scott_Stone\Pennsylvania_Polka.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+:: Duplicate of Whole_Note\Chantilly_Lace.mus
+DEL Whole_Note\Jam_Session.mus
+DEL Whole_Note\Jam_Session.wds
+:: Now in Misc\Sid_and_Sid
+DEL Misc\Anon\Happy_Frog.mus
+DEL Misc\Anon\Night_Tour.mus
+:: Duplicate of CGSC\Bob_Huffman\God_Rest_ye_Merry_Gentlemen.mus
+DEL Misc\Anon\God_Rest_ye_Merry_Gentlemen.mus
+DEL Misc\Anon\God_Rest_ye_Merry_Gentlemen.wds
+:: Duplicate of CGSC\Bob_Huffman\O_come_all_ye_Faithful.mus
+DEL Misc\Anon\O_come_all_ye_Faithful_C.mus
+DEL Misc\Anon\O_come_all_ye_Faithful_C.wds
+:: Duplicate of CGSC\Sir_Dave\Save_Last_Dance_for_me.mus
+DEL Misc\Anon\Save_the_Last_Dance_for_Me.mus
+DEL Misc\Anon\Save_the_Last_Dance_for_Me.str
+DEL Misc\Anon\Save_the_Last_Dance_for_Me.wds
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v145.txt  00_Documents\Whats_new_in_v145.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_145.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.45 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

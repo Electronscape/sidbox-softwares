@@ -1,0 +1,50 @@
+What's new in Version 1.40
+==========================
+
+This update contains 5 MUS files.
+
+1. Some new music added: See list below:
+
+George_Bounacos\Good_Old_Fashioned_Lover_Boy.mus
+Joseph_A_Grau\El_Choclo.mus
+Ladychow\Ships.mus
+Misc\S\Juegos_Prohibidos.mus
+Misc\S\Vals_del_Duende.mus
+
+
+2. Moved a some authors out of misc to their own directories.
+Autumn
+Bob_Tipton
+Brian_Gregory
+Bullwinkle
+Cisum
+Clone_Master
+Comander_C
+EMC_and_the_C-5_Crew
+Erik_Johnson
+John_Benard_Jr
+John_Benton
+Ken_Gudan
+Knubee
+Ladychow
+Madman_Mac
+Matthew_Roy
+Mr_Miski
+Raen
+Randy_Goldberg
+Robert_Bamford
+Ron_McBrayer
+Seve_Sids
+Steve_Clayter
+Tabman
+Tanis_Riverwind
+Tim_Mack
+UK
+Vangelis
+Waynel
+(See UPDATE_BAT_140.txt for full details)
+
+
+3. One tune deleted as a duplicate.
+
+Misc\S\Ride_the_Train.mus

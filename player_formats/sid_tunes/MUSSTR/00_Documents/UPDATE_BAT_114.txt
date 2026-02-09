@@ -1,0 +1,79 @@
+@echo off
+
+IF EXIST Whats_new_in_v114.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v114.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.14
+ECHO.
+
+::::::::::
+: DELETE :
+::::::::::
+DEL John_C_Mackey\Dawn_on_the_Moskva_River.st_
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE A_Brown\Baby_Elephant_Walk.mus A_Brown\Baby_Elephant_Walk_A.mus
+MOVE John_C_Mackey\Organ_Trio_Sonata_No6_3rd_Movement.mus John_C_Mackey\Organ_Trio_Sonata_No6_3rd_Movement_A.mus
+MOVE John_E_Roache\Favorite.mus John_E_Roache\Favorite_A.mus
+MOVE John_E_Roache\Wall_Street_Rag.mus John_E_Roache\Wall_Street_Rag_A.mus
+MOVE Kenneth_Barsky\Mi_Ymalel.mus Kenneth_Barsky\Mi_Ymalel_A.mus
+MOVE Kenneth_Barsky\Mi_Ymalel.str Kenneth_Barsky\Mi_Ymalel_A.str
+MOVE Kenneth_Barsky\Mi_Ymalel.wds Kenneth_Barsky\Mi_Ymalel_A.wds
+MOVE Lazy_Mode\Voyage.mus Lazy_Mode\Voyage_A.mus
+MOVE Lazy_Mode\Voyage.str Lazy_Mode\Voyage_A.str
+MOVE Misc\Anon\My_Homes_in_Alabama.mus Misc\Anon\My_Homes_in_Alabama_A.mus
+MOVE Misc\B\Eternal_Flame.str Misc\B\Eternal_Flame_A.str
+MOVE Misc\B\Eternal_Flame.wds Misc\B\Eternal_Flame_A.wds
+MOVE Misc\C\In_the_Ghetto.mus Glass_Soul\In_the_Ghetto.mus
+MOVE Misc\C\In_the_Ghetto.wds Glass_Soul\In_the_Ghetto.wdus
+MKDIR Jama1
+MOVE Misc\J\Beat_it.mus Jama1\Beat_it.mus
+MOVE Misc\J\Beat_it.wds Jama1\Beat_it.wds
+MOVE Misc\J\Dont_go_Breaking_my_Heart.mus Jama1\Dont_go_Breaking_my_Heart.mus
+MOVE Misc\J\Dont_go_Breaking_my_Heart.wds Jama1\Dont_go_Breaking_my_Heart.wds
+MOVE Misc\J\Mixed_Emotions.mus Jama1\Mixed_Emotions.mus
+MOVE Misc\J\Mixed_Emotions.wds Jama1\Mixed_Emotions.wds
+MOVE Ms_Guitar\All_Along_the_Watchtower.mus Ms_Guitar\All_Along_the_Watchtower_A.mus
+MOVE Ms_Guitar\All_Along_the_Watchtower.wds Ms_Guitar\All_Along_the_Watchtower_A.wds
+MOVE Syl\Bourree_I.mus Syl\Bourree_I_A.mus
+MOVE Tim_Jones\Dont_Think_Feel.mus Misc\J\Dont_Think_Feel.mus
+MOVE Tim_Jones\Waiting_for_a_Girl_like_You.mus Misc\J\Waiting_for_a_Girl_like_You.mus
+RMDIR Tim_Jones
+MOVE Uncle_Slam\Fuck_he_Middle_East.mus Uncle_Slam\Fuck_the_Middle_East.mus
+MOVE Uncle_Slam\Fuck_he_Middle_East.wds Uncle_Slam\Fuck_the_Middle_East.wds
+MOVE Sub_Roc_3-D\One_of_These_Days_A.mus Sub_Roc_3-D\One_of_These_Days.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Sub_Roc_3-D\One_of_These_Days_B.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+MOVE Whats_new_in_v114.txt  00_Documents\Whats_new_in_v114.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_114.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.14 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

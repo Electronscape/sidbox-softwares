@@ -1,0 +1,136 @@
+@echo off
+
+IF EXIST Whats_new_in_v122.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v122.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.22
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE DC\Kool_on_the_Hill.mus DC\Fool_on_the_Hill.mus
+MOVE DC_Star_and_Cpr\White_Rabbit.mus DC_Starr\White_Rabbit.mus
+MOVE Misc\Anon\Welcome_to_my_World.mus Lyric\Welcome_to_my_World.mus
+MOVE Misc\C\Night_and_Day.mus Doug_Cotton\Night_and_Day.mus
+MOVE Misc\C\Night_and_Day.str Doug_Cotton\Night_and_Day.str
+MOVE Misc\C\No_Rain.mus Bob_Closson\No_Rain.mus
+MOVE Misc\C\No_Rain.str Bob_Closson\No_Rain.str
+MOVE Misc\C\No_Rain.wds Bob_Closson\No_Rain.wds
+MOVE Misc\K\Blue_Bayou.mus Kentones\Blue_Bayou.mus
+MOVE Misc\K\Laughter_in_the_Rain.mus Kentones\Laughter_in_the_Rain.mus
+MOVE Misc\K\Wildfire.mus Kentones\Wildfire.mus
+MOVE Misc\K\Big_Girls_dont_Cry.mus Katydid\Big_Girls_dont_Cry.mus
+MOVE Misc\K\March_of_the_Toys.mus Katydid\March_of_the_Toys.mus
+MOVE Misc\K\March_of_the_Toys.str Katydid\March_of_the_Toys.str
+MOVE Misc\K\Shes_Always_a_Woman.mus Katydid\Shes_Always_a_Woman.mus
+MOVE Misc\K\Shes_Always_a_Woman.wds Katydid\Shes_Always_a_Woman.wds
+MOVE Misc\L\Rock_me_Amadeus.mus Chris_Leblanc\Rock_me_Amadeus.mus
+MOVE Misc\L\Rock_me_Amadeus.str Chris_Leblanc\Rock_me_Amadeus.str
+MOVE Misc\R\Lady_Holiday.mus Misc\S\Lady_Holiday.mus
+MOVE Misc\R\Lady_Holiday.str Misc\S\Lady_Holiday.str
+MOVE Misc\S\How_Long_has_the_been_going_on.mus Bill_Schoerner\How_Long_has_the_been_going_on.mus
+MOVE Misc\S\Just_one_of_those_Things.mus Bill_Schoerner\Just_one_of_those_Things.mus
+MOVE Misc\S\Marche_Militaire.mus Bill_Schoerner\Marche_Militaire.mus
+MOVE Misc\S\Piano_Concerto_No2_in_C_Minor.mus Bill_Schoerner\Piano_Concerto_No2_in_C_Minor.mus
+MOVE Misc\W\Silhouette.mus White_Knight\Silhouette.mus
+MOVE Misc\W\Songbird.mus White_Knight\Songbird.mus
+MOVE Nick_Zelinsky\Farrells_is_Fabulos_Fun.mus Nick_Zelinsky\Farrells_is_Fabulous_Fun.mus
+MOVE Nick_Zelinsky\Farrells_is_Fabulos_Fun.wds Nick_Zelinsky\Farrells_is_Fabulous_Fun.wds
+
+MOVE DC_Starr\Yoy_wont_see_me_cry.mus DC_Starr\You_wont_see_me_cry.mus
+MOVE QuakerOtis\Alud_Lang_Syne.mus QuakerOtis\Auld_Lang_Syne.mus
+MOVE Tollman_-Jeff_Goll-\Louisiana_Man_A.mus Tollman_-Jeff_Goll-\Louisana_Man_A.mus
+MOVE Tollman_-Jeff_Goll-\Louisiana_Man_A.str Tollman_-Jeff_Goll-\Louisana_Man_A.str
+MOVE Tom_B24\Do_toy_Want_to_Dance.mus Tom_B24\Do_you_Want_to_Dance_A.mus
+MOVE Tom_B24\Do_you_Want_to_Dance.mus Tom_B24\Do_you_Want_to_Dance_B.mus
+MOVE Wesley_Noles\Aria_from_Cantata_13.mus Wesley_Noles\Cantata_13_Aria.mus
+MOVE Wesley_Noles\Aria_from_Cantata_13.str Wesley_Noles\Cantata_13_Aria.str
+MOVE Wesley_Noles\Aria_from_Cantata_13.wds Wesley_Noles\Cantata_13_Aria.wds
+MOVE Wesley_Noles\Arie_from_Cantata_187.mus Wesley_Noles\Cantata_187_Aire.mus
+MOVE Wesley_Noles\Choral_from_Cantata_13.mus Wesley_Noles\Cantata_13_Choral.mus
+MOVE Wesley_Noles\Choral_from_Cantata_13.str Wesley_Noles\Cantata_13_Choral.str
+MOVE Wesley_Noles\Choral_from_Cantata_13.wds Wesley_Noles\Cantata_13_Choral.wds
+MOVE Wesley_Noles\Recitativo_and_Choral.mus Wesley_Noles\Cantata_13_Recitativo_and_Choral.mus
+MOVE Wesley_Noles\Recitativo_and_Choral.str Wesley_Noles\Cantata_13_Recitativo_and_Choral.str
+MOVE Wesley_Noles\Recitativo_and_Choral.wds Wesley_Noles\Cantata_13_Recitativo_and_Choral.wds
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /Y Updated\BJ_Pools__Electric_Blue.mus BJ_Pools\Electric_Blue.mus
+MOVE /Y Updated\BJ_Pools__Run_Riot.mus BJ_Pools\Run_Riot.mus
+MOVE /Y Updated\Brian_Barrett_-Psycho_K-__Heaven.mus Brian_Barrett_-Psycho_K-\Heaven.mus
+MOVE /Y Updated\Carl_Benton__Take_me_back_to_Tulsa.mus Carl_Benton\Take_me_back_to_Tulsa.mus
+MOVE /Y Updated\Coyote__Badge.mus Coyote\Badge.mus
+MOVE /Y Updated\Coyote__Badge.wds Coyote\Badge.wds
+MOVE /Y Updated\Coyote__Love_me_Two_Times.mus Coyote\Love_me_Two_Times.mus
+MOVE /Y Updated\Coyote__Love_me_Two_Times.wds Coyote\Love_me_Two_Times.wds
+MOVE /Y Updated\Dave_Burkus_-Mmcss-__I_Think_were_Alone_Now.mus Dave_Burkus_-Mmcss-\I_Think_were_Alone_Now.mus
+MOVE /Y Updated\DC_Starr__You_make_Lovin_Fun.mus DC_Starr\You_make_Lovin_Fun.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Domino_Dancing.mus DC_Star_and_Cpr\Domino_Dancing.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Hold_me_in_your_Arms.mus DC_Star_and_Cpr\Hold_me_in_your_Arms.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Hold_on_to_the_Nights.mus DC_Star_and_Cpr\Hold_on_to_the_Nights.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Just_to_see_Her.mus DC_Star_and_Cpr\Just_to_see_Her.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Lessons_in_Love.mus DC_Star_and_Cpr\Lessons_in_Love.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Look_Away.mus DC_Star_and_Cpr\Look_Away.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Somewhere_Over_the_Rainbow.mus DC_Star_and_Cpr\Somewhere_Over_the_Rainbow.mus
+MOVE /Y Updated\DC_Star_and_Cpr__The_Promise.mus DC_Star_and_Cpr\The_Promise.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Together_Forever.mus DC_Star_and_Cpr\Together_Forever.mus
+MOVE /Y Updated\DC_Star_and_Cpr__Two_Occasions.mus DC_Star_and_Cpr\Two_Occasions.mus
+MOVE /Y Updated\Diz_Cop__Desperado.mus Diz_Cop\Desperado.mus
+MOVE /Y Updated\Diz_Cop__Go_your_own_Way.mus Diz_Cop\Go_your_own_Way.mus
+MOVE /Y Updated\Diz_Cop__I_found_Love_in_Time.mus Diz_Cop\I_found_Love_in_Time.mus
+MOVE /Y Updated\Diz_Cop__Your_Song.mus Diz_Cop\Your_Song.mus
+MOVE /Y Updated\Firth__Boy_in_the_Bubble.mus Firth\Boy_in_the_Bubble.mus
+MOVE /Y Updated\Glass_Soul__Downtown.mus Glass_Soul\Downtown.mus
+MOVE /Y Updated\Glass_Soul__Glad_All_Over.mus Glass_Soul\Glad_All_Over.mus
+MOVE /Y Updated\Glass_Soul__Its_my_Party.mus Glass_Soul\Its_my_Party.mus
+MOVE /Y Updated\Glass_Soul__Silhouettes.mus Glass_Soul\Silhouettes.mus
+MOVE /Y Updated\Jamjerk__Cielito_Lindo.mus Jamjerk\Cielito_Lindo.mus
+MOVE /Y Updated\Mark_-AD_II-_Dickenson__Youre_the_Devil_in_Disguise_A.mus Mark_-AD_II-_Dickenson\Youre_the_Devil_in_Disguise_A.mus
+MOVE /Y Updated\Melody__Big_Yellow_Taxi.mus Melody\Big_Yellow_Taxi.mus
+MOVE /Y Updated\Melody__Islands_in_the_Stream.mus Melody\Islands_in_the_Stream.mus
+MOVE /Y Updated\Melody__You_dont_know_me.mus Melody\You_dont_know_me.mus
+MOVE /Y Updated\Misc__R__Lady_Holiday.mus Misc\R\Lady_Holiday.mus
+MOVE /Y Updated\Ml_Surface__Personality.mus Ml_Surface\Personality.mus
+MOVE /Y Updated\Nick_Zelinsky__Arent_you_Glad_you_use_Dial.mus Nick_Zelinsky\Arent_you_Glad_you_use_Dial.mus
+MOVE /Y Updated\Scott_Maxwell__Dreaming.mus Scott_Maxwell\Dreaming.mus
+MOVE /Y Updated\Steak__Wild_Boys.mus Steak\Wild_Boys.mus
+MOVE /Y Updated\Tom_B24__Friday_Night_Fever.mus Tom_B24\Friday_Night_Fever.mus
+MOVE /Y Updated\Tom_B24__Kansas_City_A.mus Tom_B24\Kansas_City_A.mus
+MOVE /Y Updated\Tom_B24__Tenesee_Flat_Top_Box.mus Tom_B24\Tenesee_Flat_Top_Box.mus
+MOVE /Y Updated\Tom_B24__Unwound.mus Tom_B24\Unwound.mus
+MOVE /Y Updated\Whole_Note__Whoopee_ti_yi_yo_get_Along_Little_Dogies.mus Whole_Note\Whoopee_ti_yi_yo_get_Along_Little_Dogies.mus
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Eugenes1\On_Broadway.str
+DEL Misc\Anon_Pic\Jacobs_Ladder.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v122.txt  00_Documents\Whats_new_in_v122.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_122.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.22 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

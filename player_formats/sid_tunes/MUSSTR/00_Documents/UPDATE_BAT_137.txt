@@ -1,0 +1,63 @@
+@echo off
+
+IF EXIST Whats_new_in_v137.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v137.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.37
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN Bruce_Herman\Count_on_Him#.mus  Bruce_Herman\Count_on_Him.mus
+REN Corky_Cochran\School_Days.mus  Corky_Cochran\School_Days_A.mus
+REN Jim_Masterson\American_Pie.mus  Jim_Masterson\American_Pie_A.mus
+REN Jim_Masterson\American_Pie.wds  Jim_Masterson\American_Pie_A.wds
+REN Marvin_Jones\Variations_on_Glow_Worm_B.str  Marvin_Jones\Variations_on_Glow_Worm_A.str
+MOVE Misc\#\Vogue.mus  Misc\C\Vogue.mus
+MOVE Misc\#\Vogue.wds  Misc\C\Vogue.wds
+REN Misc\Anon_Blank\Ehad_mi_Yodea.mus  Misc\Anon_Blank\Ehad_mi_Yodea_A.mus
+REN Misc\Anon_Blank\Ehad_mi_Yodea.wds  Misc\Anon_Blank\Ehad_mi_Yodea_A.wds
+REN Misc\C\Why_dont_we_get_Drunik.mus  Misc\C\Why_dont_we_get_Drunk.mus
+REN Misc\C\Why_dont_we_get_Drunik.wds  Misc\C\Why_dont_we_get_Drunk.wds
+REN Misc\S\Mozart_Sonatina_#1.mus  Misc\S\Mozart_Sonatina_No1.mus
+REN Steak\Wild_Boys.mus  Steak\Wild_Boys_A.mus
+REN Steak\Wild_Boys.wds  Steak\Wild_Boys_A.wds
+REN Syl\Soler_Sonata_in_C#_Minor.mus  Syl\Soler_Sonata_in_C_Sharp_Minor.mus
+REN Syl\Soler_Sonata_in_C#_Minor.str  Syl\Soler_Sonata_in_C_Sharp_Minor.str
+REN Syl\Two_Part_Invention_#13.mus  Syl\Two_Part_Invention_No13.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+RMDIR Misc\#
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v137.txt  00_Documents\Whats_new_in_v137.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_137.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.37 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

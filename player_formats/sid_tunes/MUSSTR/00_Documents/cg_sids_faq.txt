@@ -1,0 +1,158 @@
+------------------------------------------------------------------------------
+                The Compute's Gazette SID Collection (CGSC)
+                     -> Frequently Asked Questions <-
+                        Last Updated: August, 2025
+------------------------------------------------------------------------------
+
+Very Common Questions
+
+ [1] What is the Compute's Gazette SID Collection (CGSC)?
+ [2] How many files does the CGSC contain?
+ [3] What software do I need to play the tunes in CGSC?
+ [4] Why should I get CGSC when I already have the HVSC?
+
+Specific Questions
+
+ [5] Why do a few tunes in the collection not play properly on my favourite
+     player?
+
+Updates
+
+ [6] When will the next update be released?
+
+General Questions
+
+ [7] How can I tell what version of CGSC I have?
+ [8] Why do some tunes sound different compared to how I remember them on
+     the C64?
+ [9] When will CGSC be completed?
+[10] How do I play stereo music in the VICE emulator?
+
+------------------------------------------------------------------------------
+
+[1] What is the Compute's Gazette SID Collection (CGSC)?
+--------------------------------------------------------
+
+CGSC is the ultimate Compute's SIDplayer tune collection encompassing
+MUS, STR and WDS files.
+
+
+[2] How many files does the CGSC contain?
+-----------------------------------------
+
+16601 MUS
+ 4383 STR
+ 5593 WDS
+
+
+[3] What software do I need to play the tunes in CGSC?
+------------------------------------------------------
+
+Go to https://hvsc.de/players for a list of sidplayers. However, some
+of the players on that page only work with .sid files and not .mus files so
+you'll have to download them and see for yourself.
+
+You can also listen to the music in CGSC on a real C64 with any of the
+players included in the \00_COMMODORE64\ directory.
+
+
+[4] Why should I get CGSC when I already have the HVSC?
+-------------------------------------------------------
+
+The HVSC (High Voltage Sid Collection) covers a totally different area
+of C64 music than the CGSC. HVSC does not contain any Compute SIDPlayer
+music (OK, alright, it has about 7).
+
+It is recommended that you obtain a copy of both CGSC and HVSC.
+
+
+[5] Why do a few tunes in the collection not play properly on my favourite
+    player?
+--------------------------------------------------------------------------
+
+Some tunes in the collection are marked with (BAD), (SHORT), or (NON) in
+their filenames to indicate they do not play properly.
+
+The reference player used to decide whether the music plays correctly
+is SIDPLAY/W which uses the "Compute's Sidplayer Basic Player" by Craig
+Chamberlain.
+If you are using SIDPLAY/W version (30 Oct 1998) or earlier then you
+should upgrade to the newest version.
+
+Some other Commodore 64 players such as SidPic and Stereo Sidplayer have
+the same problem.
+
+If you use Compute's Basic Sidplayer or Compute's Enhanced Sidplayer then
+you will be OK.
+
+To be fair, this problem only affects about 50 out of over 13500 music files
+in CGSC!
+
+
+[6] When will the next update be released?
+------------------------------------------
+
+There is no fixed time schedule as to when each update is released.  Each
+update is dependent on two factors: available time and available SIDs.
+
+
+[7] How can I tell what version of CGSC I have?
+-----------------------------------------------
+
+Look at /00_DOCUMENTS/cg_sids.txt.  The first few lines will tell you what
+version you have.
+
+
+[8] Why do some tunes sound different compared to how I remember them on
+    the C64?
+------------------------------------------------------------------------
+
+SID emulators are very good, but not perfect.  Although SID emulation is
+not perfect, the music file may be corrupt.  If you believe you
+have found a corrupt tune, it would be best if you load up the old tune on
+a C64/128 and compare it to the CGSC version.  If you then notice a problem
+with the CGSC version, by all means, let us know.  Another thing worth checking
+is whether your emulator is set to NTSC or PAL and switch it to the other
+setting and listen to it again.
+
+
+[9] When will CGSC be completed?
+--------------------------------
+
+In all likelihood, never.  Far too many tunes were made on the C64 to
+reasonably expect that every MUS will be collected.
+
+
+[10] How do I play stereo music in the VICE emulator?
+-----------------------------------------------------
+Use the following settings to make Mark Dickenson's Stereo Player work
+in stereo mode (both the .MUS and .STR files playing simultaneously
+with the graphics in sync)
+
+Run VICE to get the Commodore 64 blue screen.
+
+Under Settings Menu: Sound settings, DirectX driver, Sample Frequency
+44100 Hz, Sound Buffer Size 100msec (350msec out of sync), Oversampling
+Factor 2x, Synchronization Method Exact
+
+Under Settings Menu: SID Settings: SID Model 8580 (new), Stereo SID at $DE00
+
+Under Settings Menu: Drive Settings 1581 (or 1541)
+
+Under Options Menu: Video Standard, NTSC-M
+
+Under Options Menu: Virtual Device traps checked. (Leave True Drive Emulation
+unchecked as VICE is way too slow when checked.)
+
+Under File Menu: Attach Disk Image, Drive 8, type .d81 (or .d64) virtual disk
+file (with Stereo Player Ver. 10.3 and .MUS and .STR files on it). Attach it.
+
+Under File Menu: Attach Disk Image, Drive 9, type .d81 (or .d64) virtual disk
+file (with more .MUS and .STR files on it). Attach it.
+
+Load and run the Stereoplayer Boot Program and press "N" and away you go.
+(Have to do a run, enter after it loads, as the comma 8 comma 1 doesn't make
+the automatic run work and the JiffyDOS British Pound symbol and command
+aren't emulated.)
+
+Thanks to John Kaputa for supplying the above information.

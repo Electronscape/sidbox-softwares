@@ -1,0 +1,108 @@
+SIIDPLAYER NEWS #3  March 1986 
+
+Welcome to the third news file for Sidplayer.  This document describes how to 
+use POLYCON, the polyphony conversion utility. 
+
+The polyphony effect occurs when one sequence of notes is played alternately 
+on two voices.  For example, voice one plays the first note, voice two plays 
+the second note, voice one plays the third note, and so on.  This allows each 
+new note to start playing while the previous note is still fading away, for a 
+pleasant, continuous sound.  The effect is heard at a few places in the song 
+HOMECOMING and in most of the song FUER. 
+
+The POLYCON utility converts a song so that the notes in one voice are played 
+with the polyphony effect.  To do this, it copies the notes in the one voice 
+to a second voice that is not being used, and then changes every other note to 
+a rest.  The first, third, fifth, etc. notes on the one voice will be changed 
+to rests, and the second, fourth, sixth, etc. notes on the other voice will be 
+changed to rests. 
+
+To convert a song, load and run the POLYCON utility.  Enter the name of the 
+song to be converted, and wait for the song to load. 
+
+The source voice is the voice which contains the notes that are to be played 
+with the polyphony effect.  When prompted for the source voice, enter the 
+number of the voice which has these notes. 
+
+The entire voice may be converted, or only the notes in a specified range of 
+measures.  Enter the number of the measure where the conversion should start, 
+or just press the Return key if you want the conversion to start at the 
+beginning of the voice. 
+
+Next enter the number of the measure where the conversion should end.  The 
+conversion will stop at the beginning of this measure.  For example, if you 
+specify that the conversion should stop at measure 50, the notes up to measure 
+50 will be converted, but those in measure 50 will not be converted.  Press 
+only the Return key if you want the conversion to continue to the end of the 
+voice. 
+
+If you do not convert the whole voice, and enter a number for the beginning or 
+ending measure, or both, the voice must contain corresponding measure markers 
+with the same numbers.  The POLYCON utility searches the voice for these 
+measure markers to find where to start and stop the conversion.  If the 
+measure markers are missing, the program will report an error. 
+
+The program next asks you to specify which voices are to be used to produce 
+the polyphony effect.  Press the Y or N key to specify yes or no on each voice. 
+
+The polyphony effect requires that two voices be used.  The source voice can 
+be one of these, so be sure to type Y for the source voice. 
+
+The second voice should be one that is not in use - not playing any notes - 
+while the polyphony notes are being played.  If you are converting an entire 
+voice, this second voice must be empty.  If you are converting only a range of 
+measures, the second voice should be playing only rests during those measures. 
+Decide which voice will be the second voice, and type Y for that voice number. 
+Type N for the remaining voice. 
+
+If the conversion is being done on a range of measures, there must be 
+corresponding measure markers in the second voice as well as in the source 
+voice.  The utility will report an error if it cannot find the starting and 
+ending measure markers in the second voice. 
+
+Any notes, rests, or commands between the measure markers in the second voice 
+will be deleted and replaced with the polyphony notes. 
+
+After you have responded with Y or N for each voice, the utility will perform 
+the conversion and ask you if you want to convert another part.  Type Y to 
+repeat the above procedure, possibly using a different source voice. 
+
+When you are done and do not want to convert any more notes, just type N at 
+the prompt asking if you want to convert another part.  Then enter a filename 
+and wait for the program to save the converted song. 
+
+You may need to go back to the Sidplayer Editor and add slower release rates 
+to the polyphony voices to make the polyphony effect more noticeable. 
+
+Also remember that you can always use the Editor to examine someone else's 
+song to see how some of these advanced techniques are used.  For example, you 
+may want to look at how polyphony was used with detuning for an interesting 
+effect at the beginning of the song ISLAND.  Polyphony also creates a nice 
+effect on fast arpeggios; it does not have to be used just with slow notes. 
+
+The polyphony effect can also be done using three voices.  Just type Y for 
+each voice when prompted.  Be sure that the two voices other than the source 
+voice are not playing any notes during those measures when the polyphony 
+effect is desired, as those notes will be deleted by the utility and replaced 
+with the polyphony notes. 
+
+The POLYCON utility has one other use besides converting a song for the 
+polyphony effect.  If you specify that you want polyphony on only one voice, 
+and that voice is the source voice, the program will print an error message, 
+because polyphony can not be done with only one voice. 
+
+If the polyphony voice is different from the source voice, however, the 
+program will only print a warning message that a non-polyphonic arrangement 
+has been selected, and will then duplicate the specified range of measures 
+from the source voice to the polyphony voice without changing any notes to 
+rests. 
+
+This can be useful occasionally when you want to have the exact same sequence 
+of notes on two voices.  One application is when you want to use the advanced 
+technique of having two voices synced together with the TPS value changing 
+every few notes.  It is a lot easier to just duplicate the notes than to 
+define and call several phrases, each phrase being only one or two notes long. 
+
+As a final comment, remember that once a part of a song has been converted, 
+there is no easy way to undo the conversion.  It may be a good idea to keep a 
+copy of the song without the polyphony effect. 

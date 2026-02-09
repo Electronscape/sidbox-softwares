@@ -1,0 +1,46 @@
+
+IF EXIST Whats_new_in_v106.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v106.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.6
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Sadist_-Madman-_-Mike_Madsen-\Revolution.mus  Sadist_-Madman-_-Mike_Madsen-\Revolution_A.mus
+MOVE Misc\Anon\Anitras_Dance.mus  Misc\Anon_Classical_with_Date\Anitras_Dance.mus
+MOVE Misc\Anon\Barcarolle.mus  Misc\Anon_Classical_with_Date\Barcarolle.mus
+MOVE Misc\Anon\Papillon_Op43_No1.mus  Misc\Anon_Classical_with_Date\Papillon_Op43_No1.mus
+MOVE Misc\Anon\Romeo_and_Juliet.mus  Misc\Anon_Classical_with_Date\Romeo_and_Juliet.mus
+MOVE Misc\Anon\Sleeping_Beauty.mus  Misc\Anon_Classical_with_Date\Sleeping_Beauty.mus
+MOVE Misc\Anon\Troika_en_Trainaux.mus  Misc\Anon_Classical_with_Date\Troika_en_Trainaux.mus
+MOVE Misc\B\Great_Gig_in_the_Sky.mus  Misc\B\Great_Gig_in_the_Sky_A.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v106.txt  00_Documents\Whats_new_in_v106.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_106.txt
+
+
+
+ECHO.
+ECHO CGSC UPDATE to v1.6 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,101 @@
+@echo off
+
+IF EXIST Whats_new_in_v125.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v125.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.25
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE DC_Starr\COLOURMYWRLD.mus DC_Starr\Colour_My_World.mus
+MOVE DC_Starr\COLOURMYWRLD.wds DC_Starr\Colour_My_World.wds
+MOVE Digital_Man\Prime_Driver.mus Digital_Man\Prime_Mover.mus
+MOVE Digital_Man\Prime_Driver.str Digital_Man\Prime_Mover.str
+MOVE Digital_Man\Prime_Driver.wds Digital_Man\Prime_Mover.wds
+MOVE Hal_Scheidt\On_the_Banks_of_the_Wasbash.mus Hal_Scheidt\Barbershop\On_the_Banks_of_the_Wasbash.mus
+MOVE Hal_Scheidt\On_the_Banks_of_the_Wasbash.str Hal_Scheidt\Barbershop\On_the_Banks_of_the_Wasbash.str
+MOVE Hal_Scheidt\On_the_Banks_of_the_Wasbash.wds Hal_Scheidt\Barbershop\On_the_Banks_of_the_Wasbash.wds
+MOVE Misc\C\Great_Balls_of_Fire.mus Clawson\Great_Balls_of_Fire.mus
+MOVE Misc\E\Cascades.mus Joe_Ekaitis\Cascades.mus
+MOVE Misc\E\Hymne.mus Joe_Ekaitis\Hymne.mus
+MOVE Misc\G\Xmas_Songs.mus Gallanteer\Xmas_Songs.mus
+MOVE Misc\G\Lost_Soul.mus Gamby\Lost_Soul.mus 
+MOVE Misc\G\Lost_Soul.str Gamby\Lost_Soul.str 
+MOVE Misc\G\Mini_Symphony_No1.mus Gamby\Mini_Symphony_No1.mus
+MOVE Misc\G\Mini_Symphony_No1.str Gamby\Mini_Symphony_No1.str
+MOVE Misc\G\Musak_No4.mus Gamby\Musak_No4.mus
+MOVE Misc\G\Musak_No4.str Gamby\Musak_No4.str
+MOVE Misc\G\Musak_No5.mus Gamby\Musak_No5.mus
+MOVE Misc\G\Musak_No5.str Gamby\Musak_No5.str
+MOVE Misc\M\Giga.mus Mouse10\Giga.mus
+MOVE Misc\M\Minuet.mus Mouse10\Minuet.mus
+MOVE Misc\M\Polonaise_in_B_Flat_Major_A.mus Mouse10\Polonaise_in_B_Flat_Major_A.mus
+MOVE Misc\M\Polonaise_in_B_Flat_Major_B.mus Mouse10\Polonaise_in_B_Flat_Major_B.mus
+MOVE Misc\I\Ragtime_Cowboy_Joe.mus Stique\Ragtime_Cowboy_Joe.mus
+MOVE Misc\I\Sea_Cruise.mus Stique\Sea_Cruise.mus
+MOVE Misc\I\Supercalifragilistic.mus Stique\Supercalifragilistic.mus
+MOVE Misc\S\Beauty_and_the_Beast.mus Stique\Beauty_and_the_Beast.mus
+MOVE Misc\S\I_Love_you_Arizona.mus Stique\I_Love_you_Arizona.mus
+MOVE Misc\S\I_Love_you_Arizona.wds Stique\I_Love_you_Arizona.wds
+MOVE Misc\T\Everything_I_do_I_do_it_for_you.mus Michael_Tardy\Everything_I_do_I_do_it_for_you.mus
+MOVE Misc\T\For_your_Eyes_Only.mus Michael_Tardy\For_your_Eyes_Only.mus
+MOVE Misc\T\For_your_Eyes_Only.str Michael_Tardy\For_your_Eyes_Only.str
+MOVE Misc\T\Archon_I.mus The_Trooper\Archon_I.mus
+MOVE Misc\T\Damage_Inc.mus The_Trooper\Damage_Inc.mus
+MOVE Misc\T\I_am_a_Viking.mus The_Trooper\I_am_a_Viking.mus
+MOVE Misc\T\Ultima_IV_Britannia_Traveling.mus The_Trooper\Ultima_IV_Britannia_Traveling.mus
+MOVE Misc\T\Ultima_IV_Castle_Music.mus The_Trooper\Ultima_IV_Castle_Music.mus
+MOVE Misc\T\Ultima_IV_Shop_Music.mus The_Trooper\Ultima_IV_Shop_Music.mus
+MOVE Misc\T\Ultima_IV_Shop_Music_Rmx.mus Paul_Labeaud\Ultima_IV_Shop_Music_Rmx.mus
+MOVE Misc\W\Oh_Lamour.mus Wiffy\Oh_Lamour.mus
+MOVE Misc\W\Oh_Lamour.str Wiffy\Oh_Lamour.str
+MOVE Misc\W\Oh_Lamour.wds Wiffy\Oh_Lamour.wds
+MOVE Misc\W\Quantum_Link_Montage.mus Wiffy\Quantum_Link_Montage.mus
+MOVE Misc\W\Saturday_in_the_Park.mus Wiffy\Saturday_in_the_Park.mus
+MOVE Misc\W\Saturday_in_the_Park.str Wiffy\Saturday_in_the_Park.str
+MOVE Misc\W\Saturday_in_the_Park.wds Wiffy\Saturday_in_the_Park.wds
+MOVE Misc\W\When_Love_comes_to_Town.mus Wiffy\When_Love_comes_to_Town.mus
+MOVE Misc\W\When_Love_comes_to_Town.str Wiffy\When_Love_comes_to_Town.str
+MOVE Misc\Z\Hallelujah_Chorus.mus Zauber\Hallelujah_Chorus.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Bertron__Keep_on_Loving_You.mus Bertron\Keep_on_Loving_You.mus
+MOVE /y Updated\Firth__You_can_Call_me_Al.mus Firth\You_can_Call_me_Al.mus
+MOVE /y Updated\Whole_Note__Sinfonia__Sinfonia_No6.mus Whole_Note\Sinfonia\Sinfonia_No6.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Commodore64\UPDATE_00readme.txt
+MOVE 00_Commodore64\UPDATE_00readme.txt 00_Commodore64\00readme.txt
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v125.txt  00_Documents\Whats_new_in_v125.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_125.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.25 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

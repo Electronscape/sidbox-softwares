@@ -1,0 +1,348 @@
+SIDNEWS #14 - INSTRUCTIONS FOR PLAYING SONGS ON MIDIPLAYER 
+By Craig Chamberlain  10/25/88 
+
+
+COPYRIGHT NOTICE 
+The Enhanced Sidplayer Promotional Player, including the MIDI edition, is 
+copyrighted by COMPUTE! Publications, Inc. and is not in the Public Domain.  
+Permission is granted to freely distribute the program, however, provided that 
+it is not modified and not sold. 
+
+
+INTRODUCTION 
+The MIDIPLAYER program plays Enhanced Sidplayer songs on any MIDI-capable 
+synthesizer.  Besides sending MIDI information to make a synthesizer play the 
+notes in a song, the player also supports other MIDI features such as program 
+changes, controller changes, different channel modes, and different keyboard 
+velocities.  The player even supports real-time control to help synchronize a 
+drum machine with the synthesizer. 
+
+The first release of MIDIPLAYER works with all MIDI synthesizers and has the 
+ability to load patch files for non-handshaking synthesizers.  Another version 
+of MIDIPLAYER is being released to support patch file loading on the Casio CZ 
+series including the CZ-101, CZ-1000, CZ-2000, CZ-3000, CZ-5000 and CZ-1 
+synthesizers.  See the document "SIDNEWS #17 - Instructions for MIDIPLAYER CZ 
+Version" for information on the CZ version of MIDIPLAYER. 
+
+MIDIPLAYER works with MIDI interfaces manufactured by Passport, Sequential, and 
+Datel, and with other compatible interfaces including Sonus and Dr. T. 
+
+Please note that the Enhanced Sidplayer music system was not designed to be a 
+full MIDI system, and the MIDIPLAYER is not intended to provide a full MIDI 
+composing environment.  The Sidplayer Editor does not accept note entry by 
+synthesizer keyboard, so using the system for MIDI composing would be rather 
+awkward, although people who have only a synthesizer module with no keyboard 
+may find the system very useful.  MIDIPLAYER merely gives you the added 
+capability of playing Sidplayer songs on a MIDI system, if you wish. 
+
+This document explains how to use the MIDIPLAYER to play songs on a MIDI 
+system.  A companion document, "SIDNEWS #15 - Instructions for Creating Songs 
+for MIDIPLAYER" tells how to edit Enhanced Sidplayer songs to take advantage of 
+special MIDI features. 
+
+
+WHAT IS MIDI 
+MIDI is an acronym standing for Musical Instrument Digital Interface.  It is a 
+standard agreed upon by several manufacturers about how different pieces of 
+equipment, including synthesizers and computers, should communicate with each 
+other.  The standard specifies how the physical connections should work, and 
+how data should be transmitted over those connections. 
+
+An example of another important standard in the computer world is ASCII.  The 
+ASCII code specifies which numbers stand for which characters on computers, 
+printers, and other devices.  Because the manufacturers have agreed to follow 
+the ASCII standard, your computer can work with a printer from almost any 
+manufacturer (although an interface between the computer and the printer may be 
+needed). 
+
+MIDI works in a similar way.  A MIDI-equipped synthesizer can be used to make 
+another MIDI-equipped synthesizer play notes or change settings, even if the 
+two synthesizers are made by different companies.  Alternatively, a computer 
+with a MIDI interface can control a MIDI-equipped synthesizer. 
+
+If you are interested in learning more about MIDI, some magazines that cover 
+MIDI are Keyboard and Electronic Musician.  Several books about MIDI have also 
+been published.  Or you may contact the International MIDI Association (the 
+IMA): 
+
+  International MIDI Association 
+  5316 W. 57th Street 
+  Los Angeles, CA 90056 
+
+
+NECESSARY EQUIPMENT 
+First you need a synthesizer that supports MIDI.  One model that has been very 
+popular with Commodore users is Casio's CZ-101.  The Casio CZ-1000 is identical 
+to the CZ-101 except that it offers a full-size keyboard.  These synthesizers 
+offered great value at a relatively low cost, but Casio has discontinued the CZ 
+series so it is getting harder to find CZ models.  Some more expensive 
+synthesizers used by many professional musicians include the Yamaha DX-7 and 
+the Roland D-50.  An exciting new synthesizer is the M1 from Korg.  There are 
+also several other MIDI synthesizers available from various manufacturers 
+including Casio, Yamaha, Roland, and Korg. 
+
+Instead of a full synthesizer, you can use a "module" or "rack-mount" unit.  A 
+module consists of a synthesizer's sound-producing circuitry but without a 
+keyboard, for a savings of a couple hundred dollars.  Modules are useful to 
+people who already have a MIDI keyboard but want more sounds, or who will be 
+using a computer to play the music.  Some popular modules include the FB01 from 
+Yamaha and the MT-32 from Roland. 
+
+You will also need a MIDI interface cartridge designed for the Commodore 64.  
+MIDIPLAYER supports the interfaces sold by Passport Designs, Sequential 
+Circuits, Inc., and Datel.  There are other interfaces which are compatible 
+with these models.  For example, the Sonus interface is compatible with the 
+Passport interface and is available by mail order for around $65.  The Model-T 
+interface from Dr. T is compatible with the Sequential interface. 
+
+If you get the Datel interface, you may experience some reliability problems.  
+The following information from Frank Prindle may be helpful:  "The interface, 
+as sold as of July 1988, has a design flaw which requires changing a trace on 
+the board to obtain reliable operation.  The enable (E) pin of the 6850 UART is 
+currently wired to I/O2 on the 64 bus; it must be rewired to Phi2 (the 6502 
+clock line).  Apparently, the manufacturer screwed up the board design when 
+someone misread Phi2 on the schematic as I/O2.  Once I fixed the wiring error, 
+the interface has worked flawlessly." 
+
+A MIDI cable is needed to connect the interface to the synthesizer.  The cable 
+has a 5-pin male DIN plug on each end.  MIDI cables may come with the 
+interface. 
+
+The MIDIPLAYER program is also needed.  The non-handshaking version can be used 
+to play regular Sidplayer and Enhanced Sidplayer songs on any MIDI synthesizer. 
+
+The use of a MIDI drum machine is optional.  MIDIPLAYER supports drum machines, 
+but the drum machine won't be activated by a song unless the song contains 
+special MIDI commands to start the drum machine and send clock timing pulses to 
+it. 
+
+
+SETUP 
+First turn off all of your equipment.  Insert the MIDI interface in the 
+Commodore 64 cartridge slot.  Use the MIDI cable to connect the MIDI OUT of the 
+interface to the MIDI IN of the synthesizer.  Hook up the audio output of the 
+synthesizer to a stereo or your computer's monitor.  Now turn on the MIDI 
+synthesizer and the other equipment.  When you press the keys on the 
+synthesizer, you should hear notes play. 
+
+Next, load the MIDIPLAYER program.  List the program on the screen and examine 
+line 30: 
+
+  30 POKE 780,0:REM 0 = PASSPORT, 1 = SEQUENTIAL, 2 = DATEL 
+
+If you have a Passport or compatible interface, the POKE value should be 0.  If 
+you have a Sequential or compatible interface, the POKE value should be 1.  If 
+you have a Datel interface, the POKE value should be 2.  If the current number 
+is not correct, change it and press Return to re-enter the line.  Be careful to 
+change only the one character, so that the length of the program line does not 
+change. 
+
+  INTERFACE                       POKE VALUE 
+  Passport/Sonus/compatibles      0 
+  Sequential/Model-T/compatibles  1 
+  Datel                           2 
+
+If you do not know which model your interface is compatible with, make your 
+best guess.  If the player later freezes up when it starts to play a song, try 
+selecting another type of interface. 
+
+Now examine line 31 of the program: 
+
+  31 POKE 781,0:REM 0 = PATCH FILE LOADING DISABLED, 1 = ENABLED 
+
+If you want to disable the loading of patch files, the POKE value should be 0.  
+If you want to enable patch file loading so that various synthesizer parameters 
+are set before a song plays, the POKE value should be 1.  Patch files are 
+explained in more detail later in this document. 
+
+Again, if the current number is not correct, change the number in the line and 
+re-enter the line, being careful not to change the line length. 
+
+Next look at line 32: 
+
+  32 POKE 782,000:REM MSEC TRANSMISSION DELAY 
+
+The POKE value specifies the length of a delay in milliseconds between the 
+transmission of MIDI commands when a patch file is loaded.  The value can range 
+from 0 to 255, with 0 meaning no delay.  If patch file loading is enabled and 
+you find that your synthesizer cannot receive long patch files at full speed, 
+you may have to experiment with delay values to slow the transmission down to a 
+rate that the synthesizer can handle.  If patch file loading is disabled, the 
+POKE value here does not matter. 
+
+Finally, look at line 40 of the program: 
+
+  40 SYS 2689,01,02,03:REM DEFAULT CHANNELS FOR VOICES 1, 2, AND 3 
+
+The three numbers after the SYS address specify the MIDI channels to be used 
+for Sidplayer song voices 1, 2, and 3, respectively.  MIDI channels are 
+numbered 1 to 16.  On some synthesizers it is more convenient to use channels 
+other than channels 1 to 3, so you can change the default channels if you like. 
+ If your synthesizer can receive on only one channel, you can set all three 
+voices to have the same channel number. 
+
+If you have made any changes to the above POKE and SYS values, you may wish at 
+this time to save the modified version of the player to the disk, so that you 
+don't have to make the same changes every time you run the program. 
+
+The use of a drum machine is optional.  If you want to hook up a drum machine, 
+use a MIDI cable to connect MIDI THRU on the synthesizer to MIDI IN on the drum 
+machine.  If the synthesizer does not have MIDI THRU but the drum machine does, 
+connect MIDI OUT from the interface to MIDI IN on the drum machine, and connect 
+MIDI THRU on the drum machine to MIDI IN on the synthesizer.  If neither unit 
+has MIDI THRU, you will need to buy a MIDI splitter to split the MIDI OUT from 
+the interface into two lines, one for MIDI IN on the synthesizer and the other 
+for MIDI IN on the drum machine. 
+
+
+PLAYING A SONG 
+Run the MIDIPLAYER program and make sure that the synthesizer is turned on.  If 
+you must press any special buttons to make your synthesizer accept MIDI input, 
+press them now. 
+
+Use the cursor keys to move to a song, and press the Return key to select the 
+song and make it load and play.  You should hear the song played on the 
+synthesizer. 
+
+If you do not hear anything, either there is a bad connection or you need to 
+set your synthesizer so that it will accept MIDI input.  If the computer 
+totally freezes up, you probably need to switch the selected interface type. 
+
+On some synthesizers it may be necessary to turn on Omni mode or some other 
+special mode in order to hear the song.  Or you may need to change the default 
+channels in line 40 of the player program so that all three voices transmit on 
+the same channel. 
+
+
+INTERPRETATION OF SIDPLAYER COMMANDS 
+MIDIPLAYER processes Enhanced Sidplayer commands that control the tempo and 
+durations of notes, repetition of music, envelope hold and release points, and 
+transposition.  It ignores Enhanced Sidplayer commands that set specific SID 
+chip values, such as the waveform or envelope attack, decay, sustain, and 
+release values, and also ignores commands for special effects such as vibrato, 
+portamento, detuning, sync mode, and ring modulation.  If you want a MIDIPLAYER 
+song to change sounds when played on a synthesizer, or control effects like 
+vibrato and portamento, special MIDI commands must be added to the song.  
+Instructions on how to do this are given in a companion document. 
+
+
+PROBLEM SONGS 
+Because MIDIPLAYER does interpret the Enhanced Sidplayer pitch transposing 
+commands, some songs created for Sidplayer may not sound very good on 
+MIDIPLAYER.  If a song uses sync mode or ring modulation, two voices play the 
+same notes, but with one voice transposed up a certain number of half steps.  
+This advanced technique can sound very good on the SID chip when the sync or 
+ring modulation mode is turned on, but can cause the transposed voice to sound 
+out of tune when the sync and ring modulation modes are turned off on the SID 
+chip, or when the voice is played on MIDIPLAYER which ignores the sync mode and 
+ring modulation commands. 
+
+Often, songs which sound mediocre on Sidplayer, because they just use the 
+default settings and don't use any special SID chip features, sound the best on 
+MIDIPLAYER, while the songs that sound the best on Sidplayer, because they have 
+been optimized to take full advantage of the SID chip, typically do not play 
+very well on MIDIPLAYER. 
+
+Songs which contain special effects such as sync mode or ring modulation 
+transposing, detuning, or ABS commands for portamento effects, and which 
+therefore don't play well on MIDIPLAYER, can be edited to remove those effects 
+and make the songs suitable for playing on a synthesizer. 
+
+Another possible problem with playing Sidplayer songs on MIDIPLAYER concerns 
+the release point, set by the PNT and HLD commands.  If the release point is 
+set too high, and a synthesizer voice is playing a tone with a slow attack 
+rate, you may not hear the majority of the notes in the voice.  That's because 
+the note is being released before the sound has built up loud enough.  You 
+either need to use a tone with a faster attack rate, or edit the song to set 
+the release point later. 
+
+There can also be a problem if the release point is set too low.  If the 
+synthesizer misses a few notes occasionally, it could be that the release is 
+happening too late, and you will have to edit the song to change the release 
+point. 
+
+One other thing you may notice is that some synthesizers have a limited octave 
+range.  When a synthesizer with a limited range receives a note with a pitch 
+outside that range, it will transpose the note into the nearest playable octave 
+and then play it.  The Casio CZ synthesizers, for example, can play notes only 
+in a five octave range, although Sidplayer can handle notes in an eight octave 
+range. 
+
+
+PATCH FILES 
+The non-handshaking version of MIDIPLAYER has the capability of loading patch 
+files along with music, words, and picture files.  This lets a person creating 
+a song for MIDIPLAYER distribute sounds along with the music, so that you can 
+hear the song the exact same way as the person who created it. 
+
+A "patch" is a definition of how a voice should sound, consisting of waveform, 
+envelope, and other information for the synthesizer.  The patch data can be 
+stored in a file called a "patch file" which can be loaded by a computer.  A 
+special MIDI command called the System Exclusive message can then be used to 
+transmit the patch data from the computer to a synthesizer. 
+
+Since the format of patch definitions varies from one model of synthesizer to 
+another, the non-handshaking version of MIDIPLAYER supports generic patch files 
+that contain MIDI messages.  The MIDI messages can be System Exclusive messages 
+to define patches, or any other MIDI messages.  A patch file intended for use 
+with a particular synthesizer model would contain System Exclusive messages 
+appropriate to that model. 
+
+A patch file for a song is indicated by the filename extension ".MDI".  The 
+player loads the patch file containing the MIDI messages and transmits them to 
+the synthesizer before it loads the other files for the song. 
+
+Some synthesizers require a special dialog between the computer and synthesizer 
+for a System Exclusive message to transfer patch data.  If your synthesizer 
+requires this special handshaking, you will not be able to transmit patch data 
+to the synthesizer using the non-handshaking version of MIDIPLAYER (although a 
+patch file containing MIDI messages other than System Exclusive messages will 
+still work).  The Casio CZ synthesizers use handshaking to transfer patch data, 
+and the CZ version of MIDIPLAYER has been written to work with this 
+handshaking. 
+
+MIDIPLAYER will not load patch files if patch file loading is turned off.  As 
+was explained in the "Setup" section of this document, a POKE value of 1 must 
+be used in line 31 to enable patch file loading.  The POKE value 0 disables the 
+loading of patch files, even if they exist on the disk. 
+
+
+PATCH FILE LOADING ERRORS 
+If there is a problem in loading a patch file, the program will stop the song 
+loading and print a message saying that there was an error in loading the patch 
+file. 
+
+Be sure you have the synthesizer turned on before you load a song, especially 
+one with a patch file. 
+
+
+CAUTION ON LOADING PATCH FILES 
+When MIDIPLAYER loads a patch file and redefines the voices, it may overwrite 
+existing voice definitions.  If you don't want to lose the existing 
+definitions, either save them in a patch file by using a patch file librarian 
+program, or run the player with the patch file loading turned off. 
+
+
+DRUM MACHINE PLAYING 
+A drum machine can be used with a song only if the song has been specially 
+edited to support a drum machine.  Furthermore, the song may have been edited 
+with a particular drum machine model in mind, and the drum machine will 
+probably have to be programmed with one or more sequences.  The person who 
+creates a song that is to be used with a drum machine will have to provide 
+information on how to use the drum machine with the song. 
+
+
+RESPECT FOR SIDPLAYER ARTISTS 
+I hope that nobody is offended that Sidplayer songs they have created can be 
+played on a MIDI synthesizer.  When you are playing a Sidplayer song on 
+MIDIPLAYER, please keep in mind the fact that the person who created the song 
+may have worked very hard to get it to sound a certain way on the SID chip. 
+
+
+ACKNOWLEDGMENTS 
+I would like to thank Ruth Gordon, Jerry Kovarsky, Paul Labeaud, Frank Prindle, 
+Jon Rafalak and Bob Retelle for their assistance in the development of 
+MIDIPLAYER. 
+
+
+I hope you enjoy MIDIPLAYER! 

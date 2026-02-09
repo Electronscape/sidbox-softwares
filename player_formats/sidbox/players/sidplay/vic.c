@@ -166,7 +166,8 @@ static inline int vic_badline(void) {
 void vic_step(int cycles) {
     VIC_CYC_ACC += (uint32_t)cycles;
 
-    while (VIC_CYC_ACC >= VIC_MACHINE_CYCLES) {
+    while (VIC_CYC_ACC >= VIC_MACHINE_CYCLES)
+    {
         VIC_CYC_ACC -= VIC_MACHINE_CYCLES;
 
         VICRASTER++;

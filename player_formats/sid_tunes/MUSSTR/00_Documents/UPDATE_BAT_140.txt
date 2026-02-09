@@ -1,0 +1,254 @@
+@echo off
+
+IF EXIST Whats_new_in_v140.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v140.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.40
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\B\Gilligans_Island.mus  Code_Breaker\Gilligans_Island.mus
+MOVE Misc\B\Sontata_in_C_K545.mus  Gerald_Bilodeau\Sontata_in_C_K545.mus
+MOVE Misc\C\Never_Love_this_Way_again.mus  Dale_Clark\Never_Love_this_Way_again.mus
+MOVE Misc\C\Never_Love_this_Way_again.wds  Dale_Clark\Never_Love_this_Way_again.wds
+MOVE Misc\J\One_more_Try.mus  Mo_Joe\One_more_Try.mus
+MOVE Misc\J\One_more_Try.str  Mo_Joe\One_more_Try.str
+MOVE Misc\J\One_more_Try.wds  Mo_Joe\One_more_Try.wds
+MOVE Misc\K\Drums_and_Stuff.mus  Karz\Drums_and_Stuff.mus
+MOVE Misc\O\Masterpiece.mus  Olivine\Masterpiece.mus
+MOVE Misc\O\What_Child_is_this.mus  Olivine\What_Child_is_this.mus
+MOVE Misc\S\Christmas_in_Rockdale.mus  Squippy\Christmas_in_Rockdale.mus
+MOVE Misc\S\Christmas_in_Rockdale.wds  Squippy\Christmas_in_Rockdale.wds
+MOVE Misc\S\Prelude_No14.mus  Mark_Schuster_-Marks34-\Prelude_No14.mus
+MOVE Misc\S\St_Elmos_Fire.mus  Igor_Stiler\St_Elmos_Fire.mus
+MOVE Misc\S\Star_Trek.mus  Scott_Stone\Star_Trek.mus
+MOVE Misc\S\Star_Trek.wds  Scott_Stone\Star_Trek.wds
+MOVE Misc\T\Christmas_Medley.mus  Tim_Vaudt_-Timv6-\Christmas_Medley.mus
+MOVE Misc\U\Switch_625.mus  Ultradeath\Switch_625.mus
+MKDIR Autumn
+MOVE Misc\A\All_I_ever_need_is_You.mus  Autumn\All_I_ever_need_is_You.mus
+MOVE Misc\A\All_I_ever_need_is_You.str  Autumn\All_I_ever_need_is_You.str
+MOVE Misc\A\All_I_ever_need_is_You.wds  Autumn\All_I_ever_need_is_You.wds
+MOVE Misc\A\Dark_Island.mus  Autumn\Dark_Island.mus
+MOVE Misc\A\Dark_Island.str  Autumn\Dark_Island.str
+MOVE Misc\A\Dark_Island.wds  Autumn\Dark_Island.wds
+MOVE Misc\A\She_Sings_Songs_without_Words.mus  Autumn\She_Sings_Songs_without_Words.mus
+MOVE Misc\A\She_Sings_Songs_without_Words.str  Autumn\She_Sings_Songs_without_Words.str
+MOVE Misc\A\She_Sings_Songs_without_Words.wds  Autumn\She_Sings_Songs_without_Words.wds
+MOVE Misc\A\Sunshine_Superman.mus  Autumn\Sunshine_Superman.mus
+MOVE Misc\A\Sunshine_Superman.str  Autumn\Sunshine_Superman.str
+MOVE Misc\A\Sunshine_Superman.wds  Autumn\Sunshine_Superman.wds
+MKDIR Bob_Tipton
+MOVE Misc\T\Close_to_You.mus  Bob_Tipton\Close_to_You.mus
+MOVE Misc\T\Close_to_You.wds  Bob_Tipton\Close_to_You.wds
+MOVE Misc\T\Daddy_Sang_Bass.mus  Bob_Tipton\Daddy_Sang_Bass.mus
+MOVE Misc\B\Forever.mus  Bob_Tipton\Forever.mus
+MOVE Misc\T\I_Walk_the_Line.mus  Bob_Tipton\I_Walk_the_Line.mus
+MKDIR Brian_Gregory
+MOVE Misc\G\Derangement_A.mus  Brian_Gregory\Derangement_A.mus
+MOVE Misc\G\Derangement_B.mus  Brian_Gregory\Derangement_B.mus
+MOVE Misc\G\Some_Wierd_Song.mus  Brian_Gregory\Some_Wierd_Song.mus
+MOVE Misc\G\Song_5.mus  Brian_Gregory\Song_5.mus
+MOVE Misc\G\Synth.mus  Brian_Gregory\Synth.mus
+MKDIR Bullwinkle
+MOVE Misc\B\Fuga_Vulgaris.mus  Bullwinkle\Fuga_Vulgaris.mus
+MOVE Misc\B\Little_Audrey_Says.mus  Bullwinkle\Little_Audrey_Says.mus
+MOVE Misc\B\Little_Audrey_Says.str  Bullwinkle\Little_Audrey_Says.str
+MOVE Misc\B\Little_Audrey_Says.wds  Bullwinkle\Little_Audrey_Says.wds
+MOVE Misc\B\OK_Chorale.mus  Bullwinkle\OK_Chorale.mus
+MOVE Misc\B\Preloud.mus  Bullwinkle\Preloud.mus
+MKDIR Cisum
+MOVE Misc\C\Dont_we_all_have_the_Right.mus  Cisum\Dont_we_all_have_the_Right.mus
+MOVE Misc\C\Ill_leave_this_World_Loving_You.mus  Cisum\Ill_leave_this_World_Loving_You.mus
+MOVE Misc\C\Mama_hes_Crazy.mus  Cisum\Mama_hes_Crazy.mus
+MOVE Misc\C\Vows_go_Unbroken.mus  Cisum\Vows_go_Unbroken.mus
+MKDIR Clone_Master
+MOVE Misc\C\Glory_of_Love.mus  Clone_Master\Glory_of_Love.mus
+MOVE Misc\C\Glory_of_Love.wds  Clone_Master\Glory_of_Love.wds
+MOVE Misc\C\Kyrie.mus  Clone_Master\Kyrie.mus
+MOVE Misc\C\Kyrie.wds  Clone_Master\Kyrie.wds
+MOVE Misc\C\Modern_Woman.mus  Clone_Master\Modern_Woman.mus
+MOVE Misc\C\Modern_Woman.wds  Clone_Master\Modern_Woman.wds
+MOVE Misc\C\Ripleys_Believe_it_or_not.mus  Clone_Master\Ripleys_Believe_it_or_not.mus
+MKDIR Comander_C
+MOVE Misc\C\Addicted_to_Love.mus  Comander_C\Addicted_to_Love.mus
+MOVE Misc\C\Another_Brick_in_the_Wall_B.mus  Comander_C\Another_Brick_in_the_Wall.mus
+MOVE Misc\C\Invisible_Touch.mus  Comander_C\Invisible_Touch.mus
+MOVE Misc\C\Summer_Nights.mus  Comander_C\Summer_Nights.mus
+MOVE Misc\C\Summer_Nights.wds  Comander_C\Summer_Nights.wds
+MKDIR EMC_and_the_C-5_Crew
+MOVE Misc\C\Another_Brick_in_the_Wall_A.mus  EMC_and_the_C-5_Crew\Another_Brick_in_the_Wall.mus
+MOVE Misc\E\Goodbye_Blue_Sky.mus  EMC_and_the_C-5_Crew\Goodbye_Blue_Sky.mus
+MOVE Misc\E\Kiss_Him_Goodbye.mus  EMC_and_the_C-5_Crew\Kiss_Him_Goodbye.mus
+MOVE Misc\E\Race_for_Eternity.mus  EMC_and_the_C-5_Crew\Race_for_Eternity.mus
+MKDIR Erik_Johnson
+MOVE Misc\J\Chauffeur.mus  Erik_Johnson\Chauffeur.mus
+MOVE Misc\J\Do_you_Believe_in_Love_A.mus  Erik_Johnson\Do_you_Believe_in_Love_A.mus
+MOVE Misc\J\Do_you_Believe_in_Love_B.mus  Erik_Johnson\Do_you_Believe_in_Love_B.mus
+MOVE Misc\J\Hungry_like_the_Wolf.mus  Erik_Johnson\Hungry_like_the_Wolf.mus
+MOVE Misc\J\Is_there_Something_I_should_Know.mus  Erik_Johnson\Is_there_Something_I_should_Know.mus
+MKDIR John_Benard_Jr
+MOVE Misc\B\Amanda.mus  John_Benard_Jr\Amanda.mus
+MOVE Misc\B\Cantcha_Say.mus  John_Benard_Jr\Cantcha_Say.mus
+MOVE Misc\B\Journeys_Faithfully.mus  John_Benard_Jr\Journeys_Faithfully.mus
+MOVE Misc\B\To_be_a_Man.mus  John_Benard_Jr\To_be_a_Man.mus
+MKDIR John_Benton
+MOVE Misc\B\American_in_Paris.mus  John_Benton\American_in_Paris.mus
+MOVE Misc\B\Fantasy_Impromptu.mus  John_Benton\Fantasy_Impromptu.mus
+MOVE Misc\B\Mountain_Greenery.mus  John_Benton\Mountain_Greenery.mus
+MOVE Misc\B\Tijuana_Taxi.mus  John_Benton\Tijuana_Taxi.mus
+MKDIR Ken_Gudan
+MOVE Misc\G\Hard_to_Say_Im_Sorry.mus  Ken_Gudan\Hard_to_Say_Im_Sorry.mus
+MOVE Misc\G\Run_Down_Vail_Mountain.mus  Ken_Gudan\Run_Down_Vail_Mountain.mus
+MOVE Misc\G\St_Elmos_Fire.mus  Ken_Gudan\St_Elmos_Fire.mus
+MOVE Misc\G\Terms_of_Endearment.mus  Ken_Gudan\Terms_of_Endearment.mus
+MKDIR Knubee
+MOVE Misc\K\After_the_Sunrise.mus  Knubee\After_the_Sunrise.mus
+MOVE Misc\K\Eternal_Flame.mus  Knubee\Eternal_Flame.mus
+MOVE Misc\K\Everything_I_do_I_do_it_for_You_A.mus  Knubee\Everything_I_do_I_do_it_for_You_A.mus
+MOVE Misc\K\Everything_I_do_I_do_it_for_You_A.wds  Knubee\Everything_I_do_I_do_it_for_You_A.wds
+MOVE Misc\K\Everything_I_do_I_do_it_for_You_B.mus  Knubee\Everything_I_do_I_do_it_for_You_B.mus
+MOVE Misc\K\Everything_I_do_I_do_it_for_You_B.wds  Knubee\Everything_I_do_I_do_it_for_You_B.wds
+MOVE Misc\K\Mull_of_Kintyre.mus  Knubee\Mull_of_Kintyre.mus
+MOVE Misc\K\Mull_of_Kintyre.wds  Knubee\Mull_of_Kintyre.wds
+MKDIR Ladychow
+MOVE Misc\L\California_Shoeshine_Boys.mus  Ladychow\California_Shoeshine_Boys.mus
+MOVE Misc\L\California_Shoeshine_Boys.wds  Ladychow\California_Shoeshine_Boys.wds
+MOVE Misc\L\Sim_Sholom.mus  Ladychow\Sim_Sholom.mus
+MOVE Misc\L\Sim_Sholom.wds  Ladychow\Sim_Sholom.wds
+MOVE Misc\L\The_Way_we_Were.mus  Ladychow\The_Way_we_Were.mus
+MKDIR Madman_Mac
+MOVE Misc\M\If_I_had_a_Hammer.mus  Madman_Mac\If_I_had_a_Hammer.mus
+MOVE Misc\M\If_I_had_a_Hammer.wds  Madman_Mac\If_I_had_a_Hammer.wds
+MOVE Misc\M\Norman_Normal.mus  Madman_Mac\Norman_Normal.mus
+MOVE Misc\M\Norman_Normal.wds  Madman_Mac\Norman_Normal.wds
+MOVE Misc\M\Puff_the_Magic_Dragon.mus  Madman_Mac\Puff_the_Magic_Dragon.mus
+MOVE Misc\M\Puff_the_Magic_Dragon.wds  Madman_Mac\Puff_the_Magic_Dragon.wds
+MOVE Misc\M\This_Land_is_your_Land.mus  Madman_Mac\This_Land_is_your_Land.mus
+MOVE Misc\M\This_Land_is_your_Land.wds  Madman_Mac\This_Land_is_your_Land.wds
+MKDIR Matthew_Roy
+MOVE Misc\R\Be_Still_My_Soul.mus  Matthew_Roy\Be_Still_My_Soul.mus
+MOVE Misc\R\Silly_Musical_Joke.mus  Matthew_Roy\Silly_Musical_Joke.mus
+MOVE Misc\R\Spacious_Firmament.mus  Matthew_Roy\Spacious_Firmament.mus
+MOVE Misc\R\West_Virginia_Fantasies.mus  Matthew_Roy\West_Virginia_Fantasies.mus
+MKDIR Mr_Miski
+MOVE Misc\M\Barbarossa.mus  Mr_Miski\Barbarossa.mus
+MOVE Misc\M\Durango.mus  Mr_Miski\Durango.mus
+MOVE Misc\M\Killing_Me_Softly_with_His_Song.mus  Mr_Miski\Killing_Me_Softly_with_His_Song.mus
+MOVE Misc\M\Stand_by_Me.mus  Mr_Miski\Stand_by_Me.mus
+MOVE Misc\M\Stand_by_Me.wds  Mr_Miski\Stand_by_Me.wds
+MKDIR Raen
+MOVE Misc\R\As_time_goes_By.mus  Raen\As_time_goes_By.mus
+MOVE Misc\R\Every_Breath_you_Take.mus  Raen\Every_Breath_you_Take.mus
+MOVE Misc\R\Every_Breath_you_Take.str  Raen\Every_Breath_you_Take.str
+MOVE Misc\R\Every_Breath_you_Take.wds  Raen\Every_Breath_you_Take.wds
+MOVE Misc\R\Two_Feet_Short_of_Goodbye.mus  Raen\Two_Feet_Short_of_Goodbye.mus
+MOVE Misc\R\Two_Feet_Short_of_Goodbye.str  Raen\Two_Feet_Short_of_Goodbye.str
+MOVE Misc\R\Two_Feet_Short_of_Goodbye.wds  Raen\Two_Feet_Short_of_Goodbye.wds
+MOVE Misc\R\Winter_Wonderland.mus  Raen\Winter_Wonderland.mus
+MOVE Misc\R\Winter_Wonderland.str  Raen\Winter_Wonderland.str
+MOVE Misc\R\Winter_Wonderland.wds  Raen\Winter_Wonderland.wds
+MKDIR Randy_Goldberg
+MOVE Misc\G\Alfred_Hitchcock.mus  Randy_Goldberg\Alfred_Hitchcock.mus
+MOVE Misc\G\Empty_Garden.mus  Randy_Goldberg\Empty_Garden.mus
+MOVE Misc\G\Hill_Street_Blues.mus  Randy_Goldberg\Hill_Street_Blues.mus
+MOVE Misc\G\Macgyver_B.mus  Randy_Goldberg\Macgyver.mus
+MKDIR Robert_Bamford
+MOVE Misc\B\Applause.mus  Robert_Bamford\Applause.mus
+MOVE Misc\B\John_Jacob.mus  Robert_Bamford\John_Jacob.mus
+MOVE Misc\B\Poor_Little_Bessie.mus  Robert_Bamford\Poor_Little_Bessie.mus
+MOVE Misc\B\Poor_Little_Bessie.wds  Robert_Bamford\Poor_Little_Bessie.wds
+MOVE Misc\B\Taps.mus  Robert_Bamford\Taps.mus
+MKDIR Ron_McBrayer
+MOVE Misc\M\Against_all_Odds.mus  Ron_McBrayer\Against_all_Odds.mus
+MOVE Misc\M\Just_the_Way_your_are.mus  Ron_McBrayer\Just_the_Way_your_are.mus
+MOVE Misc\M\Making_Love_out_of_Nothing_at_All.mus  Ron_McBrayer\Making_Love_out_of_Nothing_at_All.mus
+MOVE Misc\M\Mandy.mus  Ron_McBrayer\Mandy.mus
+MKDIR Seve_Sids
+MOVE Misc\S\Have_a_Cigar.mus  Seve_Sids\Have_a_Cigar.mus
+MOVE Misc\S\Have_a_Cigar.wds  Seve_Sids\Have_a_Cigar.wds
+MOVE Misc\S\Lins_Gift.mus  Seve_Sids\Lins_Gift.mus
+MOVE Misc\S\Mad_Man_Moon.mus  Seve_Sids\Mad_Man_Moon.mus
+MOVE Misc\S\Mad_Man_Moon.wds  Seve_Sids\Mad_Man_Moon.wds
+MOVE Misc\S\Vincent.mus  Seve_Sids\Vincent.mus
+MOVE Misc\S\Vincent.wds  Seve_Sids\Vincent.wds
+MKDIR Steve_Clayter
+MOVE Misc\C\Buglers_Dream.mus  Steve_Clayter\Buglers_Dream.mus
+MOVE Misc\C\Carnival_of_Venice.mus  Steve_Clayter\Carnival_of_Venice.mus
+MOVE Misc\C\Holiday_for_Trumpet.mus  Steve_Clayter\Holiday_for_Trumpet.mus
+MOVE Misc\C\Organ_Fugue_in_G_Minor.mus  Steve_Clayter\Organ_Fugue_in_G_Minor.mus
+MKDIR Tabman
+MOVE Misc\T\Father_I_adore_You.mus  Tabman\Father_I_adore_You.mus
+MOVE Misc\T\Here_there_and_Everywhere.mus  Tabman\Here_there_and_Everywhere.mus
+MOVE Misc\T\Here_there_and_Everywhere.wds  Tabman\Here_there_and_Everywhere.wds
+MOVE Misc\T\Sesame_Street_Theme.mus  Tabman\Sesame_Street_Theme.mus
+MOVE Misc\T\Take_me_Home_Tonight.mus  Tabman\Take_me_Home_Tonight.mus
+MKDIR Tanis_Riverwind
+MOVE Misc\R\Anaconda.mus  Tanis_Riverwind\Anaconda.mus
+MOVE Misc\R\Jazorik_Rmx.mus  Tanis_Riverwind\Jazorik_Rmx.mus
+MOVE Misc\R\Peter_Gunn_Rmx.mus  Tanis_Riverwind\Peter_Gunn_Rmx.mus
+MOVE Misc\R\Statix.mus  Tanis_Riverwind\Statix.mus
+MKDIR Tim_Mack
+MOVE Misc\M\Ave_Maria.mus  Tim_Mack\Ave_Maria.mus
+MOVE Misc\M\Ballade_for_Piano.mus  Tim_Mack\Ballade_for_Piano.mus
+MOVE Misc\M\Michael_Jackson_Medley.mus  Tim_Mack\Michael_Jackson_Medley.mus
+MOVE Misc\M\Moonlight_Sonata.mus  Tim_Mack\Moonlight_Sonata.mus
+MKDIR UK
+MOVE Misc\U\Fugue_10_in_E_Minor.mus  UK\Fugue_10_in_E_Minor.mus
+MOVE Misc\U\Little_Prelude_No3.mus  UK\Little_Prelude_No3.mus
+MOVE Misc\U\March_in_D.mus  UK\March_in_D.mus
+MOVE Misc\U\Prelude_II.mus  UK\Prelude_II.mus
+MKDIR Waynel
+MOVE Misc\L\Goodbye.mus  Waynel\Goodbye.mus
+MOVE Misc\L\Goodbye.wds  Waynel\Goodbye.wds
+MOVE Misc\L\Sentimental_Street.mus  Waynel\Sentimental_Street.mus
+MOVE Misc\L\Sentimental_Street.wds  Waynel\Sentimental_Street.wds
+MOVE Misc\L\Seven_Wishes.mus  Waynel\Seven_Wishes.mus
+MOVE Misc\L\Seven_Wishes.wds  Waynel\Seven_Wishes.wds
+MOVE Misc\L\The_Day_the_Bell_System_Died.mus  Waynel\The_Day_the_Bell_System_Died.mus
+MOVE Misc\L\The_Day_the_Bell_System_Died.wds  Waynel\The_Day_the_Bell_System_Died.wds
+MKDIR Vangelis
+MOVE Misc\C\Bring_on_the_Dancing_Horses.mus  Vangelis\Bring_on_the_Dancing_Horses.mus
+MOVE Misc\C\It_doesnt_Matter_Two.mus  Vangelis\It_doesnt_Matter_Two.mus
+MOVE Misc\C\It_doesnt_Matter_Two.wds  Vangelis\It_doesnt_Matter_Two.wds
+MOVE Misc\C\New_Dress.mus  Vangelis\New_Dress.mus
+MOVE Misc\V\Enola_Gay.mus  Vangelis\Enola_Gay.mus
+MOVE Misc\V\Forever_Live_and_Die.mus  Vangelis\Forever_Live_and_Die.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+: Duplicate of Dave_Stewart\Ride_the_Train_A.mus / Dave_Stewart\Ride_the_Train_B.mus
+DEL Misc\S\Ride_the_Train.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v140.txt  00_Documents\Whats_new_in_v140.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_140.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.40 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

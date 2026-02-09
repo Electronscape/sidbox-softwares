@@ -1,0 +1,18 @@
+What's new in Version 1.38
+==========================
+
+This update contains 1 MUS files.
+
+1. Some new music added: See list below:
+
+Misc\W\Back_to_the_Future.mus
+
+
+2. Fixed a lot of typing and spelling mistakes.
+Also moved a few tunes to different directories.
+See UPDATE_BAT_138.txt for details.
+
+
+3. One tune deleted due to being short.
+
+Suicidal_Software\Cagney_and_Lacey_B.mus

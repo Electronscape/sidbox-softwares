@@ -1,0 +1,241 @@
+SIDNEWS#15.SEQ SIDNEWS #15 - INSTRUCTIONS FOR CREATING SONGS FOR MIDIPLAYER
+By Craig Chamberlain 11/6/88
+
+
+COMMENT ABOUT CONTINUED SUPPORT, COPYRIGHTS, AND FAIRNESS
+To create MIDIPLAYER songs, it is necessary to use the Sidplayer Editor program published in "COMPUTE!'s Music System for the Commodore 128 and 64: The Enhanced Sidplayer," a book and disk combination selling for $24.95.  Note that the Enhanced Sidplayer music system, including the song Editor, is a copyrighted, commercially sold product.
+
+If you use the Editor, please make sure that you have purchased a copy of the book.  The purpose of the continued support of Sidplayer has been to further support the purchasers of Sidplayer, to increase the value of the music system, and to benefit the Commodore community at large.  In return, your support of the product is important.  The authors of Sidplayer are entitled to a fair return for their efforts, and $24.95 is a reasonable price for a quality piece of software.
+
+
+INTRODUCTION
+The MIDIPLAYER program can play any Enhanced Sidplayer song on a MIDI-capable synthesizer.  The player cannot take advantage of any special features of a synthesizer, however, unless the song has been edited to include special MIDI commands.  Such features include channel and channel mode control, program (tone) changes, keyboard velocities, vibrato, portamento, and drum machine support.
+
+This document explains how to add MIDI commands to a song so that the song can make use of these special synthesizer features.  It also provides other technical information about MIDIPLAYER, and tells how to create a patch file for a MIDIPLAYER song.
+
+You may find it easier to understand the material in this document if you are familiar with the operation of the MIDIPLAYER program, so you may first want to read the SIDNEWS #14 document, "Instructions for Playing Songs on MIDIPLAYER."
+
+
+MIDIPLAYER NOTE PROCESSING
+When MIDIPLAYER plays a song, it transmits Channel Voice messages for Note On and Note Off events on channels 1, 2, and 3, corresponding to voices 1, 2, and 3 of the Sidplayer song.
+
+An individual note is played by transmitting a Note On event at the beginning of the note, followed by a Note Off event when the note releases, as determined in Sidplayer by the hold time and release point settings.  If a note is tied to another note of the same pitch, the first note is not released and no Note Off event is transmitted, and no Note On event is transmitted for the tied note.  The note just continues to play through the tie.  If a note is tied to a note of a different pitch, indicating a slur, a Note On event is transmitted for the tied note before the Note Off event is transmitted for the first note.  A rest is played by not transmitting a Note On or Note Off event.
+
+These are the only MIDI messages that MIDIPLAYER normally transmits while playing a song.  Special commands must be placed in the song to make MIDIPLAYER transmit other MIDI messages.
+
+
+ENHANCED SIDPLAYER COMMAND PROCESSING
+MIDIPLAYER does not recognize or process many of the commands usually embedded in Sidplayer songs.  The only Sidplayer commands processed by MIDIPLAYER are:
+
+  TEMPO     TEM, UTL
+  REPEAT    HED, TAL
+  PHRASE    CAL, DEF, END
+  ENVELOPE  PNT, HLD
+  FREQ      TPS, RTP
+  MISC      UTV, JIF, FLG, AUX, HLT
+
+These commands control only the player and do not result in sending any MIDI messages to the synthesizer.  All other normal Sidplayer commands apply to the SID chip only, and therefore are ignored by MIDIPLAYER.  This includes the "absolute set pitch" (ABS) command.
+
+
+OTHER MIDI MESSAGES AND THE AUX COMMAND
+MIDI messages for controlling anything from Note On and Note Off events to program changes or controller changes always consist of one to three bytes of information.  Remembering the correct number of bytes for a particular message and calculating the correct byte values would be too complicated and tedious.
+
+MIDIPLAYER simplifies things greatly by using the AUX command with different values to represent whole MIDI messages.  In the past, the AUX ("auxiliary") command values 0 to 15 were used to set the color of the key on the player's piano keyboard display, with the values 16 to 255 reserved for future use.  Those reserved values have now been assigned special meanings for MIDIPLAYER.  One AUX command with a given number may be translated by MIDIPLAYER into a MIDI message of one to three bytes which are transmitted to the synthesizer.
+
+The numbers and meanings of the AUX commands are explained in the following sections.  As with normal Sidplayer commands, the AUX commands should be inserted at the point in the music where you want the MIDI message to be transmitted to the synthesizer.
+
+
+SET KEY COLOR
+The meanings of AUX command values 0 to 15 have not changed.  An AUX command in this range still sets the color of the highlighted key for the current voice to one of the sixteen colors available on the Commmodore 64.
+
+The color change applies only to the voice containing the AUX command.  For example, if voice 1 contains an AUX 4 command and voice 2 contains an AUX 8 command, the piano keyboard key for voice 1 will be purple (color 4) and the piano key for voice 2 will be orange (color 8).
+
+
+TRANSMIT PROGRAM CHANGE
+The term "program" also means "tone" or "sound."  Your synthesizer probably has several different tones that you can choose.  The Casio CZ-101, for example, has sixteen "preset" tones and sixteen "internal" tones.
+
+The tone selected for a voice can be changed during a song.  The AUX command values 128 to 255 correspond to program numbers 0 to 127.  To make the synthesizer switch to a different tone, you simply have to determine the number for the tone, add 128 to the number to bring it into the range 128 to 255, and use the number in the AUX command.  This is similar to using the WAV command to change the waveform on the SID chip.
+
+The tone numbers for the different tones on your synthesizer can be determined by reading the user manual for the synthesizer, or by experimentation.
+
+
+SET VOICE CHANNEL
+MIDIPLAYER transmits all MIDI Channel messages on the channels specified in line 40 of the program.  The default arrangement is to transmit messages for voices 1 through 3 on channels 1 through 3, respectively.
+
+You can change the channel number that is used for a voice within a Sidplayer song.  AUX command values 16 to 31 are used to specify which channel should be used when MIDI Channel messages are transmitted to the synthesizer.  Channel messages include Voice messages for Note On and Note Off events, Program Changes, and Control Changes, and Mode messages for Omni, Mono, and Poly modes.
+
+To calculate the AUX command value for changing the channel number, add the desired channel number to the value 15.
+
+  AUX VALUE = 15 + channel number
+
+For example, to make a voice use channel 1, you would add 15 and 1 to get 16, and insert the AUX 16 command at the point in the voice where you want the voice to start using the new channel.
+
+Changing the channel number can be useful for some advanced techniques.  One example is when you have a voice that alternates between playing bass and percussion notes.  Instead of having the voice continually switch between two tones using the AUX 128 to 255 commands, the voice can assign the bass and percussion tones to separate channels and then alternate playing on the two channels.  This lets the bass note continue to sound while the percussion note is played.  Other variations on this technique are also possible.
+
+Caution: Avoid changing the channel number for a voice between two notes that are tied or slurred together, or when the release point set by the PNT command is 0, or when the hold time set by the HLD command is longer than the duration of the preceding note.  Doing so will cause the Note Off message to be sent to the wrong channel, and the note will not stop playing.
+
+
+TRANSMIT CHANNEL MODE
+A MIDI synthesizer can be set to receive information in one of four different channel modes.  Omni mode can be turned on or off, and either Poly mode or Mono mode must be selected.  The combinations of Omni on/off and Poly or Mono modes give four possible channel modes, as shown in the chart:
+
+  MODE  OMNI  POLY/MONO
+  1     ON    POLY
+  2     ON    MONO
+  3     OFF   POLY
+  4     OFF   MONO
+
+Additionally, when Mono mode is selected, the number of channels being used must be specified.  For most uses of MIDIPLAYER, you will probably want the synthesizer to use all of its channels when it is in Mono mode.
+
+AUX command values 32 to 39 are used to set the channel mode according to the following chart:
+
+  MODE CHANGE                       AUX VALUE
+  OMNI OFF                          32
+  OMNI ON                           33
+  POLY ON (MONO OFF)                34
+  MONO ON (POLY OFF), all channels  35
+  MONO ON (POLY OFF), 1 channel     36
+  MONO ON (POLY OFF), 2 channels    37
+  MONO ON (POLY OFF), 3 channels    38
+  MONO ON (POLY OFF), 4 channels    39
+
+Caution: When having a song switch from Mono to Poly mode, you must also set the channel used for each voice so that they all use the same channel, and it is important to put the commands in the right order.
+
+To switch from Mono mode to Poly mode, voice 1 should use an AUX 16 command to switch to channel 1 (if it is not already using channel 1), and then use an AUX 34 command to put the synthesizer into Poly mode.  The other two voices should use AUX 16 commands to also switch to channel 1.
+
+To switch from Mono mode back to Poly mode, voice 1 should first send an AUX 35 command to switch to Mono mode.  All three voices should then use AUX commands as necessary to switch back to the previous channels.  To return to the default channel assignments, voices 2 and 3 should use AUX 17 and AUX 18 commands to switch back to channels 2 and 3, respectively.
+
+  SWITCH FROM MONO MODE TO POLY MODE
+  VOICE 1:  AUX 16, AUX 34
+  VOICE 2:  AUX 16
+  VOICE 3:  AUX 16
+
+  SWITCH FROM POLY MODE TO MONO MODE
+  VOICE 1:  AUX 35
+  VOICE 2:  AUX 17
+  VOICE 3:  AUX 18
+
+You can use a channel other than channel 1 for Poly mode, but channel 1 is probably the best choice.
+
+
+TRANSMIT CONTROL CHANGE
+On the Casio CZ-101 and CZ-1000, the vibrato on/off control is assigned to control number 1, and on all of the CZ synthesizers the portamento on/off control is assigned to control number 65.  If you are using a CZ synthesizer, or your synthesizer assigns the controls to the same numbers, you can use AUX command values 40 through 43 to turn these controls on or off.
+
+  CONTROL     SETTING  AUX VALUE
+  vibrato     off      40
+  vibrato     on       41
+  portamento  off      42
+  portamento  on       43
+
+
+TRANSMIT PORTAMENTO TIME
+The AUX command values 48 to 63 can be used to set the portamento time to values in the range 0 to 120, although only values in increments of 8 can be set.  The command AUX 48 sets the portamento time to 0, AUX 49 sets it to 8, AUX 50 sets it to 16, and so on.
+
+  AUX 48+N:  PORTAMENTO TIME = N * 8
+
+For a way to set the portamento time to values other than multiples of 8, see the later section on transmitting any MIDI message.
+
+
+SET NOTE ON VELOCITY
+When a synthesizer key is pressed, the velocity is a measure of the force used to press the key, and thus indicates the volume of the keypress.  A velocity number is transmitted as part of each Note On message, so different notes and different voices can be played at different volume levels.  The velocity number can range from 1 to 127, with 1 being the softest and 127 being the loudest.  Velocity number 0 is reserved to mean "Note Off" and should not be used to start playing a note.
+
+AUX command values 64 to 79 can be used to set the velocity in steps of 8.
+
+  AUX 64+N:  VELOCITY = N * 8
+
+If N=0, the velocity value 1 is used instead of 0, to avoid the Note Off problem.
+
+The default velocity value is 64, which is halfway between 1 and 127.  To set the velocity on a voice to 48, for example, you would use the command AUX 70 (because the velocity value 48 = 6 * 8, so that N is 6, and 64 + 6 = 70, the AUX number).  The command AUX 72 resets the velocity to 64.
+
+
+TRANSMIT REAL-TIME MESSAGE
+MIDIPLAYER also supports System messages.  A System message applies to an entire synthesizer rather than to individual channels, so no channel number is used.  A System message also applies to every MIDI instrument that is connected to the computer by MIDI, if you are using more than one synthesizer or drum machine.
+
+One type of System message is called the Real-Time message, and it is used to synchronize different MIDI instruments.  The most important Real-Time message is the Timing Clock message.  It should be transmitted at a rate of 24 Timing Clock messages per quarter note of music.  The main use of the Timing Clock message is for drum machine synchronization.  The synthesizers do not need the timing clocks, but a drum machine depends on receiving 24 of them for every quarter note so that its beat can be synchronized with the music.
+
+Other Real-Time messages are the Start, Stop, and Continue messages.  When a drum machine receives a Start message, it will start playing a sequence as soon as it receives the next timing clock.  When it receives a Stop message, it immediately stops playing the sequence and ignores any further timing clocks.  The drum machine can then receive either a Start message, which will make it ready to start playing at the beginning again, or a Continue message, which will make the playing pick up from the point where it left off when the next timing clock is received.
+
+AUX command values 44 to 47 make MIDIPLAYER transmit these Real-Time messages:
+
+  REAL-TIME MESSAGE  AUX VALUE
+  Start              44
+  Continue           45
+  Stop               46
+  Timing Clock       47
+
+For your convenience, MIDIPLAYER automatically transmits the messages in the correct order.  At the beginning of every jiffy, before any other messages are sent, the player checks to see if a Start, Continue, or Stop message should be transmitted, and transmits it if so.  Next it transmits the Timing Clock message if necessary.  Then the player continues with sending the other messages for other AUX commands and the notes.  So even if you put the Start AUX command before a Timing Clock AUX command, and other AUX commands before them, the Real-Time messages will be transmitted first, and in the correct order.
+
+The player will also transmit only one of a given Real-Time message per jiffy.  It cannot, for example, send two Timing Clock messages in one jiffy.
+
+A drum machine, however, needs timing clocks 24 times per every quarter note of duration, which means at least one Timing Clock message every jiffy.  But it would be preferable to avoid having to set aside one of the three song voices just to have a loop with a Timing Clock AUX command and a 1 jiffy rest.  To help solve this problem, MIDIPLAYER offers an automatic timing clock mode, which makes the player transmit a Timing Clock message every jiffy, regardless of whether a Timing Clock AUX command was given.  This automatic mode is turned off and on with AUX command values 112 and 113:
+
+  AUTOMATIC MODE  AUX VALUE
+  off             112
+  on              113
+
+Now, to make a drum machine play a sequence, use the AUX 44 command to transmit the Start message, and the AUX 113 command to turn on the automatic timing clock mode.  The drum machine will start playing its sequence and keep it going as it receives a steady stream of timing clocks.
+
+This still does not entirely solve the problem, though.  The drum machine expects 24 timing clocks for every quarter note duration.  The number of jiffies per quarter note, and thus the number of timing clocks transmitted by MIDIPLAYER per quarter note, depends on the current tempo in effect, as set by the TEM command.  Only at tempo M.M. 150 does a quarter note last for exactly 24 jiffies.  With any other value set for the TEM command, the number of jiffies per quarter note will be more or less than 24, and the drum machine will not be synchronized with the music.
+
+Therefore, what you need to do is select tempo 150 with the TEM command, but then use the JIF command to adjust the effective M.M. tempo to the one desired.  This will let you play a song at the desired tempo while keeping the drum machine synchronized with the music.  See page 122 of the Enhanced Sidplayer book for a tempo chart showing the jiffy durations of notes at different tempos, and pages 201 through 204 for more information about the JIF command.
+
+Most drum machines can also be set to expect 48 or 96 timing clocks for every quarter note.  It is possible to make MIDIPLAYER send 48 timing clocks per quarter note by using TEM 75 and adjusting the tempo with JIF, but that will probably be pushing the note-processing limits of MIDIPLAYER.  A rate of 96 or more timing clocks per quarter note is not possible with MIDIPLAYER.
+
+Note that when a song ends or you stop MIDIPLAYER by pressing the space bar, the player does not automatically transmit a Stop message.  The player stops transmitting the timing clocks, however, which effectively stops the drum machine.
+
+
+TRANSMIT ANY MIDI MESSAGE
+The AUX commands introduced so far cover only some of the MIDI messages that are possible.  There are many other Channel messages as well as other System messages.  Although it takes a little work to calculate the correct byte values and build a correct MIDI message, MIDIPLAYER does give you the ability to transmit any MIDI message that you want.
+
+Note:  This is an advanced feature of MIDIPLAYER which is not essential to playing songs.  If you are just learning how to use MIDIPLAYER, you may want to skip this section for now.
+
+A custom MIDI message is indicated to MIDIPLAYER by a sequence of AUX commands.  The first AUX command specifies the length of the MIDI message in bytes, and the AUX commands immediately following it give the values for the bytes forming the MIDI message, one AUX command per MIDI message byte.
+
+To transmit a MIDI Channel message, use AUX command values 80 to 95.  The numbers 80 to 95 correspond to indicating a message that is one to sixteen bytes in length.  From one to sixteen AUX commands should immediately follow the AUX 80 to 95 command.  The first of these following AUX commands is the MIDI message Status byte, which by the definition of the MIDI standard must be a number from 128 to 255.  The MIDIPLAYER automatically adds the channel number for the current voice to this byte before it transmits the byte to the synthesizer, so you should not add the channel number to the Status byte yourself.  The remaining AUX commands are the MIDI Data bytes for the message.
+
+As an example, let's say that you want to transmit a MIDI Channel message to set the portamento time to 35, a value other than those given by AUX commands 48 to 63.  You would have to look up the appropriate MIDI message and byte values for the message.  In the example case, the MIDI message to set the portamento time is a Control Change, which is a three-byte message.  The first byte, the Status byte, has the value 176.  The second byte is a Data byte specifying the control number, which in this example is 5, and the third byte is a Data byte specifying the control value, which in this example is 35.
+
+This example message would be transmitted by the command sequence AUX 82, AUX 176, AUX 5, AUX 35.  The AUX 82 specifies that three AUX commands follow, forming a MIDI Channel message, with each AUX command giving the value for one byte in the message.  The actual byte values transmitted by MIDIPLAYER would be 176 + N, 5, and 35, where N is the current channel number for the voice.
+
+You don't need to be concerned that some of the AUX commands after the AUX 82 have the same values as the other AUX commands introduced earlier, for setting things like key color or channel number or changing a tone.  As long as the AUX commands come immediately after an AUX 80 to 95 command, they will be interpreted by MIDIPLAYER as bytes for a MIDI message instead of AUX commands for other settings or other MIDI messages.
+
+If when playing a song MIDIPLAYER encounters an AUX 80 to 95 command that specifies more AUX commands following it than actually do follow it, meaning that either the wrong number was used or some following AUX commands are missing, the player will detect this and stop the playing at that point.  If too many AUX commands follow the AUX 80 to 95 command, the extra ones will be interpreted by MIDIPLAYER as indicating other MIDI commands.
+
+To transmit a MIDI System message, the procedure works the same except that an AUX command from 96 to 111 must be used.  An AUX command in this range indicates to the player that from one to sixteen AUX commands should follow it, forming the bytes of a MIDI System message.  In this case, the channel number is not added to the first byte, so the byte values transmitted by MIDIPLAYER are the exact same ones as given in the following AUX commands.
+
+Other than this difference, the processing works the same as for transmitting a MIDI channel message.  For example, say that you want to transmit a System Common message for a Song Select.  This could be for use with a drum machine.  You want to select song number 3.  The Song Select message is a two-byte System message.  The first byte is the Status byte and has the value 243, and the second byte is the Data byte giving the song number, which is 3.  The AUX command sequence to send this message would be AUX 97, AUX 243, AUX 3.
+
+One thing to be aware of with the Song Select message is that it must be transmitted before a Real-Time Start message to work correctly.  Remember that MIDIPLAYER transmits Real-Time messages before any other messages, so if a voice transmits a Song Select message during the same jiffy that it transmits a Start message, the Start message will be transmitted first.  The drum machine will start playing the previous song, and will not play the newly selected song until it receives another Start message.  Therefore, to use the Song Select message correctly, transmit it at least one jiffy before the Start message.
+
+For more information on how to code MIDI messages, including the byte values for different messages, refer to any of the several document files that are available, check the magazines or books that deal with MIDI, or contact the International MIDI Association (the IMA) to buy the latest copy of the MIDI Standard:
+
+  International MIDI Association
+  5316 W. 57th Street
+  Los Angeles, CA 90056
+
+Be aware that manufacturers of MIDI synthesizers are selective about which features of MIDI they want to implement, so some synthesizers will not recognize the less common MIDI messages.
+
+
+ADVANCED TECHNIQUES
+If you know how to code MIDI messages, you can use some advanced techniques to get around some of the limitations of MIDIPLAYER.  For instance, it is possible to play more than three notes at once.  If you know how to code a Note On message, you can put AUX commands in the music to transmit Note On messages along with other changes.  This technique might be used to play chords or to play individual percussion sounds if you have a drum machine which supports that feature.  Just be sure to transmit a Note Off message for every Note On, using the same pitch as was used in the Note On.  Also remember that since MIDIPLAYER does not realize that the AUX commands are playing notes, stopping MIDIPLAYER in the middle of a song will not make it automatically turn the notes off.  Finally, remember that in Mono mode each channel can play only one note at a time.
+
+
+AUX VALUES RESERVED FOR FUTURE USE
+The AUX command values 114 to 127 are reserved for future use.  Please do not use these values in your songs.  The current MIDIPLAYER will ignore them, and including them in your songs may make your song incompatible with future versions of the player.  I may have some ideas on how to use these command numbers, so please check with me first.
+
+
+SUMMARY OF AUX COMMANDS
+See "SIDNEWS #16 - Summary of AUX Commands for MIDIPLAYER" for a chart listing all of the AUX command values and meanings.  It should be very useful while you are editing songs for MIDIPLAYER.
+
+
+HOW TO MAKE A PATCH FILE
+The .MDI patch file for the non-handshaking version of MIDIPLAYER is simply a PRG type file consisting of two bytes for a load address (ignored by MIDIPLAYER) followed by bytes forming MIDI messages.  If you have some knowledge about MIDI messages, you can create the file yourself, or you can use the MIDITERM shareware program by Tim Martin to capture MIDI messages from your synthesizer and save them to a file.  Rename the file to have the same name as the Sidplayer song music file, but with the .MDI filename extension.
+
+
+RESPECT FOR SIDPLAYER ARTISTS
+If you want to modify a song created by someone else and release it for MIDIPLAYER, it would be a good idea to check with that person first.  This could be a very sensitive matter for some people.  I hope everyone will respect the rights and wishes of those who have invested their time and effort in creating Sidplayer songs.
+
+
+CLOSING COMMENTS
+I hope you enjoy using MIDIPLAYER.  Please let me know if you find any errors in the program or in the documentation, or if you have any comments or suggestions.
+
+Your support of Sidplayer is always appreciated.  If you know people who would be interested in the Enhanced Sidplayer music system, please tell them how they can buy it.  They'll have fun creating songs too, and we'll have more songs to share and enjoy.

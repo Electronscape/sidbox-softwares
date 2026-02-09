@@ -1,0 +1,390 @@
+SIDNEWS #17 - INSTRUCTIONS FOR MIDIPLAYER CZ VERSION 
+By Craig Chamberlain  10/29/88 
+
+
+COPYRIGHT NOTICE 
+The Enhanced Sidplayer Promotional Player, including the MIDI edition, is 
+copyrighted by COMPUTE! Publications, Inc. and is not in the Public Domain.  
+Permission is granted to freely distribute the program, however, provided that 
+it is not modified and not sold. 
+
+
+INTRODUCTION 
+The MIDIPLAYER program plays Enhanced Sidplayer songs on any MIDI-capable 
+synthesizer.  The Casio CZ version of MIDIPLAYER has special support for the 
+Casio CZ-101, CZ-1000, CZ-2000, CZ-3000, CZ-5000 and CZ-1 synthesizers, 
+including the ability to load patch files. 
+
+This document explains the differences between the CZ version of MIDIPLAYER and 
+the non-handshaking version for use with all MIDI synthesizers.  For complete 
+information on the general features of MIDIPLAYER, please read "SIDNEWS #14 - 
+Instructions for Playing Songs on MIDIPLAYER."  For information on how to edit 
+songs to take advantage of all the features of MIDIPLAYER, see "SIDNEWS #15 - 
+Instructions for Creating Songs for MIDIPLAYER." 
+
+
+NECESSARY EQUIPMENT 
+In addition to a Casio CZ synthesizer and a Passport, Sequential, Datel, or 
+compatible MIDI interface, you will need at least one MIDI cable.  The cable 
+connects MIDI OUT from the interface to MIDI IN on the synthesizer.  If you 
+want to use patch files, a second MIDI cable is needed, to connect MIDI OUT on 
+the synthesizer to MIDI IN on the interface. 
+
+
+SETUP 
+With all of your equipment turned off, connect the synthesizer and MIDI 
+interface with the MIDI cables, and hook up the audio output of the synthesizer 
+to a stereo or your computer's monitor.  Now turn on the synthesizer and the 
+other equipment.  When you press the keys on the synthesizer, you should hear 
+notes play. 
+
+Load the MIDIPLAYER program and LIST it.  Change line 30 to select the MIDI 
+interface type as appropriate. 
+
+Now examine lines 31 through 33: 
+
+  31 POKE 781,0:REM 0 = PATCH FILE LOADING DISABLED, 
+  32 REM 1 = CZ-101 OR CZ-1000, 3 = CZ-101 OR CZ-1000 WITH CARTRIDGE, 
+  33 REM 5 = CZ-2000 OR CZ-3000 OR CZ-5000 OR CZ-1 
+
+If you have a CZ-101 or CZ-1000 without the optional RA-3 RAM cartridge, the 
+POKE value should be 1, and if you do have a cartridge inserted, the value 
+should be 3.  If you have a CZ-2000, CZ-3000, CZ-5000, or CZ-1, the POKE value 
+should be 5.  (The CZ-1 has a different patch file format than the other CZ 
+synthesizers, but can still load and use patch files created for the other CZ 
+synthesizers.)  If you want to disable the loading of patch files, the POKE 
+value should be 0. 
+
+If the current number is not correct, change the number in the line and 
+re-enter the line, being careful not to change the line length. 
+
+  SYNTHESIZER                       POKE VALUE 
+  CZ-101 or CZ-1000                 1 
+  CZ-101 or CZ-1000 with cartridge  3 
+  CZ-2000, CZ-3000, or CZ-5000      5 
+  synthesizer other than CZ         0 
+  patch file loading turned off     0 
+
+Finally, look at line 40: 
+
+  40 SYS 2751,01,02,03:REM DEFAULT CHANNELS FOR VOICES 1, 2, AND 3 
+
+The default values of 1, 2, and 3 should work just fine on your CZ synthesizer. 
+ MIDIPLAYER will play voices 1, 2, and 3 on channels 1, 2, and 3.  However, if 
+you would like to be able to play along on the keyboard while MIDIPLAYER plays 
+a song, change the default channels to 2, 3, and 4.  The keyboard plays on 
+channel 1, so this arrangement leaves channel 1 free. 
+
+Remember that if you have made any changes, you can save the modified version 
+of the player to the disk, so that you don't have to make the same changes 
+every time you run the program. 
+
+
+PLAYING A SONG 
+Run the MIDIPLAYER program and make sure that the synthesizer is turned on.  If 
+you are using a CZ-2000, CZ-3000, or CZ-5000, press the button labeled MIDI, 
+and then press the VALUE up button once, so that the word Mono appears in the 
+upper left corner of the display.  If you are using a CZ-101 or CZ-1000, it is 
+not necessary to press any special buttons. 
+
+Select a song on the player and load it.  You should hear the song playing on 
+the synthesizer. 
+
+When MIDIPLAYER starts playing a song, it first sends a MIDI message that puts 
+the synthesizer in Mono mode with Omni mode off, so that each voice is assigned 
+its own channel.  It then transmits note information over the specified 
+channels.  The CZ-2000, CZ-3000, and CZ-5000 ignore the MIDI Mono channel mode 
+command, which is why you have to select the Mono mode manually on those 
+synthesizers. 
+
+
+MIDIPLAYER CZ SYNTHESIZER DEMO SONG 
+The COMMODORE.MUS demonstration song from the Enhanced Sidplayer book has been 
+revised to demonstrate how MIDIPLAYER can work with a Casio CZ synthesizer.  
+The song has been edited to use various preset tones and channel changes.  If 
+you have a CZ synthesizer, be sure to play the song COMMODORE-CZ.  You may get 
+some pretty weird results if you play the song on a different synthesizer. 
+
+
+OCTAVE RANGE 
+The Casio CZ synthesizers have a limited octave range and can play notes only 
+from C2 to C7 (where C4 is "middle C").  If the synthesizer receives a Note On 
+event for a pitch below octave 2, it transposes the note up to octave 2 to play 
+it.  Similarly, notes above C7 are transposed down to octave 6 before they are 
+played. 
+
+
+MONO MODE 
+When MIDIPLAYER is playing in its default Mono mode, each voice can be set to 
+have a different sound.  To set up the voices before playing a song on the 
+CZ-101 or CZ-1000, press the button marked MIDI so that the synthesizer display 
+shows the word "MIDI," and press the SOLO button so that the red light above it 
+is on (indicating that Mono mode is on).  The display should read "MIDI 
+CH=01,VO=01" with a blinking cursor under the 01 in "CH=01."  Press the CURSOR 
+right button so that the cursor moves to the 01 in "VO=01."  Voice 1 
+corresponds to Sidplayer song voice 1 (if the default channels on line 40 of 
+the program are 1, 2, and 3), so choosing a sound (Preset or Internal, 1 
+through 8 and Select 1 through 8) for VO=01 sets the sound that is heard for 
+the first voice. 
+
+Next press the VALUE up key so that the display shows "VO=02."  Synthesizer 
+voice 2 corresponds to Sidplayer voice 2, so the sound chosen for VO=02 sets 
+the sound for the second voice in the song.  Continue the procedure so that you 
+have chosen sounds for the three song voices.  Each voice can have a different 
+sound if you like. 
+
+When you are done setting the sounds, press the SOLO button twice to turn Mono 
+mode off and on again.  This resets the synthesizer to start on channel 1, and 
+resets the display to show "MIDI CH=01,VO=01" again.  The synthesizer is now 
+ready to play a song using the selected sounds. 
+
+You can also change the sounds for voices while a song is playing by following 
+the above procedure.  This can be a lot of fun.  The synthesizer will be 
+somewhat confused by the changes, however, and will not play the correct sounds 
+for the voices until you press the SOLO button twice to reset the Mono mode. 
+
+Mono mode works similarly on the CZ-2000, CZ-3000, and CZ-5000, except that 
+Mono mode has to be selected manually, and the display is different.  You still 
+use the CURSOR and VALUE buttons to change the voice numbers. 
+
+
+POLY MODE 
+Some songs for MIDIPLAYER may have been edited to put the synthesizer in Poly 
+mode rather than the default Mono mode.  In that case, the notes for all three 
+voices are sent on the same channel, generally channel 1.  The voices must all 
+share the same sound, but the polyphonic effect may be more desirable in some 
+situations. 
+
+On the CZ-101 and CZ-1000, Poly mode is selected instead of Mono mode when the 
+SOLO button is pressed so that the red light is off.  Poly mode is the default 
+mode when the synthesizer is turned on.  If you play a song intended for Mono 
+mode with the synthesizer set for Poly mode, you will only hear the notes 
+played on channel 1.  You can press the MIDI button and then the VALUE up 
+button to listen to the notes played on channels 2 and 3, but you will be able 
+to hear only one voice at a time. 
+
+The companion document explains how to edit a song so that it automatically 
+selects Poly mode and plays all three voices on channel 1. 
+
+On the CZ-2000, CZ-3000, and CZ-5000, Poly mode has to be selected manually.  
+The text lines of a song should indicate if the synthesizer should be left in 
+its default Poly mode instead of switching to Mono mode. 
+
+
+PATCH FILES FOR THE CZ SYNTHESIZERS 
+The CZ version of MIDIPLAYER has the capability of loading CZ patch files along 
+with music, words, and picture files.  A "patch" is a definition of how a voice 
+should sound, consisting of waveform, envelope, and other information for the 
+synthesizer.  The player loads a file containing sixteen patches and sends the 
+patches to the synthesizer, which can then use the new sounds when playing a 
+song.  This lets a person creating a song for MIDIPLAYER distribute sounds 
+along with the music, so that you can hear the song the exact same way as the 
+person who created it. 
+
+The player can load patches to redefine the sixteen internal voices or the 
+sixteen cartridge voices (if the optional cartridge is present), or both, on 
+the CZ-101 or CZ-1000.  For the CZ-2000, CZ-3000, or CZ-5000, the player can 
+load patches to redefine memory banks A through D.  For the CZ-1, the player 
+can load patches to redefine banks E through H.  The preset voices on the 
+synthesizers cannot be redefined. 
+
+Patch files for the synthesizers are indicated by the filename extensions 
+".CZI," ".CZC," and ".CZ5." 
+
+  NAME  VOICES 
+  .CZI  CZ-101 or CZ-1000 Internal Voices 1-16 
+        CZ-2000 Memory Bank A-1 to A-8 and B-1 to B-8 
+        CZ-3000 Memory Bank A-1 to A-8 and B-1 to B-8 
+        CZ-5000 Memory Bank A-1 to A-8 and B-1 to B-8 
+        CZ-1 Internal Voices E-1 to E-8 and F-1 to F-8 
+  .CZC  CZ-101 or CZ-1000 Cartridge Voices 1-16 
+  .CZ5  CZ-2000 Memory Bank C-1 to C-8 and D-1 to D-8 
+        CZ-3000 Memory Bank C-1 to C-8 and D-1 to D-8 
+        CZ-5000 Memory Bank C-1 to C-8 and D-1 to D-8 
+        CZ-1 Internal Voices G-1 to G-8 and H-1 to H-8 
+
+For example, let's say that you have set up MIDIPLAYER for CZ-101 or CZ-1000 
+patch file loading.  If the player is to play the song COMMODORE.MUS, and there 
+is also the file COMMODORE.CZI on the disk, the player will load the 
+COMMODORE.CZI file and redefine the sixteen internal voices before loading and 
+playing the music file.  If there is a COMMODORE.CZC file as well, and patch 
+file loading for the cartridge has been enabled, the COMMODORE.CZC file will 
+also be loaded and its patches sent to the cartridge. 
+
+If instead the player was set up for CZ-2000, CZ-3000, or CZ-5000 patch file 
+loading, the program would load the file COMMODORE.CZI to redefine the voices 
+in memory banks A and B if the file existed, and would load the file 
+COMMODORE.CZ5 to redefine the voices in memory banks C and D if the file 
+existed. 
+
+MIDIPLAYER will not load patch files if patch file loading is turned off.  As 
+was explained in the "Setup" section of this document, a POKE value of 1, 3, or 
+5, depending on the synthesizer, must be used in line 31 to enable patch file 
+loading.  The POKE value 0 disables the loading of patch files, even if they 
+exist on the disk. 
+
+
+PATCH FILE LOADING ERRORS 
+If there is a problem in loading a patch file, or the player encounters a MIDI 
+error when transmitting the patches to the synthesizer, the program will stop 
+the song loading and print a message saying that there was an error in loading 
+the patch file.  If the program doesn't print the error message and just 
+freezes up, you can press the Run/Stop key to cancel the load. 
+
+Be sure you have the synthesizer turned on before you load a song, especially 
+one with a patch file.  The second MIDI cable running from MIDI OUT on the 
+synthesizer to MIDI IN on the interface is also needed in order for patch file 
+loading to work. 
+
+The PROTECT switch on the back panel of your CZ synthesizer must be in the OFF 
+position in order for the synthesizer to accept new patches. 
+
+
+CAUTION ON LOADING PATCH FILES 
+When MIDIPLAYER loads a patch file and redefines the voices, it overwrites the 
+existing voice definitions.  If you don't want to lose the existing 
+definitions, either save them in a patch file by using a patch file librarian 
+program, or run the player with the patch file loading turned off. 
+
+
+TRANSMIT PROGRAM CHANGE 
+The term "program" also means "tone" or "sound."  The Casio CZ-101, for 
+example, has sixteen "preset" tones and sixteen "internal" tones. 
+
+The tone selected for a voice can be changed during a song.  The AUX command 
+values 128 to 255 correspond to program numbers 0 to 127.  To make the 
+synthesizer switch to a different tone, you simply have to determine the number 
+for the tone, add 128 to the number to bring it into the range 128 to 255, and 
+use the number in the AUX command.  This is similar to using the WAV command to 
+change the waveform on the SID chip. 
+
+The chart below gives the tone numbers and AUX values for the Casio CZ 
+synthesizers. 
+
+  CZ-101/1000 TONES          TONE NUMBERS  AUX VALUES 
+  Preset 1 to 16             0 to 15       128 to 143 
+  Internal No. 1 to No. 16   32 to 47      160 to 175 
+  Cartridge No. 1 to No. 16  64 to 79      192 to 207 
+
+  CZ-2000/3000/5000 TONES    TONE NUMBERS  AUX VALUES 
+  Preset A-1 to A-8          0 to 7        128 to 135 
+  Preset B-1 to B-8          8 to 15       136 to 143 
+  Preset C-1 to C-8          16 to 23      144 to 151 
+  Preset D-1 to D-8          24 to 31      152 to 159 
+  Memory Bank A-1 to A-8     32 to 39      160 to 167 
+  Memory Bank B-1 to B-8     40 to 47      168 to 175 
+  Memory Bank C-1 to C-8     48 to 55      176 to 183 
+  Memory Bank D-1 to D-8     56 to 63      184 to 191 
+
+  CZ-1 TONES                 TONE NUMBERS  AUX VALUES 
+  Internal A-1 to A-8        0 to 7        128 to 135 
+  Internal B-1 to B-8        8 to 15       136 to 143 
+  Internal C-1 to C-8        16 to 23      144 to 151 
+  Internal D-1 to D-8        24 to 31      152 to 159 
+  Internal E-1 to E-8        32 to 39      160 to 167 
+  Internal F-1 to F-8        40 to 47      168 to 175 
+  Internal G-1 to G-8        48 to 55      176 to 183 
+  Internal H-1 to H-8        56 to 63      184 to 191 
+
+If you are using a Casio CZ-101 or CZ-1000 synthesizer, the following chart 
+should also be very helpful.  It lists the program (tone) change AUX command 
+values and tone names for the preset and internal voices.  The tones for the 
+internal voices can be redefined, and the names in parentheses are the names 
+for the initial factory-programmed tones. 
+
+  AUX  TONE  NAME 
+  128  0     Preset 1   Brass Ensemble 1 
+  129  1     Preset 2   Trumpet 
+  130  2     Preset 3   Violin 
+  131  3     Preset 4   String Ensemble 1 
+  132  4     Preset 5   Electric Piano 
+  133  5     Preset 6   Electric Organ 
+  134  6     Preset 7   Flute 
+  135  7     Preset 8   Synth. Bass 
+  136  8     Preset 9   Brass Ensemble 2 
+  137  9     Preset 10  Vibraphone 
+  138  10    Preset 11  Crispy Xylophone 
+  139  11    Preset 12  Synth. Strings 
+  140  12    Preset 13  Fairy Tale 
+  141  13    Preset 14  Accordion 
+  142  14    Preset 15  Whistle 
+  143  15    Preset 16  Percussion 
+
+  160  32    Internal No. 1   (Fantastic Piano) 
+  161  33    Internal No. 2   (Brass Ensemble 3) 
+  162  34    Internal No. 3   (Synth. Glockenspiel) 
+  163  35    Internal No. 4   (String Ensemble 2) 
+  164  36    Internal No. 5   (Blues Harmonica) 
+  165  37    Internal No. 6   (Xylophone) 
+  166  38    Internal No. 7   (Fantastic Sound 1) 
+  167  39    Internal No. 8   (Fat Bass) 
+  168  40    Internal No. 9   (Funky Clavi.) 
+  169  41    Internal No. 10  (Soft Organ) 
+  170  42    Internal No. 11  (Carillon) 
+  171  43    Internal No. 12  (Southern Wing) 
+  172  44    Internal No. 13  (Synth. String 2) 
+  173  45    Internal No. 14  (Synth. Blocks) 
+  174  46    Internal No. 15  (Fantastic Sound 2) 
+  175  47    Internal No. 16  (Steel Drum 1) 
+
+
+SET VOICE CHANNEL 
+The Casio CZ synthesizers support only four channels in Mono mode.  In Poly 
+mode, either four or eight notes may be played simultaneously on one channel, 
+depending on the tone (most tones support only four). 
+
+
+TRANSMIT CHANNEL MODE 
+When MIDIPLAYER starts playing a song, it first transmits a Channel Mode 
+message on channel 1 to turn off Omni mode, followed by another message to 
+select Mono mode using all available channels.  This puts the synthesizer into 
+what is known as channel mode number 4, according to the chart. 
+
+  MODE  OMNI  POLY/MONO 
+  1     ON    POLY 
+  2     ON    MONO 
+  3     OFF   POLY 
+  4     OFF   MONO 
+
+The Casio CZ synthesizers do not support Omni mode and ignore Omni on/off 
+messages. 
+
+
+TRANSMIT PORTAMENTO TIME 
+The Casio CZ synthesizers allow the portamento time to be set to any value in 
+the range 0 to 99.  Smaller values for the AUX commands that set the portamento 
+rate give faster rates. 
+
+
+SET NOTE ON VELOCITY 
+The Casio CZ synthesizers do not support keyboard velocities, so using the AUX 
+commands to change the velocity value will have no effect on these 
+synthesizers. 
+
+
+HOW TO MAKE A CZ PATCH FILE 
+Making a Casio CZ synthesizer patch file for a MIDIPLAYER song is easy.  Just 
+take a patch file in the Dr. T patch file format and rename it to have the name 
+of the music file and the appropriate filename extension.  The extension 
+indicates which synthesizer tones are to be redefined by the patches in the 
+file, as shown in this chart: 
+
+  NAME  VOICES 
+  .CZI  CZ-101 or CZ-1000 Internal Voices 1-16 
+        CZ-2000 Memory Bank A-1 to A-8 and B-1 to B-8 
+        CZ-3000 Memory Bank A-1 to A-8 and B-1 to B-8 
+        CZ-5000 Memory Bank A-1 to A-8 and B-1 to B-8 
+        CZ-1 Internal Voices E-1 to E-8 and F-1 to F-8 
+  .CZC  CZ-101 or CZ-1000 Cartridge Voices 1-16 
+  .CZ5  CZ-2000 Memory Bank C-1 to C-8 and D-1 to D-8 
+        CZ-3000 Memory Bank C-1 to C-8 and D-1 to D-8 
+        CZ-5000 Memory Bank C-1 to C-8 and D-1 to D-8 
+        CZ-1 Internal Voices G-1 to G-8 and H-1 to H-8 
+
+Dr. T patch files are 10 block long SEQ files containing sixteen patches.  They 
+can be created by using the CZ Patch File Librarian sold by Dr. T, or by using 
+the Public Domain patch file librarian programs that support Dr. T patch files. 
+ These programs let you create new patches on your synthesizer and save them on 
+disk, or load patch files from other people and send them to your synthesizer.  
+They also let you move individual patches from one file to another, so you can 
+create one patch file consisting of just the patches you want. 

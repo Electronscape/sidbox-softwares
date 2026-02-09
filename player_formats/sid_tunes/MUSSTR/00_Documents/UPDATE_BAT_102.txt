@@ -1,0 +1,93 @@
+
+IF EXIST Update.bat GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v102.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.2
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+DEL Misc\B\Symphony_Nr1_2nd_Movement.mus
+DEL Brian_M_Szepatowski\Battlestar_Galactrica_B.mus
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\Anon\Hard_to_Say_Im_Sorry.mus  Misc\Anon\Hard_to_Say_Im_Sorry_A.mus
+MOVE Misc\Anon\Hard_to.mus  Misc\Anon\Hard_to_Say_Im_Sorry_B.mus
+MOVE Harry_B\Angels_we_have_Heart_on_High_B.mus  Harry_B\Angels_we_have_Heard_on_High_B.mus
+MOVE Harry_B\Angels_we_have_Heart_on_High_B.wds  Harry_B\Angels_we_have_Heard_on_High_B.wds
+MOVE Misc\M\Its_Over.mus  Sadist_-Madman-\Its_Over.mus
+MOVE Misc\R\Crazy_Train.mus  Ms_Guitar\Crazy_Train.mus
+MOVE Misc\B\Fool_to_Cry.mus  BJ_Pools\Fool_to_Cry.mus
+MOVE Misc\B\Start_me_up.mus  BJ_Pools\Start_me_up.mus
+MOVE Misc\W\Funky_Coffee_Song.mus  Jere_D\Funky_Coffee_Song.mus
+MOVE Misc\W\Furfs_II.mus  Lazy_Mode\Furfs_II.mus
+MOVE Misc\W\Furfs_II.str  Lazy_Mode\Furfs_II.str
+MOVE Brian_M_Szepatowski\Battlestar_Galactrica_A.mus  Brian_M_Szepatowski\Battlestar_Galactica.mus
+MOVE Nick_Zelinsky\A_Team.mus  Nick_Zelinsky\A-Team.mus
+MOVE Misc\Leave_it_to_Beaverwds  Misc\Leave_it_to_Beaver.wds
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+DEL  BJ_Pools\Animal.wds
+MOVE Updated\BJ_Pools__Animal.wds  BJ_Pools\Animal.wds
+DEL  DC_Star_and_Cpr\Lean_on_me.wds
+MOVE Updated\DC_Star_and_Cpr__Lean_on_me.wds  DC_Star_and_Cpr\Lean_on_me.wds
+DEL  Harry_B\Angels_we_have_Heard_on_High_B.wds
+MOVE Updated\Harry_B__Angels_we_have_Heard_on_High_B.wds  Harry_B\Angels_we_have_Heard_on_High_B.wds
+DEL  Misc\Anon\Harpsichord_Concerto_in_D_Minor.mus
+MOVE Updated\Misc_Anon__Harpsichord_Concerto_in_D_Minor.mus  Misc\Anon\Harpsichord_Concerto_in_D_Minor.mus
+DEL  Misc\T\Hooked_on_Classics_Parts_123.mus
+MOVE Updated\Misc_T__Hooked_on_Classics_Parts_123.mus  Misc\T\Hooked_on_Classics_Parts_123.mus
+DEL  Misc\V\Electric.mus
+MOVE Updated\Misc_V__Electric.mus  Misc\V\Electric.mus
+DEL  Nick_Zelinsky\Deck_the_Halls.wds
+MOVE Updated\Nick_Zelinsky__Deck_the_Halls.wds  Nick_Zelinsky\Deck_the_Halls.wds
+
+::::::::::::::::::::
+: REORGANIZE TUNES :
+::::::::::::::::::::
+CD David_Strauss_-Li_Dave-
+MD Led_Zeppelin
+MOVE Babe_Im_Gonna_Leave_You_A.mus  Led_Zeppelin
+MOVE Babe_Im_Gonna_Leave_You_B.mus  Led_Zeppelin
+MOVE Battle_of_Evermore.mus  Led_Zeppelin
+MOVE Black_Dog.mus  Led_Zeppelin
+MOVE Bron-yr-aur.mus  Led_Zeppelin
+MOVE Good_Times_Bad_Times_A.mus  Led_Zeppelin
+MOVE Good_Times_Bad_Times_B.mus  Led_Zeppelin
+MOVE Over_the_Hills_and_Far_Away.mus  Led_Zeppelin
+MOVE Rock_and_Roll.mus  Led_Zeppelin
+MOVE When_the_Levee_Breaks_A.mus  Led_Zeppelin
+MOVE When_the_Levee_Breaks_B.mus  Led_Zeppelin
+CD ..
+
+::::::::::::::::::
+: RENAME AUTHORS :
+::::::::::::::::::
+MOVE Sadist_-Madman-  Sadist_-Madman-_-Mike_Madsen-
+MOVE Raymon_Day  Raymond_Day
+
+:::::::::
+: OTHER :
+:::::::::
+MOVE Whats_new_in_v102.txt  00_Documents\Whats_new_in_v102.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_102.txt
+RD Updated
+
+
+
+ECHO.
+ECHO CGSC UPDATE to v1.2 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

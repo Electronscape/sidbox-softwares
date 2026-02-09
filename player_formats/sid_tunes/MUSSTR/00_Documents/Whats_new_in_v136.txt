@@ -1,0 +1,87 @@
+What's new in Version 1.36
+==========================
+
+This update contains 48 MUS and 7 WDS new files.
+
+1. Some new music added: See list below:
+
+Count_Floyd\Love_Bites.mus
+Grey_Mouser\The_Ocean.mus
+Joseph_A_Grau\On_the_Banks_of_the_Wabash.mus
+Joseph_A_Grau\On_the_Banks_of_the_Wabash.wds
+Misc\Anon\Flowers_on_the_Wall.mus
+Misc\Anon_Blank\Fritske_50_Years_Basic_Demo.mus
+Misc\Anon_Blank\Stereo_Editor_Sample1.mus
+Misc\Anon_Blank\Stereo_Editor_Sample2.mus
+Misc\Christmas_Album\12_Days_of_Christmas.mus
+Misc\Christmas_Album\Santa_Claus_is_Coming_to_Town.mus
+Misc\Christmas_Album\Tune1.mus
+Misc\Christmas_Album\Tune2.mus
+Misc\Christmas_Album\Tune3.mus
+Misc\Christmas_Album\Tune4.mus
+Misc\Christmas_Album\Tune5.mus
+Misc\Christmas_Around_the_World\Carol_of_the_Bagpipers.wds
+Misc\Christmas_Around_the_World\Christos_Rozhdaetsa.wds
+Misc\Christmas_Around_the_World\Fum_Fum_Fum.wds
+Misc\Christmas_Around_the_World\In_Bethlehem_the_Lowly.wds
+Misc\Christmas_Special\Angels_from_Heaven.mus
+Misc\Christmas_Special\Carol_of_the_Bells.mus
+Misc\Christmas_Special\Christmas_Time_is_Here.mus
+Misc\Christmas_Special\Hark_the_Herald_Angels_Sing.mus
+Misc\Christmas_Special\Its_Christmas_all_over_the_World.mus
+Misc\Christmas_Special\Jingle_Bell_Rock.mus
+Misc\Christmas_Special\Let_it_Snow.mus
+Misc\Christmas_Special\Silent_Night.mus
+Misc\Christmas_Special\Silver_Bells.mus
+Misc\Christmas_Special\Sleigh_Ride.mus
+Misc\K\Darth_Vaders_Theme.mus
+Misc\Twisted_Christmas\Jesu_Joy.mus
+Misc\Twisted_Christmas\Jingle_Bell_Rock.mus
+Misc\Twisted_Christmas\O_Christmas_Tree.mus
+Misc\Twisted_Christmas\Rockin_Xmas_Tree.mus
+Misc\Twisted_Christmas\Three_Blind_Mice.mus
+Misc\Twisted_Christmas\Tune1.mus
+Misc\Twisted_Christmas\Tune2.mus
+Misc\Twisted_Christmas\Tune3.mus
+Misc\Twisted_Christmas\We_wish_you_a_Merry_Xmas.mus
+Misc\Twisted_Christmas\Winter_Wonderland.mus
+Misc\Twisted_Christmas_II\Deck_the_Halls.mus
+Misc\Twisted_Christmas_II\God_Rest_ye_Merry_Gentlemen_plus_Ghostbusters.mus
+Misc\Twisted_Christmas_II\Good_King_Wenceslas.mus
+Misc\Twisted_Christmas_II\Grandma_got_Run_Over_by_a_Reindeer.mus
+Misc\Twisted_Christmas_II\Hark_the_Herald_Angels_Sing_plus_Twist_and_Shout.mus
+Misc\Twisted_Christmas_II\New_York_Kind_of_Christmas.mus
+Misc\Twisted_Christmas_II\Nutrocker.mus
+Misc\Twisted_Christmas_II\On_Christmas_Night.mus
+Misc\Twisted_Christmas_II\Silent_Night.mus
+Misc\Twisted_Christmas_II\We_Three_Kings_of_Orient_are.mus
+Raymond_Day\Entertainer_B.mus
+Raymond_Day\Feels_so_Good.wds
+Raymond_Day\Sailing_B.mus
+Raymond_Day\Weve_only_just_Begun.mus
+Raymond_Day\Weve_only_just_Begun.wds
+
+
+2. Some music updated: See list below:
+
+Dave_Stewart\76_Trombones.mus
+Christmas_Around_the_World\Carol_of_the_Bagpipers.mus
+Christmas_Around_the_World\Christos_Rozhdaetsa.mus
+Christmas_Around_the_World\Fum_Fum_Fum.mus
+Christmas_Around_the_World\In_Bethlehem_the_Lowly.mus
+Christmas_Around_the_World\Sleigh_Bell_Sounds.mus
+
+
+2. Deleted three files:
+Brian_M_Szepatowski\Ghostbusters.str  (does not go with mus file, actually same as Nick_Zelinsky\Ghostbusters_B.str)
+Misc\Anon\La_Bamba.mus  (same as DC_Star_and_Cpr\La_Bamba_Remix.str)
+Misc\D\Sailing.mus  (actually by Raymond Day)
+
+
+3. Added a 5 new disk images to the 00_Commodore64 directory.
+
+00_Commodore64\Extended_Words_Creator_v20.d64
+00_Commodore64\SID_Editor_v20.d64
+00_Commodore64\Sid_Title_v50.d64
+00_Commodore64\Sid_Title_v71.d64
+00_Commodore64\Stereo_Editor_10

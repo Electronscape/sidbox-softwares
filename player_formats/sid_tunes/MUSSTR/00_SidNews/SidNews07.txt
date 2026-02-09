@@ -1,0 +1,52 @@
+SIDPLAYER NEWS #7  February 1987
+
+ANNOUNCEMENT OF THE ENHANCED SIDPLAYER
+
+"COMPUTE!'s Music System for the Commodore 128 and 64: The Enhanced Sidplayer"
+By Craig Chamberlain
+Published by COMPUTE! Books
+ISBN 0-87455-074-2
+Book and disk combination  $24.95
+
+
+The Enhanced Sidplayer is here!  Sidplayer, the popular music system for the Commodore 64, has been completely rewritten to support new editing and song playing features, and to run on the Commodore 128 and 64 computers.  This documentation file describes the various features of this new product.
+
+THE ORIGINAL SIDPLAYER
+Sidplayer was first published in COMPUTE!'s "All About The Commodore 64, Volume Two" and was designed not just for people who knew a lot about music, but for anyone who had a Commodore 64.  It featured an Editor that was like a musical word processor and which could be used by people who didn't understand sheet music.  For those who were more knowledgeable about music, Sidplayer offered greater flexibility and more control over songs than other music systems, and produced songs of impressive quality.
+
+The Sidplayer music system has now been extensively revised and rewritten to include many "wish list" features and to run on both the Commodore 128 and the Commodore 64.  The two principal parts of the Enhanced Sidplayer music system are the new Player and the new Editor.
+
+THE ENHANCED PLAYER
+The new standalone player offers easy cursor key song selection and can be set to automatically play any number of songs on a disk.  A piano keyboard display shows piano keys highlighted in colors to indicate which notes are playing.  Songs which have accompanying words, known as Singalong songs, are played with a verse display that changes in time with the music.  Full screen color bitmap pictures are also supported.  The program will play songs created by the Enhanced Sidplayer, or any of the over 2000 songs that have been done on the original Sidplayer.  Songs up to 150 blocks long can be played.
+
+NEW FEATURES OF THE ENHANCED EDITOR
+The Editor was rewritten from scratch and incorporates over a year's worth of the most requested improvements.  The basic design of the original Editor has been maintained, but it is now a 35K 100% machine language program, so it is very fast and has the room for several new features.
+
+From the Main Menu, you can load a Sidplayer song and play it while watching the piano keyboard display.  Fast forwarding can now be done from the keyboard, and Clobber errors during fast forwarding have been eliminated.  You can also play individual voices without any tempo or Undefined Phrase Call errors.  You can even make the song resume playing after it has stopped.
+
+To play a Singalong song in the Editor, just switch to the Singalong Screen, load the words file, and start the playing.  Since you can see the words displayed as the music plays right in the Editor, getting the words to match up with the music is now a lot easier.
+
+Notes are entered on the Editing Screen by computer keyboard or joystick.  Pitches and durations can be selected by letter keys or be set in joystick fashion by the I, J, K, and M keys which is faster for some people.  The joystick entry has been redone so that more note features can be entered from the joystick.  Support has been added for triplets, sixty fourth notes, double sharp and double flat accidentals, and double dotted durations.  The notes can be displayed on a grand staff or a treble, bass, alto, tenor, or soprano staff.  The number of beats in the current measure is also displayed and updated as you enter the notes, and you can have the Editor automatically start a new measure when the current measure is full.
+
+Editing is easier with a cut and paste feature and an undelete key for when you accidentally delete or overwrite a note.  You can also move to the previous or next measure with one keystroke.  Numerous other features such as key repeats, scrolling speed, and an automatic insert mode, can be selected to configure the Editor to your preferences.  A Help Screen helps you remember the various keystrokes.
+
+The overall development time for a song is greatly decreased by the ability to play the song on the Editing Screen, starting at any position in the song.  Now you won't get tired of a song by having to play it from the beginning all the time.
+
+The Command Screen offers thirteen new commands, including one that lets you play any note duration at any tempo.  Other commands support pulse width vibrato, new modulation effects, eight more phrases, and other features.  The new editing features such as cut and paste, undelete, playing, and next or previous measure are also available on this screen.  A command search feature is available as well.  Two Help Screens include a tempo chart so you can quickly find the right tempo or duration.
+
+A new screen, called the Display Screen, shows all the current values of the various commands and updates them while the song plays.  This screen is very helpful as it shows you which phrases are in use and helps you find problems in a song.  The Display Screen also lets you play a song repeatedly from one measure to another.
+
+COMMODORE 128 VERSION
+The Commodore 128 version of the Editor takes advantage of the C128's greater memory and faster disk speed.  You can load a song up to 150 blocks long on the C128 Editor, and hold 80 blocks of notes in the cut and paste buffer.  If you have a 1571 disk drive, the songs will load much faster.  Note: The Commodore 128 version runs in the 40 column mode.
+
+THE BOOK
+The text consists of 247 pages explaining every facet of the Enhanced Sidplayer music system, from chapters on beginning music theory for those who know nothing about music, to chapters on the new advanced commands such as the modulation effects.  One chapter describes a sample session to help you learn the Editor as quickly as possible.  Other chapters tell how to create Singalong songs, how to merge your songs with BASIC programs, and how to use the other Sidplayer utility programs.  The text is clear and contains many examples and illustrations.  Compared to the 100 pages of actual text devoted to Sidplayer in Volume Two, you know that there is a lot of new material here.
+
+THE DISK
+The disk that comes with the book includes the Player, the Editor, many sample songs, and various utility programs.  Commodore 128 versions of these programs, to run in native C128 mode, are on one side of the disk, and C64 versions are on the other side.
+
+NOT PUBLIC DOMAIN
+The Enhanced Sidplayer programs are copyrighted by COMPUTE! Publications, Inc. and are not in the Public Domain.  They may not be distributed without permission from the publisher.
+
+WHERE AVAILABLE
+The Enhanced Sidplayer is sold as a book and disk combination so you don't have to type in any programs.  The price for the book and disk is $24.95, which is still less than other commercial music systems, and it is available from bookstores and computer stores or direct from the publisher.  The major bookstores do not seem to be automatically stocking the book, so you will probably not see it on the shelves and will have to place a special order for it.  See the beginning of this document for the full title and ISBN number.  To order direct from the publisher, call COMPUTE! toll free at 1-800-346-6767 and have your credit card handy, or send $24.95 plus $2.00 for shipping and handling to COMPUTE! Books, P.O. Box 5038, F.D.R. Station, New York, NY 10150.

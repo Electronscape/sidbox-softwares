@@ -1,0 +1,28 @@
+What's new in Version 1.42
+==========================
+
+This update contains 14 MUS and 1 WDS files.
+
+1. Some new music added: See list below:
+
+Bob_Huffman\Axel_F_C.mus
+Chuck_Knights\Honesty.mus
+Chuck_Knights\Honesty.wds
+Chuck_Knights\Turn_me_Loose.mus
+Chuck_Knights\Cats\Mungojerrie_and_Rumpelteazer.mus
+Colin_Roth\Minuet_and_Trio_in_C.mus
+Etienne\Prelude_No5.mus
+JR_Allen\Eleanor_Rigby.mus
+Mike_Generali\Sweet_lil_Sister.mus
+Misc\Anon_Blank\Flight_of_Icarus.mus
+Misc\H\Chinese_Dance.mus
+Ol_Railbird\Johnny_B_Goode.mus
+Rick_Sterling\The_Good_the_Bad_and_the_Ugly_QuickTempo.mus
+Syl\Sounds_of_Silence.mus
+Z_Axis\Minuet.mus
+
+
+2. Two tunes updated.
+
+L_Clements\Youre_a_Good_Man_Charlie_Brown.mus
+Spice\Youve_got_a_Friend_A.mus

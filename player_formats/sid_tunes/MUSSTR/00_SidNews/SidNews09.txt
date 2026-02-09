@@ -1,0 +1,106 @@
+SIDPLAYER NEWS #9  March 1987 
+
+SIDPLAYER FILE TYPES AND SELF-DISSOLVING LIBRARY FILES 
+
+This documentation file explains the various types of song files, identified by 
+the .MUS, .WDS, and .PIC filename extensions, as well as the self-dissolving 
+library files identified by the .SAL, .PIL, and .WPL filename extensions.  It 
+also gives instructions on how to use the WPLMAKER utility to create 
+self-dissolving library files. 
+
+SIDPLAYER SONGS 
+A Sidplayer music file is identified by a .MUS filename extension.  To play a 
+Sidplayer music file you need a song player program.  The .MUS file contains 
+only data and no code, so you cannot just LOAD and RUN or use SYS to hear the 
+music.  Existing players include KPLAY (with a piano keyboard display), MPLAY 
+("Multiplay" with autoplaying feature), Magic Sid Machine, SIDPIC, and the 
+Enhanced Player. 
+
+Sidplayer songs are created by the Sid Editor program published in the books 
+"All About the Commodore 64, Volume Two" and "The Complete 64" (a book and disk 
+combination) by COMPUTE! Books.  The new Enhanced Editor, and the Enhanced 
+Player, are published in "COMPUTE!'s Music System for the Commodore 128 and 64: 
+The Enhanced Sidplayer."  The Sid Editor programs and the Enhanced Player are 
+copyrighted and are not in the Public Domain.  See SIDNEWS #7 for more 
+information about the Enhanced Sidplayer book. 
+
+SINGALONG SONGS 
+Singalong songs are songs which have an accompanying words file.  The filename 
+for the words file is the same as the filename for the music file, except that 
+the .MUS filename extension is replaced with a .WDS extension.  To play a 
+Singalong song you need the Singalong player, the SIDPIC player, or the 
+Enhanced Player program, and both the .MUS and .WDS files must be on the disk.  
+The player will load the two files and play the music while displaying the 
+words.  You may also listen to just the music file of a Singalong song by using 
+any of the regular song player programs. 
+
+The words file for a Singalong song must be created by a special utility 
+program to insure the correct file format.  The utility program and 
+instructions for creating Singalong songs can be found in the Enhanced 
+Sidplayer book. 
+
+SONGS WITH PICTURES 
+Some songs have an accompanying picture file, identified by a .PIC filename 
+extension.  This is a full screen bitmap picture in Doodle or Koala format that 
+is displayed while the music plays.  The SIDPIC and Enhanced Player programs 
+can accommodate picture files. 
+
+As explained in the Enhanced Sidplayer book, a .PIC file can be created by 
+simply renaming a Doodle or Koala format picture to the name of the music file 
+but with the .PIC extension. 
+
+SELF-DISSOLVING LIBRARY FILES 
+Since a music file may also have a words or picture file or both, two or three 
+separate files could have to be downloaded to get a complete song.  For your 
+downloading convenience, songs with words or a picture are available in a 
+bundled format called a "library" file.  You can download one library file for 
+a song and then "dissolve" it into the separate files on your computer. 
+
+A self-dissolving library file is one which does not require that you run a 
+library utility program to dissolve the library file.  You just LOAD the 
+self-dissolving library file and then RUN it, and it writes the separate files 
+to your disk.  After the individual files have been written, you can scratch 
+the library file.  Because the self-dissolving library file is actually a 
+program loaded into memory, you do not need to have the library file on the 
+same disk that the separate files are written to. 
+
+MUSIC AND WORDS (.SAL) LIBRARY FILES 
+A file with the .SAL filename extension is a self-dissolving library file that 
+consists of the music and words files for one Sidplayer song.  Download the 
+.SAL file and then LOAD and RUN it, and it will write the .MUS and .WDS files 
+to your disk and then give you the option of scratching the .SAL file.  Be sure 
+to have as many free blocks on the disk as there are in the .SAL file before 
+you dissolve the file. 
+
+MUSIC AND PICTURE (.PIL) LIBRARY FILES 
+A file with a .PIL extension consists of the music and picture files for one 
+song.  A simple data compression technique is used in the .PIL file to reduce 
+the size of the picture data.  The picture data is uncompressed to normal size 
+when the .PIL file is dissolved.  Because of the data compression, the two 
+separate files may together take up more disk blocks than the .PIL file. 
+
+MUSIC, WORDS, AND PICTURE (.WPL) LIBRARY FILES 
+A file with a .WPL extension consists of the music, words, and picture files 
+for one song.  Again, data compression is used for the picture data. 
+
+THE WPLMAKER UTILITY 
+Use the WPLMAKER utility program to create a .SAL, .PIL, or .WPL file for a 
+Sidplayer song.  Just LOAD the program and RUN it, insert the disk with the 
+song to be libraried, and enter the name of that song at the filename prompt.  
+The program will first read the .MUS file for that song, then read the .WDS 
+file if it exists, and finally read the .PIC file if it exists.  The program 
+will next prompt you to insert the destination disk and press any key, and then 
+write the .SAL, .PIL, or .WPL file as appropriate. 
+
+A words or picture file must exist in order to create a library file.  If only 
+a music file for the specified song is on the disk, the WPLMAKER program will 
+print an error message and stop. 
+
+If you are going to create several self-dissolving library files and you have a 
+second disk drive as device number 9, change the statement DW=8 at the 
+beginning of the WPLMAKER program to DW=9 and the library files will be written 
+to the second drive. 
+
+The WPLMAKER utility replaces the earlier SALMAKER and PILMAKER programs and 
+should be used instead.  The library files written by WPLMAKER contain the 
+revised disk I/O routines with the improved error detection. 

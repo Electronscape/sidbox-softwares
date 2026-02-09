@@ -1,0 +1,53 @@
+@echo off
+
+IF EXIST Whats_new_in_v142.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v142.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.42
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Candylee\Butterfly_Op49_No1.mus  Candylee\Butterfly_Op43_No1.mus
+MOVE Candylee\Butterfly_Op49_No1.str  Candylee\Butterfly_Op43_No1.str
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\L_Clements__Youre_a_Good_Man_Charlie_Brown.mus  L_Clements\Youre_a_Good_Man_Charlie_Brown.mus
+MOVE /y Updated\Spice__Youve_got_a_Friend_A.mus  Spice\Youve_got_a_Friend_A.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+MOVE Gary_Alder  Gary_Adler
+
+::::::::::
+: DELETE :
+::::::::::
+# Same as Bob_Huffman\Axel_F_C.mus
+DEL CGSC\Misc\S\Axel_F.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v142.txt  00_Documents\Whats_new_in_v142.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_142.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.42 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

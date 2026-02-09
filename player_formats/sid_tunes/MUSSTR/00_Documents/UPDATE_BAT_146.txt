@@ -1,0 +1,63 @@
+@echo off
+
+IF EXIST Whats_new_in_v146.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v146.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.46
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN DC_Starr\Coventry_Carol.mus DC_Starr\Coventry_Carol_A.mus
+REN DC_Starr\Coventry_Carol.str DC_Starr\Coventry_Carol_A.str
+REN Etienne\RONDO.mus Etienne\Rondo_in_C_Major.mus
+MOVE Misc\C\O_Filii_et_Filiae.mus Michael_Cole\C\O_Filii_et_Filiae.mus
+MOVE Misc\C\Three_Hymns.mus Michael_Cole\C\Three_Hymns.mus
+REN Misc\G\Deck_the_Halls_A.mus Misc\G\Deck_the_Halls.mus
+MOVE Misc\G\Deck_the_Halls_B.mus GregoryD5\Deck_the_Halls.mus
+MOVE Misc\G\Good_King_Wenceslas.mus GregoryD5\Good_King_Wenceslas.mus
+MKDIR Vic_Menchaca
+MOVE Misc\M\Allegro_for_Violin.mus Vic_Menchaca\Allegro_for_Violin.mus
+MOVE Misc\M\Chiquitita.mus Vic_Menchaca\Chiquitita.mus
+MOVE Misc\M\Chiquitita.wds Vic_Menchaca\Chiquitita.wds
+MOVE Misc\M\Marriage_of_Figaro.mus Vic_Menchaca\Marriage_of_Figaro.mus
+MOVE Misc\M\Minuet_in_E_Flat.mus Vic_Menchaca\Minuet_in_E_Flat.mus
+REN Music_Man3\Rhapsody_in_Blue_A.mus Music_Man3\Rhapsody_in_Blue.mus
+REN Zeke4\Christmas_Day.mus Zeke4\Christmas_Day_A.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Music_Man3\Rhapsody_in_Blue_B.mus
+DEL Etienne\Prelude_No5.mus
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v146.txt  00_Documents\Whats_new_in_v146.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_146.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.46 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,79 @@
+@echo off
+
+IF EXIST Whats_new_in_v121.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v121.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.21
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Candylee\Elfindani.mus Candylee\Elfentanz_Op12_No4.mus
+MOVE Deadman\Exploding_Fist_II.mus Misc\D\Exploding_Fist_II.mus
+MOVE Deadman\Oxygene_part_2.mus Misc\D\Oxygene_part_2.mus
+RMDIR Deadman
+MOVE Misc\B\Long_Distance_Runaround.mus Blue_Adept\Long_Distance_Runaround.mus
+MOVE Misc\B\Preacher_the_Teacher.mus Blue_Adept\Preacher_the_Teacher.mus
+MOVE Misc\B\Great_Gig_in_the_Sky_A.mus Pinkfloid\Great_Gig_in_the_Sky_A.mus
+MOVE Misc\B\Great_Gig_in_the_Sky_B.mus Pinkfloid\Great_Gig_in_the_Sky_B.mus
+MOVE Misc\B\Greatest_Gift_of_all.mus Pinkfloid\Greatest_Gift_of_all.mus
+MOVE Misc\B\Greatest_Gift_of_all.str Pinkfloid\Greatest_Gift_of_all.str
+MOVE Misc\B\Greatest_Gift_of_all.wds Pinkfloid\Greatest_Gift_of_all.wds
+MOVE Misc\B\Wish_you_were_Here_-_Wait_42_Seconds.mus Pinkfloid\Wish_you_were_Here_-_Wait_42_Seconds.mus
+MOVE Pgunn\Take_me_Home_Country_Road.mus Pgunn\Take_me_Home_Country_Roads.mus
+MOVE Robert_Willis\Does_your_Chewing_Gum_Loses_its_Flavor.mus Robert_Willis\Does_your_Chewing_Gum_Lose_its_Flavor.mus
+MOVE Wesley_Noles\Arie_from_Cantana_187.mus Wesley_Noles\Arie_from_Cantata_187.mus
+MKDIR Chris_Alexander
+MOVE Misc\A\All_I_have_to_do_is_Dream.mus Chris_Alexander\All_I_have_to_do_is_Dream.mus
+MOVE Misc\A\Bridge_Over_Troubled_Water.mus Chris_Alexander\Bridge_Over_Troubled_Water.mus
+MOVE Misc\A\Impossible_Dream.mus Chris_Alexander\Impossible_Dream.mus
+MOVE Misc\A\Sixteen_Candles.mus Chris_Alexander\Sixteen_Candles.mus
+MOVE Misc\A\Yankee_Doodle_Boy.mus Chris_Alexander\Yankee_Doodle_Boy.mus
+MOVE John_Benard_Jr\Amanda.mus Misc\B\Amanda.mus
+MOVE John_Benard_Jr\Journeys_Faithfully.mus Misc\B\Journeys_Faithfully.mus
+MOVE John_Benard_Jr\To_be_a_Man.mus Misc\B\To_be_a_Man.mus
+RMDIR John_Benard_Jr
+MKDIR John_Dorner_-Delerious-
+MOVE Misc\D\Brand_New_Life.mus John_Dorner_-Delerious-\Brand_New_Life.mus
+MOVE Misc\D\Cagney_and_Lacey.mus John_Dorner_-Delerious-\Cagney_and_Lacey.mus
+MOVE Misc\D\I_Write_the_Songs.mus John_Dorner_-Delerious-\I_Write_the_Songs.mus
+MOVE Misc\D\New_York.mus John_Dorner_-Delerious-\New_York.mus
+MOVE Misc\D\Pink_Panther.mus John_Dorner_-Delerious-\Pink_Panther.mus
+MOVE Misc\D\Taxi.mus John_Dorner_-Delerious-\Taxi.mus
+MOVE Misc\D\Terms_of_Endearment.mus John_Dorner_-Delerious-\Terms_of_Endearment.mus
+MOVE Misc\D\Three_Times_a_Lady.mus John_Dorner_-Delerious-\Three_Times_a_Lady.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v121.txt  00_Documents\Whats_new_in_v121.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_121.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.21 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

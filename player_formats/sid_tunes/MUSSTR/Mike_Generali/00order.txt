@@ -1,0 +1,83 @@
+#002a	Babys Birthday
+#004	Sleep Now and Rest
+#006	Gently Sleep
+#007	The Crops have Been Gathered
+#010	Good Night My Baby
+#012	Rocking the Cradle
+#014	The Wood Birds Lullaby
+#015	Daddys gone to Town
+#016	Sunset
+#017	Twilight Song
+#019	Brahms Lullaby
+#020	Sleep on Little One
+#021	Lullaby
+#023	Slumber Soundly
+#025	Day and Night
+#027	Bye Baby Bunting
+#032a	The Birds Lullaby
+#033	Natures Goodnight
+#035	Rock the Cradle
+#036	Time Sends a Warning Call
+#037	Lambs are Sleeping
+#038	Time for Bed
+#039	Golden Cradle
+#040	Rock-a-Bye Baby
+#041	Night is Coming
+#042	Baloo Loo Lammy
+#043	O Hush thee My Baby
+#045	Youre a Grand Old Flag
+#046	Give my Regards to Broadway
+#047	O can ye Sew Cushions
+#048	Yankee Doodle Dandy
+#049	As Time goes By
+#050	All the World is Sleeping
+#051	All Through the Night
+#052	Go Away Little Fairies
+#054	Can you Count the Stars
+#055	Good Night
+#056	Softly Now the Light of Day
+#057	Lullaby
+#059	Moon and Sun
+#061	When Little Children go to Sleep
+#063	Evening Hymn
+#065	Dodo Baby Do
+#066	Sleepytime
+#067	Sun is Down
+#068	Basque Lullabye
+#069	In the Morning when You Wake
+#070    Sleep My Child
+#071	Rock-a-Bye Boy
+#072	My Son
+#073	Nani Nani
+#074	Armenian Lullaby
+#076	Sleep Sweet Babe
+#077	Mighty like a Rose
+#081	Scotch Bagpiper
+#082	Rain Drops
+#085	Baby Face
+#087	Whistle While you Work
+#089	Symphony No5 in C Minor 1st Movement
+#090	Symphony No5 in C Minor 2nd Movement
+#089-92	Symphony No5 in C Minor Complete
+#093	Sonata da Chiesa Op3 No7
+#095    Big Spender
+#096	The Best is Yet to Come
+#097    Im gonna Laugh You out of My Life
+#098	Hey Look me Over
+#101	Pass Me By
+#110	True Colors
+#111	Circle in the Sand
+#112	Honey Child
+#117	Lil Darlin
+#118	Cute
+#122	Put Your Arms Around Me Honey
+#123	A Lemon in the Garden of Love
+#125	I dont know Why
+#127	Am I Blue
+#129    Symphony No6 in F Major Op68 1st Movement
+#130    Symphony No6 in F Major Op68 2nd Movement
+#131    Symphony No6 in F Major Op68 3rd Movement
+#132    Symphony No6 in F Major Op68 4th Movement
+#133    Symphony No6 in F Major Op68 5th Movement
+#135	Firebird Ballet
+#137	Sweet Lil' Sister

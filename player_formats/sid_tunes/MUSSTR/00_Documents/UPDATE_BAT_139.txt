@@ -1,0 +1,79 @@
+@echo off
+
+IF EXIST Whats_new_in_v139.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v139.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.39
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN Corky_Cochran\School_Days_A.mus  Corky_Cochran\School_Days.mus
+REN Dave_Stewart\Ride_the_Train.mus  Dave_Stewart\Ride_the_Train_A.mus
+REN DC_Star_and_Cpr\Lean_on_me.mus  DC_Star_and_Cpr\Lean_on_me_A.mus
+REN DC_Star_and_Cpr\Lean_on_me.wds  DC_Star_and_Cpr\Lean_on_me_A.wds
+REN DC_Star_and_Cpr\Mandolin_Rain.mus  DC_Star_and_Cpr\Mandolin_Rain_A.mus
+REN DC_Star_and_Cpr\Mandolin_Rain.wds  DC_Star_and_Cpr\Mandolin_Rain_A.wds
+REN DC_Starr\Can_Live_without_your_Love_and_Affection.mus  DC_Starr\Cant_Live_without_your_Love_and_Affection.mus
+REN DC_Starr\Can_Live_without_your_Love_and_Affection.str  DC_Starr\Cant_Live_without_your_Love_and_Affection.str
+REN DC_Starr\Can_Live_without_your_Love_and_Affection.wds  DC_Starr\Cant_Live_without_your_Love_and_Affection.wds
+REN Kenneth_Barsky\Lcha_Dodi.WDS  Kenneth_Barsky\Lcha_Dodi.wds
+REN Laura\Johnny_B_Goode.mus  Laura\Johnny_B_Goode_A.mus
+REN Laura\The_Rose.mus  Laura\The_Rose_A.mus
+REN Lee_C_Dickinson\June_is_Bustin_out_all_Over_B.WDS  Lee_C_Dickinson\June_is_Bustin_out_all_Over_B.wds
+REN Jim_Masterson\And_She_Was.mus  Jim_Masterson\And_She_Was_A.mus
+REN Jim_Masterson\And_She_Was.wds  Jim_Masterson\And_She_Was_A.wds
+REN Jim_Masterson\Choooooo_Choooooo_Boogie.mus  Jim_Masterson\Choooooo_Choooooo_Boogie_A.mus
+REN Jim_Masterson\Hey_Nineteen.mus  Jim_Masterson\Hey_Nineteen_A.mus
+REN Jim_Masterson\Telecommunication.mus  Jim_Masterson\Telecommunication_A.mus
+REN Jim_Masterson\Telecommunication.wds  Jim_Masterson\Telecommunication_A.wds
+REN Misc\Anon\Ouverture_Miniature_Op71.mus  Misc\Anon\Ouverture_Miniature_Op71_A.mus
+REN Misc\C\Jingle_Bells.mus  Misc\C\Jingle_Bells_A.mus
+REM Misc\Q\Dont_let_the_Sun_go_Down_on_me.mus  Misc\Q\Dont_let_the_Sun_go_Down_on_me_A.mus
+MOVE Misc\W\Badinerie.mus  James_M_Westhues\Badinerie.mus
+MOVE Misc\W\Caro_Adone.mus  James_M_Westhues\Caro_Adone.mus
+MOVE Misc\W\Funeral_March.mus  James_M_Westhues\Funeral_March.mus
+MOVE Misc\W\Great_Fugue.mus  James_M_Westhues\Great_Fugue.mus
+REN Robert_Willis\Back_on_the_Chain_Gang.mus  Robert_Willis\Back_on_the_Chain_Gang_A.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\Jim_Masterson__Rain.mus  Jim_Masterson\Rain.mus
+MOVE /y Misc__K__Sweet_Dreams.mus  Misc\K\Sweet_Dreams.mus
+MOVE /y Misc__R__Happy_Birthday_Q-Link.mus  Misc\R\Happy_Birthday_Q-Link.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+:: Duplicate
+DEL Corky_Cochran\School_Days_B.mus
+DEL Diz_Cop\Rock_n_Me_old.wds
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v139.txt  00_Documents\Whats_new_in_v139.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_139.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.39 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

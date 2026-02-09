@@ -1,0 +1,45 @@
+
+IF EXIST Whats_new_in_v105.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v105.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.5
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Jerry_Roth_-Dr_J-\I_want_Hold_your_Hand.mus  Jerry_Roth_-Dr_J-\I_want_to_Hold_your_Hand.mus
+
+::::::::::::::::::
+: RENAME AUTHORS :
+::::::::::::::::::
+MOVE "Red Software" Red_Software
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v105.txt  00_Documents\Whats_new_in_v105.txt
+MOVE Alias_List.txt  00_Documents\Alias_List.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_105.txt
+
+
+
+ECHO.
+ECHO CGSC UPDATE to v1.5 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

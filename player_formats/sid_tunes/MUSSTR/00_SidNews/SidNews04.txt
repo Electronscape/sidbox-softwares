@@ -1,0 +1,378 @@
+SIDPLAYER NEWS #4  April 1986 
+
+This is the fourth news file for Sidplayer, the music system published in "All 
+About The Commodore 64, Volume Two" by COMPUTE! Books.  This news file offers 
+many hints, tips, and suggestions on how to more easily create better sounding 
+songs.  The information presented here will be of interest to both novices and 
+experienced users. 
+
+Please keep in mind that the Sidplayer Editor is to be used only by those who 
+have purchased Volume Two.  The Editor is not a Public Domain program.  This 
+document is not intended to be a guide on how to use the Editor for people who 
+have not purchased the book. 
+
+The main part of this document consists of suggestions organized by command 
+name.  After these suggestions you will find some shorter sections that 
+describe the symptoms of Master Composer Syndrome, encourage you to hook your 
+computer up to a stereo, and offer some advanced techniques to ponder. 
+
+TEM 
+1. The Editor lacks a feature to play just a given measure.  Although a fast 
+forward feature is available, it can still take a while to skip past part of a 
+song.  A faster way to skip over a part is to insert the command TEM 900 at 
+the beginning of the part to be skipped, and then insert a TEM command for the 
+correct tempo at the place you want to hear.  When you play the song, the part 
+to be skipped will be played even faster than is permitted by the fast forward 
+feature, and you won't run a risk of getting a CLOBBER error (unless you use 
+the fast forward feature as well).  There are two restrictions to the use of 
+this technique.  If the part to be skipped contains thirty second notes, tempo 
+450 will have to be used instead.  If the part uses utility durations, this 
+technique cannot be used. 
+2. The tempo chart on page 285 is so handy, it may be worthwhile to photocopy 
+the page for quick reference for when you enter a song. 
+
+UTL 
+1. If you need to get a portamento glide that is longer than a whole note, you 
+can always use the utility duration.  This will permit a glide of any duration 
+up to four seconds. 
+
+VOL 
+1. It is strongly recommended that you not use volumes above level 12, except 
+when you are using the triangle waveform which is naturally quieter.  If you 
+use volume levels above 12, especially with the pulse wave, the song may 
+overpower the speaker on some televisions, causing the sound to be distorted, 
+and thereby detracting from the quality of your song.  Not everybody has their 
+C64 hooked up to a nice stereo that can handle the volume. 
+2. You need to use the VOL command on only one voice.  The master volume sets 
+the volume for all three voices.  If a VOL command is used on more than one 
+voice at the same time, the VOL on the highest numbered voice is the one that 
+will take effect.  Usually the VOL and BMP commands are used only on voice one. 
+3. Be aware that a popping noise occurs when the master volume is changed by 
+large amounts.  Some people feel that the popping detracts from the song, and 
+try to minimize the popping in their songs.  To reduce the popping, try using 
+smaller volume level changes and different positions for the volume changes. 
+The sustain levels can also be adjusted to control the overall volume. 
+
+BMP 
+1. As with the VOL command, use BMP in only one voice.  If two voices use a 
+BMP command at the same time, the volume will be bumped by two levels instead 
+of one. 
+2. BMP can be used to fade out a song when the last measure or two are 
+repeated.  Some songs also use BMP to fade out the last note, but this creates 
+a noticeable "stepping" effect in the volume as it changes.  A better way to 
+fade out a note is to use a long release (a large RLS value). 
+
+HED and TAL 
+1. Remember that repeat loops cannot be nested.  Be especially careful of this 
+when you have a repeat loop that contains a phrase call, and the phrase also 
+contains a repeat loop. 
+2. If at all possible, try to avoid using HED 0 for endless repetition.  A 
+song that does not end does not work very well with an autoplayer. 
+
+DEF 
+1. Some songs contain several phrase definitions right at the beginning of 
+each voice, which often set up waveforms and envelopes that are not used until 
+later in the song.  This may be convenient but it is not always a good 
+practice.  When Sidplayer has to process several commands before the first 
+note, the chance of getting a CLOBBER error is increased.  This error occurs 
+when too many commands are placed between notes, and they cannot all be 
+processed in one jiffy (one sixtieth of a second).  The intended way for a 
+phrase to be used is to define the phrase as it is played the first time, and 
+then to call it when it needs to be played again later.  See pages 300 to 304 
+for a complete explanation of phrases. 
+
+F-M and FLT 
+1. Sometimes it can be handy when editing a song to play only one voice at a 
+time.  Unfortunately, this cannot be done if the voice contains a call to a 
+phrase defined in a voice that is not being played.  A way to get around this 
+limitation is to play the voice that contains the phrase definition but to 
+include the commands F-M N and FLT Y at the beginning of the voice.  Selecting 
+a filter mode of N (no mode) and passing the voice through the filter makes 
+the voice inaudible.  This allows you to play the voice so that the phrase 
+gets defined, without hearing the voice itself. 
+
+F-X 
+1. In addition to generating tones for music, the SID chip also picks up a lot 
+of the "noise" from the circuitry inside the computer.  This undesirable 
+background noise can be significantly reduced on some computers by turning on 
+the external filter input.  To take advantage of this, just include an F-X Y 
+command at the beginning of each song you create.  The songs will be free of a 
+lot of the background hiss when played.  Other than making the song sound much 
+cleaner, enabling the external filter input will not have any effect on the 
+song. 
+
+ATK 
+1. It is not always desirable to use a value of 0 for the ATK command.  When 
+all three voices have an attack rate of 0, and all three voices start playing 
+new notes at the same time, sometimes the SID chip will not gate (start 
+playing) the notes together, and one note will noticeably start to sound 
+before the others.  The phenomenon is sporadic, but does not occur with slower 
+attack rates, so you can use ATK 1 to get around the problem. 
+
+DCY 
+1. To minimize the "biting" effect of the volume falling from the attack peak 
+to a much lower sustain level, a slower decay rate can be used. 
+
+SUS 
+1. Unfortunately, the SID chip does not provide a volume control for each 
+voice (the VOL command affects all three voices), but to some extent, the 
+sustain level of a voice can be used to control the volume of a voice. 
+2. If one voice is playing a melody and other voices are supporting it by 
+playing harmony, it is a good idea to have the SUS level for the harmony 
+voices set at least one level lower than the sustain level for the melody 
+voice.  If they are equal, the harmony voices can overpower the melody voice. 
+Setting their SUS levels lower makes the melody voice stand out, and generally 
+the song will sound a bit nicer. 
+
+RLS 
+1. As with the ATK command, it is a good practice to avoid using the value 0 
+with the RLS command.  A release rate of 0 sometimes makes voices cut off 
+unevenly.  It is more noticeable when the song is played on a stereo instead 
+of a television or monitor speaker.  Values from 1 to 15 are recommended for a 
+more pleasant effect. 
+
+PNT 
+1. The release point, set by the PNT command, determines the number of jiffies 
+from the end of a note that the note should start to release.  Always remember 
+that the release point must be less than the duration of the note being 
+played, or the note will not be played properly.  For example, in tempo 100 a 
+sixteenth note is 9 jiffies long.  If the release point is set to 12, the note 
+will start to release as soon as it starts playing.  It will never have a 
+chance to complete its attack, and so will not be heard, or will be hardly 
+audible.  For this reason the release point is usually set around 4 or 5.  If 
+you have the release point set larger and have to play some shorter notes, it 
+may be necessary to temporarily set the release point smaller for those notes. 
+You can refer to the tempo chart on page 285 to determine the exact jiffy 
+count for any note in any tempo. 
+2. If notes of longer durations are being played, a reason to use a larger 
+release point is to create a more staccato effect. 
+3. Setting the release point to 0 means that notes played will never be 
+released.  This is the same thing as tying the notes together.  Therefore, if 
+you need to enter a lot of notes that are all tied together, for a legato 
+effect, set the release point to 0 instead of entering a tie for each note. 
+4. If a voice contains alternating notes and rests of the same duration, such 
+as a quarter note, quarter rest, quarter note, quarter rest sequence in a bass 
+line, a shortcut can be used.  The technique is combine the notes and rests 
+into notes of equivalent total duration and then set the release point to make 
+the release begin where the rest would normally begin.  For example, let's say 
+that the above quarter notes and quarter rests were played in tempo 100, so 
+each note and rest was 36 jiffies long, and the release point was set at 4. 
+Instead of entering quarter note and quarter rest pairs, you could enter half 
+notes and set the release point at 40, where the 40 is 36 jiffies for the 
+quarter rest and 4 jiffies for the normal release point of the quarter note. 
+
+WAV 
+1. For some reason, pitches played using the pulse wave in octaves 0, 1, and 
+some of 2 sound out of tune.  It may be best to avoid using the pulse waveform 
+when playing notes in the lowest octaves. 
+2. The pulse waveform can be combined with the triangle waveform to create a 
+new and useful waveform type.  Just enter the number 5 (4 for pulse plus 1 for 
+triangle) to select the WAV TP command.  The resultant waveform is especially 
+useful for harpsichord effects. 
+3. The waveform combination SP is much quieter and therefore is not as useful. 
+All other combinations seem to be inaudible. 
+4. Don't put a WAV command right before a rest.  The release of a preceding 
+note may continue into a rest, and a waveform change before the rest may clip 
+the end of the note and be noticeable.  Instead, just put the WAV command 
+right before the next note to be played. 
+
+P-W 
+1. Do not use the pulse wave with a pulse width less than 100.  Notes played 
+with a width much less than 150 are inaudible on some SID chips. 
+2. When using the TP waveform combination, be sure to have the pulse width set 
+below 2048.  The volume of the TP waveform decreases as the pulse width goes 
+above 2000.  Also set the width below 2048 when using waveform SP. 
+
+P-S 
+1. Pulse width sweeping works by adding the pulse sweep value to the pulse 
+width once each jiffy.  The only problem with this is that with larger sweep 
+rates, the pulse width can exceed 4095, in which case it wraps around and 
+starts back at 0.  This causes a very noticeable popping noise which can 
+really detract from a song.  To avoid the wraparound you can use a slower 
+sweep rate or set the pulse width lower (or higher if you are sweeping 
+backwards).  If you want to keep the same pulse width and sweep rate, first 
+determine on which notes the wraparound occurs.  These will be the notes with 
+the longest durations.  Then take each note which causes popping, divide it 
+into two halves tied together, and insert a P-S command between them with the 
+same sweep rate but the opposite direction.  For example, if popping occurs on 
+a half note when the sweep rate is 30, instead enter a quarter note tied to 
+another quarter note of the same pitch, with a P-S -30 command between them. 
+You will also need to enter a P-S 30 command after them to reset the direction 
+of the sweep for the next note. 
+
+SNC and RNG 
+1. Refer to pages 324 to 325 and 333 to 337 of Volume Two for the correct way 
+to set up synchronization and ring modulation effects. 
+
+VDP and VRT 
+1. For a more natural vibrato effect, you can change the vibrato depth while a 
+note is playing.  Just break the note into smaller notes of the same total 
+duration, all tied together, and put VDP commands of increasing values between 
+them.  Again, remember to reset the depth back to the original value. 
+2. Be aware that the vibrato processing is done only for the duration of a 
+note, and is not done when a rest is being played.  When a note with a slow 
+release rate is followed by a rest, the voice may continue to fade away during 
+the first part of the rest.  If vibrato is used on the note, it is sometimes 
+noticeable that the vibrato all of a sudden stops as the note is fading away. 
+To prevent this from happening, you can delete the rest, add its duration to 
+the preceding note, and set the release point higher for that note as 
+discussed in the above section on the PNT command. 
+
+TPS 
+1. The SID chip cannot play pitches beyond octave 7, even when the TPS command 
+is used.  If you try to play a note above B7, the note will be played with the 
+same pitch but in octave 7.  Thus an E transposed to octave 8 will be played 
+as an E in octave 7.  To determine if a voice is being transposed out of 
+range, watch the voice on KPLAY and see if the key goes off the right edge of 
+the piano keyboard display and disappears. 
+2. It is possible for the SID chip to play pitches in octave -1 by using the 
+TPS command with negative values, but this is rarely useful. 
+
+AUX 
+1. When using the AUX command to change the color of the piano keys in KPLAY, 
+do not use values outside the range of 0 to 15.  Values larger than 15 do not 
+give you any new colors, and songs using larger values may forfeit 
+compatibility with future editions of players. 
+
+MISCELLANEOUS 
+1. Be very careful to never let two voices using the same waveform play notes 
+of the exact same pitch at the very same time.  When this is allowed to 
+happen, a phenomenon known as "destructive harmonic interference" can occur, 
+which in no way damages your computer but can cause the two voices to cancel 
+each other out and be inaudible.  The effect happens randomly and is not 
+always noticeable.  The only time that two voices should simultaneously play 
+the exact same pitches in the same octave with the same waveform is when the 
+voices are being detuned. 
+2. If two notes of the same pitch are tied together, it is a good practice to 
+put the shorter note first.  This is because a note tied to another note does 
+not release.  If the longer note is put first, the release cannot begin until 
+the shorter note starts playing, and in some cases the release would normally 
+begin sooner.  This is especially true when larger release points are used. 
+Putting the shorter note before the longer note ensures that the release will 
+begin at the appropriate place. 
+3. When a grace note is played, remember that the duration for the grace note 
+should come out of the duration for the preceding note.  This way, the note 
+following the grace note will begin right on the beat, as it should, instead 
+of the grace note.  It may be necessary to use utility durations for both the 
+grace note and the note preceding it. 
+4. KPLAY and MPLAY and the other players end a song right when the last 
+duration is complete, even if some of the voices are not done releasing.  To 
+let each voice fade out and finish completely, it is a nice touch to put a 
+rest after the last note in each voice. 
+5. Remember that when you are creating a very long song, it is much easier to 
+break the song into parts, enter and edit each part separately, and then 
+combine them using the MERGE utility found on page 369.  This utility can also 
+be used to create songs larger than what the Editor can hold in memory. 
+6. The LISTER utility on page 365, or the revised version called PRINTER which 
+prints in three columns only to a printer, can be used to find duration bugs 
+in songs.  See SIDNEWS#1 for information on the PRINTER utility. 
+7. Whenever possible, please try not to use the default waveform and envelope. 
+The default settings were chosen because they give a simple, neutral waveform 
+and envelope which can be modified easily.  Playing all three voices with the 
+default square wave and organ-type envelope, however, can make any song, even 
+a very good one, sound pretty blah. 
+8. Don't overlook the subtle but significant effects that different envelope 
+settings can have on a song.  Envelopes seem to be one of the most ignored 
+aspects of songs. 
+
+MASTER COMPOSER SYNDROME 
+It has been observed that people who formerly used the Master Composer music 
+system and now use Sidplayer exhibit a strong tendency to use a heavy dose of 
+vibrato and pulse width sweeping in their songs.  Presumably this is because 
+these are two easy-to-use features that are not found on Master Composer.  If 
+you might be such a person, we urge you to control your fascination with these 
+features and use them sparingly.  Thank you! 
+
+THE BASEBALL CARD PHENOMENON 
+Some music systems may make songs sound better than other music systems, but 
+the quality of a song depends just as much, if not more so, on the time and 
+care taken by the person entering the song.  While it is nice to have lots of 
+songs to collect and trade, it is also important to keep the quality level 
+high in order to maintain interest in the songs.  We would prefer to encourage 
+people to emphasize quality over quantity. 
+
+SIDPLAYER ON YOUR STEREO 
+If you don't have your computer hooked up to a stereo, you're only getting 
+part of the story when you play a song.  Playing songs over a stereo gives you 
+fuller bass lines and triangle waveforms, and reveals other things you never 
+knew were there.  See SIDNEWS#1 for instructions on how to hook your computer 
+up to a stereo. 
+
+SOME ADVANCED TECHNIQUES TO PONDER 
+1. The sync mode is not used very often because it requires two voices, 
+leaving only one voice free.  The mode offers a whole variety of new tone 
+types, however, and is definitely worth investigating.  Try the sync mode with 
+different combinations of waveforms and TPS values, as demonstrated by the 
+song TPI#14. 
+2. See page 337 for a discussion of using sync and ring modulation at the same 
+time.  With this technique, you can sometimes get tones that sound like they 
+are being filtered, even though they are not. 
+3. Another possibility is to use portamento with the sync mode.  This is done 
+by putting an absolute set command of a different pitch before each note that 
+is played.  When this is done on the synchronized voice which adds the 
+harmonics, an interesting "wah" effect is produced, as in the song ETAL. 
+4. Some people have gotten interesting results by using the sync or ring 
+modulation modes with nonstandard configurations. 
+5. Absolute set commands can be placed between rests following a note with a 
+large RLS value to make a note slowly fade away while changing pitch.  This 
+technique was used in the song STUNTMAN. 
+6. A subtle technique is to use the absolute set command with detuning and 
+portamento.  Turn on the detuning and set a detuned pitch with the absolute 
+set command.  Then turn off the detuning and play a note with a slow 
+portamento rate in effect.  The note will not start at exactly the correct 
+pitch but will move to the desired pitch.  This may be useful for simulating 
+some vocal effects.  A variation on this method is to not use detuning and 
+just use the absolute set command to set the pitch one half step below the 
+desired pitch, with a faster portamento rate. 
+7. Detuning and transposition can be an interesting combination.  Octave 
+transpositions with detuning were used in PIPERS, CALLIOPE, BISTRO, and 
+AMERICA. 
+8. An advanced use of detuning is to slightly detune a voice, even when it is 
+not being played along with another voice containing the same notes, for a 
+fuller sound.  This technique is based on a principle used by barbershop 
+quartets. 
+9. The POLYCON utility can be used to add a pedal effect or lingering effect 
+(like a bell) to a song, as in FUER.  This technique can also be used with 
+fast arpeggios for another interesting effect.  See SIDNEWS#3 for full 
+instructions. 
+10. Detuning with polyphony also gives an interesting effect.  This 
+combination was used in the song ISLAND. 
+11. When the waveform TP is used, pulse width sweeping can be used to sweep 
+the width past 2048, thereby making the volume fade out. 
+12. A note by note use of utility duration is very tedious but can produce 
+some wonderful phrasing effects.  See the song FUER for an example.  Even 
+using just a few carefully placed utility durations can add a nice, more 
+natural touch to a song. 
+13. When two voices are playing similar notes, perhaps with different pulse 
+widths or detuning, a very short utility duration rest can be placed at the 
+beginning of one of the voices to create an echo effect.  See the version of 
+TAKE FIVE by Stan Halaby for an example. 
+14. While having only three voices can be quite a limitation, it is sometimes 
+possible to use one voice for two different effects simultaneously.  For 
+example, CANTINA uses the same voice for both bass notes and percussion 
+effects.  The bass notes are played on the beat and the percussion effects are 
+played on the offbeat.  Phrase calls can make it easy to alternate between 
+different waveform and envelope settings. 
+15. One technique to get around volume problems on a voice is to release a 
+note before has completed its attack phase.  This will require some 
+experimentation with attack rates and release points.  The technique was used 
+in the stereo version of AXEL F. 
+16. A rapid succession of different pitches using white noise makes an 
+interesting percussion line, as in the song IBEX. 
+17. Longer white noise notes, as in the song OSPREY, can also give an 
+interesting effect. 
+18. One other interesting effect is to play a sequence of notes of the same 
+pitch but with different pulse widths. 
+
+FINAL REMARKS 
+1. Some of these suggestions and techniques are described in the book, along 
+with complete instructions on how to use the Sidplayer Editor and a fairly 
+comprehensive introduction to music theory. 
+2. Most people feel that it is worth $16.95 to get the complete documentation. 
+3. Other music systems cost twice as much and are not as well documented. 
+4. The book also has bitmapped graphics and sprite utilities, and sections on 
+Advanced BASIC. 
+5. The Sidplayer Editor is not a Public Domain program and is supposed to be 
+used only by those who have purchased Volume Two. 
+
+If you use the Sidplayer Editor and don't have the book... 

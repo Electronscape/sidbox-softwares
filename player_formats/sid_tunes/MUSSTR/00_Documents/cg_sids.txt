@@ -1,0 +1,209 @@
+-----------------------------------------------------------------------------
+                   T H E   C O M P U T E ' S   G A Z E T T E
+                          S I D   C O L L E C T I O N
+
+                                 release 1.47
+
+                                 August, 2025
+-----------------------------------------------------------------------------
+
+---------
+CONTENTS:
+---------
+
+[1] Introduction
+    [1-1] The CGSC Project
+[2] Collection Structure
+[3] How Can I Help?
+    [3-1] Contributing Music
+[4] Acknowledgments
+
+-------------------------
+CHAPTER [1]: Introduction
+-------------------------
+
+[1-1] The CGSC Project
+======================
+
+The CGSC Project is an attempt to accurately archive all Compute's Sidplayer
+music files into one complete collection.
+The project was started in November of 1998.
+The previous SID collections were less comprehensive, were not sorted into
+any order and contained many repeats.
+
+---------------------------------
+CHAPTER [2]: Collection Structure
+---------------------------------
+
+There are several ways in which most SID collections have been organised.
+To name a few, by author's first name, by categories or just a simple
+rat's nest of SIDs.  We have chosen to arrange the collection by the
+author's name or by the author's alias if it was used more frequently.
+Finally, we usually only give composers their own directory when we have
+three or more tunes available from them.  This then makes it a little easier
+for you to locate the composer.
+
+Some files have been given special extensions to their names. Below is a list
+of those extensions:
+
+_(BAD)  - Tune plays but sounds funny after a while.
+
+_(SHORT)  - Tune plays but stops after a while.
+
+_(NON)  - Tune does not play any sounds at all.
+
+NOTE: These are marked BAD, SHORT or NON only if they do not play on *all*
+      music players.
+
+_A _B _C etc..  - Where duplicate tunes exist within the collection, each
+                  is given a letter suffix. Each duplicate is slightly
+                  different, so each version was kept.
+
+_Remix  - The tune is a remixed version
+
+
+Below are a some comments about a few special directories:
+
+/00_COMMODORE64 - Contains some useful Commodore Programs such as Sid/Pic
+                  and Stereo SidPlayer.
+
+/00_DOCUMENTS - If you are reading this document, then most likely you have
+                already figured out what this directory is for.
+
+/00_UTILS - Source code written in Visual Basic to help assist in "sorting"
+            out MUS, STR and WDS files. These are only of use when adding
+            new music to this collection.
+            There is also a utility to help playing MUS files with SIDPLAY/W
+            is the subdirectory MUSPLAY.
+
+/MISC - For tunes where the Author does not have their own directory.
+        Subdirectories A to Z exist so that the tunes can be "split down"
+        into smaller groups. They are split by authors surname where possible.
+
+/MISC/ANON - For tunes with no known Author.
+
+----------------------------
+CHAPTER [3]: How Can I Help?
+----------------------------
+
+[3-1]: Contributing Music
+=========================
+
+We love to receive new Music for the CG SID Collection.
+Here are some other items we are looking for:
+
+  * Complete collections directly from the composers (this is most ideal
+    as they will usually have all the information we require, too).
+
+  * Fixes of SIDs already in the CG SID Collection.  We have found
+    several tunes that do not play properly, have missing STR or WDS files,
+    etc.  Do if at all possible check them on a C64 first.
+
+  - We ONLY want Compute's Sidplayer SID tunes.
+
+If you have any music files and would like to send them, there are
+several methods in which this can be achieved.  I would prefer them to be
+emailed as an included attachment (preferred).
+There are other possibilities so feel free to email and we can arrange
+what ever is most convenient.
+
+Please also DO NOT send any attachment that is more than 500KB without
+mailing first to let us know and that you have confirmation from us it is
+okay to send.  Unfortunately, a lot of phone companies' pricing structures
+mean that we have to prioritise our time on line to this effect.
+
+
+----------------------------
+Chapter [4]: Acknowledgments
+----------------------------
+
+Thanks to the following for help:
+=================================
+
+Funet FTP site
+ - Grabbed all the music files
+   (http://www.funet.fi/pub/cbm/c64/audio/sidplayer/index.html)
+David Strauss
+ - For sids from his web pages
+   (http://www.miracomcorp.com/dave/sids.html)
+HVSC
+ - Based this document on yours
+High Voltage CD #2
+ - For the SIDS subdirectory
+Agust Arni Jonsson
+ - For NemeSIDs #18-#19
+Meikkeim
+ - For a few disk images with sid music on them
+   (http://members.aol.com/meikkeim/sids.html)
+ICPUG 
+ - for music files from their c64 Software Library
+Snakeman
+ - For a lot of the new sids added in version 1.1 of CGSC
+   (http://www.wipd.com/~snakeman/c64sids.html)
+Jan Diabelez Arnt Harries (Rambones)
+  - For sending me a copy of his collection
+The Shark
+  - For a few MUS files and some comments on the layout of
+    the collection
+  - For telling me about http://www.monroeworld.com/
+Shane R. Monroe
+  - for sids.zip from his web pages
+    (http://www.monroeworld.com/)
+Jeremy Sieracki
+  - for the music on Arnold (most of the 1.3 updates are from here)
+    (ftp://arnold.c64.org/pub/games/jeremy/MUS-SIDS/)
+Headgap Web BBS
+  - for music from their archives (most of the 1.4 updates are from here)
+    (http://www.headgap.com/C64-128/cSidFiles/)
+Other places I've been
+   Including:
+    (http://cereal.mv.com/cereal/CBM-SIDS/filesbbs.html)
+    (ftp://ftp.wcat.com/pub/c64/sids/)
+    (http://jkracht.aye.net/cbm/cbm-sids/)
+    (http://files.chatnfiles.com/carousel/comdore/64MUSIC/)
+    (http://www.softwolves.pp.se/cbm/syspd/d64/)
+Charles J. Fitzhugh (Sir Fitz)
+  - for helping with the "Alias_List.txt" and sorting out some of
+    the music in the Misc directory
+Dave G Elliott (CS Geos)
+  - for music for the 1.9 update
+    (http://dgelliott.tripod.com/)
+Christopher A Haslage
+  - for music for the 1.9 update
+CMDRKEY Genie Archive
+  - for all the music in the 1.11 update
+    (http://usa.cmdrkey.com/cbm/genie/)
+Troy Rutter (Datasid)
+  - for most of the music in the 1.13 update
+Raccoon, Stockholm computer club (STOCC), & Stone Oakvalley Studios
+  - for most of the music in the 1.15 update
+DemongerX
+  - for all of the music added in the 1.16 update (2600 files, 26% more!)
+DLH (Bombjack) and Christopher Ryan
+    (http://www.bombjack.org/commodore/magazines-disk/commodore-gazette/commodore-gazette.htm)
+  - for a lot of the music added in the 1.17 update from the Commodore Gazette disk mag
+Troy Rutter (Datasid) & Andrew Hackard
+  - for virtually all of the music in the 1.20 update
+ftp://8bitfiles.net/archives/compuserve-file-archive/20 Music & Utilities/
+  - for most of the music in the 1.23 update
+Kent Sullivan sent over some disks from John Rafalak which added about 750 new tunes in the v1.25 update. These tunes are from an archive of the Q-Link Music Room, where John was a SysOp.
+An anonymous contributor sent over some disks which added about 200 new tunes in the v1.25 update.
+http://www.7ater.com/c64/C64.htm for the new tunes in the v1.26 update.
+Kent Sullivan and Craig Chamberlain for the original Sidfest disks and all the files in the v1.29 update.
+Tristan Miller for sending in his own tunes and a five others in the v1.30 update. And also for spotting some typos in some of the file names.
+Cincinnati Commodore Computer Club (CCCC) 2008 CDROM Image from the DLH Commodore Archive for tunes in the v1.30 update.
+Allan Weseman for 124 tunes in the 1.31 update.
+Stone Oakvalley for sending over a list of mus files in various collections. Found about 80 extra.
+DLH (Bombjack) and Commodore East Brunswick User Group (CEBUG)
+    (http://www.bombjack.org/commodore/disks/cebug/)
+  - for the Stewart_Meyers tunes
+Wilfred Bos for finding various tunes in CSDB
+iAN CooG for the TheFatman tunes
+Kent Sullivan sent over some disks from Sue Matthews which added 152 MUS and 45 WDS files. Sue downloaded these tunes from the Q-Link Music Room "back in the day".
+Baracuda of Blazon/The Stock/Smash Designs for pointing out a new source for the 1.42 update
+DuncanTwain for over 330 tunes in the v1.45 update
+Sebastian (Professor Chaos) for the two tunes added to Misc\Anon_Blank in v1.45
+Lane County Commodore User's Group collection for about 40 mus and 10 wds in v1.45
+Chris OMalley for most of the additions in v1.47
+
+And to everyone else who contributed...

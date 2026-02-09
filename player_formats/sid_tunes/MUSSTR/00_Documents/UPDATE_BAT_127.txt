@@ -1,0 +1,63 @@
+@echo off
+
+IF EXIST Whats_new_in_v127.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v127.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.27
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MKDIR Jim_J_Jim
+MOVE Jim\Angels_we_have_Heard_on_High.mus Jim_J_Jim\Angels_we_have_Heard_on_High.mus
+MOVE Jim\Drunk_Calliopie.mus Jim_J_Jim\Drunk_Calliopie.mus
+MOVE Jim\In_my_Dreams.mus Jim_J_Jim\In_my_Dreams.mus
+MOVE Jim\It_came_upon_a_Midnight_Clear.mus Jim_J_Jim\It_came_upon_a_Midnight_Clear.mus
+MOVE Jim\Quick_Demo.mus Jim_J_Jim\Quick_Demo.mus
+MOVE Jim\All_the_Reasons_Why.mus Jim_-Jim_Brock-_-KCORB-\All_the_Reasons_Why.mus
+MOVE Jim\All_the_Reasons_Why.str Jim_-Jim_Brock-_-KCORB-\All_the_Reasons_Why.str
+MOVE Jim\Christmas_in_Dixie.mus Jim_-Jim_Brock-_-KCORB-\Christmas_in_Dixie.mus
+MOVE Jim\Christmas_in_Dixie.str Jim_-Jim_Brock-_-KCORB-\Christmas_in_Dixie.str
+MOVE Jim\Christmas_in_Dixie.wds Jim_-Jim_Brock-_-KCORB-\Christmas_in_Dixie.wds
+MOVE Jim\I_Heard_the_Bells.mus Jim_-Jim_Brock-_-KCORB-\I_Heard_the_Bells.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+MOVE /y Updated\DC_Star_and_Cpr__Back_in_the_High_Life.mus DC_Star_and_Cpr\Back_in_the_High_Life.mus
+MOVE /y Updated\Melody__It_was_Almost_like_a_song.mus Melody\It_was_Almost_like_a_song.mus
+MOVE /y Updated\Melody__Its_all_in_the_Game.mus Melody\Its_all_in_the_Game.mus
+RMDIR Updated
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+DEL Jim\Secret_Love.mus
+DEL Jim\Secret_Love.str
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v127.txt  00_Documents\Whats_new_in_v127.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_127.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.27 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

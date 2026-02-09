@@ -1,0 +1,122 @@
+
+IF EXIST Whats_new_in_v104.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE DOS PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v104.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.4
+ECHO.
+
+::::::::::::::::
+: DELETE DUPES :
+::::::::::::::::
+DEL Sammy_Snake\Walk_this_Way.mus
+DEL BJ_Pools\Shake_Me.str
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Coyote\Little_Words.mus  Coyote\Little_Wing.mus
+MOVE Coyote\Little_Words.wds  Coyote\Little_Wing.wds
+MOVE DC_Holmes\I_Heart_it_Through_the_Grapevine.mus  DC_Holmes\I_Heard_it_Through_the_Grapevine.mus
+MOVE DC_Holmes\I_Heart_it_Through_the_Grapevine.wds  DC_Holmes\I_Heard_it_Through_the_Grapevine.wds
+MOVE Misc\M\Mothers_of-the_Disappeared.mus  Misc\M\Mothers_of_the_Disappeared.mus
+MOVE John_E_Roach\Eugenia.mus  John_E_Roach\Eugenia_A.mus
+MOVE John_E_Roach\Original_Rag_A.mus  John_E_Roach\Original_Rags_A.mus
+MOVE John_E_Roach\Rag-Time_Dance.mus  John_E_Roach\Rag-Time_Dance_A.mus
+MOVE Nick_Zelinsky\Dancing_on_the_Ceiling.mus  Nick_Zelinsky\Dancing_on_the_Ceiling_A.mus
+MOVE Omega_Factor\Doctor_Who.mus  Omega_Factor\Doctor_Who_A.mus
+MOVE Paul_Labeaud\Easy_Street.mus  Paul_Labeaud\Easy_Street_A.mus
+MOVE Paul_Labeaud\Easy_Street.str  Paul_Labeaud\Easy_Street_A.str
+MOVE Paul_Labeaud\Easy_Street.wds  Paul_Labeaud\Easy_Street_A.wds
+MOVE Steak\Rock_you_like_a_Hurricane.mus  Steak\Rock_you_like_a_Hurricane_A.mus
+MOVE Steak\Run_to_You.mus  Steak\Run_to_You_A.mus
+MOVE Tom_B24\Just_One_Look.mus  Tom_B24\Just_One_Look_A.mus
+MOVE Tom_B24\Rock_and_Roll_is_Here_to_Stay.mus  Tom_B24\Rock_and_Roll_is_Here_to_Stay_A.mus
+
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+DEL Bobbye\Flowers_are_Red.mus
+MOVE Updated\Bobbye__Flowers_are_Red.mus  Bobbye\Flowers_are_Red.mus
+DEL DC_Star_and_Cpr\Breakout.mus
+MOVE Updated\DC_Star_and_Cpr__Breakout.mus  DC_Star_and_Cpr\Breakout.mus
+DEL Misc\A\Eye_of_the_Tiger.wds
+MOVE Updated\Misc_A__Eye_of_the_Tiger.wds  Misc\A\Eye_of_the_Tiger.wds
+DEL Misc\T\Youve_Lost_that_Lovin_Feeling.wds
+MOVE Updated\Misc_T__Youve_Lost_that_Lovin_Feeling.wds  Misc\T\Youve_Lost_that_Lovin_Feeling.wds
+DEL Nick_Zelinsky\Always.mus
+MOVE Updated\Nick_Zelinsky__Always.mus  Nick_Zelinsky\Always.mus
+MOVE Updated\Nick_Zelinsky__Always.str  Nick_Zelinsky\Always.str
+DEL Patricia_Bellamy\Cant_Help_Falling_in_Love.wds
+MOVE Updated\Patricia_Bellamy__Cant_Help_Falling_in_Love.wds  Patricia_Bellamy\Cant_Help_Falling_in_Love.wds
+DEL Patricia_Bellamy\Sad_Songs.wds
+MOVE Updated\Patricia_Bellamy__Sad_Songs.wds  Patricia_Bellamy\Sad_Songs.wds
+DEL Patricia_Bellamy\Turn_Turn_Turn.wds
+MOVE Updated\Patricia_Bellamy__Turn_Turn_Turn.wds  Patricia_Bellamy\Turn_Turn_Turn.wds
+DEL Whole_Note\Will_the_Circle_be_Broken.mus
+MOVE Updated\Whole_Note__Will_the_Circle_be_Broken.mus  Whole_Note\Will_the_Circle_be_Broken.mus
+
+::::::::::::::::::::
+: REORGANIZE TUNES :
+::::::::::::::::::::
+MOVE Misc\Anon\End_of_the_Road.mus  Saint_Bob1\End_of_the_Road.mus
+MOVE Misc\Anon\End_of_the_Road.wds  Saint_Bob1\End_of_the_Road.wds
+MOVE Misc\Anon\Keyboard_Piece_No7_C_Sharp_Major.mus  David_Pike\Keyboard_Piece_No7_C_Sharp_Major.mus
+MOVE Misc\B\Carnivale.mus  Misc\M\Carnivale.mus
+MOVE Misc\B\Carnivale.str  Misc\M\Carnivale.str
+MOVE Misc\B\Carnivale.wds  Misc\M\Carnivale.wds
+MOVE Misc\D\I_like.mus  Misc\G\I_like.mus
+MOVE Misc\D\I_like.str  Misc\G\I_like.str
+MOVE Misc\D\I_like.wds  Misc\G\I_like.wds
+MOVE Misc\J\Wheel_in_the_Sky.mus  Misc\T\Wheel_in_the_Sky.mus
+MOVE Misc\J\Wheel_in_the_Sky.wds  Misc\T\Wheel_in_the_Sky.wds
+MOVE Misc\L\Lapti_Nek.mus  Misc\S\Lapti_Nek.mus
+MOVE Misc\M\Jingle_Bells.mus  Misc\A\Jingle_Bells.mus
+MOVE Misc\N\Shake_me_I_Rattle.mus  Candylee\Shake_me_I_Rattle.mus
+MOVE Misc\N\Shake_me_I_Rattle.str  Candylee\Shake_me_I_Rattle.str
+MOVE Misc\N\Shake_me_I_Rattle.wds  Candylee\Shake_me_I_Rattle.wds
+MOVE Misc\S\Green_River.mus  Slydog\Green_River.mus
+MD F_W_P
+MOVE Misc\A\Over_the_Rainbow.mus  F_W_P\Over_the_Rainbow.mus
+MOVE Misc\Anon\It_aint_Necessarily_so.mus  F_W_P\It_aint_Necessarily_so.mus
+MOVE Misc\F\Berceuse_in_D_Flat_Op57.mus  F_W_P\Berceuse_in_D_Flat_Op57.mus
+MOVE Misc\F\Polonaise_in_G_Minor.mus  F_W_P\Polonaise_in_G_Minor.mus
+MOVE Misc\F\Killing_me_Softly_with_his_Song.mus  F_W_P\Killing_me_Softly_with_his_Song.mus
+MD Lorelei
+MOVE Misc\L\Immigrant_Song.mus  Lorelei\Immigrant_Song.mus
+MOVE Misc\L\Immigrant_Song.str  Lorelei\Immigrant_Song.str
+MOVE Misc\L\Sail_Away.mus  Lorelei\Sail_Away.mus
+MOVE Misc\L\Sail_Away.str  Lorelei\Sail_Away.str
+MOVE Misc\L\Variations_from_Glucks_Opera.mus  Lorelei\Variations_from_Glucks_Opera.mus
+
+
+::::::::::::::::::
+: RENAME AUTHORS :
+::::::::::::::::::
+MOVE Jere_D  Jere_D_Weaver
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v104.txt  00_Documents\Whats_new_in_v104.txt
+MOVE Extended_WDS.txt  00_Documents\Extended_WDS.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_104.txt
+RD Updated
+
+
+
+ECHO.
+ECHO CGSC UPDATE to v1.4 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

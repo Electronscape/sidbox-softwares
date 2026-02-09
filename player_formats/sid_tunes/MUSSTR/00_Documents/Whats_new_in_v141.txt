@@ -1,0 +1,53 @@
+What's new in Version 1.41
+==========================
+
+This update contains 38 MUS and 3 STR files.
+
+1. Some new music added: See list below:
+
+Bill_Bastian\Plink_Plank_Plunk.mus
+Craig_Chamberlain\Axel_F_(Left).mus
+Craig_Chamberlain\Axel_F_(Right).mus
+Crazy_Bill\Everybody_wants_to_Be_a_Cat.mus
+Dan_Barrett\Summer_Samba.mus
+David_W_Tattam\Aria_Non_Piu_Andrai.mus
+David_W_Tattam\Canon_in_D_Major.mus
+David_W_Tattam\Evening_in_the_Country.mus
+David_W_Tattam\Little_Prelude_No5.mus
+David_W_Tattam\Menuet.mus
+David_W_Tattam\Menuet_II.mus
+David_W_Tattam\Piano_Sonata_in_C_Major.mus
+David_W_Tattam\Stardust.mus
+David_W_Tattam\Waltz.mus
+George_Bounacos\Root_Beer_Rag.mus
+Glen\Flyin_Home.mus
+Jere_D_Weaver\There_will_Never_be_Another_You.mus
+Jere_D_Weaver\There_will_Never_be_Another_You.str
+Jerry_Roth_-Dr_J-\Wild_Weekend_B.mus
+Jerry_Roth_-Dr_J-\Wild_Weekend_B.str
+Jimi_O\Americal_Patrol.mus
+Jimi_O\Americal_Patrol.str
+Jim_and_Carole_Dietz\Tales_of_the_Vienna_Wood.mus
+Joseph_A_Grau\Prancer.mus
+Misc\Anon\Ah_vous_Dirai-Je_Maman.mus
+Misc\Anon_Blank\Ghostbusters.mus
+Misc\B\Blue_Peter.mus
+Misc\C\Sonata_in_G_Minor.mus
+Misc\I\Allegro.mus
+Misc\I\Dreams.mus
+Misc\M\English_Anthem.mus
+Misc\M\Yellow_Submarine_B.mus
+Misc\S\The_Song.mus
+Music_Man3\Deck_the_Halls.mus
+Stephen_B_OShea\Love_is_Blue.mus
+Stephen_B_OShea\Monkey.mus
+Stephen_B_OShea\Raffertys_Rules.mus
+Stephen_B_OShea\Sesame_Street.mus
+The_Edge\People_are_People.mus
+The_Edge\The_Weapon.mus
+Thy_Ace\15_2-Part_Inventions.mus
+
+
+2. One tune updated.
+
+John_E_Roache\Solace_A.mus

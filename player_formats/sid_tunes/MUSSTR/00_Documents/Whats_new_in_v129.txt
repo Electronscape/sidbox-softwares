@@ -1,0 +1,473 @@
+What's new in Version 1.29
+==========================
+
+This update contains 252 MUS, 92 STR & 54 WDS new files.
+
+1. Music from various SIDFests in the original disk image format, also including disk label scans.
+SIDfest '87 (Columbus, OH) -- All-American SIDs.d64
+SIDfest '87 (Columbus, OH) -- Christmas SIDs Side A.d64
+SIDfest '87 (Columbus, OH) -- Christmas SIDs Side B.d64
+SIDfest '87 (Columbus, OH) -- Commemorative Album from SDAs.d64
+SIDfest '87 (Columbus, OH) -- Commemorative Collection.d64
+SIDfest '87 (Columbus, OH) -- Country & Folk SIDs.d64
+SIDfest '87 (Columbus, OH) -- Dr. J's SIDs.d64
+SIDfest '87 (Columbus, OH) -- Harry Bratt's Unfinished Works.d64
+SIDfest '87 (Columbus, OH) -- Ragtime & Jazz SIDs.d64
+SIDfest '87 (Columbus, OH) -- Rockin' Sid Side A.d64
+SIDfest '87 (Columbus, OH) -- Rockin' Sid Side B.d64
+SIDfest '87 (Columbus, OH) -- Show Time Side A.d64
+SIDfest '87 (Columbus, OH) -- Show Time Side B.d64
+SIDfest '87 (Columbus, OH) -- Sids for Kids Side A.d64
+SIDfest '87 (Columbus, OH) -- Sids for Kids Side B.d64
+SIDfest '87 (Columbus, OH) -- Swing 'n' Sway SIDs.d64
+SIDfest '87 (Columbus, OH) -- The Classics Side A.d64
+SIDfest '87 (Columbus, OH) -- The Classics Side B.d64
+SIDfest '88 (Philadelphia, PA) -- Classical Collection (from SDA).d64
+SIDfest '88 (Philadelphia, PA) -- Commemorative Collection.d64
+SIDfest '88 (Philadelphia, PA) -- Commemorative Stereo Album Side A.d64
+SIDfest '88 (Philadelphia, PA) -- Commemorative Stereo Album Side B.d64
+SIDfest '88 (Richmond, VA) -- Commemorative Album Side A.d64
+SIDfest '88 (Richmond, VA) -- Commemorative Album Side B.d64
+SIDfest '89 (New Orleans, LA) -- Classical Album Side A.d64
+SIDfest '89 (New Orleans, LA) -- Classical Album Side B.d64
+SIDfest '89 (New Orleans, LA) -- Commemorative Album Side A.d64
+SIDfest '89 (New Orleans, LA) -- Commemorative Album Side B.d64
+SIDfest '89 (New Orleans, LA) -- Doc JM Side A.d64
+SIDfest '89 (New Orleans, LA) -- Doc JM Side B.d64
+SIDfest '89 (New Orleans, LA) -- Doc JM Side C.d64
+SIDfest '90 (Las Vegas, NV) -- Songs from SDAs.d64
+SIDfest '90 (Valley Forge, PA) -- Classical SIDs Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Classical SIDs Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Commemorative Collection -- Las Vegas retrospective Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Commemorative Collection -- Las Vegas retrospective Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Commemorative Collection Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Commemorative Collection Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- New Orleans Classical Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- New Orleans Classical Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Original SIDs Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Original SIDs Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on DocJM Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on DocJM Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on DrJ5 Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on DrJ5 Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on Jabba Hutt Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on Jabba Hutt Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on SylviaL Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on SylviaL Side B (stereo).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on Whole Note Side A (mono).d64
+SIDfest '90 (Valley Forge, PA) -- Spotlight on Whole Note Side B (stereo).d64
+SIDfest '91 (Miami, FL) -- Classical SIDs from SDAs.d64
+SIDfest '91 (Miami, FL) -- Songs collected unofficially by Colin Roth Side A.d64
+SIDfest '91 (Miami, FL) -- Songs collected unofficially by Colin Roth Side B.d64
+
+2. Some new music added: See list below:
+
+Bobbye\Manhattan_Serenade.mus
+Brian_M_Szepatowski\Battlestar_Galactica_B.mus
+Carl_Benton\Fantasie_in_E_Op16_Nr3.str
+Carl_Benton\Pavana_the_Earle_of_Salisbury.mus
+Carl_Benton\Pavana_the_Earle_of_Salisbury.str
+Carl_Benton\Short_Mesure_off_my_Lady.mus
+Carl_Benton\The_New_Sa-Hoo.mus
+Carl_Benton\Valse_Triste_B.mus
+Carl_Benton\Valse_Triste_B.str
+Cicada\In_Russia.mus
+Colin10\Daydream.mus
+Colin10\Piano_Study_No1_from_Opus47.mus
+Colin10\Sonatina_Op3_No2.mus
+Colin10\Three_Small_Piano_Pieces.mus
+Colin_Roth\Allemande.mus
+Colin_Roth\Bourree.mus
+Colin_Roth\Bourree.str
+Colin_Roth\Concerto_XI_44_Part1.mus
+Colin_Roth\Concerto_XI_44_Part1.str
+Colin_Roth\Concerto_XI_44_Part12.str
+Colin_Roth\Concerto_XI_44_Part2.mus
+Colin_Roth\Goldberg_Variation_No1.mus
+Daspf\Oh_What_a_Beautiful_Morning.wds
+Daspf\People_will_Say_were_in_Love.mus
+Daspf\People_will_Say_were_in_Love.wds
+Datasid_-Troy_Rutter-\Im_at_the_WOC_Show.wds
+Datasid_-Troy_Rutter-\Its_Hard_to_Say_Goodbye.mus
+Datasid_-Troy_Rutter-\Its_Hard_to_Say_Goodbye.wds
+David_Pike\Allegro_20.mus
+David_Pike\Allegro_21.mus
+David_Pike\Allegro_22.mus
+David_Pike\Allegro_23.mus
+David_Pike\Dichos.wds
+David_Pike\Leonardo.wds
+David_Pike\Movement.mus
+David_Pike\Sonata_K178_L162.mus
+David_Pike\Sonata_K189_L143.mus
+DC8\Kabalevsky_Prelude_Remix.mus
+DC8\Sinfonia_10_B.mus
+DC8\Wohin_B.mus
+DC8\Wohin_B.str
+DC_Starr\Beginnings.mus
+DC_Starr\Cosmic_Chimes.mus
+DC_Starr\Happiness_Found.mus
+DC_Starr\Life_Source.mus
+DC_Starr\Polonaise_Op53.mus
+DC_Starr\Song_for_Brian.mus
+DC_Starr\Story_of_a_Romance.mus
+DC_Starr\Story_of_a_Romance.wds
+DC_Star_and_Cpr\Star_Trek_III_Search_for_Spock_B.str
+DC_Star_and_Cpr\Whos_Afraid_of_the_Big_Bad_Wolf.mus
+DC_Star_and_Cpr\Whos_Afraid_of_the_Big_Bad_Wolf.wds
+FatalCharm\Huh_eh_what.mus
+Gene\Cant_Stop_Sidding.str
+Gene\Cant_Stop_Sidding.wds
+Glen\Elfin_Dance_Op12_B.mus
+Glen\Mazurka_No2_Op54.mus
+Glen\Mazurka_No2_Op54.str
+Gustave\Concerto_Grosso_for_Strings_OpIII_No6.mus
+Harry_Bratt\Last_Free_California_Condor.mus
+Harry_Bratt\HB\Baraque_Hoedown2.mus
+Herb_D1_and_Cindy_J\Red_River_Valley.wds
+James_E_Grant\Above_Below.mus
+James_E_Grant\Above_Below.str
+James_E_Grant\Fantasia_in_G_Minor_BWV542.mus
+James_E_Grant\Fantasia_in_G_Minor_BWV542.str
+James_E_Grant\Fugue_in_G_Minor_BWV542.mus
+James_E_Grant\Fugue_in_G_Minor_BWV542.str
+James_E_Grant\Fugue_in_G_Minor_BWV578.mus
+James_E_Grant\Fugue_in_G_Minor_BWV578.str
+James_E_Grant\Prelude_and_Fugue_in_G_Major_BWV550.mus
+James_E_Grant\Prelude_and_Fugue_in_G_Major_BWV550.str
+James_E_Grant\Short_Prelude_No4_in_F_Major.mus
+James_E_Grant\Short_Prelude_No4_in_F_Major.str
+James_E_Grant\Tocatta_in_D_Minor_BWV538.mus
+James_E_Grant\Tocatta_in_D_Minor_BWV538.str
+Jere_D_Weaver\Hot_Stuff.mus
+Jim_and_Carole_Dietz\Alley_Oop.mus
+Jim_and_Carole_Dietz\Alley_Oop.wds
+Jim_and_Carole_Dietz\April_in_Paris.mus
+Jim_and_Carole_Dietz\At_the_Hop.mus
+Jim_and_Carole_Dietz\At_the_Hop.wds
+Jim_and_Carole_Dietz\Buckeye_Battle_Cry.mus
+Jim_and_Carole_Dietz\Buckeye_Battle_Cry.wds
+Jim_and_Carole_Dietz\Days_of_Wine_and_Roses.mus
+Jim_and_Carole_Dietz\Diana.wds
+Jim_and_Carole_Dietz\Dont_Fence_me_in.mus
+Jim_and_Carole_Dietz\Frosty_the_Snowman.mus
+Jim_and_Carole_Dietz\Holly_and_the_Ivy.mus
+Jim_and_Carole_Dietz\Holly_and_the_Ivy.wds
+Jim_and_Carole_Dietz\O_Tannenbaum.mus
+Jim_and_Carole_Dietz\O_Tannenbaum.wds
+Jim_and_Carole_Dietz\September_Song.mus
+Jim_and_Carole_Dietz\Song_of_India.mus
+Jim_and_Carole_Dietz\Syncopated_Clock.mus
+Jim_and_Carole_Dietz\The_Wanderer.mus
+Jim_and_Carole_Dietz\The_Wanderer.wds
+Jim_and_Carole_Dietz\Three_Blind_Mice.mus
+Jim_and_Carole_Dietz\Three_Blind_Mice.wds
+Jim_and_Carole_Dietz\Tie_a_Yellow_Ribbon_round_the_old_Oak_Tree.mus
+John_C_Mackey\Sonata_Pathetique_Op13.mus
+John_C_Mackey\Water_Music.mus
+John_C_Mackey\Winter_B.mus
+John_C_Mackey\Brandenburg_Concerto\Brandenburg_Concerto_No4_in_G_Major_3rd_Movement_B.mus
+John_E_Roache\Moonscape.mus
+John_E_Roache\White_Christmas.mus
+John_E_Roache\White_Christmas.wds
+Joseph_A_Grau\Aquila_Altera.mus
+Joseph_A_Grau\Barricades_Mysterieuses.mus
+Joseph_A_Grau\Barricades_Mysterieuses.str
+Joseph_A_Grau\Caro_nome_che_il_mio_cor.mus
+Joseph_A_Grau\Clavier_Sonata_No1.mus
+Joseph_A_Grau\Dubula.mus
+Joseph_A_Grau\Dubula.wds
+Joseph_A_Grau\Etude_No25_from_Gradus_ad_Parnassum.mus
+Joseph_A_Grau\Follow_the_Drum.mus
+Joseph_A_Grau\Follow_the_Drum.str
+Joseph_A_Grau\Four_Gigues.mus
+Joseph_A_Grau\Four_Gigues.str
+Joseph_A_Grau\Four_Pieces.mus
+Joseph_A_Grau\How_Willing_my_Paternal_Love.mus
+Joseph_A_Grau\How_Willing_my_Paternal_Love.str
+Joseph_A_Grau\Imprecunious_Davis.mus
+Joseph_A_Grau\Imprecunious_Davis.str
+Joseph_A_Grau\Irish_Castle_A.mus
+Joseph_A_Grau\Irish_Castle_B.mus
+Joseph_A_Grau\Kostensko_Horo.mus
+Joseph_A_Grau\Menuet_Dexaudet.mus
+Joseph_A_Grau\Menuet_Dexaudet.str
+Joseph_A_Grau\Otme_Bulbul.mus
+Joseph_A_Grau\O_ma_Tendre_Musette.mus
+Joseph_A_Grau\O_ma_Tendre_Musette.str
+Joseph_A_Grau\Que_ne_suis_je_la_Fougere_B.mus
+Joseph_A_Grau\Que_ne_suis_je_la_Fougere_B.str
+Joseph_A_Grau\Sarabande_from_Pieces_de_Clavecin.mus
+Joseph_A_Grau\Sarabande_from_Pieces_de_Clavecin.str
+Joseph_A_Grau\Schwaben-Tanz.mus
+Joseph_A_Grau\Sonata_XI_in_D_Major_Frederick_the_Great.mus
+Joseph_A_Grau\Sonata_XI_in_D_Major_Frederick_the_Great.str
+Joseph_A_Grau\Spice-cakewalk.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat
+Joseph_A_Grau\Ta-gu.mus
+Joseph_A_Grau\Tempo_di_Ballo.mus
+Joseph_A_Grau\Variations_on_a_Theme_by_Anselm_Huttenbrenner.mus
+Joseph_A_Grau\Variations_on_a_Theme_by_Anselm_Huttenbrenner.str
+Joseph_A_Grau\Zborenka_Horo.mus
+Joseph_A_Grau\Bergerette\Aminte.mus
+Joseph_A_Grau\Bergerette\Aminte.str
+Joseph_A_Grau\Bergerette\Bergere_Legere.mus
+Joseph_A_Grau\Bergerette\Bergere_Legere.str
+Joseph_A_Grau\Bergerette\Chantons_les_Amours_de_Jean.mus
+Joseph_A_Grau\Bergerette\Chantons_les_Amours_de_Jean.str
+Joseph_A_Grau\Bergerette\Chaque_Chose_a_son_Temps.mus
+Joseph_A_Grau\Bergerette\Chaque_Chose_a_son_Temps.str
+Joseph_A_Grau\Bergerette\Jeune_Filette.mus
+Joseph_A_Grau\Bergerette\Jeune_Filette.str
+Joseph_A_Grau\Bergerette\Je_Connais_un_Berger_Discret.mus
+Joseph_A_Grau\Bergerette\Je_Connais_un_Berger_Discret.str
+Joseph_A_Grau\Bergerette\Lamour_Senvole.mus
+Joseph_A_Grau\Bergerette\Lamour_Senvole.str
+Joseph_A_Grau\Bergerette\La_Mere_Bontemps.mus
+Joseph_A_Grau\Bergerette\La_Mere_Bontemps.str
+Joseph_A_Grau\Bergerette\Lisette.mus
+Joseph_A_Grau\Bergerette\Lisette.str
+Joseph_A_Grau\Bergerette\Maman_Dites-moi.mus
+Joseph_A_Grau\Bergerette\Maman_Dites-moi.str
+Joseph_A_Grau\Bergerette\Nanette.mus
+Joseph_A_Grau\Bergerette\Nanette.str
+Joseph_A_Grau\Bergerette\Non_je_ne_Crois_pos.mus
+Joseph_A_Grau\Bergerette\Non_je_ne_Crois_pos.str
+Joseph_A_Grau\Bergerette\Non_je_nirai_plus_au_Bois.mus
+Joseph_A_Grau\Bergerette\Non_je_nirai_plus_au_Bois.str
+Joseph_A_Grau\Bergerette\Par_un_Matin.mus
+Joseph_A_Grau\Bergerette\Par_un_Matin.str
+Joseph_A_Grau\Bergerette\Philis_plus_Avare_que_Tendre.mus
+Joseph_A_Grau\Bergerette\Philis_plus_Avare_que_Tendre.str
+Joseph_A_Grau\Bergerette\Trop_Aimable_Sylvie.mus
+Joseph_A_Grau\Bergerette\Trop_Aimable_Sylvie.str
+Joseph_A_Grau\Bergerette\Venez_Agreable_Printemps.mus
+Joseph_A_Grau\Bergerette\Venez_Agreable_Printemps.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\01_Fantasie.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\01_Fantasie.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\02_Fuga_A_Quattro.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\02_Fuga_A_Quattro.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\03_Allemande.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\03_Allemande.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\04_Courante.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\04_Courante.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\05_Sarabande.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\05_Sarabande.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\06_La_Hardiesse.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\06_La_Hardiesse.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\07_Menuetts_I_and_II.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\07_Menuetts_I_and_II.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\08_Air.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\08_Air.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\09_Hornpipe.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\09_Hornpipe.str
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\10_Gigue.mus
+Joseph_A_Grau\Suite_by_Gottlieb_Muffat\10_Gigue.str
+Joseph_M_Fortier\Aba_Daba_Honeymoon.mus
+Les_Herrman\Clarinet_Polka.mus
+Ltworf5\Nothing_else_Matters.mus
+Ltworf5\Nothing_else_Matters.wds
+Lyric\America.wds
+Lyric\Cherokee_Memory_B.str
+Lyric\Reflections.mus
+Lyric\Reflections.str
+Lyric\Swan_Lake_A.str
+Lyric\Tribute_to_James_Calway.mus
+Lyric\Tribute_to_James_Calway.str
+Marvin_Jones\Plant_a_Radish.mus
+Marvin_Jones\Plant_a_Radish.wds
+Marvin_Jones\Try_to_Remember.mus
+Marvin_Jones\Try_to_Remember.wds
+Mets5\Ave_Maria.mus
+Mike_Generali\Symphony_No6_in_F_Major_Op68_1st_Movement.mus
+Mike_Generali\Symphony_No6_in_F_Major_Op68_2nd_Movement.mus
+Mike_Generali\Symphony_No6_in_F_Major_Op68_3rd_Movement.mus
+Mike_Generali\Symphony_No6_in_F_Major_Op68_4th_Movement.mus
+Mike_Generali\Symphony_No6_in_F_Major_Op68_5th_Movement.mus
+Misc\Anon\Angelus_ad_Virginem.mus
+Misc\Anon\Away_in_a_Manger.mus
+Misc\Anon\I_Heard_the_Bells_on_Chistmas.mus
+Misc\Anon\Lullay_thou_Little_Tiny_Child.mus
+Misc\Anon\Star_Carol.mus
+Misc\Anon\We_Three_Kings_of_Orient_are.mus
+Misc\Anon_Blank\April_Sky.mus
+Misc\Anon_Blank\Aubert.mus
+Misc\Anon_Blank\Aust_Czerny.mus
+Misc\Anon_Blank\Bach_BMV977.mus
+Misc\Anon_Blank\Croft_Prelude.mus
+Misc\Anon_Blank\Elven_Hymn.mus
+Misc\Anon_Blank\Elven_Hymn.wds
+Misc\Anon_Blank\Flutes_on_Koh.mus
+Misc\Anon_Blank\Flute_Set.mus
+Misc\Anon_Blank\Lullabye_Lia.mus
+Misc\Anon_Blank\Overture_SQ.mus
+Misc\Anon_Blank\Piano.mus
+Misc\Anon_Blank\Schub_Op18-4.mus
+Misc\Anon_Blank\Var_Anslem.mus
+Misc\Anon_Blank\Vir_Misc1.mus
+Misc\B\Choralvorspiele_I_No8.mus
+Misc\B\Dump_Monster_Theme.mus
+Misc\B\Panis_Angelicus.mus
+Misc\C\At_Times.mus
+Misc\C\O_Filii_et_Filiae.mus
+Misc\G\Allegro.mus
+Misc\H\Haydns_Trumpet_Concerto.mus
+Misc\H\I_Love_Trash.mus
+Misc\H\Kling_Gloeckchen.mus
+Misc\H\Sea_Chanty.mus
+Misc\H\Sing_Sesame_Street.mus
+Misc\K\Let_there_be_Peace_on_Earth.mus
+Misc\M\All_my_Love.wds
+Misc\M\Dusk.mus
+Misc\R\What_have_they_done_to_My_Song_(NON).mus
+Misc\S\Brandenburg_Converto_No3_in_G_B.mus
+Misc\S\Irish_Ballad.mus
+Misc\S\I_wont_Forget_You.mus
+Misc\S\O_Holy_Night.mus
+Misc\S\Prelude_No14.mus
+Misc\T\Fat_Bottomed_Girls.mus
+Misc\T\Fat_Bottomed_Girls.wds
+Misc\T\La_Lutine.mus
+Misc\T\Youre_my_Best_Friend.mus
+Mouse10\La_de_Brissac.mus
+Ms_Guitar\Stairway_to_Heaven.mus
+Ms_Guitar\Stairway_to_Heaven.wds
+Nick_Zelinsky\Dancing_on_the_Ceiling_A.wds
+Nosfera_II\Gopak_for_Piano.mus
+Nosfera_II\Gopak_for_Piano.str
+Nosfera_II\Toot_Fugue.mus
+Nosfera_II\Toot_Fugue.str
+Rohan2\Dance_of_the_Hours.str
+Rohan2\Waltz_from_Act_Two_of_Faust.mus
+Rohan2\Waltz_from_Act_Two_of_Faust.str
+Ron_Zyna\If_you_know_what_I_mean.mus
+Ron_Zyna\If_you_know_what_I_mean.str
+Ron_Zyna\If_you_know_what_I_mean.wds
+Saint_Bob1\Working_for_the_Weekend.mus
+Saint_Bob1\Working_for_the_Weekend.wds
+Sandy_C\I_found_a_Peach_in_Orange_New_Jersey.mus
+Sandy_C\I_found_a_Peach_in_Orange_New_Jersey.str
+Sandy_C\I_found_a_Peach_in_Orange_New_Jersey.wds
+Sandy_C\That_Awkward_Age.mus
+Sandy_C\That_Awkward_Age.str
+Sandy_C\That_Awkward_Age.wds
+Sean_Fields\Shooting_Star.wds
+Sean_Fields\Sometimes_a_Fantasy.wds
+Sid_Editor\Sand_Castle.mus
+Slip_Note\For_You_Bright_Eyes.mus
+Slip_Note\For_You_Bright_Eyes.str
+Slip_Note\Raindrop_Prelude_Op28_No15.mus
+Slip_Note\Raindrop_Prelude_Op28_No15.str
+Syl\Allegro.str
+Syl\Allemande_for_Lute.mus
+Syl\Allemande_for_Lute.str
+Syl\As_I_went_to_Walsingham.mus
+Syl\Ave_Verum_Corpus.mus
+Syl\Ave_Verum_Corpus.str
+Syl\Bach_Air_B.mus
+Syl\Bach_Air_B.str
+Syl\Bohemia_Rag.mus
+Syl\Champagne_Rag.mus
+Syl\Chipapanecas.mus
+Syl\Divertimento_No1_K136_Allegro.mus
+Syl\Divertimento_No1_K136_Allegro.str
+Syl\Divertimento_No1_K136_Andante.mus
+Syl\Divertimento_No1_K136_Andante.str
+Syl\Divertimento_No1_K136_Presto.mus
+Syl\Divertimento_No1_K136_Presto.str
+Syl\Flute_Sonata_No6_Rondo.mus
+Syl\Flute_Sonata_No6_Rondo.str
+Syl\Gavotte.mus
+Syl\Greensleeves.mus
+Syl\Haydn_Allegro_from_Sonata_in_C_Major.mus
+Syl\Haydn_Duet_in_D_Major.mus
+Syl\Haydn_Duet_in_D_Major.str
+Syl\Haydn_Serenade_from_Quartet_in_F_Major.mus
+Syl\Haydn_Sonata_No20_in_C_Minor.mus
+Syl\Haydn_String_Quartet_Op76_No3.mus
+Syl\Haydn_String_Quartet_Op76_No3.str
+Syl\Kiso_Bushi.mus
+Syl\Kiso_Bushi.str
+Syl\Marche_de_Rois.mus
+Syl\Marche_de_Rois.str
+Syl\Marche_de_Rois.wds
+Syl\Packingstones_Pound.mus
+Syl\Patricia_Rag.mus
+Syl\Ruhe_sanft_mein_Holdes_Leben.mus
+Syl\Siciliano_in_C_Minor.str
+Syl\Sonatina_in_G_and_Country_Dance.mus
+Syl\Sunburst_Rag.mus
+Syl\Sunburst_Rag.str
+Syl\Telemann_Fantasia_No1-1.mus
+Syl\Telemann_Fantasia_No1-2.mus
+Syl\Telemann_Fantasia_No1-3.mus
+Syl\Telemann_Fantasia_No1-4.mus
+Syl\Telemann_Fantasia_No1-5.mus
+Syl\Telemann_Fantasia_No1-6.mus
+Syl\Toccata_and_Fugue.mus
+Syl\Two_Violins_in_A_Minor_A.str
+Symphoni\Cristoforis_Dream_A.str
+Synthax_-Mark_Hazen-\Melencholia_Test.mus
+Terry_Woll\Look_to_the_Rainbow.mus
+Terry_Woll\Look_to_the_Rainbow.wds
+Uncle_Slam\Fade_to_Black.str
+Uncle_Slam\Fade_to_Black.wds
+Utah_Blaine\Cry_like_a_Baby.mus
+Utah_Blaine\Cry_like_a_Baby.wds
+Victor_Singleton\Ah_Robin.mus
+Victor_Singleton\Ah_Robin.wds
+Victor_Singleton\Ay_Linda_Amiga.mus
+Victor_Singleton\Ay_Linda_Amiga.wds
+Victor_Singleton\Belle_qui_Pavan.mus
+Victor_Singleton\Belle_qui_Pavan.wds
+Victor_Singleton\Stella_Splendens.mus
+Victor_Singleton\Stella_Splendens.wds
+Victor_Singleton\Sumer_is_icumen_in.mus
+Victor_Singleton\Sumer_is_icumen_in.wds
+Victor_Singleton\Tant_con_je_Vivrai.mus
+Victor_Singleton\Tant_con_je_Vivrai.wds
+Victor_Singleton\Veris_Dulcis_in_Tempore.mus
+Victor_Singleton\Veris_Dulcis_in_Tempore.wds
+Victor_Street_Music\Nothing_Compares_to_you.mus
+Victor_Street_Music\Nothing_Compares_to_you.wds
+Wesley_Noles\Ciaccona_mit_13_Veranerungen.mus
+Wesley_Noles\Dies_irae.mus
+Wesley_Noles\Lamentation_Lectio_III_Aleph.str
+Wesley_Noles\Lamentation_Lectio_III_Aleph.wds
+Wesley_Noles\Music_for_Marcel_Duchamp.mus
+Wesley_Noles\Nocturne_in_C_Minor_Op48_No1.str
+Wesley_Noles\Nocturne_in_E_Flat_Op9_No2.str
+Wesley_Noles\On_his_Loves_Absence.mus
+Wesley_Noles\On_his_Loves_Absence.wds
+Wesley_Noles\Preludio_Nr2.mus
+Wesley_Noles\Recitative_and_Aria.mus
+Wesley_Noles\Recitative_and_Aria.wds
+Whole_Note\AJA.wds
+Whole_Note\Itty_Bitty_Marching_Band.mus
+Whole_Note\Itty_Bitty_Marching_Band.wds
+Whole_Note\Minuet_in_G.mus
+Whole_Note\Oklahoma.wds
+Whole_Note\Passacaglia.mus
+Whole_Note\Rock_of_Ages.mus
+Whole_Note\Rock_of_Ages.str
+Whole_Note\Suite_VII_G_Minor
+Whole_Note\Woody_Woodpecket_Song.mus
+Whole_Note\Woody_Woodpecket_Song.wds
+Whole_Note\Baroque_Master_Works\Ottava_Parte.mus
+Whole_Note\Baroque_Master_Works\Sonata_L388.mus
+Whole_Note\Baroque_Master_Works\Theme_and_Variations.mus
+Whole_Note\Suite_VII_G_Minor\Gigue_B.str
+Yoda_Dayve\Summer_Place.mus
+Z_Axis\Bassa_Imperiale.mus
+Z_Axis\Bassa_Imperiale.str
+Z_Axis\Serenade.mus
+Z_Axis\Seven_German_Dances.mus
+Z_Axis\Seven_German_Dances.str
+
+3. Some new music updated: See list below:
+
+Marvin_Jones\Whirlpool_Galaxy_M5.mus
+Whole_Note\Long_and_Winding_Road.mus
+
+4. Added some new disk images to the 00_Commodore64 directory.
+
+00_Commodore64\Magic_Sid_Machine_v21.d64

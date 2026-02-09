@@ -1,0 +1,194 @@
+SIDPLAYER NEWS FILE #1  7/85 11/85 
+
+Welcome to the first news file for Sidplayer, the music system published in 
+the book "ALL ABOUT THE COMMODORE 64, VOLUME TWO" by Craig Chamberlain, 
+published by COMPUTE! Books. 
+
+This documentation file describes how to use KPLAY, how to hook your Commodore 
+64 up to a stereo, how to play a song for two computers, where to submit 
+songs, and more. 
+
+The SIDCAT files provide a complete listing of Sidplayer songs in groups of 
+fifty. 
+
+These files will be updated periodically to bring you the latest information 
+about Sidplayer. 
+
+KPLAY is an enhanced version of the Player found in Volume Two.  It plays all 
+Sidplayer songs and features a piano keyboard display.  KPLAY and Sidplayer 
+songs may be freely distributed but not sold. 
+
+When you run KPLAY, the program will first ask you for your name.  Type your 
+name, up to ten letters long, and press the Return key.  Don't worry about 
+upper/lower case. 
+
+After displaying two more screens, the program will list the names of all the 
+Sidplayer songs on the disk. (Sidplayer songs are identified by .MUS at the 
+end of the filename.) 
+
+To play a song, just type its name (without the .MUS) and press the Return 
+key.  The program will load the song, the screen will change to show a piano 
+keyboard, some text lines will be printed, and the song will start playing. 
+
+When the song is done playing, the program will return to the screen with the 
+song directory.  You can then choose another song. 
+
+To stop a song before it is finished playing, just hit any key, such as the 
+space bar. 
+
+To replay a song, type * in place of the filename and press Return.  The 
+program will skip the loading process and start playing the song again. 
+
+If you make a mistake in typing a filename, or a requested song is not on the 
+disk, the program will print the message "I DON'T KNOW THAT SONG". 
+
+To play songs on another disk, simply insert the disk and press Return for a 
+new song directory. 
+
+If no Sidplayer songs are found on a disk, the message "NO MUSIC FILES ON 
+DISK" will be printed. 
+
+To save some typing, you can use the wildcard character in the filenames. 
+Just type the first few letters of the filename, followed by a '*', the 
+wildcard character.  For example, to load and play the song HOMECOMING, type 
+HOM* for the filename. 
+
+Be sure to type enough letters to distinguish the name from any others. 
+Typing only HO* could cause the program to load and play the song HOLST 
+instead. 
+
+Also be aware that using wildcards may make the program try to load a file 
+other than a song.  Typing K* might cause the program to load and attempt to 
+play the program KPLAY rather than the song K.C.O.. 
+
+When you are done playing songs, hit Run/Stop Restore to exit the program. 
+
+The first time you do this, remember to Scratch the KPLAY on the disk and use 
+the SAVE command to replace it with the personalized version. 
+
+If you do this, the next time you run the personalized KPLAY, it will not ask 
+you for your name, and will go right to the song directory! 
+
+To change the name or remove it, LOAD the KPLAY program and enter the command 
+RUN 100 to start the program at line 100. 
+
+Sidplayer songs are very memory efficient.  Their small size means that they 
+can be loaded from disk faster, can be transferred by modem in a shorter 
+amount of time, and take less storage space. 
+
+Although the songs are compact enough that you could store as many as a 
+hundred on one side of a disk, it is recommended that you not put more than 
+fifty songs on a side, since this will make the screen scroll when KPLAY 
+prints the song directory. 
+
+Also, the extra songs will not be playable by the MULTIPLAY (MPLAY) song 
+player. 
+
+Sidplayer songs sound great, but they will sound even better if you play them 
+over a stereo instead of through the cheap little speaker on a television or 
+monitor. 
+
+It's so easy to connect your Commodore 64 to a stereo.  Any standard monitor 
+cord splits into one or more video lines and one audio line.  Just plug the 
+cord into the monitor output of the 64 and connect the audio line to the 
+auxiliary input of your stereo. 
+
+You may also want to get a "Y" patchcord to split the signal, so that you can 
+hear it through both the left and right speakers. 
+
+An unfortunate limitation of the SID chip is that it supports only three 
+voices.  Contemporary songs often need at least four. 
+
+One way to get around this problem is to have a song use two computers, for a 
+total of six voices.  This allows the use of a melody line, a bass line, 
+chords, and percussion, and opens the door to stereo effects. 
+
+The first Sidplayer song for two computers is the Axel F Theme from the movie 
+"Beverly Hills Cop".  The file AXELF-L is for the left speaker and the file 
+AXELF-R is for the right speaker.  The two files must be played simultaneously 
+on two computers. 
+
+To play two computers together, load and run the Sidplayer Editor on each 
+computer, then load the file for the left speaker on one computer and the file 
+for the right speaker on the other computer. 
+
+Press the '1' key from the MAIN menu to select the PLAY option, and finally 
+press the Return keys of the two computers at the same instant.  The four 
+timing beeps at the beginning of the song should be synchronized if the Return 
+keys were hit together.  It may take a few tries to get a "good start". 
+
+Adjust the volumes for a good balance (the audio output is stronger on some 
+64'S than others) and enjoy the song. 
+
+The simultaneous playing can also be done with KPLAY, but sometimes the two 
+computers will not stay synchronized.  Unlike the Editor, KPLAY uses the 
+raster scan interrupt, and for some unknown reason the computers may "drift" 
+even if they are started together. 
+
+If you try to use KPLAY, turn on each computer, hit Run/Stop Restore on each 
+one, then load and run KPLAY.  Load the respective song files, but hit a key 
+to stop the playing.  Type '*' for the filename on each computer to choose the 
+replay feature, and then hit the Return keys together.  Listen for a while to 
+determine if the playing on the two computers stays synchronized. 
+
+One way to tell for sure if the computers stay together is to play the same 
+song on both computers. 
+
+An alternate method to start the playing from KPLAY is to release joystick 
+triggers together instead of hitting Return keys together. 
+
+Plug a joystick into port two of each computer and have one person hold both 
+joysticks.  The person should press and hold down the triggers on the 
+joysticks when the Return keys are pressed.  The playing will not start until 
+the triggers are released. 
+
+If the playing on the computers does not stay synchronized, try a different 
+pair of computers. 
+
+To submit songs, you may send them to the author. 
+
+Craig Chamberlain 
+C/O Compute! Books 
+P.O. BOX 5406 
+Greensboro, NC 27403 
+
+If you subscribe to the Delphi telecommunications service, a more direct way 
+to submit your songs is to upload them to the Commodore music database of the 
+Micro Artist Network (MANIAC) SIG.  The song will be assigned the next 
+available catalog number and be listed in the next catalog.  You will also 
+find the latest songs from other people in the MANIAC music database. 
+
+The author can sometimes be found in the Micro Artist Network SIG.  Delphi 
+mail should be sent to the username CRAIGCH. 
+
+Here are a couple technical notes.  The version of the player used by the 
+KPLAY program has been modified to improve the timing. 
+
+Because of these timing changes, a song with sensitive envelope settings may 
+play just a little differently in KPLAY than it does in the Editor or the 
+Player from the book. 
+
+The other note is that to change the color of a piano key in KPLAY, use the 
+Editor to enter an AUX command on the appropriate voice with a color number 
+from 0 to 15.  Do not use values outside of this range. 
+
+The SONGCOPY utility is used to copy several songs at once.  Enter song 
+filenames one at a time.  Sorry, but wildcards may not be used.  Hit only the 
+Return key for a song directory showing which songs have been selected.  Enter 
+the command BEGIN to start the copying. 
+
+The PRINTER utility is a version of the LISTER utility revised to list the 
+voices in three columns on a printer, to save paper.  The program will work 
+only with a printer. 
+
+See the later SIDNEWS files for more information, including instructions on 
+how to use MULTIPLAY, tips on making songs with Sidplayer, and instructions on 
+how to use the POLYCON utility. 
+
+*********************************** 
+
+THE PROGRAMS PUBLISHED IN THE BOOK "ALL ABOUT THE COMMODORE 64, VOLUME TWO" 
+ARE PROTECTED BY COPYRIGHT.  THEY ARE NOT IN THE PUBLIC DOMAIN, AND MAY NOT BE 
+DISTRIBUTED IN ANY FORM.  THIS INCLUDES THE EDITOR AND SID.OBJ PROGRAMS.  A 
+DISK OF ALL THE PROGRAMS IN VOLUME TWO MAY BE PURCHASED FROM COMPUTE! FOR 
+$12.95. 

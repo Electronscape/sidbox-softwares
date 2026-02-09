@@ -1,0 +1,100 @@
+@echo off
+
+IF EXIST Whats_new_in_v135.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v135.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.35
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN DDK_-75_Girl-\No_more_Tears.mus  DDK_-75_Girl-\No_more_Tears_A.mus
+REN Misc\B\Love_Song.mus  Misc\B\Love_Song_A.mus
+MOVE Misc\V\Murder_She_Wrote.mus  Vaxman1\Murder_She_Wrote.mus
+MOVE Misc\V\Murder_She_Wrote.wds  Vaxman1\Murder_She_Wrote.wds
+MOVE Misc\F\It_Might_as_Well_be_Spring.mus  Misc\Anon_Films\It_Might_as_Well_be_Spring.mus
+REN Terry_Woll\My_Funny_Valentine.mus  Terry_Woll\My_Funny_Valentine_A.mus
+MOVE Misc\W\My_Funny_Valentine.mus  Terry_Woll\My_Funny_Valentine_B.mus
+MOVE Misc\W\My_Funny_Valentine.wds  Terry_Woll\My_Funny_Valentine_B.wds
+MOVE Misc\C\School_Days.mus  Corky_Cochran\School_Days.mus
+MOVE Misc\C\Till_We_Meet_Again.mus  Corky_Cochran\Till_We_Meet_Again.mus
+MOVE Misc\C\When_Good_Fellows_Get_Together.mus  Corky_Cochran\When_Good_Fellows_Get_Together.mus
+MOVE Misc\S\New_Wave_3.mus  The_Sid_Kid\New_Wave_3.mus
+MKDIR Andy_Figueroa_-UnixWizard-
+MOVE Misc\F\Dont_Think_Twice.mus  Andy_Figueroa_-UnixWizard-\Dont_Think_Twice.mus
+MOVE Misc\F\Dont_Think_Twice.wds  Andy_Figueroa_-UnixWizard-\Dont_Think_Twice.wds
+MOVE Misc\F\Gilgarra_Mountain.mus  Andy_Figueroa_-UnixWizard-\Gilgarra_Mountain.mus
+MOVE Misc\F\Gilgarra_Mountain.wds  Andy_Figueroa_-UnixWizard-\Gilgarra_Mountain.wds
+MOVE Misc\F\Gone_the_Rainbow.mus  Andy_Figueroa_-UnixWizard-\Gone_the_Rainbow.mus
+MOVE Misc\F\Gone_the_Rainbow.wds  Andy_Figueroa_-UnixWizard-\Gone_the_Rainbow.wds
+MOVE Misc\U\Lo_he_comes.mus  Andy_Figueroa_-UnixWizard-\Lo_he_comes.mus
+MOVE Misc\U\Lo_he_comes.str  Andy_Figueroa_-UnixWizard-\Lo_he_comes.str
+MOVE Misc\U\Lo_he_comes.wds  Andy_Figueroa_-UnixWizard-\Lo_he_comes.wds
+MOVE Misc\F\Lord_of_all_Hopefulness.mus  Andy_Figueroa_-UnixWizard-\Lord_of_all_Hopefulness.mus
+MOVE Misc\F\Lord_of_all_Hopefulness.wds  Andy_Figueroa_-UnixWizard-\Lord_of_all_Hopefulness.wds
+MOVE Misc\U\Of_the_Fathers_Love_Begotten.mus  Andy_Figueroa_-UnixWizard-\Of_the_Fathers_Love_Begotten.mus
+MOVE Misc\U\Of_the_Fathers_Love_Begotten.str  Andy_Figueroa_-UnixWizard-\Of_the_Fathers_Love_Begotten.str
+MOVE Misc\U\Of_the_Fathers_Love_Begotten.wds  Andy_Figueroa_-UnixWizard-\Of_the_Fathers_Love_Begotten.wds
+MKDIR Mark_Headrick
+MOVE Misc\H\Angel.mus  Mark_Headrick\Angel.mus
+MOVE Misc\H\Neurosynth.mus  Mark_Headrick\Neurosynth.mus
+MOVE Misc\H\Neurosynth.str  Mark_Headrick\Neurosynth.str
+MOVE Misc\H\Sea_Chanty.mus  Mark_Headrick\Sea_Chanty.mus
+MOVE Misc\H\Shes_like_the_Wind.mus  Mark_Headrick\Shes_like_the_Wind.mus
+MKDIR Martin_Desrochers_-Scammer-
+MOVE Misc\D\I_just_cant_Seem_to_get_Enough.mus  Martin_Desrochers_-Scammer-\I_just_cant_Seem_to_get_Enough.mus
+MOVE Misc\D\If_you_Leave.mus  Martin_Desrochers_-Scammer-\If_you_Leave.mus
+MOVE Misc\D\See_You.mus  Martin_Desrochers_-Scammer-\See_You.mus
+MOVE Misc\D\Things_you_Said.mus  Martin_Desrochers_-Scammer-\Things_you_Said.mus
+MOVE Misc\D\True_Faith.mus  Martin_Desrochers_-Scammer-\True_Faith.mus
+MOVE Misc\D\View_to_a_Kill.mus  Martin_Desrochers_-Scammer-\View_to_a_Kill.mus
+MOVE Misc\S\On_my_Own.mus  Martin_Desrochers_-Scammer-\On_my_Own.mus
+MOVE Misc\S\Somebody.mus  Martin_Desrochers_-Scammer-\Somebody.mus
+MKDIR PaulG46
+MOVE Misc\A\Light_be_2.mus  PaulG46\Light_be_2.mus
+MOVE Misc\A\Light_be_3.mus  PaulG46\Light_be_3.mus
+MOVE Misc\A\Light_be_4.mus  PaulG46\Light_be_4.mus
+MOVE Misc\P\Ghost_Rider.mus  PaulG46\Ghost_Rider.mus
+MOVE Misc\P\Starscape.mus  PaulG46\Starscape.mus
+MOVE Misc\P\Sun_Toucher.mus  PaulG46\Sun_Toucher.mus
+MKDIR Tom_Duda
+MOVE Misc\D\1st_Momement_Sonata_in_A_Major_K305.mus  Tom_Duda\1st_Momement_Sonata_in_A_Major_K305.mus
+MOVE Misc\D\2nd_Momement_Sonata_in_A_Major_K305.mus  Tom_Duda\2nd_Momement_Sonata_in_A_Major_K305.mus
+MOVE Misc\D\Clavier_Sonata_in_A_Major_K331.mus  Tom_Duda\Clavier_Sonata_in_A_Major_K331.mus
+MOVE Misc\D\Sonata_No6_in_E_Major.mus  Tom_Duda\Sonata_No6_in_E_Major.mus
+MOVE Misc\D\Sonata_Quasi_una_Fantasia_Op27_No2.mus  Tom_Duda\Sonata_Quasi_una_Fantasia_Op27_No2.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v135.txt  00_Documents\Whats_new_in_v135.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_135.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.35 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

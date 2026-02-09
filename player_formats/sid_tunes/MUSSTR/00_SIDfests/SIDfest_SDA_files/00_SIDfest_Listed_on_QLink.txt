@@ -1,0 +1,53 @@
+The following sda files were listed as available on QLink.
+
+Columbus Album 1 of 4,columbus 1.sda,SYSOP SIDs,06/29/87
+Columbus Album 2 of 4,columbus 2.sda,SYSOP SIDs,06/29/87
+Columbus Album 3 of 4,columbus 3.sda,SYSOP SIDs,06/29/87
+Columbus Album 4 of 4,columbus 4.sda,SYSOP SIDs,06/29/87
+Columbus CCCO disk 1of3,col disk 1.sda,SYSOP SIDs,07/02/87
+Columbus CCCO disk 2of3,col disk 2.sda,SYSOP SIDs,07/02/87
+Columbus CCCO disk 3of3,col disk 3.sda,SYSOP SIDs,07/02/87
+
+Richmond SIDFest 1 of 6 *,richmond/ms.sda,SID FEST 88,05/05/88
+Richmond SIDFest 2 of 6 *,richmond/es.sda,SID FEST 88,05/05/88
+Richmond SIDFest 3 of 6 *,richmond/m1.sda,SID FEST 88,05/05/88
+Richmond SIDFest 4 of 6 *,richmond/m2.sda,SID FEST 88,05/05/88
+Richmond SIDFest 5 of 6 *,richmond/so1.sda,SID FEST 88,05/05/88
+Richmond SIDFest 6 of 6 *,richmond/so2.sda,SID FEST 88,05/05/88
+
+SIDFEST-Classical/Mono *,fest/cl/mono.sda,Jabba Hutt,11/01/88
+SIDFEST-Classical/Stereo*,fest/cl/ster.sda,Jabba Hutt,10/31/88
+SIDFEST-Mono 1 *,phila/mono1.sda,NickZ,11/01/88
+SIDFEST-Mono 2 *,phila/mono2a.sda,NickZ,11/02/88
+SIDFEST-Stereo Only*,phila/stereo.sda,NickZ,11/01/88
+SIDFEST-Str for Mono*,phila/extra.sda,NickZ,11/01/88
+
+***New Orleans SIDFest***,sidfest.mus,SYSOP SIDs,06/30/89
+General Album - Mono 1*,nofestmo1.sda,SID FEST 89,06/21/89
+General Album - Mono 2*,nofestmo2.sda,SID FEST 89,06/21/89
+General Album - Mono 3*,nofestmo3.sda,SID FEST 89,06/21/89
+General Album - Stereo 1*,nofestst1.sda,SID FEST 89,06/21/89
+General Album - Stereo 2*,nofestst2.sda,SID FEST 89,06/21/89
+General Album - Stereo 3*,nofestst3.sda,SID FEST 89,06/21/89
+General Album - Stereo 4*,nofestst4.sda,SID FEST 89,06/21/89
+General Album - Stereo 5*,nofestst5.sda,SID FEST 89,06/21/89
+SIDFest Classical-Mono 1*,class 1/mono.sda,Jabba Hutt,06/20/89
+SIDFest Classical-Mono 2*,class 2/mono.sda,Jabba Hutt,06/20/89
+SIDFest Classical-Str 3 *,class 3/ster.sda,Jabba Hutt,06/20/89
+SIDFest Classical-Str 4 *,class 4/ster.sda,Jabba Hutt,06/20/89
+SIDFest-Demo,sidfest demo,SYSOP JON,06/24/89
+
+1989 WOC Album Mono 1 *,vf/woc/m1.sda,SID FEST 89,09/22/89
+1989 WOC Album Mono 2 *,vf/woc/m2.sda,SID FEST 89,09,22/89
+1989 WOC Album Stereo 1 *,vf/woc/st1.sda,SID FEST 89,09/22/89
+1989 WOC Album Stereo 2 *,vf/woc/st2.sda,SID FEST 89,09/22/89
+1989 WOC Album Stereo 3 *,vf/woc/st3.sda,SID FEST 89,09/22/89
+
+Vegas SidFest 90 ClsSt1**,vegas-cl-st1.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 ClsSt2**,vegas-cl-st2.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 GenMn1**,vegas-mono-1.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 GenMn2**,vegas-mono-2.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 GenMn3**,vegas-mono-3.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 GenSt1**,vegas-ge-st1.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 GenSt2**,vegas-ge-st2.sda,SYSHELP JG,06/19/90
+Vegas SidFest 90 GenSt3**,vegas-ge-st3.sda,SYSHELP JG,06/19/90

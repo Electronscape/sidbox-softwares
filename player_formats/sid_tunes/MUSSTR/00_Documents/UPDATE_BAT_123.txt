@@ -1,0 +1,56 @@
+@echo off
+
+IF EXIST Whats_new_in_v123.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v123.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.23
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+MOVE Misc\B\Allemande.mus Vince_Bonina\Allemande.mus
+MOVE Misc\B\Greatest_Love.mus Vince_Bonina\Greatest_Love.mus
+MOVE Misc\B\Sparklers.mus Vince_Bonina\Sparklers.mus
+MOVE Misc\B\Superman_B.mus Vince_Bonina\Superman.mus
+MOVE Misc\B\Superman_A.mus Misc\B\Superman.mus
+MOVE Misc\K\Hoe_Down.mus John_Kates\Hoe_Down.mus
+MOVE Misc\K\Jazz_Etude.mus John_Kates\Jazz_Etude.mus
+MOVE Misc\K\Sharons_Song.mus John_Kates\Sharons_Song.mus
+MOVE Misc\N\Sound_of_Silence.mus Travers_Naran\Sound_of_Silence_B.mus
+MOVE Misc\N\Sound_of_Silence.wds Travers_Naran\Sound_of_Silence_B.wds
+MOVE Misc\P\Believe_it_or_Not.mus PK_Labs\Believe_it_or_Not.mus
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v123.txt  00_Documents\Whats_new_in_v123.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_123.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.23 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END

@@ -1,0 +1,54 @@
+@echo off
+
+IF EXIST Whats_new_in_v132.txt GOTO CONTINUE
+ECHO YOU NEED TO RUN THE UPDATE.BAT FROM THE COMMAND PROMPT
+GOTO END
+
+:CONTINUE
+IF EXIST 00_Documents\Whats_new_in_v132.txt GOTO END
+
+ECHO.
+ECHO CGSC UPDATE to v1.32
+ECHO.
+
+::::::::::::::::::::::::
+: MOVE OR RENAME TUNES :
+::::::::::::::::::::::::
+REN Dave_Burkus_-Mmcss-\Minuet_in_G.mus  Dave_Burkus_-Mmcss-\Minuet_in_G_(Beethoven).mus
+REN Dave_Marquis\Polka.mus  Dave_Marquis\Polka_A.mus
+REN Misc\Anon\Praise_Him.mus  Misc\Anon\Praise_Him_A.mus
+REN Misc\Anon\Praise_Him.wds  Misc\Anon\Praise_Him_A.wds
+REN Misc\G\La_Bamba.mus  Misc\G\La_Bamba_A.mus
+REN Ol_Railbird\All_I_have_to_do_is_Dream.mus  Ol_Railbird\All_I_have_to_do_is_Dream_B.mus
+MKDIR Corky_Cochran\Traditional_Song
+MOVE Misc\Traditional_Song\*.*  Corky_Cochran\Traditional_Song\*.*
+RMDIR Misc\Traditional_Song
+
+::::::::::::::::::::::::
+: REPLACE TUNES OR WDS :
+::::::::::::::::::::::::
+
+:::::::::::::::::
+: RENAME AUTHOR :
+:::::::::::::::::
+
+::::::::::
+: DELETE :
+::::::::::
+
+:::::::::
+: OTHER :
+:::::::::
+DEL 00_Documents\cg_sids.txt
+MOVE cg_sids.txt  00_Documents\cg_sids.txt
+DEL 00_Documents\cg_sids_faq.txt
+MOVE cg_sids_faq.txt  00_Documents\cg_sids_faq.txt
+MOVE Whats_new_in_v132.txt  00_Documents\Whats_new_in_v132.txt
+COPY UPDATE.BAT  00_Documents\UPDATE_BAT_132.txt
+
+ECHO.
+ECHO CGSC UPDATE to v1.32 FINISHED
+ECHO.
+ECHO You can now delete UPDATE.BAT
+
+:END
