@@ -452,7 +452,7 @@ void DirectoryBoss::procCheckAudioConf(const QList<QCheckBox*>& box) {
 void DirectoryBoss::sendNewDirectory(){
     QString string;
 
-    string = "cd " + ui->txtFilePath->text() + "\r\n";
+    string = "cd \"" + ui->txtFilePath->text() + "\"\r\n";
     //QMessageBox::information(this, "HELLO", string);
 
     if(serial){
