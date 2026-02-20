@@ -505,7 +505,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
             QString txForPlay, txForPics, txForEmulator, txForApps, txForMica;
             QString txForC64Tape, txForZXTapeTZX, txForZXTapeTPA;
 
-            txForPlay = QString("play \"%1/%2\"\n").arg(ui->txtFilePath->text()).arg(folderName);
+            txForPlay = QString("play \"%1/%2\" %3\n").arg(ui->txtFilePath->text()).arg(folderName).arg(ui->scrSubSong->value());
             txForPlay.replace("//","/");
 
             txForPics = QString("piciff \"%1/%2\"\n").arg(ui->txtFilePath->text()).arg(folderName);

@@ -5,13 +5,8 @@
 //#include <math.h>
 //#include <time.h>
 #include <alsa/asoundlib.h>
+#include "main.h"
 
-
-#include "sidbox/players/sidplay/cpu6502.h"
-#include "sidbox/players/sidplay/sid8579.h"
-
-#include "sidbox/players/sidplay/bus.h"
-#include "sidbox/players/sidplay/playsid.h"
 
 
 #define PCM_DEVICE "default"
@@ -27,9 +22,12 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+//#include "sidbox/players/tfmxplay.h"
+
+
 
 static char g_last_dir[PATH_MAX] =
-    "/mnt/LinuxDatas/work/sidbox-softwares/player_formats/sid_tunes";
+    "/mnt/LinuxDatas/work/sidbox-softwares/player_formats/tunes";
 
 static void strip_newlines(char *s){
     if (!s) return;
@@ -74,7 +72,7 @@ static int get_config_paths(char *out_dir, size_t out_dir_sz, char *out_file, si
     return 1;
 }
 
-void rsid_lastdir_load(void){
+void music_lastdir_load(void){
     char dir[PATH_MAX], file[PATH_MAX];
     if (!get_config_paths(dir, sizeof(dir), file, sizeof(file))) return;
     FILE *f = fopen(file, "rb");
@@ -89,7 +87,7 @@ void rsid_lastdir_load(void){
     fclose(f);
 }
 
-void rsid_lastdir_save(void){
+void music_lastdir_save(void){
     char dir[PATH_MAX], file[PATH_MAX];
     if (!get_config_paths(dir, sizeof(dir), file, sizeof(file))) return;
     ensure_dir_exists(dir);
@@ -100,11 +98,11 @@ void rsid_lastdir_save(void){
     fclose(f);
 }
 
-int pick_sid_file(char *out_path, size_t out_sz){
+int pick_music_file(char *out_path, size_t out_sz){
     if (!out_path || out_sz == 0) return 0;
     char cmd[2048];
     snprintf(cmd, sizeof(cmd),
-             "kdialog --getopenfilename \"%s\" \"*|SID files (*)\" \"*|All files\"",
+             "kdialog --getopenfilename \"%s\" \"*|files (*)\" \"*|All files\"",
              g_last_dir);
 
     FILE *fp = popen(cmd, "r");
@@ -129,144 +127,109 @@ int pick_sid_file(char *out_path, size_t out_sz){
     snprintf(g_last_dir, sizeof(g_last_dir), "%s", tmp);
 
     // persist it
-    rsid_lastdir_save();
+    music_lastdir_save();
 
     return 1;
 }
 
-// defaultings
-uint8_t playmode_sidtype = SIDPLAY_PLAYMODE_PSID;   // 0 = PSID, 1 = RSID, 2 = some crazy thing i dunno yet
 
 
 int main(){
-    char sidfilename[256];
+    char musicfilename[256];
     uint32_t length;
 
     setvbuf(stdout, NULL, _IONBF, 0);
 
     // audio setup ##########################################################
-    snd_pcm_t *pcm_handle;
-    snd_pcm_sw_params_t *sw;
-    snd_pcm_hw_params_t *params;
-    unsigned int rate = AUDIO_MIX_FREQ;
+    snd_pcm_t *pcm_handle = NULL;
+    snd_pcm_sw_params_t *sw = NULL;
+    snd_pcm_hw_params_t *params = NULL;
+    unsigned int rate = 44100;
     int err;
 
-    snd_pcm_hw_params_malloc(&params);
-
-    /* Open PCM device for playback */
     if ((err = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
         fprintf(stderr, "Error opening PCM device: %s\n", snd_strerror(err));
         return 1;
     }
+
+    snd_pcm_hw_params_malloc(&params);
     snd_pcm_hw_params_any(pcm_handle, params);
+
     snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE);
     snd_pcm_hw_params_set_channels(pcm_handle, params, 2);
 
     snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0);
-    snd_pcm_hw_params(pcm_handle, params);
-    snd_pcm_hw_params_free(params);
 
-    snd_pcm_uframes_t period = 128;
+    snd_pcm_uframes_t period = 882;
     snd_pcm_uframes_t bufferv = period * 2;
-
 
     snd_pcm_hw_params_set_period_size_near(pcm_handle, params, &period, 0);
     snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &bufferv);
 
-    /* Set hardware parameters */
+    if ((err = snd_pcm_hw_params(pcm_handle, params)) < 0) {
+        fprintf(stderr, "snd_pcm_hw_params failed: %s\n", snd_strerror(err));
+        snd_pcm_hw_params_free(params);
+        snd_pcm_close(pcm_handle);
+        return 1;
+    }
 
-    snd_pcm_sw_params_alloca(&sw);
-    // SW params: start quickly, wake us quickly
+    snd_pcm_hw_params_free(params);
+
+    snd_pcm_sw_params_malloc(&sw);
     snd_pcm_sw_params_current(pcm_handle, sw);
 
-    // Start as soon as we have 1 period queued (or even 1 frame)
     snd_pcm_sw_params_set_start_threshold(pcm_handle, sw, period);
-
-    // Wake up when at least 1 period is free
     snd_pcm_sw_params_set_avail_min(pcm_handle, sw, period);
 
-    // Apply SW params
-    err = snd_pcm_sw_params(pcm_handle, sw);
-    if (err < 0) {
+    if ((err = snd_pcm_sw_params(pcm_handle, sw)) < 0) {
         fprintf(stderr, "snd_pcm_sw_params failed: %s\n", snd_strerror(err));
-        return -1;
+        snd_pcm_sw_params_free(sw);
+        snd_pcm_close(pcm_handle);
+        return 1;
     }
+
+    snd_pcm_sw_params_free(sw);
+
+    // Make sure PCM is ready
+    if ((err = snd_pcm_prepare(pcm_handle)) < 0) {
+        fprintf(stderr, "snd_pcm_prepare failed: %s\n", snd_strerror(err));
+        snd_pcm_close(pcm_handle);
+        return 1;
+    }
+
+
+
+    int16_t buffer[882 * 2];
+    memset(buffer, 0x00, sizeof(buffer));
+
+
+
+
+    printf("sizeof int: %u\n", sizeof(int));
 
     // AUDIO SETUP SUCCESSFULL ------------------------
-
-    /////// SELECT A FILE NOW ETH ////////////////////////////////////
-    rsid_lastdir_load();
-    char path[4096];
-    if (pick_sid_file(path, sizeof(path))) {
-        printf("Picked: %s\n", path);
-        sprintf(sidfilename, path);
-    } else {
-        printf("Cancelled or failed\n");
-        return 0;
-    }
-    playmode_sidtype = CheckSIDType(sidfilename);
-
-    /////////////////////////// TEST ////////////////////////////////////////////////////////////
-    if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){  // TEST AREA //
-        if(!PlaySID_Init(sidfilename, 0)){
-            printf("Failed to init SID: %s\n", sidfilename);
-            snd_pcm_close(pcm_handle);
-            return 2;
-        }
-    }
-
-    if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){  // TEST AREA //
-        if(!PlaySID_InitRSID(sidfilename, 0)){
-            printf("Failed to init SID: %s\n", sidfilename);
-            snd_pcm_close(pcm_handle);
-            return 2;
-        }
-    }
+    size_t filesize;
+    pick_music_file(musicfilename, 256);
+    printf("File selected '%s'\n", musicfilename);
 
 
     /////////////////////////// [END TEST] ////////////////////////////////////////////////////////
-    /* Prepare buffer and generate PWM (SID-style) audio */
-    int16_t buffer[1024];                         /* stereo interleaved frames */
+    while (1)
+    {
+        uint32_t frames = 882;  // 44100 / 50fps
 
+        /// audio renderer ///
 
-
-    while(1){   // this will keep looing only because later i'll add stuff to control this later
-        // will play the routine here
-        // example
-
-        // inside the doPlaySidStep() this does the steps you'll find in the playsid.c and return how many samples, enough to fill the 4096 buffer here
-        // change this if you need  but
-        //length = doPlaySidStep(buffer);// <-- do what you need here to make this work interleaved buffer output for now
-
-        uint32_t frames = 880;
-
-        // ## FOR PSID PLAY ONLY call THIS and loop  #######################################################
-        if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){
-            doPlaySidStep(buffer, frames);    // <-- used in PSID playback
-
-        }
-        // ## END PSID ONLY SECTION -- commented out for testing RSID/Prog for now
-
-        //-------------------------------------------------------------------------------------------------
-
-        // ## FOR RSID PLAY ONLY (or programs) call THIS and loop #########################################
-        // LIST OF TO DOs:
-        // todo-later :LATER: cyc_acc = 0; for now we wont bother this just a reminder
-        /////////////////
-        if(playmode_sidtype == SIDPLAY_PLAYMODE_RSID){
-            doRSIDStep(buffer, frames, AUDIO_MIX_FREQ);
-        }
-
-        // ## FOR RSID PLAY ONLY (or programs) call THIS and loop #########################################
         snd_pcm_sframes_t written = snd_pcm_writei(pcm_handle, buffer, frames);
-        if(written == -EPIPE){
+        if (written == -EPIPE) {
             snd_pcm_prepare(pcm_handle);
-        } else if(written < 0){
+        } else if (written < 0) {
             fprintf(stderr, "Write error: %s\n", snd_strerror((int)written));
             break;
         }
     }
+
 
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);

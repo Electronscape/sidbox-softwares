@@ -8,20 +8,16 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_executable(playerformats-test main.c
     main.h
 
-    sidbox/players/sidplay/cpu6502.c
-    sidbox/players/sidplay/cpu6502.h
-    sidbox/players/sidplay/sid8579.c
-    sidbox/players/sidplay/sid8579.h
+    sidbox/host.h
+    sidbox/host.c
 
-    sidbox/players/sidplay/cia.h
-    sidbox/players/sidplay/cia.c
-    sidbox/players/sidplay/vic.h
-    sidbox/players/sidplay/vic.c
-    sidbox/players/sidplay/bus.h
-    sidbox/players/sidplay/bus.c
 
-    sidbox/players/sidplay/playsid.c
-    sidbox/players/sidplay/playsid.h
+
+
+
+
+
+
 )
 
 find_package(ALSA REQUIRED)
