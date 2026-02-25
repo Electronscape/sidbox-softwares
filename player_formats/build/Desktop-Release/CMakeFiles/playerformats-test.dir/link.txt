@@ -1,1 +1,0 @@
-/usr/bin/gcc -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/playerformats-test.dir/link.d "CMakeFiles/playerformats-test.dir/main.c.o" "CMakeFiles/playerformats-test.dir/sidbox/host.c.o" "CMakeFiles/playerformats-test.dir/sidbox/player/playmed.c.o" -o playerformats-test  /usr/lib64/libasound.so -lm

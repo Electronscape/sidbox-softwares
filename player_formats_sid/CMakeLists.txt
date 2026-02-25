@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(playerformats-test LANGUAGES C)
+project(playerformats-test-sid LANGUAGES C)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_executable(playerformats-test main.c
+add_executable(playerformats-test-sid main.c
     main.h
 
+    sidbox/host.c
+    sidbox/host.h
     sidbox/players/sidplay/cpu6502.c
     sidbox/players/sidplay/cpu6502.h
     sidbox/players/sidplay/sid8579.c
@@ -26,9 +28,9 @@ add_executable(playerformats-test main.c
 
 find_package(ALSA REQUIRED)
 
-target_link_libraries(playerformats-test PRIVATE ALSA::ALSA)
+target_link_libraries(playerformats-test-sid PRIVATE ALSA::ALSA)
 
-target_compile_options(playerformats-test PRIVATE
+target_compile_options(playerformats-test-sid PRIVATE
   -Wall -Wextra
   -Wshadow
   -Wconversion -Wsign-conversion
@@ -40,6 +42,6 @@ target_compile_options(playerformats-test PRIVATE
 
 
 include(GNUInstallDirs)
-install(TARGETS playerformats-test
+install(TARGETS playerformats-test-sid
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

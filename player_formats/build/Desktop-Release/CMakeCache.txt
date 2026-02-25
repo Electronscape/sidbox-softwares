@@ -194,7 +194,7 @@ CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 CMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Release/.qtc/package-manager/auto-setup.cmake
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=playerformats-test
+CMAKE_PROJECT_NAME:STATIC=playerformats-test-poky
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -277,13 +277,13 @@ QT_CREATOR_SOURCE_GROUPS:BOOL=ON
 QT_QMAKE_EXECUTABLE:FILEPATH=/usr/bin/qmake
 
 //Value Computed by CMake
-playerformats-test_BINARY_DIR:STATIC=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Release
+playerformats-test-poky_BINARY_DIR:STATIC=/mnt/LinuxDatas/work/sidbox-softwares/player_formats/build/Desktop-Release
 
 //Value Computed by CMake
-playerformats-test_IS_TOP_LEVEL:STATIC=ON
+playerformats-test-poky_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
-playerformats-test_SOURCE_DIR:STATIC=/mnt/LinuxDatas/work/sidbox-softwares/player_formats
+playerformats-test-poky_SOURCE_DIR:STATIC=/mnt/LinuxDatas/work/sidbox-softwares/player_formats
 
 
 ########################

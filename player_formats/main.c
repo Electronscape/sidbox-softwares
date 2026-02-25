@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "sidbox/player/playmed.h"
+
 
 
 
@@ -214,10 +214,6 @@ int main(){
     printf("File selected '%s'\n", musicfilename);
 
 
-    if(!playMED_Load(musicfilename, 44100)){
-        printf("MED load failed: %s\n", playMED_LastError());
-        return 1;
-    }
 
     /////////////////////////// [END TEST] ////////////////////////////////////////////////////////
     while (1)
@@ -229,7 +225,6 @@ int main(){
         // bits for the ticks
         // then the renderer it self
 
-        RenderMED_Interleaved(buffer, frames);
 
 
         snd_pcm_sframes_t written = snd_pcm_writei(pcm_handle, buffer, frames);

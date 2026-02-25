@@ -333,53 +333,89 @@ void sid_write(uint16_t addr, uint8_t v){
     }
 }
 
-// --- Render one stereo sample (your sidMixer, but one-shot) ---
-void sid_render_sample(int16_t *outL, int16_t *outR){
-    // a trimmed version of your sidMixer inner loop
+
+
+uint8_t sidroute0 =  0b101101;   // both both both   (DEFAULT - IN SINGLE SIDMODE)
+uint8_t sidroute1 =  0b101101;   // left both right  (DEFAULT - FOR SID#1 DUAL SID MODE)
+uint8_t sidroute2 =  0b011110;   // right both left  (DEFAULT - FOR SID#2 DUAL SID MODE)
+
+// route bits meaning:
+#define ROUTE_RIGHT 0x01
+#define ROUTE_LEFT  0x02
+#define ROUTE_BOTH  0x03
+
+static inline uint8_t get_voice_route(uint8_t sidroute, int v)
+{
+    // Your layout per comments:
+    // voice0 = bits 5..4, voice1 = bits 3..2, voice2 = bits 1..0
+    // v: 0..2
+    int shift = 2 * (2 - v);
+    return (sidroute >> shift) & 0x03;
+}
+
+// --- Render one stereo sample (per-voice routing, minimal-risk) ---
+void sid_render_sample(int16_t *outL, int16_t *outR)
+{
     int finalL = 0, finalR = 0;
 
-    //synth_prep_per_step();
     int chiplen = 1;
-    if((CHIPCONFIGS & SIDHV_CHANNEL_STEREO) || bDualChipMode) chiplen = 2;
-    for(int chip=0; chip<chiplen; chip++){
-        int outf = 0;
-        int outo = 0;
-        unsigned char tVoice = 0x7;
-        if(bDualChipMode==1){
-            tVoice = (unsigned char)(GetSidChipVoices((unsigned char)chip) & 0x7);
-        }
+    if (bDualChipMode) chiplen = 2;
+    //printf("DUAL MODE %u\n", bDualChipMode);
 
-        for(int v=0; v<3; v++){
+    // RIGHT channel filter state (LEFT uses existing filter[chip].h/b/l)
+    // Type is taken from your actual filter fields, so it matches pfloat internal type.
+    static __typeof__(filter[0].h) hR[2]; // [chip]
+    static __typeof__(filter[0].b) bR[2];
+    static __typeof__(filter[0].l) lR[2];
+
+    for (int chip = 0; chip < chiplen; chip++)
+    {
+        // Select routing mask
+        // - single: sidroute0
+        // - dual:   sidroute1 for chip0, sidroute2 for chip1
+        uint8_t sidroute = sidroute0;
+        if (chiplen == 2) sidroute = (chip == 0) ? sidroute1 : sidroute2;
+
+        int outfL = 0, outoL = 0;
+        int outfRch = 0, outoRch = 0;
+
+        unsigned char tVoice = 0x7;
+        if (bDualChipMode == 1)
+            tVoice = (unsigned char)(GetSidChipVoices((unsigned char)chip) & 0x7);
+
+        for (int v = 0; v < 3; v++)
+        {
             osc[chip][v].counter = (osc[chip][v].counter + osc[chip][v].freq) & 0x0FFFFFFF;
 
-            if(osc[chip][v].wave & 0x08){
+            if (osc[chip][v].wave & 0x08)
+            {
                 osc[chip][v].counter = 0;
                 osc[chip][v].noisepos = 0;
                 osc[chip][v].noiseval = 0xffffff;
             }
 
             int refosc = v ? (v - 1) : 2;
-            if(osc[chip][v].wave & 0x02){
-                if(osc[chip][refosc].counter < osc[chip][refosc].freq){
-                    // ---------------- THIS WAS CHANGED ----------------
-                    // Protect against Division By Zero if master freq is 0
-                    if(osc[chip][refosc].freq > 0) {
+            if (osc[chip][v].wave & 0x02)
+            {
+                if (osc[chip][refosc].counter < osc[chip][refosc].freq)
+                {
+                    if (osc[chip][refosc].freq > 0)
                         osc[chip][v].counter = osc[chip][refosc].counter * osc[chip][v].freq / osc[chip][refosc].freq;
-                    } else {
+                    else
                         osc[chip][v].counter = 0;
-                    }
-                    // --------------------------------------------------
                 }
             }
 
             byte triout = (byte)(osc[chip][v].counter >> 19);
-            if(osc[chip][v].counter >> 27) triout ^= 0xff;
+            if (osc[chip][v].counter >> 27) triout ^= 0xff;
             byte sawout = (byte)(osc[chip][v].counter >> 20);
             byte plsout = (byte)((osc[chip][v].counter > osc[chip][v].pulse) - 1);
 
-            if(osc[chip][v].noisepos != (osc[chip][v].counter >> 24)){
+            if (osc[chip][v].noisepos != (osc[chip][v].counter >> 24))
+            {
                 osc[chip][v].noisepos = osc[chip][v].counter >> 24;
-                osc[chip][v].noiseval = (osc[chip][v].noiseval << 1) | (get_bit(osc[chip][v].noiseval, 22) ^ get_bit(osc[chip][v].noiseval, 17));
+                osc[chip][v].noiseval = (osc[chip][v].noiseval << 1) |
+                                        (get_bit(osc[chip][v].noiseval, 22) ^ get_bit(osc[chip][v].noiseval, 17));
                 osc[chip][v].noiseout =
                     (get_bit(osc[chip][v].noiseval,22) << 7) |
                     (get_bit(osc[chip][v].noiseval,20) << 6) |
@@ -392,93 +428,122 @@ void sid_render_sample(int16_t *outL, int16_t *outR){
             }
             byte nseout = osc[chip][v].noiseout;
 
-            if(osc[chip][v].wave & 0x04){
-                if(osc[chip][refosc].counter < 0x8000000) triout ^= 0xff;
+            if (osc[chip][v].wave & 0x04)
+            {
+                if (osc[chip][refosc].counter < 0x8000000) triout ^= 0xff;
             }
 
             byte outv = 0xff;
-            if(osc[chip][v].wave & 0x10) outv &= triout;
-            if(osc[chip][v].wave & 0x20) outv &= sawout;
-            if(osc[chip][v].wave & 0x40) outv &= plsout;
-            if(osc[chip][v].wave & 0x80) outv &= nseout;
+            if (osc[chip][v].wave & 0x10) outv &= triout;
+            if (osc[chip][v].wave & 0x20) outv &= sawout;
+            if (osc[chip][v].wave & 0x40) outv &= plsout;
+            if (osc[chip][v].wave & 0x80) outv &= nseout;
 
-            if(!(osc[chip][v].wave & 0x01)) osc[chip][v].envphase = 3;
-            else if(osc[chip][v].envphase == 3) osc[chip][v].envphase = 0;
+            if (!(osc[chip][v].wave & 0x01)) osc[chip][v].envphase = 3;
+            else if (osc[chip][v].envphase == 3) osc[chip][v].envphase = 0;
 
-            switch(osc[chip][v].envphase){
+            switch (osc[chip][v].envphase)
+            {
             case 0:
                 osc[chip][v].envval += osc[chip][v].attack;
-                if(osc[chip][v].envval >= 0xFFFFFF){ osc[chip][v].envval = 0xFFFFFF; osc[chip][v].envphase = 1; }
+                if (osc[chip][v].envval >= 0xFFFFFF) { osc[chip][v].envval = 0xFFFFFF; osc[chip][v].envphase = 1; }
                 break;
             case 1:
                 osc[chip][v].envval -= osc[chip][v].decay;
-                if((signed int)osc[chip][v].envval <= (signed int)(osc[chip][v].sustain << 16)){
+                if ((signed int)osc[chip][v].envval <= (signed int)(osc[chip][v].sustain << 16))
+                {
                     osc[chip][v].envval = (signed int)(osc[chip][v].sustain << 16);
                     osc[chip][v].envphase = 2;
                 }
                 break;
             case 2:
-                if((signed int)osc[chip][v].envval != (signed int)(osc[chip][v].sustain << 16)) osc[chip][v].envphase = 1;
+                if ((signed int)osc[chip][v].envval != (signed int)(osc[chip][v].sustain << 16)) osc[chip][v].envphase = 1;
                 break;
             case 3:
                 osc[chip][v].envval -= osc[chip][v].release;
-                if(osc[chip][v].envval < 0x40000) osc[chip][v].envval = 0x40000;
+                if (osc[chip][v].envval < 0x40000) osc[chip][v].envval = 0x40000;
                 break;
             }
 
-            // filtered/non-filtered routing
-            if((v < 2) || filter[chip].v3ena){
+            // per-voice stereo routing happens HERE (before filter)
+            if ((v < 2) || filter[chip].v3ena)
+            {
                 long tform = 0;
-                if(tVoice & (1 << v)) tform = (((int)(outv - 0x80)) * osc[chip][v].envval) >> 22;
-                if(osc[chip][v].filter) outf += (int)tform;
-                else outo += (int)tform;
+                if (tVoice & (1 << v))
+                    tform = (((int)(outv - 0x80)) * osc[chip][v].envval) >> 22;
+
+                uint8_t route = get_voice_route(sidroute, v);
+
+                if (osc[chip][v].filter)
+                {
+                    if (route & ROUTE_LEFT)  outfL += (int)tform;
+                    if (route & ROUTE_RIGHT) outfRch += (int)tform;
+                }
+                else
+                {
+                    if (route & ROUTE_LEFT)  outoL += (int)tform;
+                    if (route & ROUTE_RIGHT) outoRch += (int)tform;
+                }
             }
         }
 
-        // filter step
-        if(filter[chip].freq < 2000) filter[chip].freq = 2000;
+        // filter step (same params, separate states)
+        if (filter[chip].freq < 2000) filter[chip].freq = 2000;
 
-        filter[chip].h = pfloat_ConvertFromInt(outf) - ((filter[chip].b >> 8) * filter[chip].rez) - filter[chip].l;
+        // LEFT uses existing filter[chip].h/b/l (unchanged!)
+        filter[chip].h = pfloat_ConvertFromInt(outfL)
+                         - ((filter[chip].b >> 8) * filter[chip].rez)
+                         - filter[chip].l;
+
         filter[chip].b += pfloat_Multiply(filter[chip].freq, filter[chip].h);
         filter[chip].l += pfloat_Multiply(filter[chip].freq, filter[chip].b);
 
-        outf = 0;
-        if(filter[chip].l_ena) outf += pfloat_ConvertToInt(filter[chip].l);
-        if(filter[chip].b_ena) outf += pfloat_ConvertToInt(filter[chip].b);
-        if(filter[chip].h_ena) outf += pfloat_ConvertToInt(filter[chip].h);
+        int outf_left = 0;
+        if (filter[chip].l_ena) outf_left += pfloat_ConvertToInt(filter[chip].l);
+        if (filter[chip].b_ena) outf_left += pfloat_ConvertToInt(filter[chip].b);
+        if (filter[chip].h_ena) outf_left += pfloat_ConvertToInt(filter[chip].h);
 
-        int mixed = filter[chip].vol * (outo + outf);
+        int mixedL = filter[chip].vol * (outoL + outf_left);
 
-        /// digi-compensators ////////////////////////
-        int digi = ((int)vol_dac[chip] - 8);
-        mixed += digi * DIGI_GAIN;
+        // RIGHT uses new state arrays
+        hR[chip] = pfloat_ConvertFromInt(outfRch)
+                   - ((bR[chip] >> 8) * filter[chip].rez)
+                   - lR[chip];
 
+        bR[chip] += pfloat_Multiply(filter[chip].freq, hR[chip]);
+        lR[chip] += pfloat_Multiply(filter[chip].freq, bR[chip]);
 
-        /////////////////////////////////////////////
+        int outf_right = 0;
+        if (filter[chip].l_ena) outf_right += pfloat_ConvertToInt(lR[chip]);
+        if (filter[chip].b_ena) outf_right += pfloat_ConvertToInt(bR[chip]);
+        if (filter[chip].h_ena) outf_right += pfloat_ConvertToInt(hR[chip]);
 
-        if(!(CHIPCONFIGS & SIDHV_CHANNEL_STEREO)){
-            finalL += mixed;
-            finalR += mixed;
-        } else {
-            if(chip == 0) finalL += mixed;
-            if(chip == 1) finalR += mixed;
+        int mixedR = filter[chip].vol * (outoRch + outf_right);
+
+        // digi-compensators (applied equally to both sides, same as before)
+        {
+            int digi = ((int)vol_dac[chip] - 8);
+            int d = digi * DIGI_GAIN;
+            mixedL += d;
+            mixedR += d;
         }
+
+        finalL += mixedL;
+        finalR += mixedR;
     }
 
-    // scaling/clamp to S16
-    // Your original used some shifting; here we do a safe clamp.
+    // scaling/clamp to S16 (same behavior as your code)
     finalL >>= 1;
     finalR >>= 1;
 
-    if(finalL < -32767) finalL = -32767;
-    if(finalL >  32767) finalL =  32767;
-    if(finalR < -32767) finalR = -32767;
-    if(finalR >  32767) finalR =  32767;
+    if (finalL < -32767) finalL = -32767;
+    if (finalL >  32767) finalL =  32767;
+    if (finalR < -32767) finalR = -32767;
+    if (finalR >  32767) finalR =  32767;
 
     *outL = (int16_t)finalL;
     *outR = (int16_t)finalR;
 }
-
 
 
 
@@ -493,7 +558,7 @@ static uint64_t g_rsid_acc = 0;
 
 // advance SID internal time by real CPU cycles (RSID path)
 // This now actually ADVANCES osc/env/filter state for the number of "ticks" elapsed.
-void sid_clock_cycles(uint32_t cpu_cycles){
+void sid_clock_cycles_old(uint32_t cpu_cycles){
     if(cpu_cycles == 0) return;
 
     // accumulate fractional "ticks"
@@ -621,10 +686,12 @@ void sid_clock_cycles(uint32_t cpu_cycles){
     }
 }
 
-
+void setChipSize(uint8_t m){
+    bDualChipMode = m;
+}
 // Produce one sample from CURRENT state (no counters/envelopes/filter stepping)
 // (your existing one is fine — keep it exactly like you wrote)
-void sid_render_sample_noadvance(int16_t *outL, int16_t *outR){
+void sid_render_sample_noadvance_old(int16_t *outL, int16_t *outR){
     int finalL = 0, finalR = 0;
 
     int chiplen = 1;

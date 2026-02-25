@@ -27,9 +27,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+void setChipSize(uint8_t m);
 
 static char g_last_dir[PATH_MAX] =
-    "/mnt/LinuxDatas/work/sidbox-softwares/player_formats/sid_tunes";
+    "/mnt/LinuxDatas/work/sidbox-softwares/player_formats_sid/sid_tunes";
 
 static void strip_newlines(char *s){
     if (!s) return;
@@ -64,9 +65,9 @@ static int get_config_paths(char *out_dir, size_t out_dir_sz, char *out_file, si
     const char *xdg = getenv("XDG_CONFIG_HOME");
     const char *home = getenv("HOME");
     if (xdg && *xdg) {
-        snprintf(out_dir,  out_dir_sz,  "%s/sidbox_player", xdg);
+        snprintf(out_dir,  out_dir_sz,  "%s/sidbox_player_sid", xdg);
     } else if (home && *home) {
-        snprintf(out_dir,  out_dir_sz,  "%s/.config/sidbox_player", home);
+        snprintf(out_dir,  out_dir_sz,  "%s/.config/sidbox_player_sid", home);
     } else {
         return 0;
     }
@@ -230,7 +231,7 @@ int main(){
     int16_t buffer[1024];                         /* stereo interleaved frames */
 
 
-
+setChipSize(0);
     while(1){   // this will keep looing only because later i'll add stuff to control this later
         // will play the routine here
         // example
@@ -242,7 +243,10 @@ int main(){
         uint32_t frames = 880;
 
         // ## FOR PSID PLAY ONLY call THIS and loop  #######################################################
+
+
         if(playmode_sidtype == SIDPLAY_PLAYMODE_PSID){
+
             doPlaySidStep(buffer, frames);    // <-- used in PSID playback
 
         }
