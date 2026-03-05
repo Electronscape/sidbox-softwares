@@ -6800,6 +6800,22 @@ HOLD ALT and CLICK the ending colour.</string>
        <string>Resample</string>
       </property>
      </widget>
+     <widget class="QCheckBox" name="chkImportPaletteRanger">
+      <property name="geometry">
+       <rect>
+        <x>250</x>
+        <y>100</y>
+        <width>160</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Import Ranged Pallete</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>

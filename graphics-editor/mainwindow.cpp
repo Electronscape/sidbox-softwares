@@ -118,6 +118,7 @@ int         ltcapturedX = -1, ltcapturedY = -1;  // last location target
 int         capturedX = -1, capturedY = -1;
 
 bool paletteRestrictor = false;
+bool paletteRanger = false;
 int paletteRangerOffset, paletteRangerLength;
 
 int hoverPixelX = -1;
@@ -1713,6 +1714,9 @@ MainWindow::MainWindow(QWidget *parent)
         paletteRestrictor = ui->chkPaletteUseRestrictor->isChecked();
     });
 
+    connect(ui->chkImportPaletteRanger, &QCheckBox::clicked, this, [this](){
+        paletteRanger = ui->chkImportPaletteRanger->isChecked();
+    });
 
     /// image handler buttons
     connect(ui->cmdHandleTL, &QPushButton::clicked, this, [this](){ clearHandlerButtons(cHandleTL); });
@@ -2783,15 +2787,25 @@ bool extractPngPalette(const QString &path, uint32_t CLUT[256])
             }
         } else {
             if (chunkType == "PLTE") {
-                int n = qMin(int(chunkLen / 3), 256);
+                //palmode = paletteRanger
+                int n;
+                int doffset;
+                doffset = 0;
+                n = qMin(int(chunkLen / 3), 256);
+                if(paletteRanger == true){
+                    n = qMin(int(chunkLen / 3), paletteRangerLength);
+                    doffset = paletteRangerOffset;
+                }
+
                 for (int i = 0; i < n; i++) {
                     int r = p[pos+8 + i*3 + 0];
                     int g = p[pos+8 + i*3 + 1];
                     int b = p[pos+8 + i*3 + 2];
-                    CLUT[i] = (r << 16) | (g << 8) | b;
+                    CLUT[i + doffset] = (r << 16) | (g << 8) | b;
                 }
                 // fill rest with black
-                for (int i = n; i < 256; i++) CLUT[i] = 0;
+                if(paletteRanger == false)
+                    for (int i = n; i < 256; i++) CLUT[i] = 0;
                 return true;
             }
         }
@@ -2951,8 +2965,16 @@ bool MainWindow::importGif(const QString &path){
         }
     } else { // not using the restrictor
         printf("Did we end up here in the NON restrictor mode?\n");
+
+        uint8_t offsetter;
+        offsetter = 0;
+        if(paletteRanger){
+            offsetter = paletteRangerOffset;
+        }
+
         for (int i = 0; i < 256; i++)
             pal[i] = CCLUT[i];//qRgb(i, i, i);
+
 
         // Apply to palette
         img = img.convertToFormat(QImage::Format_Indexed8, pal, Qt::AvoidDither);
@@ -2996,7 +3018,7 @@ bool MainWindow::importGif(const QString &path){
                     }
                     colourIndex = bestIndex;
                 }
-                (*icon_area)[y][x] = colourIndex;
+                (*icon_area)[y][x] = colourIndex + offsetter;
             }
         }
     }

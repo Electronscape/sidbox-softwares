@@ -1,0 +1,1315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fuss-Free Browser Apps — Sprite Rotation Tool</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Rotate sprites through a full 360° and export individual frames or sprite sheets. Ideal for retro pixel art, AGS projects and modern game engines.">
+<meta name="keywords" content="sprite rotation tool, sprite sheet, pixel art, AGS, Unity, Godot, GameMaker, Phaser, image rotation, frames, browser tool">
+<meta name="robots" content="index,follow">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sprite Rotation Tool — Fuss-Free Browser Apps">
+<meta property="og:description" content="Rotate sprites through 360° and export frames or sprite sheets, all in your browser with optional background keying.">
+
+<style>
+  /* Base site palette & typography (aligned with mortgage page) */
+  :root{
+    --bg:#0e0f12;
+    --card:#16181d;
+    --ink:#e9edf1;
+    --sub:#aab4c3;
+    --accent:#48c78e;
+    --accent-2:#6ea8fe;
+    --muted:#23262d;
+    --edge:#2a2f37;
+    --error:#ff5c7a;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent-2);text-decoration:none}
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:20px 14px 40px;
+  }
+  h1{font-size:26px;margin:0 0 6px}
+  h2{font-size:20px;margin:6px 0 10px}
+  .sub{color:var(--sub);margin:2px 0 16px}
+  hr{border:none;height:1px;background:var(--edge);margin:18px 0}
+
+  /* Chips and layout for this tool */
+  .chip-bar{
+    margin-top:10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .chip{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    padding:3px 10px;
+    border-radius:999px;
+    border:1px solid var(--edge);
+    background:#11131a;
+    color:var(--sub);
+  }
+  .chip--accent{
+    border-color:var(--accent);
+    background:rgba(72,199,142,.12);
+    color:var(--accent);
+  }
+
+  main{
+    margin-top:10px;
+    display:grid;
+    grid-template-columns:minmax(0,3fr) minmax(0,2.6fr);
+    gap:16px;
+  }
+  @media (max-width:900px){
+    main{grid-template-columns:minmax(0,1fr)}
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--edge);
+    border-radius:14px;
+    padding:14px 14px 16px;
+    margin:14px 0;
+    box-shadow:0 12px 30px rgba(0,0,0,.45);
+  }
+  .card h2{margin-top:0}
+  .card p{margin:0 0 8px;color:var(--sub);font-size:0.9rem}
+  .section-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.16em;
+    color:var(--sub);
+    margin-bottom:4px;
+  }
+
+  .field-group{margin-bottom:10px}
+  label{
+    display:block;
+    font-size:12px;
+    color:var(--sub);
+    margin-bottom:4px;
+  }
+  input[type="file"],
+  input[type="number"],
+  input[type="text"],
+  select{
+    width:100%;
+    background:var(--muted);
+    color:var(--ink);
+    border:1px solid var(--edge);
+    border-radius:10px;
+    padding:7px 8px;
+    font-size:14px;
+    outline:0;
+  }
+  input[type="file"]{padding:6px 6px}
+  input[type="number"]:focus,
+  input[type="text"]:focus,
+  select:focus{
+    border-color:var(--accent-2);
+    box-shadow:0 0 0 3px rgba(110,168,254,.2);
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+
+  .radio-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 14px;
+    margin-bottom:6px;
+    align-items:center;
+    font-size:0.86rem;
+  }
+  .radio-row label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:0;
+    cursor:pointer;
+  }
+
+  .inline-note{
+    font-size:11px;
+    color:var(--sub);
+    margin-top:3px;
+  }
+  .pill{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    background:#1d2026;
+    border:1px solid var(--edge);
+    font-size:11px;
+    color:var(--sub);
+    margin:2px 6px 2px 0;
+  }
+  .pill strong{
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  .btn-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:6px;
+  }
+  button{
+    border:none;
+    border-radius:10px;
+    padding:8px 14px;
+    font:inherit;
+    font-size:0.9rem;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--accent);
+    color:#07110b;
+    font-weight:600;
+    box-shadow:0 8px 20px rgba(0,0,0,.4);
+    transition:transform .18s ease-out,box-shadow .18s ease-out,filter .18s ease-out;
+  }
+  button:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 12px 26px rgba(0,0,0,.55);
+    filter:brightness(1.02);
+  }
+  button:active:not(:disabled){
+    transform:translateY(0);
+    box-shadow:0 6px 16px rgba(0,0,0,.45);
+    filter:brightness(0.98);
+  }
+  button.secondary{
+    background:var(--muted);
+    color:var(--ink);
+    border:1px solid var(--edge);
+    box-shadow:none;
+  }
+  button.secondary:hover:not(:disabled){
+    box-shadow:0 8px 20px rgba(0,0,0,.5);
+  }
+  button:disabled{
+    opacity:.48;
+    cursor:default;
+    box-shadow:none;
+  }
+
+  .status{
+    margin-top:8px;
+    font-size:12px;
+    color:var(--sub);
+    min-height:1.1em;
+  }
+  .status--error{color:var(--error)}
+  .status--ok{color:var(--accent)}
+
+  .canvas-shell{
+    border-radius:10px;
+    background:#050713;
+    border:1px dashed #313553;
+    padding:6px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:160px;
+  }
+  .canvas-shell canvas{
+    max-width:100%;
+    image-rendering:pixelated;
+  }
+
+  .meta-line{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:6px;
+    margin-top:6px;
+    font-size:12px;
+    color:var(--sub);
+  }
+
+  .frame-slider-row{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:13px;
+  }
+  .frame-slider-row input[type="range"]{width:100%}
+
+  .preview-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  @media (max-width:700px){
+    .preview-grid{grid-template-columns:minmax(0,1fr)}
+  }
+
+  .small-note{
+    font-size:11px;
+    color:var(--sub);
+    margin-top:3px;
+  }
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.84rem;
+  }
+  .toggle-row input[type="checkbox"]{width:auto}
+
+  /* FAQ accordion */
+  .faq-card{margin-top:2px}
+  .faq-list{
+    margin:4px 0 0;
+    padding:0;
+    list-style:none;
+  }
+  .faq-item + .faq-item{
+    margin-top:6px;
+    border-top:1px solid rgba(255,255,255,.04);
+    padding-top:6px;
+  }
+  .faq-question{
+    width:100%;
+    text-align:left;
+    background:#090a19;
+    border-radius:10px;
+    border:1px solid #252741;
+    padding:7px 10px;
+    color:var(--ink);
+    font-size:0.9rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    box-shadow:none;
+  }
+  .faq-question span{flex:1}
+  .faq-question .faq-icon{
+    font-size:0.9rem;
+    opacity:.8;
+  }
+  .faq-item.open .faq-question{
+    border-color:var(--accent);
+    background:#090f18;
+  }
+  .faq-answer{
+    margin-top:4px;
+    padding:4px 6px 2px;
+    font-size:0.85rem;
+    color:var(--sub);
+    display:none;
+  }
+  .faq-item.open .faq-answer{display:block}
+  .faq-answer p{margin:0 0 4px}
+  .faq-answer ul{
+    margin:2px 0 4px 18px;
+    padding:0;
+  }
+  .faq-answer li{margin-bottom:2px}
+
+  /* Footer block (copied pattern from other pages) */
+  #footer-bar{
+    text-align:center;
+    margin:2em 0;
+    font-size:.95rem;
+  }
+  #footer-bar a{
+    color:var(--accent-2);
+    text-decoration:none;
+    margin:0 .3em;
+  }
+  #footer-bar .main-link{
+    font-size:1.1rem;
+    font-weight:700;
+  }
+  #footer-bar a:hover{text-decoration:underline}
+  #embed-box{
+    display:none;
+    margin:.8rem auto 0;
+    text-align:left;
+    font-size:.85rem;
+    background:#222;
+    color:#ccc;
+    padding:.6rem;
+    border-radius:6px;
+    overflow-x:auto;
+    max-width:90%;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Fuss-Free Browser Apps</h1>
+    <h2>Sprite Rotation Tool</h2>
+    <p class="sub">
+      Rotate a sprite through a full 360° and export the results as individual frames or compact sprite sheets.
+      Ideal for pixel-art games, AGS projects and modern engines like Unity, Godot and GameMaker.
+    </p>
+
+    <main>
+      <!-- LEFT: controls -->
+      <section>
+        <div class="card">
+          <div class="section-label">Step 1</div>
+          <h2>Load sprite</h2>
+          <p>Choose a single sprite image. PNG with transparency is ideal, but other standard image formats work too.</p>
+
+          <div class="field-group">
+            <label for="image-input">Sprite image (PNG, JPG, WEBP, GIF, etc.)</label>
+            <input type="file" id="image-input" accept="image/*">
+          </div>
+          <div class="inline-note">
+            The tool rotates the sprite around its centre. The output frames are padded so that no corners get clipped.
+          </div>
+
+          <div class="canvas-shell" id="original-shell">
+            <canvas id="original-canvas"></canvas>
+          </div>
+          <div class="meta-line">
+            <span id="original-info">No image loaded yet.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-label">Step 2</div>
+          <h2>Rotation settings</h2>
+          <p>Pick how many frames you want and how they’re spaced around the full 360°.</p>
+
+          <div class="field-group">
+            <label>Fixed cell size</label>
+            <div class="toggle-row">
+              <input type="checkbox" id="fixed-cell-toggle">
+              <span>Keep every frame inside a fixed cell (e.g. 64×64) instead of expanding.</span>
+            </div>
+
+            <div id="fixed-cell-options" style="display:none; margin-top:6px;">
+              <div class="field-group" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
+                <div>
+                  <label for="cell-w">Cell width (px)</label>
+                  <input type="number" id="cell-w" min="1" max="4096" step="1" value="64">
+                </div>
+                <div>
+                  <label for="cell-h">Cell height (px)</label>
+                  <input type="number" id="cell-h" min="1" max="4096" step="1" value="64">
+                </div>
+              </div>
+
+              <div class="field-group" style="margin-bottom:0;">
+                <label for="cell-behavior">When rotation would exceed cell</label>
+                <select id="cell-behavior">
+                  <option value="fit">Scale down to fit (no clipping)</option>
+                  <option value="clip">Clip to cell (no scaling)</option>
+                </select>
+                <div class="inline-note">
+                  “Fit” preserves all pixels but shrinks the sprite. “Clip” keeps scale but corners may be cut.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="radio-row">
+              <label>
+                <input type="radio" name="mode" id="mode-angle" value="angle" checked>
+                Angle per frame
+              </label>
+              <label>
+                <input type="radio" name="mode" id="mode-count" value="count">
+                Number of frames (360°)
+              </label>
+            </div>
+            <div id="angle-wrapper" class="field-group">
+              <label for="angle-step">Angle between frames (degrees)</label>
+              <input type="number" id="angle-step" min="1" max="360" step="1" value="15">
+              <div class="inline-note">
+                Must divide evenly into 360° (e.g. 10, 12, 15, 20, 24, 30, 45, 60, 90…). The tool will generate a full 360° loop.
+              </div>
+            </div>
+            <div id="count-wrapper" class="field-group" style="display:none;">
+              <label for="frame-count">Number of frames (full 360°)</label>
+              <input type="number" id="frame-count" min="2" max="360" step="1" value="24">
+              <div class="inline-note">
+                Must divide evenly into 360°. For example, 12 frames give 30° steps; 24 frames give 15° steps.
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Rendering mode</label>
+            <div class="toggle-row">
+              <input type="checkbox" id="smoothing-toggle">
+              <span>Enable smooth anti-aliasing (better for HD art; leave off for crisp pixel art).</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Background handling</label>
+            <div class="radio-row">
+              <label>
+                <input type="radio" name="bg-mode" id="bg-keep" value="keep" checked>
+                Leave as-is
+              </label>
+              <label>
+                <input type="radio" name="bg-mode" id="bg-key" value="key">
+                Make corner colour transparent
+              </label>
+            </div>
+            <div id="bg-options" style="display:none; margin-top:2px;">
+              <div class="field-group" style="margin-bottom:4px;">
+                <label for="bg-corner">Sample corner</label>
+                <select id="bg-corner">
+                  <option value="tl">Top-left</option>
+                  <option value="tr">Top-right</option>
+                  <option value="bl">Bottom-left</option>
+                  <option value="br">Bottom-right</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0;">
+                <label for="bg-tolerance">Colour tolerance</label>
+                <input type="number" id="bg-tolerance" min="0" max="80" step="1" value="8">
+                <div class="inline-note">
+                  Pixels close to the sampled colour will become fully transparent. Increase if some background remains.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pill" id="derived-summary">
+            360° / 15° &rarr; <strong>24</strong> frames
+          </div>
+
+          <div class="btn-row">
+            <button id="generate-btn" type="button">Generate frames</button>
+            <button id="reset-btn" type="button" class="secondary">Reset</button>
+          </div>
+
+          <div id="status" class="status"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT: previews & export -->
+      <section>
+        <div class="card">
+          <div class="section-label">Step 3</div>
+          <h2>Preview &amp; export</h2>
+          <p>Scrub through the generated frames to check the rotation looks right before exporting.</p>
+
+          <div class="preview-grid">
+            <div>
+              <div class="canvas-shell">
+                <canvas id="frame-preview"></canvas>
+              </div>
+              <div class="meta-line">
+                <span id="frame-info">No frames yet.</span>
+                <span id="frame-dimensions"></span>
+              </div>
+              <div class="frame-slider-row" id="frame-slider-row" style="display:none;">
+                <label for="frame-slider">Current frame: <span id="frame-index-label">1</span></label>
+                <input type="range" id="frame-slider" min="1" max="1" value="1">
+              </div>
+            </div>
+
+            <div>
+              <div class="section-label">Sprite sheet</div>
+              <p style="margin-bottom:6px;">Choose a grid layout and build a single sprite sheet image.</p>
+
+              <div class="field-group">
+                <label for="sheet-layout">Layout (columns × rows)</label>
+                <select id="sheet-layout" disabled>
+                  <option value="">Generate frames first</option>
+                </select>
+              </div>
+
+              <div class="btn-row">
+                <button id="build-sheet-btn" type="button" disabled>Build sprite sheet</button>
+              </div>
+
+              <div class="canvas-shell" style="margin-top:8px;">
+                <canvas id="sheet-preview"></canvas>
+              </div>
+
+              <div class="meta-line">
+                <span id="sheet-info">No sheet yet.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top:10px;">
+            <button id="download-frames-btn" type="button" class="secondary" disabled>Download all frames (ZIP)</button>
+            <button id="download-sheet-btn" type="button" disabled>Download sprite sheet (PNG)</button>
+          </div>
+          <div class="small-note">
+            Frames are packaged into a single ZIP containing individual PNG files (with transparency if enabled).
+          </div>
+        </div>
+      </section>
+    </main>
+
+
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  const imageInput = document.getElementById('image-input');
+  const originalCanvas = document.getElementById('original-canvas');
+  const originalInfo = document.getElementById('original-info');
+
+  const modeAngle = document.getElementById('mode-angle');
+  const modeCount = document.getElementById('mode-count');
+  const angleWrapper = document.getElementById('angle-wrapper');
+  const countWrapper = document.getElementById('count-wrapper');
+  const angleStepInput = document.getElementById('angle-step');
+  const frameCountInput = document.getElementById('frame-count');
+  const derivedSummary = document.getElementById('derived-summary');
+
+  const smoothingToggle = document.getElementById('smoothing-toggle');
+
+  const fixedCellToggle = document.getElementById('fixed-cell-toggle');
+  const fixedCellOptions = document.getElementById('fixed-cell-options');
+  const cellWInput = document.getElementById('cell-w');
+  const cellHInput = document.getElementById('cell-h');
+  const cellBehaviorSelect = document.getElementById('cell-behavior');
+
+  const bgKeep = document.getElementById('bg-keep');
+  const bgKey = document.getElementById('bg-key');
+  const bgOptions = document.getElementById('bg-options');
+  const bgCorner = document.getElementById('bg-corner');
+  const bgTolerance = document.getElementById('bg-tolerance');
+
+  const generateBtn = document.getElementById('generate-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const statusEl = document.getElementById('status');
+
+  const framePreviewCanvas = document.getElementById('frame-preview');
+  const frameInfo = document.getElementById('frame-info');
+  const frameDimensions = document.getElementById('frame-dimensions');
+  const frameSliderRow = document.getElementById('frame-slider-row');
+  const frameSlider = document.getElementById('frame-slider');
+  const frameIndexLabel = document.getElementById('frame-index-label');
+
+  const sheetLayoutSelect = document.getElementById('sheet-layout');
+  const buildSheetBtn = document.getElementById('build-sheet-btn');
+  const sheetPreviewCanvas = document.getElementById('sheet-preview');
+  const sheetInfo = document.getElementById('sheet-info');
+
+  const downloadFramesBtn = document.getElementById('download-frames-btn');
+  const downloadSheetBtn = document.getElementById('download-sheet-btn');
+
+  let originalImage = null;
+  let originalFileName = 'sprite';
+  let frames = [];
+  let frameDataUrls = [];
+  let frameSize = 0;
+  let degreesPerFrame = 0;
+  let sheetDataUrl = null;
+  let smoothingEnabled = false;
+  let bgMode = 'keep';
+
+  let fixedCellEnabled = false;
+  let cellW = 64;
+  let cellH = 64;
+  let cellBehavior = 'fit';
+
+
+
+  function setStatus(message, type){
+    statusEl.textContent = message || '';
+    statusEl.classList.remove('status--error','status--ok');
+    if(type === 'error') statusEl.classList.add('status--error');
+    if(type === 'ok') statusEl.classList.add('status--ok');
+  }
+
+  function clearGenerated(){
+    frames = [];
+    frameDataUrls = [];
+    frameSize = 0;
+    degreesPerFrame = 0;
+    sheetDataUrl = null;
+
+    framePreviewCanvas.width = 0;
+    framePreviewCanvas.height = 0;
+    frameInfo.textContent = 'No frames yet.';
+    frameDimensions.textContent = '';
+
+    frameSliderRow.style.display = 'none';
+    frameSlider.min = 1;
+    frameSlider.max = 1;
+    frameSlider.value = 1;
+    frameIndexLabel.textContent = '1';
+
+    sheetLayoutSelect.innerHTML = '<option value="">Generate frames first</option>';
+    sheetLayoutSelect.disabled = true;
+    buildSheetBtn.disabled = true;
+
+    sheetPreviewCanvas.width = 0;
+    sheetPreviewCanvas.height = 0;
+    sheetInfo.textContent = 'No sheet yet.';
+
+    downloadFramesBtn.disabled = true;
+    downloadSheetBtn.disabled = true;
+  }
+
+  function updateDerivedSummary(){
+    const mode = modeAngle.checked ? 'angle' : 'count';
+    if(mode === 'angle'){
+      const angle = Number(angleStepInput.value);
+      if(!angle || angle <= 0){
+        derivedSummary.textContent = 'Enter a valid angle between 1° and 360°.';
+        return;
+      }
+      const framesCalc = 360/angle;
+      if(!Number.isInteger(framesCalc)){
+        derivedSummary.textContent = '360° / ' + angle.toFixed(2) + '° → not an integer number of frames.';
+      } else {
+        derivedSummary.innerHTML =
+          '360° / ' + angle.toFixed(2).replace(/\.00$/,'') + '° &rarr; <strong>' + framesCalc + '</strong> frames';
+      }
+    } else {
+      const count = Number(frameCountInput.value);
+      if(!count || count <= 0){
+        derivedSummary.textContent = 'Enter a valid frame count.';
+        return;
+      }
+      const angle = 360/count;
+      if(!Number.isInteger(angle)){
+        derivedSummary.textContent = count + ' frames → 360° / ' + count + ' = ' + angle.toFixed(2) + '° (not an integer step).';
+      } else {
+        derivedSummary.innerHTML =
+          count + ' frames &rarr; <strong>' + angle.toFixed(2).replace(/\.00$/,'') + '°</strong> per frame';
+      }
+    }
+  }
+
+  function updateBgMode(){
+    if(bgKey.checked){
+      bgMode = 'key';
+      bgOptions.style.display = '';
+    } else {
+      bgMode = 'keep';
+      bgOptions.style.display = 'none';
+    }
+  }
+
+  function updateFixedCellUI(){
+    fixedCellEnabled = !!fixedCellToggle.checked;
+    fixedCellOptions.style.display = fixedCellEnabled ? '' : 'none';
+
+    cellW = Math.max(1, Number(cellWInput.value) || 64);
+    cellH = Math.max(1, Number(cellHInput.value) || 64);
+    cellBehavior = cellBehaviorSelect.value === 'clip' ? 'clip' : 'fit';
+
+    clearGenerated();
+  }
+
+  function sampleBackgroundColor(){
+    if(!originalImage) return null;
+    const ctx = originalCanvas.getContext('2d');
+    const w = originalCanvas.width;
+    const h = originalCanvas.height;
+    if(!w || !h) return null;
+
+    let x = 0, y = 0;
+    const corner = bgCorner.value || 'tl';
+    if(corner === 'tr'){ x = w-1; y = 0; }
+    else if(corner === 'bl'){ x = 0; y = h-1; }
+    else if(corner === 'br'){ x = w-1; y = h-1; }
+    else { x = 0; y = 0; }
+
+    const data = ctx.getImageData(x,y,1,1).data;
+    return { r:data[0], g:data[1], b:data[2], a:data[3] };
+  }
+
+  function applyColorKey(canvas,bg,tol){
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const d = imgData.data;
+    const len = d.length;
+    const t = tol < 0 ? 0 : tol;
+
+    for(let i=0;i<len;i+=4){
+      const r = d[i];
+      const g = d[i+1];
+      const b = d[i+2];
+      const a = d[i+3];
+      if(a === 0) continue;
+
+      const dr = Math.abs(r-bg.r);
+      const dg = Math.abs(g-bg.g);
+      const db = Math.abs(b-bg.b);
+
+      if(dr <= t && dg <= t && db <= t){
+        d[i+3] = 0;
+      }
+    }
+    ctx.putImageData(imgData,0,0);
+  }
+
+  function drawImageToCanvas(img,canvas){
+    const ctx = canvas.getContext('2d');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.imageSmoothingEnabled = smoothingEnabled;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0);
+  }
+
+  function handleImageLoad(file,dataUrl){
+    const img = new Image();
+    img.onload = function(){
+      originalImage = img;
+      clearGenerated();
+      drawImageToCanvas(img,originalCanvas);
+      originalInfo.textContent = file.name + ' – ' + img.width + '×' + img.height + ' px';
+
+      const namePart = file.name.split('.').slice(0,-1).join('.') || 'sprite';
+      originalFileName = namePart.replace(/[^a-z0-9_\-]/gi,'_');
+
+      setStatus('Sprite loaded. Adjust rotation settings and generate frames.','ok');
+    };
+    img.onerror = function(){
+      originalImage = null;
+      originalCanvas.width = 0;
+      originalCanvas.height = 0;
+      originalInfo.textContent = 'Could not load image.';
+      setStatus('That didn’t look like a valid image file.','error');
+    };
+    img.src = dataUrl;
+  }
+
+  imageInput.addEventListener('change',function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')){
+      setStatus('Please choose an image file (PNG, JPG, WEBP, GIF, etc.).','error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(evt){ handleImageLoad(file,evt.target.result); };
+    reader.onerror = function(){ setStatus('Error reading file.','error'); };
+    reader.readAsDataURL(file);
+  });
+
+  modeAngle.addEventListener('change',function(){
+    if(modeAngle.checked){
+      angleWrapper.style.display = '';
+      countWrapper.style.display = 'none';
+    }
+    updateDerivedSummary();
+  });
+  modeCount.addEventListener('change',function(){
+    if(modeCount.checked){
+      angleWrapper.style.display = 'none';
+      countWrapper.style.display = '';
+    }
+    updateDerivedSummary();
+  });
+  angleStepInput.addEventListener('input',updateDerivedSummary);
+  frameCountInput.addEventListener('input',updateDerivedSummary);
+
+  smoothingToggle.addEventListener('change',function(){
+    smoothingEnabled = smoothingToggle.checked;
+    if(originalImage){
+      drawImageToCanvas(originalImage,originalCanvas);
+    }
+    setStatus(
+      'Rendering: ' + (smoothingEnabled ? 'smooth / anti-aliased' : 'pixel-perfect (no smoothing). Re-generate frames to apply.'),
+      ''
+    );
+  });
+
+  bgKeep.addEventListener('change',updateBgMode);
+  bgKey.addEventListener('change',updateBgMode);
+
+  fixedCellToggle.addEventListener('change',updateFixedCellUI);
+  cellWInput.addEventListener('input',updateFixedCellUI);
+  cellHInput.addEventListener('input',updateFixedCellUI);
+  cellBehaviorSelect.addEventListener('change',updateFixedCellUI);
+
+  function getRotationSettings(){
+    const mode = modeAngle.checked ? 'angle' : 'count';
+    if(mode === 'angle'){
+      const angle = Number(angleStepInput.value);
+      if(!angle || angle <= 0 || angle > 360) throw new Error('Please enter an angle between 1° and 360°.');
+      const framesCalc = 360/angle;
+      if(!Number.isInteger(framesCalc)) throw new Error('Angle must divide evenly into 360°. For example: 10, 12, 15, 20, 24, 30, 45, 60, 90…');
+      return { frames:framesCalc, angle:angle };
+    } else {
+      const count = Number(frameCountInput.value);
+      if(!count || count < 2 || count > 360) throw new Error('Please enter a frame count between 2 and 360.');
+      const angle = 360/count;
+      if(!Number.isInteger(angle)) throw new Error('Frame count must divide evenly into 360° (e.g. 8, 12, 16, 24, 30…).');
+      return { frames:count, angle:angle };
+    }
+  }
+
+  function generateFrames(){
+    if(!originalImage){
+      setStatus('Load a sprite image first.','error');
+      return;
+    }
+
+    let settings;
+    try{
+      settings = getRotationSettings();
+    }catch(err){
+      setStatus(err.message,'error');
+      return;
+    }
+
+    const totalFrames = settings.frames;
+    const step = settings.angle;
+    const w = originalImage.width;
+    const h = originalImage.height;
+
+    // Decide output frame size:
+    // - default: expand to max bounding side (original behaviour)
+    // - fixed cell: force to cellW x cellH
+    let outW, outH;
+    if(fixedCellEnabled){
+      outW = Math.max(1, Math.floor(Number(cellW) || 64));
+      outH = Math.max(1, Math.floor(Number(cellH) || 64));
+    } else {
+      const maxSide = Math.ceil(Math.sqrt(w*w + h*h));
+      outW = maxSide;
+      outH = maxSide;
+    }
+
+    frames = [];
+    frameDataUrls = [];
+    // NOTE: existing code assumes square tiles everywhere else. If you only use 64x64 you're fine.
+    // We'll store the width as "frameSize" to keep the rest of the tool working unchanged.
+    frameSize = outW;
+    degreesPerFrame = step;
+    sheetDataUrl = null;
+
+    let bgSample = null;
+    let tol = 0;
+
+    if(bgMode === 'key'){
+      bgSample = sampleBackgroundColor();
+      if(!bgSample){
+        setStatus('Could not sample background colour – check the sprite is loaded.','error');
+        return;
+      }
+      tol = Number(bgTolerance.value);
+      if(!Number.isFinite(tol) || tol < 0) tol = 0;
+      if(tol > 80) tol = 80;
+    }
+
+    // If fixed cell + FIT: compute ONE uniform scale factor that guarantees no clipping
+    // across the whole rotation loop.
+    let uniformScale = 1;
+
+    if(fixedCellEnabled && cellBehavior === 'fit'){
+      let maxBoundW = 0;
+      let maxBoundH = 0;
+
+      for(let i=0;i<totalFrames;i++){
+        const a = (i*step) * Math.PI / 180;
+        const c = Math.abs(Math.cos(a));
+        const s = Math.abs(Math.sin(a));
+
+        // bounding box of rotated rectangle w x h
+        const boundW = (w * c) + (h * s);
+        const boundH = (w * s) + (h * c);
+
+        if(boundW > maxBoundW) maxBoundW = boundW;
+        if(boundH > maxBoundH) maxBoundH = boundH;
+      }
+
+      uniformScale = Math.min(outW / maxBoundW, outH / maxBoundH, 1);
+      if(!Number.isFinite(uniformScale) || uniformScale <= 0) uniformScale = 1;
+    }
+
+    const offcanvas = document.createElement('canvas');
+    const ctx = offcanvas.getContext('2d');
+    offcanvas.width = outW;
+    offcanvas.height = outH;
+    ctx.imageSmoothingEnabled = smoothingEnabled;
+
+    for(let i=0;i<totalFrames;i++){
+      const angleRad = (i*step) * Math.PI / 180;
+
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,offcanvas.width,offcanvas.height);
+
+      ctx.translate(outW/2, outH/2);
+      ctx.rotate(angleRad);
+
+      if(fixedCellEnabled && cellBehavior === 'fit'){
+        ctx.scale(uniformScale, uniformScale);
+      }
+      // if clip: scale = 1, so it may clip (as intended)
+
+      ctx.drawImage(originalImage, -w/2, -h/2);
+      ctx.restore();
+
+      const frameCanvas = document.createElement('canvas');
+      frameCanvas.width = outW;
+      frameCanvas.height = outH;
+      const fctx = frameCanvas.getContext('2d');
+      fctx.imageSmoothingEnabled = smoothingEnabled;
+      fctx.drawImage(offcanvas,0,0);
+
+      if(bgSample && bgMode === 'key'){
+        applyColorKey(frameCanvas,bgSample,tol);
+      }
+
+      frames.push(frameCanvas);
+      frameDataUrls.push(frameCanvas.toDataURL('image/png'));
+    }
+
+    if(frames.length > 0){
+      framePreviewCanvas.width = outW;
+      framePreviewCanvas.height = outH;
+      const pctx = framePreviewCanvas.getContext('2d');
+      pctx.imageSmoothingEnabled = smoothingEnabled;
+      pctx.clearRect(0,0,outW,outH);
+      pctx.drawImage(frames[0],0,0);
+
+      frameInfo.textContent = frames.length + ' frame(s) at ' + step + '° per frame (full 360° loop).';
+
+      // Keep the UI sane. If you go rectangular later, we should store frameW/frameH separately.
+      frameDimensions.textContent = outW + '×' + outH + ' px per frame';
+
+      frameSliderRow.style.display = '';
+      frameSlider.min = 1;
+      frameSlider.max = frames.length;
+      frameSlider.value = 1;
+      frameIndexLabel.textContent = '1';
+
+      populateSheetLayouts(frames.length);
+
+      downloadFramesBtn.disabled = false;
+      downloadSheetBtn.disabled = true;
+      sheetInfo.textContent = 'Pick a layout and build the sprite sheet.';
+
+      setStatus('Generated ' + frames.length + ' frames.','ok');
+    } else {
+      setStatus('No frames generated – check your settings.','error');
+    }
+  }
+
+  function populateSheetLayouts(frameCount){
+    sheetLayoutSelect.innerHTML = '';
+    const layouts = [];
+    const maxCols = Math.min(frameCount,16);
+
+    for(let cols=1; cols<=maxCols; cols++){
+      if(frameCount % cols === 0){
+        const rows = frameCount/cols;
+        layouts.push({cols,rows});
+      }
+    }
+    if(layouts.length === 0){
+      layouts.push({cols:frameCount,rows:1});
+    }
+    layouts.sort(function(a,b){
+      const diffA = Math.abs(a.cols-a.rows);
+      const diffB = Math.abs(b.cols-b.rows);
+      return diffA-diffB || a.cols-b.cols;
+    });
+
+    layouts.forEach(function(layout,idx){
+      const opt = document.createElement('option');
+      opt.value = layout.cols + 'x' + layout.rows;
+      opt.textContent = layout.cols + ' × ' + layout.rows + (idx===0 ? ' (compact)' : '');
+      sheetLayoutSelect.appendChild(opt);
+    });
+
+    sheetLayoutSelect.disabled = false;
+    buildSheetBtn.disabled = false;
+  }
+
+  function showPreviewFrame(index){
+    if(!frames.length) return;
+    const idx = Math.min(Math.max(index,1),frames.length) - 1;
+    const canvas = frames[idx];
+    framePreviewCanvas.width = canvas.width;
+    framePreviewCanvas.height = canvas.height;
+    const ctx = framePreviewCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = smoothingEnabled;
+    ctx.clearRect(0,0,framePreviewCanvas.width,framePreviewCanvas.height);
+    ctx.drawImage(canvas,0,0);
+    frameIndexLabel.textContent = String(idx+1);
+  }
+
+  frameSlider.addEventListener('input',function(){
+    const value = Number(frameSlider.value);
+    showPreviewFrame(value);
+  });
+
+  function buildSpriteSheet(){
+    if(!frames.length){
+      setStatus('Generate frames first.','error');
+      return;
+    }
+    const value = sheetLayoutSelect.value;
+    if(!value){
+      setStatus('Pick a sprite sheet layout first.','error');
+      return;
+    }
+    const parts = value.split('x');
+    const cols = Number(parts[0]);
+    const rows = Number(parts[1]);
+
+    const sheetCanvas = sheetPreviewCanvas;
+    const ctx = sheetCanvas.getContext('2d');
+    sheetCanvas.width = cols*frameSize;
+    sheetCanvas.height = rows*frameSize;
+    ctx.imageSmoothingEnabled = smoothingEnabled;
+    ctx.clearRect(0,0,sheetCanvas.width,sheetCanvas.height);
+
+    for(let i=0;i<frames.length;i++){
+      const col = i % cols;
+      const row = Math.floor(i/cols);
+      ctx.drawImage(frames[i],col*frameSize,row*frameSize);
+    }
+
+    sheetDataUrl = sheetCanvas.toDataURL('image/png');
+    sheetInfo.textContent = 'Sprite sheet: ' + cols + ' × ' + rows +
+      ' tiles (' + frames.length + ' frames, ' + sheetCanvas.width + '×' + sheetCanvas.height + ' px).';
+
+    downloadSheetBtn.disabled = false;
+    setStatus('Sprite sheet built.','ok');
+  }
+
+  function triggerDownload(url,filename){
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  const crcTable = (function(){
+    const table = new Uint32Array(256);
+    for(let i=0;i<256;i++){
+      let c = i;
+      for(let j=0;j<8;j++){
+        c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[i] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes){
+    let crc = 0xffffffff;
+    for(let i=0;i<bytes.length;i++){
+      crc = crcTable[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  function dataURLToUint8Array(dataURL){
+    const commaIndex = dataURL.indexOf(',');
+    const base64 = dataURL.slice(commaIndex+1);
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for(let i=0;i<len;i++){
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  function makeZip(files){
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+    let centralSize = 0;
+
+    function writeUint32(arr,off,value){
+      arr[off]   = value & 0xff;
+      arr[off+1] = (value >>> 8) & 0xff;
+      arr[off+2] = (value >>> 16) & 0xff;
+      arr[off+3] = (value >>> 24) & 0xff;
+    }
+    function writeUint16(arr,off,value){
+      arr[off]   = value & 0xff;
+      arr[off+1] = (value >>> 8) & 0xff;
+    }
+
+    files.forEach(function(file){
+      const nameBytes = new TextEncoder().encode(file.name);
+      const data = file.data;
+      const crc = crc32(data);
+      const size = data.length;
+      const modTime = 0;
+      const modDate = 0;
+
+      const localHeader = new Uint8Array(30 + nameBytes.length);
+      writeUint32(localHeader,0,0x04034b50);
+      writeUint16(localHeader,4,20);
+      writeUint16(localHeader,6,0);
+      writeUint16(localHeader,8,0);
+      writeUint16(localHeader,10,modTime);
+      writeUint16(localHeader,12,modDate);
+      writeUint32(localHeader,14,crc);
+      writeUint32(localHeader,18,size);
+      writeUint32(localHeader,22,size);
+      writeUint16(localHeader,26,nameBytes.length);
+      writeUint16(localHeader,28,0);
+      localHeader.set(nameBytes,30);
+
+      localParts.push(localHeader,data);
+      const localOffset = offset;
+      offset += localHeader.length + data.length;
+
+      const centralHeader = new Uint8Array(46 + nameBytes.length);
+      writeUint32(centralHeader,0,0x02014b50);
+      writeUint16(centralHeader,4,20);
+      writeUint16(centralHeader,6,20);
+      writeUint16(centralHeader,8,0);
+      writeUint16(centralHeader,10,0);
+      writeUint16(centralHeader,12,modTime);
+      writeUint16(centralHeader,14,modDate);
+      writeUint32(centralHeader,16,crc);
+      writeUint32(centralHeader,20,size);
+      writeUint32(centralHeader,24,size);
+      writeUint16(centralHeader,28,nameBytes.length);
+      writeUint16(centralHeader,30,0);
+      writeUint16(centralHeader,32,0);
+      writeUint16(centralHeader,34,0);
+      writeUint16(centralHeader,36,0);
+      writeUint32(centralHeader,38,0);
+      writeUint32(centralHeader,42,localOffset);
+      centralHeader.set(nameBytes,46);
+
+      centralParts.push(centralHeader);
+      centralSize += centralHeader.length;
+    });
+
+    const centralOffset = offset;
+    const fileCount = files.length;
+
+    const endRecord = new Uint8Array(22);
+    writeUint32(endRecord,0,0x06054b50);
+    writeUint16(endRecord,4,0);
+    writeUint16(endRecord,6,0);
+    writeUint16(endRecord,8,fileCount);
+    writeUint16(endRecord,10,fileCount);
+    writeUint32(endRecord,12,centralSize);
+    writeUint32(endRecord,16,centralOffset);
+    writeUint16(endRecord,20,0);
+
+    const allParts = localParts.concat(centralParts,[endRecord]);
+    let totalSize = 0;
+    allParts.forEach(function(part){ totalSize += part.length; });
+
+    const zipBytes = new Uint8Array(totalSize);
+    let pos = 0;
+    allParts.forEach(function(part){
+      zipBytes.set(part,pos);
+      pos += part.length;
+    });
+
+    return new Blob([zipBytes],{type:'application/zip'});
+  }
+
+  function downloadAllFramesAsZip(){
+    if(!frameDataUrls.length){
+      setStatus('No frames to download.','error');
+      return;
+    }
+    const base = originalFileName || 'sprite';
+    const digits = String(frameDataUrls.length).length;
+
+    const files = frameDataUrls.map(function(url,idx){
+      const indexStr = String(idx+1).padStart(digits,'0');
+      const filename = base + '_frame_' + indexStr + '.png';
+      const data = dataURLToUint8Array(url);
+      return { name:filename, data:data };
+    });
+
+    const zipBlob = makeZip(files);
+    const zipName = base + '_frames.zip';
+    const zipUrl = URL.createObjectURL(zipBlob);
+    triggerDownload(zipUrl,zipName);
+    setTimeout(function(){ URL.revokeObjectURL(zipUrl); },40000);
+
+    setStatus('ZIP download requested for ' + files.length + ' frame(s).','ok');
+  }
+
+  function downloadSpriteSheet(){
+    if(!sheetDataUrl){
+      setStatus('Build the sprite sheet before downloading.','error');
+      return;
+    }
+    const filename = (originalFileName || 'sprite') + '_sheet.png';
+    triggerDownload(sheetDataUrl,filename);
+    setStatus('Sprite sheet download requested.','ok');
+  }
+
+  generateBtn.addEventListener('click',generateFrames);
+
+  resetBtn.addEventListener('click',function(){
+    imageInput.value = '';
+    originalImage = null;
+    originalCanvas.width = 0;
+    originalCanvas.height = 0;
+    originalInfo.textContent = 'No image loaded yet.';
+    angleStepInput.value = 15;
+    frameCountInput.value = 24;
+    modeAngle.checked = true;
+    angleWrapper.style.display = '';
+    countWrapper.style.display = 'none';
+    smoothingToggle.checked = false;
+    smoothingEnabled = false;
+    bgKeep.checked = true;
+    bgKey.checked = false;
+    bgCorner.value = 'tl';
+    bgTolerance.value = 8;
+    updateBgMode();
+    updateDerivedSummary();
+    clearGenerated();
+    setStatus('Reset. Load a sprite to start again.','');
+  });
+
+  buildSheetBtn.addEventListener('click',buildSpriteSheet);
+  downloadFramesBtn.addEventListener('click',downloadAllFramesAsZip);
+  downloadSheetBtn.addEventListener('click',downloadSpriteSheet);
+
+  /* FAQ accordion */
+  Array.from(document.querySelectorAll('.faq-item')).forEach(function(item){
+    const btn = item.querySelector('.faq-question');
+    if(!btn) return;
+    btn.addEventListener('click',function(){
+      item.classList.toggle('open');
+    });
+  });
+
+  updateBgMode();
+  updateDerivedSummary();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+// Pixel Palette Bytes
+NOT very imaginative but its what it is!!
+
+
+    // Layout:
+    // [0] configbits
+    // [1..2] width  (big-endian)
+    // [3..4] height (big-endian)
+    // [5..8] payload length (big-endian)
+    // [9..15] reserved = 0
+
+    // colour palette info
+    // [16 + 1024]  // 1024 bytes of palette info
+
+    // [1040 ... n] // the 8bit pixel data
