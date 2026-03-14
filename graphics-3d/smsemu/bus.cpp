@@ -1,0 +1,569 @@
+/*
+    Sega MasterSystem / GameGear Emulation systems
+
+    SYSTEM::BUS
+*/
+
+#include "sms.h"
+#include "internal.h"
+
+#include <string.h>
+
+
+static bool log_once_per_addr[0xC000]; // optional, avoid flooding
+
+
+
+static void sega_mapper_update_slot0(struct SMS_Core* sms) {
+    uint32_t offset = 0x4000 * sms->cart.mappers.sega.fffd;
+    for (uint32_t i = 0; i < 0x10; ++i) {
+        sms->cart.mappers.sega.banks[i] = (const unsigned char *)ROM + offset + i*0x400;
+    }
+
+    /*
+    const uint32_t offset = 0x4000ul * sms->cart.mappers.sega.fffd;
+
+    // this is fixed, never updated!
+    sms->cart.mappers.sega.banks[0x00] = (const unsigned char *)ROM;
+
+    for (uint32_t i = 1; i < 0x10; ++i) {
+        // only the first 15 banks are saved
+        sms->cart.mappers.sega.banks[i] = (const unsigned char *)ROM + offset + (0x0400ul * i);
+    }
+    */
+}
+
+static void sega_mapper_update_slot1(struct SMS_Core* sms) {
+    uint32_t offset = 0x4000 * sms->cart.mappers.sega.fffe;
+    for (uint32_t i = 0; i < 0x10; ++i) {
+        sms->cart.mappers.sega.banks[i + 0x10] = (const unsigned char *)ROM + offset + i*0x400;
+    }
+
+}
+
+static void sega_mapper_update_slot2(struct SMS_Core* sms){
+    uint32_t offset = 0x4000 * sms->cart.mappers.sega.ffff;
+    for (uint32_t i = 0; i < 0x10; ++i) {
+        sms->cart.mappers.sega.banks[i + 0x20] = (const unsigned char *)ROM + offset + i*0x400;
+    }
+
+}
+
+static void sega_mapper_update_ram0(struct SMS_Core* sms)
+{
+    for (uint32_t i = 0; i < 0x10; ++i)
+    {
+        sms->cart.mappers.sega.banks[i + 0x20] = (const unsigned char *)ram[sms->cart.mappers.sega.fffc.ram_bank_select & 1] + (0x0400ul * i);
+    }
+}
+
+void SMS_mapper_update(struct SMS_Core* sms)
+{
+    switch (sms->cart.mapper_type)
+    {
+    case MAPPER_TYPE_NONE:
+        break;
+
+    case MAPPER_TYPE_SEGA:
+        sega_mapper_update_slot0(sms);
+        sega_mapper_update_slot1(sms);
+        if (sms->cart.mappers.sega.fffc.ram_enable_80000)
+        {
+            sega_mapper_update_ram0(sms);
+        }
+        else
+        {
+            sega_mapper_update_slot2(sms);
+        }
+        break;
+    }
+}
+
+void sega_mapper_setup(struct SMS_Core* sms)
+{
+    // control is reset to zero
+    memset(&sms->cart.mappers.sega.fffc, 0, sizeof(sms->cart.mappers.sega.fffc));
+
+    sms->cart.mappers.sega.fffd = 0;
+    sms->cart.mappers.sega.fffe = 1;
+    sms->cart.mappers.sega.ffff = 2;
+
+    SMS_mapper_update(sms);
+}
+
+// TODO:
+void codemaster_mapper_setup(struct SMS_Core* sms)
+{
+    //SMS_log_fatal("unfinished codemasters mapper!\n");
+    UNUSED(sms);
+}
+
+static FORCE_INLINE unsigned char none_mapper_read(struct SMS_Core* sms, uint16_t addr)
+{
+    return (uint8_t)ROM[addr & sms->rom_mask];
+}
+
+static FORCE_INLINE unsigned char sega_mapper_read(struct SMS_Core* sms, uint16_t addr)
+{
+
+    if (addr < 0x4000)
+        return sms->cart.mappers.sega.banks[addr >> 10][addr & 0x3FF];
+    else if (addr < 0x8000)
+        return sms->cart.mappers.sega.banks[((addr >> 10) & 0xF)+ 0x10][addr & 0x3FF];
+    else if (addr < 0xC000) {
+        if (sms->cart.mappers.sega.fffc.ram_enable_80000)
+            return ram[sms->cart.mappers.sega.fffc.ram_bank_select & 1][addr & 0x3FFF];
+        else
+            return sms->cart.mappers.sega.banks[(addr >> 10) & 0xf + 0x20][addr & 0x3FF];
+            //return sms->cart.mappers.sega.banks[((addr >> 10) & 0xF) + 0x20][addr & 0x3FF];
+
+    }
+    return 0xFF; // safe fallback
+
+
+    unsigned char value;
+
+    // THIS works
+    //return sms->cart.mappers.sega.banks[addr >> 10][addr & 0x3FF];
+
+
+    // the Blow does not
+    // Slot addresses:
+    // 0x0000–0x3FFF -> slot0
+    // 0x4000–0x7FFF -> slot1
+    // 0x8000–0xBFFF -> slot2 / RAM overlay
+
+    if (addr < 0x4000) {
+        // slot0 banks 0x00–0x0F
+        value = sms->cart.mappers.sega.banks[addr >> 10][addr & 0x3FF];
+    }
+    else if (addr < 0x8000) {
+        // slot1 banks 0x10–0x1F
+        value = sms->cart.mappers.sega.banks[(addr >> 10) & 0x0F + 0x10][addr & 0x3FF];
+    }
+    else if (addr < 0xC000) {
+        if (sms->cart.mappers.sega.fffc.ram_enable_80000) {
+            // RAM overlay
+            value = ram[sms->cart.mappers.sega.fffc.ram_bank_select & 1][addr & 0x3FFF];
+        } else {
+            // slot2 banks 0x20–0x2F
+            value = sms->cart.mappers.sega.banks[(addr >> 10) & 0x0F + 0x20][addr & 0x3FF];
+        }
+    } else
+        value = 0xff;
+
+    return value;
+}
+
+static FORCE_INLINE void sega_mapper_write(struct SMS_Core* sms, uint16_t addr, unsigned char value)
+{
+    switch(addr) {
+        case 0xFFFC: // RAM overlay control
+            sms->cart.mappers.sega.fffc.ram_enable_80000 = BIT_TST3(value);
+            sms->cart.mappers.sega.fffc.ram_bank_select = BIT_TST2(value);
+
+            // force update immediately
+            if (sms->cart.mappers.sega.fffc.ram_enable_80000)
+                sega_mapper_update_ram0(sms);
+            else
+                sega_mapper_update_slot2(sms);
+            break;
+
+        case 0xFFFD: sms->cart.mappers.sega.fffd = value & sms->cart.max_bank_mask; sega_mapper_update_slot0(sms); break;
+        case 0xFFFE: sms->cart.mappers.sega.fffe = value & sms->cart.max_bank_mask; sega_mapper_update_slot1(sms); break;
+        case 0xFFFF: sms->cart.mappers.sega.ffff = value & sms->cart.max_bank_mask;
+            if (!sms->cart.mappers.sega.fffc.ram_enable_80000) sega_mapper_update_slot2(sms);
+            break;
+    }
+}
+
+static FORCE_INLINE unsigned char cart_read(struct SMS_Core* sms, uint16_t addr)
+{
+    switch (sms->cart.mapper_type)
+    {
+        case MAPPER_TYPE_NONE: return (uint8_t)none_mapper_read(sms, addr);
+        case MAPPER_TYPE_SEGA: return (uint8_t)sega_mapper_read(sms, addr) & 0xff;
+    }
+
+    UNREACHABLE(0xFF);
+}
+
+static FORCE_INLINE void cart_write(struct SMS_Core* sms, uint16_t addr, unsigned char value)
+{
+    UNUSED(sms); UNUSED(addr); UNUSED(value);
+
+    switch (sms->cart.mapper_type)
+    {
+        case MAPPER_TYPE_NONE: break;
+        case MAPPER_TYPE_SEGA: sega_mapper_write(sms, addr, value); break;
+        default: return;
+    }
+}
+
+unsigned char SMS_read8(struct SMS_Core* sms, uint16_t addr)
+{
+    /*
+    switch ((addr >> 13) & 0x7)
+    {
+        case 0: case 1: case 2:
+        case 3: case 4: case 5:
+            return (uint8_t)cart_read(sms, addr);
+
+        case 6: case 7:
+            return (uint8_t)system_ram[addr & 0x1FFF];
+    }
+
+    UNREACHABLE(0xFF);
+     */
+    // Fast path: upper 3 address bits < 6
+    if (addr < 0xC000)  // (6 * 0x2000)
+        return (uint8_t)cart_read(sms, addr);
+    else
+        return system_ram[addr & 0x1FFF];
+}
+
+// NOTE: writes from 0xEXXX will happen to this function, due to the
+// the switch currently used in the write func.
+// this is okay though because i use a switch here to check the addr!
+static inline void hi_ffxx_write(struct SMS_Core* sms, uint16_t addr, unsigned char value)
+{
+    switch (addr){
+        case 0xFFFC: // Cartridge RAM mapper control
+            // TODO: mapping at 0xC000
+            sms->cart.mappers.sega.fffc.rom_write_enable = BIT_TST7(value);
+            sms->cart.mappers.sega.fffc.ram_enable_C0000 = BIT_TST4(value);
+            sms->cart.mappers.sega.fffc.ram_enable_80000 = BIT_TST3(value);
+            sms->cart.mappers.sega.fffc.ram_bank_select =  BIT_TST2(value);
+            sms->cart.mappers.sega.fffc.bank_shift = value & 0x3;
+
+            //if(!sms->cart.mappers.sega.fffc.ram_enable_C0000) dbug("unimp ram_enable_c0000\r\n");
+            //if(!sms->cart.mappers.sega.fffc.bank_shift) dbug("unimp bank_shift\r\n");
+
+            if (sms->cart.mappers.sega.fffc.ram_enable_80000)
+                sega_mapper_update_ram0(sms);
+            else
+                sega_mapper_update_slot2(sms);
+
+            break;
+
+        case 0xFFFD: // Mapper slot 0 control
+            sms->cart.mappers.sega.fffd = value & sms->cart.max_bank_mask;
+            sega_mapper_update_slot0(sms);
+            break;
+
+        case 0xFFFE: // Mapper slot 1 control
+            sms->cart.mappers.sega.fffe = value & sms->cart.max_bank_mask;
+            sega_mapper_update_slot1(sms);
+            break;
+
+        case 0xFFFF: // Mapper slot 2 control
+            sms->cart.mappers.sega.ffff = value & sms->cart.max_bank_mask;
+            //if (sms->cart.mappers.sega.fffc.ram_enable_80000 == false)
+            {
+                sega_mapper_update_slot2(sms);
+            }
+            break;
+    }
+}
+
+void SMS_write8(struct SMS_Core* sms, uint16_t addr, unsigned char value)
+{
+
+    switch ((addr >> 13) & 0x7)
+    {
+        case 0: case 1: case 2:
+        case 3: case 4: case 5:
+            cart_write(sms, addr, value);
+            break;
+
+        case 6:
+            system_ram[addr & 0x1FFF] = value;
+            break;
+
+        case 7:
+            system_ram[addr & 0x1FFF] = value;
+            hi_ffxx_write(sms, addr, value);
+
+            break;
+    }
+
+    if (addr < 0xC000) {
+        // Address in 0x0000–0xBFFF (cases 0–5)
+        cart_write(sms, addr, value);
+    } else {
+        // Address in 0xC000–0xFFFF
+        uint16_t offset = addr & 0x1FFF;
+        system_ram[offset] = value;
+
+        // If case 7 (0xE000–0xFFFF), also do hi_ffxx_write
+        if (addr >= 0xE000)
+            hi_ffxx_write(sms, addr, value);
+    }
+}
+
+uint16_t SMS_read16(struct SMS_Core* sms, uint16_t addr)
+{
+    uint8_t lo = SMS_read8(sms, addr);
+    uint8_t hi = SMS_read8(sms, addr + 1);
+    return ((uint16_t)hi << 8) | lo;
+}
+
+void SMS_write16(struct SMS_Core* sms, uint16_t addr, uint16_t value)
+{
+    SMS_write8(sms, addr + 0, (value & 0xFF));
+    SMS_write8(sms, addr + 1, (value >> 8));
+}
+
+
+void IO_memory_control_write(struct SMS_Core* sms, unsigned char value)
+{
+    sms->memory_control.exp_slot_enable      = BIT_TST7(value);
+    sms->memory_control.cart_slot_enable     = BIT_TST6(value);
+    sms->memory_control.card_slot_disable    = BIT_TST5(value);
+    sms->memory_control.work_ram_disable     = BIT_TST4(value);
+    sms->memory_control.bios_rom_disable     = BIT_TST3(value);
+    sms->memory_control.io_chip_disable      = BIT_TST2(value);
+
+    if(sms->memory_control.work_ram_disable == 0) dbug( "wram disabled!");
+    // bios either unmapped itself (likely) or got re-mapped (impossible)
+}
+
+void IO_control_write(struct SMS_Core* sms, unsigned char value)
+{
+    (void)sms; (void)value;
+}
+
+unsigned char IO_read_vcounter(const struct SMS_Core* sms)
+{
+    return sms->vdp.vcount_port;
+}
+
+unsigned char IO_read_hcounter(const struct SMS_Core* sms)
+{
+    // docs say that this is a 9-bit counter, but only upper 8-bits read
+    return (uint16_t)((float)sms->vdp.cycles * 1.5f) >> 1;
+}
+
+unsigned char IO_vdp_status_read(struct SMS_Core* sms)
+{
+    sms->vdp.control_latch = false;
+
+    return vdp_status_flag_read(sms);
+}
+
+unsigned char IO_vdp_data_read(struct SMS_Core* sms)
+{
+    sms->vdp.control_latch = false;
+
+    const unsigned char data = sms->vdp.buffer_read_data;
+
+    sms->vdp.buffer_read_data = *(vram + sms->vdp.addr);
+    sms->vdp.addr = (sms->vdp.addr + 1u) & 0x3FFF;
+
+    return data;
+}
+
+void IO_vdp_data_write(struct SMS_Core* sms, unsigned char value)
+{
+    sms->vdp.control_latch = false;
+
+    switch (sms->vdp.code)
+    {
+    case VDP_CODE_VRAM_WRITE_LOAD:
+    case VDP_CODE_VRAM_WRITE:
+    case VDP_CODE_REG_WRITE:
+        // writes store the new value in the buffered_data
+        sms->vdp.buffer_read_data = value;
+        //sms->vdp.vram[sms->vdp.addr] = value;
+        *(vram + sms->vdp.addr) = value;
+        sms->vdp.addr = (sms->vdp.addr + 1) & 0x3FFF;
+        break;
+
+    case VDP_CODE_CRAM_WRITE:
+        if (SMS_is_system_type_gg(sms))
+        {
+            // even addr stores byte to latch, odd writes 2 bytes
+            if (sms->vdp.addr & 1)
+            {
+                const unsigned char rg_index = (sms->vdp.addr - 1) & 0x3F;
+                const unsigned char b_index = sms->vdp.addr & 0x3F;
+
+                // check is the colour has changed, if so, set dirty
+                if (sms->vdp.cram[rg_index] != sms->vdp.cram_gg_latch || sms->vdp.cram[b_index] != value) {
+                    sms->vdp.dirty_cram[rg_index] = true;
+                }
+
+                sms->vdp.cram[rg_index] = sms->vdp.cram_gg_latch;
+                sms->vdp.cram[b_index] = value;
+            }
+            else
+            {
+                // latches the r,g values
+                sms->vdp.cram_gg_latch = value;
+            }
+        }
+        else
+        {
+            sms->vdp.dirty_cram[sms->vdp.addr & 0x1F] |= sms->vdp.cram[sms->vdp.addr & 0x1F] != value;
+            sms->vdp.cram[sms->vdp.addr & 0x1F] = value;
+        }
+
+        sms->vdp.addr = (sms->vdp.addr + 1) & 0x3FFF;
+        break;
+    }
+}
+
+static inline void IO_vdp_control_write(struct SMS_Core* sms, unsigned char value)
+{
+    if (sms->vdp.control_latch)
+    {
+        sms->vdp.control_word = (sms->vdp.control_word & 0xFF) | (value << 8);
+        sms->vdp.code = value >> 6;
+        sms->vdp.control_latch = false;
+
+        switch (sms->vdp.code)
+        {
+        // code0 immediatley loads a byte from vram into buffer
+        case VDP_CODE_VRAM_WRITE_LOAD:
+            sms->vdp.addr = sms->vdp.control_word & 0x3FFF;
+            sms->vdp.buffer_read_data = *(vram + sms->vdp.addr);
+            sms->vdp.addr = (sms->vdp.addr + 1) & 0x3FFF;
+            break;
+
+        case VDP_CODE_VRAM_WRITE:
+            sms->vdp.addr = sms->vdp.control_word & 0x3FFF;
+            break;
+
+        case VDP_CODE_REG_WRITE:
+            vdp_io_write(sms, value & 0xF, sms->vdp.control_word & 0xFF);
+            break;
+
+        case VDP_CODE_CRAM_WRITE:
+            sms->vdp.addr = sms->vdp.control_word & 0x3FFF;
+            break;
+        }
+    }
+    else
+    {
+        sms->vdp.addr = (sms->vdp.addr & 0x3F00) | value;
+        sms->vdp.control_word = value;
+        sms->vdp.control_latch = true;
+    }
+}
+
+static inline unsigned char IO_gamegear_read(const struct SMS_Core* sms, unsigned char addr)
+{
+    switch (addr & 0x7)
+    {
+    case 0x0: return sms->port.gg_regs[0x0] | 0x1F;
+    case 0x1: return /* 0x7F; */ sms->port.gg_regs[0x1];
+    case 0x2: return /* 0xFF; */ sms->port.gg_regs[0x2];
+    case 0x3: return /* 0x00; */ sms->port.gg_regs[0x3];
+    case 0x4: return /* 0xFF; */ sms->port.gg_regs[0x4];
+    case 0x5: return /* 0x00; */ sms->port.gg_regs[0x5];
+    }
+
+    UNREACHABLE(0xFF);
+}
+
+static inline void IO_gamegear_write(struct SMS_Core* sms, unsigned char addr, unsigned char value)
+{
+    switch (addr & 0x7)
+    {
+    case 0x1: sms->port.gg_regs[0x1] = value; break;
+    case 0x2: sms->port.gg_regs[0x2] = value; break;
+    case 0x3: sms->port.gg_regs[0x3] = value; break;
+    case 0x4: break;
+    case 0x5: sms->port.gg_regs[0x5] = value; break;
+
+    case 0x6:
+        sms->apu.tone0_right = BIT_TST0(value);
+        sms->apu.tone1_right = BIT_TST1(value);
+        sms->apu.tone2_right = BIT_TST2(value);
+        sms->apu.noise_right = BIT_TST3(value);
+
+        sms->apu.tone0_left = BIT_TST4(value);
+        sms->apu.tone1_left = BIT_TST5(value);
+        sms->apu.tone2_left = BIT_TST6(value);
+        sms->apu.noise_left = BIT_TST7(value);
+        break;
+    }
+}
+
+unsigned char SMS_read_io(struct SMS_Core* sms, unsigned char addr)
+{
+
+    uint8_t masked = addr & 0xFF;
+
+    // 0x00–0x05
+    if (masked <= 0x05)
+        //return IO_gamegear_read(sms, addr);
+        if (SMS_is_system_type_gg(sms))
+        {
+            return IO_gamegear_read(sms, addr);
+        }
+        else
+        {
+            //dbug("reading from gg port in non gg mode, what should happen here?");
+            return 0xFF;
+        }
+
+    // 0x06–0x3F
+    if (masked <= 0x3F)
+        return 0xFF;
+
+    // VCounter range: even 0x40–0x7E
+    if ((masked >= 0x40) && (masked <= 0x7E)) {
+        return (masked & 1) ? IO_read_hcounter(sms) : IO_read_vcounter(sms);
+    }
+
+    // VDP: 0x80–0xBF
+    if ((masked >= 0x80) && (masked <= 0xBF)) {
+        return (masked & 1) ? IO_vdp_status_read(sms) : IO_vdp_data_read(sms);
+    }
+
+    // Port A/B: 0xC0–0xFF
+    if (masked >= 0xC0) {
+        return (masked & 1) ? sms->port.b : sms->port.a;
+    }
+
+    return 0xFF; // Unreachable, but safe fallback
+}
+
+void SMS_write_io(struct SMS_Core* sms, unsigned char addr, unsigned char value)
+{
+    addr &= 0xFF;
+
+    // Game Gear-specific registers (0x00–0x06)
+    if (addr <= 0x06) {
+        if (SMS_is_system_type_gg(sms)) {
+            IO_gamegear_write(sms, addr, value);
+        } else {
+            if (addr & 1)
+                IO_control_write(sms, value);
+            else
+                IO_memory_control_write(sms, value);
+        }
+        return;
+    }
+
+    if(addr >= 0x07 && addr <= 0x3F){
+        return (addr & 1) ? IO_control_write(sms, value) : IO_control_write(sms, value);
+    }
+
+    // SN76489 PSG write (0x40–0x7F)
+    if (addr >= 0x40 && addr <= 0x7F) {
+        SN76489_reg_write(sms, value);
+        return;
+    }
+
+    // VDP data/control (0x80–0xBF)
+    if (addr >= 0x80 && addr <= 0xBF) {
+        if (addr & 1)
+            IO_vdp_control_write(sms, value);
+        else
+            IO_vdp_data_write(sms, value);
+        return;
+    }
+
+}

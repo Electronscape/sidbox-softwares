@@ -1,0 +1,399 @@
+#include "dialog.h"
+#include "ui_dialog.h"
+#include <QTimer>
+#include <QFileDialog>
+#include <QString>
+#include <QMessageBox>
+#include <QSettings>
+
+#include "sbapi_graphics.h"
+#include "hardware/audiosys.h"
+
+void clearAudioBuffer();
+
+float winScale = 1.0f;
+int currentScale = 1;
+
+void prepXYs();
+void BEGIN_SMSEMU(char *filename);
+void doSMSFrames();
+
+Dialog *g_dialog = nullptr;
+char frame_db = 0;
+char EmuReady = 0;
+char RomFileName[1024];
+
+void sms_keydown(int keycode);
+void sms_keyup(int keycode);
+
+Dialog::Dialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::Dialog)
+{
+
+    ui->setupUi(this);
+
+    printf("Hello world\n");
+    prepXYs();
+
+    scene = new QGraphicsScene(this);
+    ui->gfxPort->setScene(scene);
+
+    // Your framebuffer image (480×320)
+    screenImageF = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
+    screenImageB = QImage(SCR_WIDTH, SCR_HEIGHT, QImage::Format_RGB32);
+
+    ui->gfxPort->setRenderHint(QPainter::SmoothPixmapTransform, true);
+    ui->gfxPort->setRenderHint(QPainter::Antialiasing, false); // don't need antialias for pixels
+
+    //ui->gfxPort->setResizeAnchor(QGraphicsView::AnchorViewCenter);
+    //ui->gfxPort->setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+    ui->gfxPort->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->gfxPort->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+
+    // Add it to the scene
+    pixmapItem = scene->addPixmap(QPixmap::fromImage(screenImageF));
+    pixmapItem->setTransformationMode(Qt::SmoothTransformation);
+
+    pixmapItem->setPos(0, 0);
+
+    g_dialog = this;
+
+    connect(ui->cmdClose, &QPushButton::clicked, this, [=]() {
+        this->close();
+    });
+
+    //ui->gfxPort->scale(2.0, 2.0);    // 2× zoom
+
+    connect(ui->cmdZoom1x, &QPushButton::clicked, this, [=](){
+        setScreenScale(1);
+    });
+
+    connect(ui->cmdZoom2x, &QPushButton::clicked, this, [=](){
+        setScreenScale(2);
+    });
+
+    connect(ui->cmdZoomWx, &QPushButton::clicked, this, [=](){
+        setScreenScale(winScale);
+    });
+
+    setScreenScale(1);
+
+/*
+    QTimer *t = new QTimer(this);
+    connect(t, &QTimer::timeout, this, [=](){
+        processAudio();
+    });
+    t->start(1);   // every 1ms
+*/
+
+    clearAudioBuffer();
+
+    timer = new QTimer(this);
+    QTimer::singleShot(500, this, [=]() {
+        if(initAudioHardware()){
+            printf("Failed to open the audio systems\n");
+        } else {
+            printf("Audio opened ok\n");
+        }
+
+        // Timer to update at ~60Hz
+
+        //connect(timer, &QTimer::timeout, this, &Dialog::updateScreen);
+        //timer->start(16);
+    });
+
+    //BEGIN_SMSEMU((char *)"../../../../sonic.sms");
+    //BEGIN_SMSEMU((char *)"../../../../GameGear Shinobi.GG");
+    //BEGIN_SMSEMU((char *)"../../../../GenesisProject-Lambo.sms");
+    //
+
+
+    QTimer *frameTimer = new QTimer(this);
+    connect(frameTimer, &QTimer::timeout, this, [=]() {
+        if(EmuReady) doSMSFrames();
+    });
+    frameTimer->start(16);   // 0ms = run every cycle
+
+    connect(ui->cmdOpenRom, &QPushButton::clicked, this, &Dialog::loadROM);
+
+    //setFocusPolicy(Qt::StrongFocus);
+    //setAttribute(Qt::WA_KeyboardFocusChange);
+
+    ui->gfxPort->installEventFilter(this);
+    ui->gfxPort->setFocusPolicy(Qt::StrongFocus);
+    ui->gfxPort->setFocus();
+
+
+
+
+
+}
+
+
+void Dialog::loadROM() {
+    static QString lastDir;
+    {
+        QSettings settings("Electronscape", "MySMSemu");
+        lastDir = settings.value("lastRomDir", QDir::homePath()).toString();
+    }
+
+    QString fileName = QFileDialog::getOpenFileName(
+        this,
+        tr("Open ROM"),
+        lastDir,
+        tr("ROM Files (*.sms *.gg);;All Files (*)")
+        );
+
+    if (fileName.isEmpty()) {
+        return; // User cancelled
+    }
+
+    {
+        QFileInfo info(fileName);
+        QSettings settings("Electronscape", "MySMSemu");
+        settings.setValue("lastRomDir", info.absolutePath());
+    }
+
+    // Copy safely to your C-style buffer
+    strncpy(RomFileName, fileName.toStdString().c_str(), sizeof(RomFileName)-1);
+    RomFileName[sizeof(RomFileName)-1] = '\0';  // ensure null termination
+
+    EmuReady = 1;
+
+    printf("ROM selected: %s\n", RomFileName);
+
+    ui->gfxPort->setFocus();
+
+
+    BEGIN_SMSEMU(RomFileName);
+
+    // Optionally, call your ROM loader here
+    // uint32_t romSize;
+    // read_file(RomFileName, &romSize);
+}
+
+
+
+volatile uint8_t portA_state = 0;
+volatile uint8_t portB_state = 0;
+enum SMS_PortA
+{
+    JOY1_NOTHING        = 0,
+    JOY1_UP_BUTTON      = 1 << 0,
+    JOY1_DOWN_BUTTON    = 1 << 1,
+    JOY1_LEFT_BUTTON    = 1 << 2,
+    JOY1_RIGHT_BUTTON   = 1 << 3,
+    JOY1_A_BUTTON       = 1 << 4,
+    JOY1_B_BUTTON       = 1 << 5,
+    JOY2_UP_BUTTON      = 1 << 6,
+    JOY2_DOWN_BUTTON    = 1 << 7,
+};
+
+enum SMS_PortB
+{
+    JOY2_NOTHING        = 0,
+    JOY2_LEFT_BUTTON    = 1 << 0,
+    JOY2_RIGHT_BUTTON   = 1 << 1,
+    JOY2_A_BUTTON       = 1 << 2,
+    JOY2_B_BUTTON       = 1 << 3,
+    RESET_BUTTON        = 1 << 4,
+    PAUSE_BUTTON        = 1 << 5,
+};
+
+int mapQtKeyToSMS(int qtKey) {
+    switch(qtKey) {
+
+/*0*/   case Qt::Key_Up:    return (0x0000 | JOY1_UP_BUTTON);
+/*1*/   case Qt::Key_Down:  return (0x0000 | JOY1_DOWN_BUTTON);
+/*2*/   case Qt::Key_Left:  return (0x0000 | JOY1_LEFT_BUTTON);
+/*3*/   case Qt::Key_Right: return (0x0000 | JOY1_RIGHT_BUTTON);
+/*4*/   case Qt::Key_Z:     return (0x0000 | JOY1_A_BUTTON);
+/*5*/   case Qt::Key_X:     return (0x0000 | JOY1_B_BUTTON);
+
+/*6*/   case Qt::Key_W:     return (0x0000 | JOY2_UP_BUTTON);
+/*7*/   case Qt::Key_S:     return (0x0000 | JOY2_DOWN_BUTTON);
+/*0*/   case Qt::Key_A:     return (0xF000 | JOY2_LEFT_BUTTON);
+/*1*/   case Qt::Key_D:     return (0xF000 | JOY2_RIGHT_BUTTON);
+/*2*/   case Qt::Key_K:     return (0xF000 | JOY2_A_BUTTON);
+/*3*/   case Qt::Key_L:     return (0xF000 | JOY2_B_BUTTON);
+
+/*4*/   case Qt::Key_R:     return (0xF000 | RESET_BUTTON);
+/*5*/   case Qt::Key_P:     return (0xF000 | PAUSE_BUTTON);
+
+    }
+    return 0; // unknown
+}
+
+bool Dialog::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == ui->gfxPort) {
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+            //handleKeyPress(keyEvent->key());
+            if (!keyEvent->isAutoRepeat()) { // only handle first press
+                sms_keydown(mapQtKeyToSMS(keyEvent->key()));
+            }
+            return true; // stop further processing
+        }
+        if (event->type() == QEvent::KeyRelease) {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+            //handleKeyRelease(keyEvent->key());
+            if (!keyEvent->isAutoRepeat()) { // only handle first press
+                sms_keyup(mapQtKeyToSMS(keyEvent->key()));
+            }
+            return true; // stop further processing
+        }
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+
+
+
+
+
+void Dialog::resizeEvent(QResizeEvent *event)
+{
+    QDialog::resizeEvent(event);
+
+    // Calculate available size for the graphics view, accounting for window frame
+    QSize available = this->frameSize();
+    int marginX = 8; // tweak if needed
+    int marginY = 44;
+
+    float scaleX = static_cast<float>(available.width() - marginX) / SCR_WIDTH;
+    float scaleY = static_cast<float>(available.height() - marginY) / SCR_HEIGHT;
+
+    // Keep aspect ratio by using the smaller scale
+    float scale = qMin(scaleX, scaleY);
+    winScale = scale;
+
+    setScreenScale(winScale);
+}
+
+void Dialog::setScreenScale(float factor)
+{
+    currentScale = factor;
+
+    ui->gfxPort->resetTransform();
+    ui->gfxPort->scale(factor, factor);
+
+
+    //int currentY = ui->gfxPort->y();   // get current Y position
+    //ui->gfxPort->move(10, currentY);   // move to X=10, keep Y the same
+
+    // Update the graphics view size to match scaled content
+    ui->gfxPort->setFixedSize(static_cast<int>(SCR_WIDTH * factor),
+                              static_cast<int>(SCR_HEIGHT * factor));
+
+
+    int winW = this->width();
+    int winH = this->height();
+    int gfxW = ui->gfxPort->width();
+    int gfxH = ui->gfxPort->height();
+
+    int posX = (winW - gfxW) / 2;
+    int posY = (winH - gfxH) / 2;
+
+    ui->gfxPort->move(posX, posY+18);
+}
+
+void Dialog::closeEvent(QCloseEvent *event){
+    closeAudioHardware();
+}
+
+
+
+Dialog::~Dialog()
+{
+    delete ui;
+}
+
+/////////// ------------------------------- SID BOXY STUFF ----------------------------------------------------------------------------
+
+char strText[128];
+
+/*
+void Dialog::updateScreen()
+{
+    //uint8_t *v = VRAM;
+
+    sbgfx_fill(0);
+
+
+
+    dopalletecycle();
+
+    uint8_t colind = 0;
+    uint16_t tbx = 0, tby = 0;
+    for(tby = 0; tby < 16; tby++){
+        for(tbx = 0; tbx < 16; tbx++){
+            sbgfx_drawbox(tbx * 20, 1+tby * 20, 18, 18, colind);
+            colind++;
+        }
+    }
+
+    sprintf(strText, "Hello world testing ...\nI hope new line also works!");
+    gfx_setcolour(208);
+    draw_text816(4, 5, (const unsigned char *)strText);
+    draw_text816(6, 5, (const unsigned char *)strText);
+    draw_text816(5, 4, (const unsigned char *)strText);
+    draw_text816(5, 6, (const unsigned char *)strText);
+
+    gfx_setcolour(7);
+    draw_text816(5, 5, (const unsigned char *)strText);
+
+
+    // ------- TRANSFER VRAM to IMAGE output ----------- //
+    // simulates the SIDBOX Graphics view LCD
+    uint8_t *p = PROJ_VRAM;
+    for (int x = 0; x < SCR_WIDTH; x++){
+        for (int y = 0; y < SCR_HEIGHT; y++){
+            QRgb *scan = reinterpret_cast<QRgb*>(screenImage.scanLine(y));
+            scan[x] = PROJ_CRAM[*p++];
+        }
+    }
+
+    pixmapItem->setPixmap(QPixmap::fromImage(screenImage));
+    processAudio();
+}
+*/
+
+void Dialog::swapBuffers() {
+    std::swap(screenImageF, screenImageB);
+    pixmapItem->setPixmap(QPixmap::fromImage(screenImageF));
+}
+
+void Dialog::updateSMSScreen(){
+    // ------- TRANSFER VRAM to IMAGE output ----------- //
+    // simulates the SIDBOX Graphics view LCD
+    uint8_t *p = PROJ_VRAM;
+
+    for (int x = 0; x < SCR_WIDTH; x++){
+        for (int y = 0; y < SCR_HEIGHT; y++){
+            QRgb *scan = reinterpret_cast<QRgb*>(screenImageB.scanLine(y));
+            scan[x] = PROJ_CRAM[*p++];
+        }
+    }
+    sbgfx_drawbox(476, 0, 479, 320, 63);
+    sbgfx_drawbox(0, 319, 479, 319, 63);
+
+    swapBuffers();
+    //processAudio();
+    //printf("piss\n");
+}
+
+
+void Dialog::clearSMSScreen(){
+    sbgfx_fill(0);
+    uint8_t *p = PROJ_VRAM;
+
+    for (int x = 0; x < SCR_WIDTH; x++){
+        for (int y = 0; y < SCR_HEIGHT; y++){
+            QRgb *scan = reinterpret_cast<QRgb*>(screenImageB.scanLine(y));
+            scan[x] = PROJ_CRAM[*p++];
+        }
+    }
+    swapBuffers();
+}
