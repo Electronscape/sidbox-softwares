@@ -17,4 +17,11 @@ void setLightDirection(int index, Vec3 dir);
 float computeTriangleBrightness(Vec3 a, Vec3 b, Vec3 c);
 float brightnessToShadeF(float brightness);
 
+// controls
+void setLightIntensity(int index, float bright);
+
+
+static inline uint32_t lerpColor(uint32_t c1, uint32_t c2, float t);
+void buildLightingCLUT(uint32_t *clut, uint32_t *baseColors, int numColors, uint32_t target, float shades[5]);
+
 #endif

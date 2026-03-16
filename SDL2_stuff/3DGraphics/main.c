@@ -10,11 +10,20 @@
 // basic includes
 #include "gfx.h"
 
+#include "sb3d/3dloader.h"
 #include "sb3d/sb3d.h"
 
 
 
 //#include "worldspace.h"
+uint8_t toggleLightSun     = 0,
+        toggleLightShip    = 1,
+        toggleWireFrame    = 0,
+        toggleZOrdering    = 0,
+        toggleflatMode     = 0,   // flat mode, use non dithered shaded, triangles
+        toggleTwoshadeMode = 0,   // this shades in full dither, but only uses the base colour selected, and black (colour 16)
+        togglewireframe    = 0;   // 
+;
 
 
 
@@ -24,9 +33,62 @@
 int tmr1;
 //static uint8_t mouseAction = 0;
 
-#define ZOOM 2
 
-#define COLOUR_OFFSET   32
+
+
+int updateFPS() {
+    static uint32_t fpsTimer = 0;
+    static uint32_t lastFrameTime = 0;
+    static int frameCount = 0;        // frames actually rendered
+    static int uncappedCount = 0;     // every loop iteration
+    static int fps = 0;
+    static int uncappedFPS = 0;
+
+    uint32_t now = SDL_GetTicks();
+    uncappedCount++; // count every loop iteration
+
+    // Update FPS every second
+    if (now - fpsTimer >= 1000) {
+        fps = frameCount;
+        uncappedFPS = uncappedCount;
+
+        frameCount = 0;
+        uncappedCount = 0;
+        fpsTimer = now;
+    }
+
+            char buf[32];
+        sprintf(buf, "FPS: %d (Uncapped: %d)", fps, uncappedFPS);
+        drawText(0, 1, buf, 16);
+        drawText(2, 1, buf, 16);
+        drawText(1, 0, buf, 16);
+        drawText(1, 2, buf, 16);
+        drawText(1, 1, buf, 15);
+        
+        sprintf(buf, "TRIS: %d",  getRenderTriCount());
+
+        drawText(1, 15, buf, 16);
+        drawText(1, 17, buf, 16);
+        drawText(0, 16, buf, 16);
+        drawText(2, 16, buf, 16);
+        drawText(1, 16, buf, 15);
+
+    // Check if enough time has passed for next frame
+    const uint32_t targetMs = A_FPS_MS; // e.g., 1000 / 144
+    if (now - lastFrameTime >= targetMs) {
+        lastFrameTime += targetMs; // advance last frame time
+        frameCount++;              // count as a rendered frame
+
+        // Display FPS info
+
+        return 1; // time to update logic/render
+    }
+
+
+    
+    return 0; // skip this loop iteration for logic
+}
+
 
 Vec3 Light1Pos = {0.0f, 0.0f, 0.0f};
 //static uint32_t indexTmrTest = 0;
@@ -49,6 +111,7 @@ int main(void) {
         return 1;
     }
 
+    //SDL_Renderer *ren = SDL_CreateRenderer(sdl_win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_Renderer *ren = SDL_CreateRenderer(sdl_win, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture  *tex = SDL_CreateTexture (ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_W, SCREEN_H);
     if (!ren) {
@@ -85,17 +148,29 @@ int main(void) {
         0xFF80FF00, 0xFFFF0080, 0xFF00FF80, 0xFFC0C0C0
     };
 
+    clut[0] = 0xff000000;
+    //clut[16] = 0xff2B5792;
+    clut[16] = 0xff000000;
+    
+
 
     /* 4 darker shades after the base */
     float shades[5] = {1.0f, 0.75f, 0.55f, 0.35f, 0.20f};
+    //float shades[5] = {1.0f, 1.20f, 1.35f, 1.55f, 1.75f};
 
-    /* palette starts at 16 */
+    uint32_t lightTarget = clut[16]; // e.g., warm sunlight tint
+
+    // replace your old nested loop
+    buildLightingCLUT(clut, baseColors, 16, lightTarget, shades);
+
+    /*
     for (int ci = 0; ci < 16; ci++) {
         for (int s = 0; s < 5; s++) {
             //clut[16 + (ci * 5) + s] = darken(baseColors[ci], shades[s]);
             clut[COLOUR_OFFSET + (s * 16) + ci] = darken(baseColors[ci], shades[s]);
         }
     }
+    */
 
 
     // test box, this works can now comment out
@@ -107,176 +182,106 @@ int main(void) {
 
 ///[ WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////////
 
+    setDefaultRenderMode();
     Camera cam = {
         .pos = { 0.0f, 40.0f, -100.0f },
         .right =   { 1.0f, 0.0f, 0.0f },
         .up =      { 0.0f, 1.0f, 0.0f },
-        .forward = { 0.0f, 0.0f, 1.0f }
+        .forward = { 0.0f, 0.0f, 1.0f },
+        .nearPlane = 0.01f,
+        .farPlane = 1500.0f
     };
 
 
 
     normalizeCamera(&cam);
 
-    /* simple box building mesh */
-    Vec3 buildingVerts[] = {
-        {-20.0f,   0.0f, -20.0f},   // 0
-        { 20.0f,   0.0f, -20.0f},   // 1
-        { 20.0f,   0.0f,  20.0f},   // 2
-        {-20.0f,   0.0f,  20.0f},   // 3
-
-        {-20.0f,  60.0f, -20.0f},   // 4
-        { 20.0f,  60.0f, -20.0f},   // 5
-        { 20.0f,  60.0f,  20.0f},   // 6
-        {-20.0f,  60.0f,  20.0f}    // 7
-    };
-
-    Edge buildingEdges[] = {
-        {0,1}, {1,2}, {2,3}, {3,0},   /* bottom */
-        {4,5}, {5,6}, {6,7}, {7,4},   /* top */
-        {0,4}, {1,5}, {2,6}, {3,7}    /* verticals */
-    };
-
-    Tri buildingTris[] = {
-        {0,1,2, COLOUR_OFFSET + 2}, {0,2,3, COLOUR_OFFSET + 2},   /* bottom */
-        {4,6,5, COLOUR_OFFSET + 3}, {4,7,6, COLOUR_OFFSET + 3},   /* top */
-
-        {0,4,5, COLOUR_OFFSET + 4}, {0,5,1, COLOUR_OFFSET + 4},   /* side 1 */
-        {1,5,6, COLOUR_OFFSET + 5}, {1,6,2, COLOUR_OFFSET + 5},   /* side 2 */
-        {2,6,7, COLOUR_OFFSET + 2}, {2,7,3, COLOUR_OFFSET + 2},   /* side 3 */
-        {3,7,4, COLOUR_OFFSET + 3}, {3,4,0, COLOUR_OFFSET + 3}    /* side 4 */
-    };
-
-    Mesh buildingMesh = {
-        .verts = buildingVerts,
-        .vertCount = 8,
-        .edges = buildingEdges,
-        .edgeCount = 12,
-        .tris = buildingTris,
-        .triCount = 12
-    };
-
-
-
-
-    Vec3 building2Verts[] = {
-        /* main base */
-        {-30.0f,   0.0f, -30.0f},   // 0
-        { 30.0f,   0.0f, -30.0f},   // 1
-        { 30.0f,   0.0f,  30.0f},   // 2
-        {-30.0f,   0.0f,  30.0f},   // 3
-
-        {-30.0f,  50.0f, -30.0f},   // 4
-        { 30.0f,  50.0f, -30.0f},   // 5
-        { 30.0f,  50.0f,  30.0f},   // 6
-        {-30.0f,  50.0f,  30.0f},   // 7
-
-        /* upper tower */
-        {-15.0f,  50.0f, -15.0f},   // 8
-        { 15.0f,  50.0f, -15.0f},   // 9
-        { 15.0f,  50.0f,  15.0f},   // 10
-        {-15.0f,  50.0f,  15.0f},   // 11
-
-        {-15.0f,  85.0f, -15.0f},   // 12
-        { 15.0f,  85.0f, -15.0f},   // 13
-        { 15.0f,  85.0f,  15.0f},   // 14
-        {-15.0f,  85.0f,  15.0f}    // 15
-    };
-    Edge building2Edges[] = {
-        /* base box */
-        {0,1}, {1,2}, {2,3}, {3,0},
-        {4,5}, {5,6}, {6,7}, {7,4},
-        {0,4}, {1,5}, {2,6}, {3,7},
-
-        /* upper tower */
-        {8,9}, {9,10}, {10,11}, {11,8},
-        {12,13}, {13,14}, {14,15}, {15,12},
-        {8,12}, {9,13}, {10,14}, {11,15}
-    };
-    
-    Tri building2Tris[] = {
-        /* ===== main base ===== */
-
-        /* front (-z) */
-        {0,5,1, COLOUR_OFFSET + 2}, {0,4,5, COLOUR_OFFSET + 2},
-
-        /* back (+z) */
-        {3,2,6, COLOUR_OFFSET + 3}, {3,6,7, COLOUR_OFFSET + 3},
-
-        /* left (-x) */
-        {0,3,7, COLOUR_OFFSET + 4}, {0,7,4, COLOUR_OFFSET + 4},
-
-        /* right (+x) */
-        {1,5,6, COLOUR_OFFSET + 5}, {1,6,2, COLOUR_OFFSET + 5},
-
-        /* top of main base (around tower) */
-        {4,8,9,  COLOUR_OFFSET +3},  {4,9,5,   COLOUR_OFFSET +3},    /* front strip */
-        {5,9,10, COLOUR_OFFSET +3},  {5,10,6,  COLOUR_OFFSET +3},   /* right strip */
-        {7,6,10, COLOUR_OFFSET +3},  {7,10,11, COLOUR_OFFSET +3},  /* back strip */
-        {4,7,11, COLOUR_OFFSET +3},  {4,11,8,  COLOUR_OFFSET +3},   /* left strip */
-
-        /* bottom */
-        {0,1,2, COLOUR_OFFSET + 2}, {0,2,3, COLOUR_OFFSET + 2},
-
-        /* ===== upper tower ===== */
-
-        /* front (-z) */
-        {8,13,9,   COLOUR_OFFSET + 4}, {8,12,13,  COLOUR_OFFSET + 4},
-
-        /* back (+z) */
-        {11,10,14, COLOUR_OFFSET + 5}, {11,14,15, COLOUR_OFFSET + 5},
-
-        /* left (-x) */
-        {8,11,15,  COLOUR_OFFSET + 2}, {8,15,12,  COLOUR_OFFSET + 2},
-
-        /* right (+x) */
-        {9,13,14,  COLOUR_OFFSET + 3}, {9,14,10,  COLOUR_OFFSET + 3},
-
-        /* roof */
-        {12,15,14, COLOUR_OFFSET + 1}, {12,14,13, COLOUR_OFFSET + 1}
-    };
-
-
-    Mesh building2Mesh = {
-        .verts = building2Verts,
-        .vertCount = 16,
-        .edges = building2Edges,
-        .edgeCount = 24,
-        .tris = building2Tris,
-        .triCount = 26,
-        .boundsRadius = 0.0f
-    };
-
-
-    buildingMesh.boundsRadius = meshComputeBoundsRadius(&buildingMesh);
-    building2Mesh.boundsRadius = meshComputeBoundsRadius(&building2Mesh);
-
-
-
     clearLights();
 
     uint8_t lightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 1.0f, 1);
-    uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 2.0f, 1);
+    uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 1.0f, 1);
+    uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -0.50f, 0.30}, 0.10, 1);
+    //uint8_t SunlightId2 = addDirectionalLight((Vec3){ 1.0, -1.00f, -1.00}, 0.1, 1);
 
     //uint8_t sunlight = addDirectionalLight((Vec3){ 0.6f, -1.0f, 0.3f }, 0.65f, 1);
     //
     //addPointLight((Vec3){ 0.0f, 80.0f, 120.0f }, 1.8f, 1);
 
+    worldClear();
 
-    /*
-    Entity worldEntities[] = {
-        entityCreate(&buildingMesh,  (Vec3){   0.0f, 0.0f, 200.0f }),
-        entityCreate(&buildingMesh,  (Vec3){ 120.0f, 0.0f, 320.0f }),
-        entityCreate(&buildingMesh,  (Vec3){-140.0f, 0.0f, 420.0f }),
-        entityCreate(&building2Mesh, (Vec3){ 220.0f, 0.0f, 260.0f })
-    };
-    */
-   worldClear();
+    Mesh theCylinder = createCylinder(30.0f, 80.0f, 32);
+    Mesh boxTemplate = createBox(40.0f, 160.0f, 40.0f); // a pointer so will be shared if you change geometry of this
+    Mesh boxTemplate2 = createBox(40.0f, 40.0f, 40.0f);
+    Mesh thePlaneBase = createPlane(1000.0f, 1000.0f, 40);
+    Mesh theSphere = createSphere(80.0f, 16, 16);
+    Mesh theCone = createCone(40, 40, 12);
+    Mesh thePyramid = createPyramid(200, 200);
+    Mesh theTorsu = createTorus(100, 20, 36, 20);
 
-    int box0 = entityCreate(&buildingMesh,  (Vec3){   0.0f, 0.0f, 200.0f });
-    int box1 = entityCreate(&buildingMesh,  (Vec3){ 120.0f, 0.0f, 320.0f });
-    int box2 = entityCreate(&buildingMesh,  (Vec3){-140.0f, 0.0f, 420.0f });
-    int box3 = entityCreate(&building2Mesh, (Vec3){ 220.0f, 0.0f, 260.0f });
+    Mesh myBoxInst = copyMesh(&boxTemplate);    // create the instance of this object, so changing ITS geometry doesnt affect the source Mesh (boxTemplate)
+    Mesh myBoxInst2 = copyMesh(&boxTemplate2);   
+
+    Mesh thePlane = copyMesh(&thePlaneBase);
+
+
+    Mesh shipMesh;
+    loadMeshSB3D("shipv1.sb3d", &shipMesh, 20.0f);
+    int ship0 = entityCreate(&shipMesh, (Vec3){ 0.0f, 100.0f, 200.0f });
+    meshSetMaterial(&shipMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
+
+    Mesh houseMesh;
+    //loadMeshOBJ("house1.obj", &houseMesh, 32, 50.0f);
+    loadMeshSB3D("house1.sb3d", &houseMesh, 50.0f);
+    int house0 = entityCreate(&houseMesh, (Vec3){ 450, 0, 0});
+    meshSetMaterial(&houseMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
+
+    Mesh ipenergyMesh;
+    //loadMeshOBJ("ip_energy.obj", &ipenergyMesh, 32, 20.0f);
+    loadMeshSB3D("ip_energy.sb3d", &ipenergyMesh, 20.0f);
+    int ipenergy0 = entityCreate(&ipenergyMesh, (Vec3){ 400, 10, 220});
+
+    Mesh ipbadguy1Mesh;
+    //loadMeshOBJ("ip_badguy1.obj", &ipbadguy1Mesh, 32, 20.0f);
+    loadMeshSB3D("ip_badguy1.sb3d", &ipbadguy1Mesh, 20.0f);
+    int ipbadguy1 = entityCreate(&ipbadguy1Mesh, (Vec3){ 400, 10, 120});
+
+    Mesh carrierMesh;
+    loadMeshSB3D("carrier.sb3d", &carrierMesh, 50.0f);
+    int carrier0 = entityCreate(&carrierMesh, (Vec3) { 300, -50, -100});
+
+
+    Mesh textMesh;
+    loadMeshOBJ("text.obj", &textMesh, 32, 20.0f);
+    int text0 = entityCreate(&textMesh, (Vec3){ 0, 200, 0});
+    meshSetMaterial(&textMesh, 0.00f, 0.55f, -0.02f, 1.50f, 64.0f);   // shiny metal
+
+
+
+
+    meshSetMaterial(&theTorsu, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
+    meshSetMaterial(&theSphere, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);
+
+       
+    
+    int myBoxInstID = entityCreate(&myBoxInst, (Vec3){ 0,0,0});
+    
+    int cylinder0 = entityCreate(&theCylinder, (Vec3) {-200.0f, 50, 0});
+    int plane0 = entityCreate(&thePlane, (Vec3){ 0.0f, -40.0f, 0.0f});
+    int sphere0 = entityCreate(&theSphere, (Vec3){   0.0f, 50.0f, 0.0f } );
+    int box0 = entityCreate(&myBoxInst2,  (Vec3){   0.0f, 0.0f, 200.0f });
+    int box1 = entityCreate(&myBoxInst2,  (Vec3){ 120.0f, 0.0f, 320.0f });
+    int box2 = entityCreate(&myBoxInst2,  (Vec3){-140.0f, 0.0f, 420.0f });
+
+    int cone0 = entityCreate(&theCone, (Vec3){200, 50, 0});
+    int pyra0 = entityCreate(&thePyramid, (Vec3){0, 30, -200});
+    int tor0 = entityCreate(&theTorsu, (Vec3){-200, 100, 200});
+
+    entityColour(plane0, 32 + 11);  
+    entityColour(sphere0, 32 + 13);
+    entityColour(pyra0, 32 + 4);
+
+
+    entityColour(tor0, 32 + 5);
 
     //const int worldEntityCount = sizeof(worldEntities) / sizeof(worldEntities[0]);
 
@@ -285,10 +290,14 @@ int main(void) {
 
 
 ///[ END WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////
+    static int nextLogicUpdate = 0;
 
-    
+    entityTurnLocal(tor0, 0.000f, M_PI/2,0.00f);
+    static float waveTime = 0.0f;
+
+
     while (running) {
-        uint32_t frame_start = SDL_GetTicks();
+        //uint32_t frame_start = SDL_GetTicks();
 
         // ---- 1) process all pending events (NO WAIT here) ----
         SDL_Event e;
@@ -297,184 +306,212 @@ int main(void) {
             if ((e.type == SDL_KEYDOWN) && (e.key.repeat == 0) && (e.key.keysym.sym == SDLK_ESCAPE))
                 running = 0;
 
-            switch (e.type) {
+            if ((e.type == SDL_KEYDOWN) && (e.key.repeat == 0)) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_KP_0:
+                        toggleWireFrame = 1 - toggleWireFrame;
+                        enableWireFrame(toggleWireFrame);
+                        break;
 
-                case SDL_TEXTINPUT: {
-                    // UTF-8 string; you only want ASCII for now
-                    const char *s = e.text.text;
-                    for (int i = 0; s[i]; i++) {
-                        unsigned char c = (unsigned char)s[i];
-                        if (c >= 32 && c <= 126) {
-                            //SBOSIO_KeyboardInterface(c, 0);
-                            // a keyboard interface
-                        }
-                    }
-                } break;
-                
+                    case SDLK_KP_1:
+                        toggleLightShip = 1 - toggleLightShip;
+                        break;
+                    
+                    case SDLK_KP_2:
+                        toggleLightSun = 1 - toggleLightSun;
+                        break;
 
-                case SDL_KEYDOWN: {
-                    //if (e.key.repeat) break;
+                    case SDLK_KP_4:
+                        toggleZOrdering = 1 - toggleZOrdering;
+                        enableZOrdering(toggleZOrdering);
+                        break;
 
-                    //uint8_t mod = 0;
-                    //SDL_Keymod m = SDL_GetModState();
-                    /*
-                    if (m & KMOD_SHIFT) mod |= KM_SHIFT;
-                    if (m & KMOD_CTRL)  mod |= KM_CTRL;
-                    if (m & KMOD_ALT)   mod |= KM_ALT;
+                    case SDLK_KP_5:
+                        toggleflatMode = 1 - toggleflatMode;
+                        enableFlatMode(toggleflatMode);
+                        break;
 
-                    switch (e.key.keysym.sym) {
-                        case SDLK_BACKSPACE: SBOSIO_KeyboardInterface(KEY_BACKSPACE, mod); break;
-                        case SDLK_DELETE:    SBOSIO_KeyboardInterface(KEY_DEL, mod);       break;
-                        case SDLK_LEFT:      SBOSIO_KeyboardInterface(KEY_LEFT, mod);      break;
-                        case SDLK_RIGHT:     SBOSIO_KeyboardInterface(KEY_RIGHT, mod);     break;
-                        case SDLK_UP:        SBOSIO_KeyboardInterface(KEY_UP, mod);        break;
-                        case SDLK_DOWN:      SBOSIO_KeyboardInterface(KEY_DOWN, mod);      break;
-                        case SDLK_HOME:      SBOSIO_KeyboardInterface(KEY_HOME, mod);      break;
-                        case SDLK_END:       SBOSIO_KeyboardInterface(KEY_END, mod);       break;
-                        case SDLK_RETURN:
-                        case SDLK_KP_ENTER:  SBOSIO_KeyboardInterface(KEY_ENTER, mod);     break;
-                        case SDLK_TAB:       SBOSIO_KeyboardInterface(KEY_TAB, mod);       break;
-                        case SDLK_ESCAPE:    SBOSIO_KeyboardInterface(KEY_ESC, mod);       break;
-                        default: break;
-                    }
-                    */
-                } break;
-            }
+                    case SDLK_KP_6:
+                        toggleTwoshadeMode = 1 - toggleTwoshadeMode;
+                        enableTwoShade(toggleTwoshadeMode);
+                        break;
+                    
+                    default:
+                        break;
+                }
+            }            
         }
 
-        // ---- 2) your per-frame stuff ----
-        //pump_mouse_sdl();
-
-        uint32_t now = SDL_GetTicks();
-        uint32_t dt  = now - last;
-        last = now;
-
-        tmr1 += dt;
-        if (tmr1 >= 1000) {
-            tmr1 = 0;
-            
-        }
-
-
-
-    ///////////////////////////// RENDER 3D world ////////////////////////////////////
-
-        float moveSpeed = 0.30f;
-        float turnSpeed = 0.002f;
-
-        const Uint8 *keys = SDL_GetKeyboardState(NULL);
-
-        if (keys[SDL_SCANCODE_W]) {
-            cam.pos = vec3Add(cam.pos, vec3Scale(cam.forward, moveSpeed));
-        }
-
-        if (keys[SDL_SCANCODE_S]) {
-            cam.pos = vec3Add(cam.pos, vec3Scale(cam.forward, -moveSpeed));
-        }
-
-        if (keys[SDL_SCANCODE_A]) {
-            cam.pos = vec3Add(cam.pos, vec3Scale(cam.right, -moveSpeed));
-        }
-
-        if (keys[SDL_SCANCODE_D]) {
-            cam.pos = vec3Add(cam.pos, vec3Scale(cam.right, moveSpeed));
-        }
-
-        if (keys[SDL_SCANCODE_R]) {
-            cam.pos = vec3Add(cam.pos, vec3Scale(cam.up, moveSpeed));
-        }
-
-        if (keys[SDL_SCANCODE_F]) {
-            cam.pos = vec3Add(cam.pos, vec3Scale(cam.up, -moveSpeed));
-        }
-
-        if (keys[SDL_SCANCODE_Q]) turnCameraGlobal(&cam, -turnSpeed, 0.0f, 0.0f);
-        if (keys[SDL_SCANCODE_E]) turnCameraGlobal(&cam,  turnSpeed, 0.0f, 0.0f);
-
-        if (keys[SDL_SCANCODE_1]) turnCameraLocal(&cam, -turnSpeed, 0.0f, 0.0f);
-        if (keys[SDL_SCANCODE_3]) turnCameraLocal(&cam,  turnSpeed, 0.0f, 0.0f);
-
-        if (keys[SDL_SCANCODE_Z]) turnCameraGlobal(&cam, 0.0f, 0.0f, -0.001f);
-        if (keys[SDL_SCANCODE_C]) turnCameraGlobal(&cam, 0.0f, 0.0f,  0.001f);
-
-
-        if (keys[SDL_SCANCODE_KP_8]) {
-            Light1Pos.z += 1;
-            setLightPosition(lightid, Light1Pos);
-        }
-
-        if (keys[SDL_SCANCODE_KP_2]) {
-            Light1Pos.z -= 1;
-            setLightPosition(lightid, Light1Pos);
-        }
-
-        if (keys[SDL_SCANCODE_KP_4]) {
-            Light1Pos.x -= 1;
-            setLightPosition(lightid, Light1Pos);
-        }
-
-        if (keys[SDL_SCANCODE_KP_6]) {
-            Light1Pos.x += 1;
-            setLightPosition(lightid, Light1Pos);
-        }
-
-        if (keys[SDL_SCANCODE_SPACE]) {
-            cam.pos = (Vec3){ 0.0f, 40.0f, -100.0f };
-            cam.right =   (Vec3){ 1.0f, 0.0f, 0.0f };
-            cam.up =      (Vec3){ 0.0f, 1.0f, 0.0f };
-            cam.forward = (Vec3){ 0.0f, 0.0f, 1.0f };
-        }
-
-        clearScreen(0);
-
-        resetRenderList();
-
-        //addDirectionalLight
-        static uint8_t lighton;
-        uint8_t qflip;
-
-        qflip = rand() % 255;
-
-        if(qflip < 3) lighton = 1;
-        if(qflip > 250) lighton = 0;
-
-        lightEnable(0, lighton);
-        //lightEnable(0, 0);
-        setLightPosition(Camlightid, cam.pos);
-
-        entityMoveForward(box0, 0.1f);
-        entityTurnLocal(box0, 0.001f, 0, 0);
-        entityMoveRight(box2, -0.1f);
-
+        if(nextLogicUpdate)
+        {
+            nextLogicUpdate = 0;
         
-        Render3D(&cam);
+            ///////////////////////////// RENDER 3D world ////////////////////////////////////
+
+            float moveSpeed = 1.20f;
+            float turnSpeed = 0.015f;
+
+            const Uint8 *keys = SDL_GetKeyboardState(NULL);
+
+            if (keys[SDL_SCANCODE_W]) {
+                cam.pos = vec3Add(cam.pos, vec3Scale(cam.forward, moveSpeed));
+            }
+
+            if (keys[SDL_SCANCODE_S]) {
+                cam.pos = vec3Add(cam.pos, vec3Scale(cam.forward, -moveSpeed));
+            }
+
+            if (keys[SDL_SCANCODE_A]) {
+                cam.pos = vec3Add(cam.pos, vec3Scale(cam.right, -moveSpeed));
+            }
+
+            if (keys[SDL_SCANCODE_D]) {
+                cam.pos = vec3Add(cam.pos, vec3Scale(cam.right, moveSpeed));
+            }
+
+            if (keys[SDL_SCANCODE_R]) {
+                cam.pos = vec3Add(cam.pos, vec3Scale(cam.up, moveSpeed));
+            }
+
+            if (keys[SDL_SCANCODE_F]) {
+                cam.pos = vec3Add(cam.pos, vec3Scale(cam.up, -moveSpeed));
+            }
+
+            if (keys[SDL_SCANCODE_Q]) turnCameraGlobal(&cam, -turnSpeed, 0.0f, 0.0f);
+            if (keys[SDL_SCANCODE_E]) turnCameraGlobal(&cam,  turnSpeed, 0.0f, 0.0f);
+
+            if (keys[SDL_SCANCODE_1]) turnCameraLocal(&cam, -turnSpeed, 0.0f, 0.0f);
+            if (keys[SDL_SCANCODE_3]) turnCameraLocal(&cam,  turnSpeed, 0.0f, 0.0f);
+
+            if (keys[SDL_SCANCODE_Z]) turnCameraGlobal(&cam, 0.0f, 0.0f,  0.01f);
+            if (keys[SDL_SCANCODE_C]) turnCameraGlobal(&cam, 0.0f, 0.0f, -0.01f);
 
 
-    ///////////////////////////// RENDER 3D world ////////////////////////////////////
+            if (keys[SDL_SCANCODE_KP_8]) {
+                Light1Pos.z += 1;
+                setLightPosition(lightid, Light1Pos);
+            }
 
-        /*
+            if (keys[SDL_SCANCODE_KP_2]) {
+                Light1Pos.z -= 1;
+                setLightPosition(lightid, Light1Pos);
+            }
+
+            if (keys[SDL_SCANCODE_KP_4]) {
+                Light1Pos.x -= 1;
+                setLightPosition(lightid, Light1Pos);
+            }
+
+            if (keys[SDL_SCANCODE_KP_6]) {
+                Light1Pos.x += 1;
+                setLightPosition(lightid, Light1Pos);
+            }
+
+            if (keys[SDL_SCANCODE_SPACE]) {
+                cam.pos = (Vec3){ 0.0f, 40.0f, -100.0f };
+                cam.right =   (Vec3){ 1.0f, 0.0f, 0.0f };
+                cam.up =      (Vec3){ 0.0f, 1.0f, 0.0f };
+                cam.forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+            }
+
+            clearScreen(0);
+
+
+
+            resetRenderList();
+
+            //addDirectionalLight
+            static uint8_t lighton;
+            uint8_t qflip;
+
+            qflip = rand() % 255;
+
+            if(qflip < 3) lighton = 1;
+            if(qflip > 250) lighton = 0;
+
+            //lightEnable(0, lighton);
+            lightEnable(0, 0);
+            lightEnable(Camlightid, toggleLightShip);
+            setLightIntensity(Camlightid, 2.0f);
+
+
+            lightEnable(SunlightId, toggleLightSun);
+            setLightIntensity(SunlightId, 1.0);
+            setLightPosition(Camlightid, cam.pos);
+
+            entityMoveForward(box0, 1.0f);
+            entityTurnLocal(box0, 0.01f, 0, 0);
+            entityMoveRight(box2, -1.0f);
+
+            entityTurnLocal(tor0, 0.000f, 0.00f,0.010f);
+
+            entityTurnLocal(text0, 0.01f, 0, 0);
+
+
+            //ipenergy0
+            //ipbadguy1
+
+            entityTurnLocal(ipenergy0, 0.01f,0.00f,0.00f);
+
+
+            
+
+            
+            static Vec3 enemyPos = {80.0f,0.0f,0.0f}, enemyPosSpeed = {0.2f,0,0};
+            enemyPos.x += enemyPosSpeed.x;
+            if(enemyPos.x < 80.0f || enemyPos.x > 150.0f) enemyPosSpeed.x = -enemyPosSpeed.x;
+
+
+
+            entitySetPosition(ipbadguy1, enemyPos);
+            entityTurnLocal(ipbadguy1, 0.03f,0.00f,0.00f);
+
+
+
+
+
+            waveTime += 0.014f;
+            meshResetFromSource(&thePlane, &thePlaneBase);
+            meshDeformWavePlaneY(&thePlane, waveTime, 6.0f, 0.020f, 0.020f, 1.5f);
+
+            float t = waveTime;
+            for(int f=0; f<theSphere.triCount; f++){
+                uint8_t familyBase = 8;   // start column
+                uint8_t familySpan = 3;   // use 4 related colours only
+
+                uint8_t family = familyBase +
+                    (uint8_t)((sinf(f * 0.21f + t) * 0.5f + 0.5f) * (float)familySpan);
+
+                uint8_t shade  =
+                    (uint8_t)((sinf(f * 0.37f - t * 1.7f) * 0.5f + 0.5f) * 4.0f);
+
+                entityColourFace(sphere0, f, COLOUR_OFFSET + family + (shade * 16));
+            }
+            
+
+            Render3D(&cam);
+
+
+            ///////////////////////////// RENDER 3D world ////////////////////////////////////
+
+        }
+        
         uint8_t colInd = 0;
         for(int gy = 0; gy < 16; gy ++){
             for(int gx = 0; gx < 16; gx ++){
-                drawRect(gx * 8, gy * 8, 8,8, colInd);
+                drawRect((SCREEN_W - 4 * 16) + gx * 4, gy * 4, 4, 4, colInd);
                 colInd ++;
             }
         }
-        */
+        
 
+        nextLogicUpdate = updateFPS();
 
         videoMemToScreen();
         SDL_UpdateTexture(tex, NULL, pb, SCREEN_W * (int)sizeof(uint32_t));
         SDL_RenderCopy(ren, tex, NULL, NULL);
         SDL_RenderPresent(ren);
 
-        // ---- 3) sleep remainder of frame (THIS is your cap) ----
-        uint32_t frame_end = SDL_GetTicks();
-        uint32_t elapsed = frame_end - frame_start;
-
-        if (elapsed < tick_ms) {
-            //SDL_Delay((uint32_t)(tick_ms - elapsed));
-        }
         //SDL_GL_SetSwapInterval(1);
         
     }

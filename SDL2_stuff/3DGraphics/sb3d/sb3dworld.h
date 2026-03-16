@@ -12,10 +12,13 @@
 extern int worldEntityCount;
 void worldClear(void);
 
+#define M_PI    3.14159265358979323846f
 
-#define MAX_RENDER_TRIS 4096    
+#define MAX_RENDER_TRIS 1024 * 8    
 #define MAX_LIGHTS 8
 
+
+#define COLOUR_OFFSET   32  // base default colouring system
 
 
 typedef struct {
@@ -47,14 +50,9 @@ typedef struct {
     int b;
     int c;
     uint8_t color;
+    uint8_t emission;
 } Tri;
 
-typedef struct {
-    Vec3 pos;
-    Vec3 right;
-    Vec3 up;
-    Vec3 forward;
-} Camera;
 
 
 typedef struct {
@@ -64,6 +62,16 @@ typedef struct {
     float intensity;
     int   enabled;
 } Light;
+
+
+
+typedef struct {
+    float ambient;           // 0.0 .. 1.0
+    float diffuse;           // 0.0 .. 2.0
+    float specularStrength;  // 0.0 .. 2.0
+    float shininess;         // e.g. 4, 8, 16, 32
+    float emissive;          // 0.0 .. 1.0
+} Material;
 
 typedef struct {
     Vec3 *verts;
@@ -76,6 +84,8 @@ typedef struct {
     int triCount;
 
     float boundsRadius;
+
+    Material material;
 } Mesh;
 
 
@@ -84,10 +94,13 @@ typedef struct {
     Vec2 p0;
     Vec2 p1;
     Vec2 p2;
-
-    uint8_t color;
-    float shadeF;
     float depth;
+    float shadeF;
+    uint16_t z0;
+    uint16_t z1;
+    uint16_t z2;
+    uint8_t color;
+    uint8_t emission;
 } RenderTri;
 
 #endif

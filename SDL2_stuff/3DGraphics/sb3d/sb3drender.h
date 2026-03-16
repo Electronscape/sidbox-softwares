@@ -15,9 +15,18 @@ typedef enum {
 } ClipPlane;
 
 
-int projectPoint(Vec3 p, Vec2 *out);
-int clipLineToNearPlane(Vec3 *a, Vec3 *b);
+void setDefaultRenderMode();
+void enableZOrdering(int enable);
+void enableFlatMode(int en);
+void enableTwoShade(int en);
+void enableWireFrame(int en);
+
+
+int projectPoint(Vec3 p, const Camera *cam, Vec2 *out);
+int clipLineToNearPlane(Vec3 *a, Vec3 *b, const Camera *cam);
 void resetRenderList(void);
+
+int getRenderTriCount(void);
 void Render3D(const Camera *cam);
 
 // sorting

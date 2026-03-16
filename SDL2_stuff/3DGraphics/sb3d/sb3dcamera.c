@@ -82,3 +82,16 @@ void turnCameraGlobal(Camera *cam, float yaw, float pitch, float roll)
     normalizeCamera(cam);
 }
 
+void setCameraRange(Camera *cam, float nearPlane, float farPlane)
+{
+    if (nearPlane < 0.001f) {
+        nearPlane = 0.001f;
+    }
+
+    if (farPlane <= nearPlane) {
+        farPlane = nearPlane + 1.0f;
+    }
+
+    cam->nearPlane = nearPlane;
+    cam->farPlane  = farPlane;
+}
