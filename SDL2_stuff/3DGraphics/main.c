@@ -246,7 +246,7 @@ int main(void) {
     loadMeshSB3D("carrier.sb3d", &carrierMesh, 50.0f);
     int carrier0 = entityCreate(&carrierMesh, (Vec3) { 300, -50, -100});
 
-
+    // ALL Now SB3D
     Mesh textMesh;
     loadMeshSB3D("text.sb3d", &textMesh, 20.0f);
     int text0 = entityCreate(&textMesh, (Vec3){ 0, 200, 0});
