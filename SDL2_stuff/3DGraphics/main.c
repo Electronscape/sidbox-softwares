@@ -230,18 +230,15 @@ int main(void) {
     meshSetMaterial(&shipMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
 
     Mesh houseMesh;
-    //loadMeshOBJ("house1.obj", &houseMesh, 32, 50.0f);
     loadMeshSB3D("house1.sb3d", &houseMesh, 50.0f);
     int house0 = entityCreate(&houseMesh, (Vec3){ 450, 0, 0});
-    meshSetMaterial(&houseMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
+    //meshSetMaterial(&houseMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
 
     Mesh ipenergyMesh;
-    //loadMeshOBJ("ip_energy.obj", &ipenergyMesh, 32, 20.0f);
     loadMeshSB3D("ip_energy.sb3d", &ipenergyMesh, 20.0f);
     int ipenergy0 = entityCreate(&ipenergyMesh, (Vec3){ 400, 10, 220});
 
     Mesh ipbadguy1Mesh;
-    //loadMeshOBJ("ip_badguy1.obj", &ipbadguy1Mesh, 32, 20.0f);
     loadMeshSB3D("ip_badguy1.sb3d", &ipbadguy1Mesh, 20.0f);
     int ipbadguy1 = entityCreate(&ipbadguy1Mesh, (Vec3){ 400, 10, 120});
 
@@ -254,10 +251,6 @@ int main(void) {
     loadMeshOBJ("text.obj", &textMesh, 32, 20.0f);
     int text0 = entityCreate(&textMesh, (Vec3){ 0, 200, 0});
     meshSetMaterial(&textMesh, 0.00f, 0.55f, -0.02f, 1.50f, 64.0f);   // shiny metal
-
-
-
-
     meshSetMaterial(&theTorsu, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
     meshSetMaterial(&theSphere, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);
 
