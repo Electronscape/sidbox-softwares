@@ -248,7 +248,7 @@ int main(void) {
 
 
     Mesh textMesh;
-    loadMeshOBJ("text.obj", &textMesh, 32, 20.0f);
+    loadMeshSB3D("text.sb3d", &textMesh, 20.0f);
     int text0 = entityCreate(&textMesh, (Vec3){ 0, 200, 0});
     meshSetMaterial(&textMesh, 0.00f, 0.55f, -0.02f, 1.50f, 64.0f);   // shiny metal
     meshSetMaterial(&theTorsu, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal

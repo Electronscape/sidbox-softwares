@@ -521,7 +521,7 @@ int main(int argc, char *argv[])
     printf("Verts : %u\n", (unsigned)vertCount);
     printf("Tris  : %u\n", (unsigned)triCount);
     printf("Mats  : %d\n", materialCount);
-    printf("END OF PROGRAM!\n");
+    printf("Your Object is completed now!!\n");
 
     free(verts);
     free(tris);
