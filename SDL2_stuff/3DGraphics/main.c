@@ -183,59 +183,53 @@ int main(void) {
 ///[ WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////////
 
     setDefaultRenderMode();
-    Camera cam = createCamera();
-    setCameraRange(&cam, 0.01, 2500.0f);
-    normalizeCamera(&cam);
+    Camera cam = cameraCreate();
+    cameraSetRange(&cam, 0.01, 2500.0f);
+    cameraNormalize(&cam);
 
-    clearLights();
+    lightsClear();
 
     uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 1.0f, 1);
     uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -0.50f, 0.30}, 0.10, 1);
 
     worldClear();
 
-    Mesh theSphere = createSphere(80.0f, 16, 16);
-    Mesh thePyramid = createPyramid(200, 200);
-
 
     Mesh shipMesh;
     loadMeshSB3D("shipv1.sb3d", &shipMesh, 10.0f);
-    int ship0 = entityCreate(&shipMesh, (Vec3){ 0.0f, 100.0f, 200.0f });
-    int ship1 = entityCreate(&shipMesh, vec3(-190,42, 500));
+    int ship0 = entityWorldSpawn(&shipMesh, (Vec3){ 0.0f, 100.0f, 200.0f });
+    int ship1 = entityWorldSpawn(&shipMesh, vec3(-135,42, 500));
     meshSetMaterial(&shipMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
 
 
 
     Mesh houseMesh;
     loadMeshSB3D("house1.sb3d", &houseMesh, 50.0f);
-    int house0 = entityCreate(&houseMesh, (Vec3){ 450, 32, 0});
+    int house0 = entityWorldSpawn(&houseMesh, vec3(280, 32, 650) );
+    entityTurnLocal(house0, -2.32,0,0);
 
     Mesh ipenergyMesh;
     loadMeshSB3D("ip_energy.sb3d", &ipenergyMesh, 20.0f);
-    int ipenergy0 = entityCreate(&ipenergyMesh, (Vec3){ 400, 32, 220});
+    int ipenergy0 = entityWorldSpawn(&ipenergyMesh, vec3( 300, 32, 320) );
 
     Mesh ipbadguy1Mesh;
     loadMeshSB3D("ip_badguy1.sb3d", &ipbadguy1Mesh, 20.0f);
-    int ipbadguy1 = entityCreate(&ipbadguy1Mesh, (Vec3){ 400, 32, 120});
+    int ipbadguy1 = entityWorldSpawn(&ipbadguy1Mesh, (Vec3){ 280, 32, 420});
 
     Mesh carrierMesh;
     loadMeshSB3D("carrier.sb3d", &carrierMesh, 50.0f);
-    int carrier0 = entityCreate(&carrierMesh, (Vec3) { 1800, 0, -100});
+    int carrier0 = entityWorldSpawn(&carrierMesh, (Vec3) { 1800, 0, -100});
 
+    Mesh recogMesh;
+    loadMeshSB3D("recogniser.sb3d", &recogMesh, 100.0f);
+    int recog0 = entityWorldSpawn(&recogMesh, vec3(-200, 100, 0));
 
 
     Mesh islandMesh;
-    loadMeshSB3D("island.sb3d", &islandMesh, 200.0f);
-    int island0 = entityCreate(&islandMesh, vec3(012, 0, 0));
+    loadMeshSB3D("islandx.sb3d", &islandMesh, 200.0f);
+    int island0 = entityWorldSpawn(&islandMesh, vec3(012, 0, 0));
 
        
-    
-    int sphere0 = entityCreate(&theSphere, (Vec3){   0.0f, 50.0f, 0.0f } );
-    int pyra0 = entityCreate(&thePyramid, (Vec3){0, 30, -200});
-
-
-    entityColour(sphere0, 32 + 13);
-    entityColour(pyra0, 32 + 4);
     ///[ END WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////
 
 
@@ -250,8 +244,8 @@ int main(void) {
 
     uint8_t mbLeft=0, mbRight=0;
 
-    positionCamera(&cam, vec3(0,50,0));
-    rotateCamera(&cam, 0,0,0);
+    cameraSetPosition(&cam, vec3(0,50,0));
+    cameraRotate(&cam, 0,0,0);
 
     toggleLightSun = 1;
     toggleLightShip = 0;
@@ -341,12 +335,12 @@ int main(void) {
             float ryGlobal = 0.0f;
 
             // thrust
-            if (keys[SDL_SCANCODE_W] || mbLeft) moveCamera(&cam, 0.0f, 0.0f,  moveSpeed);
-            if (keys[SDL_SCANCODE_S]) moveCamera(&cam, 0.0f, 0.0f, -moveSpeed);
-            if (keys[SDL_SCANCODE_A]) moveCamera(&cam, -moveSpeed, 0, 0);
-            if (keys[SDL_SCANCODE_D]) moveCamera(&cam,  moveSpeed, 0, 0);
-            if (keys[SDL_SCANCODE_R]) moveCamera(&cam, 0, moveSpeed, 0);
-            if (keys[SDL_SCANCODE_F]) moveCamera(&cam, 0, -moveSpeed, 0);
+            if (keys[SDL_SCANCODE_W] || mbLeft) cameraMove(&cam, 0.0f, 0.0f,  moveSpeed);
+            if (keys[SDL_SCANCODE_S]) cameraMove(&cam, 0.0f, 0.0f, -moveSpeed);
+            if (keys[SDL_SCANCODE_A]) cameraMove(&cam, -moveSpeed, 0, 0);
+            if (keys[SDL_SCANCODE_D]) cameraMove(&cam,  moveSpeed, 0, 0);
+            if (keys[SDL_SCANCODE_R]) cameraMove(&cam, 0, moveSpeed, 0);
+            if (keys[SDL_SCANCODE_F]) cameraMove(&cam, 0, -moveSpeed, 0);
 
 
             // keyboard yaw
@@ -366,14 +360,14 @@ int main(void) {
             rz += mouseYaw;
 
             // local pitch/roll
-            turnCamera(&cam, rx, 0.0f, rz, 0);
+            cameraTurn(&cam, rx, 0.0f, rz, 0);
 
             // optional bank-to-turn assist
             ryGlobal += cam.right.y * 0.02f;
 
             // global yaw after local update
             if (ryGlobal != 0.0f) {
-                turnCamera(&cam, 0.0f, -ryGlobal, 0.0f, 1);
+                cameraTurn(&cam, 0.0f, -ryGlobal, 0.0f, 1);
             }
 
             // consume mouse deltas
@@ -382,17 +376,17 @@ int main(void) {
 
             // air craft style motion #######################################################
             if (keys[SDL_SCANCODE_SPACE]) {
-                positionCamera(&cam, vec3(0,50,0));
-                rotateCamera(&cam, 0,0,0);
+                cameraSetPosition(&cam, vec3(0,50,0));
+                cameraRotate(&cam, 0,0,0);
             }
 
 
             lightEnable(Camlightid, toggleLightShip);
-            setLightIntensity(Camlightid, 2.0f);
+            lightSetIntensity(Camlightid, 2.0f);
 
             lightEnable(SunlightId, toggleLightSun);
-            setLightIntensity(SunlightId, 1.0);
-            setLightPosition(Camlightid, cam.pos);
+            lightSetIntensity(SunlightId, 1.0);
+            lightSetPosition(Camlightid, cam.pos);
             
 
             entityTurnLocal(ipenergy0, 0.01f,0,0);
@@ -400,9 +394,9 @@ int main(void) {
             //////////////////////////
             entityMoveForward(ship1, 1.8f);//vec3(0,0,0.7f));
 
-            Vec3 theShipPos = getEntityPosition(ship1);
+            Vec3 theShipPos = entityGetPosition(ship1);
             if(theShipPos.z > 3000){
-                entitySetPosition(ship1, vec3(-190,42, 000));
+                entitySetPosition(ship1, vec3(-135,42, 000));
             }
 
             //////////////////////////

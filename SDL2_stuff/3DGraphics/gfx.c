@@ -426,8 +426,7 @@ void resetRand(void)
     g_ditherSeed = 0x34188195;
 }
 
-static uint32_t fastRand(void)
-{
+static uint32_t fastRand(void){
     g_ditherSeed = (g_ditherSeed * 1664525u) + 1013904223u;
     return g_ditherSeed;
 }

@@ -5,6 +5,14 @@
 
 #include "sb3d.h"
 
+static int entityIdValid(int id)
+{
+    if (id < 0 || id >= WORLD_MAX) return 0;
+    if (!worldEntities[id].active) return 0;
+    if (!worldEntities[id].mesh) return 0;
+    return 1;
+}
+
 
 Vec3 entityLocalToWorld(const Entity *e, Vec3 v)
 {
@@ -22,6 +30,10 @@ float meshComputeBoundsRadius(const Mesh *mesh)
 {
     float maxDist2 = 0.0f;
 
+    if (!mesh || !mesh->verts || mesh->vertCount <= 0) {
+        return 0.0f;
+    }
+
     for (int i = 0; i < mesh->vertCount; i++) {
         Vec3 v = mesh->verts[i];
         float d2 = (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
@@ -35,55 +47,78 @@ float meshComputeBoundsRadius(const Mesh *mesh)
 }
 
 
-int entityCreate(Mesh *mesh, Vec3 pos)
+int entityWorldSpawn(Mesh *mesh, Vec3 pos)
 {
     int id;
+    if (!mesh) return -1;
 
-    if (worldEntityCount >= WORLD_MAX) {
-        return -1;
+    for (id = 0; id < WORLD_MAX; id++) {
+        if (!worldEntities[id].active) {
+            worldEntities[id].mesh = mesh;
+            worldEntities[id].pos = pos;
+
+            worldEntities[id].right   = (Vec3){ 1.0f, 0.0f, 0.0f };
+            worldEntities[id].up      = (Vec3){ 0.0f, 1.0f, 0.0f };
+            worldEntities[id].forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+            worldEntities[id].active  = 1;
+
+            return id;
+        }
     }
 
-    id = worldEntityCount;
-    worldEntityCount++;
+    return -1;
+}
 
-    worldEntities[id].mesh = mesh;
-    worldEntities[id].pos = pos;
+void entityWorldDestroy(int *id)
+{
+    if (!id) return;
+    if (*id < 0 || *id >= WORLD_MAX) {
+        *id = -1;
+        return;
+    }
 
-    worldEntities[id].right   = (Vec3){ 1.0f, 0.0f, 0.0f };
-    worldEntities[id].up      = (Vec3){ 0.0f, 1.0f, 0.0f };
-    worldEntities[id].forward = (Vec3){ 0.0f, 0.0f, 1.0f };
-    return id;
+    worldEntities[*id].active = 0;
+    worldEntities[*id].mesh = NULL;
+    worldEntities[*id].pos = (Vec3){ 0.0f, 0.0f, 0.0f };
+    worldEntities[*id].right = (Vec3){ 1.0f, 0.0f, 0.0f };
+    worldEntities[*id].up = (Vec3){ 0.0f, 1.0f, 0.0f };
+    worldEntities[*id].forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+    *id = -1;
 }
 
 
-void entitySetPosition(int id, Vec3 pos)
-{
-    if (id < 0 || id >= worldEntityCount) return;
+void entitySetPosition(int id, Vec3 pos){
+    if (!entityIdValid(id)) return;
     worldEntities[id].pos = pos;
 }
 
 void entityMove(int id, Vec3 delta)
 {
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
     worldEntities[id].pos = vec3Add(worldEntities[id].pos, delta);
 }
 
-Vec3 getEntityPosition(int id){
+Vec3 entityGetPosition(int id)
+{
+    if (!entityIdValid(id)) {
+        return (Vec3){0.0f, 0.0f, 0.0f};
+    }
     return worldEntities[id].pos;
 }
 
 void entityMoveForward(int id, float dist)
 {
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
     worldEntities[id].pos = vec3Add(
         worldEntities[id].pos,
         vec3Scale(worldEntities[id].forward, dist)
     );
 }
 
+
 void entityMoveRight(int id, float dist)
 {
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
     worldEntities[id].pos = vec3Add(
         worldEntities[id].pos,
         vec3Scale(worldEntities[id].right, dist)
@@ -92,7 +127,7 @@ void entityMoveRight(int id, float dist)
 
 void entityMoveUp(int id, float dist)
 {
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
     worldEntities[id].pos = vec3Add(
         worldEntities[id].pos,
         vec3Scale(worldEntities[id].up, dist)
@@ -103,16 +138,18 @@ void entityMoveUp(int id, float dist)
 // note colour palette SHOULD be 5 shades available, BUT not STRICTLY required ;)
 // Set the whole mesh to a single colour
 void entityColour(int id, uint8_t colour) {
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
 
     Mesh *m = worldEntities[id].mesh;
+    if (!m || !m->tris) return;
+
     for (int i = 0; i < m->triCount; i++) {
         m->tris[i].color = colour;
     }
 }
 
 static void setMeshColour(Mesh *mesh, uint8_t colour){
-    if(!mesh) return;
+    if (!mesh || !mesh->tris) return;
 
     for (int i = 0; i < mesh->triCount; i++) {
         mesh->tris[i].color = colour;
@@ -120,10 +157,12 @@ static void setMeshColour(Mesh *mesh, uint8_t colour){
 }
 
 // Set a specific face / triangle to a colour
-void entityColourFace(int id, int faceId, uint8_t colour) {
-    if (id < 0 || id >= worldEntityCount) return;
+void entityColourFace(int id, int faceId, uint8_t colour)
+{
+    if (!entityIdValid(id)) return;
 
     Mesh *m = worldEntities[id].mesh;
+    if (!m || !m->tris) return;
     if (faceId < 0 || faceId >= m->triCount) return;
 
     m->tris[faceId].color = colour;
@@ -132,6 +171,8 @@ void entityColourFace(int id, int faceId, uint8_t colour) {
 
 void normalizeEntity(Entity *e)
 {
+    if (!e) return;
+
     e->forward = vec3Normalize(e->forward);
     e->right   = vec3Normalize(e->right);
 
@@ -144,6 +185,8 @@ void normalizeEntity(Entity *e)
 
 void entityResetAxes(Entity *e)
 {
+    if (!e) return;
+
     e->right   = (Vec3){ 1.0f, 0.0f, 0.0f };
     e->up      = (Vec3){ 0.0f, 1.0f, 0.0f };
     e->forward = (Vec3){ 0.0f, 0.0f, 1.0f };
@@ -154,7 +197,7 @@ void entityTurnLocal(int id, float yaw, float pitch, float roll)
 {
     Entity *e;
 
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
     e = &worldEntities[id];
 
     if (yaw != 0.0f) {
@@ -182,7 +225,7 @@ void entityTurnGlobal(int id, float yaw, float pitch, float roll)
     Vec3 worldY = { 0.0f, 1.0f, 0.0f };
     Vec3 worldZ = { 0.0f, 0.0f, 1.0f };
 
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
     e = &worldEntities[id];
 
     if (yaw != 0.0f) {
@@ -210,7 +253,7 @@ void entityTurnGlobal(int id, float yaw, float pitch, float roll)
 // Create a box mesh at origin with given width, height, depth
 Mesh createBox(float width, float height, float depth)
 {
-    Mesh mesh;
+    Mesh mesh = {0};
 
     // Allocate vertices (8 corners)
     mesh.vertCount = 8;
@@ -247,17 +290,17 @@ Mesh createBox(float width, float height, float depth)
     mesh.tris = malloc(sizeof(Tri) * mesh.triCount);
     Tri t[] = {
         // bottom
-        {0,1,2, DEFAULT_COLOUR_BOTTOM}, {0,2,3, DEFAULT_COLOUR_BOTTOM},
+        {0,1,2, DEFAULT_COLOUR_BOTTOM, DEFAULT_EMISSION}, {0,2,3, DEFAULT_COLOUR_BOTTOM, DEFAULT_EMISSION},
         // top
-        {4,6,5, DEFAULT_COLOUR_TOP}, {4,7,6, DEFAULT_COLOUR_TOP},
+        {4,6,5, DEFAULT_COLOUR_TOP, DEFAULT_EMISSION}, {4,7,6, DEFAULT_COLOUR_TOP, DEFAULT_EMISSION},
         // side 1
-        {0,4,5, DEFAULT_COLOUR_SIDE1}, {0,5,1, DEFAULT_COLOUR_SIDE1},
+        {0,4,5, DEFAULT_COLOUR_SIDE1, DEFAULT_EMISSION}, {0,5,1, DEFAULT_COLOUR_SIDE1, DEFAULT_EMISSION},
         // side 2
-        {1,5,6, DEFAULT_COLOUR_SIDE2}, {1,6,2, DEFAULT_COLOUR_SIDE2},
+        {1,5,6, DEFAULT_COLOUR_SIDE2, DEFAULT_EMISSION}, {1,6,2, DEFAULT_COLOUR_SIDE2, DEFAULT_EMISSION},
         // side 3
-        {2,6,7, DEFAULT_COLOUR_SIDE3}, {2,7,3, DEFAULT_COLOUR_SIDE3},
+        {2,6,7, DEFAULT_COLOUR_SIDE3, DEFAULT_EMISSION}, {2,7,3, DEFAULT_COLOUR_SIDE3, DEFAULT_EMISSION},
         // side 4
-        {3,7,4, DEFAULT_COLOUR_SIDE4}, {3,4,0, DEFAULT_COLOUR_SIDE4}
+        {3,7,4, DEFAULT_COLOUR_SIDE4, DEFAULT_EMISSION}, {3,4,0, DEFAULT_COLOUR_SIDE4, DEFAULT_EMISSION}
     };
     for (int i = 0; i < mesh.triCount; i++) mesh.tris[i] = t[i];
 
@@ -273,7 +316,7 @@ Mesh createBox(float width, float height, float depth)
 
 Mesh createSphere(float radius, int stacks, int slices) 
 {
-    Mesh mesh;
+    Mesh mesh = {0};
     
 
     mesh.vertCount = (stacks + 1) * (slices + 1);
@@ -305,8 +348,8 @@ Mesh createSphere(float radius, int stacks, int slices)
             int i2 = i0 + 1;
             int i3 = i1 + 1;
 
-            mesh.tris[ti++] = (Tri){i0, i2, i1, DEFAULT_COLOUR};
-            mesh.tris[ti++] = (Tri){i2, i3, i1, DEFAULT_COLOUR};
+            mesh.tris[ti++] = (Tri){i0, i2, i1, DEFAULT_COLOUR, DEFAULT_EMISSION};
+            mesh.tris[ti++] = (Tri){i2, i3, i1, DEFAULT_COLOUR, DEFAULT_EMISSION};
         }
     }
 
@@ -318,7 +361,7 @@ Mesh createSphere(float radius, int stacks, int slices)
 
 Mesh createPlane(float sizeX, float sizeZ, int divisions)
 {
-    Mesh mesh;   
+    Mesh mesh = {0};   
 
     int vertsPerSide = divisions + 1;
 
@@ -360,8 +403,8 @@ Mesh createPlane(float sizeX, float sizeZ, int divisions)
             int i2 =  i0 + 1;
             int i3 =  i1 + 1;
 
-            mesh.tris[ti++] = (Tri){ i0, i1, i2, DEFAULT_COLOUR };
-            mesh.tris[ti++] = (Tri){ i2, i1, i3, DEFAULT_COLOUR };
+            mesh.tris[ti++] = (Tri){ i0, i1, i2, DEFAULT_COLOUR, DEFAULT_EMISSION };
+            mesh.tris[ti++] = (Tri){ i2, i1, i3, DEFAULT_COLOUR, DEFAULT_EMISSION };
         }
     }
     mesh.boundsRadius = meshComputeBoundsRadius(&mesh);
@@ -372,7 +415,7 @@ Mesh createPlane(float sizeX, float sizeZ, int divisions)
 
 Mesh createCylinder(float radius, float height, int segments)
 {
-    Mesh mesh;
+    Mesh mesh = {0};
     int vertCount = (segments + 1) * 2; // top + bottom rings
     int triCount  = segments * 4;       // 2 for top cap, 2 for bottom cap, 2 per side quad
     mesh.vertCount = vertCount;
@@ -408,9 +451,9 @@ Mesh createCylinder(float radius, float height, int segments)
         int t1 = b1 + segments + 1;
 
         // first triangle
-        mesh.tris[ti++] = (Tri){ b0, t0, t1, DEFAULT_COLOUR };
+        mesh.tris[ti++] = (Tri){ b0, t0, t1, DEFAULT_COLOUR, DEFAULT_EMISSION };
         // second triangle
-        mesh.tris[ti++] = (Tri){ b0, t1, b1, DEFAULT_COLOUR };
+        mesh.tris[ti++] = (Tri){ b0, t1, b1, DEFAULT_COLOUR, DEFAULT_EMISSION };
 
         // edges for wireframe
         mesh.edges[ei++] = (Edge){ b0, b1 };
@@ -428,7 +471,7 @@ Mesh createCylinder(float radius, float height, int segments)
         int t0 = i + segments + 1;
         int t1 = (i + 1) % (segments + 1) + segments + 1;
         // flip order for correct CCW
-        mesh.tris[ti++] = (Tri){ topCenterIndex, t1, t0, DEFAULT_COLOUR };
+        mesh.tris[ti++] = (Tri){ topCenterIndex, t1, t0, DEFAULT_COLOUR, DEFAULT_EMISSION };
     }
 
     // bottom cap (normal points down)
@@ -441,7 +484,7 @@ Mesh createCylinder(float radius, float height, int segments)
         int b0 = i;
         int b1 = (i + 1) % (segments + 1);
         // flip order for correct CCW
-        mesh.tris[ti++] = (Tri){ bottomCenterIndex, b0, b1, DEFAULT_COLOUR };
+        mesh.tris[ti++] = (Tri){ bottomCenterIndex, b0, b1, DEFAULT_COLOUR, DEFAULT_EMISSION };
     }
 
     mesh.boundsRadius = meshComputeBoundsRadius(&mesh);
@@ -455,7 +498,7 @@ Mesh createCylinder(float radius, float height, int segments)
 
 Mesh createCone(float radius, float height, int segments)
 {
-    Mesh mesh;
+    Mesh mesh = {0};
     float halfH = height * 0.5f;
 
     // Vertices: bottom ring + tip
@@ -487,7 +530,7 @@ Mesh createCone(float radius, float height, int segments)
         int b0 = i;
         int b1 = (i + 1) % (segments + 1);
         // flip b0 and b1 to fix winding
-        mesh.tris[ti++] = (Tri){ b1, b0, tipIndex, DEFAULT_COLOUR };
+        mesh.tris[ti++] = (Tri){ b1, b0, tipIndex, DEFAULT_COLOUR, DEFAULT_EMISSION };
 
         mesh.edges[ei++] = (Edge){ b0, b1 };
         mesh.edges[ei++] = (Edge){ b0, tipIndex };
@@ -502,7 +545,7 @@ Mesh createCone(float radius, float height, int segments)
     for (int i = 0; i < segments; i++) {
         int b0 = i;
         int b1 = (i + 1) % (segments + 1);
-        mesh.tris[ti++] = (Tri){ bottomIndex, b0, b1, DEFAULT_COLOUR };
+        mesh.tris[ti++] = (Tri){ bottomIndex, b0, b1, DEFAULT_COLOUR, DEFAULT_EMISSION };
         mesh.edges[ei++] = (Edge){ b0, bottomIndex };
     }
 
@@ -515,7 +558,7 @@ Mesh createCone(float radius, float height, int segments)
 
 Mesh createPyramid(float width, float height)
 {
-    Mesh mesh;
+    Mesh mesh = {0};
     mesh.vertCount = 5;
     mesh.triCount  = 6;
     mesh.edgeCount = 8;
@@ -537,14 +580,14 @@ Mesh createPyramid(float width, float height)
     mesh.verts[4] = (Vec3){ 0, hh, 0 };
 
     // base
-    mesh.tris[0] = (Tri){ 0, 1, 2, DEFAULT_COLOUR };
-    mesh.tris[1] = (Tri){ 0, 2, 3, DEFAULT_COLOUR };
+    mesh.tris[0] = (Tri){ 0, 1, 2, DEFAULT_COLOUR, DEFAULT_EMISSION };
+    mesh.tris[1] = (Tri){ 0, 2, 3, DEFAULT_COLOUR, DEFAULT_EMISSION };
 
     // sides
-    mesh.tris[2] = (Tri){ 0, 4, 1, DEFAULT_COLOUR };
-    mesh.tris[3] = (Tri){ 1, 4, 2, DEFAULT_COLOUR };
-    mesh.tris[4] = (Tri){ 2, 4, 3, DEFAULT_COLOUR };
-    mesh.tris[5] = (Tri){ 3, 4, 0, DEFAULT_COLOUR };
+    mesh.tris[2] = (Tri){ 0, 4, 1, DEFAULT_COLOUR, DEFAULT_EMISSION };
+    mesh.tris[3] = (Tri){ 1, 4, 2, DEFAULT_COLOUR, DEFAULT_EMISSION };
+    mesh.tris[4] = (Tri){ 2, 4, 3, DEFAULT_COLOUR, DEFAULT_EMISSION };
+    mesh.tris[5] = (Tri){ 3, 4, 0, DEFAULT_COLOUR, DEFAULT_EMISSION };
 
     // edges (optional)
     mesh.edges[0] = (Edge){0,1}; mesh.edges[1] = (Edge){1,2};
@@ -563,7 +606,7 @@ Mesh createPyramid(float width, float height)
 
 Mesh createTorus(float majorRadius, float minorRadius, int majorSegs, int minorSegs)
 {
-    Mesh mesh;
+    Mesh mesh = {0};
     mesh.vertCount = (majorSegs + 1) * (minorSegs + 1);
     mesh.triCount  = majorSegs * minorSegs * 2;
     mesh.edgeCount = 0; // optional
@@ -599,8 +642,8 @@ Mesh createTorus(float majorRadius, float minorRadius, int majorSegs, int minorS
             int i2 = i0 + 1;
             int i3 = i1 + 1;
 
-            mesh.tris[ti++] = (Tri){i0, i2, i1, DEFAULT_COLOUR};
-            mesh.tris[ti++] = (Tri){i2, i3, i1, DEFAULT_COLOUR};
+            mesh.tris[ti++] = (Tri){i0, i2, i1, DEFAULT_COLOUR, DEFAULT_EMISSION};
+            mesh.tris[ti++] = (Tri){i2, i3, i1, DEFAULT_COLOUR, DEFAULT_EMISSION};
         }
     }
 
@@ -614,7 +657,7 @@ Mesh createTorus(float majorRadius, float minorRadius, int majorSegs, int minorS
 
 void meshSetVertex(Mesh *mesh, int index, Vec3 v)
 {
-    if (!mesh) return;
+    if (!mesh || !mesh->verts) return;
     if (index < 0 || index >= mesh->vertCount) return;
 
     mesh->verts[index] = v;
@@ -630,7 +673,8 @@ void meshOffsetVertex(Mesh *mesh, int index, Vec3 delta)
 
 Vec3 meshGetVertex(const Mesh *mesh, int index)
 {
-    if (!mesh) return (Vec3){0.0f, 0.0f, 0.0f};
+    if (!mesh || !mesh->verts) return (Vec3){0.0f, 0.0f, 0.0f};
+    
     if (index < 0 || index >= mesh->vertCount) return (Vec3){0.0f, 0.0f, 0.0f};
 
     return mesh->verts[index];
@@ -657,6 +701,7 @@ void meshOffsetVertexRecalc(Mesh *mesh, int index, Vec3 delta)
 void meshResetFromSource(Mesh *dst, const Mesh *src)
 {
     if (!dst || !src) return;
+    if (!dst->verts || !src->verts) return;
     if (dst->vertCount != src->vertCount) return;
 
     for (int i = 0; i < src->vertCount; i++) {
@@ -710,7 +755,8 @@ void meshDeformWavePlaneY(Mesh *mesh, float time, float amp, float freqX, float 
 // Deep copy a mesh (returns independent instance)
 Mesh copyMesh(const Mesh *src)
 {
-    Mesh dst;
+    Mesh dst = {0};
+    if (!src) return dst;
 
     dst.vertCount = src->vertCount;
     dst.edgeCount = src->edgeCount;
@@ -787,7 +833,7 @@ void entityFollowCameraXZ(int id, const Camera *cam, float worldY, float snap)
     float pz;
 
     if (!cam) return;
-    if (id < 0 || id >= worldEntityCount) return;
+    if (!entityIdValid(id)) return;
 
     if (snap <= 0.0f) {
         snap = 1.0f;

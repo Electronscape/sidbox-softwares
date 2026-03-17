@@ -270,116 +270,6 @@ static void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color,
     if (pc.y > rt->maxY) rt->maxY = pc.y;
 }
 
-static int computeShadePointLight(Vec3 a, Vec3 b, Vec3 c, Vec3 lightPos)
-{
-    const float abx = b.x - a.x;
-    const float aby = b.y - a.y;
-    const float abz = b.z - a.z;
-
-    const float acx = c.x - a.x;
-    const float acy = c.y - a.y;
-    const float acz = c.z - a.z;
-
-    float nx = (aby * acz) - (abz * acy);
-    float ny = (abz * acx) - (abx * acz);
-    float nz = (abx * acy) - (aby * acx);
-
-    const float nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
-    if (nlen2 > 0.000001f) {
-        const float invNLen = 1.0f / sqrtf(nlen2);
-        nx *= invNLen;
-        ny *= invNLen;
-        nz *= invNLen;
-    } else {
-        nx = ny = nz = 0.0f;
-    }
-
-    const float cx = (a.x + b.x + c.x) * (1.0f / 3.0f);
-    const float cy = (a.y + b.y + c.y) * (1.0f / 3.0f);
-    const float cz = (a.z + b.z + c.z) * (1.0f / 3.0f);
-
-    float lx = lightPos.x - cx;
-    float ly = lightPos.y - cy;
-    float lz = lightPos.z - cz;
-
-    const float dist2 = (lx * lx) + (ly * ly) + (lz * lz);
-    if (dist2 > 0.000001f) {
-        const float invDist = 1.0f / sqrtf(dist2);
-        lx *= invDist;
-        ly *= invDist;
-        lz *= invDist;
-    } else {
-        lx = ly = lz = 0.0f;
-    }
-
-    float d = (nx * lx) + (ny * ly) + (nz * lz);
-    if (d < 0.0f) d = 0.0f;
-    if (d > 1.0f) d = 1.0f;
-
-    float brightness = d * (1.0f / (1.0f + dist2 * 0.0002f)) * 1.8f;
-    if (brightness < 0.0f) brightness = 0.0f;
-    if (brightness > 1.0f) brightness = 1.0f;
-
-    int shade = 4 - (int)(brightness * 4.999f);
-    if (shade < 0) shade = 0;
-    if (shade > 4) shade = 4;
-
-    return shade;
-}
-
-static float computeTriangleMaterialBrightness(
-    Vec3 wa, Vec3 wb, Vec3 wc,
-    Vec3 lightPos,
-    Vec3 cameraPos,
-    const Material *mat
-)
-{
-    Vec3 ab = vec3Sub(wb, wa);
-    Vec3 ac = vec3Sub(wc, wa);
-    Vec3 n = vec3Normalize(vec3Cross(ab, ac));
-
-    Vec3 center = triangleCenter(wa, wb, wc);
-
-    Vec3 L = vec3Sub(lightPos, center);
-    float dist2 = vec3Dot(L, L);
-    float dist = sqrtf(dist2);
-    if (dist > 0.0001f) {
-        L = vec3Scale(L, 1.0f / dist);
-    }
-
-    Vec3 V = vec3Sub(cameraPos, center);
-    float vlen = sqrtf(vec3Dot(V, V));
-    if (vlen > 0.0001f) {
-        V = vec3Scale(V, 1.0f / vlen);
-    }
-
-    float ndotl = vec3Dot(n, L);
-    if (ndotl < 0.0f) ndotl = 0.0f;
-
-    float falloff = 1.0f / (1.0f + dist2 * 0.00012f);
-    float diffuse = ndotl * mat->diffuse;
-
-    Vec3 R = vec3Sub(vec3Scale(n, 2.0f * vec3Dot(n, L)), L);
-    R = vec3Normalize(R);
-
-    float rdotv = vec3Dot(R, V);
-    if (rdotv < 0.0f) rdotv = 0.0f;
-
-    float specular = 0.0f;
-    if (mat->specularStrength > 0.0f) {
-        specular = powf(rdotv, mat->shininess) * mat->specularStrength;
-    }
-
-    float brightness =
-        mat->ambient +
-        ((diffuse + specular) * falloff) +
-        mat->emissive;
-
-    if (brightness < 0.0f) brightness = 0.0f;
-    if (brightness > 1.0f) brightness = 1.0f;
-
-    return brightness;
-}
 
 int projectPoint(Vec3 p, const Camera *cam, Vec2 *out)
 {
@@ -434,8 +324,12 @@ void submitWorldEntities(const Camera *cam)
 {
     int visibleCount = 0;
 
-    for (int i = 0; i < worldEntityCount; i++) {
+    for (int i = 0; i < WORLD_MAX; i++) {
         Entity *ent = &worldEntities[i];
+
+        if (!ent->active) continue;
+        if (!ent->mesh) continue;
+
         if (entityVisible(ent, cam)) {
             renderEntities[visibleCount++] = ent;
         }
@@ -1037,8 +931,8 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
     const Mesh *mesh = ent->mesh;
     const Material *mat = &mesh->material;
 
-    Light *lights = getLights();
-    const int lightCount = getLightCount();
+    Light *lights = lightsGet();
+    const int lightCount = lightsGetCount();
 
     const float matAmbient  = mat->ambient;
     const float matEmissive = mat->emissive;

@@ -159,23 +159,23 @@ float computeTriangleBrightness(Vec3 a, Vec3 b, Vec3 c)
 
 
 
-Light *getLights(void)
+Light *lightsGet(void)
 {
     return g_lights;
 }
 
-int getLightCount(void)
+int lightsGetCount(void)
 {
     return g_lightCount;
 }
 
-void clearLights(void)
+void lightsClear(void)
 {
     g_lightCount = 0;
 }
 
 void lightEnable(uint8_t lightIndex, uint8_t enable){
-    if(lightIndex < 0 || lightIndex >= g_lightCount) return;
+    if(lightIndex >= g_lightCount) return;
 
     g_lights[lightIndex].enabled = enable;
 }
@@ -212,7 +212,7 @@ int addDirectionalLight(Vec3 dir, float intensity, int enabled)
     return g_lightCount - 1;
 }
 
-void setLightPosition(int index, Vec3 pos)
+void lightSetPosition(int index, Vec3 pos)
 {
     if (index < 0 || index >= g_lightCount) {
         return;
@@ -221,7 +221,7 @@ void setLightPosition(int index, Vec3 pos)
     g_lights[index].pos = pos;
 }
 
-void setLightDirection(int index, Vec3 dir)
+void lightSetDirection(int index, Vec3 dir)
 {
     if (index < 0 || index >= g_lightCount) {
         return;
@@ -230,7 +230,7 @@ void setLightDirection(int index, Vec3 dir)
     g_lights[index].dir = vec3Normalize(dir);
 }
 
-void setLightIntensity(int index, float bright)
+void lightSetIntensity(int index, float bright)
 {
     if (index < 0 || index >= g_lightCount) {
         return;

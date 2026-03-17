@@ -17,17 +17,14 @@ typedef struct {
 } Camera;
 
 
-Camera createCamera(void);
-void normalizeCamera(Camera *cam);
+Camera cameraCreate(void);  //
+void cameraNormalize(Camera *cam);
 Vec3 worldToCamera(Vec3 p, Camera cam);
-void setCameraRange(Camera *cam, float nearPlane, float farPlane);
-
-void positionCamera(Camera *cam, Vec3 pos);
-void translateCamera(Camera *cam, float x, float y, float z);
-void moveCamera(Camera *cam, float x, float y, float z);
-void rotateCamera(Camera *cam, float yaw, float pitch, float roll);
-//void turnCamera(Camera *cam, float yaw, float pitch, float roll);
-void turnCamera(Camera *cam, float x, float y, float z, uint8_t global);
+void cameraSetRange(Camera *cam, float nearPlane, float farPlane);
+void cameraSetPosition(Camera *cam, Vec3 pos);
+void cameraMove(Camera *cam, float x, float y, float z);
+void cameraRotate(Camera *cam, float yaw, float pitch, float roll);
+void cameraTurn(Camera *cam, float x, float y, float z, uint8_t global);
 
 
 #endif

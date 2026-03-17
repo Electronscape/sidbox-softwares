@@ -4,6 +4,7 @@
 #include "sb3d.h"
 
 
+
 static void rebuildCameraBasis(Camera *cam)
 {
     float cy = cosf(cam->rotation.x);
@@ -12,8 +13,8 @@ static void rebuildCameraBasis(Camera *cam)
     float cp = cosf(cam->rotation.y);
     float sp = sinf(cam->rotation.y);
 
-    float cr = cosf(cam->rotation.z);
-    float sr = sinf(cam->rotation.z);
+    //float cr = cosf(cam->rotation.z);
+    //float sr = sinf(cam->rotation.z);
 
     // Forward from yaw/pitch
     cam->forward.x = sy * cp;
@@ -42,11 +43,11 @@ static void rebuildCameraBasis(Camera *cam)
         cam->up    = rotateAroundAxis(cam->up,    cam->forward, cam->rotation.z);
     }
 
-    normalizeCamera(cam);
+    cameraNormalize(cam);
 }
 
 
-Camera createCamera(void)
+Camera cameraCreate(void)
 {
     Camera cam = {
         .pos       = { 0.0f, 0.0f, 0.0f },
@@ -62,13 +63,13 @@ Camera createCamera(void)
 }
 
 
-void positionCamera(Camera *cam, Vec3 pos)
+void cameraSetPosition(Camera *cam, Vec3 pos)
 {
     if (!cam) return;
     cam->pos = pos;
 }
 
-void rotateCamera(Camera *cam, float yaw, float pitch, float roll){
+void cameraRotate(Camera *cam, float yaw, float pitch, float roll){
     if (!cam) return;
     cam->rotation.x = yaw;
     cam->rotation.y = pitch;
@@ -77,18 +78,9 @@ void rotateCamera(Camera *cam, float yaw, float pitch, float roll){
 }
 
 
-static float wrapAngle(float a)
-{
-    const float pi    = 3.14159265359f;
-    const float twoPi = 6.28318530718f;
 
-    while (a > pi)  a -= twoPi;
-    while (a < -pi) a += twoPi;
 
-    return a;
-}
-
-void turnCamera(Camera *cam, float x, float y, float z, uint8_t global)
+void cameraTurn(Camera *cam, float x, float y, float z, uint8_t global)
 {
     Vec3 axisX;
     Vec3 axisY;
@@ -124,10 +116,10 @@ void turnCamera(Camera *cam, float x, float y, float z, uint8_t global)
         cam->up      = rotateAroundAxis(cam->up,      axisZ, z);
     }
 
-    normalizeCamera(cam);
+    cameraNormalize(cam);
 }
 
-void normalizeCamera(Camera *cam)
+void cameraNormalize(Camera *cam)
 {
     cam->forward = vec3Normalize(cam->forward);
     cam->right   = vec3Normalize(cam->right);
@@ -156,7 +148,7 @@ Vec3 worldToCamera(Vec3 p, Camera cam)
 }
 
 
-void setCameraRange(Camera *cam, float nearPlane, float farPlane)
+void cameraSetRange(Camera *cam, float nearPlane, float farPlane)
 {
     if (!cam) return;
 
@@ -172,16 +164,9 @@ void setCameraRange(Camera *cam, float nearPlane, float farPlane)
     cam->farPlane  = farPlane;
 }
 
-void translateCamera(Camera *cam, float x, float y, float z)
-{
-    if (!cam) return;
 
-    cam->pos.x += x;
-    cam->pos.y += y;
-    cam->pos.z += z;
-}
 
-void moveCamera(Camera *cam, float x, float y, float z)
+void cameraMove(Camera *cam, float x, float y, float z)
 {
     if (!cam) return;
 
