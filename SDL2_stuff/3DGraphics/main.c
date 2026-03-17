@@ -248,16 +248,36 @@ int main(void) {
     float mouseSensitivity = 0.0015f;
     int mouseLookEnabled = 1;
 
+    uint8_t mbLeft=0, mbRight=0;
+
+    positionCamera(&cam, vec3(0,50,0));
+    rotateCamera(&cam, 0,0,0);
+
+    toggleLightSun = 1;
+    toggleLightShip = 0;
+    toggleflatMode = 1;
+    enableFlatMode(toggleflatMode);
+
     SDL_SetRelativeMouseMode(SDL_TRUE);
     while (running) {
         //uint32_t frame_start = SDL_GetTicks();
 
+        //mbLeft  = 0;
+        //mbRight = 0;
         // ---- 1) process all pending events (NO WAIT here) ----
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) running = 0;
             if ((e.type == SDL_KEYDOWN) && (e.key.repeat == 0) && (e.key.keysym.sym == SDLK_ESCAPE))
                 running = 0;
+
+            if((e.type == SDL_MOUSEBUTTONDOWN)){
+                if(e.button.button == SDL_BUTTON_LEFT) mbLeft = 1;
+            }
+
+            if((e.type == SDL_MOUSEBUTTONUP)){
+                if(e.button.button == SDL_BUTTON_LEFT) mbLeft = 0;
+            }
 
             if ((e.type == SDL_KEYDOWN) && (e.key.repeat == 0)) {
                 switch (e.key.keysym.sym) {
@@ -297,7 +317,7 @@ int main(void) {
 
             if(e.type == SDL_MOUSEMOTION && mouseLookEnabled){
                 mouseYaw   -= (float)e.motion.xrel * mouseSensitivity;
-                mousePitch += (float)e.motion.yrel * mouseSensitivity;
+                mousePitch -= (float)e.motion.yrel * mouseSensitivity;
             }
         }
 
@@ -321,7 +341,7 @@ int main(void) {
             float ryGlobal = 0.0f;
 
             // thrust
-            if (keys[SDL_SCANCODE_W]) moveCamera(&cam, 0.0f, 0.0f,  moveSpeed);
+            if (keys[SDL_SCANCODE_W] || mbLeft) moveCamera(&cam, 0.0f, 0.0f,  moveSpeed);
             if (keys[SDL_SCANCODE_S]) moveCamera(&cam, 0.0f, 0.0f, -moveSpeed);
             if (keys[SDL_SCANCODE_A]) moveCamera(&cam, -moveSpeed, 0, 0);
             if (keys[SDL_SCANCODE_D]) moveCamera(&cam,  moveSpeed, 0, 0);
@@ -375,10 +395,23 @@ int main(void) {
             setLightPosition(Camlightid, cam.pos);
             
 
-            clearScreen(0);
+            entityTurnLocal(ipenergy0, 0.01f,0,0);
+            // crap AI for one ship
+            //////////////////////////
+            entityMoveForward(ship1, 1.8f);//vec3(0,0,0.7f));
+
+            Vec3 theShipPos = getEntityPosition(ship1);
+            if(theShipPos.z > 3000){
+                entitySetPosition(ship1, vec3(-190,42, 000));
+            }
+
+            //////////////////////////
+
+            //clearScreen(0);
             resetRenderList();
-            drawFakeHorizon(&cam, 9, 36, 1, 0);
+            drawFakeHorizon(&cam, 9, 59, 43, 0);
             drawFakeHorizonDots(&cam, 2, 128, 0, 110);
+            //drawFakeHorizonGrid(&cam, 2, 128, 0.0f, 32);
             Render3D(&cam);
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
 

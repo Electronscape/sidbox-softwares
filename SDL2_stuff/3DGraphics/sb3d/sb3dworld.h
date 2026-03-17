@@ -106,6 +106,9 @@ typedef struct {
 
     uint8_t color;
     uint8_t emission;
+
+    int16_t minY;
+    int16_t maxY;
 } RenderTri;
 
 #endif

@@ -15,13 +15,6 @@ typedef enum {
 } ClipPlane;
 
 
-typedef struct {
-    float x;
-    float y;
-    float camz;
-} ScreenVert;
-
-
 
 void setDefaultRenderMode();
 void enableZOrdering(int enable);
@@ -49,5 +42,12 @@ void drawWorldLine(Vec3 a, Vec3 b, const Camera *cam, uint8_t color);
 
 void drawFakeHorizonDots(const Camera *cam, uint8_t dotCol, int spacing, float ylevel, uint8_t density);
 void drawFakeHorizon(const Camera *cam, uint8_t skyCol, uint8_t groundCol, uint8_t lineCol, float ylevel);
+void drawFakeHorizonGrid(
+    const Camera *cam,
+    uint8_t gridCol,
+    int spacing,
+    float ylevel,
+    int rangeCells
+);
 
 #endif

@@ -68,6 +68,10 @@ void entityMove(int id, Vec3 delta)
     worldEntities[id].pos = vec3Add(worldEntities[id].pos, delta);
 }
 
+Vec3 getEntityPosition(int id){
+    return worldEntities[id].pos;
+}
+
 void entityMoveForward(int id, float dist)
 {
     if (id < 0 || id >= worldEntityCount) return;

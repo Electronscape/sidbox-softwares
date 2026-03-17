@@ -1,83 +1,105 @@
 #include <stdint.h>
 #include <math.h>
 
-
 #include "sb3d.h"
-
 
 Vec3 vec3Add(Vec3 a, Vec3 b)
 {
-    Vec3 out = { a.x + b.x, a.y + b.y, a.z + b.z };
-    return out;
+    return (Vec3){
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z
+    };
 }
 
 Vec3 vec3Sub(Vec3 a, Vec3 b)
 {
-    Vec3 out = { a.x - b.x, a.y - b.y, a.z - b.z };
-    return out;
+    return (Vec3){
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
+    };
 }
 
 Vec3 vec3Scale(Vec3 v, float s)
 {
-    Vec3 out = { v.x * s, v.y * s, v.z * s };
-    return out;
+    return (Vec3){
+        v.x * s,
+        v.y * s,
+        v.z * s
+    };
 }
 
 float vec3Dot(Vec3 a, Vec3 b)
 {
-    return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+    return
+        (a.x * b.x) +
+        (a.y * b.y) +
+        (a.z * b.z);
 }
 
 Vec3 vec3Cross(Vec3 a, Vec3 b)
 {
-    Vec3 out = {
+    return (Vec3){
         (a.y * b.z) - (a.z * b.y),
         (a.z * b.x) - (a.x * b.z),
         (a.x * b.y) - (a.y * b.x)
     };
-    return out;
 }
 
 Vec3 vec3Normalize(Vec3 v)
 {
-    float len = sqrtf((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+    const float len2 =
+        (v.x * v.x) +
+        (v.y * v.y) +
+        (v.z * v.z);
 
-    if (len <= 0.000001f) {
-        Vec3 zero = { 0.0f, 0.0f, 0.0f };
-        return zero;
+    if (len2 <= 0.000001f) {
+        return (Vec3){ 0.0f, 0.0f, 0.0f };
     }
 
-    return vec3Scale(v, 1.0f / len);
+    {
+        const float invLen = 1.0f / sqrtf(len2);
+        return (Vec3){
+            v.x * invLen,
+            v.y * invLen,
+            v.z * invLen
+        };
+    }
 }
-
 
 Vec3 rotateAroundAxis(Vec3 v, Vec3 axis, float angle)
 {
     axis = vec3Normalize(axis);
 
-    float c = cosf(angle);
-    float s = sinf(angle);
+    {
+        const float c = cosf(angle);
+        const float s = sinf(angle);
+        const float oneMinusC = 1.0f - c;
+        const float axisDotV = vec3Dot(axis, v);
 
-    Vec3 term1 = vec3Scale(v, c);
-    Vec3 term2 = vec3Scale(vec3Cross(axis, v), s);
-    Vec3 term3 = vec3Scale(axis, vec3Dot(axis, v) * (1.0f - c));
+        Vec3 cross = vec3Cross(axis, v);
 
-    return vec3Add(vec3Add(term1, term2), term3);
+        return (Vec3){
+            (v.x * c) + (cross.x * s) + (axis.x * axisDotV * oneMinusC),
+            (v.y * c) + (cross.y * s) + (axis.y * axisDotV * oneMinusC),
+            (v.z * c) + (cross.z * s) + (axis.z * axisDotV * oneMinusC)
+        };
+    }
 }
-
-
-
 
 Vec3 triangleCenter(Vec3 a, Vec3 b, Vec3 c)
 {
-    Vec3 out;
-    out.x = (a.x + b.x + c.x) / 3.0f;
-    out.y = (a.y + b.y + c.y) / 3.0f;
-    out.z = (a.z + b.z + c.z) / 3.0f;
-    return out;
+    const float oneThird = 1.0f / 3.0f;
+
+    return (Vec3){
+        (a.x + b.x + c.x) * oneThird,
+        (a.y + b.y + c.y) * oneThird,
+        (a.z + b.z + c.z) * oneThird
+    };
 }
 
-
-Vec3 vec3(float x, float y, float z){
-    return ((Vec3){x,y,z});
+Vec3 vec3(float x, float y, float z)
+{
+    return (Vec3){ x, y, z };
 }

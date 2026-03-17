@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "gfx.h"
 
@@ -49,749 +50,6 @@ static const uint8_t bayer4x4[4][4] = {
     { 15,  7, 13,  5 }
 };
 
-
-uint8_t fb[SCREEN_W * SCREEN_H] = {0};
-uint32_t pb[SCREEN_W * SCREEN_H] = {0xFF0000FF};
-
-// converter
-void videoMemToScreen(){
-    // convert the CLUT image to ARGB for SDL2
-    for(int32_t s = 0; s < (SCREEN_H * SCREEN_W); s++){
-        pb[s] = clut[ fb[s] ];
-    }
-}
-
-// real basic clear screen
-void clearScreen(uint8_t colIndex){
-    for(int32_t s = 0; s < (SCREEN_H * SCREEN_W); s++){
-        fb[s] = colIndex;
-    }
-}
-
-void putPixel(int32_t x, int32_t y, uint8_t colIndex){
-    // protect the ram area!
-    if(x < 0 || x >= SCREEN_W) return;
-    if(y < 0 || y >= SCREEN_H) return;
-
-    fb[(y * SCREEN_W) + x] = colIndex;
-}
-
-void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex)
-{
-    int dx = abs(x1 - x0);
-    int sx = (x0 < x1) ? 1 : -1;
-    int dy = -abs(y1 - y0);
-    int sy = (y0 < y1) ? 1 : -1;
-    int err = dx + dy;
-
-    while (1) {
-        putPixel(x0, y0, colorIndex);
-
-        if (x0 == x1 && y0 == y1) {
-            break;
-        }
-
-        int e2 = err * 2;
-
-        if (e2 >= dy) {
-            err += dy;
-            x0 += sx;
-        }
-
-        if (e2 <= dx) {
-            err += dx;
-            y0 += sy;
-        }
-    }
-}
-
-
-
-
-
-static int hashNoise4bit(int x, int y)
-{
-    uint32_t n = (uint32_t)x;
-    n *= 0x1f123bb5u;
-    n += (uint32_t)y * 0x159a55e5u;
-    n ^= n >> 15;
-    n *= 0x85ebca6bu;
-    n ^= n >> 13;
-    n *= 0xc2b2ae35u;
-    n ^= n >> 16;
-
-    return (int)(n & 15u);
-}
-
-static uint32_t g_ditherSeed = 0x12345678;
-void resetRand(){
-    g_ditherSeed = 0x34188195;
-}
-
-static uint32_t fastRand(void)
-{
-    g_ditherSeed = (g_ditherSeed * 1664525u) + 1013904223u;
-    return g_ditherSeed;
-}
-
-uint8_t shadeColor(uint8_t baseColor, int shade)
-{
-    if (shade < 0) {
-        shade = 0;
-    }
-
-    if (shade >= 5) {
-        return 16;   /* or 0 if you prefer */
-    }
-
-    uint8_t family = baseColor & 15;
-
-    return (uint8_t)(32 + family + (shade * 16));
-}
-
-static uint8_t ditherShadeColor(uint8_t baseColor, float shadeF, int x, int y, DitherMode mode)
-{
-    if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
-
-    int s0 = (int)shadeF;
-    int s1 = s0 + 1;
-
-    if (s1 > 5) s1 = 5;
-
-    float frac = shadeF - (float)s0;
-
-    int threshold;
-
-    if (mode == DITHER_RANDOM) {
-        threshold = hashNoise4bit(x, y);
-    } else {
-        threshold = bayer4x4[y & 3][x & 3];
-    }
-
-    if ((frac * 16.0f) > (float)threshold) {
-        return shadeColor(baseColor, s1);
-    } else {
-        return shadeColor(baseColor, s0);
-    }
-}
-
-void fillTriangleDitherZBandBayer(
-    int x0, int y0,
-    int x1, int y1,
-    int x2, int y2,
-    uint16_t z0_in,
-    uint16_t z1_in,
-    uint16_t z2_in,
-    float camz0,
-    float camz1,
-    float camz2,
-    uint8_t baseColor,
-    float shadeF,
-    int bandY0,
-    int bandY1
-)
-{
-    int minX = x0;
-    int maxX = x0;
-    int minY = y0;
-    int maxY = y0;
-
-    if (x1 < minX) minX = x1;
-    if (x2 < minX) minX = x2;
-    if (x1 > maxX) maxX = x1;
-    if (x2 > maxX) maxX = x2;
-
-    if (y1 < minY) minY = y1;
-    if (y2 < minY) minY = y2;
-    if (y1 > maxY) maxY = y1;
-    if (y2 > maxY) maxY = y2;
-
-
-    if (maxY < bandY0 || minY > bandY1) return;
-    if (maxX < 0 || minX >= SCREEN_W) return;
-
-    if (minX < 0) minX = 0;
-    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
-    if (minY < bandY0) minY = bandY0;
-    if (maxY > bandY1) maxY = bandY1;
-
-    if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
-
-    {
-        int s0 = (int)shadeF;
-        int s1 = s0 + 1;
-        if (s1 > 5) s1 = 5;
-
-        float frac = shadeF - (float)s0;
-        int threshold16 = (int)(frac * 16.0f);
-
-        if (threshold16 < 0) threshold16 = 0;
-        if (threshold16 > 15) threshold16 = 15;
-
-        uint8_t col0 = shadeColor(baseColor, s0);
-        uint8_t col1 = shadeColor(baseColor, s1);
-        const int solidFill = (col0 == col1) || (threshold16 <= 0);
-
-        {
-            float fx0 = (float)x0;
-            float fy0 = (float)y0;
-            float fx1 = (float)x1;
-            float fy1 = (float)y1;
-            float fx2 = (float)x2;
-            float fy2 = (float)y2;
-
-            float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
-            if (fabsf(area) < 0.0001f) {
-                return;
-            }
-
-            if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) {
-                return;
-            }
-
-            {
-                float q0 = 1.0f / camz0;
-                float q1 = 1.0f / camz1;
-                float q2 = 1.0f / camz2;
-
-                float zq0 = (float)z0_in * q0;
-                float zq1 = (float)z1_in * q1;
-                float zq2 = (float)z2_in * q2;
-
-                for (int y = minY; y <= maxY; y++) {
-                    int localY = y - bandY0;
-                    uint16_t *zbRow = &g_depthBufferBand[localY * SCREEN_W];
-
-                    const uint8_t *brow = bayer4x4[y & 3];
-                    uint8_t rowCols[4];
-                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
-                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
-                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
-                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
-
-                    for (int x = minX; x <= maxX; x++) {
-                        float px = (float)x + 0.5f;
-                        float py = (float)y + 0.5f;
-
-                        float w0 = ((fx1 - px) * (fy2 - py)) - ((fy1 - py) * (fx2 - px));
-                        float w1 = ((fx2 - px) * (fy0 - py)) - ((fy2 - py) * (fx0 - px));
-                        float w2 = ((fx0 - px) * (fy1 - py)) - ((fy0 - py) * (fx1 - px));
-
-                        if (area > 0.0f) {
-                            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
-                        } else {
-                            if (w0 > 0.0f || w1 > 0.0f || w2 > 0.0f) continue;
-                        }
-
-                        w0 /= area;
-                        w1 /= area;
-                        w2 /= area;
-
-                        {
-                            float q = (w0 * q0) + (w1 * q1) + (w2 * q2);
-                            if (q <= 0.0f) continue;
-
-                            float z = ((w0 * zq0) + (w1 * zq1) + (w2 * zq2)) / q;
-
-                            if (z < 0.0f) z = 0.0f;
-                            if (z > 65535.0f) z = 65535.0f;
-
-                            {
-                                uint16_t zi = (uint16_t)(z + 0.5f);
-
-                                if (zi < zbRow[x]) {
-                                    zbRow[x] = zi;
-                                    fb[y * SCREEN_W + x] = solidFill ? col0 : rowCols[x & 3];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-void fillTriangleZBandFlat(
-    int x0, int y0,
-    int x1, int y1,
-    int x2, int y2,
-    uint16_t z0_in,
-    uint16_t z1_in,
-    uint16_t z2_in,
-    float camz0,
-    float camz1,
-    float camz2,
-    uint8_t baseColor,
-    float shadeF,
-    int bandY0,
-    int bandY1
-)
-{
-    int minX = x0;
-    int maxX = x0;
-    int minY = y0;
-    int maxY = y0;
-
-    if (x1 < minX) minX = x1;
-    if (x2 < minX) minX = x2;
-    if (x1 > maxX) maxX = x1;
-    if (x2 > maxX) maxX = x2;
-
-    if (y1 < minY) minY = y1;
-    if (y2 < minY) minY = y2;
-    if (y1 > maxY) maxY = y1;
-    if (y2 > maxY) maxY = y2;
-
-    if (maxY < bandY0 || minY > bandY1) return;
-    if (maxX < 0 || minX >= SCREEN_W) return;
-
-    if (minX < 0) minX = 0;
-    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
-    if (minY < bandY0) minY = bandY0;
-    if (maxY > bandY1) maxY = bandY1;
-
-    {
-        int shade = (int)(shadeF + 0.5f);
-        uint8_t col;
-
-        if (shade < 0) shade = 0;
-        if (shade > 4) shade = 4;
-        col = shadeColor(baseColor, shade);
-
-        {
-            float fx0 = (float)x0;
-            float fy0 = (float)y0;
-            float fx1 = (float)x1;
-            float fy1 = (float)y1;
-            float fx2 = (float)x2;
-            float fy2 = (float)y2;
-
-            float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
-            if (fabsf(area) < 0.0001f) {
-                return;
-            }
-
-            if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) {
-                return;
-            }
-
-            {
-                float q0 = 1.0f / camz0;
-                float q1 = 1.0f / camz1;
-                float q2 = 1.0f / camz2;
-
-                float zq0 = (float)z0_in * q0;
-                float zq1 = (float)z1_in * q1;
-                float zq2 = (float)z2_in * q2;
-
-                for (int y = minY; y <= maxY; y++) {
-                    int localY = y - bandY0;
-                    uint16_t *zbRow = &g_depthBufferBand[localY * SCREEN_W];
-
-                    for (int x = minX; x <= maxX; x++) {
-                        float px = (float)x + 0.5f;
-                        float py = (float)y + 0.5f;
-
-                        float w0 = ((fx1 - px) * (fy2 - py)) - ((fy1 - py) * (fx2 - px));
-                        float w1 = ((fx2 - px) * (fy0 - py)) - ((fy2 - py) * (fx0 - px));
-                        float w2 = ((fx0 - px) * (fy1 - py)) - ((fy0 - py) * (fx1 - px));
-
-                        if (area > 0.0f) {
-                            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
-                        } else {
-                            if (w0 > 0.0f || w1 > 0.0f || w2 > 0.0f) continue;
-                        }
-
-                        w0 /= area;
-                        w1 /= area;
-                        w2 /= area;
-
-                        {
-                            float q = (w0 * q0) + (w1 * q1) + (w2 * q2);
-                            if (q <= 0.0f) continue;
-
-                            float z = ((w0 * zq0) + (w1 * zq1) + (w2 * zq2)) / q;
-
-                            if (z < 0.0f) z = 0.0f;
-                            if (z > 65535.0f) z = 65535.0f;
-
-                            {
-                                uint16_t zi = (uint16_t)(z + 0.5f);
-
-                                if (zi < zbRow[x]) {
-                                    zbRow[x] = zi;
-                                    fb[y * SCREEN_W + x] = col;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-void fillTriangleDither2Mode(
-    int x0, int y0,
-    int x1, int y1,
-    int x2, int y2,
-    uint8_t baseColor,
-    float shadeF,
-    DitherMode mode
-)
-{
-    int minX = x0;
-    int minY = y0;
-    int maxX = x0;
-    int maxY = y0;
-
-    if (x1 < minX) minX = x1;
-    if (x2 < minX) minX = x2;
-    if (y1 < minY) minY = y1;
-    if (y2 < minY) minY = y2;
-
-    if (x1 > maxX) maxX = x1;
-    if (x2 > maxX) maxX = x2;
-    if (y1 > maxY) maxY = y1;
-    if (y2 > maxY) maxY = y2;
-
-    if (minX < 0) minX = 0;
-    if (minY < 0) minY = 0;
-    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
-    if (maxY >= SCREEN_H) maxY = SCREEN_H - 1;
-
-    int area = ((x1 - x0) * (y2 - y0)) - ((y1 - y0) * (x2 - x0));
-    if (area == 0) {
-        return;
-    }
-
-    if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
-
-    {
-        uint8_t col0 = baseColor;
-        uint8_t col1 = 16;   /* black */
-
-        int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
-
-        if (threshold16 < 0) threshold16 = 0;
-        if (threshold16 > 16) threshold16 = 16;
-
-        if (threshold16 <= 0) {
-            fillTriangle(x0, y0, x1, y1, x2, y2, col0);
-            return;
-        }
-
-        if (threshold16 >= 16) {
-            fillTriangle(x0, y0, x1, y1, x2, y2, col1);
-            return;
-        }
-
-        for (int y = minY; y <= maxY; y++) {
-            for (int x = minX; x <= maxX; x++) {
-                int w0 = ((x1 - x0) * (y - y0)) - ((y1 - y0) * (x - x0));
-                int w1 = ((x2 - x1) * (y - y1)) - ((y2 - y1) * (x - x1));
-                int w2 = ((x0 - x2) * (y - y2)) - ((y0 - y2) * (x - x2));
-
-                if (area > 0) {
-                    if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                        int threshold;
-
-                        if (mode == DITHER_RANDOM) {
-                            threshold = hashNoise4bit(x, y);
-                        } else {
-                            threshold = bayer4x4[y & 3][x & 3];
-                        }
-
-                        putPixel(x, y, (threshold < threshold16) ? col1 : col0);
-                    }
-                } else {
-                    if (w0 <= 0 && w1 <= 0 && w2 <= 0) {
-                        int threshold;
-
-                        if (mode == DITHER_RANDOM) {
-                            threshold = hashNoise4bit(x, y);
-                        } else {
-                            threshold = bayer4x4[y & 3][x & 3];
-                        }
-
-                        putPixel(x, y, (threshold < threshold16) ? col1 : col0);
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-void fillTriangleDitherZBandBayer2Mode(
-    int x0, int y0,
-    int x1, int y1,
-    int x2, int y2,
-    uint16_t z0_in,
-    uint16_t z1_in,
-    uint16_t z2_in,
-    float camz0,
-    float camz1,
-    float camz2,
-    uint8_t baseColor,
-    float shadeF,
-    int bandY0,
-    int bandY1
-)
-{
-    int minX = x0;
-    int maxX = x0;
-    int minY = y0;
-    int maxY = y0;
-
-    if (x1 < minX) minX = x1;
-    if (x2 < minX) minX = x2;
-    if (x1 > maxX) maxX = x1;
-    if (x2 > maxX) maxX = x2;
-
-    if (y1 < minY) minY = y1;
-    if (y2 < minY) minY = y2;
-    if (y1 > maxY) maxY = y1;
-    if (y2 > maxY) maxY = y2;
-
-    if (maxY < bandY0 || minY > bandY1) return;
-    if (maxX < 0 || minX >= SCREEN_W) return;
-
-    if (minX < 0) minX = 0;
-    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
-    if (minY < bandY0) minY = bandY0;
-    if (maxY > bandY1) maxY = bandY1;
-
-    if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
-
-    {
-        uint8_t col0 = baseColor;
-        uint8_t col1 = 16;
-
-        int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
-        if (threshold16 < 0) threshold16 = 0;
-        if (threshold16 > 16) threshold16 = 16;
-
-        const int solidBase  = (threshold16 <= 0);
-        const int solidBlack = (threshold16 >= 16);
-
-        {
-            float fx0 = (float)x0;
-            float fy0 = (float)y0;
-            float fx1 = (float)x1;
-            float fy1 = (float)y1;
-            float fx2 = (float)x2;
-            float fy2 = (float)y2;
-
-            float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
-            if (fabsf(area) < 0.0001f) {
-                return;
-            }
-
-            if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) {
-                return;
-            }
-
-            {
-                float q0 = 1.0f / camz0;
-                float q1 = 1.0f / camz1;
-                float q2 = 1.0f / camz2;
-
-                float zq0 = (float)z0_in * q0;
-                float zq1 = (float)z1_in * q1;
-                float zq2 = (float)z2_in * q2;
-
-                for (int y = minY; y <= maxY; y++) {
-                    int localY = y - bandY0;
-                    uint16_t *zbRow = &g_depthBufferBand[localY * SCREEN_W];
-
-                    const uint8_t *brow = bayer4x4[y & 3];
-                    uint8_t rowCols[4];
-                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
-                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
-                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
-                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
-
-                    for (int x = minX; x <= maxX; x++) {
-                        float px = (float)x + 0.5f;
-                        float py = (float)y + 0.5f;
-
-                        float w0 = ((fx1 - px) * (fy2 - py)) - ((fy1 - py) * (fx2 - px));
-                        float w1 = ((fx2 - px) * (fy0 - py)) - ((fy2 - py) * (fx0 - px));
-                        float w2 = ((fx0 - px) * (fy1 - py)) - ((fy0 - py) * (fx1 - px));
-
-                        if (area > 0.0f) {
-                            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
-                        } else {
-                            if (w0 > 0.0f || w1 > 0.0f || w2 > 0.0f) continue;
-                        }
-
-                        w0 /= area;
-                        w1 /= area;
-                        w2 /= area;
-
-                        {
-                            float q = (w0 * q0) + (w1 * q1) + (w2 * q2);
-                            if (q <= 0.0f) continue;
-
-                            float z = ((w0 * zq0) + (w1 * zq1) + (w2 * zq2)) / q;
-
-                            if (z < 0.0f) z = 0.0f;
-                            if (z > 65535.0f) z = 65535.0f;
-
-                            {
-                                uint16_t zi = (uint16_t)(z + 0.5f);
-
-                                if (zi < zbRow[x]) {
-                                    zbRow[x] = zi;
-
-                                    if (solidBase) {
-                                        fb[y * SCREEN_W + x] = col0;
-                                    } else if (solidBlack) {
-                                        fb[y * SCREEN_W + x] = col1;
-                                    } else {
-                                        fb[y * SCREEN_W + x] = rowCols[x & 3];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-
-
-
-
-void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t baseColor, float shadeF, DitherMode mode)
-{
-    int minX = x0;
-    int minY = y0;
-    int maxX = x0;
-    int maxY = y0;
-
-    if (x1 < minX) minX = x1;
-    if (x2 < minX) minX = x2;
-    if (y1 < minY) minY = y1;
-    if (y2 < minY) minY = y2;
-
-    if (x1 > maxX) maxX = x1;
-    if (x2 > maxX) maxX = x2;
-    if (y1 > maxY) maxY = y1;
-    if (y2 > maxY) maxY = y2;
-
-    if (minX < 0) minX = 0;
-    if (minY < 0) minY = 0;
-    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
-    if (maxY >= SCREEN_H) maxY = SCREEN_H - 1;
-
-    int area = ((x1 - x0) * (y2 - y0)) - ((y1 - y0) * (x2 - x0));
-    if (area == 0) {
-        return;
-    }
-
-    for (int y = minY; y <= maxY; y++) {
-        for (int x = minX; x <= maxX; x++) {
-            int w0 = ((x1 - x0) * (y - y0)) - ((y1 - y0) * (x - x0));
-            int w1 = ((x2 - x1) * (y - y1)) - ((y2 - y1) * (x - x1));
-            int w2 = ((x0 - x2) * (y - y2)) - ((y0 - y2) * (x - x2));
-
-            if (area > 0) {
-                if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                    putPixel(x, y, ditherShadeColor(baseColor, shadeF, x, y, mode));
-                }
-            } else {
-                if (w0 <= 0 && w1 <= 0 && w2 <= 0) {
-                    putPixel(x, y, ditherShadeColor(baseColor, shadeF, x, y, mode));
-                }
-            }
-        }
-    }
-}
-
-
-void fillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t color)
-{
-    int minX = x0;
-    int minY = y0;
-    int maxX = x0;
-    int maxY = y0;
-
-    if (x1 < minX) minX = x1;
-    if (x2 < minX) minX = x2;
-    if (y1 < minY) minY = y1;
-    if (y2 < minY) minY = y2;
-
-    if (x1 > maxX) maxX = x1;
-    if (x2 > maxX) maxX = x2;
-    if (y1 > maxY) maxY = y1;
-    if (y2 > maxY) maxY = y2;
-
-    if (minX < 0) minX = 0;
-    if (minY < 0) minY = 0;
-    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
-    if (maxY >= SCREEN_H) maxY = SCREEN_H - 1;
-
-    int area = ((x1 - x0) * (y2 - y0)) - ((y1 - y0) * (x2 - x0));
-    if (area == 0) {
-        return;
-    }
-
-    for (int y = minY; y <= maxY; y++) {
-        for (int x = minX; x <= maxX; x++) {
-            int w0 = ((x1 - x0) * (y - y0)) - ((y1 - y0) * (x - x0));
-            int w1 = ((x2 - x1) * (y - y1)) - ((y2 - y1) * (x - x1));
-            int w2 = ((x0 - x2) * (y - y2)) - ((y0 - y2) * (x - x2));
-
-            if (area > 0) {
-                if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                    putPixel(x, y, color);
-                }
-            } else {
-                if (w0 <= 0 && w1 <= 0 && w2 <= 0) {
-                    putPixel(x, y, color);
-                }
-            }
-        }
-    }
-}
-
-
-uint32_t darken(uint32_t c, float f)
-{
-    uint8_t r = (c >> 16) & 0xFF;
-    uint8_t g = (c >> 8)  & 0xFF;
-    uint8_t b = (c >> 0)  & 0xFF;
-
-    r = (uint8_t)(r * f);
-    g = (uint8_t)(g * f);
-    b = (uint8_t)(b * f);
-
-    return (0xFF<<24) | (r<<16) | (g<<8) | b;
-}
-
-
-
-void drawRect(int x, int y, int w, int h, uint8_t col){
-    for(int tx=0; tx < w; tx++){
-        for(int ty=0; ty < h; ty++){
-            putPixel(tx + x, ty + y, col);
-        }
-    }
-
-
-
-}
 
 
 // 8x8 font table: 256 glyphs, 8 rows each
@@ -1055,16 +313,1017 @@ const uint8_t font[256][8] = {
 };
 
 
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include "gfx.h"
+
+/* keep your existing clut[] here */
+/* keep your existing bayer4x4[][] here */
+/* keep your existing font[][] here */
+
+uint8_t fb[SCREEN_W * SCREEN_H] = {0};
+uint32_t pb[SCREEN_W * SCREEN_H] = {0xFF0000FF};
+
+static uint32_t g_ditherSeed = 0x12345678;
+
+static inline void putPixelFast(int32_t x, int32_t y, uint8_t colIndex)
+{
+    fb[(y * SCREEN_W) + x] = colIndex;
+}
+
+static inline uint8_t *fbRowPtr(int y)
+{
+    return &fb[y * SCREEN_W];
+}
+
+static inline int clampi(int v, int lo, int hi)
+{
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+/* ========================================================================= */
+/* basic framebuffer ops                                                     */
+/* ========================================================================= */
+
+void videoMemToScreen(void)
+{
+    const uint8_t *src = fb;
+    uint32_t *dst = pb;
+    const uint32_t *lut = clut;
+
+    for (int i = 0; i < (SCREEN_W * SCREEN_H); i++) {
+        dst[i] = lut[src[i]];
+    }
+}
+
+void clearScreen(uint8_t colIndex)
+{
+    memset(fb, colIndex, sizeof(fb));
+}
+
+void putPixel(int32_t x, int32_t y, uint8_t colIndex)
+{
+    if ((unsigned)x >= SCREEN_W) return;
+    if ((unsigned)y >= SCREEN_H) return;
+    fb[(y * SCREEN_W) + x] = colIndex;
+}
+
+void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex)
+{
+    int dx = abs(x1 - x0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy;
+
+    for (;;) {
+        if ((unsigned)x0 < SCREEN_W && (unsigned)y0 < SCREEN_H) {
+            fb[(y0 * SCREEN_W) + x0] = colorIndex;
+        }
+
+        if (x0 == x1 && y0 == y1) {
+            break;
+        }
+
+        const int e2 = err << 1;
+
+        if (e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        }
+
+        if (e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+/* ========================================================================= */
+/* dither helpers                                                            */
+/* ========================================================================= */
+
+static int hashNoise4bit(int x, int y)
+{
+    uint32_t n = (uint32_t)x;
+    n *= 0x1f123bb5u;
+    n += (uint32_t)y * 0x159a55e5u;
+    n ^= n >> 15;
+    n *= 0x85ebca6bu;
+    n ^= n >> 13;
+    n *= 0xc2b2ae35u;
+    n ^= n >> 16;
+
+    return (int)(n & 15u);
+}
+
+void resetRand(void)
+{
+    g_ditherSeed = 0x34188195;
+}
+
+static uint32_t fastRand(void)
+{
+    g_ditherSeed = (g_ditherSeed * 1664525u) + 1013904223u;
+    return g_ditherSeed;
+}
+
+uint8_t shadeColor(uint8_t baseColor, int shade)
+{
+    if (shade < 0) shade = 0;
+    if (shade >= 5) return 16;
+
+    return (uint8_t)(32 + (baseColor & 15) + (shade * 16));
+}
+
+static uint8_t ditherShadeColor(uint8_t baseColor, float shadeF, int x, int y, DitherMode mode)
+{
+    if (shadeF < 0.0f) shadeF = 0.0f;
+    if (shadeF > 5.0f) shadeF = 5.0f;
+
+    int s0 = (int)shadeF;
+    int s1 = s0 + 1;
+    if (s1 > 5) s1 = 5;
+
+    const float frac = shadeF - (float)s0;
+
+    int threshold;
+    if (mode == DITHER_RANDOM) {
+        threshold = hashNoise4bit(x, y);
+    } else {
+        threshold = bayer4x4[y & 3][x & 3];
+    }
+
+    return ((frac * 16.0f) > (float)threshold)
+        ? shadeColor(baseColor, s1)
+        : shadeColor(baseColor, s0);
+}
+
+/* ========================================================================= */
+/* triangle helpers                                                          */
+/* ========================================================================= */
+
+static inline void triBounds(
+    int x0, int y0, int x1, int y1, int x2, int y2,
+    int *minX, int *minY, int *maxX, int *maxY)
+{
+    int mnx = x0;
+    int mny = y0;
+    int mxx = x0;
+    int mxy = y0;
+
+    if (x1 < mnx) mnx = x1;
+    if (x2 < mnx) mnx = x2;
+    if (y1 < mny) mny = y1;
+    if (y2 < mny) mny = y2;
+
+    if (x1 > mxx) mxx = x1;
+    if (x2 > mxx) mxx = x2;
+    if (y1 > mxy) mxy = y1;
+    if (y2 > mxy) mxy = y2;
+
+    *minX = mnx;
+    *minY = mny;
+    *maxX = mxx;
+    *maxY = mxy;
+}
+
+static inline int triAreaInt(int x0, int y0, int x1, int y1, int x2, int y2)
+{
+    return ((x1 - x0) * (y2 - y0)) - ((y1 - y0) * (x2 - x0));
+}
+
+/* ========================================================================= */
+/* z+dither banded fill                                                      */
+/* ========================================================================= */
+
+void fillTriangleDitherZBandBayer(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    float shadeF,
+    int bandY0,
+    int bandY1
+)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    minY = clampi(minY, bandY0, bandY1);
+    maxY = clampi(maxY, bandY0, bandY1);
+
+    if (shadeF < 0.0f) shadeF = 0.0f;
+    if (shadeF > 5.0f) shadeF = 5.0f;
+
+    int s0 = (int)shadeF;
+    int s1 = s0 + 1;
+    if (s1 > 5) s1 = 5;
+
+    const float frac = shadeF - (float)s0;
+    int threshold16 = (int)(frac * 16.0f);
+    if (threshold16 < 0) threshold16 = 0;
+    if (threshold16 > 15) threshold16 = 15;
+
+    const uint8_t col0 = shadeColor(baseColor, s0);
+    const uint8_t col1 = shadeColor(baseColor, s1);
+    const int solidFill = (col0 == col1) || (threshold16 <= 0);
+
+    const float fx0 = (float)x0;
+    const float fy0 = (float)y0;
+    const float fx1 = (float)x1;
+    const float fy1 = (float)y1;
+    const float fx2 = (float)x2;
+    const float fy2 = (float)y2;
+
+    const float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+    if (fabsf(area) < 0.0001f) return;
+
+    if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) return;
+
+    const float invArea = 1.0f / area;
+    const int areaPositive = (area > 0.0f);
+
+    const float q0 = 1.0f / camz0;
+    const float q1 = 1.0f / camz1;
+    const float q2 = 1.0f / camz2;
+
+    const float zq0 = (float)z0_in * q0;
+    const float zq1 = (float)z1_in * q1;
+    const float zq2 = (float)z2_in * q2;
+
+    const float A0 = fy1 - fy2;
+    const float B0 = fx2 - fx1;
+    const float C0 = (fx1 * fy2) - (fy1 * fx2);
+
+    const float A1 = fy2 - fy0;
+    const float B1 = fx0 - fx2;
+    const float C1 = (fx2 * fy0) - (fy2 * fx0);
+
+    const float A2 = fy0 - fy1;
+    const float B2 = fx1 - fx0;
+    const float C2 = (fx0 * fy1) - (fy0 * fx1);
+
+    const float qStepX =
+        (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
+    const float qStepY =
+        (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
+
+    const float zqStepX =
+        (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
+    const float zqStepY =
+        (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
+
+    const float startPx = (float)minX + 0.5f;
+    const float startPy = (float)minY + 0.5f;
+
+    float rowW0 = (A0 * startPx) + (B0 * startPy) + C0;
+    float rowW1 = (A1 * startPx) + (B1 * startPy) + C1;
+    float rowW2 = (A2 * startPx) + (B2 * startPy) + C2;
+
+    float rowQ =
+        ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
+
+    float rowZQ =
+        ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
+
+    const int width = (maxX - minX) + 1;
+
+    for (int y = minY; y <= maxY; y++) {
+        const int localY = y - bandY0;
+        uint16_t *zb = &g_depthBufferBand[(localY * SCREEN_W) + minX];
+        uint8_t  *dst = &fb[(y * SCREEN_W) + minX];
+
+        const uint8_t *brow = bayer4x4[y & 3];
+        const uint8_t rowCols[4] = {
+            (uint8_t)((brow[0] < threshold16) ? col1 : col0),
+            (uint8_t)((brow[1] < threshold16) ? col1 : col0),
+            (uint8_t)((brow[2] < threshold16) ? col1 : col0),
+            (uint8_t)((brow[3] < threshold16) ? col1 : col0)
+        };
+
+        float w0 = rowW0;
+        float w1 = rowW1;
+        float w2 = rowW2;
+        float q  = rowQ;
+        float zq = rowZQ;
+
+        if (areaPositive) {
+            for (int i = 0; i < width; i++) {
+                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f && q > 0.0f) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        zb[i] = zi;
+                        dst[i] = solidFill ? col0 : rowCols[(minX + i) & 3];
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+            }
+        } else {
+            for (int i = 0; i < width; i++) {
+                if (w0 <= 0.0f && w1 <= 0.0f && w2 <= 0.0f && q > 0.0f) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        zb[i] = zi;
+                        dst[i] = solidFill ? col0 : rowCols[(minX + i) & 3];
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+        rowQ  += qStepY;
+        rowZQ += zqStepY;
+    }
+}
+
+void fillTriangleZBandFlat(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    float shadeF,
+    int bandY0,
+    int bandY1
+)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    minY = clampi(minY, bandY0, bandY1);
+    maxY = clampi(maxY, bandY0, bandY1);
+
+    int shade = (int)(shadeF + 0.5f);
+    if (shade < 0) shade = 0;
+    if (shade > 4) shade = 4;
+    const uint8_t col = shadeColor(baseColor, shade);
+
+    const float fx0 = (float)x0;
+    const float fy0 = (float)y0;
+    const float fx1 = (float)x1;
+    const float fy1 = (float)y1;
+    const float fx2 = (float)x2;
+    const float fy2 = (float)y2;
+
+    const float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+    if (fabsf(area) < 0.0001f) return;
+
+    if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) return;
+
+    const float invArea = 1.0f / area;
+    const int areaPositive = (area > 0.0f);
+
+    const float q0 = 1.0f / camz0;
+    const float q1 = 1.0f / camz1;
+    const float q2 = 1.0f / camz2;
+
+    const float zq0 = (float)z0_in * q0;
+    const float zq1 = (float)z1_in * q1;
+    const float zq2 = (float)z2_in * q2;
+
+    const float A0 = fy1 - fy2;
+    const float B0 = fx2 - fx1;
+    const float C0 = (fx1 * fy2) - (fy1 * fx2);
+
+    const float A1 = fy2 - fy0;
+    const float B1 = fx0 - fx2;
+    const float C1 = (fx2 * fy0) - (fy2 * fx0);
+
+    const float A2 = fy0 - fy1;
+    const float B2 = fx1 - fx0;
+    const float C2 = (fx0 * fy1) - (fy0 * fx1);
+
+    const float qStepX =
+        (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
+    const float qStepY =
+        (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
+
+    const float zqStepX =
+        (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
+    const float zqStepY =
+        (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
+
+    const float startPx = (float)minX + 0.5f;
+    const float startPy = (float)minY + 0.5f;
+
+    float rowW0 = (A0 * startPx) + (B0 * startPy) + C0;
+    float rowW1 = (A1 * startPx) + (B1 * startPy) + C1;
+    float rowW2 = (A2 * startPx) + (B2 * startPy) + C2;
+
+    float rowQ =
+        ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
+
+    float rowZQ =
+        ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
+
+    const int width = (maxX - minX) + 1;
+
+    for (int y = minY; y <= maxY; y++) {
+        const int localY = y - bandY0;
+        uint16_t *zb = &g_depthBufferBand[(localY * SCREEN_W) + minX];
+        uint8_t  *dst = &fb[(y * SCREEN_W) + minX];
+
+        float w0 = rowW0;
+        float w1 = rowW1;
+        float w2 = rowW2;
+        float q  = rowQ;
+        float zq = rowZQ;
+
+        if (areaPositive) {
+            for (int i = 0; i < width; i++) {
+                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f && q > 0.0f) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        zb[i] = zi;
+                        dst[i] = col;
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+            }
+        } else {
+            for (int i = 0; i < width; i++) {
+                if (w0 <= 0.0f && w1 <= 0.0f && w2 <= 0.0f && q > 0.0f) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        zb[i] = zi;
+                        dst[i] = col;
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+        rowQ  += qStepY;
+        rowZQ += zqStepY;
+    }
+}
+
+void fillTriangleDither2Mode(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint8_t baseColor,
+    float shadeF,
+    DitherMode mode
+)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    minY = clampi(minY, 0, SCREEN_H - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    maxY = clampi(maxY, 0, SCREEN_H - 1);
+
+    const int area = triAreaInt(x0, y0, x1, y1, x2, y2);
+    if (area == 0) return;
+
+    if (shadeF < 0.0f) shadeF = 0.0f;
+    if (shadeF > 5.0f) shadeF = 5.0f;
+
+    const uint8_t col0 = baseColor;
+    const uint8_t col1 = 16;
+
+    int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
+    if (threshold16 < 0) threshold16 = 0;
+    if (threshold16 > 16) threshold16 = 16;
+
+    if (threshold16 <= 0) {
+        fillTriangle(x0, y0, x1, y1, x2, y2, col0);
+        return;
+    }
+
+    if (threshold16 >= 16) {
+        fillTriangle(x0, y0, x1, y1, x2, y2, col1);
+        return;
+    }
+
+    const int A0 = y1 - y2;
+    const int B0 = x2 - x1;
+    const int C0 = (x1 * y2) - (y1 * x2);
+
+    const int A1 = y2 - y0;
+    const int B1 = x0 - x2;
+    const int C1 = (x2 * y0) - (y2 * x0);
+
+    const int A2 = y0 - y1;
+    const int B2 = x1 - x0;
+    const int C2 = (x0 * y1) - (y0 * x1);
+
+    int rowW0 = (A0 * minX) + (B0 * minY) + C0;
+    int rowW1 = (A1 * minX) + (B1 * minY) + C1;
+    int rowW2 = (A2 * minX) + (B2 * minY) + C2;
+
+    const int width = (maxX - minX) + 1;
+    const int areaPositive = (area > 0);
+
+    for (int y = minY; y <= maxY; y++) {
+        uint8_t *dst = &fb[(y * SCREEN_W) + minX];
+
+        int w0 = rowW0;
+        int w1 = rowW1;
+        int w2 = rowW2;
+
+        if (mode == DITHER_RANDOM) {
+            for (int i = 0; i < width; i++) {
+                if ((areaPositive && w0 >= 0 && w1 >= 0 && w2 >= 0) ||
+                    (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
+                    const int x = minX + i;
+                    const int threshold = hashNoise4bit(x, y);
+                    dst[i] = (threshold < threshold16) ? col1 : col0;
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+            }
+        } else {
+            const uint8_t *brow = bayer4x4[y & 3];
+            const uint8_t rowCols[4] = {
+                (uint8_t)((brow[0] < threshold16) ? col1 : col0),
+                (uint8_t)((brow[1] < threshold16) ? col1 : col0),
+                (uint8_t)((brow[2] < threshold16) ? col1 : col0),
+                (uint8_t)((brow[3] < threshold16) ? col1 : col0)
+            };
+
+            for (int i = 0; i < width; i++) {
+                if ((areaPositive && w0 >= 0 && w1 >= 0 && w2 >= 0) ||
+                    (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
+                    dst[i] = rowCols[(minX + i) & 3];
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+    }
+}
+
+void fillTriangleDitherZBandBayer2Mode(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    float shadeF,
+    int bandY0,
+    int bandY1
+)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    minY = clampi(minY, bandY0, bandY1);
+    maxY = clampi(maxY, bandY0, bandY1);
+
+    if (shadeF < 0.0f) shadeF = 0.0f;
+    if (shadeF > 5.0f) shadeF = 5.0f;
+
+    const uint8_t col0 = baseColor;
+    const uint8_t col1 = 16;
+
+    int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
+    if (threshold16 < 0) threshold16 = 0;
+    if (threshold16 > 16) threshold16 = 16;
+
+    const int solidBase  = (threshold16 <= 0);
+    const int solidBlack = (threshold16 >= 16);
+
+    const float fx0 = (float)x0;
+    const float fy0 = (float)y0;
+    const float fx1 = (float)x1;
+    const float fy1 = (float)y1;
+    const float fx2 = (float)x2;
+    const float fy2 = (float)y2;
+
+    const float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+    if (fabsf(area) < 0.0001f) return;
+
+    if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) return;
+
+    const float invArea = 1.0f / area;
+    const int areaPositive = (area > 0.0f);
+
+    const float q0 = 1.0f / camz0;
+    const float q1 = 1.0f / camz1;
+    const float q2 = 1.0f / camz2;
+
+    const float zq0 = (float)z0_in * q0;
+    const float zq1 = (float)z1_in * q1;
+    const float zq2 = (float)z2_in * q2;
+
+    const float A0 = fy1 - fy2;
+    const float B0 = fx2 - fx1;
+    const float C0 = (fx1 * fy2) - (fy1 * fx2);
+
+    const float A1 = fy2 - fy0;
+    const float B1 = fx0 - fx2;
+    const float C1 = (fx2 * fy0) - (fy2 * fx0);
+
+    const float A2 = fy0 - fy1;
+    const float B2 = fx1 - fx0;
+    const float C2 = (fx0 * fy1) - (fy0 * fx1);
+
+    const float qStepX =
+        (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
+    const float qStepY =
+        (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
+
+    const float zqStepX =
+        (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
+    const float zqStepY =
+        (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
+
+    const float startPx = (float)minX + 0.5f;
+    const float startPy = (float)minY + 0.5f;
+
+    float rowW0 = (A0 * startPx) + (B0 * startPy) + C0;
+    float rowW1 = (A1 * startPx) + (B1 * startPy) + C1;
+    float rowW2 = (A2 * startPx) + (B2 * startPy) + C2;
+
+    float rowQ =
+        ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
+
+    float rowZQ =
+        ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
+
+    const int width = (maxX - minX) + 1;
+
+    for (int y = minY; y <= maxY; y++) {
+        const int localY = y - bandY0;
+        uint16_t *zb = &g_depthBufferBand[(localY * SCREEN_W) + minX];
+        uint8_t  *dst = &fb[(y * SCREEN_W) + minX];
+
+        const uint8_t *brow = bayer4x4[y & 3];
+        const uint8_t rowCols[4] = {
+            (uint8_t)((brow[0] < threshold16) ? col1 : col0),
+            (uint8_t)((brow[1] < threshold16) ? col1 : col0),
+            (uint8_t)((brow[2] < threshold16) ? col1 : col0),
+            (uint8_t)((brow[3] < threshold16) ? col1 : col0)
+        };
+
+        float w0 = rowW0;
+        float w1 = rowW1;
+        float w2 = rowW2;
+        float q  = rowQ;
+        float zq = rowZQ;
+
+        if (areaPositive) {
+            for (int i = 0; i < width; i++) {
+                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f && q > 0.0f) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        zb[i] = zi;
+
+                        if (solidBase)      dst[i] = col0;
+                        else if (solidBlack) dst[i] = col1;
+                        else                dst[i] = rowCols[(minX + i) & 3];
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+            }
+        } else {
+            for (int i = 0; i < width; i++) {
+                if (w0 <= 0.0f && w1 <= 0.0f && w2 <= 0.0f && q > 0.0f) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        zb[i] = zi;
+
+                        if (solidBase)      dst[i] = col0;
+                        else if (solidBlack) dst[i] = col1;
+                        else                dst[i] = rowCols[(minX + i) & 3];
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+        rowQ  += qStepY;
+        rowZQ += zqStepY;
+    }
+}
+
+void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t baseColor, float shadeF, DitherMode mode)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    minY = clampi(minY, 0, SCREEN_H - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    maxY = clampi(maxY, 0, SCREEN_H - 1);
+
+    const int area = triAreaInt(x0, y0, x1, y1, x2, y2);
+    if (area == 0) return;
+
+    const int A0 = y1 - y2;
+    const int B0 = x2 - x1;
+    const int C0 = (x1 * y2) - (y1 * x2);
+
+    const int A1 = y2 - y0;
+    const int B1 = x0 - x2;
+    const int C1 = (x2 * y0) - (y2 * x0);
+
+    const int A2 = y0 - y1;
+    const int B2 = x1 - x0;
+    const int C2 = (x0 * y1) - (y0 * x1);
+
+    int rowW0 = (A0 * minX) + (B0 * minY) + C0;
+    int rowW1 = (A1 * minX) + (B1 * minY) + C1;
+    int rowW2 = (A2 * minX) + (B2 * minY) + C2;
+
+    const int width = (maxX - minX) + 1;
+    const int areaPositive = (area > 0);
+
+    for (int y = minY; y <= maxY; y++) {
+        uint8_t *dst = &fb[(y * SCREEN_W) + minX];
+
+        int w0 = rowW0;
+        int w1 = rowW1;
+        int w2 = rowW2;
+
+        if (mode == DITHER_RANDOM) {
+            for (int i = 0; i < width; i++) {
+                if ((areaPositive && w0 >= 0 && w1 >= 0 && w2 >= 0) ||
+                    (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
+                    dst[i] = ditherShadeColor(baseColor, shadeF, minX + i, y, mode);
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+            }
+        } else {
+            if (shadeF < 0.0f) shadeF = 0.0f;
+            if (shadeF > 5.0f) shadeF = 5.0f;
+
+            int s0 = (int)shadeF;
+            int s1 = s0 + 1;
+            if (s1 > 5) s1 = 5;
+
+            const float frac = shadeF - (float)s0;
+            int threshold16 = (int)(frac * 16.0f);
+            if (threshold16 < 0) threshold16 = 0;
+            if (threshold16 > 15) threshold16 = 15;
+
+            const uint8_t col0 = shadeColor(baseColor, s0);
+            const uint8_t col1 = shadeColor(baseColor, s1);
+
+            const uint8_t *brow = bayer4x4[y & 3];
+            const uint8_t rowCols[4] = {
+                (uint8_t)((brow[0] < threshold16) ? col1 : col0),
+                (uint8_t)((brow[1] < threshold16) ? col1 : col0),
+                (uint8_t)((brow[2] < threshold16) ? col1 : col0),
+                (uint8_t)((brow[3] < threshold16) ? col1 : col0)
+            };
+
+            for (int i = 0; i < width; i++) {
+                if ((areaPositive && w0 >= 0 && w1 >= 0 && w2 >= 0) ||
+                    (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
+                    dst[i] = rowCols[(minX + i) & 3];
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+    }
+}
+
+void fillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t color)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    minY = clampi(minY, 0, SCREEN_H - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    maxY = clampi(maxY, 0, SCREEN_H - 1);
+
+    const int area = triAreaInt(x0, y0, x1, y1, x2, y2);
+    if (area == 0) return;
+
+    const int A0 = y1 - y2;
+    const int B0 = x2 - x1;
+    const int C0 = (x1 * y2) - (y1 * x2);
+
+    const int A1 = y2 - y0;
+    const int B1 = x0 - x2;
+    const int C1 = (x2 * y0) - (y2 * x0);
+
+    const int A2 = y0 - y1;
+    const int B2 = x1 - x0;
+    const int C2 = (x0 * y1) - (y0 * x1);
+
+    int rowW0 = (A0 * minX) + (B0 * minY) + C0;
+    int rowW1 = (A1 * minX) + (B1 * minY) + C1;
+    int rowW2 = (A2 * minX) + (B2 * minY) + C2;
+
+    const int width = (maxX - minX) + 1;
+    const int areaPositive = (area > 0);
+
+    for (int y = minY; y <= maxY; y++) {
+        uint8_t *dst = &fb[(y * SCREEN_W) + minX];
+
+        int w0 = rowW0;
+        int w1 = rowW1;
+        int w2 = rowW2;
+
+        if (areaPositive) {
+            for (int i = 0; i < width; i++) {
+                if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                    dst[i] = color;
+                }
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+            }
+        } else {
+            for (int i = 0; i < width; i++) {
+                if (w0 <= 0 && w1 <= 0 && w2 <= 0) {
+                    dst[i] = color;
+                }
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+    }
+}
+
+/* ========================================================================= */
+/* misc drawing                                                              */
+/* ========================================================================= */
+
+uint32_t darken(uint32_t c, float f)
+{
+    uint8_t r = (c >> 16) & 0xFF;
+    uint8_t g = (c >> 8)  & 0xFF;
+    uint8_t b = (c >> 0)  & 0xFF;
+
+    r = (uint8_t)(r * f);
+    g = (uint8_t)(g * f);
+    b = (uint8_t)(b * f);
+
+    return (0xFFu << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+}
+
+void drawRect(int x, int y, int w, int h, uint8_t col)
+{
+    if (w <= 0 || h <= 0) return;
+
+    int x0 = x;
+    int y0 = y;
+    int x1 = x + w - 1;
+    int y1 = y + h - 1;
+
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 >= SCREEN_W) x1 = SCREEN_W - 1;
+    if (y1 >= SCREEN_H) y1 = SCREEN_H - 1;
+
+    if (x0 > x1 || y0 > y1) return;
+
+    const int fillW = (x1 - x0) + 1;
+
+    for (int yy = y0; yy <= y1; yy++) {
+        memset(&fb[(yy * SCREEN_W) + x0], col, fillW);
+    }
+}
 
 void drawChar(int x, int y, char c, uint8_t color)
 {
+    if (x >= SCREEN_W || y >= SCREEN_H) return;
+    if (x <= -8 || y <= -8) return;
+
     const uint8_t *glyph = font[(uint8_t)c];
 
     for (int row = 0; row < 8; row++) {
-        uint8_t bits = glyph[row];
+        const int py = y + row;
+        if ((unsigned)py >= SCREEN_H) continue;
+
+        const uint8_t bits = glyph[row];
+        uint8_t *dst = &fb[(py * SCREEN_W)];
+
         for (int col = 0; col < 8; col++) {
-            if (bits & (1 << (7 - col))) {
-                putPixel(x + col, y + row, color);
+            if (bits & (1u << (7 - col))) {
+                const int px = x + col;
+                if ((unsigned)px < SCREEN_W) {
+                    dst[px] = color;
+                }
             }
         }
     }

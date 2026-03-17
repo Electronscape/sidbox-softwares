@@ -32,6 +32,7 @@ float meshComputeBoundsRadius(const Mesh *mesh);
 
 void entitySetPosition(int id, Vec3 pos);
 void entityMove(int id, Vec3 delta);
+Vec3 getEntityPosition(int id);
 
 void entityMoveForward(int id, float dist);
 void entityMoveRight(int id, float dist);

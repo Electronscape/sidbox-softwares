@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 
-#define SCREEN_TEST 0
+#define SCREEN_TEST 2
 
 #if(SCREEN_TEST == 0)
 #define ZOOM 3
@@ -17,6 +17,12 @@
 #define ZOOM 1
 #define SCREEN_W  1900
 #define SCREEN_H  1000
+#endif
+
+#if(SCREEN_TEST == 2)
+#define ZOOM 2
+#define SCREEN_W  1900/2
+#define SCREEN_H  1000/2
 #endif
 
 
@@ -31,7 +37,7 @@ typedef enum {
 } DitherMode;
 
 
-#define ZBUF_BAND_H  64
+#define ZBUF_BAND_H  32
 extern uint16_t g_depthBufferBand[SCREEN_W * ZBUF_BAND_H];
 void resetDepthBufferBand(void);
 
