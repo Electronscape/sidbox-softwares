@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-81799a3736f0b95bf8ac.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "graphics-crap_md",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "graphics-crap_md::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-graphics-crap_md-Release-9f3903561a8a1b4fef0d.json",
+					"name" : "graphics-crap_md",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "graphics-crap_md_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-graphics-crap_md_autogen-Release-dde14025d698fb7e8496.json",
+					"name" : "graphics-crap_md_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "graphics-crap_md_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-graphics-crap_md_autogen_timestamp_deps-Release-9fdf48550ee0a71c51b9.json",
+					"name" : "graphics-crap_md_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/mnt/LinuxDatas/work/sidbox-softwares/graphics-test/build/Desktop-Release",
+		"source" : "/mnt/LinuxDatas/work/sidbox-softwares/mega_drive_emuvcrap"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
