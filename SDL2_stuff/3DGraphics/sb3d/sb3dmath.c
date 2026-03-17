@@ -76,3 +76,8 @@ Vec3 triangleCenter(Vec3 a, Vec3 b, Vec3 c)
     out.z = (a.z + b.z + c.z) / 3.0f;
     return out;
 }
+
+
+Vec3 vec3(float x, float y, float z){
+    return ((Vec3){x,y,z});
+}

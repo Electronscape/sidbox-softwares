@@ -775,3 +775,25 @@ void meshSetMaterial(
     mesh->material.specularStrength = specularStrength;
     mesh->material.shininess        = shininess;
 }
+
+
+void entityFollowCameraXZ(int id, const Camera *cam, float worldY, float snap)
+{
+    float px;
+    float pz;
+
+    if (!cam) return;
+    if (id < 0 || id >= worldEntityCount) return;
+
+    if (snap <= 0.0f) {
+        snap = 1.0f;
+    }
+
+    px = floorf(cam->pos.x / snap) * snap;
+    pz = floorf(cam->pos.z / snap) * snap;
+
+    worldEntities[id].pos.x = px;
+    worldEntities[id].pos.y = worldY;
+    worldEntities[id].pos.z = pz;
+}
+

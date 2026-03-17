@@ -84,7 +84,19 @@ void meshDeformWavePlaneY(Mesh *mesh, float time, float amp, float freqX, float 
 Mesh copyMesh(const Mesh *src);
 
 
+void entityFollowCameraXZ(int id, const Camera *cam, float worldY, float snap);
 
+
+void meshUpdateInfinitePlaneY(
+    Mesh *mesh,
+    const Mesh *src,
+    Vec3 planeOrigin,
+    float time,
+    float amp,
+    float freqX,
+    float freqZ,
+    float speed
+);
 
 
 

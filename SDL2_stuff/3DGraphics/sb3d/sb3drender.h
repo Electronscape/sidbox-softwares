@@ -15,6 +15,14 @@ typedef enum {
 } ClipPlane;
 
 
+typedef struct {
+    float x;
+    float y;
+    float camz;
+} ScreenVert;
+
+
+
 void setDefaultRenderMode();
 void enableZOrdering(int enable);
 void enableFlatMode(int en);
@@ -37,5 +45,9 @@ void submitEntitySolid(const Entity *ent, const Camera *cam);
 void drawEntitySolid(const Entity *ent, const Camera *cam);
 void drawEntity(const Entity *ent, const Camera *cam, uint8_t color);
 void drawWorldLine(Vec3 a, Vec3 b, const Camera *cam, uint8_t color);
+
+
+void drawFakeHorizonDots(const Camera *cam, uint8_t dotCol, int spacing, float ylevel, uint8_t density);
+void drawFakeHorizon(const Camera *cam, uint8_t skyCol, uint8_t groundCol, uint8_t lineCol, float ylevel);
 
 #endif

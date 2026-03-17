@@ -99,6 +99,11 @@ typedef struct {
     uint16_t z0;
     uint16_t z1;
     uint16_t z2;
+
+    float camz0;
+    float camz1;
+    float camz2;
+
     uint8_t color;
     uint8_t emission;
 } RenderTri;

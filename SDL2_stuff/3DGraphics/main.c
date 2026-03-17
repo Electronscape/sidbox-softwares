@@ -183,101 +183,59 @@ int main(void) {
 ///[ WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////////
 
     setDefaultRenderMode();
-    Camera cam = {
-        .pos = { 0.0f, 40.0f, -100.0f },
-        .right =   { 1.0f, 0.0f, 0.0f },
-        .up =      { 0.0f, 1.0f, 0.0f },
-        .forward = { 0.0f, 0.0f, 1.0f },
-        .nearPlane = 0.01f,
-        .farPlane = 1500.0f
-    };
-
-
-
+    Camera cam = createCamera();
+    setCameraRange(&cam, 0.01, 2500.0f);
     normalizeCamera(&cam);
 
     clearLights();
 
-    uint8_t lightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 1.0f, 1);
     uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 1.0f, 1);
     uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -0.50f, 0.30}, 0.10, 1);
-    //uint8_t SunlightId2 = addDirectionalLight((Vec3){ 1.0, -1.00f, -1.00}, 0.1, 1);
-
-    //uint8_t sunlight = addDirectionalLight((Vec3){ 0.6f, -1.0f, 0.3f }, 0.65f, 1);
-    //
-    //addPointLight((Vec3){ 0.0f, 80.0f, 120.0f }, 1.8f, 1);
 
     worldClear();
 
-    Mesh theCylinder = createCylinder(30.0f, 80.0f, 32);
-    Mesh boxTemplate = createBox(40.0f, 160.0f, 40.0f); // a pointer so will be shared if you change geometry of this
-    Mesh boxTemplate2 = createBox(40.0f, 40.0f, 40.0f);
-    Mesh thePlaneBase = createPlane(1000.0f, 1000.0f, 40);
     Mesh theSphere = createSphere(80.0f, 16, 16);
-    Mesh theCone = createCone(40, 40, 12);
     Mesh thePyramid = createPyramid(200, 200);
-    Mesh theTorsu = createTorus(100, 20, 36, 20);
-
-    Mesh myBoxInst = copyMesh(&boxTemplate);    // create the instance of this object, so changing ITS geometry doesnt affect the source Mesh (boxTemplate)
-    Mesh myBoxInst2 = copyMesh(&boxTemplate2);   
-
-    Mesh thePlane = copyMesh(&thePlaneBase);
 
 
     Mesh shipMesh;
-    loadMeshSB3D("shipv1.sb3d", &shipMesh, 20.0f);
+    loadMeshSB3D("shipv1.sb3d", &shipMesh, 10.0f);
     int ship0 = entityCreate(&shipMesh, (Vec3){ 0.0f, 100.0f, 200.0f });
+    int ship1 = entityCreate(&shipMesh, vec3(-190,42, 500));
     meshSetMaterial(&shipMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
+
+
 
     Mesh houseMesh;
     loadMeshSB3D("house1.sb3d", &houseMesh, 50.0f);
-    int house0 = entityCreate(&houseMesh, (Vec3){ 450, 0, 0});
-    //meshSetMaterial(&houseMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
+    int house0 = entityCreate(&houseMesh, (Vec3){ 450, 32, 0});
 
     Mesh ipenergyMesh;
     loadMeshSB3D("ip_energy.sb3d", &ipenergyMesh, 20.0f);
-    int ipenergy0 = entityCreate(&ipenergyMesh, (Vec3){ 400, 10, 220});
+    int ipenergy0 = entityCreate(&ipenergyMesh, (Vec3){ 400, 32, 220});
 
     Mesh ipbadguy1Mesh;
     loadMeshSB3D("ip_badguy1.sb3d", &ipbadguy1Mesh, 20.0f);
-    int ipbadguy1 = entityCreate(&ipbadguy1Mesh, (Vec3){ 400, 10, 120});
+    int ipbadguy1 = entityCreate(&ipbadguy1Mesh, (Vec3){ 400, 32, 120});
 
     Mesh carrierMesh;
     loadMeshSB3D("carrier.sb3d", &carrierMesh, 50.0f);
-    int carrier0 = entityCreate(&carrierMesh, (Vec3) { 300, -50, -100});
+    int carrier0 = entityCreate(&carrierMesh, (Vec3) { 1800, 0, -100});
 
-    // ALL Now SB3D
-    Mesh textMesh;
-    loadMeshSB3D("text.sb3d", &textMesh, 20.0f);
-    int text0 = entityCreate(&textMesh, (Vec3){ 0, 200, 0});
-    meshSetMaterial(&textMesh, 0.00f, 0.55f, -0.02f, 1.50f, 64.0f);   // shiny metal
-    meshSetMaterial(&theTorsu, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
-    meshSetMaterial(&theSphere, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);
+
+
+    Mesh islandMesh;
+    loadMeshSB3D("island.sb3d", &islandMesh, 200.0f);
+    int island0 = entityCreate(&islandMesh, vec3(012, 0, 0));
 
        
     
-    int myBoxInstID = entityCreate(&myBoxInst, (Vec3){ 0,0,0});
-    
-    int cylinder0 = entityCreate(&theCylinder, (Vec3) {-200.0f, 50, 0});
-    int plane0 = entityCreate(&thePlane, (Vec3){ 0.0f, -40.0f, 0.0f});
     int sphere0 = entityCreate(&theSphere, (Vec3){   0.0f, 50.0f, 0.0f } );
-    int box0 = entityCreate(&myBoxInst2,  (Vec3){   0.0f, 0.0f, 200.0f });
-    int box1 = entityCreate(&myBoxInst2,  (Vec3){ 120.0f, 0.0f, 320.0f });
-    int box2 = entityCreate(&myBoxInst2,  (Vec3){-140.0f, 0.0f, 420.0f });
-
-    int cone0 = entityCreate(&theCone, (Vec3){200, 50, 0});
     int pyra0 = entityCreate(&thePyramid, (Vec3){0, 30, -200});
-    int tor0 = entityCreate(&theTorsu, (Vec3){-200, 100, 200});
 
-    entityColour(plane0, 32 + 11);  
+
     entityColour(sphere0, 32 + 13);
     entityColour(pyra0, 32 + 4);
-
-
-    entityColour(tor0, 32 + 5);
-
-    //const int worldEntityCount = sizeof(worldEntities) / sizeof(worldEntities[0]);
-
     ///[ END WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////
 
 
@@ -285,10 +243,12 @@ int main(void) {
 ///[ END WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////
     static int nextLogicUpdate = 0;
 
-    entityTurnLocal(tor0, 0.000f, M_PI/2,0.00f);
-    static float waveTime = 0.0f;
+    float mouseYaw = 0.0f;
+    float mousePitch = 0.0f;
+    float mouseSensitivity = 0.0015f;
+    int mouseLookEnabled = 1;
 
-
+    SDL_SetRelativeMouseMode(SDL_TRUE);
     while (running) {
         //uint32_t frame_start = SDL_GetTicks();
 
@@ -332,7 +292,13 @@ int main(void) {
                     default:
                         break;
                 }
-            }            
+            }
+
+
+            if(e.type == SDL_MOUSEMOTION && mouseLookEnabled){
+                mouseYaw   -= (float)e.motion.xrel * mouseSensitivity;
+                mousePitch += (float)e.motion.yrel * mouseSensitivity;
+            }
         }
 
         if(nextLogicUpdate)
@@ -346,145 +312,74 @@ int main(void) {
 
             const Uint8 *keys = SDL_GetKeyboardState(NULL);
 
-            if (keys[SDL_SCANCODE_W]) {
-                cam.pos = vec3Add(cam.pos, vec3Scale(cam.forward, moveSpeed));
+
+            // navigational test
+
+            // air craft style motion #######################################################
+            float rx = 0.0f;
+            float rz = 0.0f;
+            float ryGlobal = 0.0f;
+
+            // thrust
+            if (keys[SDL_SCANCODE_W]) moveCamera(&cam, 0.0f, 0.0f,  moveSpeed);
+            if (keys[SDL_SCANCODE_S]) moveCamera(&cam, 0.0f, 0.0f, -moveSpeed);
+            if (keys[SDL_SCANCODE_A]) moveCamera(&cam, -moveSpeed, 0, 0);
+            if (keys[SDL_SCANCODE_D]) moveCamera(&cam,  moveSpeed, 0, 0);
+            if (keys[SDL_SCANCODE_R]) moveCamera(&cam, 0, moveSpeed, 0);
+            if (keys[SDL_SCANCODE_F]) moveCamera(&cam, 0, -moveSpeed, 0);
+
+
+            // keyboard yaw
+            if (keys[SDL_SCANCODE_Q]) ryGlobal += turnSpeed;
+            if (keys[SDL_SCANCODE_E]) ryGlobal -= turnSpeed;
+
+            // keyboard roll
+            if (keys[SDL_SCANCODE_LEFT])  rz += turnSpeed;
+            if (keys[SDL_SCANCODE_RIGHT]) rz -= turnSpeed;
+
+            // keyboard pitch
+            if (keys[SDL_SCANCODE_UP])    rx += turnSpeed;
+            if (keys[SDL_SCANCODE_DOWN])  rx -= turnSpeed;
+
+            // mouse adds pitch + roll
+            rx += mousePitch;
+            rz += mouseYaw;
+
+            // local pitch/roll
+            turnCamera(&cam, rx, 0.0f, rz, 0);
+
+            // optional bank-to-turn assist
+            ryGlobal += cam.right.y * 0.02f;
+
+            // global yaw after local update
+            if (ryGlobal != 0.0f) {
+                turnCamera(&cam, 0.0f, -ryGlobal, 0.0f, 1);
             }
 
-            if (keys[SDL_SCANCODE_S]) {
-                cam.pos = vec3Add(cam.pos, vec3Scale(cam.forward, -moveSpeed));
-            }
+            // consume mouse deltas
+            mouseYaw = 0.0f;
+            mousePitch = 0.0f;
 
-            if (keys[SDL_SCANCODE_A]) {
-                cam.pos = vec3Add(cam.pos, vec3Scale(cam.right, -moveSpeed));
-            }
-
-            if (keys[SDL_SCANCODE_D]) {
-                cam.pos = vec3Add(cam.pos, vec3Scale(cam.right, moveSpeed));
-            }
-
-            if (keys[SDL_SCANCODE_R]) {
-                cam.pos = vec3Add(cam.pos, vec3Scale(cam.up, moveSpeed));
-            }
-
-            if (keys[SDL_SCANCODE_F]) {
-                cam.pos = vec3Add(cam.pos, vec3Scale(cam.up, -moveSpeed));
-            }
-
-            if (keys[SDL_SCANCODE_Q]) turnCameraGlobal(&cam, -turnSpeed, 0.0f, 0.0f);
-            if (keys[SDL_SCANCODE_E]) turnCameraGlobal(&cam,  turnSpeed, 0.0f, 0.0f);
-
-            if (keys[SDL_SCANCODE_1]) turnCameraLocal(&cam, -turnSpeed, 0.0f, 0.0f);
-            if (keys[SDL_SCANCODE_3]) turnCameraLocal(&cam,  turnSpeed, 0.0f, 0.0f);
-
-            if (keys[SDL_SCANCODE_Z]) turnCameraGlobal(&cam, 0.0f, 0.0f,  0.01f);
-            if (keys[SDL_SCANCODE_C]) turnCameraGlobal(&cam, 0.0f, 0.0f, -0.01f);
-
-
-            if (keys[SDL_SCANCODE_KP_8]) {
-                Light1Pos.z += 1;
-                setLightPosition(lightid, Light1Pos);
-            }
-
-            if (keys[SDL_SCANCODE_KP_2]) {
-                Light1Pos.z -= 1;
-                setLightPosition(lightid, Light1Pos);
-            }
-
-            if (keys[SDL_SCANCODE_KP_4]) {
-                Light1Pos.x -= 1;
-                setLightPosition(lightid, Light1Pos);
-            }
-
-            if (keys[SDL_SCANCODE_KP_6]) {
-                Light1Pos.x += 1;
-                setLightPosition(lightid, Light1Pos);
-            }
-
+            // air craft style motion #######################################################
             if (keys[SDL_SCANCODE_SPACE]) {
-                cam.pos = (Vec3){ 0.0f, 40.0f, -100.0f };
-                cam.right =   (Vec3){ 1.0f, 0.0f, 0.0f };
-                cam.up =      (Vec3){ 0.0f, 1.0f, 0.0f };
-                cam.forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+                positionCamera(&cam, vec3(0,50,0));
+                rotateCamera(&cam, 0,0,0);
             }
 
-            clearScreen(0);
 
-
-
-            resetRenderList();
-
-            //addDirectionalLight
-            static uint8_t lighton;
-            uint8_t qflip;
-
-            qflip = rand() % 255;
-
-            if(qflip < 3) lighton = 1;
-            if(qflip > 250) lighton = 0;
-
-            //lightEnable(0, lighton);
-            lightEnable(0, 0);
             lightEnable(Camlightid, toggleLightShip);
             setLightIntensity(Camlightid, 2.0f);
-
 
             lightEnable(SunlightId, toggleLightSun);
             setLightIntensity(SunlightId, 1.0);
             setLightPosition(Camlightid, cam.pos);
-
-            entityMoveForward(box0, 1.0f);
-            entityTurnLocal(box0, 0.01f, 0, 0);
-            entityMoveRight(box2, -1.0f);
-
-            entityTurnLocal(tor0, 0.000f, 0.00f,0.010f);
-
-            entityTurnLocal(text0, 0.01f, 0, 0);
-
-
-            //ipenergy0
-            //ipbadguy1
-
-            entityTurnLocal(ipenergy0, 0.01f,0.00f,0.00f);
-
-
             
 
-            
-            static Vec3 enemyPos = {80.0f,0.0f,0.0f}, enemyPosSpeed = {0.2f,0,0};
-            enemyPos.x += enemyPosSpeed.x;
-            if(enemyPos.x < 80.0f || enemyPos.x > 150.0f) enemyPosSpeed.x = -enemyPosSpeed.x;
-
-
-
-            entitySetPosition(ipbadguy1, enemyPos);
-            entityTurnLocal(ipbadguy1, 0.03f,0.00f,0.00f);
-
-
-
-
-
-            waveTime += 0.014f;
-            meshResetFromSource(&thePlane, &thePlaneBase);
-            meshDeformWavePlaneY(&thePlane, waveTime, 6.0f, 0.020f, 0.020f, 1.5f);
-
-            float t = waveTime;
-            for(int f=0; f<theSphere.triCount; f++){
-                uint8_t familyBase = 8;   // start column
-                uint8_t familySpan = 3;   // use 4 related colours only
-
-                uint8_t family = familyBase +
-                    (uint8_t)((sinf(f * 0.21f + t) * 0.5f + 0.5f) * (float)familySpan);
-
-                uint8_t shade  =
-                    (uint8_t)((sinf(f * 0.37f - t * 1.7f) * 0.5f + 0.5f) * 4.0f);
-
-                entityColourFace(sphere0, f, COLOUR_OFFSET + family + (shade * 16));
-            }
-            
-
+            clearScreen(0);
+            resetRenderList();
+            drawFakeHorizon(&cam, 9, 36, 1, 0);
+            drawFakeHorizonDots(&cam, 2, 128, 0, 110);
             Render3D(&cam);
-
-
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
 
         }

@@ -31,7 +31,7 @@ typedef enum {
 } DitherMode;
 
 
-#define ZBUF_BAND_H  32
+#define ZBUF_BAND_H  64
 extern uint16_t g_depthBufferBand[SCREEN_W * ZBUF_BAND_H];
 void resetDepthBufferBand(void);
 
@@ -64,8 +64,19 @@ void fillTriangleDitherZBayer( int x0, int y0, int x1, int y1, int x2, int y2, u
 
 void resetDepthBufferBand(void);
 
-void fillTriangleDitherZBandBayer( int x0, int y0, int x1, int y1, int x2, int y2, uint16_t z0, uint16_t z1, uint16_t z2, uint8_t baseColor, float shadeF, int bandY0, int bandY1 );
-void fillTriangleZBandFlat(int x0, int y0,  int x1, int y1,  int x2, int y2,  uint16_t z0,  uint16_t z1,  uint16_t z2,  uint8_t baseColor,  float shadeF, int bandY0, int bandY1);
+void fillTriangleDitherZBandBayer(
+    int x0, int y0, int x1, int y1, int x2, int y2,
+    uint16_t z0, uint16_t z1, uint16_t z2,
+    float camz0, float camz1, float camz2,
+    uint8_t baseColor, float shadeF, int bandY0, int bandY1);
+
+
+void fillTriangleZBandFlat(
+    int x0, int y0,  int x1, int y1,  int x2, int y2,
+    uint16_t z0,  uint16_t z1,  uint16_t z2,
+    float camz0, float camz1, float camz2,
+    uint8_t baseColor,  float shadeF, int bandY0, int bandY1);
+
 
 void fillTriangleDitherZBandBayer2Mode(
     int x0, int y0,
@@ -74,6 +85,9 @@ void fillTriangleDitherZBandBayer2Mode(
     uint16_t z0,
     uint16_t z1,
     uint16_t z2,
+    float camz0,
+    float camz1,
+    float camz2,
     uint8_t baseColor,
     float shadeF,
     int bandY0,

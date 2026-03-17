@@ -18,7 +18,8 @@ Vec3 triangleCenter(Vec3 a, Vec3 b, Vec3 c);
 
 Vec3 rotateAroundAxis(Vec3 v, Vec3 axis, float angle);
 
-
+// math helpers
+Vec3 vec3(float x, float y, float z);
 
 
 

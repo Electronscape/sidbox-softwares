@@ -1,0 +1,45 @@
+
+            waveTime += 0.014f;
+            meshResetFromSource(&thePlane, &thePlaneBase);
+            meshDeformWavePlaneY(&thePlane, waveTime, 6.0f, 0.020f, 0.020f, 1.5f);
+
+            float t = waveTime;
+            for(int f=0; f<theSphere.triCount; f++){
+                uint8_t familyBase = 8;   // start column
+                uint8_t familySpan = 3;   // use 4 related colours only
+
+                uint8_t family = familyBase +
+                    (uint8_t)((sinf(f * 0.21f + t) * 0.5f + 0.5f) * (float)familySpan);
+
+                uint8_t shade  =
+                    (uint8_t)((sinf(f * 0.37f - t * 1.7f) * 0.5f + 0.5f) * 4.0f);
+
+                entityColourFace(sphere0, f, COLOUR_OFFSET + family + (shade * 16));
+            }
+
+
+            entityMoveForward(box0, 1.0f);
+            entityTurnLocal(box0, 0.01f, 0, 0);
+            entityMoveRight(box2, -1.0f);
+
+            entityTurnLocal(tor0, 0.000f, 0.00f,0.010f);
+            entityTurnLocal(text0, 0.01f, 0, 0);
+
+
+
+
+            // bad guy test
+            entityTurnLocal(ipenergy0, 0.01f,0.00f,0.00f);
+            static Vec3 enemyPos = {80.0f,0.0f,0.0f}, enemyPosSpeed = {0.2f,0,0};
+            enemyPos.x += enemyPosSpeed.x;
+            if(enemyPos.x < 80.0f || enemyPos.x > 150.0f) enemyPosSpeed.x = -enemyPosSpeed.x;
+            entitySetPosition(ipbadguy1, enemyPos);
+            entityTurnLocal(ipbadguy1, 0.03f,0.00f,0.00f);
+
+
+    // ALL Now SB3D
+    Mesh textMesh;
+    loadMeshSB3D("text.sb3d", &textMesh, 20.0f);
+    int text0 = entityCreate(&textMesh, (Vec3){ 0, 200, 0});
+    meshSetMaterial(&textMesh, 0.00f, 0.55f, -0.02f, 1.50f, 64.0f);   // shiny metal
+    meshSetMaterial(&theSphere, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);

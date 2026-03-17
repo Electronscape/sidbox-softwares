@@ -180,44 +180,41 @@ void fillTriangleDitherZBandBayer(
     int x0, int y0,
     int x1, int y1,
     int x2, int y2,
-    uint16_t z0,
-    uint16_t z1,
-    uint16_t z2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
     uint8_t baseColor,
     float shadeF,
     int bandY0,
     int bandY1
 )
 {
-    int t;
-    uint16_t tz;
+    int minX = x0;
+    int maxX = x0;
+    int minY = y0;
+    int maxY = y0;
 
-    /* quick reject against current band */
-    if (y0 > bandY1 && y1 > bandY1 && y2 > bandY1) return;
-    if (y0 < bandY0 && y1 < bandY0 && y2 < bandY0) return;
+    if (x1 < minX) minX = x1;
+    if (x2 < minX) minX = x2;
+    if (x1 > maxX) maxX = x1;
+    if (x2 > maxX) maxX = x2;
 
-    /* sort verts by Y ascending */
-    if (y1 < y0) {
-        t = x0; x0 = x1; x1 = t;
-        t = y0; y0 = y1; y1 = t;
-        tz = z0; z0 = z1; z1 = tz;
-    }
+    if (y1 < minY) minY = y1;
+    if (y2 < minY) minY = y2;
+    if (y1 > maxY) maxY = y1;
+    if (y2 > maxY) maxY = y2;
 
-    if (y2 < y0) {
-        t = x0; x0 = x2; x2 = t;
-        t = y0; y0 = y2; y2 = t;
-        tz = z0; z0 = z2; z2 = tz;
-    }
 
-    if (y2 < y1) {
-        t = x1; x1 = x2; x2 = t;
-        t = y1; y1 = y2; y2 = t;
-        tz = z1; z1 = z2; z2 = tz;
-    }
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
 
-    if (y0 == y2) {
-        return;
-    }
+    if (minX < 0) minX = 0;
+    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
+    if (minY < bandY0) minY = bandY0;
+    if (maxY > bandY1) maxY = bandY1;
 
     if (shadeF < 0.0f) shadeF = 0.0f;
     if (shadeF > 5.0f) shadeF = 5.0f;
@@ -235,211 +232,85 @@ void fillTriangleDitherZBandBayer(
 
         uint8_t col0 = shadeColor(baseColor, s0);
         uint8_t col1 = shadeColor(baseColor, s1);
-
         const int solidFill = (col0 == col1) || (threshold16 <= 0);
 
-        #define X_FP_SHIFT 16
-        #define Z_FP_SHIFT 8
-
         {
-            int dy02 = y2 - y0;
-            int dy01 = y1 - y0;
-            int dy12 = y2 - y1;
+            float fx0 = (float)x0;
+            float fy0 = (float)y0;
+            float fx1 = (float)x1;
+            float fy1 = (float)y1;
+            float fx2 = (float)x2;
+            float fy2 = (float)y2;
 
-            int32_t x02 = (x0 << X_FP_SHIFT);
-            int32_t z02 = ((int32_t)z0 << Z_FP_SHIFT);
-            int32_t dx02 = 0;
-            int32_t dz02 = 0;
-
-            if (dy02 != 0) {
-                dx02 = ((x2 - x0) << X_FP_SHIFT) / dy02;
-                dz02 = (((int32_t)z2 - (int32_t)z0) << Z_FP_SHIFT) / dy02;
+            float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+            if (fabsf(area) < 0.0001f) {
+                return;
             }
 
-            /* upper half */
-            if (dy01 > 0) {
-                int32_t x01 = (x0 << X_FP_SHIFT);
-                int32_t z01 = ((int32_t)z0 << Z_FP_SHIFT);
-                int32_t dx01 = ((x1 - x0) << X_FP_SHIFT) / dy01;
-                int32_t dz01 = (((int32_t)z1 - (int32_t)z0) << Z_FP_SHIFT) / dy01;
+            if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) {
+                return;
+            }
 
-                for (int y = y0; y < y1; y++) {
-                    if ((unsigned)y < SCREEN_H && y >= bandY0 && y <= bandY1) {
-                        int32_t xl = x02;
-                        int32_t xr = x01;
-                        int32_t zl = z02;
-                        int32_t zr = z01;
+            {
+                float q0 = 1.0f / camz0;
+                float q1 = 1.0f / camz1;
+                float q2 = 1.0f / camz2;
 
-                        if (xl > xr) {
-                            int32_t ti;
-                            ti = xl; xl = xr; xr = ti;
-                            ti = zl; zl = zr; zr = ti;
+                float zq0 = (float)z0_in * q0;
+                float zq1 = (float)z1_in * q1;
+                float zq2 = (float)z2_in * q2;
+
+                for (int y = minY; y <= maxY; y++) {
+                    int localY = y - bandY0;
+                    uint16_t *zbRow = &g_depthBufferBand[localY * SCREEN_W];
+
+                    const uint8_t *brow = bayer4x4[y & 3];
+                    uint8_t rowCols[4];
+                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
+                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
+                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
+                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
+
+                    for (int x = minX; x <= maxX; x++) {
+                        float px = (float)x + 0.5f;
+                        float py = (float)y + 0.5f;
+
+                        float w0 = ((fx1 - px) * (fy2 - py)) - ((fy1 - py) * (fx2 - px));
+                        float w1 = ((fx2 - px) * (fy0 - py)) - ((fy2 - py) * (fx0 - px));
+                        float w2 = ((fx0 - px) * (fy1 - py)) - ((fy0 - py) * (fx1 - px));
+
+                        if (area > 0.0f) {
+                            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
+                        } else {
+                            if (w0 > 0.0f || w1 > 0.0f || w2 > 0.0f) continue;
                         }
 
+                        w0 /= area;
+                        w1 /= area;
+                        w2 /= area;
+
                         {
-                            int origXs = xl >> X_FP_SHIFT;
-                            int origXe = xr >> X_FP_SHIFT;
-                            int xs = origXs;
-                            int xe = origXe;
+                            float q = (w0 * q0) + (w1 * q1) + (w2 * q2);
+                            if (q <= 0.0f) continue;
 
-                            if (xs < 0) xs = 0;
-                            if (xe >= SCREEN_W) xe = SCREEN_W - 1;
+                            float z = ((w0 * zq0) + (w1 * zq1) + (w2 * zq2)) / q;
 
-                            if (xs <= xe) {
-                                int fullSpan = origXe - origXs;
-                                int32_t z = zl;
-                                int32_t dzSpan = 0;
+                            if (z < 0.0f) z = 0.0f;
+                            if (z > 65535.0f) z = 65535.0f;
 
-                                if (fullSpan > 0) {
-                                    dzSpan = (zr - zl) / fullSpan;
-                                    z += dzSpan * (xs - origXs);
-                                }
+                            {
+                                uint16_t zi = (uint16_t)(z + 0.5f);
 
-                                int localY = y - bandY0;
-                                uint16_t *zb = &g_depthBufferBand[localY * SCREEN_W + xs];
-                                uint8_t  *dst = &fb[y * SCREEN_W + xs];
-
-                                if (solidFill) {
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = col0;
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                } else {
-                                    const uint8_t *brow = bayer4x4[y & 3];
-                                    uint8_t rowCols[4];
-
-                                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
-                                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
-                                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
-                                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
-
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = rowCols[x & 3];
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
+                                if (zi < zbRow[x]) {
+                                    zbRow[x] = zi;
+                                    fb[y * SCREEN_W + x] = solidFill ? col0 : rowCols[x & 3];
                                 }
                             }
                         }
                     }
-
-                    x02 += dx02;
-                    z02 += dz02;
-                    x01 += dx01;
-                    z01 += dz01;
-                }
-            } else {
-                x02 += dx02 * (y1 - y0);
-                z02 += dz02 * (y1 - y0);
-            }
-
-            /* lower half */
-            if (dy12 > 0) {
-                int32_t x12 = (x1 << X_FP_SHIFT);
-                int32_t z12 = ((int32_t)z1 << Z_FP_SHIFT);
-                int32_t dx12 = ((x2 - x1) << X_FP_SHIFT) / dy12;
-                int32_t dz12 = (((int32_t)z2 - (int32_t)z1) << Z_FP_SHIFT) / dy12;
-
-                for (int y = y1; y <= y2; y++) {
-                    if ((unsigned)y < SCREEN_H && y >= bandY0 && y <= bandY1) {
-                        int32_t xl = x02;
-                        int32_t xr = x12;
-                        int32_t zl = z02;
-                        int32_t zr = z12;
-
-                        if (xl > xr) {
-                            int32_t ti;
-                            ti = xl; xl = xr; xr = ti;
-                            ti = zl; zl = zr; zr = ti;
-                        }
-
-                        {
-                            int origXs = xl >> X_FP_SHIFT;
-                            int origXe = xr >> X_FP_SHIFT;
-                            int xs = origXs;
-                            int xe = origXe;
-
-                            if (xs < 0) xs = 0;
-                            if (xe >= SCREEN_W) xe = SCREEN_W - 1;
-
-                            if (xs <= xe) {
-                                int fullSpan = origXe - origXs;
-                                int32_t z = zl;
-                                int32_t dzSpan = 0;
-
-                                if (fullSpan > 0) {
-                                    dzSpan = (zr - zl) / fullSpan;
-                                    z += dzSpan * (xs - origXs);
-                                }
-
-                                int localY = y - bandY0;
-                                uint16_t *zb = &g_depthBufferBand[localY * SCREEN_W + xs];
-                                uint8_t  *dst = &fb[y * SCREEN_W + xs];
-
-                                if (solidFill) {
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = col0;
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                } else {
-                                    const uint8_t *brow = bayer4x4[y & 3];
-                                    uint8_t rowCols[4];
-
-                                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
-                                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
-                                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
-                                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
-
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = rowCols[x & 3];
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    x02 += dx02;
-                    z02 += dz02;
-                    x12 += dx12;
-                    z12 += dz12;
                 }
             }
         }
-
-        #undef X_FP_SHIFT
-        #undef Z_FP_SHIFT
     }
 }
 
@@ -447,47 +318,40 @@ void fillTriangleZBandFlat(
     int x0, int y0,
     int x1, int y1,
     int x2, int y2,
-    uint16_t z0,
-    uint16_t z1,
-    uint16_t z2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
     uint8_t baseColor,
     float shadeF,
     int bandY0,
     int bandY1
 )
 {
-    int t;
-    uint16_t tz;
+    int minX = x0;
+    int maxX = x0;
+    int minY = y0;
+    int maxY = y0;
 
-    /* quick reject against current band */
-    if (y0 > bandY1 && y1 > bandY1 && y2 > bandY1) return;
-    if (y0 < bandY0 && y1 < bandY0 && y2 < bandY0) return;
+    if (x1 < minX) minX = x1;
+    if (x2 < minX) minX = x2;
+    if (x1 > maxX) maxX = x1;
+    if (x2 > maxX) maxX = x2;
 
-    /* sort verts by Y ascending */
-    if (y1 < y0) {
-        t = x0; x0 = x1; x1 = t;
-        t = y0; y0 = y1; y1 = t;
-        tz = z0; z0 = z1; z1 = tz;
-    }
+    if (y1 < minY) minY = y1;
+    if (y2 < minY) minY = y2;
+    if (y1 > maxY) maxY = y1;
+    if (y2 > maxY) maxY = y2;
 
-    if (y2 < y0) {
-        t = x0; x0 = x2; x2 = t;
-        t = y0; y0 = y2; y2 = t;
-        tz = z0; z0 = z2; z2 = tz;
-    }
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
 
-    if (y2 < y1) {
-        t = x1; x1 = x2; x2 = t;
-        t = y1; y1 = y2; y2 = t;
-        tz = z1; z1 = z2; z2 = tz;
-    }
-
-    if (y0 == y2) {
-        return;
-    }
-
-    if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
+    if (minX < 0) minX = 0;
+    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
+    if (minY < bandY0) minY = bandY0;
+    if (maxY > bandY1) maxY = bandY1;
 
     {
         int shade = (int)(shadeF + 0.5f);
@@ -495,165 +359,78 @@ void fillTriangleZBandFlat(
 
         if (shade < 0) shade = 0;
         if (shade > 4) shade = 4;
-
         col = shadeColor(baseColor, shade);
 
-        #define X_FP_SHIFT 16
-        #define Z_FP_SHIFT 8
-
         {
-            int dy02 = y2 - y0;
-            int dy01 = y1 - y0;
-            int dy12 = y2 - y1;
+            float fx0 = (float)x0;
+            float fy0 = (float)y0;
+            float fx1 = (float)x1;
+            float fy1 = (float)y1;
+            float fx2 = (float)x2;
+            float fy2 = (float)y2;
 
-            int32_t x02 = (x0 << X_FP_SHIFT);
-            int32_t z02 = ((int32_t)z0 << Z_FP_SHIFT);
-            int32_t dx02 = 0;
-            int32_t dz02 = 0;
-
-            if (dy02 != 0) {
-                dx02 = ((x2 - x0) << X_FP_SHIFT) / dy02;
-                dz02 = (((int32_t)z2 - (int32_t)z0) << Z_FP_SHIFT) / dy02;
+            float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+            if (fabsf(area) < 0.0001f) {
+                return;
             }
 
-            /* upper half */
-            if (dy01 > 0) {
-                int32_t x01 = (x0 << X_FP_SHIFT);
-                int32_t z01 = ((int32_t)z0 << Z_FP_SHIFT);
-                int32_t dx01 = ((x1 - x0) << X_FP_SHIFT) / dy01;
-                int32_t dz01 = (((int32_t)z1 - (int32_t)z0) << Z_FP_SHIFT) / dy01;
+            if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) {
+                return;
+            }
 
-                for (int y = y0; y < y1; y++) {
-                    if ((unsigned)y < SCREEN_H && y >= bandY0 && y <= bandY1) {
-                        int32_t xl = x02;
-                        int32_t xr = x01;
-                        int32_t zl = z02;
-                        int32_t zr = z01;
+            {
+                float q0 = 1.0f / camz0;
+                float q1 = 1.0f / camz1;
+                float q2 = 1.0f / camz2;
 
-                        if (xl > xr) {
-                            int32_t ti;
-                            ti = xl; xl = xr; xr = ti;
-                            ti = zl; zl = zr; zr = ti;
+                float zq0 = (float)z0_in * q0;
+                float zq1 = (float)z1_in * q1;
+                float zq2 = (float)z2_in * q2;
+
+                for (int y = minY; y <= maxY; y++) {
+                    int localY = y - bandY0;
+                    uint16_t *zbRow = &g_depthBufferBand[localY * SCREEN_W];
+
+                    for (int x = minX; x <= maxX; x++) {
+                        float px = (float)x + 0.5f;
+                        float py = (float)y + 0.5f;
+
+                        float w0 = ((fx1 - px) * (fy2 - py)) - ((fy1 - py) * (fx2 - px));
+                        float w1 = ((fx2 - px) * (fy0 - py)) - ((fy2 - py) * (fx0 - px));
+                        float w2 = ((fx0 - px) * (fy1 - py)) - ((fy0 - py) * (fx1 - px));
+
+                        if (area > 0.0f) {
+                            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
+                        } else {
+                            if (w0 > 0.0f || w1 > 0.0f || w2 > 0.0f) continue;
                         }
 
+                        w0 /= area;
+                        w1 /= area;
+                        w2 /= area;
+
                         {
-                            int origXs = xl >> X_FP_SHIFT;
-                            int origXe = xr >> X_FP_SHIFT;
-                            int xs = origXs;
-                            int xe = origXe;
+                            float q = (w0 * q0) + (w1 * q1) + (w2 * q2);
+                            if (q <= 0.0f) continue;
 
-                            if (xs < 0) xs = 0;
-                            if (xe >= SCREEN_W) xe = SCREEN_W - 1;
+                            float z = ((w0 * zq0) + (w1 * zq1) + (w2 * zq2)) / q;
 
-                            if (xs <= xe) {
-                                int fullSpan = origXe - origXs;
-                                int32_t z = zl;
-                                int32_t dzSpan = 0;
+                            if (z < 0.0f) z = 0.0f;
+                            if (z > 65535.0f) z = 65535.0f;
 
-                                if (fullSpan > 0) {
-                                    dzSpan = (zr - zl) / fullSpan;
-                                    z += dzSpan * (xs - origXs);
-                                }
+                            {
+                                uint16_t zi = (uint16_t)(z + 0.5f);
 
-                                int localY = y - bandY0;
-                                uint16_t *zb = &g_depthBufferBand[localY * SCREEN_W + xs];
-                                uint8_t  *dst = &fb[y * SCREEN_W + xs];
-
-                                for (int x = xs; x <= xe; x++) {
-                                    uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                    if (zi < *zb) {
-                                        *zb = zi;
-                                        *dst = col;
-                                    }
-
-                                    z += dzSpan;
-                                    zb++;
-                                    dst++;
+                                if (zi < zbRow[x]) {
+                                    zbRow[x] = zi;
+                                    fb[y * SCREEN_W + x] = col;
                                 }
                             }
                         }
                     }
-
-                    x02 += dx02;
-                    z02 += dz02;
-                    x01 += dx01;
-                    z01 += dz01;
-                }
-            } else {
-                x02 += dx02 * (y1 - y0);
-                z02 += dz02 * (y1 - y0);
-            }
-
-            /* lower half */
-            if (dy12 > 0) {
-                int32_t x12 = (x1 << X_FP_SHIFT);
-                int32_t z12 = ((int32_t)z1 << Z_FP_SHIFT);
-                int32_t dx12 = ((x2 - x1) << X_FP_SHIFT) / dy12;
-                int32_t dz12 = (((int32_t)z2 - (int32_t)z1) << Z_FP_SHIFT) / dy12;
-
-                for (int y = y1; y <= y2; y++) {
-                    if ((unsigned)y < SCREEN_H && y >= bandY0 && y <= bandY1) {
-                        int32_t xl = x02;
-                        int32_t xr = x12;
-                        int32_t zl = z02;
-                        int32_t zr = z12;
-
-                        if (xl > xr) {
-                            int32_t ti;
-                            ti = xl; xl = xr; xr = ti;
-                            ti = zl; zl = zr; zr = ti;
-                        }
-
-                        {
-                            int origXs = xl >> X_FP_SHIFT;
-                            int origXe = xr >> X_FP_SHIFT;
-                            int xs = origXs;
-                            int xe = origXe;
-
-                            if (xs < 0) xs = 0;
-                            if (xe >= SCREEN_W) xe = SCREEN_W - 1;
-
-                            if (xs <= xe) {
-                                int fullSpan = origXe - origXs;
-                                int32_t z = zl;
-                                int32_t dzSpan = 0;
-
-                                if (fullSpan > 0) {
-                                    dzSpan = (zr - zl) / fullSpan;
-                                    z += dzSpan * (xs - origXs);
-                                }
-
-                                int localY = y - bandY0;
-                                uint16_t *zb = &g_depthBufferBand[localY * SCREEN_W + xs];
-                                uint8_t  *dst = &fb[y * SCREEN_W + xs];
-
-                                for (int x = xs; x <= xe; x++) {
-                                    uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                    if (zi < *zb) {
-                                        *zb = zi;
-                                        *dst = col;
-                                    }
-
-                                    z += dzSpan;
-                                    zb++;
-                                    dst++;
-                                }
-                            }
-                        }
-                    }
-
-                    x02 += dx02;
-                    z02 += dz02;
-                    x12 += dx12;
-                    z12 += dz12;
                 }
             }
         }
-
-        #undef X_FP_SHIFT
-        #undef Z_FP_SHIFT
     }
 }
 
@@ -750,307 +527,145 @@ void fillTriangleDither2Mode(
 }
 
 
-
 void fillTriangleDitherZBandBayer2Mode(
     int x0, int y0,
     int x1, int y1,
     int x2, int y2,
-    uint16_t z0,
-    uint16_t z1,
-    uint16_t z2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
     uint8_t baseColor,
     float shadeF,
     int bandY0,
     int bandY1
 )
 {
-    int t;
-    uint16_t tz;
+    int minX = x0;
+    int maxX = x0;
+    int minY = y0;
+    int maxY = y0;
 
-    /* quick reject against current band */
-    if (y0 > bandY1 && y1 > bandY1 && y2 > bandY1) return;
-    if (y0 < bandY0 && y1 < bandY0 && y2 < bandY0) return;
+    if (x1 < minX) minX = x1;
+    if (x2 < minX) minX = x2;
+    if (x1 > maxX) maxX = x1;
+    if (x2 > maxX) maxX = x2;
 
-    /* sort verts by Y ascending */
-    if (y1 < y0) {
-        t = x0; x0 = x1; x1 = t;
-        t = y0; y0 = y1; y1 = t;
-        tz = z0; z0 = z1; z1 = tz;
-    }
+    if (y1 < minY) minY = y1;
+    if (y2 < minY) minY = y2;
+    if (y1 > maxY) maxY = y1;
+    if (y2 > maxY) maxY = y2;
 
-    if (y2 < y0) {
-        t = x0; x0 = x2; x2 = t;
-        t = y0; y0 = y2; y2 = t;
-        tz = z0; z0 = z2; z2 = tz;
-    }
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
 
-    if (y2 < y1) {
-        t = x1; x1 = x2; x2 = t;
-        t = y1; y1 = y2; y2 = t;
-        tz = z1; z1 = z2; z2 = tz;
-    }
-
-    if (y0 == y2) {
-        return;
-    }
+    if (minX < 0) minX = 0;
+    if (maxX >= SCREEN_W) maxX = SCREEN_W - 1;
+    if (minY < bandY0) minY = bandY0;
+    if (maxY > bandY1) maxY = bandY1;
 
     if (shadeF < 0.0f) shadeF = 0.0f;
     if (shadeF > 5.0f) shadeF = 5.0f;
 
     {
         uint8_t col0 = baseColor;
-        uint8_t col1 = 16;   /* black in your palette */
+        uint8_t col1 = 16;
 
         int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
-
         if (threshold16 < 0) threshold16 = 0;
         if (threshold16 > 16) threshold16 = 16;
 
         const int solidBase  = (threshold16 <= 0);
         const int solidBlack = (threshold16 >= 16);
 
-        #define X_FP_SHIFT 16
-        #define Z_FP_SHIFT 8
-
         {
-            int dy02 = y2 - y0;
-            int dy01 = y1 - y0;
-            int dy12 = y2 - y1;
+            float fx0 = (float)x0;
+            float fy0 = (float)y0;
+            float fx1 = (float)x1;
+            float fy1 = (float)y1;
+            float fx2 = (float)x2;
+            float fy2 = (float)y2;
 
-            int32_t x02 = (x0 << X_FP_SHIFT);
-            int32_t z02 = ((int32_t)z0 << Z_FP_SHIFT);
-            int32_t dx02 = 0;
-            int32_t dz02 = 0;
-
-            if (dy02 != 0) {
-                dx02 = ((x2 - x0) << X_FP_SHIFT) / dy02;
-                dz02 = (((int32_t)z2 - (int32_t)z0) << Z_FP_SHIFT) / dy02;
+            float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+            if (fabsf(area) < 0.0001f) {
+                return;
             }
 
-            /* upper half */
-            if (dy01 > 0) {
-                int32_t x01 = (x0 << X_FP_SHIFT);
-                int32_t z01 = ((int32_t)z0 << Z_FP_SHIFT);
-                int32_t dx01 = ((x1 - x0) << X_FP_SHIFT) / dy01;
-                int32_t dz01 = (((int32_t)z1 - (int32_t)z0) << Z_FP_SHIFT) / dy01;
+            if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) {
+                return;
+            }
 
-                for (int y = y0; y < y1; y++) {
-                    if ((unsigned)y < SCREEN_H && y >= bandY0 && y <= bandY1) {
-                        int32_t xl = x02;
-                        int32_t xr = x01;
-                        int32_t zl = z02;
-                        int32_t zr = z01;
+            {
+                float q0 = 1.0f / camz0;
+                float q1 = 1.0f / camz1;
+                float q2 = 1.0f / camz2;
 
-                        if (xl > xr) {
-                            int32_t ti;
-                            ti = xl; xl = xr; xr = ti;
-                            ti = zl; zl = zr; zr = ti;
+                float zq0 = (float)z0_in * q0;
+                float zq1 = (float)z1_in * q1;
+                float zq2 = (float)z2_in * q2;
+
+                for (int y = minY; y <= maxY; y++) {
+                    int localY = y - bandY0;
+                    uint16_t *zbRow = &g_depthBufferBand[localY * SCREEN_W];
+
+                    const uint8_t *brow = bayer4x4[y & 3];
+                    uint8_t rowCols[4];
+                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
+                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
+                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
+                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
+
+                    for (int x = minX; x <= maxX; x++) {
+                        float px = (float)x + 0.5f;
+                        float py = (float)y + 0.5f;
+
+                        float w0 = ((fx1 - px) * (fy2 - py)) - ((fy1 - py) * (fx2 - px));
+                        float w1 = ((fx2 - px) * (fy0 - py)) - ((fy2 - py) * (fx0 - px));
+                        float w2 = ((fx0 - px) * (fy1 - py)) - ((fy0 - py) * (fx1 - px));
+
+                        if (area > 0.0f) {
+                            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
+                        } else {
+                            if (w0 > 0.0f || w1 > 0.0f || w2 > 0.0f) continue;
                         }
 
+                        w0 /= area;
+                        w1 /= area;
+                        w2 /= area;
+
                         {
-                            int origXs = xl >> X_FP_SHIFT;
-                            int origXe = xr >> X_FP_SHIFT;
-                            int xs = origXs;
-                            int xe = origXe;
+                            float q = (w0 * q0) + (w1 * q1) + (w2 * q2);
+                            if (q <= 0.0f) continue;
 
-                            if (xs < 0) xs = 0;
-                            if (xe >= SCREEN_W) xe = SCREEN_W - 1;
+                            float z = ((w0 * zq0) + (w1 * zq1) + (w2 * zq2)) / q;
 
-                            if (xs <= xe) {
-                                int fullSpan = origXe - origXs;
-                                int32_t z = zl;
-                                int32_t dzSpan = 0;
+                            if (z < 0.0f) z = 0.0f;
+                            if (z > 65535.0f) z = 65535.0f;
 
-                                if (fullSpan > 0) {
-                                    dzSpan = (zr - zl) / fullSpan;
-                                    z += dzSpan * (xs - origXs);
-                                }
+                            {
+                                uint16_t zi = (uint16_t)(z + 0.5f);
 
-                                int localY = y - bandY0;
-                                uint16_t *zb = &g_depthBufferBand[localY * SCREEN_W + xs];
-                                uint8_t  *dst = &fb[y * SCREEN_W + xs];
+                                if (zi < zbRow[x]) {
+                                    zbRow[x] = zi;
 
-                                if (solidBase) {
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = col0;
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                }
-                                else if (solidBlack) {
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = col1;
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                }
-                                else {
-                                    const uint8_t *brow = bayer4x4[y & 3];
-                                    uint8_t rowCols[4];
-
-                                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
-                                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
-                                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
-                                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
-
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = rowCols[x & 3];
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
+                                    if (solidBase) {
+                                        fb[y * SCREEN_W + x] = col0;
+                                    } else if (solidBlack) {
+                                        fb[y * SCREEN_W + x] = col1;
+                                    } else {
+                                        fb[y * SCREEN_W + x] = rowCols[x & 3];
                                     }
                                 }
                             }
                         }
                     }
-
-                    x02 += dx02;
-                    z02 += dz02;
-                    x01 += dx01;
-                    z01 += dz01;
-                }
-            } else {
-                x02 += dx02 * (y1 - y0);
-                z02 += dz02 * (y1 - y0);
-            }
-
-            /* lower half */
-            if (dy12 > 0) {
-                int32_t x12 = (x1 << X_FP_SHIFT);
-                int32_t z12 = ((int32_t)z1 << Z_FP_SHIFT);
-                int32_t dx12 = ((x2 - x1) << X_FP_SHIFT) / dy12;
-                int32_t dz12 = (((int32_t)z2 - (int32_t)z1) << Z_FP_SHIFT) / dy12;
-
-                for (int y = y1; y <= y2; y++) {
-                    if ((unsigned)y < SCREEN_H && y >= bandY0 && y <= bandY1) {
-                        int32_t xl = x02;
-                        int32_t xr = x12;
-                        int32_t zl = z02;
-                        int32_t zr = z12;
-
-                        if (xl > xr) {
-                            int32_t ti;
-                            ti = xl; xl = xr; xr = ti;
-                            ti = zl; zl = zr; zr = ti;
-                        }
-
-                        {
-                            int origXs = xl >> X_FP_SHIFT;
-                            int origXe = xr >> X_FP_SHIFT;
-                            int xs = origXs;
-                            int xe = origXe;
-
-                            if (xs < 0) xs = 0;
-                            if (xe >= SCREEN_W) xe = SCREEN_W - 1;
-
-                            if (xs <= xe) {
-                                int fullSpan = origXe - origXs;
-                                int32_t z = zl;
-                                int32_t dzSpan = 0;
-
-                                if (fullSpan > 0) {
-                                    dzSpan = (zr - zl) / fullSpan;
-                                    z += dzSpan * (xs - origXs);
-                                }
-
-                                int localY = y - bandY0;
-                                uint16_t *zb = &g_depthBufferBand[localY * SCREEN_W + xs];
-                                uint8_t  *dst = &fb[y * SCREEN_W + xs];
-
-                                if (solidBase) {
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = col0;
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                }
-                                else if (solidBlack) {
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = col1;
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                }
-                                else {
-                                    const uint8_t *brow = bayer4x4[y & 3];
-                                    uint8_t rowCols[4];
-
-                                    rowCols[0] = (brow[0] < threshold16) ? col1 : col0;
-                                    rowCols[1] = (brow[1] < threshold16) ? col1 : col0;
-                                    rowCols[2] = (brow[2] < threshold16) ? col1 : col0;
-                                    rowCols[3] = (brow[3] < threshold16) ? col1 : col0;
-
-                                    for (int x = xs; x <= xe; x++) {
-                                        uint16_t zi = (uint16_t)(z >> Z_FP_SHIFT);
-
-                                        if (zi < *zb) {
-                                            *zb = zi;
-                                            *dst = rowCols[x & 3];
-                                        }
-
-                                        z += dzSpan;
-                                        zb++;
-                                        dst++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    x02 += dx02;
-                    z02 += dz02;
-                    x12 += dx12;
-                    z12 += dz12;
                 }
             }
         }
-
-        #undef X_FP_SHIFT
-        #undef Z_FP_SHIFT
     }
 }
-
-
-
-
-
-
-
-
 
 
 

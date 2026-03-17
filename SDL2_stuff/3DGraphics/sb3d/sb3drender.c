@@ -36,6 +36,7 @@ static inline uint16_t encodeZ(float z, const Camera *cam)
     if (t > 1.0f) t = 1.0f;
     return (uint16_t)(t * 65535.0f);
 }
+
 static inline uint8_t encodeZ8(float z, const Camera *cam)
 {
     float t = (z - cam->nearPlane) / (cam->farPlane - cam->nearPlane);
@@ -74,14 +75,35 @@ static Vec3 lerpVec3(Vec3 a, Vec3 b, float t)
     return out;
 }
 
+
+
+
+
+
 static float planeEval(Vec3 p, ClipPlane plane, const Camera *cam)
 {
+    const float fovDeg = 90.0f;
+    const float fovRad = fovDeg * (M_PI / 180.0f);
+    const float f = (SCREEN_W * 0.5f) / tanf(fovRad * 0.5f);
+
+    const float halfWOverF = (SCREEN_W * 0.5f) / f;
+    const float halfHOverF = (SCREEN_H * 0.5f) / f;
+
     switch (plane) {
-        case PLANE_NEAR:   return p.z - cam->nearPlane;
-        case PLANE_LEFT:   return p.x + p.z * ((SCREEN_W * 0.5f) / PROJ_F);
-        case PLANE_RIGHT:  return (p.z * ((SCREEN_W * 0.5f) / PROJ_F)) - p.x;
-        case PLANE_TOP:    return (p.z * ((SCREEN_H * 0.5f) / PROJ_F)) - p.y;
-        case PLANE_BOTTOM: return p.y + p.z * ((SCREEN_H * 0.5f) / PROJ_F);
+        case PLANE_NEAR:
+            return p.z - cam->nearPlane;
+
+        case PLANE_LEFT:
+            return p.x + (p.z * halfWOverF);
+
+        case PLANE_RIGHT:
+            return (p.z * halfWOverF) - p.x;
+
+        case PLANE_TOP:
+            return (p.z * halfHOverF) - p.y;
+
+        case PLANE_BOTTOM:
+            return p.y + (p.z * halfHOverF);
     }
 
     return -1.0f;
@@ -131,36 +153,40 @@ static int clipTriangleToFrustum(Vec3 a, Vec3 b, Vec3 c, Vec3 *outVerts, const C
 {
     Vec3 poly1[CLIP_MAX_VERTS];
     Vec3 poly2[CLIP_MAX_VERTS];
+    Vec3 *src = poly1;
+    Vec3 *dst = poly2;
+    Vec3 *tmp;
     int count = 3;
 
-    poly1[0] = a;
-    poly1[1] = b;
-    poly1[2] = c;
+    src[0] = a;
+    src[1] = b;
+    src[2] = c;
 
-    count = clipPolygonAgainstPlane(poly1, count, poly2, PLANE_NEAR, cam);
+    count = clipPolygonAgainstPlane(src, count, dst, PLANE_NEAR, cam);
     if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
 
-    count = clipPolygonAgainstPlane(poly2, count, poly1, PLANE_LEFT, cam);
+    count = clipPolygonAgainstPlane(src, count, dst, PLANE_LEFT, cam);
     if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
 
-    count = clipPolygonAgainstPlane(poly1, count, poly2, PLANE_RIGHT, cam);
+    count = clipPolygonAgainstPlane(src, count, dst, PLANE_RIGHT, cam);
     if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
 
-    count = clipPolygonAgainstPlane(poly2, count, poly1, PLANE_TOP, cam);
+    count = clipPolygonAgainstPlane(src, count, dst, PLANE_TOP, cam);
     if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
 
-    count = clipPolygonAgainstPlane(poly1, count, poly2, PLANE_BOTTOM, cam);
+    count = clipPolygonAgainstPlane(src, count, dst, PLANE_BOTTOM, cam);
     if (count < 3) return 0;
 
     for (int i = 0; i < count; i++) {
-        outVerts[i] = poly2[i];
+        outVerts[i] = dst[i];
     }
 
     return count;
 }
-
-
-
 
 
 
@@ -187,16 +213,6 @@ static void sortRenderList(void)
     qsort(g_renderTris, g_renderTriCount, sizeof(RenderTri), compareRenderTri);
 }
 
-static void sortRenderList_OLD(void)
-{
-    for (int i = 0; i < g_renderTriCount - 1; i++) {
-        for (int j = i + 1; j < g_renderTriCount; j++) {
-            if (g_renderTris[i].depth < g_renderTris[j].depth) {
-                swapRenderTri(&g_renderTris[i], &g_renderTris[j]);
-            }
-        }
-    }
-}
 
 /// sorting
 static float entityDepth(const Entity *ent, const Camera *cam)
@@ -239,7 +255,6 @@ static int triangleFacingScreen(Vec2 a, Vec2 b, Vec2 c)
     return (cross > 0);
 }
 
-
 static void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, float shadeF)
 {
     Vec2 pa, pb, pc;
@@ -260,14 +275,19 @@ static void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color,
     rt.p0 = pa;
     rt.p1 = pb;
     rt.p2 = pc;
-    rt.color  = color;
+
+    rt.color    = color;
     rt.emission = emission;
-    rt.shadeF = shadeF;
-    rt.depth  = (a.z + b.z + c.z) / 3.0f;
+    rt.shadeF   = shadeF;
+    rt.depth    = (a.z + b.z + c.z) / 3.0f;
 
     rt.z0 = encodeZ(a.z, cam);
     rt.z1 = encodeZ(b.z, cam);
     rt.z2 = encodeZ(c.z, cam);
+
+    rt.camz0 = a.z;
+    rt.camz1 = b.z;
+    rt.camz2 = c.z;
 
     g_renderTris[g_renderTriCount++] = rt;
 }
@@ -345,7 +365,6 @@ int projectPoint(Vec3 p, const Camera *cam, Vec2 *out)
         return 0;
     }
 
-    // Convert horizontal FOV to focal length in pixels
     float fovRad = fovDeg * (M_PI / 180.0f);
     float f = (SCREEN_W * 0.5f) / tanf(fovRad * 0.5f);
 
@@ -485,38 +504,16 @@ static int entityVisible(const Entity *ent, const Camera *cam)
     Vec3 center = worldToCamera(ent->pos, *cam);
     float r = ent->mesh->boundsRadius;
 
-    float halfW = (SCREEN_W * 0.5f) / PROJ_F;
-    float halfH = (SCREEN_H * 0.5f) / PROJ_F;
-
-    /* far plane */
     if (center.z - r > cam->farPlane) {
         return 0;
     }
-    
-    /* near plane */
+
     if (center.z + r < cam->nearPlane) {
-        return 0;
-    }
-
-    /* left/right planes */
-    if (center.x < -(center.z * halfW) - r) {
-        return 0;
-    }
-    if (center.x >  (center.z * halfW) + r) {
-        return 0;
-    }
-
-    /* top/bottom planes */
-    if (center.y < -(center.z * halfH) - r) {
-        return 0;
-    }
-    if (center.y >  (center.z * halfH) + r) {
         return 0;
     }
 
     return 1;
 }
-
 
 void submitWorldEntities(const Camera *cam)
 {
@@ -543,6 +540,172 @@ int getRenderTriCount(void)
     return g_renderTriCount;
 }
 
+static uint32_t sb3d_hash2i(int x, int z)
+{
+    uint32_t h = (uint32_t)x * 374761393u;
+    h += (uint32_t)z * 668265263u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    h ^= (h >> 16);
+    return h;
+}
+
+void drawFakeHorizonDots(const Camera *cam, uint8_t dotCol, int spacing, float ylevel, uint8_t density)
+{
+    if (!cam) return;
+    if (spacing < 2) spacing = 2;
+
+    /*
+        Bigger = more world coverage, more cost.
+        Keep this fairly small unless you really need more.
+    */
+    const int range = spacing * 18;
+
+    /*
+        0..255 : higher = more dots survive
+        255 = all points
+        128 = about half
+         64 = about quarter
+    */
+
+    /*
+        jitter inside each cell, in world units
+        keep below spacing * 0.5f so points stay near their own cell
+    */
+    const float jitter = spacing * 0.35f;
+
+    int baseX = ((int)floorf(cam->pos.x / (float)spacing)) * spacing;
+    int baseZ = ((int)floorf(cam->pos.z / (float)spacing)) * spacing;
+
+    for (int wz = baseZ - range; wz <= baseZ + range; wz += spacing) {
+        for (int wx = baseX - range; wx <= baseX + range; wx += spacing) {
+            uint32_t h = sb3d_hash2i(wx / spacing, wz / spacing);
+
+            /* density test: stable procedural keep/drop */
+            if ((h & 255u) > density) {
+                continue;
+            }
+
+            /*
+                stable procedural jitter:
+                use different bits of hash for x/z offset
+            */
+            float jx = (((float)((h >> 8)  & 255u) / 255.0f) * 2.0f - 1.0f) * jitter;
+            float jz = (((float)((h >> 16) & 255u) / 255.0f) * 2.0f - 1.0f) * jitter;
+
+            Vec3 world = vec3((float)wx + jx, ylevel, (float)wz + jz);
+            Vec3 camP  = worldToCamera(world, *cam);
+            Vec2 scr;
+
+            if (!projectPoint(camP, cam, &scr)) {
+                continue;
+            }
+
+            if (scr.x < 0 || scr.x >= SCREEN_W || scr.y < 0 || scr.y >= SCREEN_H) {
+                continue;
+            }
+
+            drawLine(scr.x, scr.y, scr.x, scr.y, dotCol);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+void drawFakeHorizon(const Camera *cam, uint8_t skyCol, uint8_t groundCol, uint8_t lineCol, float ylevel)
+{
+    if (!cam) return;
+
+    const float fovDeg = 90.0f;
+    const float fovRad = fovDeg * (M_PI / 180.0f);
+    const float f      = (SCREEN_W * 0.5f) / tanf(fovRad * 0.5f);
+
+    const float cx = (float)(SCREEN_W * 0.5f);
+    const float cy = (float)(SCREEN_H * 0.5f);
+
+    const float Ry = cam->right.y;
+    const float Uy = cam->up.y;
+    const float Fy = cam->forward.y;
+
+    for (int y = 0; y < SCREEN_H; y++) {
+        float dirCamY = -((float)y - cy) / f;
+
+        float leftDirWorldY =
+            (((0.0f - cx) / f) * Ry) +
+            (dirCamY * Uy) +
+            Fy;
+
+        float rightDirWorldY =
+            ((((float)(SCREEN_W - 1) - cx) / f) * Ry) +
+            (dirCamY * Uy) +
+            Fy;
+
+        int leftGround = 0;
+        int rightGround = 0;
+
+        if (fabsf(leftDirWorldY) >= 0.0001f) {
+            float t = (ylevel - cam->pos.y) / leftDirWorldY;
+            if (t > 0.0f) leftGround = 1;
+        }
+
+        if (fabsf(rightDirWorldY) >= 0.0001f) {
+            float t = (ylevel - cam->pos.y) / rightDirWorldY;
+            if (t > 0.0f) rightGround = 1;
+        }
+
+        if (leftGround == rightGround) {
+            drawLine(0, y, SCREEN_W - 1, y, leftGround ? groundCol : skyCol);
+        } else {
+            /*
+                Solve dirWorldY = 0 for x on this row:
+
+                ((x - cx)/f)*Ry + dirCamY*Uy + Fy = 0
+                x = cx - f * (dirCamY*Uy + Fy) / Ry
+            */
+            int xSplit;
+
+            if (fabsf(Ry) < 0.0001f) {
+                xSplit = SCREEN_W / 2;
+            } else {
+                float xSplitF = cx - (f * ((dirCamY * Uy) + Fy) / Ry);
+                xSplit = (int)lroundf(xSplitF);
+            }
+
+            if (xSplit < 0) xSplit = 0;
+            if (xSplit > SCREEN_W) xSplit = SCREEN_W;
+
+            if (leftGround) {
+                if (xSplit > 0) {
+                    drawLine(0, y, xSplit - 1, y, groundCol);
+                }
+                if (xSplit < SCREEN_W) {
+                    drawLine(xSplit, y, SCREEN_W - 1, y, skyCol);
+                }
+            } else {
+                if (xSplit > 0) {
+                    drawLine(0, y, xSplit - 1, y, skyCol);
+                }
+                if (xSplit < SCREEN_W) {
+                    drawLine(xSplit, y, SCREEN_W - 1, y, groundCol);
+                }
+            }
+        }
+    }
+
+    /*
+        Draw the actual horizon line using the same equation.
+    */
+    if (fabsf(Uy) >= 0.0001f) {
+        int y0 = (int)lroundf(cy + ((((0.0f) - cx) * Ry) + (f * Fy)) / Uy);
+        int y1 = (int)lroundf(cy + ((((float)(SCREEN_W - 1) - cx) * Ry) + (f * Fy)) / Uy);
+        drawLine(0, y0, SCREEN_W - 1, y1, lineCol);
+    }
+}
 void Render3D(const Camera *cam)
 {
     resetRenderList();
@@ -663,6 +826,9 @@ void Render3D(const Camera *cam)
                     g_renderTris[i].z0,
                     g_renderTris[i].z1,
                     g_renderTris[i].z2,
+                    g_renderTris[i].camz0,
+                    g_renderTris[i].camz1,
+                    g_renderTris[i].camz2,
                     g_renderTris[i].color,
                     g_renderTris[i].shadeF,
                     bandY0,
@@ -677,6 +843,9 @@ void Render3D(const Camera *cam)
                     g_renderTris[i].z0,
                     g_renderTris[i].z1,
                     g_renderTris[i].z2,
+                    g_renderTris[i].camz0,
+                    g_renderTris[i].camz1,
+                    g_renderTris[i].camz2,
                     g_renderTris[i].color,
                     g_renderTris[i].shadeF,
                     bandY0,
@@ -691,6 +860,9 @@ void Render3D(const Camera *cam)
                     g_renderTris[i].z0,
                     g_renderTris[i].z1,
                     g_renderTris[i].z2,
+                    g_renderTris[i].camz0,
+                    g_renderTris[i].camz1,
+                    g_renderTris[i].camz2,
                     g_renderTris[i].color,
                     g_renderTris[i].shadeF,
                     bandY0,
@@ -713,7 +885,7 @@ static int triangleFacingCamera(Vec3 a, Vec3 b, Vec3 c)
     return (d < 0.0f);
 }
 
-//#define USE_BACKFACE_CULL 1
+#define USE_BACKFACE_CULL 1
 
 void submitEntitySolid(const Entity *ent, const Camera *cam)
 {
