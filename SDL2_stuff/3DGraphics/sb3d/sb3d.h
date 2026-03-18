@@ -13,7 +13,7 @@
 #include "sb3d/sb3dlights.h"
 #include "sb3d/sb3dentity.h"
 
-
+#include "sb3d/sb3dmaterial.h"
 #include "sb3d/sb3drender.h"
 
 

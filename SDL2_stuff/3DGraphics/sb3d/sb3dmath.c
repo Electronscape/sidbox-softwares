@@ -103,3 +103,17 @@ Vec3 vec3(float x, float y, float z)
 {
     return (Vec3){ x, y, z };
 }
+
+float degrees(float angle){
+    return (M_PI / 180.0f) * angle;
+}
+
+float degToRad(float angle)
+{
+    return angle * (M_PI / 180.0f);
+}
+
+float radToDeg(float angle)
+{
+    return angle * (180.0f / M_PI);
+}

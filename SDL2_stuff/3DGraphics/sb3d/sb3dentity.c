@@ -14,6 +14,8 @@ static int entityIdValid(int id)
 }
 
 
+
+
 Vec3 entityLocalToWorld(const Entity *e, Vec3 v)
 {
     Vec3 world = e->pos;
@@ -50,7 +52,6 @@ float meshComputeBoundsRadius(const Mesh *mesh)
 int entityWorldSpawn(Mesh *mesh, Vec3 pos)
 {
     int id;
-    if (!mesh) return -1;
 
     for (id = 0; id < WORLD_MAX; id++) {
         if (!worldEntities[id].active) {
@@ -60,7 +61,8 @@ int entityWorldSpawn(Mesh *mesh, Vec3 pos)
             worldEntities[id].right   = (Vec3){ 1.0f, 0.0f, 0.0f };
             worldEntities[id].up      = (Vec3){ 0.0f, 1.0f, 0.0f };
             worldEntities[id].forward = (Vec3){ 0.0f, 0.0f, 1.0f };
-            worldEntities[id].active  = 1;
+
+            worldEntities[id].active          = 1;
 
             return id;
         }
@@ -83,11 +85,13 @@ void entityWorldDestroy(int *id)
     worldEntities[*id].right = (Vec3){ 1.0f, 0.0f, 0.0f };
     worldEntities[*id].up = (Vec3){ 0.0f, 1.0f, 0.0f };
     worldEntities[*id].forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+
     *id = -1;
 }
 
 
-void entitySetPosition(int id, Vec3 pos){
+void entitySetPosition(int id, Vec3 pos)
+{
     if (!entityIdValid(id)) return;
     worldEntities[id].pos = pos;
 }
@@ -213,6 +217,44 @@ void entityTurnLocal(int id, float yaw, float pitch, float roll)
     if (roll != 0.0f) {
         e->right = rotateAroundAxis(e->right,   e->forward, roll);
         e->up    = rotateAroundAxis(e->up,      e->forward, roll);
+    }
+
+    normalizeEntity(e);
+}
+
+
+void entityRotation(int id, float yaw, float pitch, float roll)
+{
+    Entity *e;
+    Vec3 worldX = { 1.0f, 0.0f, 0.0f };
+    Vec3 worldY = { 0.0f, 1.0f, 0.0f };
+    Vec3 worldZ = { 0.0f, 0.0f, 1.0f };
+
+    if (!entityIdValid(id)) return;
+    e = &worldEntities[id];
+
+    /* reset to identity first */
+    e->right   = (Vec3){ 1.0f, 0.0f, 0.0f };
+    e->up      = (Vec3){ 0.0f, 1.0f, 0.0f };
+    e->forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+
+    /* absolute rotation in global axis order */
+    if (yaw != 0.0f) {
+        e->forward = rotateAroundAxis(e->forward, worldY, yaw);
+        e->right   = rotateAroundAxis(e->right,   worldY, yaw);
+        e->up      = rotateAroundAxis(e->up,      worldY, yaw);
+    }
+
+    if (pitch != 0.0f) {
+        e->forward = rotateAroundAxis(e->forward, worldX, pitch);
+        e->right   = rotateAroundAxis(e->right,   worldX, pitch);
+        e->up      = rotateAroundAxis(e->up,      worldX, pitch);
+    }
+
+    if (roll != 0.0f) {
+        e->forward = rotateAroundAxis(e->forward, worldZ, roll);
+        e->right   = rotateAroundAxis(e->right,   worldZ, roll);
+        e->up      = rotateAroundAxis(e->up,      worldZ, roll);
     }
 
     normalizeEntity(e);
@@ -797,36 +839,6 @@ Mesh copyMesh(const Mesh *src)
 }
 
 
-void meshSetDefaultMaterial(Mesh *mesh)
-{
-    if (!mesh) return;
-
-    mesh->material.ambient          = 0.00f;
-    mesh->material.diffuse          = 1.00f;
-    mesh->material.emissive         = 0.00f;
-    mesh->material.specularStrength = 0.00f;
-    mesh->material.shininess        = 8.0f;
-}
-
-void meshSetMaterial(
-    Mesh *mesh,
-    float ambient,
-    float diffuse,
-    float emissive,
-    float specularStrength,
-    float shininess
-)
-{
-    if (!mesh) return;
-
-    mesh->material.ambient          = ambient;
-    mesh->material.diffuse          = diffuse;
-    mesh->material.emissive         = emissive;
-    mesh->material.specularStrength = specularStrength;
-    mesh->material.shininess        = shininess;
-}
-
-
 void entityFollowCameraXZ(int id, const Camera *cam, float worldY, float snap)
 {
     float px;
@@ -847,3 +859,47 @@ void entityFollowCameraXZ(int id, const Camera *cam, float worldY, float snap)
     worldEntities[id].pos.z = pz;
 }
 
+Vec3 entityLookAt(int aId, int bId, uint8_t rotate)
+{
+    Vec3 ang;
+    float dx, dy, dz;
+    float horiz;
+
+    if (!entityIdValid(aId) || !entityIdValid(bId)) {
+        return (Vec3){ 0.0f, 0.0f, 0.0f };
+    }
+
+    dx = worldEntities[bId].pos.x - worldEntities[aId].pos.x;
+    dy = worldEntities[bId].pos.y - worldEntities[aId].pos.y;
+    dz = worldEntities[bId].pos.z - worldEntities[aId].pos.z;
+
+    if ((dx == 0.0f) && (dy == 0.0f) && (dz == 0.0f)) {
+        return (Vec3){ 0.0f, 0.0f, 0.0f };
+    }
+
+    /*
+        Absolute yaw:
+        forward = +Z
+        yaw 0 faces +Z
+        positive yaw turns toward +X
+    */
+    ang.y = atan2f(dx, dz);
+
+    /*
+        Absolute pitch from horizontal plane
+    */
+    horiz = sqrtf((dx * dx) + (dz * dz));
+    ang.x = -atan2f(dy, horiz);
+
+    /*
+        Roll cannot be derived from just two positions.
+        Keep it at zero.
+    */
+    ang.z = 0.0f;
+
+    if (rotate) {
+        entityRotation(aId, ang.y, ang.x, ang.z);
+    }
+
+    return ang;
+}

@@ -21,7 +21,9 @@ Vec3 rotateAroundAxis(Vec3 v, Vec3 axis, float angle);
 // math helpers
 Vec3 vec3(float x, float y, float z);
 
-
+float degrees(float angle);
+float degToRad(float angle);
+float radToDeg(float angle);
 
 
 

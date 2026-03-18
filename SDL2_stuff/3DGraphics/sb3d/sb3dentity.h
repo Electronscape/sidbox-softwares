@@ -7,6 +7,8 @@
 #include "sb3dmath.h"
 
 
+//meshSetMaterial(&theTorsu, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
+
 /* -------------------------------------------------------------------------- */
 /* Default colour offsets                                                     */
 /* -------------------------------------------------------------------------- */
@@ -25,10 +27,11 @@
 /* Entity                                                                     */
 /* -------------------------------------------------------------------------- */
 
-typedef struct {
-    Mesh *mesh;
-    Vec3 pos;
 
+typedef struct {
+    Vec3 pos;
+    Mesh *mesh;
+    
     Vec3 forward;
     Vec3 right;
     Vec3 up;
@@ -51,6 +54,7 @@ void entityWorldDestroy(int *id);
 /* Entity transforms / movement                                               */
 /* -------------------------------------------------------------------------- */
 
+Mesh copyMesh(const Mesh *src);
 void entitySetPosition(int id, Vec3 pos);
 Vec3 entityGetPosition(int id);
 
@@ -62,11 +66,15 @@ void entityMoveUp(int id, float dist);
 void entityTurnLocal(int id, float yaw, float pitch, float roll);
 void entityTurnGlobal(int id, float yaw, float pitch, float roll);
 
+void entityRotation(int id, float yaw, float pitch, float roll);
+
 void normalizeEntity(Entity *e);
 void entityResetAxes(Entity *e);
 
 Vec3 entityLocalToWorld(const Entity *e, Vec3 v);
 void entityFollowCameraXZ(int id, const Camera *cam, float worldY, float snap);
+
+Vec3 entityLookAt(int aId, int bId, uint8_t rotate);
 
 
 /* -------------------------------------------------------------------------- */
@@ -125,6 +133,8 @@ Mesh createCone(float radius, float height, int segments);
 Mesh createPyramid(float width, float height);
 Mesh createTorus(float majorRadius, float minorRadius, int majorSegs, int minorSegs);
 
+
+int entityBuildWorldCache(Entity *ent);
 
 #endif
 

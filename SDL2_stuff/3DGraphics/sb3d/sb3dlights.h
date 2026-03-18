@@ -4,6 +4,17 @@
 #include "sb3dworld.h"
 #include "sb3dmath.h"
 
+typedef struct {
+    LightType type;
+    Vec3  pos;
+    Vec3  dir;
+    float intensity;
+    float near, far, beyond;
+    int   enabled;
+} Light;
+
+
+
 extern int g_lightCount;
 
 Light *lightsGet(void);
@@ -21,6 +32,7 @@ int addDirectionalLight(Vec3 dir, float intensity, int enabled);
 void lightSetPosition(int index, Vec3 pos);
 void lightSetDirection(int index, Vec3 dir);
 void lightSetIntensity(int index, float bright);
+void lightSetRanges(int lightId, float near, float far, float beyond);
 
 float brightnessToShadeF(float brightness);
 

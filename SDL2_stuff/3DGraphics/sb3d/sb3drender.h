@@ -4,6 +4,8 @@
 #include "sb3dworld.h"
 
 #define CLIP_MAX_VERTS 8
+#define SB3D_MAX_VERTS 4096
+
 #define PROJ_F 200.0f
 
 typedef enum {

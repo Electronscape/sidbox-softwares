@@ -2,6 +2,7 @@
 #define _SIDBOX_3D_WORLDSPACE_H_
 
 #include <stdint.h>
+#include "sb3dmaterial.h"
 
 
 #define NEAR_Z 0.1f
@@ -55,23 +56,8 @@ typedef struct {
 
 
 
-typedef struct {
-    LightType type;
-    Vec3  pos;
-    Vec3  dir;
-    float intensity;
-    int   enabled;
-} Light;
 
 
-
-typedef struct {
-    float ambient;           // 0.0 .. 1.0
-    float diffuse;           // 0.0 .. 2.0
-    float specularStrength;  // 0.0 .. 2.0
-    float shininess;         // e.g. 4, 8, 16, 32
-    float emissive;          // 0.0 .. 1.0
-} Material;
 
 typedef struct {
     Vec3 *verts;

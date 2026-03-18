@@ -27,7 +27,7 @@ uint8_t toggleLightSun     = 0,
 
 
 
-#define FPS        144
+#define FPS        60
 #define A_FPS_MS   (1000 / FPS)
 
 int tmr1;
@@ -91,6 +91,7 @@ int updateFPS() {
 
 
 Vec3 Light1Pos = {0.0f, 0.0f, 0.0f};
+uint8_t HosS, HosH, HosG, SeaDots;
 //static uint32_t indexTmrTest = 0;
 
 int main(void) {
@@ -163,43 +164,35 @@ int main(void) {
     // replace your old nested loop
     buildLightingCLUT(clut, baseColors, 16, lightTarget, shades);
 
-    /*
-    for (int ci = 0; ci < 16; ci++) {
-        for (int s = 0; s < 5; s++) {
-            //clut[16 + (ci * 5) + s] = darken(baseColors[ci], shades[s]);
-            clut[COLOUR_OFFSET + (s * 16) + ci] = darken(baseColors[ci], shades[s]);
-        }
-    }
-    */
-
-
-    // test box, this works can now comment out
-    //drawLine(100, 100, 300, 100, 2);
-    //drawLine(300, 100, 300, 300, 3);
-    //drawLine(300, 300, 100, 300, 4);
-    //drawLine(100, 300, 100, 100, 5);
-
-
 ///[ WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////////
 
     setDefaultRenderMode();
     Camera cam = cameraCreate();
-    cameraSetRange(&cam, 0.01, 2500.0f);
+    cameraSetRange(&cam, 0.01, 5000.0f);
     cameraNormalize(&cam);
 
     lightsClear();
 
-    uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 1.0f, 1);
+    uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 0.01f, 1);
     uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -0.50f, 0.30}, 0.10, 1);
+    uint8_t fighterLightId = addPointLight(vec3(0,0,0), 1.0f, 1);
+    lightSetRanges(fighterLightId, 100.0f, 320.0f, 530.0f);
+
 
     worldClear();
 
 
-    Mesh shipMesh;
-    loadMeshSB3D("shipv1.sb3d", &shipMesh, 10.0f);
-    int ship0 = entityWorldSpawn(&shipMesh, (Vec3){ 0.0f, 100.0f, 200.0f });
-    int ship1 = entityWorldSpawn(&shipMesh, vec3(-135,42, 500));
-    meshSetMaterial(&shipMesh, 0.0f, 1.0f, 0.0f, 0.25f, 16.0f);
+    Mesh shipMesh; loadMeshSB3D("shipv1.sb3d", &shipMesh, 10.0f);
+    Mesh shipTestMesh = copyMesh(&shipMesh);
+    int shipTest = entityWorldSpawn(&shipTestMesh, vec3(-135,42, -200) );
+
+    Mesh ShipYard[3]; int shipYardID[3];
+    for(int i = 0; i < 3; i++){
+        ShipYard[i] = copyMesh(&shipMesh);
+        shipYardID[i] = entityWorldSpawn(&ShipYard[i], vec3(-245, 42, 100 + (i * 100)));
+        entityRotation(shipYardID[i], degrees(90), 0, 0);
+    }
+
 
 
 
@@ -218,7 +211,7 @@ int main(void) {
 
     Mesh carrierMesh;
     loadMeshSB3D("carrier.sb3d", &carrierMesh, 50.0f);
-    int carrier0 = entityWorldSpawn(&carrierMesh, (Vec3) { 1800, 0, -100});
+    int carrier0 = entityWorldSpawn(&carrierMesh, (Vec3) { 1950, 0, -100});
 
     Mesh recogMesh;
     loadMeshSB3D("recogniser.sb3d", &recogMesh, 100.0f);
@@ -228,6 +221,14 @@ int main(void) {
     Mesh islandMesh;
     loadMeshSB3D("islandx.sb3d", &islandMesh, 200.0f);
     int island0 = entityWorldSpawn(&islandMesh, vec3(012, 0, 0));
+
+    Mesh textMesh;
+    loadMeshSB3D("text.sb3d", &textMesh, 50.0f);
+    int text0 = entityWorldSpawn(&textMesh, vec3(0,200,0));
+    meshSetMaterial(&textMesh, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
+
+
+
 
        
     ///[ END WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////
@@ -251,6 +252,13 @@ int main(void) {
     toggleLightShip = 0;
     toggleflatMode = 1;
     enableFlatMode(toggleflatMode);
+
+    // sky colour
+    SeaDots = 2;
+    HosS = 9;
+    HosG = 59;
+    HosH = 43;
+
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
     while (running) {
@@ -286,6 +294,20 @@ int main(void) {
                     
                     case SDLK_KP_2:
                         toggleLightSun = 1 - toggleLightSun;
+
+                        if(toggleLightSun){
+                            HosS = 9;   // sky
+                            HosG = 59;  // horizon
+                            HosH = 43;  // Sea
+                            SeaDots = 2;
+                        } else {
+                            HosS = 17;
+                            HosG = 18;
+                            HosH = 20;
+                            SeaDots = 23;
+                        }
+
+
                         break;
 
                     case SDLK_KP_4:
@@ -321,8 +343,8 @@ int main(void) {
         
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
 
-            float moveSpeed = 1.20f;
-            float turnSpeed = 0.015f;
+            float moveSpeed = 5.40f;
+            float turnSpeed = 0.030f;
 
             const Uint8 *keys = SDL_GetKeyboardState(NULL);
 
@@ -383,28 +405,45 @@ int main(void) {
 
             lightEnable(Camlightid, toggleLightShip);
             lightSetIntensity(Camlightid, 2.0f);
+            lightSetRanges(Camlightid, 100.0f, 320.0f, 530.0f);
 
             lightEnable(SunlightId, toggleLightSun);
             lightSetIntensity(SunlightId, 1.0);
             lightSetPosition(Camlightid, cam.pos);
             
 
-            entityTurnLocal(ipenergy0, 0.01f,0,0);
+            entityTurnLocal(ipenergy0, 0.02f, 0,0);
             // crap AI for one ship
             //////////////////////////
-            entityMoveForward(ship1, 1.8f);//vec3(0,0,0.7f));
+            entityMoveForward(shipTest, 6.3f);//vec3(0,0,0.7f));
 
-            Vec3 theShipPos = entityGetPosition(ship1);
-            if(theShipPos.z > 3000){
-                entitySetPosition(ship1, vec3(-135,42, 000));
+            float speed = 0.2;
+            entityTurnLocal(carrier0, -0.003f * speed, 0, 0);
+            entityMoveForward(carrier0, 6.8f * speed);//vec3(0,0,0.7f));
+            
+
+            Vec3 theShipPos = entityGetPosition(shipTest);
+            if(theShipPos.z > 2500){
+                entitySetPosition(shipTest, vec3(-135,42, -400));
             }
+
+            lightSetPosition(fighterLightId, theShipPos);
+            //lightSetRanges(fighterLightId, 100.0f, 320.0f, 530.0f);
+
+
+            entityLookAt(text0, shipTest, 1);
+
+
+            Vec3 pv1 = entityLookAt(shipYardID[0], shipTest, 1);
+            //entityRotation(shipYardID[0], pv1.y, 0, 0);
 
             //////////////////////////
 
             //clearScreen(0);
+
             resetRenderList();
-            drawFakeHorizon(&cam, 9, 59, 43, 0);
-            drawFakeHorizonDots(&cam, 2, 128, 0, 110);
+            drawFakeHorizon(&cam, HosS, HosG, HosH, 0);
+            drawFakeHorizonDots(&cam, SeaDots, 128, 0, 110);
             //drawFakeHorizonGrid(&cam, 2, 128, 0.0f, 32);
             Render3D(&cam);
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
