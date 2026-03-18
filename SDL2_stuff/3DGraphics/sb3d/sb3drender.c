@@ -212,12 +212,8 @@ void sortEntityPointersByDepth(Entity **entities, int count, const Camera *cam)
     return;
 }
 
-static inline int triangleFacingScreen(Vec2 a, Vec2 b, Vec2 c)
-{
-    int cross =
-        (b.x - a.x) * (c.y - a.y) -
-        (b.y - a.y) * (c.x - a.x);
-
+static inline int triangleFacingScreen(Vec2 a, Vec2 b, Vec2 c){
+    int cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
     return (cross > 0);
 }
 
@@ -341,6 +337,8 @@ void submitWorldEntities(const Camera *cam)
 
         if (!ent->active) continue;
         if (!ent->mesh) continue;
+        if (!ent->flags & ENTITY_VISIBLE) continue;;
+
 
         if (entityVisible(ent, cam)) {
             renderEntities[visibleCount++] = ent;
@@ -1593,3 +1591,400 @@ void drawEntitySolid(const Entity *ent, const Camera *cam)
 {
     submitEntitySolid(ent, cam);
 }
+
+
+
+
+static int sb3dRayTriangleHitDetailed(
+    Vec3 rayOrig,
+    Vec3 rayDir,
+    float maxDist,
+    Vec3 v0,
+    Vec3 v1,
+    Vec3 v2,
+    float *outT,
+    Vec3 *outNormal
+)
+{
+    const float EPS = 0.0001f;
+
+    const float e1x = v1.x - v0.x;
+    const float e1y = v1.y - v0.y;
+    const float e1z = v1.z - v0.z;
+
+    const float e2x = v2.x - v0.x;
+    const float e2y = v2.y - v0.y;
+    const float e2z = v2.z - v0.z;
+
+    const float px = (rayDir.y * e2z) - (rayDir.z * e2y);
+    const float py = (rayDir.z * e2x) - (rayDir.x * e2z);
+    const float pz = (rayDir.x * e2y) - (rayDir.y * e2x);
+
+    const float det = (e1x * px) + (e1y * py) + (e1z * pz);
+
+    if (fabsf(det) < EPS) {
+        return 0;
+    }
+
+    {
+        const float invDet = 1.0f / det;
+
+        const float tx = rayOrig.x - v0.x;
+        const float ty = rayOrig.y - v0.y;
+        const float tz = rayOrig.z - v0.z;
+
+        const float u = ((tx * px) + (ty * py) + (tz * pz)) * invDet;
+        if (u < 0.0f || u > 1.0f) {
+            return 0;
+        }
+
+        const float qx = (ty * e1z) - (tz * e1y);
+        const float qy = (tz * e1x) - (tx * e1z);
+        const float qz = (tx * e1y) - (ty * e1x);
+
+        const float v = ((rayDir.x * qx) + (rayDir.y * qy) + (rayDir.z * qz)) * invDet;
+        if (v < 0.0f || (u + v) > 1.0f) {
+            return 0;
+        }
+
+        {
+            const float tHit = ((e2x * qx) + (e2y * qy) + (e2z * qz)) * invDet;
+
+            if (tHit <= EPS) {
+                return 0;
+            }
+
+            if (tHit > maxDist) {
+                return 0;
+            }
+
+            if (outT) {
+                *outT = tHit;
+            }
+        }
+    }
+
+    if (outNormal) {
+        float nx = (e1y * e2z) - (e1z * e2y);
+        float ny = (e1z * e2x) - (e1x * e2z);
+        float nz = (e1x * e2y) - (e1y * e2x);
+
+        const float nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
+        if (nlen2 > 0.000001f) {
+            const float invNLen = 1.0f / sqrtf(nlen2);
+            nx *= invNLen;
+            ny *= invNLen;
+            nz *= invNLen;
+        } else {
+            nx = 0.0f;
+            ny = 0.0f;
+            nz = 0.0f;
+        }
+
+        outNormal->x = nx;
+        outNormal->y = ny;
+        outNormal->z = nz;
+    }
+
+    return 1;
+}
+
+
+static void sb3dBuildHitBasis(
+    Vec3 normal,
+    Vec3 preferredForward,
+    Vec3 *outRight,
+    Vec3 *outUp,
+    Vec3 *outForward
+)
+{
+    Vec3 f;
+    Vec3 r;
+    Vec3 u;
+    Vec3 helper;
+
+    /* forward = surface normal */
+    f = normal;
+
+    /*
+        project preferredForward onto plane perpendicular to normal
+        so we get a stable tangent direction
+    */
+    {
+        const float d =
+            (preferredForward.x * f.x) +
+            (preferredForward.y * f.y) +
+            (preferredForward.z * f.z);
+
+        u.x = preferredForward.x - (f.x * d);
+        u.y = preferredForward.y - (f.y * d);
+        u.z = preferredForward.z - (f.z * d);
+    }
+
+    /*
+        if preferredForward is too parallel to the normal,
+        choose a fallback helper axis
+    */
+    {
+        const float len2 =
+            (u.x * u.x) +
+            (u.y * u.y) +
+            (u.z * u.z);
+
+        if (len2 <= 0.000001f) {
+            if (f.y > -0.9f && f.y < 0.9f) {
+                helper = (Vec3){ 0.0f, 1.0f, 0.0f };
+            } else {
+                helper = (Vec3){ 1.0f, 0.0f, 0.0f };
+            }
+
+            {
+                const float d =
+                    (helper.x * f.x) +
+                    (helper.y * f.y) +
+                    (helper.z * f.z);
+
+                u.x = helper.x - (f.x * d);
+                u.y = helper.y - (f.y * d);
+                u.z = helper.z - (f.z * d);
+            }
+        }
+    }
+
+    /* normalize u */
+    {
+        const float len2 =
+            (u.x * u.x) +
+            (u.y * u.y) +
+            (u.z * u.z);
+
+        if (len2 > 0.000001f) {
+            const float invLen = 1.0f / sqrtf(len2);
+            u.x *= invLen;
+            u.y *= invLen;
+            u.z *= invLen;
+        } else {
+            u = (Vec3){ 0.0f, 1.0f, 0.0f };
+        }
+    }
+
+    /* right = up x forward */
+    r.x = (u.y * f.z) - (u.z * f.y);
+    r.y = (u.z * f.x) - (u.x * f.z);
+    r.z = (u.x * f.y) - (u.y * f.x);
+
+    {
+        const float len2 =
+            (r.x * r.x) +
+            (r.y * r.y) +
+            (r.z * r.z);
+
+        if (len2 > 0.000001f) {
+            const float invLen = 1.0f / sqrtf(len2);
+            r.x *= invLen;
+            r.y *= invLen;
+            r.z *= invLen;
+        }
+    }
+
+    /* rebuild up so basis is perfectly orthogonal */
+    u.x = (f.y * r.z) - (f.z * r.y);
+    u.y = (f.z * r.x) - (f.x * r.z);
+    u.z = (f.x * r.y) - (f.y * r.x);
+
+    {
+        const float len2 =
+            (u.x * u.x) +
+            (u.y * u.y) +
+            (u.z * u.z);
+
+        if (len2 > 0.000001f) {
+            const float invLen = 1.0f / sqrtf(len2);
+            u.x *= invLen;
+            u.y *= invLen;
+            u.z *= invLen;
+        }
+    }
+
+    if (outRight)   *outRight   = r;
+    if (outUp)      *outUp      = u;
+    if (outForward) *outForward = f;
+}
+
+static int sb3dRayEntityCandidate(
+    Vec3 rayOrig,
+    Vec3 rayDir,
+    float maxDist,
+    const Entity *ent
+)
+{
+    float vx, vy, vz;
+    float t;
+    float cx, cy, cz;
+    float dx, dy, dz;
+    float dist2;
+    float r;
+
+    if (!ent || !ent->mesh) return 0;
+
+    cx = ent->pos.x;
+    cy = ent->pos.y;
+    cz = ent->pos.z;
+    r  = ent->mesh->boundsRadius;
+
+    vx = cx - rayOrig.x;
+    vy = cy - rayOrig.y;
+    vz = cz - rayOrig.z;
+
+    /* projection of entity center onto ray */
+    t = (vx * rayDir.x) + (vy * rayDir.y) + (vz * rayDir.z);
+
+    /* sphere completely behind ray start */
+    if (t < -r) {
+        return 0;
+    }
+
+    /* sphere completely beyond ray max distance */
+    if (t > (maxDist + r)) {
+        return 0;
+    }
+
+    /* clamp closest point to ray segment */
+    if (t < 0.0f) {
+        t = 0.0f;
+    } else if (t > maxDist) {
+        t = maxDist;
+    }
+
+    dx = (rayOrig.x + (rayDir.x * t)) - cx;
+    dy = (rayOrig.y + (rayDir.y * t)) - cy;
+    dz = (rayOrig.z + (rayDir.z * t)) - cz;
+
+    dist2 = (dx * dx) + (dy * dy) + (dz * dz);
+
+    return (dist2 <= (r * r));
+}
+
+int sb3dRaycastWorld(
+    Vec3 rayOrig,
+    Vec3 rayDir,
+    float maxDist,
+    SB3DRaycastHit *outHit
+)
+{
+    int found = 0;
+    float bestT = maxDist;
+
+    if (!outHit) return 0;
+
+    outHit->hit = 0;
+    outHit->entityId = -1;
+    outHit->triIndex = -1;
+    outHit->distance = 0.0f;
+    outHit->point = (Vec3){ 0.0f, 0.0f, 0.0f };
+    outHit->normal = (Vec3){ 0.0f, 0.0f, 0.0f };
+    outHit->right = (Vec3){ 1.0f, 0.0f, 0.0f };
+    outHit->up = (Vec3){ 0.0f, 1.0f, 0.0f };
+    outHit->forward = (Vec3){ 0.0f, 0.0f, 1.0f };
+
+    {
+        const float len2 =
+            (rayDir.x * rayDir.x) +
+            (rayDir.y * rayDir.y) +
+            (rayDir.z * rayDir.z);
+
+        if (len2 <= 0.000001f) {
+            return 0;
+        }
+
+        {
+            const float invLen = 1.0f / sqrtf(len2);
+            rayDir.x *= invLen;
+            rayDir.y *= invLen;
+            rayDir.z *= invLen;
+        }
+    }
+
+    for (int ei = 0; ei < WORLD_MAX; ei++) {
+        Entity *ent = &worldEntities[ei];
+        if (!ent->active) continue;
+        if (!ent->mesh) continue;
+
+        /* NEW: skip entities not marked for ray hit */
+        if ((ent->flags & ENTITY_HITTEST) == 0) continue;
+        if (!sb3dRayEntityCandidate(rayOrig, rayDir, bestT, ent))  continue;
+
+        {
+            const Mesh *mesh = ent->mesh;
+
+            for (int ti = 0; ti < mesh->triCount; ti++) {
+                const Tri *t = &mesh->tris[ti];
+                const Vec3 w0 = entityLocalToWorld(ent, mesh->verts[t->a]);
+                const Vec3 w1 = entityLocalToWorld(ent, mesh->verts[t->b]);
+                const Vec3 w2 = entityLocalToWorld(ent, mesh->verts[t->c]);
+
+                float hitT;
+                Vec3 hitNormal;
+
+                if (sb3dRayTriangleHitDetailed(
+                        rayOrig,
+                        rayDir,
+                        bestT,
+                        w0,
+                        w1,
+                        w2,
+                        &hitT,
+                        &hitNormal))
+                {
+                    Vec3 preferredForward;
+
+                    bestT = hitT;
+                    found = 1;
+
+                    outHit->hit = 1;
+                    outHit->entityId = ei;
+                    outHit->triIndex = ti;
+                    outHit->distance = hitT;
+
+                    outHit->point.x = rayOrig.x + (rayDir.x * hitT);
+                    outHit->point.y = rayOrig.y + (rayDir.y * hitT);
+                    outHit->point.z = rayOrig.z + (rayDir.z * hitT);
+
+                    outHit->normal = hitNormal;
+
+                    preferredForward.x = -rayDir.x;
+                    preferredForward.y = -rayDir.y;
+                    preferredForward.z = -rayDir.z;
+
+                    sb3dBuildHitBasis(
+                        hitNormal,
+                        preferredForward,
+                        &outHit->right,
+                        &outHit->up,
+                        &outHit->forward
+                    );
+                }
+            }
+        }
+    }
+
+    return found;
+}
+
+int sb3dRaycastFromCamera(
+    const Camera *cam,
+    float maxDist,
+    SB3DRaycastHit *outHit
+)
+{
+    Vec3 rayOrig;
+    Vec3 rayDir;
+
+    if (!cam || !outHit) return 0;
+
+    rayOrig = cam->pos;
+    rayDir  = cam->forward;
+
+    return sb3dRaycastWorld(rayOrig, rayDir, maxDist, outHit);
+}
+

@@ -57,7 +57,7 @@ int updateFPS() {
         fpsTimer = now;
     }
 
-            char buf[32];
+        char buf[32];
         sprintf(buf, "FPS: %d (Uncapped: %d)", fps, uncappedFPS);
         drawText(0, 1, buf, 16);
         drawText(2, 1, buf, 16);
@@ -119,7 +119,7 @@ void initSmoke(void)
 
 void updateSmoke(float t, Vec3 origin)
 {
-    float scale = 6.0f;
+    float scale = 16.0f;
 
     for (int i = 0; i < 32; i++) {
         Vec3 p;
@@ -262,11 +262,24 @@ int main(void) {
     for(int i = 0; i < 3; i++){
         ShipYard[i] = copyMesh(&shipMesh);
         shipYardID[i] = entityWorldSpawn(&ShipYard[i], vec3(-245, 42, 100 + (i * 100)));
-        entityRotation(shipYardID[i], degrees(90), 0, 0);
+        entityRotation(shipYardID[i], degrees(90), 0, 0, 1);
     }
 
+    entitySetPosition(shipYardID[1], vec3(-245, 82, 100 + (1 * 100)));
+
+    entitySetCollisionType(shipYardID[1], COLLISION_SPHERE);
+    entitySetCollisionRadius(shipYardID[1],26.0f);
+    entitySetCollisionHalfSize(shipYardID[1], vec3(20.0f, 20.0f, 20.0f));
+    entityEnableCollision(shipYardID[1], 1);
 
 
+    entitySetCollisionType(shipYardID[2], COLLISION_SPHERE);
+    entitySetCollisionHalfSize(shipYardID[2], vec3(20.0f, 20.0f, 20.0f));
+    entityEnableCollision(shipYardID[2], 1);
+
+
+
+    Vec3 startPos = {0,0,0};
 
     Mesh houseMesh;
     loadMeshSB3D("house1.sb3d", &houseMesh, 50.0f);
@@ -293,6 +306,17 @@ int main(void) {
     Mesh islandMesh;
     loadMeshSB3D("islandx.sb3d", &islandMesh, 200.0f);
     int island0 = entityWorldSpawn(&islandMesh, vec3(012, 0, 0));
+    entityAllowHit(island0, 1);
+
+    entitySetCollisionType(island0, COLLISION_MESH);
+    entitySetCollisionHalfSize(island0, vec3(1.0f, 1.0f, 1.0f));
+    entityEnableCollision(island0, 1);
+
+
+
+
+    Mesh hitSpherMesh = createBox(10,10,10);
+    int hitSphere0 = entityWorldSpawn(&hitSpherMesh, startPos);
 
     //Mesh textMesh;
     //loadMeshSB3D("text.sb3d", &textMesh, 50.0f);
@@ -332,6 +356,7 @@ int main(void) {
 
 
 
+    int MoveHitTest;
 
 
     
@@ -413,9 +438,12 @@ int main(void) {
             }
         }
 
+        static uint8_t hittestOut = 0;
+
         if(nextLogicUpdate)
         {
             nextLogicUpdate = 0;
+            hittestOut = 0;
         
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
 
@@ -431,6 +459,15 @@ int main(void) {
             float rx = 0.0f;
             float rz = 0.0f;
             float ryGlobal = 0.0f;
+
+
+            entityMoveWithCollision(shipYardID[1], vec3(0, -0.8, 0), &MoveHitTest, 1);
+            // Ship1 testing
+            if (keys[SDL_SCANCODE_HOME])     entityMoveWithCollision(shipYardID[1], vec3(0, 0, 2.0), &MoveHitTest, 0);
+            if (keys[SDL_SCANCODE_END])      entityMoveWithCollision(shipYardID[1], vec3(0, 0, -2.0), &MoveHitTest, 0);
+            if (keys[SDL_SCANCODE_DELETE])   entityTurnLocal(shipYardID[1], -0.04f, 0, 0);
+            if (keys[SDL_SCANCODE_PAGEDOWN]) entityTurnLocal(shipYardID[1],  0.04f, 0, 0);
+
 
             // thrust
             if (keys[SDL_SCANCODE_W] || mbLeft) cameraMove(&cam, 0.0f, 0.0f,  moveSpeed);
@@ -514,7 +551,26 @@ int main(void) {
             worldTime += 0.01;
 
 
-            updateSmoke(worldTime, vec3(-135,30,0));
+            // HIT TESTING 
+            static SB3DRaycastHit hit;
+            entitySetPosition(hitSphere0, vec3(999999.0f, 999999.0f, 999999.0f));
+            if (sb3dRaycastFromCamera(&cam, 2200.0f, &hit)) {
+                entitySetPosition(hitSphere0, vec3(hit.point.x, hit.point.y, hit.point.z));
+                //entitySetBasis(hitSphere0, hit.right, hit.up, hit.forward);
+                entityAlignToHit(hitSphere0, &hit); // same as entitySetBasis, just more convenient
+            }
+
+
+            int otherId;
+            if (entityCollision(shipYardID[1], &otherId)) {
+                /* hit otherId */
+                hittestOut = otherId;
+            }
+
+
+
+
+            updateSmoke(worldTime, vec3(-565,430,-800));
 
             resetRenderList();
             drawFakeHorizon(&cam, HosS, HosG, HosH, 0);
@@ -535,6 +591,28 @@ int main(void) {
         
 
         nextLogicUpdate = updateFPS();
+
+
+
+        char buf[32];
+        sprintf(buf, "HIT %lu, M:HIT %ld", hittestOut, MoveHitTest);
+        drawText(0, 31, buf, 16);
+        drawText(2, 31, buf, 16);
+        drawText(1, 30, buf, 16);
+        drawText(1, 32, buf, 16);
+        drawText(1, 31, buf, 15);
+
+
+
+
+
+
+
+
+
+
+
+
 
         videoMemToScreen();
         SDL_UpdateTexture(tex, NULL, pb, SCREEN_W * (int)sizeof(uint32_t));
