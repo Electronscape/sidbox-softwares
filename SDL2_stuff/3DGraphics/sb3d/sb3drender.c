@@ -1,3 +1,5 @@
+// file: render.c
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,15 +44,6 @@ static inline Vec3 lerpVec3(Vec3 a, Vec3 b, float t)
     out.z = a.z + ((b.z - a.z) * t);
     return out;
 }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -151,7 +144,7 @@ static int clipPolygonAgainstPlane(Vec3 *inVerts, int inCount, Vec3 *outVerts, C
     return outCount;
 }
 
-static int clipTriangleToFrustum(Vec3 a, Vec3 b, Vec3 c, Vec3 *outVerts, const Camera *cam)
+int clipTriangleToFrustum(Vec3 a, Vec3 b, Vec3 c, Vec3 *outVerts, const Camera *cam)
 {
     Vec3 poly1[CLIP_MAX_VERTS];
     Vec3 poly2[CLIP_MAX_VERTS];
@@ -246,7 +239,7 @@ static inline int triangleFacingCamera(Vec3 a, Vec3 b, Vec3 c)
     return (d < 0.0f);
 }
 
-static void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, float shadeF)
+void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, float shadeF)
 {
     Vec2 pa, pb, pc;
 
@@ -805,6 +798,7 @@ void Render3D(const Camera *cam)
 {
     resetRenderList();
     submitWorldEntities(cam);
+    sb3dParticlesRender(cam);
 
     if (g_wireframe) {
         if (g_enableZOrdering) {
@@ -820,7 +814,7 @@ void Render3D(const Camera *cam)
 
             if (rt->emission > 0) {
                 const float emissiveF = (float)rt->emission / 255.0f;
-                int emissiveShade = 4 - (int)(emissiveF * 4.0f + 0.5f);
+                int emissiveShade = (int)MAX_PALETTE_SHADE_INDEX - (int)(emissiveF * MAX_PALETTE_SHADE_INDEX + 0.5f);
                 if (emissiveShade < 0) emissiveShade = 0;
                 if (emissiveShade < shade) shade = emissiveShade;
             }

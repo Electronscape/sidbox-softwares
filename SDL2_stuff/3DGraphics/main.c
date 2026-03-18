@@ -94,6 +94,78 @@ Vec3 Light1Pos = {0.0f, 0.0f, 0.0f};
 uint8_t HosS, HosH, HosG, SeaDots;
 //static uint32_t indexTmrTest = 0;
 
+
+
+
+
+
+int smokeIds[32];
+
+void initSmoke(void)
+{
+    for (int i = 0; i < 32; i++) {
+        smokeIds[i] = sb3dParticleSpawnQuad(
+            (Vec3){ 0.0f, 0.0f, 0.0f },
+            0.5f,
+            COLOUR_OFFSET + 1,
+            3.0f,
+            0,
+            0.5
+        );
+    }
+}
+
+
+
+void updateSmoke(float t, Vec3 origin)
+{
+    float scale = 6.0f;
+
+    for (int i = 0; i < 32; i++) {
+        Vec3 p;
+        float age;
+        float rise;
+        float driftX;
+        float driftZ;
+        float size;
+        float shade;
+
+        if (smokeIds[i] < 0) continue;
+
+        age = fmodf((t * 0.35f) + ((float)i / 32.0f), 1.0f);
+
+        /* taller plume */
+        rise = (age * 14.0f) * scale;
+
+        /* wider sideways drift */
+        driftX =
+            sinf((t * 1.2f) + (float)i * 1.37f) *
+            ((0.35f + age * 1.25f) * scale);
+
+        driftZ =
+            cosf((t * 0.9f) + (float)i * 1.91f) *
+            ((0.35f + age * 1.00f) * scale);
+
+        p.x = origin.x + driftX;
+        p.y = origin.y + rise;
+        p.z = origin.z + driftZ;
+
+        /* bigger puffs */
+        size = (1.2f + (age * 3.5f)) * scale;
+
+        shade = 2.0f + (age * 2.0f);
+
+        sb3dParticleSetPosition(smokeIds[i], p);
+        sb3dParticleSetSize(smokeIds[i], size);
+        sb3dParticleSetShade(smokeIds[i], shade);
+        sb3dParticleSetColor(smokeIds[i], COLOUR_OFFSET + 1);
+        sb3dParticleSetEmission(smokeIds[i], 0);
+    }
+}
+
+
+
+
 int main(void) {
     //// HOST STARTUP
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -158,6 +230,7 @@ int main(void) {
     /* 4 darker shades after the base */
     float shades[5] = {1.0f, 0.75f, 0.55f, 0.35f, 0.20f};
     //float shades[5] = {1.0f, 1.20f, 1.35f, 1.55f, 1.75f};
+    float shades2[2] = {1.0f, 0.4f};
 
     uint32_t lightTarget = clut[16]; // e.g., warm sunlight tint
 
@@ -171,16 +244,15 @@ int main(void) {
     cameraSetRange(&cam, 0.01, 5000.0f);
     cameraNormalize(&cam);
 
+    worldClear();
     lightsClear();
+    sb3dParticlesClear();
+
 
     uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 0.01f, 1);
     uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -0.50f, 0.30}, 0.10, 1);
     uint8_t fighterLightId = addPointLight(vec3(0,0,0), 1.0f, 1);
     lightSetRanges(fighterLightId, 100.0f, 320.0f, 530.0f);
-
-
-    worldClear();
-
 
     Mesh shipMesh; loadMeshSB3D("shipv1.sb3d", &shipMesh, 10.0f);
     Mesh shipTestMesh = copyMesh(&shipMesh);
@@ -222,14 +294,13 @@ int main(void) {
     loadMeshSB3D("islandx.sb3d", &islandMesh, 200.0f);
     int island0 = entityWorldSpawn(&islandMesh, vec3(012, 0, 0));
 
-    Mesh textMesh;
-    loadMeshSB3D("text.sb3d", &textMesh, 50.0f);
-    int text0 = entityWorldSpawn(&textMesh, vec3(0,200,0));
-    meshSetMaterial(&textMesh, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
+    //Mesh textMesh;
+    //loadMeshSB3D("text.sb3d", &textMesh, 50.0f);
+    //int text0 = entityWorldSpawn(&textMesh, vec3(0,200,0));
+    //meshSetMaterial(&textMesh, 0.00f, 0.55f, 0.0f, 1.50f, 64.0f);   // shiny metal
 
 
-
-
+    initSmoke();
        
     ///[ END WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////
 
@@ -259,6 +330,11 @@ int main(void) {
     HosG = 59;
     HosH = 43;
 
+
+
+
+
+    
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
     while (running) {
@@ -430,16 +506,15 @@ int main(void) {
             lightSetPosition(fighterLightId, theShipPos);
             //lightSetRanges(fighterLightId, 100.0f, 320.0f, 530.0f);
 
-
-            entityLookAt(text0, shipTest, 1);
-
-
             Vec3 pv1 = entityLookAt(shipYardID[0], shipTest, 1);
             //entityRotation(shipYardID[0], pv1.y, 0, 0);
 
             //////////////////////////
+            static float worldTime;
+            worldTime += 0.01;
 
-            //clearScreen(0);
+
+            updateSmoke(worldTime, vec3(-135,30,0));
 
             resetRenderList();
             drawFakeHorizon(&cam, HosS, HosG, HosH, 0);

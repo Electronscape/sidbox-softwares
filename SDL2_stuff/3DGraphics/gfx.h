@@ -36,6 +36,11 @@ typedef enum {
     DITHER_RANDOM   = 1
 } DitherMode;
 
+#define MAX_PALETTE_SHADE_INDEX  5
+#define MAX_PALETTE_SHADE_COUNT  (MAX_PALETTE_SHADE_INDEX)  // this is used when the light doesnt hit at all (uses)
+
+#define PALETTE_SHADE_OFFSETS    32
+#define BLACK_SHADE_PALETTE      16
 
 #define ZBUF_BAND_H  32
 extern uint16_t g_depthBufferBand[SCREEN_W * ZBUF_BAND_H];

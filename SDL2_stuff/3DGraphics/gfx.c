@@ -1,3 +1,5 @@
+// file: gfx.c
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -434,19 +436,19 @@ static uint32_t fastRand(void){
 uint8_t shadeColor(uint8_t baseColor, int shade)
 {
     if (shade < 0) shade = 0;
-    if (shade >= 5) return 16;
+    if (shade >= MAX_PALETTE_SHADE_COUNT) return BLACK_SHADE_PALETTE;
 
-    return (uint8_t)(32 + (baseColor & 15) + (shade * 16));
+    return (uint8_t)(PALETTE_SHADE_OFFSETS + (baseColor & 15) + (shade * 16));
 }
 
 static uint8_t ditherShadeColor(uint8_t baseColor, float shadeF, int x, int y, DitherMode mode)
 {
     if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
+    if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
     int s0 = (int)shadeF;
     int s1 = s0 + 1;
-    if (s1 > 5) s1 = 5;
+    if (s1 > (int)MAX_PALETTE_SHADE_COUNT) s1 = (int)MAX_PALETTE_SHADE_COUNT;
 
     const float frac = shadeF - (float)s0;
 
@@ -528,11 +530,11 @@ void fillTriangleDitherZBandBayer(
     maxY = clampi(maxY, bandY0, bandY1);
 
     if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
+    if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
     int s0 = (int)shadeF;
     int s1 = s0 + 1;
-    if (s1 > 5) s1 = 5;
+    if (s1 > (int)MAX_PALETTE_SHADE_COUNT) s1 = (int)MAX_PALETTE_SHADE_COUNT;
 
     const float frac = shadeF - (float)s0;
     int threshold16 = (int)(frac * 16.0f);
@@ -701,7 +703,7 @@ void fillTriangleZBandFlat(
 
     int shade = (int)(shadeF + 0.5f);
     if (shade < 0) shade = 0;
-    if (shade > 4) shade = 4;
+    if (shade > (int)MAX_PALETTE_SHADE_INDEX) shade = (int)MAX_PALETTE_SHADE_INDEX;
     const uint8_t col = shadeColor(baseColor, shade);
 
     const float fx0 = (float)x0;
@@ -739,15 +741,10 @@ void fillTriangleZBandFlat(
     const float B2 = fx1 - fx0;
     const float C2 = (fx0 * fy1) - (fy0 * fx1);
 
-    const float qStepX =
-        (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
-    const float qStepY =
-        (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
-
-    const float zqStepX =
-        (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
-    const float zqStepY =
-        (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
+    const float qStepX =  (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
+    const float qStepY =  (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
+    const float zqStepX = (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
+    const float zqStepY = (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
 
     const float startPx = (float)minX + 0.5f;
     const float startPy = (float)minY + 0.5f;
@@ -756,11 +753,8 @@ void fillTriangleZBandFlat(
     float rowW1 = (A1 * startPx) + (B1 * startPy) + C1;
     float rowW2 = (A2 * startPx) + (B2 * startPy) + C2;
 
-    float rowQ =
-        ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
-
-    float rowZQ =
-        ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
+    float rowQ =  ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
+    float rowZQ = ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
 
     const int width = (maxX - minX) + 1;
 
@@ -846,12 +840,12 @@ void fillTriangleDither2Mode(
     if (area == 0) return;
 
     if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
+    if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
     const uint8_t col0 = baseColor;
-    const uint8_t col1 = 16;
+    const uint8_t col1 = BLACK_SHADE_PALETTE;
 
-    int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
+    int threshold16 = (int)((shadeF / MAX_PALETTE_SHADE_COUNT) * 16.0f);
     if (threshold16 < 0) threshold16 = 0;
     if (threshold16 > 16) threshold16 = 16;
 
@@ -959,12 +953,12 @@ void fillTriangleDitherZBandBayer2Mode(
     maxY = clampi(maxY, bandY0, bandY1);
 
     if (shadeF < 0.0f) shadeF = 0.0f;
-    if (shadeF > 5.0f) shadeF = 5.0f;
+    if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
     const uint8_t col0 = baseColor;
-    const uint8_t col1 = 16;
+    const uint8_t col1 = BLACK_SHADE_PALETTE;
 
-    int threshold16 = (int)((shadeF / 5.0f) * 16.0f);
+    int threshold16 = (int)((shadeF / MAX_PALETTE_SHADE_COUNT) * 16.0f);
     if (threshold16 < 0) threshold16 = 0;
     if (threshold16 > 16) threshold16 = 16;
 
@@ -1158,11 +1152,11 @@ void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t 
             }
         } else {
             if (shadeF < 0.0f) shadeF = 0.0f;
-            if (shadeF > 5.0f) shadeF = 5.0f;
+            if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
             int s0 = (int)shadeF;
             int s1 = s0 + 1;
-            if (s1 > 5) s1 = 5;
+            if (s1 > (int)MAX_PALETTE_SHADE_COUNT) s1 = (int)MAX_PALETTE_SHADE_COUNT;
 
             const float frac = shadeF - (float)s0;
             int threshold16 = (int)(frac * 16.0f);

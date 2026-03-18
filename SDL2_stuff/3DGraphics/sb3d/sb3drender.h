@@ -2,9 +2,12 @@
 #define RENDER3D_H
 
 #include "sb3dworld.h"
+#include "../gfx.h"
 
 #define CLIP_MAX_VERTS 8
 #define SB3D_MAX_VERTS 4096
+
+
 
 #define PROJ_F 200.0f
 
@@ -16,6 +19,8 @@ typedef enum {
     PLANE_BOTTOM
 } ClipPlane;
 
+int clipTriangleToFrustum(Vec3 a, Vec3 b, Vec3 c, Vec3 *outVerts, const Camera *cam);
+void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, float shadeF);
 
 
 void setDefaultRenderMode();
