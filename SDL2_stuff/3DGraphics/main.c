@@ -184,9 +184,7 @@ int main(void) {
         return 1;
     }
 
-    //SDL_Renderer *ren = SDL_CreateRenderer(sdl_win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_Renderer *ren = SDL_CreateRenderer(sdl_win, -1, SDL_RENDERER_ACCELERATED);
-    SDL_Texture  *tex = SDL_CreateTexture (ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_W, SCREEN_H);
     if (!ren) {
         fprintf(stderr, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
         SDL_DestroyWindow(sdl_win);
@@ -194,6 +192,13 @@ int main(void) {
         return 1;
     }
 
+    SDL_Texture *tex = SDL_CreateTexture(
+        ren,
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_STREAMING,
+        SCREEN_W,
+        SCREEN_H
+    );
     if (!tex) {
         fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
         SDL_DestroyRenderer(ren);
@@ -201,7 +206,8 @@ int main(void) {
         SDL_Quit();
         return 1;
     }
-    
+
+
     int running = 1;
     const int tick_ms = A_FPS_MS;
     uint32_t last = SDL_GetTicks();
@@ -222,20 +228,14 @@ int main(void) {
     };
 
     clut[0] = 0xff000000;
-    //clut[16] = 0xff2B5792;
     clut[16] = 0xff000000;
     
-
-
     /* 4 darker shades after the base */
     float shades[5] = {1.0f, 0.75f, 0.55f, 0.35f, 0.20f};
-    //float shades[5] = {1.0f, 1.20f, 1.35f, 1.55f, 1.75f};
     float shades2[2] = {1.0f, 0.4f};
-
     uint32_t lightTarget = clut[16]; // e.g., warm sunlight tint
+    buildLightingCLUT(clut, baseColors, 16, lightTarget, shades);     // replace your old nested loop
 
-    // replace your old nested loop
-    buildLightingCLUT(clut, baseColors, 16, lightTarget, shades);
 
 ///[ WORLD 3D SETUP TEST ]////////////////////////////////////////////////////////////////////
 
@@ -250,7 +250,7 @@ int main(void) {
 
 
     uint8_t Camlightid = addPointLight((Vec3){  0.0f, 0.0f, 0.0f }, 0.01f, 1);
-    uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -0.50f, 0.30}, 0.10, 1);
+    uint8_t SunlightId = addDirectionalLight((Vec3){ -1.0, -1.50f, 0.30}, 0.10, 1);
     uint8_t fighterLightId = addPointLight(vec3(0,0,0), 1.0f, 1);
     lightSetRanges(fighterLightId, 100.0f, 320.0f, 530.0f);
 
@@ -552,6 +552,7 @@ int main(void) {
 
 
             // HIT TESTING 
+            //*
             static SB3DRaycastHit hit;
             entitySetPosition(hitSphere0, vec3(999999.0f, 999999.0f, 999999.0f));
             if (sb3dRaycastFromCamera(&cam, 2200.0f, &hit)) {
@@ -563,9 +564,10 @@ int main(void) {
 
             int otherId;
             if (entityCollision(shipYardID[1], &otherId)) {
-                /* hit otherId */
+                
                 hittestOut = otherId;
             }
+            //*/
 
 
 

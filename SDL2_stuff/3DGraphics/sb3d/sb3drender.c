@@ -281,13 +281,15 @@ void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_
 
 int projectPoint(Vec3 p, const Camera *cam, Vec2 *out)
 {
+    const float invZ = 1.0f / p.z;
+    const float f = sb3d_proj_f();
+
     if (p.z <= cam->nearPlane) {
         return 0;
     }
 
-    const float f = sb3d_proj_f();
-    out->x = (int)lroundf((p.x / p.z) * f) + (SCREEN_W / 2);
-    out->y = (int)lroundf((-p.y / p.z) * f) + (SCREEN_H / 2);
+    out->x = (int)((p.x * f * invZ) + (SCREEN_W * 0.5f) + 0.5f);
+    out->y = (int)((-p.y * f * invZ) + (SCREEN_H * 0.5f) + 0.5f);
     return 1;
 }
 
@@ -337,8 +339,7 @@ void submitWorldEntities(const Camera *cam)
 
         if (!ent->active) continue;
         if (!ent->mesh) continue;
-        if (!ent->flags & ENTITY_VISIBLE) continue;;
-
+        if ((ent->flags & ENTITY_VISIBLE) == 0) continue;
 
         if (entityVisible(ent, cam)) {
             renderEntities[visibleCount++] = ent;
@@ -937,122 +938,149 @@ void Render3D(const Camera *cam)
     }
 }
 
-
 void submitEntitySolid(const Entity *ent, const Camera *cam)
 {
+    const Mesh *mesh;
+    const Material *mat;
+    Light *lights;
+    int lightCount;
+
+    float matAmbient;
+    float matEmissive;
+    float matDiffuse;
+    float matSpec;
+    float matShiny;
+
+    float entPosX, entPosY, entPosZ;
+    float erx, ery, erz;
+    float eux, euy, euz;
+    float efx, efy, efz;
+
+    float camPosX, camPosY, camPosZ;
+    float crx, cry, crz;
+    float cux, cuy, cuz;
+    float cfx, cfy, cfz;
+
     if (!ent || !cam) return;
     if (!ent->mesh) return;
 
-    const Mesh *mesh = ent->mesh;
-    const Material *mat = &mesh->material;
+    mesh = ent->mesh;
+    if (!mesh->verts || !mesh->tris) return;
+    if (mesh->vertCount <= 0 || mesh->vertCount > SB3D_MAX_VERTS) return;
+    if (mesh->triCount <= 0) return;
 
-    if (mesh->vertCount <= 0 || mesh->vertCount > SB3D_MAX_VERTS) {
-        return;
-    }
+    mat = &mesh->material;
+    lights = lightsGet();
+    lightCount = lightsGetCount();
 
-    Light *lights = lightsGet();
-    const int lightCount = lightsGetCount();
+    matAmbient  = mat->ambient;
+    matEmissive = mat->emissive;
+    matDiffuse  = mat->diffuse;
+    matSpec     = mat->specularStrength;
+    matShiny    = mat->shininess;
 
-    const float matAmbient  = mat->ambient;
-    const float matEmissive = mat->emissive;
-    const float matDiffuse  = mat->diffuse;
-    const float matSpec     = mat->specularStrength;
-    const float matShiny    = mat->shininess;
+    entPosX = ent->pos.x;
+    entPosY = ent->pos.y;
+    entPosZ = ent->pos.z;
 
-    const float entPosX = ent->pos.x;
-    const float entPosY = ent->pos.y;
-    const float entPosZ = ent->pos.z;
+    erx = ent->right.x;
+    ery = ent->right.y;
+    erz = ent->right.z;
 
-    const float erx = ent->right.x;
-    const float ery = ent->right.y;
-    const float erz = ent->right.z;
+    eux = ent->up.x;
+    euy = ent->up.y;
+    euz = ent->up.z;
 
-    const float eux = ent->up.x;
-    const float euy = ent->up.y;
-    const float euz = ent->up.z;
+    efx = ent->forward.x;
+    efy = ent->forward.y;
+    efz = ent->forward.z;
 
-    const float efx = ent->forward.x;
-    const float efy = ent->forward.y;
-    const float efz = ent->forward.z;
+    camPosX = cam->pos.x;
+    camPosY = cam->pos.y;
+    camPosZ = cam->pos.z;
 
-    const float camPosX = cam->pos.x;
-    const float camPosY = cam->pos.y;
-    const float camPosZ = cam->pos.z;
+    crx = cam->right.x;
+    cry = cam->right.y;
+    crz = cam->right.z;
 
-    const float crx = cam->right.x;
-    const float cry = cam->right.y;
-    const float crz = cam->right.z;
+    cux = cam->up.x;
+    cuy = cam->up.y;
+    cuz = cam->up.z;
 
-    const float cux = cam->up.x;
-    const float cuy = cam->up.y;
-    const float cuz = cam->up.z;
-
-    const float cfx = cam->forward.x;
-    const float cfy = cam->forward.y;
-    const float cfz = cam->forward.z;
+    cfx = cam->forward.x;
+    cfy = cam->forward.y;
+    cfz = cam->forward.z;
 
     /*
-        Build world-space + camera-space vertex caches ONCE for this entity.
+        Build world-space + camera-space vertex caches once per entity
     */
     for (int vi = 0; vi < mesh->vertCount; vi++) {
-        const Vec3 lv = mesh->verts[vi];
+        const Vec3 *lv = &mesh->verts[vi];
+        float wx, wy, wz;
+        float dx, dy, dz;
 
-        const float wx =
-            entPosX +
-            (erx * lv.x) +
-            (eux * lv.y) +
-            (efx * lv.z);
-
-        const float wy =
-            entPosY +
-            (ery * lv.x) +
-            (euy * lv.y) +
-            (efy * lv.z);
-
-        const float wz =
-            entPosZ +
-            (erz * lv.x) +
-            (euz * lv.y) +
-            (efz * lv.z);
+        wx = entPosX + (erx * lv->x) + (eux * lv->y) + (efx * lv->z);
+        wy = entPosY + (ery * lv->x) + (euy * lv->y) + (efy * lv->z);
+        wz = entPosZ + (erz * lv->x) + (euz * lv->y) + (efz * lv->z);
 
         g_worldVertsCache[vi].x = wx;
         g_worldVertsCache[vi].y = wy;
         g_worldVertsCache[vi].z = wz;
 
-        {
-            const float dx = wx - camPosX;
-            const float dy = wy - camPosY;
-            const float dz = wz - camPosZ;
+        dx = wx - camPosX;
+        dy = wy - camPosY;
+        dz = wz - camPosZ;
 
-            g_camVertsCache[vi].x = (dx * crx) + (dy * cry) + (dz * crz);
-            g_camVertsCache[vi].y = (dx * cux) + (dy * cuy) + (dz * cuz);
-            g_camVertsCache[vi].z = (dx * cfx) + (dy * cfy) + (dz * cfz);
-        }
+        g_camVertsCache[vi].x = (dx * crx) + (dy * cry) + (dz * crz);
+        g_camVertsCache[vi].y = (dx * cux) + (dy * cuy) + (dz * cuz);
+        g_camVertsCache[vi].z = (dx * cfx) + (dy * cfy) + (dz * cfz);
     }
 
     for (int i = 0; i < mesh->triCount; i++) {
-        const Tri t = mesh->tris[i];
+        const Tri *t;
+        const Vec3 *wa;
+        const Vec3 *wb;
+        const Vec3 *wc;
+        const Vec3 *a;
+        const Vec3 *b;
+        const Vec3 *c;
 
-        const Vec3 wa = g_worldVertsCache[t.a];
-        const Vec3 wb = g_worldVertsCache[t.b];
-        const Vec3 wc = g_worldVertsCache[t.c];
+        float abx, aby, abz;
+        float acx, acy, acz;
+        float nx, ny, nz;
+        float nlen2;
 
-        const Vec3 a = g_camVertsCache[t.a];
-        const Vec3 b = g_camVertsCache[t.b];
-        const Vec3 c = g_camVertsCache[t.c];
+        float faceCX, faceCY, faceCZ;
+        float faceEmission;
+        float brightness;
 
-        if (a.z > cam->farPlane && b.z > cam->farPlane && c.z > cam->farPlane) {
+        float vx, vy, vz;
+        float vlen2;
+
+        Vec3 clipped[CLIP_MAX_VERTS];
+        int clippedCount;
+
+        t = &mesh->tris[i];
+
+        wa = &g_worldVertsCache[t->a];
+        wb = &g_worldVertsCache[t->b];
+        wc = &g_worldVertsCache[t->c];
+
+        a = &g_camVertsCache[t->a];
+        b = &g_camVertsCache[t->b];
+        c = &g_camVertsCache[t->c];
+
+        if (a->z > cam->farPlane && b->z > cam->farPlane && c->z > cam->farPlane) {
             continue;
         }
 
     #if USE_BACKFACE_CULL
-        if (!triangleFacingCamera(a, b, c)) {
+        if (!triangleFacingCamera(*a, *b, *c)) {
             continue;
         }
     #endif
 
-        Vec3 clipped[CLIP_MAX_VERTS];
-        const int clippedCount = clipTriangleToFrustum(a, b, c, clipped, cam);
+        clippedCount = clipTriangleToFrustum(*a, *b, *c, clipped, cam);
         if (clippedCount < 3) {
             continue;
         }
@@ -1060,24 +1088,26 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         /*
             World-space face normal
         */
-        const float abx = wb.x - wa.x;
-        const float aby = wb.y - wa.y;
-        const float abz = wb.z - wa.z;
+        abx = wb->x - wa->x;
+        aby = wb->y - wa->y;
+        abz = wb->z - wa->z;
 
-        const float acx = wc.x - wa.x;
-        const float acy = wc.y - wa.y;
-        const float acz = wc.z - wa.z;
+        acx = wc->x - wa->x;
+        acy = wc->y - wa->y;
+        acz = wc->z - wa->z;
 
-        float nx = (aby * acz) - (abz * acy);
-        float ny = (abz * acx) - (abx * acz);
-        float nz = (abx * acy) - (aby * acx);
+        nx = (aby * acz) - (abz * acy);
+        ny = (abz * acx) - (abx * acz);
+        nz = (abx * acy) - (aby * acx);
 
-        const float nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
+        nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
         if (nlen2 > 0.000001f) {
-            const float invNLen = 1.0f / sqrtf(nlen2);
-            nx *= invNLen;
-            ny *= invNLen;
-            nz *= invNLen;
+            if (nlen2 < 0.999f || nlen2 > 1.001f) {
+                const float invNLen = 1.0f / sqrtf(nlen2);
+                nx *= invNLen;
+                ny *= invNLen;
+                nz *= invNLen;
+            }
         } else {
             nx = 0.0f;
             ny = 0.0f;
@@ -1087,49 +1117,57 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         /*
             World-space face center
         */
-        const float cx = (wa.x + wb.x + wc.x) * (1.0f / 3.0f);
-        const float cy = (wa.y + wb.y + wc.y) * (1.0f / 3.0f);
-        const float cz = (wa.z + wb.z + wc.z) * (1.0f / 3.0f);
+        faceCX = (wa->x + wb->x + wc->x) * (1.0f / 3.0f);
+        faceCY = (wa->y + wb->y + wc->y) * (1.0f / 3.0f);
+        faceCZ = (wa->z + wb->z + wc->z) * (1.0f / 3.0f);
 
-        const float faceEmission = (float)t.emission / 255.0f;
-        float brightness = matAmbient + matEmissive;
+        faceEmission = (float)t->emission / 255.0f;
+        brightness = matAmbient + matEmissive;
 
         /*
             View vector once per face
         */
-        float vx = camPosX - cx;
-        float vy = camPosY - cy;
-        float vz = camPosZ - cz;
+        vx = camPosX - faceCX;
+        vy = camPosY - faceCY;
+        vz = camPosZ - faceCZ;
 
-        {
-            const float vlen2 = (vx * vx) + (vy * vy) + (vz * vz);
-            if (vlen2 > 0.000001f) {
+        vlen2 = (vx * vx) + (vy * vy) + (vz * vz);
+        if (vlen2 > 0.000001f) {
+            if (vlen2 < 0.999f || vlen2 > 1.001f) {
                 const float invVLen = 1.0f / sqrtf(vlen2);
                 vx *= invVLen;
                 vy *= invVLen;
                 vz *= invVLen;
-            } else {
-                vx = 0.0f;
-                vy = 0.0f;
-                vz = 0.0f;
             }
+        } else {
+            vx = 0.0f;
+            vy = 0.0f;
+            vz = 0.0f;
         }
 
         for (int li = 0; li < lightCount; li++) {
-            const Light *ls = &lights[li];
+            const Light *ls;
+            float lx, ly, lz;
+            float attenuation;
+            float ndotl;
+
+            ls = &lights[li];
             if (!ls->enabled) continue;
 
-            float lx, ly, lz;
-            float attenuation = 1.0f;
+            attenuation = 1.0f;
 
             if (ls->type == LIGHT_POINT) {
-                lx = ls->pos.x - cx;
-                ly = ls->pos.y - cy;
-                lz = ls->pos.z - cz;
+                float dist2;
+                float near2;
+                float beyond2;
 
-                const float dist2   = (lx * lx) + (ly * ly) + (lz * lz);
-                const float near2   = ls->near   * ls->near;
-                const float beyond2 = ls->beyond * ls->beyond;
+                lx = ls->pos.x - faceCX;
+                ly = ls->pos.y - faceCY;
+                lz = ls->pos.z - faceCZ;
+
+                dist2   = (lx * lx) + (ly * ly) + (lz * lz);
+                near2   = ls->near   * ls->near;
+                beyond2 = ls->beyond * ls->beyond;
 
                 if (dist2 >= beyond2) {
                     continue;
@@ -1184,15 +1222,12 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
                     attenuation = 1.0f;
                 }
             } else {
-                /*
-                    Directional light dir assumed already normalized when set.
-                */
                 lx = -ls->dir.x;
                 ly = -ls->dir.y;
                 lz = -ls->dir.z;
             }
 
-            float ndotl = (nx * lx) + (ny * ly) + (nz * lz);
+            ndotl = (nx * lx) + (ny * ly) + (nz * lz);
             if (ndotl <= 0.0f) {
                 continue;
             }
@@ -1200,11 +1235,15 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
             brightness += ndotl * ls->intensity * attenuation * matDiffuse;
 
             if (matSpec > 0.0f) {
-                const float rx = (2.0f * ndotl * nx) - lx;
-                const float ry = (2.0f * ndotl * ny) - ly;
-                const float rz = (2.0f * ndotl * nz) - lz;
+                float rdx, rdy, rdz;
+                float rdotv;
 
-                float rdotv = (rx * vx) + (ry * vy) + (rz * vz);
+                rdx = (2.0f * ndotl * nx) - lx;
+                rdy = (2.0f * ndotl * ny) - ly;
+                rdz = (2.0f * ndotl * nz) - lz;
+
+                rdotv = (rdx * vx) + (rdy * vy) + (rdz * vz);
+
                 if (rdotv > 0.0f) {
                     float specPow;
 
@@ -1213,13 +1252,15 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
                         s *= s;
                         s *= s;
                         specPow = s;
-                    } else if (matShiny == 16.0f) {
+                    }
+                    else if (matShiny == 16.0f) {
                         float s = rdotv * rdotv;
                         s *= s;
                         s *= s;
                         s *= s;
                         specPow = s;
-                    } else {
+                    }
+                    else {
                         specPow = powf(rdotv, matShiny);
                     }
 
@@ -1241,8 +1282,8 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
                     clipped[k],
                     clipped[k + 1],
                     (Camera *)cam,
-                    t.color,
-                    t.emission,
+                    t->color,
+                    t->emission,
                     shadeF
                 );
             }
@@ -1593,8 +1634,6 @@ void drawEntitySolid(const Entity *ent, const Camera *cam)
 }
 
 
-
-
 static int sb3dRayTriangleHitDetailed(
     Vec3 rayOrig,
     Vec3 rayDir,
@@ -1622,18 +1661,18 @@ static int sb3dRayTriangleHitDetailed(
 
     const float det = (e1x * px) + (e1y * py) + (e1z * pz);
 
-    if (fabsf(det) < EPS) {
+    if (det > -EPS && det < EPS) {
         return 0;
     }
 
     {
-        const float invDet = 1.0f / det;
-
         const float tx = rayOrig.x - v0.x;
         const float ty = rayOrig.y - v0.y;
         const float tz = rayOrig.z - v0.z;
 
+        const float invDet = 1.0f / det;
         const float u = ((tx * px) + (ty * py) + (tz * pz)) * invDet;
+
         if (u < 0.0f || u > 1.0f) {
             return 0;
         }
@@ -1643,6 +1682,7 @@ static int sb3dRayTriangleHitDetailed(
         const float qz = (tx * e1y) - (ty * e1x);
 
         const float v = ((rayDir.x * qx) + (rayDir.y * qy) + (rayDir.z * qz)) * invDet;
+
         if (v < 0.0f || (u + v) > 1.0f) {
             return 0;
         }
@@ -1650,11 +1690,7 @@ static int sb3dRayTriangleHitDetailed(
         {
             const float tHit = ((e2x * qx) + (e2y * qy) + (e2z * qz)) * invDet;
 
-            if (tHit <= EPS) {
-                return 0;
-            }
-
-            if (tHit > maxDist) {
+            if (tHit <= EPS || tHit > maxDist) {
                 return 0;
             }
 
@@ -1670,11 +1706,14 @@ static int sb3dRayTriangleHitDetailed(
         float nz = (e1x * e2y) - (e1y * e2x);
 
         const float nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
+
         if (nlen2 > 0.000001f) {
-            const float invNLen = 1.0f / sqrtf(nlen2);
-            nx *= invNLen;
-            ny *= invNLen;
-            nz *= invNLen;
+            if (nlen2 < 0.999f || nlen2 > 1.001f) {
+                const float invNLen = 1.0f / sqrtf(nlen2);
+                nx *= invNLen;
+                ny *= invNLen;
+                nz *= invNLen;
+            }
         } else {
             nx = 0.0f;
             ny = 0.0f;
@@ -1689,7 +1728,6 @@ static int sb3dRayTriangleHitDetailed(
     return 1;
 }
 
-
 static void sb3dBuildHitBasis(
     Vec3 normal,
     Vec3 preferredForward,
@@ -1698,117 +1736,124 @@ static void sb3dBuildHitBasis(
     Vec3 *outForward
 )
 {
-    Vec3 f;
-    Vec3 r;
-    Vec3 u;
-    Vec3 helper;
+    float fx = normal.x;
+    float fy = normal.y;
+    float fz = normal.z;
 
-    /* forward = surface normal */
-    f = normal;
+    float ux, uy, uz;
+    float rx, ry, rz;
 
-    /*
-        project preferredForward onto plane perpendicular to normal
-        so we get a stable tangent direction
-    */
+    {
+        const float flen2 = (fx * fx) + (fy * fy) + (fz * fz);
+        if (flen2 > 0.000001f) {
+            if (flen2 < 0.999f || flen2 > 1.001f) {
+                const float invLen = 1.0f / sqrtf(flen2);
+                fx *= invLen;
+                fy *= invLen;
+                fz *= invLen;
+            }
+        } else {
+            fx = 0.0f;
+            fy = 0.0f;
+            fz = 1.0f;
+        }
+    }
+
     {
         const float d =
-            (preferredForward.x * f.x) +
-            (preferredForward.y * f.y) +
-            (preferredForward.z * f.z);
+            (preferredForward.x * fx) +
+            (preferredForward.y * fy) +
+            (preferredForward.z * fz);
 
-        u.x = preferredForward.x - (f.x * d);
-        u.y = preferredForward.y - (f.y * d);
-        u.z = preferredForward.z - (f.z * d);
+        ux = preferredForward.x - (fx * d);
+        uy = preferredForward.y - (fy * d);
+        uz = preferredForward.z - (fz * d);
     }
 
-    /*
-        if preferredForward is too parallel to the normal,
-        choose a fallback helper axis
-    */
     {
-        const float len2 =
-            (u.x * u.x) +
-            (u.y * u.y) +
-            (u.z * u.z);
+        const float ulen2 = (ux * ux) + (uy * uy) + (uz * uz);
 
-        if (len2 <= 0.000001f) {
-            if (f.y > -0.9f && f.y < 0.9f) {
-                helper = (Vec3){ 0.0f, 1.0f, 0.0f };
+        if (ulen2 <= 0.000001f) {
+            if (fy > -0.9f && fy < 0.9f) {
+                ux = -fx * fy;
+                uy = 1.0f - (fy * fy);
+                uz = -fz * fy;
             } else {
-                helper = (Vec3){ 1.0f, 0.0f, 0.0f };
-            }
-
-            {
-                const float d =
-                    (helper.x * f.x) +
-                    (helper.y * f.y) +
-                    (helper.z * f.z);
-
-                u.x = helper.x - (f.x * d);
-                u.y = helper.y - (f.y * d);
-                u.z = helper.z - (f.z * d);
+                ux = 1.0f - (fx * fx);
+                uy = -fy * fx;
+                uz = -fz * fx;
             }
         }
     }
 
-    /* normalize u */
     {
-        const float len2 =
-            (u.x * u.x) +
-            (u.y * u.y) +
-            (u.z * u.z);
+        const float ulen2 = (ux * ux) + (uy * uy) + (uz * uz);
 
-        if (len2 > 0.000001f) {
-            const float invLen = 1.0f / sqrtf(len2);
-            u.x *= invLen;
-            u.y *= invLen;
-            u.z *= invLen;
+        if (ulen2 > 0.000001f) {
+            const float invLen = 1.0f / sqrtf(ulen2);
+            ux *= invLen;
+            uy *= invLen;
+            uz *= invLen;
         } else {
-            u = (Vec3){ 0.0f, 1.0f, 0.0f };
+            ux = 0.0f;
+            uy = 1.0f;
+            uz = 0.0f;
         }
     }
 
-    /* right = up x forward */
-    r.x = (u.y * f.z) - (u.z * f.y);
-    r.y = (u.z * f.x) - (u.x * f.z);
-    r.z = (u.x * f.y) - (u.y * f.x);
+    rx = (uy * fz) - (uz * fy);
+    ry = (uz * fx) - (ux * fz);
+    rz = (ux * fy) - (uy * fx);
 
     {
-        const float len2 =
-            (r.x * r.x) +
-            (r.y * r.y) +
-            (r.z * r.z);
-
-        if (len2 > 0.000001f) {
-            const float invLen = 1.0f / sqrtf(len2);
-            r.x *= invLen;
-            r.y *= invLen;
-            r.z *= invLen;
+        const float rlen2 = (rx * rx) + (ry * ry) + (rz * rz);
+        if (rlen2 > 0.000001f) {
+            const float invLen = 1.0f / sqrtf(rlen2);
+            rx *= invLen;
+            ry *= invLen;
+            rz *= invLen;
+        } else {
+            rx = 1.0f;
+            ry = 0.0f;
+            rz = 0.0f;
         }
     }
 
-    /* rebuild up so basis is perfectly orthogonal */
-    u.x = (f.y * r.z) - (f.z * r.y);
-    u.y = (f.z * r.x) - (f.x * r.z);
-    u.z = (f.x * r.y) - (f.y * r.x);
+    uy = (fz * rx) - (fx * rz);
+    uz = (fx * ry) - (fy * rx);
+    ux = (fy * rz) - (fz * ry);
 
     {
-        const float len2 =
-            (u.x * u.x) +
-            (u.y * u.y) +
-            (u.z * u.z);
-
-        if (len2 > 0.000001f) {
-            const float invLen = 1.0f / sqrtf(len2);
-            u.x *= invLen;
-            u.y *= invLen;
-            u.z *= invLen;
+        const float ulen2 = (ux * ux) + (uy * uy) + (uz * uz);
+        if (ulen2 > 0.000001f) {
+            const float invLen = 1.0f / sqrtf(ulen2);
+            ux *= invLen;
+            uy *= invLen;
+            uz *= invLen;
+        } else {
+            ux = 0.0f;
+            uy = 1.0f;
+            uz = 0.0f;
         }
     }
 
-    if (outRight)   *outRight   = r;
-    if (outUp)      *outUp      = u;
-    if (outForward) *outForward = f;
+    if (outRight) {
+        outRight->x = rx;
+        outRight->y = ry;
+        outRight->z = rz;
+    }
+
+    if (outUp) {
+        outUp->x = ux;
+        outUp->y = uy;
+        outUp->z = uz;
+    }
+
+    if (outForward) {
+        outForward->x = fx;
+        outForward->y = fy;
+        outForward->z = fz;
+    }
 }
 
 static int sb3dRayEntityCandidate(
@@ -1820,45 +1865,42 @@ static int sb3dRayEntityCandidate(
 {
     float vx, vy, vz;
     float t;
-    float cx, cy, cz;
     float dx, dy, dz;
     float dist2;
     float r;
 
     if (!ent || !ent->mesh) return 0;
 
-    cx = ent->pos.x;
-    cy = ent->pos.y;
-    cz = ent->pos.z;
+    vx = ent->pos.x - rayOrig.x;
+    vy = ent->pos.y - rayOrig.y;
+    vz = ent->pos.z - rayOrig.z;
     r  = ent->mesh->boundsRadius;
 
-    vx = cx - rayOrig.x;
-    vy = cy - rayOrig.y;
-    vz = cz - rayOrig.z;
-
-    /* projection of entity center onto ray */
     t = (vx * rayDir.x) + (vy * rayDir.y) + (vz * rayDir.z);
 
-    /* sphere completely behind ray start */
     if (t < -r) {
         return 0;
     }
 
-    /* sphere completely beyond ray max distance */
     if (t > (maxDist + r)) {
         return 0;
     }
 
-    /* clamp closest point to ray segment */
-    if (t < 0.0f) {
-        t = 0.0f;
-    } else if (t > maxDist) {
-        t = maxDist;
+    if (t <= 0.0f) {
+        dx = rayOrig.x - ent->pos.x;
+        dy = rayOrig.y - ent->pos.y;
+        dz = rayOrig.z - ent->pos.z;
     }
-
-    dx = (rayOrig.x + (rayDir.x * t)) - cx;
-    dy = (rayOrig.y + (rayDir.y * t)) - cy;
-    dz = (rayOrig.z + (rayDir.z * t)) - cz;
+    else if (t >= maxDist) {
+        dx = (rayOrig.x + (rayDir.x * maxDist)) - ent->pos.x;
+        dy = (rayOrig.y + (rayDir.y * maxDist)) - ent->pos.y;
+        dz = (rayOrig.z + (rayDir.z * maxDist)) - ent->pos.z;
+    }
+    else {
+        dx = (rayOrig.x + (rayDir.x * t)) - ent->pos.x;
+        dy = (rayOrig.y + (rayDir.y * t)) - ent->pos.y;
+        dz = (rayOrig.z + (rayDir.z * t)) - ent->pos.z;
+    }
 
     dist2 = (dx * dx) + (dy * dy) + (dz * dz);
 
@@ -1897,7 +1939,7 @@ int sb3dRaycastWorld(
             return 0;
         }
 
-        {
+        if (len2 < 0.999f || len2 > 1.001f) {
             const float invLen = 1.0f / sqrtf(len2);
             rayDir.x *= invLen;
             rayDir.y *= invLen;
@@ -1907,50 +1949,92 @@ int sb3dRaycastWorld(
 
     for (int ei = 0; ei < WORLD_MAX; ei++) {
         Entity *ent = &worldEntities[ei];
+        const Mesh *mesh;
+        const Vec3 *verts;
+        const Tri *tris;
+        int triCount;
+
+        float px, py, pz;
+        float rx, ry, rz;
+        float ux, uy, uz;
+        float fx, fy, fz;
+
         if (!ent->active) continue;
         if (!ent->mesh) continue;
-
-        /* NEW: skip entities not marked for ray hit */
         if ((ent->flags & ENTITY_HITTEST) == 0) continue;
-        if (!sb3dRayEntityCandidate(rayOrig, rayDir, bestT, ent))  continue;
+        if (!sb3dRayEntityCandidate(rayOrig, rayDir, bestT, ent)) continue;
 
-        {
-            const Mesh *mesh = ent->mesh;
+        mesh = ent->mesh;
+        verts = mesh->verts;
+        tris = mesh->tris;
+        triCount = mesh->triCount;
 
-            for (int ti = 0; ti < mesh->triCount; ti++) {
-                const Tri *t = &mesh->tris[ti];
-                const Vec3 w0 = entityLocalToWorld(ent, mesh->verts[t->a]);
-                const Vec3 w1 = entityLocalToWorld(ent, mesh->verts[t->b]);
-                const Vec3 w2 = entityLocalToWorld(ent, mesh->verts[t->c]);
+        if (!verts || !tris || triCount <= 0) continue;
 
-                float hitT;
-                Vec3 hitNormal;
+        px = ent->pos.x;
+        py = ent->pos.y;
+        pz = ent->pos.z;
 
-                if (sb3dRayTriangleHitDetailed(
-                        rayOrig,
-                        rayDir,
-                        bestT,
-                        w0,
-                        w1,
-                        w2,
-                        &hitT,
-                        &hitNormal))
+        rx = ent->right.x;
+        ry = ent->right.y;
+        rz = ent->right.z;
+
+        ux = ent->up.x;
+        uy = ent->up.y;
+        uz = ent->up.z;
+
+        fx = ent->forward.x;
+        fy = ent->forward.y;
+        fz = ent->forward.z;
+
+        for (int ti = 0; ti < triCount; ti++) {
+            const Tri *t = &tris[ti];
+            const Vec3 *la = &verts[t->a];
+            const Vec3 *lb = &verts[t->b];
+            const Vec3 *lc = &verts[t->c];
+
+            Vec3 w0, w1, w2;
+            float hitT;
+            Vec3 hitNormal;
+
+            w0.x = px + (rx * la->x) + (ux * la->y) + (fx * la->z);
+            w0.y = py + (ry * la->x) + (uy * la->y) + (fy * la->z);
+            w0.z = pz + (rz * la->x) + (uz * la->y) + (fz * la->z);
+
+            w1.x = px + (rx * lb->x) + (ux * lb->y) + (fx * lb->z);
+            w1.y = py + (ry * lb->x) + (uy * lb->y) + (fy * lb->z);
+            w1.z = pz + (rz * lb->x) + (uz * lb->y) + (fz * lb->z);
+
+            w2.x = px + (rx * lc->x) + (ux * lc->y) + (fx * lc->z);
+            w2.y = py + (ry * lc->x) + (uy * lc->y) + (fy * lc->z);
+            w2.z = pz + (rz * lc->x) + (uz * lc->y) + (fz * lc->z);
+
+            if (sb3dRayTriangleHitDetailed(
+                    rayOrig,
+                    rayDir,
+                    bestT,
+                    w0,
+                    w1,
+                    w2,
+                    &hitT,
+                    &hitNormal))
+            {
+                bestT = hitT;
+                found = 1;
+
+                outHit->hit = 1;
+                outHit->entityId = ei;
+                outHit->triIndex = ti;
+                outHit->distance = hitT;
+
+                outHit->point.x = rayOrig.x + (rayDir.x * hitT);
+                outHit->point.y = rayOrig.y + (rayDir.y * hitT);
+                outHit->point.z = rayOrig.z + (rayDir.z * hitT);
+
+                outHit->normal = hitNormal;
+
                 {
                     Vec3 preferredForward;
-
-                    bestT = hitT;
-                    found = 1;
-
-                    outHit->hit = 1;
-                    outHit->entityId = ei;
-                    outHit->triIndex = ti;
-                    outHit->distance = hitT;
-
-                    outHit->point.x = rayOrig.x + (rayDir.x * hitT);
-                    outHit->point.y = rayOrig.y + (rayDir.y * hitT);
-                    outHit->point.z = rayOrig.z + (rayDir.z * hitT);
-
-                    outHit->normal = hitNormal;
 
                     preferredForward.x = -rayDir.x;
                     preferredForward.y = -rayDir.y;
@@ -1971,20 +2055,13 @@ int sb3dRaycastWorld(
     return found;
 }
 
+
 int sb3dRaycastFromCamera(
     const Camera *cam,
     float maxDist,
     SB3DRaycastHit *outHit
 )
 {
-    Vec3 rayOrig;
-    Vec3 rayDir;
-
     if (!cam || !outHit) return 0;
-
-    rayOrig = cam->pos;
-    rayDir  = cam->forward;
-
-    return sb3dRaycastWorld(rayOrig, rayDir, maxDist, outHit);
+    return sb3dRaycastWorld(cam->pos, cam->forward, maxDist, outHit);
 }
-

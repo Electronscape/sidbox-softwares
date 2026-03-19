@@ -315,12 +315,6 @@ const uint8_t font[256][8] = {
 };
 
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "gfx.h"
-
 /* keep your existing clut[] here */
 /* keep your existing bayer4x4[][] here */
 /* keep your existing font[][] here */
@@ -356,9 +350,10 @@ void videoMemToScreen(void)
     const uint8_t *src = fb;
     uint32_t *dst = pb;
     const uint32_t *lut = clut;
+    const uint8_t *end = fb + (SCREEN_W * SCREEN_H);
 
-    for (int i = 0; i < (SCREEN_W * SCREEN_H); i++) {
-        dst[i] = lut[src[i]];
+    while (src < end) {
+        *dst++ = lut[*src++];
     }
 }
 
@@ -829,23 +824,34 @@ void fillTriangleDither2Mode(
 )
 {
     int minX, minY, maxX, maxY;
+    int area;
+    int A0, B0, C0;
+    int A1, B1, C1;
+    int A2, B2, C2;
+    int rowW0, rowW1, rowW2;
+    int width;
+    int areaPositive;
+    int threshold16;
+
+    const uint8_t col0 = baseColor;
+    const uint8_t col1 = BLACK_SHADE_PALETTE;
+
     triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxX < 0 || maxY < 0 || minX >= SCREEN_W || minY >= SCREEN_H) return;
 
     minX = clampi(minX, 0, SCREEN_W - 1);
     minY = clampi(minY, 0, SCREEN_H - 1);
     maxX = clampi(maxX, 0, SCREEN_W - 1);
     maxY = clampi(maxY, 0, SCREEN_H - 1);
 
-    const int area = triAreaInt(x0, y0, x1, y1, x2, y2);
+    area = triAreaInt(x0, y0, x1, y1, x2, y2);
     if (area == 0) return;
 
     if (shadeF < 0.0f) shadeF = 0.0f;
     if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
-    const uint8_t col0 = baseColor;
-    const uint8_t col1 = BLACK_SHADE_PALETTE;
-
-    int threshold16 = (int)((shadeF / MAX_PALETTE_SHADE_COUNT) * 16.0f);
+    threshold16 = (int)((shadeF / MAX_PALETTE_SHADE_COUNT) * 16.0f);
     if (threshold16 < 0) threshold16 = 0;
     if (threshold16 > 16) threshold16 = 16;
 
@@ -859,28 +865,27 @@ void fillTriangleDither2Mode(
         return;
     }
 
-    const int A0 = y1 - y2;
-    const int B0 = x2 - x1;
-    const int C0 = (x1 * y2) - (y1 * x2);
+    A0 = y1 - y2;
+    B0 = x2 - x1;
+    C0 = (x1 * y2) - (y1 * x2);
 
-    const int A1 = y2 - y0;
-    const int B1 = x0 - x2;
-    const int C1 = (x2 * y0) - (y2 * x0);
+    A1 = y2 - y0;
+    B1 = x0 - x2;
+    C1 = (x2 * y0) - (y2 * x0);
 
-    const int A2 = y0 - y1;
-    const int B2 = x1 - x0;
-    const int C2 = (x0 * y1) - (y0 * x1);
+    A2 = y0 - y1;
+    B2 = x1 - x0;
+    C2 = (x0 * y1) - (y0 * x1);
 
-    int rowW0 = (A0 * minX) + (B0 * minY) + C0;
-    int rowW1 = (A1 * minX) + (B1 * minY) + C1;
-    int rowW2 = (A2 * minX) + (B2 * minY) + C2;
+    rowW0 = (A0 * minX) + (B0 * minY) + C0;
+    rowW1 = (A1 * minX) + (B1 * minY) + C1;
+    rowW2 = (A2 * minX) + (B2 * minY) + C2;
 
-    const int width = (maxX - minX) + 1;
-    const int areaPositive = (area > 0);
+    width = (maxX - minX) + 1;
+    areaPositive = (area > 0);
 
     for (int y = minY; y <= maxY; y++) {
         uint8_t *dst = &fb[(y * SCREEN_W) + minX];
-
         int w0 = rowW0;
         int w1 = rowW1;
         int w2 = rowW2;
@@ -889,11 +894,10 @@ void fillTriangleDither2Mode(
             for (int i = 0; i < width; i++) {
                 if ((areaPositive && w0 >= 0 && w1 >= 0 && w2 >= 0) ||
                     (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
-                    const int x = minX + i;
-                    const int threshold = hashNoise4bit(x, y);
+                    int x = minX + i;
+                    int threshold = hashNoise4bit(x, y);
                     dst[i] = (threshold < threshold16) ? col1 : col0;
                 }
-
                 w0 += A0;
                 w1 += A1;
                 w2 += A2;
@@ -912,7 +916,6 @@ void fillTriangleDither2Mode(
                     (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
                     dst[i] = rowCols[(minX + i) & 3];
                 }
-
                 w0 += A0;
                 w1 += A1;
                 w2 += A2;
@@ -1103,38 +1106,67 @@ void fillTriangleDitherZBandBayer2Mode(
 void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t baseColor, float shadeF, DitherMode mode)
 {
     int minX, minY, maxX, maxY;
+    int area;
+    int A0, B0, C0;
+    int A1, B1, C1;
+    int A2, B2, C2;
+    int rowW0, rowW1, rowW2;
+    int width;
+    int areaPositive;
+
+    int s0, s1;
+    float frac;
+    int threshold16;
+    uint8_t col0, col1;
+
     triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxX < 0 || maxY < 0 || minX >= SCREEN_W || minY >= SCREEN_H) return;
 
     minX = clampi(minX, 0, SCREEN_W - 1);
     minY = clampi(minY, 0, SCREEN_H - 1);
     maxX = clampi(maxX, 0, SCREEN_W - 1);
     maxY = clampi(maxY, 0, SCREEN_H - 1);
 
-    const int area = triAreaInt(x0, y0, x1, y1, x2, y2);
+    area = triAreaInt(x0, y0, x1, y1, x2, y2);
     if (area == 0) return;
 
-    const int A0 = y1 - y2;
-    const int B0 = x2 - x1;
-    const int C0 = (x1 * y2) - (y1 * x2);
+    if (shadeF < 0.0f) shadeF = 0.0f;
+    if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
 
-    const int A1 = y2 - y0;
-    const int B1 = x0 - x2;
-    const int C1 = (x2 * y0) - (y2 * x0);
+    s0 = (int)shadeF;
+    s1 = s0 + 1;
+    if (s1 > (int)MAX_PALETTE_SHADE_COUNT) s1 = (int)MAX_PALETTE_SHADE_COUNT;
 
-    const int A2 = y0 - y1;
-    const int B2 = x1 - x0;
-    const int C2 = (x0 * y1) - (y0 * x1);
+    frac = shadeF - (float)s0;
+    threshold16 = (int)(frac * 16.0f);
+    if (threshold16 < 0) threshold16 = 0;
+    if (threshold16 > 15) threshold16 = 15;
 
-    int rowW0 = (A0 * minX) + (B0 * minY) + C0;
-    int rowW1 = (A1 * minX) + (B1 * minY) + C1;
-    int rowW2 = (A2 * minX) + (B2 * minY) + C2;
+    col0 = shadeColor(baseColor, s0);
+    col1 = shadeColor(baseColor, s1);
 
-    const int width = (maxX - minX) + 1;
-    const int areaPositive = (area > 0);
+    A0 = y1 - y2;
+    B0 = x2 - x1;
+    C0 = (x1 * y2) - (y1 * x2);
+
+    A1 = y2 - y0;
+    B1 = x0 - x2;
+    C1 = (x2 * y0) - (y2 * x0);
+
+    A2 = y0 - y1;
+    B2 = x1 - x0;
+    C2 = (x0 * y1) - (y0 * x1);
+
+    rowW0 = (A0 * minX) + (B0 * minY) + C0;
+    rowW1 = (A1 * minX) + (B1 * minY) + C1;
+    rowW2 = (A2 * minX) + (B2 * minY) + C2;
+
+    width = (maxX - minX) + 1;
+    areaPositive = (area > 0);
 
     for (int y = minY; y <= maxY; y++) {
         uint8_t *dst = &fb[(y * SCREEN_W) + minX];
-
         int w0 = rowW0;
         int w1 = rowW1;
         int w2 = rowW2;
@@ -1143,29 +1175,15 @@ void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t 
             for (int i = 0; i < width; i++) {
                 if ((areaPositive && w0 >= 0 && w1 >= 0 && w2 >= 0) ||
                     (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
-                    dst[i] = ditherShadeColor(baseColor, shadeF, minX + i, y, mode);
+                    int x = minX + i;
+                    int threshold = hashNoise4bit(x, y);
+                    dst[i] = (threshold < threshold16) ? col1 : col0;
                 }
-
                 w0 += A0;
                 w1 += A1;
                 w2 += A2;
             }
         } else {
-            if (shadeF < 0.0f) shadeF = 0.0f;
-            if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) shadeF = (float)MAX_PALETTE_SHADE_INDEX;
-
-            int s0 = (int)shadeF;
-            int s1 = s0 + 1;
-            if (s1 > (int)MAX_PALETTE_SHADE_COUNT) s1 = (int)MAX_PALETTE_SHADE_COUNT;
-
-            const float frac = shadeF - (float)s0;
-            int threshold16 = (int)(frac * 16.0f);
-            if (threshold16 < 0) threshold16 = 0;
-            if (threshold16 > 15) threshold16 = 15;
-
-            const uint8_t col0 = shadeColor(baseColor, s0);
-            const uint8_t col1 = shadeColor(baseColor, s1);
-
             const uint8_t *brow = bayer4x4[y & 3];
             const uint8_t rowCols[4] = {
                 (uint8_t)((brow[0] < threshold16) ? col1 : col0),
@@ -1179,7 +1197,6 @@ void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t 
                     (!areaPositive && w0 <= 0 && w1 <= 0 && w2 <= 0)) {
                     dst[i] = rowCols[(minX + i) & 3];
                 }
-
                 w0 += A0;
                 w1 += A1;
                 w2 += A2;
@@ -1195,45 +1212,54 @@ void fillTriangleDither(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t 
 void fillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint8_t color)
 {
     int minX, minY, maxX, maxY;
+    int area;
+    int A0, B0, C0;
+    int A1, B1, C1;
+    int A2, B2, C2;
+    int rowW0, rowW1, rowW2;
+    int width;
+    int areaPositive;
+
     triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxX < 0 || maxY < 0 || minX >= SCREEN_W || minY >= SCREEN_H) return;
 
     minX = clampi(minX, 0, SCREEN_W - 1);
     minY = clampi(minY, 0, SCREEN_H - 1);
     maxX = clampi(maxX, 0, SCREEN_W - 1);
     maxY = clampi(maxY, 0, SCREEN_H - 1);
 
-    const int area = triAreaInt(x0, y0, x1, y1, x2, y2);
+    area = triAreaInt(x0, y0, x1, y1, x2, y2);
     if (area == 0) return;
 
-    const int A0 = y1 - y2;
-    const int B0 = x2 - x1;
-    const int C0 = (x1 * y2) - (y1 * x2);
+    A0 = y1 - y2;
+    B0 = x2 - x1;
+    C0 = (x1 * y2) - (y1 * x2);
 
-    const int A1 = y2 - y0;
-    const int B1 = x0 - x2;
-    const int C1 = (x2 * y0) - (y2 * x0);
+    A1 = y2 - y0;
+    B1 = x0 - x2;
+    C1 = (x2 * y0) - (y2 * x0);
 
-    const int A2 = y0 - y1;
-    const int B2 = x1 - x0;
-    const int C2 = (x0 * y1) - (y0 * x1);
+    A2 = y0 - y1;
+    B2 = x1 - x0;
+    C2 = (x0 * y1) - (y0 * x1);
 
-    int rowW0 = (A0 * minX) + (B0 * minY) + C0;
-    int rowW1 = (A1 * minX) + (B1 * minY) + C1;
-    int rowW2 = (A2 * minX) + (B2 * minY) + C2;
+    rowW0 = (A0 * minX) + (B0 * minY) + C0;
+    rowW1 = (A1 * minX) + (B1 * minY) + C1;
+    rowW2 = (A2 * minX) + (B2 * minY) + C2;
 
-    const int width = (maxX - minX) + 1;
-    const int areaPositive = (area > 0);
+    width = (maxX - minX) + 1;
+    areaPositive = (area > 0);
 
     for (int y = minY; y <= maxY; y++) {
         uint8_t *dst = &fb[(y * SCREEN_W) + minX];
-
         int w0 = rowW0;
         int w1 = rowW1;
         int w2 = rowW2;
 
         if (areaPositive) {
             for (int i = 0; i < width; i++) {
-                if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                if ((w0 | w1 | w2) >= 0) {
                     dst[i] = color;
                 }
                 w0 += A0;
@@ -1299,25 +1325,45 @@ void drawRect(int x, int y, int w, int h, uint8_t col)
 
 void drawChar(int x, int y, char c, uint8_t color)
 {
+    const uint8_t *glyph;
+    int row;
+
     if (x >= SCREEN_W || y >= SCREEN_H) return;
     if (x <= -8 || y <= -8) return;
 
-    const uint8_t *glyph = font[(uint8_t)c];
+    glyph = font[(uint8_t)c];
 
-    for (int row = 0; row < 8; row++) {
-        const int py = y + row;
+    for (row = 0; row < 8; row++) {
+        int py = y + row;
+        uint8_t bits;
+
         if ((unsigned)py >= SCREEN_H) continue;
 
-        const uint8_t bits = glyph[row];
-        uint8_t *dst = &fb[(py * SCREEN_W)];
+        bits = glyph[row];
+        if (!bits) continue;
 
-        for (int col = 0; col < 8; col++) {
-            if (bits & (1u << (7 - col))) {
-                const int px = x + col;
-                if ((unsigned)px < SCREEN_W) {
-                    dst[px] = color;
-                }
-            }
+        if (x >= 0 && x <= (SCREEN_W - 8)) {
+            uint8_t *dst = &fb[(py * SCREEN_W) + x];
+
+            if (bits & 0x80) dst[0] = color;
+            if (bits & 0x40) dst[1] = color;
+            if (bits & 0x20) dst[2] = color;
+            if (bits & 0x10) dst[3] = color;
+            if (bits & 0x08) dst[4] = color;
+            if (bits & 0x04) dst[5] = color;
+            if (bits & 0x02) dst[6] = color;
+            if (bits & 0x01) dst[7] = color;
+        } else {
+            uint8_t *dst = &fb[(py * SCREEN_W)];
+
+            if ((bits & 0x80) && (unsigned)(x + 0) < SCREEN_W) dst[x + 0] = color;
+            if ((bits & 0x40) && (unsigned)(x + 1) < SCREEN_W) dst[x + 1] = color;
+            if ((bits & 0x20) && (unsigned)(x + 2) < SCREEN_W) dst[x + 2] = color;
+            if ((bits & 0x10) && (unsigned)(x + 3) < SCREEN_W) dst[x + 3] = color;
+            if ((bits & 0x08) && (unsigned)(x + 4) < SCREEN_W) dst[x + 4] = color;
+            if ((bits & 0x04) && (unsigned)(x + 5) < SCREEN_W) dst[x + 5] = color;
+            if ((bits & 0x02) && (unsigned)(x + 6) < SCREEN_W) dst[x + 6] = color;
+            if ((bits & 0x01) && (unsigned)(x + 7) < SCREEN_W) dst[x + 7] = color;
         }
     }
 }

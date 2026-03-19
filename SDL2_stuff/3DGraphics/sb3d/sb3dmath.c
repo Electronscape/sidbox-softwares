@@ -58,12 +58,30 @@ Vec3 vec3Normalize(Vec3 v)
         return (Vec3){ 0.0f, 0.0f, 0.0f };
     }
 
+    if (len2 > 0.999f && len2 < 1.001f) {
+        return v;
+    }
+
     {
-        const float invLen = 1.0f / sqrtf(len2);
+        union {
+            float f;
+            uint32_t i;
+        } conv;
+
+        float x2 = len2 * 0.5f;
+        float y = len2;
+
+        conv.f = y;
+        conv.i = 0x5f3759dfu - (conv.i >> 1);
+        y = conv.f;
+
+        /* one Newton-Raphson step */
+        y = y * (1.5f - (x2 * y * y));
+
         return (Vec3){
-            v.x * invLen,
-            v.y * invLen,
-            v.z * invLen
+            v.x * y,
+            v.y * y,
+            v.z * y
         };
     }
 }
@@ -88,15 +106,15 @@ Vec3 rotateAroundAxis(Vec3 v, Vec3 axis, float angle)
     }
 }
 
-Vec3 triangleCenter(Vec3 a, Vec3 b, Vec3 c)
+ Vec3 triangleCenter(Vec3 a, Vec3 b, Vec3 c)
 {
-    const float oneThird = 1.0f / 3.0f;
+    Vec3 out;
+    const float k = 0.33333334f;
 
-    return (Vec3){
-        (a.x + b.x + c.x) * oneThird,
-        (a.y + b.y + c.y) * oneThird,
-        (a.z + b.z + c.z) * oneThird
-    };
+    out.x = (a.x + b.x + c.x) * k;
+    out.y = (a.y + b.y + c.y) * k;
+    out.z = (a.z + b.z + c.z) * k;
+    return out;
 }
 
 Vec3 vec3(float x, float y, float z)

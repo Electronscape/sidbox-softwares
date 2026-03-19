@@ -25,6 +25,12 @@
 #define SCREEN_H  1000/2
 #endif
 
+#if(SCREEN_TEST == 3)
+#define ZOOM 2
+#define SCREEN_W  800
+#define SCREEN_H  380
+#endif
+
 
 
 extern uint32_t clut[256];

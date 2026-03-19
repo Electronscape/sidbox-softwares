@@ -5,7 +5,10 @@
 
 
 
+void sb3dInitTrigTable(void);
 
+float sbsinf(float radians);
+float sbcosf(float radians);
 
 
 Vec3 vec3Add(Vec3 a, Vec3 b);
