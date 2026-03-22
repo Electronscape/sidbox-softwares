@@ -303,6 +303,12 @@ int main(void) {
     int recog0 = entityWorldSpawn(&recogMesh, vec3(-200, 100, 0));
 
 
+    Mesh textMesh;
+    loadMeshSB3D("text.sb3d", &textMesh, 20.0f);
+    int text0 = entityWorldSpawn(&textMesh, vec3(0, 100, 200));
+    meshSetMaterial(&textMesh, 0.00f, 0.55f, 0.00f, 1.50f, 64.0f);
+
+
     Mesh islandMesh;
     loadMeshSB3D("islandx.sb3d", &islandMesh, 200.0f);
     int island0 = entityWorldSpawn(&islandMesh, vec3(012, 0, 0));
@@ -345,7 +351,7 @@ int main(void) {
 
     toggleLightSun = 1;
     toggleLightShip = 0;
-    toggleflatMode = 1;
+    toggleflatMode = 0;
     enableFlatMode(toggleflatMode);
 
     // sky colour
@@ -526,15 +532,17 @@ int main(void) {
             
 
             entityTurnLocal(ipenergy0, 0.02f, 0,0);
+            entityTurnLocal(text0, 0.02f,0,0);
             // crap AI for one ship
             //////////////////////////
-            entityMoveForward(shipTest, 6.3f);//vec3(0,0,0.7f));
+            
 
             float speed = 0.2;
             entityTurnLocal(carrier0, -0.003f * speed, 0, 0);
             entityMoveForward(carrier0, 6.8f * speed);//vec3(0,0,0.7f));
             
 
+            entityMoveForward(shipTest, 6.3f);//vec3(0,0,0.7f));
             Vec3 theShipPos = entityGetPosition(shipTest);
             if(theShipPos.z > 2500){
                 entitySetPosition(shipTest, vec3(-135,42, -400));
