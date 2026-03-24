@@ -261,6 +261,9 @@ static int load_materials_from_obj(const char *objPath, MaterialInfo *materials,
     return 1; /* no mtllib is fine */
 }
 
+
+
+
 static int count_obj(FILE *fp, uint32_t *vertCount, uint32_t *triCount)
 {
     char line[MAX_LINE_LEN];

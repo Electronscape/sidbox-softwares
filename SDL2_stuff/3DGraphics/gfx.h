@@ -49,6 +49,11 @@ typedef enum {
 #define BLACK_SHADE_PALETTE      16
 
 #define ZBUF_BAND_H  32
+
+#define FB_INDEX(x, y) (((x) * SCREEN_H) + (y))
+
+
+
 extern uint16_t g_depthBufferBand[SCREEN_W * ZBUF_BAND_H];
 void resetDepthBufferBand(void);
 
@@ -87,6 +92,23 @@ void fillTriangleDitherZBandBayer(
     float camz0, float camz1, float camz2,
     uint8_t baseColor, float shadeF, int bandY0, int bandY1);
 
+
+void fillTriangleDitherZBandBayerT(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    float shadeF,
+    uint8_t transparent,
+    int bandY0,
+    int bandY1
+);
 
 void fillTriangleZBandFlat(
     int x0, int y0,  int x1, int y1,  int x2, int y2,

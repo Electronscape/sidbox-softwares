@@ -14,6 +14,11 @@ typedef struct {
 
     float nearPlane;
     float farPlane;
+
+
+    // projector
+    float projF;
+    float halfW, halfH, halfOverW;
 } Camera;
 
 

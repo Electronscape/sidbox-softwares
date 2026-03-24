@@ -330,6 +330,7 @@ void sb3dParticlesRender(const Camera *cam)
                             (Camera *)cam,
                             p->color,
                             p->emission,
+                            255,
                             finalShadeF
                         );
                     }
@@ -345,6 +346,7 @@ void sb3dParticlesRender(const Camera *cam)
                             (Camera *)cam,
                             p->color,
                             p->emission,
+                            255,
                             finalShadeF
                         );
                     }

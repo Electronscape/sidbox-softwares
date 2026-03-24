@@ -30,6 +30,9 @@ static int g_wireframe       = 0;
 
 
 
+
+
+
 static inline float sb3d_proj_f(void)
 {
     const float fovRad = 90.0f * (float)(M_PI / 180.0f);
@@ -235,7 +238,7 @@ static inline int triangleFacingCamera(Vec3 a, Vec3 b, Vec3 c)
     return (d < 0.0f);
 }
 
-void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, float shadeF)
+void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, uint8_t trans, float shadeF)
 {
     Vec2 pa, pb, pc;
 
@@ -260,6 +263,7 @@ void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_
     rt->color    = color;
     rt->emission = emission;
     rt->shadeF   = shadeF;
+    rt->transparency = trans;
     rt->depth    = (a.z + b.z + c.z) * (1.0f / 3.0f);
 
     rt->z0 = encodeZ(a.z, cam);
@@ -436,6 +440,577 @@ void drawFakeHorizonDots(const Camera *cam, uint8_t dotCol, int spacing, float y
     }
 }
 
+
+
+uint8_t sidboxFB[SCREEN_H * SCREEN_W];
+
+void DrawSBFBtoDB(void)
+{
+    for (int y = 0; y < SCREEN_H; y++) {
+        for (int x = 0; x < SCREEN_W; x++) {
+            fb[y * SCREEN_W + x] = sidboxFB[x * SCREEN_H + y];
+        }
+    }
+}
+
+#define drawbuffer sidboxFB
+
+void drawFakeHorizonTex(
+    const Camera *cam,
+    const uint8_t *skyTex,
+    const uint8_t *groundTex,
+    uint8_t skySolidCol,
+    uint8_t groundSolidCol,
+    uint8_t lineCol,
+    float groundY,
+    float skyY,
+    float skyFadeDist,
+    float skyScale,
+    float groundScale,
+    int skyScrollU,
+    int skyScrollV,
+    int groundScrollU,
+    int groundScrollV,
+    uint8_t transparentZero,
+    uint8_t proceduralPatchMode,
+    uint8_t skyPatchDensity,
+    uint8_t groundPatchDensity
+)
+{
+    if (!cam) return;
+    if (!skyTex || !groundTex) return;
+
+    const float f    = cam->projF;
+    const float cx   = cam->halfW;
+    const float cy   = cam->halfH;
+    const float invF = 1.0f / f;
+
+    const float camPosX = cam->pos.x;
+    const float camPosY = cam->pos.y;
+    const float camPosZ = cam->pos.z;
+
+    const float rx = cam->right.x;
+    const float ry = cam->right.y;
+    const float rz = cam->right.z;
+
+    const float ux = cam->up.x;
+    const float uy = cam->up.y;
+    const float uz = cam->up.z;
+
+    const float fx = cam->forward.x;
+    const float fy = cam->forward.y;
+    const float fz = cam->forward.z;
+
+    const float Ry = cam->right.y;
+    const float Uy = cam->up.y;
+    const float Fy = cam->forward.y;
+
+    const float groundNumer = groundY - camPosY;
+    const float skyNumer    = skyY    - camPosY;
+
+    const float skyFadeStart = skyFadeDist * 0.65f;
+    const float skyFadeEnd   = skyFadeDist;
+
+    const float skyFadeStart2 = skyFadeStart * skyFadeStart;
+    const float skyFadeEnd2   = skyFadeEnd   * skyFadeEnd;
+    const float skyFadeSpan2  = skyFadeEnd2 - skyFadeStart2;
+
+    for (int x = 0; x < SCREEN_W; x++) {
+        const float sx = (((float)x - cx) * invF);
+        const float xTerm = sx * Ry;
+
+        const float topDirWorldY    = xTerm + (cy * invF * Uy) + Fy;
+        const float bottomDirWorldY = xTerm + (((cy - (float)(SCREEN_H - 1)) * invF) * Uy) + Fy;
+
+        int topGround = 0;
+        int botGround = 0;
+
+        if (fabsf(topDirWorldY) >= 0.0001f) {
+            topGround = ((groundNumer / topDirWorldY) > 0.0f);
+        }
+        if (fabsf(bottomDirWorldY) >= 0.0001f) {
+            botGround = ((groundNumer / bottomDirWorldY) > 0.0f);
+        }
+
+        uint8_t *dst = &drawbuffer[FB_INDEX(x, 0)];
+
+        if (topGround == botGround) {
+            if (topGround) {
+                /* whole column = ground */
+                for (int y = 0; y < SCREEN_H; y++) {
+                    const float sy = (cy - (float)y) * invF;
+
+                    const float dirX = (sx * rx) + (sy * ux) + fx;
+                    const float dirY = (sx * ry) + (sy * uy) + fy;
+                    const float dirZ = (sx * rz) + (sy * uz) + fz;
+
+                    if (fabsf(dirY) < 0.0001f) {
+                        *dst++ = lineCol;
+                        continue;
+                    }
+
+                    {
+                        const float t = groundNumer / dirY;
+                        const float hitX = camPosX + (dirX * t);
+                        const float hitZ = camPosZ + (dirZ * t);
+
+                        const float u = (hitX * groundScale) + (float)groundScrollU;
+                        const float v = (hitZ * groundScale) + (float)groundScrollV;
+
+                        const int iu = (int)floorf(u);
+                        const int iv = (int)floorf(v);
+
+                        int tu = iu & 31;
+                        int tv = iv & 31;
+
+                        uint8_t texCol;
+
+                        if (proceduralPatchMode) {
+                            const int tileU = iu >> 5;
+                            const int tileV = iv >> 5;
+
+                            const uint32_t hDensity = sb3d_hash2i(tileU, tileV);
+                            const uint32_t hOrient  = sb3d_hash2i(tileU ^ 0x68bc21ebu, tileV ^ 0x02e5be93u);
+
+                            if ((hDensity & 255u) > groundPatchDensity) {
+                                texCol = groundSolidCol;
+                            } else {
+                                int su = tu;
+                                int sv = tv;
+                                int ru, rv;
+
+                                if (hOrient & 1u) su = 31 - su;   /* flip X */
+                                if (hOrient & 2u) sv = 31 - sv;   /* flip Y */
+
+                                switch ((hOrient >> 2) & 3u) {
+                                    default:
+                                    case 0: ru = su;       rv = sv;       break; /*   0 */
+                                    case 1: ru = 31 - sv;  rv = su;       break; /*  90 */
+                                    case 2: ru = 31 - su;  rv = 31 - sv;  break; /* 180 */
+                                    case 3: ru = sv;       rv = 31 - su;  break; /* 270 */
+                                }
+
+                                texCol = groundTex[(rv << 5) | ru];
+                                if (transparentZero && texCol == 0) texCol = groundSolidCol;
+                            }
+                        } else {
+                            texCol = groundTex[(tv << 5) | tu];
+                            if (transparentZero && texCol == 0) texCol = groundSolidCol;
+                        }
+
+                        *dst++ = texCol;
+                    }
+                }
+            } else {
+                /* whole column = sky */
+                for (int y = 0; y < SCREEN_H; y++) {
+                    const float sy = (cy - (float)y) * invF;
+
+                    const float dirX = (sx * rx) + (sy * ux) + fx;
+                    const float dirY = (sx * ry) + (sy * uy) + fy;
+                    const float dirZ = (sx * rz) + (sy * uz) + fz;
+
+                    if (fabsf(dirY) < 0.0001f) {
+                        *dst++ = skySolidCol;
+                        continue;
+                    }
+
+                    {
+                        const float t = skyNumer / dirY;
+
+                        if (t <= 0.0f) {
+                            *dst++ = skySolidCol;
+                        } else {
+                            const float hitX = camPosX + (dirX * t);
+                            const float hitZ = camPosZ + (dirZ * t);
+
+                            const float dx = hitX - camPosX;
+                            const float dz = hitZ - camPosZ;
+                            const float dist2 = (dx * dx) + (dz * dz);
+
+                            const float u = (hitX * skyScale) + (float)skyScrollU;
+                            const float v = (hitZ * skyScale) + (float)skyScrollV;
+
+                            const int iu = (int)floorf(u);
+                            const int iv = (int)floorf(v);
+
+                            int tu = iu & 31;
+                            int tv = iv & 31;
+
+                            uint8_t texCol;
+
+                            if (proceduralPatchMode) {
+                                const int tileU = iu >> 5;
+                                const int tileV = iv >> 5;
+
+                                const uint32_t hDensity = sb3d_hash2i(tileU, tileV);
+                                const uint32_t hOrient  = sb3d_hash2i(tileU ^ 0x68bc21ebu, tileV ^ 0x02e5be93u);
+
+                                if ((hDensity & 255u) > skyPatchDensity) {
+                                    texCol = skySolidCol;
+                                } else {
+                                    int su = tu;
+                                    int sv = tv;
+                                    int ru, rv;
+
+                                    if (hOrient & 1u) su = 31 - su;   /* flip X */
+                                    if (hOrient & 2u) sv = 31 - sv;   /* flip Y */
+
+                                    switch ((hOrient >> 2) & 3u) {
+                                        default:
+                                        case 0: ru = su;       rv = sv;       break; /*   0 */
+                                        case 1: ru = 31 - sv;  rv = su;       break; /*  90 */
+                                        case 2: ru = 31 - su;  rv = 31 - sv;  break; /* 180 */
+                                        case 3: ru = sv;       rv = 31 - su;  break; /* 270 */
+                                    }
+
+                                    texCol = skyTex[(rv << 5) | ru];
+                                    if (transparentZero && texCol == 0) texCol = skySolidCol;
+                                }
+                            } else {
+                                texCol = skyTex[(tv << 5) | tu];
+                                if (transparentZero && texCol == 0) texCol = skySolidCol;
+                            }
+
+                            if (dist2 <= skyFadeStart2) {
+                                *dst++ = texCol;
+                            } else if (dist2 >= skyFadeEnd2) {
+                                *dst++ = skySolidCol;
+                            } else {
+                                const float fadeT = (dist2 - skyFadeStart2) / skyFadeSpan2;
+                                const int dither = ((x & 3) + ((y & 3) << 2));
+                                *dst++ = ((int)(fadeT * 15.0f) > dither) ? skySolidCol : texCol;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            int ySplit;
+
+            if (fabsf(Uy) < 0.0001f) {
+                ySplit = SCREEN_H / 2;
+            } else {
+                const float ySplitF = cy + (f / Uy) * (xTerm + Fy);
+                ySplit = (int)lroundf(ySplitF);
+            }
+
+            if (ySplit < 0) ySplit = 0;
+            if (ySplit > SCREEN_H) ySplit = SCREEN_H;
+
+            if (topGround) {
+                /* top = ground, bottom = sky */
+                for (int y = 0; y < ySplit; y++) {
+                    const float sy = (cy - (float)y) * invF;
+
+                    const float dirX = (sx * rx) + (sy * ux) + fx;
+                    const float dirY = (sx * ry) + (sy * uy) + fy;
+                    const float dirZ = (sx * rz) + (sy * uz) + fz;
+
+                    if (fabsf(dirY) < 0.0001f) {
+                        *dst++ = lineCol;
+                        continue;
+                    }
+
+                    {
+                        const float t = groundNumer / dirY;
+                        const float hitX = camPosX + (dirX * t);
+                        const float hitZ = camPosZ + (dirZ * t);
+
+                        const float u = (hitX * groundScale) + (float)groundScrollU;
+                        const float v = (hitZ * groundScale) + (float)groundScrollV;
+
+                        const int iu = (int)floorf(u);
+                        const int iv = (int)floorf(v);
+
+                        int tu = iu & 31;
+                        int tv = iv & 31;
+
+                        uint8_t texCol;
+
+                        if (proceduralPatchMode) {
+                            const int tileU = iu >> 5;
+                            const int tileV = iv >> 5;
+
+                            const uint32_t hDensity = sb3d_hash2i(tileU, tileV);
+                            const uint32_t hOrient  = sb3d_hash2i(tileU ^ 0x68bc21ebu, tileV ^ 0x02e5be93u);
+
+                            if ((hDensity & 255u) > groundPatchDensity) {
+                                texCol = groundSolidCol;
+                            } else {
+                                int su = tu;
+                                int sv = tv;
+                                int ru, rv;
+
+                                if (hOrient & 1u) su = 31 - su;
+                                if (hOrient & 2u) sv = 31 - sv;
+
+                                switch ((hOrient >> 2) & 3u) {
+                                    default:
+                                    case 0: ru = su;       rv = sv;       break;
+                                    case 1: ru = 31 - sv;  rv = su;       break;
+                                    case 2: ru = 31 - su;  rv = 31 - sv;  break;
+                                    case 3: ru = sv;       rv = 31 - su;  break;
+                                }
+
+                                texCol = groundTex[(rv << 5) | ru];
+                                if (transparentZero && texCol == 0) texCol = groundSolidCol;
+                            }
+                        } else {
+                            texCol = groundTex[(tv << 5) | tu];
+                            if (transparentZero && texCol == 0) texCol = groundSolidCol;
+                        }
+
+                        *dst++ = texCol;
+                    }
+                }
+
+                for (int y = ySplit; y < SCREEN_H; y++) {
+                    const float sy = (cy - (float)y) * invF;
+
+                    const float dirX = (sx * rx) + (sy * ux) + fx;
+                    const float dirY = (sx * ry) + (sy * uy) + fy;
+                    const float dirZ = (sx * rz) + (sy * uz) + fz;
+
+                    if (fabsf(dirY) < 0.0001f) {
+                        *dst++ = skySolidCol;
+                        continue;
+                    }
+
+                    {
+                        const float t = skyNumer / dirY;
+
+                        if (t <= 0.0f) {
+                            *dst++ = skySolidCol;
+                        } else {
+                            const float hitX = camPosX + (dirX * t);
+                            const float hitZ = camPosZ + (dirZ * t);
+
+                            const float dx = hitX - camPosX;
+                            const float dz = hitZ - camPosZ;
+                            const float dist2 = (dx * dx) + (dz * dz);
+
+                            const float u = (hitX * skyScale) + (float)skyScrollU;
+                            const float v = (hitZ * skyScale) + (float)skyScrollV;
+
+                            const int iu = (int)floorf(u);
+                            const int iv = (int)floorf(v);
+
+                            int tu = iu & 31;
+                            int tv = iv & 31;
+
+                            uint8_t texCol;
+
+                            if (proceduralPatchMode) {
+                                const int tileU = iu >> 5;
+                                const int tileV = iv >> 5;
+
+                                const uint32_t hDensity = sb3d_hash2i(tileU, tileV);
+                                const uint32_t hOrient  = sb3d_hash2i(tileU ^ 0x68bc21ebu, tileV ^ 0x02e5be93u);
+
+                                if ((hDensity & 255u) > skyPatchDensity) {
+                                    texCol = skySolidCol;
+                                } else {
+                                    int su = tu;
+                                    int sv = tv;
+                                    int ru, rv;
+
+                                    if (hOrient & 1u) su = 31 - su;
+                                    if (hOrient & 2u) sv = 31 - sv;
+
+                                    switch ((hOrient >> 2) & 3u) {
+                                        default:
+                                        case 0: ru = su;       rv = sv;       break;
+                                        case 1: ru = 31 - sv;  rv = su;       break;
+                                        case 2: ru = 31 - su;  rv = 31 - sv;  break;
+                                        case 3: ru = sv;       rv = 31 - su;  break;
+                                    }
+
+                                    texCol = skyTex[(rv << 5) | ru];
+                                    if (transparentZero && texCol == 0) texCol = skySolidCol;
+                                }
+                            } else {
+                                texCol = skyTex[(tv << 5) | tu];
+                                if (transparentZero && texCol == 0) texCol = skySolidCol;
+                            }
+
+                            if (dist2 <= skyFadeStart2) {
+                                *dst++ = texCol;
+                            } else if (dist2 >= skyFadeEnd2) {
+                                *dst++ = skySolidCol;
+                            } else {
+                                const float fadeT = (dist2 - skyFadeStart2) / skyFadeSpan2;
+                                const int dither = ((x & 3) + ((y & 3) << 2));
+                                *dst++ = ((int)(fadeT * 15.0f) > dither) ? skySolidCol : texCol;
+                            }
+                        }
+                    }
+                }
+            } else {
+                /* top = sky, bottom = ground */
+                for (int y = 0; y < ySplit; y++) {
+                    const float sy = (cy - (float)y) * invF;
+
+                    const float dirX = (sx * rx) + (sy * ux) + fx;
+                    const float dirY = (sx * ry) + (sy * uy) + fy;
+                    const float dirZ = (sx * rz) + (sy * uz) + fz;
+
+                    if (fabsf(dirY) < 0.0001f) {
+                        *dst++ = skySolidCol;
+                        continue;
+                    }
+
+                    {
+                        const float t = skyNumer / dirY;
+
+                        if (t <= 0.0f) {
+                            *dst++ = skySolidCol;
+                        } else {
+                            const float hitX = camPosX + (dirX * t);
+                            const float hitZ = camPosZ + (dirZ * t);
+
+                            const float dx = hitX - camPosX;
+                            const float dz = hitZ - camPosZ;
+                            const float dist2 = (dx * dx) + (dz * dz);
+
+                            const float u = (hitX * skyScale) + (float)skyScrollU;
+                            const float v = (hitZ * skyScale) + (float)skyScrollV;
+
+                            const int iu = (int)floorf(u);
+                            const int iv = (int)floorf(v);
+
+                            int tu = iu & 31;
+                            int tv = iv & 31;
+
+                            uint8_t texCol;
+
+                            if (proceduralPatchMode) {
+                                const int tileU = iu >> 5;
+                                const int tileV = iv >> 5;
+
+                                const uint32_t hDensity = sb3d_hash2i(tileU, tileV);
+                                const uint32_t hOrient  = sb3d_hash2i(tileU ^ 0x68bc21ebu, tileV ^ 0x02e5be93u);
+
+                                if ((hDensity & 255u) > skyPatchDensity) {
+                                    texCol = skySolidCol;
+                                } else {
+                                    int su = tu;
+                                    int sv = tv;
+                                    int ru, rv;
+
+                                    if (hOrient & 1u) su = 31 - su;
+                                    if (hOrient & 2u) sv = 31 - sv;
+
+                                    switch ((hOrient >> 2) & 3u) {
+                                        default:
+                                        case 0: ru = su;       rv = sv;       break;
+                                        case 1: ru = 31 - sv;  rv = su;       break;
+                                        case 2: ru = 31 - su;  rv = 31 - sv;  break;
+                                        case 3: ru = sv;       rv = 31 - su;  break;
+                                    }
+
+                                    texCol = skyTex[(rv << 5) | ru];
+                                    if (transparentZero && texCol == 0) texCol = skySolidCol;
+                                }
+                            } else {
+                                texCol = skyTex[(tv << 5) | tu];
+                                if (transparentZero && texCol == 0) texCol = skySolidCol;
+                            }
+
+                            if (dist2 <= skyFadeStart2) {
+                                *dst++ = texCol;
+                            } else if (dist2 >= skyFadeEnd2) {
+                                *dst++ = skySolidCol;
+                            } else {
+                                const float fadeT = (dist2 - skyFadeStart2) / skyFadeSpan2;
+                                const int dither = ((x & 3) + ((y & 3) << 2));
+                                *dst++ = ((int)(fadeT * 15.0f) > dither) ? skySolidCol : texCol;
+                            }
+                        }
+                    }
+                }
+
+                for (int y = ySplit; y < SCREEN_H; y++) {
+                    const float sy = (cy - (float)y) * invF;
+
+                    const float dirX = (sx * rx) + (sy * ux) + fx;
+                    const float dirY = (sx * ry) + (sy * uy) + fy;
+                    const float dirZ = (sx * rz) + (sy * uz) + fz;
+
+                    if (fabsf(dirY) < 0.0001f) {
+                        *dst++ = lineCol;
+                        continue;
+                    }
+
+                    {
+                        const float t = groundNumer / dirY;
+                        const float hitX = camPosX + (dirX * t);
+                        const float hitZ = camPosZ + (dirZ * t);
+
+                        const float u = (hitX * groundScale) + (float)groundScrollU;
+                        const float v = (hitZ * groundScale) + (float)groundScrollV;
+
+                        const int iu = (int)floorf(u);
+                        const int iv = (int)floorf(v);
+
+                        int tu = iu & 31;
+                        int tv = iv & 31;
+
+                        uint8_t texCol;
+
+                        if (proceduralPatchMode) {
+                            const int tileU = iu >> 5;
+                            const int tileV = iv >> 5;
+
+                            const uint32_t hDensity = sb3d_hash2i(tileU, tileV);
+                            const uint32_t hOrient  = sb3d_hash2i(tileU ^ 0x68bc21ebu, tileV ^ 0x02e5be93u);
+
+                            if ((hDensity & 255u) > groundPatchDensity) {
+                                texCol = groundSolidCol;
+                            } else {
+                                int su = tu;
+                                int sv = tv;
+                                int ru, rv;
+
+                                if (hOrient & 1u) su = 31 - su;
+                                if (hOrient & 2u) sv = 31 - sv;
+
+                                switch ((hOrient >> 2) & 3u) {
+                                    default:
+                                    case 0: ru = su;       rv = sv;       break;
+                                    case 1: ru = 31 - sv;  rv = su;       break;
+                                    case 2: ru = 31 - su;  rv = 31 - sv;  break;
+                                    case 3: ru = sv;       rv = 31 - su;  break;
+                                }
+
+                                texCol = groundTex[(rv << 5) | ru];
+                                if (transparentZero && texCol == 0) texCol = groundSolidCol;
+                            }
+                        } else {
+                            texCol = groundTex[(tv << 5) | tu];
+                            if (transparentZero && texCol == 0) texCol = groundSolidCol;
+                        }
+
+                        *dst++ = texCol;
+                    }
+                }
+            }
+        }
+    }
+
+    DrawSBFBtoDB();
+    if (fabsf(Uy) >= 0.0001f) {
+        int y0 = (int)lroundf(cy + ((((0.0f) - cx) * Ry) + (f * Fy)) / Uy);
+        int y1 = (int)lroundf(cy + (((((float)(SCREEN_W - 1)) - cx) * Ry) + (f * Fy)) / Uy);
+        drawLine(0, y0, SCREEN_W - 1, y1, lineCol);
+    }
+}
+
+
+
+
+//DrawSBFBtoDB();
+
 void drawFakeHorizon(const Camera *cam, uint8_t skyCol, uint8_t groundCol, uint8_t lineCol, float ylevel)
 {
     if (!cam) return;
@@ -474,7 +1049,7 @@ void drawFakeHorizon(const Camera *cam, uint8_t skyCol, uint8_t groundCol, uint8
             rightGround = ((groundNumer / rightDirWorldY) > 0.0f);
         }
 
-        uint8_t *row = &fb[y * SCREEN_W];
+        uint8_t *row = &sidboxFB[y * SCREEN_W];
 
         if (leftGround == rightGround) {
             memset(row, leftGround ? groundCol : skyCol, SCREEN_W);
@@ -917,22 +1492,43 @@ void Render3D(const Camera *cam)
                 );
             }
         }
-        else {
+        else {  // normal render
             for (int i = 0; i < g_renderTriCount; i++) {
                 RenderTri *rt = &g_renderTris[i];
+
+
+
                 if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
 
-                fillTriangleDitherZBandBayer(
-                    rt->p0.x, rt->p0.y,
-                    rt->p1.x, rt->p1.y,
-                    rt->p2.x, rt->p2.y,
-                    rt->z0, rt->z1, rt->z2,
-                    rt->camz0, rt->camz1, rt->camz2,
-                    rt->color,
-                    rt->shadeF,
-                    bandY0,
-                    bandY1
-                );
+                if(rt->color & TRI_FLAG_TRANSPARENT)
+                {
+                    uint8_t tStrenth = rt->transparency;
+
+                    fillTriangleDitherZBandBayerT(
+                        rt->p0.x, rt->p0.y,
+                        rt->p1.x, rt->p1.y,
+                        rt->p2.x, rt->p2.y,
+                        rt->z0, rt->z1, rt->z2,
+                        rt->camz0, rt->camz1, rt->camz2,
+                        rt->color,
+                        rt->shadeF,
+                        tStrenth,
+                        bandY0,
+                        bandY1
+                    );
+                } else {
+                    fillTriangleDitherZBandBayer(
+                        rt->p0.x, rt->p0.y,
+                        rt->p1.x, rt->p1.y,
+                        rt->p2.x, rt->p2.y,
+                        rt->z0, rt->z1, rt->z2,
+                        rt->camz0, rt->camz1, rt->camz2,
+                        rt->color,
+                        rt->shadeF,
+                        bandY0,
+                        bandY1
+                    );
+                }
             }
         }
     }
@@ -1053,6 +1649,7 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         float faceCX, faceCY, faceCZ;
         float faceEmission;
         float brightness;
+        uint8_t renderColor;
 
         float vx, vy, vz;
         float vlen2;
@@ -1275,6 +1872,9 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
 
         {
             const float shadeF = brightnessToShadeF(brightness);
+            renderColor = (uint8_t)(t->color & TRI_COLOUR_MASK);
+            if(t->transparency > 0)
+                renderColor |= TRI_FLAG_TRANSPARENT;
 
             for (int k = 1; k < clippedCount - 1; k++) {
                 submitClippedTri(
@@ -1282,8 +1882,9 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
                     clipped[k],
                     clipped[k + 1],
                     (Camera *)cam,
-                    t->color,
+                    renderColor,
                     t->emission,
+                    t->transparency,
                     shadeF
                 );
             }
@@ -1595,6 +2196,7 @@ void submitEntitySolid_OLD(const Entity *ent, const Camera *cam)
                     (Camera *)cam,
                     t.color,
                     t.emission,
+                    255,
                     shadeF
                 );
             }

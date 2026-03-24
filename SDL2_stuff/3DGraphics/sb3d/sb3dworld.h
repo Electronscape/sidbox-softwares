@@ -52,6 +52,7 @@ typedef struct {
     int c;
     uint8_t color;
     uint8_t emission;
+    uint8_t transparency;
 } Tri;
 
 
@@ -92,6 +93,7 @@ typedef struct {
 
     uint8_t color;
     uint8_t emission;
+    uint8_t transparency;
 
     int16_t minY;
     int16_t maxY;

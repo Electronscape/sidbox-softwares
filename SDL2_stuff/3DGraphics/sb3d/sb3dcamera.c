@@ -56,7 +56,12 @@ Camera cameraCreate(void)
         .up        = { 0.0f, 1.0f, 0.0f },
         .forward   = { 0.0f, 0.0f, 1.0f },
         .nearPlane = 0.01f,
-        .farPlane  = 1000.0f
+        .farPlane  = 1000.0f,
+
+        .projF     = (float)(SCREEN_W * 0.5f),
+        .halfW     = (float)(SCREEN_W * 0.5f),
+        .halfH     = (float)(SCREEN_H * 0.5f),
+        .halfOverW = (float)SCREEN_H / (float)SCREEN_W
     };
 
     return cam;
