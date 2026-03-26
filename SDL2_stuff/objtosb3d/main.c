@@ -17,16 +17,18 @@ typedef struct {
     uint32_t a;
     uint32_t b;
     uint32_t c;
-    uint8_t  color;
-    uint8_t  emission;
-    uint8_t  transparency;
+    uint8_t  color;         // gets the colour ID from the Material Name
+    uint8_t  emission;      // { Ke - [Blender:Emission] }
+    uint8_t  transparency;  // { d  - [Blender:Alpha] }
+    uint8_t  shininess;     // 
 } TriFile;
 
 typedef struct {
     char     name[256];
-    uint8_t  color;
-    uint8_t  emission;
-    uint8_t  transparency;
+    uint8_t  color;         // gets the colour ID from the Material Name
+    uint8_t  emission;      // { Ke }
+    uint8_t  transparency;  // { d  - [Blender:Alpha] }
+    uint8_t  shininess;     // 
 } MaterialInfo;
 
 static int has_obj_extension(const char *filename)
@@ -40,6 +42,46 @@ static int has_obj_extension(const char *filename)
 
     return (strcmp(dot, ".obj") == 0);
 }
+
+// Emission calculator //
+static uint8_t ke_to_emission(float r, float g, float b)
+{
+    float v = r;
+    const float scale = 255.0f;   /* adjust later if needed */
+
+    if (g > v) v = g;
+    if (b > v) v = b;
+
+    if (v < 0.0f) v = 0.0f;
+    if (v > 1.0f) v = 1.0f;
+
+    v *= scale;
+
+    if (v < 0.0f) v = 0.0f;
+    if (v > 255.0f) v = 255.0f;
+
+    return (uint8_t)(v + 0.5f);
+}
+
+// Transparency Calculator //
+static uint8_t d_to_transparency(float d)
+{
+    if (d < 0.0f) d = 0.0f;
+    if (d > 1.0f) d = 1.0f;
+
+    return (uint8_t)((1.0f - d) * 255.0f + 0.5f);
+}
+
+static uint8_t ns_to_shininess(float ns)
+{
+    ns *= 0.001f;   // convert 0.0..1000.0 down to 0.0..1.0
+
+    if (ns < 0.0f) ns = 0.0f;
+    if (ns > 1.0f) ns = 1.0f;
+
+    return (uint8_t)((1.0f - ns) * 255.0f + 0.5f);
+}
+
 
 static int build_output_name(const char *input, char *output, size_t outputSize)
 {
@@ -111,78 +153,51 @@ static int find_material(MaterialInfo *materials, int materialCount, const char 
     return -1;
 }
 
-
-static int parse_sbx_material_name(
-    const char *name,
-    uint8_t *outColor,
-    uint8_t *outEmission,
-    uint8_t *outTransparency
-)
+static int parse_sbx_material_name(const char *name, uint8_t *outColor)
 {
     const char *p;
-    char *endptr;
-    long colorVal;
 
-    if (!name || !outColor || !outEmission || !outTransparency) return 0;
-    if (strncmp(name, "SBX_", 4) != 0) return 0;
+    if (!name || !outColor) return 0;
 
-    p = name + 4;
-
-    colorVal = strtol(p, &endptr, 10);
-    if (endptr == p) return 0;
-    if (colorVal < 0 || colorVal > 255) return 0;
-
-    *outColor = (uint8_t)colorVal;
-    *outEmission = 0;
-    *outTransparency = 0;
-
-    p = endptr;
+    p = name;
 
     while (*p) {
-        if (*p == 'E') {
-            p++;
+        if (p[0] == 'S' &&
+            p[1] == 'B' &&
+            p[2] == 'X' &&
+            p[3] == '_')
+        {
+            const char *n = p + 4;
+            unsigned value = 0;
+            int digits = 0;
 
-            if (*p >= '0' && *p <= '9') {
-                long emissionVal = strtol(p, &endptr, 10);
-
-                if (endptr == p) return 0;
-                if (emissionVal < 0) emissionVal = 0;
-                if (emissionVal > 255) emissionVal = 255;
-
-                *outEmission = (uint8_t)emissionVal;
-                p = endptr;
-            } else {
-                *outEmission = 255;
+            while (*n >= '0' && *n <= '9') {
+                value = (value * 10u) + (unsigned)(*n - '0');
+                if (value > 255u) return 0;
+                digits++;
+                n++;
             }
-        }
-        else if (*p == 'T') {
-            p++;
 
-            if (*p >= '0' && *p <= '9') {
-                long transparencyVal = strtol(p, &endptr, 10);
-
-                if (endptr == p) return 0;
-                if (transparencyVal < 0) transparencyVal = 0;
-                if (transparencyVal > 255) transparencyVal = 255;
-
-                *outTransparency = (uint8_t)transparencyVal;
-                p = endptr;
-            } else {
-                *outTransparency = 128;
+            if (digits == 0) {
+                return 0;
             }
+
+            *outColor = (uint8_t)value;
+            return 1;
         }
-        else {
-            return 0;
-        }
+
+        p++;
     }
 
-    return 1;
+    return 0;
 }
+
 
 static int load_mtl_file(const char *mtlPath, MaterialInfo *materials, int *materialCount)
 {
     FILE *fp;
     char line[MAX_LINE_LEN];
+    int current = -1;
 
     if (!mtlPath || !materials || !materialCount) return 0;
 
@@ -209,16 +224,36 @@ static int load_mtl_file(const char *mtlPath, MaterialInfo *materials, int *mate
 
                 materials[*materialCount].color = 32;
                 materials[*materialCount].emission = 0;
-                materials[*materialCount].transparency = 0;
+                materials[*materialCount].transparency = 0; // fully solid!!
+                materials[*materialCount].shininess = 0;    // (NOT shiny)
 
                 parse_sbx_material_name(
                     materials[*materialCount].name,
-                    &materials[*materialCount].color,
-                    &materials[*materialCount].emission,
-                    &materials[*materialCount].transparency
+                    &materials[*materialCount].color
                 );
 
+                current = *materialCount;
                 (*materialCount)++;
+            }
+        }
+        else if (current >= 0) {
+            float r, g, b, shine;
+            float v;
+
+            if (strncmp(line, "Ke ", 3) == 0) { // Emission {Blender uses Ke}
+                if (sscanf(line + 3, "%f %f %f", &r, &g, &b) == 3) {
+                    materials[current].emission = ke_to_emission(r, g, b);
+                }
+            }
+            else if (strncmp(line, "d ", 2) == 0) {   /* Blender alpha {Blender uses d }*/
+                if (sscanf(line + 2, "%f", &v) == 1) {
+                    materials[current].transparency = d_to_transparency(v);
+                }
+            }
+            else if (strncmp(line, "Ns ", 3) == 0) {    // blender Roughness!
+                if (sscanf(line + 3, "%f", &shine) == 1) {
+                    materials[current].shininess = ns_to_shininess(shine);
+                }
             }
         }
     }
@@ -260,9 +295,6 @@ static int load_materials_from_obj(const char *objPath, MaterialInfo *materials,
     fclose(fp);
     return 1; /* no mtllib is fine */
 }
-
-
-
 
 static int count_obj(FILE *fp, uint32_t *vertCount, uint32_t *triCount)
 {
@@ -317,9 +349,10 @@ static int parse_obj(
     char line[MAX_LINE_LEN];
     uint32_t vi = 0;
     uint32_t ti = 0;
-    uint8_t currentColor = 32;
-    uint8_t currentEmission = 0;
-    uint8_t currentTransparency = 0;
+    uint8_t currentColor = 32;          // default colour
+    uint8_t currentEmission = 0;        // no emission
+    uint8_t currentTransparency = 0;    // solid
+    uint8_t currentShine        = 0;    // MATT (not shiny bits)
 
     while (fgets(line, sizeof(line), fp)) {
         if (line[0] == 'v' && line[1] == ' ') {
@@ -333,7 +366,7 @@ static int parse_obj(
 
                 verts[vi].x = x;
                 verts[vi].y = y;
-                verts[vi].z = -z;
+                verts[vi].z = -z;   /* keep your current working axis fix */
                 vi++;
             }
         }
@@ -350,25 +383,19 @@ static int parse_obj(
                     currentColor = materials[matIndex].color;
                     currentEmission = materials[matIndex].emission;
                     currentTransparency = materials[matIndex].transparency;
+                    currentShine = materials[matIndex].shininess;
                 } else {
                     uint8_t parsedColor;
-                    uint8_t parsedEmission;
-                    uint8_t parsedTransparency;
 
-                    if (parse_sbx_material_name(
-                            matName,
-                            &parsedColor,
-                            &parsedEmission,
-                            &parsedTransparency))
-                    {
+                    if (parse_sbx_material_name(matName, &parsedColor)) {
                         currentColor = parsedColor;
-                        currentEmission = parsedEmission;
-                        currentTransparency = parsedTransparency;
                     } else {
                         currentColor = 32;
-                        currentEmission = 0;
-                        currentTransparency = 0;
                     }
+                    currentEmission = 0;
+                    currentTransparency = 0;
+                    currentShine = 0;
+
                 }
             }
         }
@@ -379,13 +406,13 @@ static int parse_obj(
             char *tok = strtok_r(line + 2, " \t\r\n", &saveptr);
 
             while (tok && n < MAX_FACE_VERTS) {
-                long vIndex = strtol(tok, NULL, 10);
+                long vIndex = strtol(tok, NULL, 10); /* first integer before slash */
                 idx[n++] = (int)vIndex;
                 tok = strtok_r(NULL, " \t\r\n", &saveptr);
             }
 
             if (n >= 3) {
-                int a0 = idx[0] - 1;
+                int a0 = idx[0] - 1; /* OBJ is 1-based */
 
                 for (int k = 1; k < n - 1; k++) {
                     int a1 = idx[k] - 1;
@@ -409,11 +436,12 @@ static int parse_obj(
                     }
 
                     tris[ti].a = (uint32_t)a0;
-                    tris[ti].b = (uint32_t)a2;
+                    tris[ti].b = (uint32_t)a2;   /* keep your current working winding fix */
                     tris[ti].c = (uint32_t)a1;
                     tris[ti].color = currentColor;
                     tris[ti].emission = currentEmission;
                     tris[ti].transparency = currentTransparency;
+                    tris[ti].shininess = currentShine;
                     ti++;
                 }
             }
@@ -445,7 +473,7 @@ static int write_sb3d(
 {
     FILE *fp;
     const char magic[4] = { 'S', 'B', '3', 'D' };
-    uint32_t version = 3;
+    uint32_t version = 5;   // i know, total gash, but need to change this to prevent funny meshes ;)
 
     fp = fopen(filename, "wb");
     if (!fp) {
@@ -464,12 +492,13 @@ static int write_sb3d(
 
     if (triCount > 0) {
         for (uint32_t i = 0; i < triCount; i++) {
-            if (fwrite(&tris[i].a, sizeof(uint32_t), 1, fp) != 1) goto write_fail;
-            if (fwrite(&tris[i].b, sizeof(uint32_t), 1, fp) != 1) goto write_fail;
-            if (fwrite(&tris[i].c, sizeof(uint32_t), 1, fp) != 1) goto write_fail;
-            if (fwrite(&tris[i].color, sizeof(uint8_t), 1, fp) != 1) goto write_fail;
-            if (fwrite(&tris[i].emission, sizeof(uint8_t), 1, fp) != 1) goto write_fail;
+            if (fwrite(&tris[i].a,           sizeof(uint32_t), 1, fp) != 1) goto write_fail;
+            if (fwrite(&tris[i].b,           sizeof(uint32_t), 1, fp) != 1) goto write_fail;
+            if (fwrite(&tris[i].c,           sizeof(uint32_t), 1, fp) != 1) goto write_fail;
+            if (fwrite(&tris[i].color,        sizeof(uint8_t), 1, fp) != 1) goto write_fail;
+            if (fwrite(&tris[i].emission,     sizeof(uint8_t), 1, fp) != 1) goto write_fail;
             if (fwrite(&tris[i].transparency, sizeof(uint8_t), 1, fp) != 1) goto write_fail;
+            if (fwrite(&tris[i].shininess,    sizeof(uint8_t), 1, fp) != 1) goto write_fail;
         }
     }
 
@@ -481,7 +510,6 @@ write_fail:
     fclose(fp);
     return 0;
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -560,6 +588,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    printf("\n--- VERSION 5 ----\n");
     printf("Input : %s\n", inputName);
     printf("Output: %s\n", outputName);
     printf("Verts : %u\n", (unsigned)vertCount);

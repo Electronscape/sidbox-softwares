@@ -1166,7 +1166,84 @@ static int sb3d_clipLineToScreen(int *x0, int *y0, int *x1, int *y1)
     }
 }
 
+void drawFakeSkyDots(const Camera *cam, uint8_t dotCol, int azSteps, int elSteps, uint8_t density)
+{
+    //if (!cam) return;
+    //if (density == 0) return;
 
+    if (azSteps < 16) azSteps = 16;
+    if (elSteps < 8)  elSteps = 8;
+
+    const float twoPi  = 6.28318530718f;
+    const float halfPi = 1.57079632679f;
+
+    const float invAz = 1.0f / (float)azSteps;
+    const float invEl = 1.0f / (float)elSteps;
+
+    const float rx = cam->right.x;
+    const float ry = cam->right.y;
+    const float rz = cam->right.z;
+
+    const float ux = cam->up.x;
+    const float uy = cam->up.y;
+    const float uz = cam->up.z;
+
+    const float fx = cam->forward.x;
+    const float fy = cam->forward.y;
+    const float fz = cam->forward.z;
+
+
+    for (int el = 0; el < elSteps; el++) {
+        const float elT = ((float)el + 0.5f) * invEl;
+        const float elev = elT * halfPi;
+
+        const float sinElev = sinf(elev);
+        const float cosElev = cosf(elev);
+
+        for (int az = 0; az < azSteps; az++) {
+            uint32_t h = sb3d_hash2i(az, el);
+            if ((h & 255u) > density) continue;
+
+            const float jitterA = ((float)((h >> 8)  & 255u)) * (1.0f / 255.0f);
+            const float jitterE = ((float)((h >> 16) & 255u)) * (1.0f / 255.0f);
+
+            const float ang =
+                (((float)az + jitterA) * invAz) * twoPi;
+
+            const float elevJ =
+                (((float)el + jitterE) * invEl) * halfPi;
+
+            const float sinE = sinf(elevJ);
+            const float cosE = cosf(elevJ);
+            const float sinA = sinf(ang);
+            const float cosA = cosf(ang);
+
+            /* upper hemisphere world direction */
+            const float worldX = cosE * cosA;
+            const float worldY = sinE;
+            const float worldZ = cosE * sinA;
+
+            /* world dir -> camera dir */
+            const float camX = (worldX * rx) + (worldY * ry) + (worldZ * rz);
+            const float camY = (worldX * ux) + (worldY * uy) + (worldZ * uz);
+            const float camZ = (worldX * fx) + (worldY * fy) + (worldZ * fz);
+
+            /* only stars in front of camera */
+            if (camZ <= 0.001f) continue;
+
+            {
+                const float invZ = 1.0f / camZ;
+                const int sx = (int)((camX * cam->projF * invZ) + cam->halfW + 0.5f);
+                const int sy = (int)((-camY * cam->projF * invZ) + cam->halfH + 0.5f);
+
+                if ((unsigned)sx < SCREEN_W && (unsigned)sy < SCREEN_H) {
+                    putPixel(sx, sy, dotCol);
+                }
+            }
+        }
+    }
+    
+}
 
 
 void drawFakeHorizonGrid(

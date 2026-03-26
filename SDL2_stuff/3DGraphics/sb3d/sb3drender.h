@@ -52,6 +52,7 @@ void drawEntity(const Entity *ent, const Camera *cam, uint8_t color);
 void drawWorldLine(Vec3 a, Vec3 b, const Camera *cam, uint8_t color);
 
 
+void drawFakeSkyDots(const Camera *cam, uint8_t dotCol, int azSteps, int elSteps, uint8_t density);
 void drawFakeHorizonDots(const Camera *cam, uint8_t dotCol, int spacing, float ylevel, uint8_t density);
 void drawFakeHorizon(const Camera *cam, uint8_t skyCol, uint8_t groundCol, uint8_t lineCol, float ylevel);
 void drawFakeHorizonGrid(

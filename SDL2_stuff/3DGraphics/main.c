@@ -727,12 +727,13 @@ int main(void) {
             static uint32_t skyU = 0;
             skyU +=1;
 
-            drawFakeHorizonTex(&cam, skytex, seatex, HosS, HosG, HosH, 0, 1600, 10000
-                ,0.02f, 0.04f, skyU, 0, 0, 0, 1, 1, 60, 255);
+            drawFakeHorizonTex(&cam, skytex, seatex, HosS, HosG, HosH, 0, 1600, 10000  ,0.02f, 0.04f, skyU, 0, 0, 0, 1, 1, 60, 255);
 
+            
 
+            drawFakeSkyDots(&cam, 255, 128, 32, 8);
             drawFakeHorizonDots(&cam, SeaDots, 128, 0, 110);
-            //drawFakeHorizonGrid(&cam, 2, 128, 0.0f, 32);
+            drawFakeHorizonGrid(&cam, 2, 128, 0.0f, 32);
             Render3D(&cam);
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
 
