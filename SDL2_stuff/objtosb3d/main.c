@@ -34,12 +34,9 @@ typedef struct {
 static int has_obj_extension(const char *filename)
 {
     const char *dot;
-
     if (!filename) return 0;
-
     dot = strrchr(filename, '.');
     if (!dot) return 0;
-
     return (strcmp(dot, ".obj") == 0);
 }
 
