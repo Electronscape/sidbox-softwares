@@ -3,9 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_LINE_LEN   1024
-#define MAX_FACE_VERTS 64
-#define MAX_MATERIALS  256
+#define MAX_LINE_LEN   1024u
+#define MAX_FACE_VERTS 64u
+#define MAX_MATERIALS  256u
+
+
+#define TRI_FLAG_DEFAULT        0x00
+#define TRI_FLAG_NOBFACECULL    0x10
+#define TRI_FLAG_RESERVED3      0x20
+#define TRI_FLAG_RESERVED4      0x40
+#define TRI_FLAG_TRANSPARENT    0x80    // TODO: sadly this is required to ensure transparent faces to be flagged in runtime... will fix this later
+
 
 typedef struct {
     float x;
@@ -63,10 +71,13 @@ static uint8_t ke_to_emission(float r, float g, float b)
 // Transparency Calculator //
 static uint8_t d_to_transparency(float d)
 {
+    uint8_t transU;
     if (d < 0.0f) d = 0.0f;
     if (d > 1.0f) d = 1.0f;
 
-    return (uint8_t)((1.0f - d) * 255.0f + 0.5f);
+    transU = (uint8_t)((1.0f - d) * 255.0f + 0.5f);
+    //printf("F %f == %u\n", d, transU);
+    return transU;//
 }
 
 static uint8_t ns_to_shininess(float ns)
@@ -150,7 +161,7 @@ static int find_material(MaterialInfo *materials, int materialCount, const char 
     return -1;
 }
 
-static int parse_sbx_material_name(const char *name, uint8_t *outColor)
+static int parse_sbx_material_name_OLD(const char *name, uint8_t *outColor)
 {
     const char *p;
 
@@ -190,6 +201,100 @@ static int parse_sbx_material_name(const char *name, uint8_t *outColor)
 }
 
 
+
+
+
+static int parse_sbx_material_name(const char *name, uint8_t *outColor)
+{
+    const char *p;
+
+    if (!name || !outColor) return 0;
+
+    p = name;
+
+    while (*p) {
+        if (p[0] == 'S' &&
+            p[1] == 'B' &&
+            p[2] == 'X')
+        {
+            /* -------------------------------------------------- */
+            /* Old format: SBX_<colour>                           */
+            /* -------------------------------------------------- */
+            if (p[3] == '_') {
+                const char *n = p + 4;
+                unsigned value = 0;
+                int digits = 0;
+
+                while (*n >= '0' && *n <= '9') {
+                    value = (value * 10u) + (unsigned)(*n - '0');
+                    if (value > 255u) return 0;
+                    digits++;
+                    n++;
+                }
+
+                if (digits == 0) {
+                    return 0;
+                }
+
+                *outColor = (uint8_t)value & 0xf;
+                //printf("Material %s colour: %lu\n", name, value & 0xf);
+                return 1;
+            }
+
+            /* -------------------------------------------------- */
+            /* New format: SBXx_<colour>                          */
+            /* x = single hex digit -> upper nibble              */
+            /* colour = decimal -> lower nibble                  */
+            /* -------------------------------------------------- */
+            if (p[4] == '_') {
+                uint8_t flagNibble = 0;
+                const char *n = p + 5;
+                uint8_t value = 0;
+                int digits = 0;
+
+                if (p[3] >= '0' && p[3] <= '9') {
+                    flagNibble = (unsigned)(p[3] - '0');
+                }
+                else if (p[3] >= 'a' && p[3] <= 'f') {
+                    flagNibble = (unsigned)(10 + (p[3] - 'a'));
+                }
+                else if (p[3] >= 'A' && p[3] <= 'F') {
+                    flagNibble = (unsigned)(10 + (p[3] - 'A'));
+                }
+                else {
+                    p++;
+                    continue;
+                }
+
+                while (*n >= '0' && *n <= '9') {
+                    value = (value * 10u) + (unsigned)(*n - '0');
+                    if (value > 255u) return 0;
+                    digits++;
+                    n++;
+                }
+
+                if (digits == 0) {
+                    return 0;
+                }
+
+                
+                *outColor = (uint8_t)((flagNibble << 4) | (value & 0x0Fu));
+                //if(flagNibble) 
+                //printf("Material %s has flags 0x%0x / colour: %lu\n", name, (flagNibble << 4), value & 0xf);
+                return 1;
+            }
+        }
+
+        p++;
+    }
+
+    return 0;
+}
+
+
+
+
+
 static int load_mtl_file(const char *mtlPath, MaterialInfo *materials, int *materialCount)
 {
     FILE *fp;
@@ -219,7 +324,7 @@ static int load_mtl_file(const char *mtlPath, MaterialInfo *materials, int *mate
                 strncpy(materials[*materialCount].name, name, sizeof(materials[*materialCount].name) - 1);
                 materials[*materialCount].name[sizeof(materials[*materialCount].name) - 1] = '\0';
 
-                materials[*materialCount].color = 32;
+                materials[*materialCount].color = 1;
                 materials[*materialCount].emission = 0;
                 materials[*materialCount].transparency = 0; // fully solid!!
                 materials[*materialCount].shininess = 0;    // (NOT shiny)
@@ -245,6 +350,8 @@ static int load_mtl_file(const char *mtlPath, MaterialInfo *materials, int *mate
             else if (strncmp(line, "d ", 2) == 0) {   /* Blender alpha {Blender uses d }*/
                 if (sscanf(line + 2, "%f", &v) == 1) {
                     materials[current].transparency = d_to_transparency(v);
+                    if(materials[current].transparency > 0)
+                        materials[current].color |= TRI_FLAG_TRANSPARENT;
                 }
             }
             else if (strncmp(line, "Ns ", 3) == 0) {    // blender Roughness!
@@ -256,6 +363,29 @@ static int load_mtl_file(const char *mtlPath, MaterialInfo *materials, int *mate
     }
 
     fclose(fp);
+
+
+
+    for (int i = 0; i < *materialCount; i++) {
+        printf(
+            "MAT[%02d] %-24s PK:0x%02X  FLG:0x%0x  COL:%2u  EMI:%3u  TRN:%3u  SHN:%3u\n",
+            i,
+            materials[i].name,
+            (unsigned)materials[i].color,
+            (unsigned)((materials[i].color >> 4) & 0x0F),
+            (unsigned)materials[i].color & 0xf,
+            (unsigned)materials[i].emission,
+            (unsigned)materials[i].transparency,
+            (unsigned)materials[i].shininess
+        );
+    }
+
+
+
+
+
+
+
     return 1;
 }
 
@@ -346,7 +476,7 @@ static int parse_obj(
     char line[MAX_LINE_LEN];
     uint32_t vi = 0;
     uint32_t ti = 0;
-    uint8_t currentColor = 32;          // default colour
+    uint8_t currentColor = 1;          // default colour
     uint8_t currentEmission = 0;        // no emission
     uint8_t currentTransparency = 0;    // solid
     uint8_t currentShine        = 0;    // MATT (not shiny bits)
@@ -387,7 +517,7 @@ static int parse_obj(
                     if (parse_sbx_material_name(matName, &parsedColor)) {
                         currentColor = parsedColor;
                     } else {
-                        currentColor = 32;
+                        currentColor = 1;
                     }
                     currentEmission = 0;
                     currentTransparency = 0;
@@ -588,8 +718,8 @@ int main(int argc, char *argv[])
     printf("\n--- VERSION 5 ----\n");
     printf("Input : %s\n", inputName);
     printf("Output: %s\n", outputName);
-    printf("Verts : %u\n", (unsigned)vertCount);
-    printf("Tris  : %u\n", (unsigned)triCount);
+    printf("Verts : %lu\n", (unsigned)vertCount);
+    printf("Tris  : %lu\n", (unsigned)triCount );
     printf("Mats  : %d\n", materialCount);
     printf("END OF PROGRAM!\n");
 
