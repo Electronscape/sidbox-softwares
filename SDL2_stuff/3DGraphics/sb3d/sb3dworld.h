@@ -83,6 +83,11 @@ typedef struct {
     Vec2 p2;
     float depth;
     float shadeF;
+
+    float shade0F;
+    float shade1F;
+    float shade2F;
+
     uint16_t z0;
     uint16_t z1;
     uint16_t z2;

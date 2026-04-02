@@ -496,6 +496,432 @@ static inline int triAreaInt(int x0, int y0, int x1, int y1, int x2, int y2)
 /* ========================================================================= */
 /* z+dither banded fill                                                      */
 /* ========================================================================= */
+void fillTriangleDitherZBandBayerGouraud(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    float shade0F,
+    float shade1F,
+    float shade2F,
+    int bandY0,
+    int bandY1
+)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    minY = clampi(minY, bandY0, bandY1);
+    maxY = clampi(maxY, bandY0, bandY1);
+
+    const float fx0 = (float)x0;
+    const float fy0 = (float)y0;
+    const float fx1 = (float)x1;
+    const float fy1 = (float)y1;
+    const float fx2 = (float)x2;
+    const float fy2 = (float)y2;
+
+    const float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+    if (fabsf(area) < 0.0001f) return;
+
+    if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) return;
+
+    const float invArea = 1.0f / area;
+    const int areaPositive = (area > 0.0f);
+    const float qEps = 0.0000001f;
+
+    const float q0 = 1.0f / camz0;
+    const float q1 = 1.0f / camz1;
+    const float q2 = 1.0f / camz2;
+
+    const float zq0 = (float)z0_in * q0;
+    const float zq1 = (float)z1_in * q1;
+    const float zq2 = (float)z2_in * q2;
+
+    const float sq0 = shade0F * q0;
+    const float sq1 = shade1F * q1;
+    const float sq2 = shade2F * q2;
+
+    const float A0 = fy1 - fy2;
+    const float B0 = fx2 - fx1;
+    const float C0 = (fx1 * fy2) - (fy1 * fx2);
+
+    const float A1 = fy2 - fy0;
+    const float B1 = fx0 - fx2;
+    const float C1 = (fx2 * fy0) - (fy2 * fx0);
+
+    const float A2 = fy0 - fy1;
+    const float B2 = fx1 - fx0;
+    const float C2 = (fx0 * fy1) - (fy0 * fx1);
+
+    const float qStepX =
+        (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
+    const float qStepY =
+        (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
+
+    const float zqStepX =
+        (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
+    const float zqStepY =
+        (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
+
+    const float sqStepX =
+        (A0 * sq0 + A1 * sq1 + A2 * sq2) * invArea;
+    const float sqStepY =
+        (B0 * sq0 + B1 * sq1 + B2 * sq2) * invArea;
+
+    const float startPx = (float)minX + 0.5f;
+    const float startPy = (float)minY + 0.5f;
+
+    float rowW0 = (A0 * startPx) + (B0 * startPy) + C0;
+    float rowW1 = (A1 * startPx) + (B1 * startPy) + C1;
+    float rowW2 = (A2 * startPx) + (B2 * startPy) + C2;
+
+    float rowQ =
+        ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
+
+    float rowZQ =
+        ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
+
+    float rowSQ =
+        ((rowW0 * sq0) + (rowW1 * sq1) + (rowW2 * sq2)) * invArea;
+
+    const int width = (maxX - minX) + 1;
+
+    for (int y = minY; y <= maxY; y++) {
+        const int localY = y - bandY0;
+        uint16_t *zb = &g_depthBufferBand[(localY * SCREEN_W) + minX];
+        uint8_t  *dst = &fb[(y * SCREEN_W) + minX];
+        const uint8_t *brow = bayer4x4[y & 3];
+
+        float w0 = rowW0;
+        float w1 = rowW1;
+        float w2 = rowW2;
+        float q  = rowQ;
+        float zq = rowZQ;
+        float sq = rowSQ;
+
+        if (areaPositive) {
+            for (int i = 0; i < width; i++) {
+                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f && q > qEps) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        float shadeF = sq / q;
+                        if (shadeF < 0.0f) shadeF = 0.0f;
+                        if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) {
+                            shadeF = (float)MAX_PALETTE_SHADE_INDEX;
+                        }
+
+                        int s0 = (int)shadeF;
+                        int s1 = s0 + 1;
+                        if (s1 > (int)MAX_PALETTE_SHADE_INDEX) {
+                            s1 = (int)MAX_PALETTE_SHADE_INDEX;
+                        }
+
+                        int threshold16 = (int)((shadeF - (float)s0) * 16.0f);
+                        if (threshold16 < 0)  threshold16 = 0;
+                        if (threshold16 > 15) threshold16 = 15;
+
+                        const uint8_t col0 = shadeColor(baseColor, s0);
+                        const uint8_t col1 = shadeColor(baseColor, s1);
+
+                        zb[i]  = zi;
+                        dst[i] = (brow[(minX + i) & 3] < threshold16) ? col1 : col0;
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+                sq += sqStepX;
+            }
+        } else {
+            for (int i = 0; i < width; i++) {
+                if (w0 <= 0.0f && w1 <= 0.0f && w2 <= 0.0f && q > qEps) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        float shadeF = sq / q;
+                        if (shadeF < 0.0f) shadeF = 0.0f;
+                        if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) {
+                            shadeF = (float)MAX_PALETTE_SHADE_INDEX;
+                        }
+
+                        int s0 = (int)shadeF;
+                        int s1 = s0 + 1;
+                        if (s1 > (int)MAX_PALETTE_SHADE_INDEX) {
+                            s1 = (int)MAX_PALETTE_SHADE_INDEX;
+                        }
+
+                        int threshold16 = (int)((shadeF - (float)s0) * 16.0f);
+                        if (threshold16 < 0)  threshold16 = 0;
+                        if (threshold16 > 15) threshold16 = 15;
+
+                        const uint8_t col0 = shadeColor(baseColor, s0);
+                        const uint8_t col1 = shadeColor(baseColor, s1);
+
+                        zb[i]  = zi;
+                        dst[i] = (brow[(minX + i) & 3] < threshold16) ? col1 : col0;
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+                sq += sqStepX;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+        rowQ  += qStepY;
+        rowZQ += zqStepY;
+        rowSQ += sqStepY;
+    }
+}
+
+void fillTriangleDitherZBandBayerTGouraud(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    uint8_t transparancy,
+    float shade0F,
+    float shade1F,
+    float shade2F,
+    int bandY0,
+    int bandY1
+)
+{
+    int minX, minY, maxX, maxY;
+    triBounds(x0, y0, x1, y1, x2, y2, &minX, &minY, &maxX, &maxY);
+
+    if (maxY < bandY0 || minY > bandY1) return;
+    if (maxX < 0 || minX >= SCREEN_W) return;
+
+    minX = clampi(minX, 0, SCREEN_W - 1);
+    maxX = clampi(maxX, 0, SCREEN_W - 1);
+    minY = clampi(minY, bandY0, bandY1);
+    maxY = clampi(maxY, bandY0, bandY1);
+
+    const float fx0 = (float)x0;
+    const float fy0 = (float)y0;
+    const float fx1 = (float)x1;
+    const float fy1 = (float)y1;
+    const float fx2 = (float)x2;
+    const float fy2 = (float)y2;
+
+    const float area = ((fx1 - fx0) * (fy2 - fy0)) - ((fy1 - fy0) * (fx2 - fx0));
+    if (fabsf(area) < 0.0001f) return;
+
+    if (camz0 <= 0.0001f || camz1 <= 0.0001f || camz2 <= 0.0001f) return;
+
+    const float invArea = 1.0f / area;
+    const int areaPositive = (area > 0.0f);
+
+    const float q0 = 1.0f / camz0;
+    const float q1 = 1.0f / camz1;
+    const float q2 = 1.0f / camz2;
+
+    const float zq0 = (float)z0_in * q0;
+    const float zq1 = (float)z1_in * q1;
+    const float zq2 = (float)z2_in * q2;
+
+    const float sq0 = shade0F * q0;
+    const float sq1 = shade1F * q1;
+    const float sq2 = shade2F * q2;
+
+    const float A0 = fy1 - fy2;
+    const float B0 = fx2 - fx1;
+    const float C0 = (fx1 * fy2) - (fy1 * fx2);
+
+    const float A1 = fy2 - fy0;
+    const float B1 = fx0 - fx2;
+    const float C1 = (fx2 * fy0) - (fy2 * fx0);
+
+    const float A2 = fy0 - fy1;
+    const float B2 = fx1 - fx0;
+    const float C2 = (fx0 * fy1) - (fy0 * fx1);
+
+    const float qStepX =
+        (A0 * q0 + A1 * q1 + A2 * q2) * invArea;
+    const float qStepY =
+        (B0 * q0 + B1 * q1 + B2 * q2) * invArea;
+
+    const float zqStepX =
+        (A0 * zq0 + A1 * zq1 + A2 * zq2) * invArea;
+    const float zqStepY =
+        (B0 * zq0 + B1 * zq1 + B2 * zq2) * invArea;
+
+    const float sqStepX =
+        (A0 * sq0 + A1 * sq1 + A2 * sq2) * invArea;
+    const float sqStepY =
+        (B0 * sq0 + B1 * sq1 + B2 * sq2) * invArea;
+
+    const float startPx = (float)minX + 0.5f;
+    const float startPy = (float)minY + 0.5f;
+
+    float rowW0 = (A0 * startPx) + (B0 * startPy) + C0;
+    float rowW1 = (A1 * startPx) + (B1 * startPy) + C1;
+    float rowW2 = (A2 * startPx) + (B2 * startPy) + C2;
+
+    float rowQ =
+        ((rowW0 * q0) + (rowW1 * q1) + (rowW2 * q2)) * invArea;
+
+    float rowZQ =
+        ((rowW0 * zq0) + (rowW1 * zq1) + (rowW2 * zq2)) * invArea;
+
+    float rowSQ =
+        ((rowW0 * sq0) + (rowW1 * sq1) + (rowW2 * sq2)) * invArea;
+
+    int transThreshold16 = (((int)transparancy * 17) >> 8);
+    if (transThreshold16 < 0)  transThreshold16 = 0;
+    if (transThreshold16 > 16) transThreshold16 = 16;
+
+    const int width = (maxX - minX) + 1;
+    const float qEps = 0.0000001f;
+
+    for (int y = minY; y <= maxY; y++) {
+        const int localY = y - bandY0;
+        uint16_t *zb = &g_depthBufferBand[(localY * SCREEN_W) + minX];
+        uint8_t  *dst = &fb[(y * SCREEN_W) + minX];
+        const uint8_t *brow = bayer4x4[y & 3];
+
+        float w0 = rowW0;
+        float w1 = rowW1;
+        float w2 = rowW2;
+        float q  = rowQ;
+        float zq = rowZQ;
+        float sq = rowSQ;
+
+        if (areaPositive) {
+            for (int i = 0; i < width; i++) {
+                if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f && q > qEps) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        const uint8_t bpat = brow[(minX + i) & 3];
+
+                        if (bpat >= transThreshold16) {
+                            float shadeF = sq / q;
+                            if (shadeF < 0.0f) shadeF = 0.0f;
+                            if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) {
+                                shadeF = (float)MAX_PALETTE_SHADE_INDEX;
+                            }
+
+                            int s0 = (int)shadeF;
+                            int s1 = s0 + 1;
+                            if (s1 > (int)MAX_PALETTE_SHADE_INDEX) {
+                                s1 = (int)MAX_PALETTE_SHADE_INDEX;
+                            }
+
+                            int threshold16 = (int)((shadeF - (float)s0) * 16.0f);
+                            if (threshold16 < 0)  threshold16 = 0;
+                            if (threshold16 > 15) threshold16 = 15;
+
+                            const uint8_t col0 = shadeColor(baseColor, s0);
+                            const uint8_t col1 = shadeColor(baseColor, s1);
+
+                            zb[i]  = zi;
+                            dst[i] = (bpat < threshold16) ? col1 : col0;
+                        }
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+                sq += sqStepX;
+            }
+        } else {
+            for (int i = 0; i < width; i++) {
+                if (w0 <= 0.0f && w1 <= 0.0f && w2 <= 0.0f && q > qEps) {
+                    float z = zq / q;
+                    if (z < 0.0f) z = 0.0f;
+                    if (z > 65535.0f) z = 65535.0f;
+
+                    const uint16_t zi = (uint16_t)(z + 0.5f);
+                    if (zi < zb[i]) {
+                        const uint8_t bpat = brow[(minX + i) & 3];
+
+                        if (bpat >= transThreshold16) {
+                            float shadeF = sq / q;
+                            if (shadeF < 0.0f) shadeF = 0.0f;
+                            if (shadeF > (float)MAX_PALETTE_SHADE_INDEX) {
+                                shadeF = (float)MAX_PALETTE_SHADE_INDEX;
+                            }
+
+                            int s0 = (int)shadeF;
+                            int s1 = s0 + 1;
+                            if (s1 > (int)MAX_PALETTE_SHADE_INDEX) {
+                                s1 = (int)MAX_PALETTE_SHADE_INDEX;
+                            }
+
+                            int threshold16 = (int)((shadeF - (float)s0) * 16.0f);
+                            if (threshold16 < 0)  threshold16 = 0;
+                            if (threshold16 > 15) threshold16 = 15;
+
+                            const uint8_t col0 = shadeColor(baseColor, s0);
+                            const uint8_t col1 = shadeColor(baseColor, s1);
+
+                            zb[i]  = zi;
+                            dst[i] = (bpat < threshold16) ? col1 : col0;
+                        }
+                    }
+                }
+
+                w0 += A0;
+                w1 += A1;
+                w2 += A2;
+                q  += qStepX;
+                zq += zqStepX;
+                sq += sqStepX;
+            }
+        }
+
+        rowW0 += B0;
+        rowW1 += B1;
+        rowW2 += B2;
+        rowQ  += qStepY;
+        rowZQ += zqStepY;
+        rowSQ += sqStepY;
+    }
+}
+
+
 
 void fillTriangleDitherZBandBayer(
     int x0, int y0,

@@ -16,6 +16,14 @@ static RenderTri g_renderTris[MAX_RENDER_TRIS];
 // cache
 static Vec3 g_worldVertsCache[SB3D_MAX_VERTS];
 static Vec3 g_camVertsCache[SB3D_MAX_VERTS];
+static Vec3 g_worldNormCache[SB3D_MAX_VERTS];
+
+
+typedef struct
+{
+    Vec3 p;
+    float shadeF;
+} ClipVert;
 
 
 static int g_renderTriCount = 0;
@@ -78,13 +86,6 @@ static inline uint8_t encodeZ8(float z, const Camera *cam)
     return (uint8_t)(t * 255.0f);
 }
 
-void setDefaultRenderMode(void)
-{
-    g_enableZOrdering = 1;
-    g_flatMode        = 0;
-    g_twoshadeMode    = 0;
-    g_wireframe       = 0;
-}
 
 void enableZOrdering(int enable) { g_enableZOrdering = enable; }
 void enableFlatMode(int en)      { g_flatMode = en; }
@@ -238,7 +239,15 @@ static inline int triangleFacingCamera(Vec3 a, Vec3 b, Vec3 c)
     return (d < 0.0f);
 }
 
-void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, uint8_t trans, float shadeF)
+
+void submitClippedTri(
+    Vec3 a, Vec3 b, Vec3 c,
+    float shade0F, float shade1F, float shade2F,
+    Camera *cam,
+    uint8_t color,
+    uint8_t emission,
+    uint8_t trans
+)
 {
     Vec2 pa, pb, pc;
 
@@ -260,11 +269,16 @@ void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_
     rt->p1 = pb;
     rt->p2 = pc;
 
-    rt->color    = color;
-    rt->emission = emission;
-    rt->shadeF   = shadeF;
+    rt->color        = color;
+    rt->emission     = emission;
     rt->transparency = trans;
-    rt->depth    = (a.z + b.z + c.z) * (1.0f / 3.0f);
+
+    rt->shade0F = shade0F;
+    rt->shade1F = shade1F;
+    rt->shade2F = shade2F;
+    rt->shadeF  = (shade0F + shade1F + shade2F) * (1.0f / 3.0f);
+
+    rt->depth = (a.z + b.z + c.z) * (1.0f / 3.0f);
 
     rt->z0 = encodeZ(a.z, cam);
     rt->z1 = encodeZ(b.z, cam);
@@ -281,7 +295,6 @@ void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_
     if (pb.y > rt->maxY) rt->maxY = pb.y;
     if (pc.y > rt->maxY) rt->maxY = pc.y;
 }
-
 
 int projectPoint(Vec3 p, const Camera *cam, Vec2 *out)
 {
@@ -316,6 +329,122 @@ int clipLineToNearPlane(Vec3 *a, Vec3 *b, const Camera *cam)
     else       *b = p;
 
     return 1;
+}
+
+
+static inline float planeEvalClip(ClipVert v, ClipPlane plane, const Camera *cam)
+{
+    const float f = sb3d_proj_f();
+    const float halfWOverF = (SCREEN_W * 0.5f) / f;
+    const float halfHOverF = (SCREEN_H * 0.5f) / f;
+    const Vec3 p = v.p;
+
+    switch (plane) {
+        case PLANE_NEAR:   return p.z - cam->nearPlane;
+        case PLANE_LEFT:   return p.x + (p.z * halfWOverF);
+        case PLANE_RIGHT:  return (p.z * halfWOverF) - p.x;
+        case PLANE_TOP:    return (p.z * halfHOverF) - p.y;
+        case PLANE_BOTTOM: return p.y + (p.z * halfHOverF);
+    }
+
+    return -1.0f;
+}
+
+static inline int pointInsidePlaneClip(ClipVert v, ClipPlane plane, const Camera *cam)
+{
+    return (planeEvalClip(v, plane, cam) >= 0.0f);
+}
+
+static inline ClipVert intersectPlaneClip(ClipVert a, ClipVert b, ClipPlane plane, const Camera *cam)
+{
+    ClipVert out;
+    const float fa = planeEvalClip(a, plane, cam);
+    const float fb = planeEvalClip(b, plane, cam);
+    const float t  = fa / (fa - fb);
+
+    out.p.x = a.p.x + ((b.p.x - a.p.x) * t);
+    out.p.y = a.p.y + ((b.p.y - a.p.y) * t);
+    out.p.z = a.p.z + ((b.p.z - a.p.z) * t);
+    out.shadeF = a.shadeF + ((b.shadeF - a.shadeF) * t);
+
+    return out;
+}
+
+static int clipPolygonAgainstPlaneClip(
+    ClipVert *inVerts,
+    int inCount,
+    ClipVert *outVerts,
+    ClipPlane plane,
+    const Camera *cam
+)
+{
+    int outCount = 0;
+
+    for (int i = 0; i < inCount; i++) {
+        ClipVert current = inVerts[i];
+        ClipVert prev    = inVerts[(i + inCount - 1) % inCount];
+
+        const int currentInside = pointInsidePlaneClip(current, plane, cam);
+        const int prevInside    = pointInsidePlaneClip(prev, plane, cam);
+
+        if (prevInside && currentInside) {
+            outVerts[outCount++] = current;
+        }
+        else if (prevInside && !currentInside) {
+            outVerts[outCount++] = intersectPlaneClip(prev, current, plane, cam);
+        }
+        else if (!prevInside && currentInside) {
+            outVerts[outCount++] = intersectPlaneClip(prev, current, plane, cam);
+            outVerts[outCount++] = current;
+        }
+    }
+
+    return outCount;
+}
+
+int clipTriangleToFrustumClip(
+    ClipVert a,
+    ClipVert b,
+    ClipVert c,
+    ClipVert *outVerts,
+    const Camera *cam
+)
+{
+    ClipVert poly1[CLIP_MAX_VERTS];
+    ClipVert poly2[CLIP_MAX_VERTS];
+    ClipVert *src = poly1;
+    ClipVert *dst = poly2;
+    ClipVert *tmp;
+    int count = 3;
+
+    src[0] = a;
+    src[1] = b;
+    src[2] = c;
+
+    count = clipPolygonAgainstPlaneClip(src, count, dst, PLANE_NEAR, cam);
+    if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
+
+    count = clipPolygonAgainstPlaneClip(src, count, dst, PLANE_LEFT, cam);
+    if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
+
+    count = clipPolygonAgainstPlaneClip(src, count, dst, PLANE_RIGHT, cam);
+    if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
+
+    count = clipPolygonAgainstPlaneClip(src, count, dst, PLANE_TOP, cam);
+    if (count < 3) return 0;
+    tmp = src; src = dst; dst = tmp;
+
+    count = clipPolygonAgainstPlaneClip(src, count, dst, PLANE_BOTTOM, cam);
+    if (count < 3) return 0;
+
+    for (int i = 0; i < count; i++) {
+        outVerts[i] = dst[i];
+    }
+
+    return count;
 }
 
 void resetRenderList(void)
@@ -1445,100 +1574,111 @@ void drawFakeHorizonGrid(
 
 
 
-void Render3D(const Camera *cam)
-{
-    resetRenderList();
-    submitWorldEntities(cam);
-    sb3dParticlesRender(cam);
+void Render3DWireFrame(const Camera *cam){
+    if (g_enableZOrdering) {
+        sortRenderList();
+    }
+    for (int i = 0; i < g_renderTriCount; i++) {
+        RenderTri *rt = &g_renderTris[i];
+        int shade = (int)(rt->shadeF + 0.5f);
 
-    if (g_wireframe) {
-        if (g_enableZOrdering) {
-            sortRenderList();
+        if (shade < 0) shade = 0;
+        if (shade > 4) shade = 4;
+
+        if (rt->emission > 0) {
+            const float emissiveF = (float)rt->emission / 255.0f;
+            int emissiveShade = (int)MAX_PALETTE_SHADE_INDEX - (int)(emissiveF * MAX_PALETTE_SHADE_INDEX + 0.5f);
+            if (emissiveShade < 0) emissiveShade = 0;
+            if (emissiveShade < shade) shade = emissiveShade;
         }
+        const uint8_t col = shadeColor(rt->color, shade);
+        drawLine(rt->p0.x, rt->p0.y, rt->p1.x, rt->p1.y, col);
+        drawLine(rt->p1.x, rt->p1.y, rt->p2.x, rt->p2.y, col);
+        drawLine(rt->p2.x, rt->p2.y, rt->p0.x, rt->p0.y, col);
+    }
+}
+
+
+void Render3DFlatMode(const Camera *cam){
+  for (int bandY0 = 0; bandY0 < SCREEN_H; bandY0 += ZBUF_BAND_H) {
+        int bandY1 = bandY0 + ZBUF_BAND_H - 1;
+        if (bandY1 >= SCREEN_H) bandY1 = SCREEN_H - 1;
+
+        resetDepthBufferBand();
 
         for (int i = 0; i < g_renderTriCount; i++) {
             RenderTri *rt = &g_renderTris[i];
-            int shade = (int)(rt->shadeF + 0.5f);
+            if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
 
-            if (shade < 0) shade = 0;
-            if (shade > 4) shade = 4;
-
-            if (rt->emission > 0) {
-                const float emissiveF = (float)rt->emission / 255.0f;
-                int emissiveShade = (int)MAX_PALETTE_SHADE_INDEX - (int)(emissiveF * MAX_PALETTE_SHADE_INDEX + 0.5f);
-                if (emissiveShade < 0) emissiveShade = 0;
-                if (emissiveShade < shade) shade = emissiveShade;
-            }
-
-            const uint8_t col = shadeColor(rt->color, shade);
-
-            drawLine(rt->p0.x, rt->p0.y, rt->p1.x, rt->p1.y, col);
-            drawLine(rt->p1.x, rt->p1.y, rt->p2.x, rt->p2.y, col);
-            drawLine(rt->p2.x, rt->p2.y, rt->p0.x, rt->p0.y, col);
+            fillTriangleZBandFlat(
+                rt->p0.x, rt->p0.y,
+                rt->p1.x, rt->p1.y,
+                rt->p2.x, rt->p2.y,
+                rt->z0, rt->z1, rt->z2,
+                rt->camz0, rt->camz1, rt->camz2,
+                rt->color,
+                rt->shadeF,
+                bandY0,
+                bandY1
+            );
         }
-        return;
     }
+}
 
-    if (!g_enableZOrdering) {
-        sortRenderList();
-
-        if (g_flatMode) {
-            for (int i = 0; i < g_renderTriCount; i++) {
-                RenderTri *rt = &g_renderTris[i];
-                int shade = (int)(rt->shadeF + 0.5f);
-
-                if (shade < 0) shade = 0;
-                if (shade > 4) shade = 4;
-
-                fillTriangle(
-                    rt->p0.x, rt->p0.y,
-                    rt->p1.x, rt->p1.y,
-                    rt->p2.x, rt->p2.y,
-                    shadeColor(rt->color, shade)
-                );
-            }
-        }
-        else if (g_twoshadeMode) {
-            for (int i = 0; i < g_renderTriCount; i++) {
-                RenderTri *rt = &g_renderTris[i];
-                fillTriangleDither2Mode(
-                    rt->p0.x, rt->p0.y,
-                    rt->p1.x, rt->p1.y,
-                    rt->p2.x, rt->p2.y,
-                    rt->color,
-                    rt->shadeF,
-                    DITHER_BAYER4X4
-                );
-            }
-        }
-        else {
-            for (int i = 0; i < g_renderTriCount; i++) {
-                RenderTri *rt = &g_renderTris[i];
-                fillTriangleDither(
-                    rt->p0.x, rt->p0.y,
-                    rt->p1.x, rt->p1.y,
-                    rt->p2.x, rt->p2.y,
-                    rt->color,
-                    rt->shadeF,
-                    DITHER_BAYER4X4
-                );
-            }
-        }
-        return;
-    }
-
+void Render3DTwoShade(const Camera *cam){
     for (int bandY0 = 0; bandY0 < SCREEN_H; bandY0 += ZBUF_BAND_H) {
         int bandY1 = bandY0 + ZBUF_BAND_H - 1;
         if (bandY1 >= SCREEN_H) bandY1 = SCREEN_H - 1;
 
         resetDepthBufferBand();
 
-        if (g_flatMode) {
-            for (int i = 0; i < g_renderTriCount; i++) {
-                RenderTri *rt = &g_renderTris[i];
-                if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
+        for (int i = 0; i < g_renderTriCount; i++) {
+            RenderTri *rt = &g_renderTris[i];
+            if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
 
-                fillTriangleZBandFlat(
+            fillTriangleDitherZBandBayer2Mode(
+                rt->p0.x, rt->p0.y,
+                rt->p1.x, rt->p1.y,
+                rt->p2.x, rt->p2.y,
+                rt->z0, rt->z1, rt->z2,
+                rt->camz0, rt->camz1, rt->camz2,
+                rt->color,
+                rt->shadeF,
+                bandY0,
+                bandY1
+            );
+        }
+    }
+}
+
+
+void Render3DStandard(const Camera *cam){
+    for (int bandY0 = 0; bandY0 < SCREEN_H; bandY0 += ZBUF_BAND_H) {
+        int bandY1 = bandY0 + ZBUF_BAND_H - 1;
+        if (bandY1 >= SCREEN_H) bandY1 = SCREEN_H - 1;
+
+        resetDepthBufferBand();
+        for (int i = 0; i < g_renderTriCount; i++) {
+            RenderTri *rt = &g_renderTris[i];
+            if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
+            if(rt->color & TRI_FLAG_TRANSPARENT)
+            {
+                uint8_t tStrenth = rt->transparency;
+
+                fillTriangleDitherZBandBayerT(
+                    rt->p0.x, rt->p0.y,
+                    rt->p1.x, rt->p1.y,
+                    rt->p2.x, rt->p2.y,
+                    rt->z0, rt->z1, rt->z2,
+                    rt->camz0, rt->camz1, rt->camz2,
+                    rt->color,
+                    rt->shadeF,
+                    tStrenth,
+                    bandY0,
+                    bandY1
+                );
+            } else {
+                fillTriangleDitherZBandBayer(
                     rt->p0.x, rt->p0.y,
                     rt->p1.x, rt->p1.y,
                     rt->p2.x, rt->p2.y,
@@ -1551,57 +1691,49 @@ void Render3D(const Camera *cam)
                 );
             }
         }
-        else if (g_twoshadeMode) {
-            for (int i = 0; i < g_renderTriCount; i++) {
-                RenderTri *rt = &g_renderTris[i];
-                if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
+    }
+}
 
-                fillTriangleDitherZBandBayer2Mode(
-                    rt->p0.x, rt->p0.y,
-                    rt->p1.x, rt->p1.y,
-                    rt->p2.x, rt->p2.y,
-                    rt->z0, rt->z1, rt->z2,
-                    rt->camz0, rt->camz1, rt->camz2,
-                    rt->color,
-                    rt->shadeF,
-                    bandY0,
-                    bandY1
-                );
+void Render3DGouraud(const Camera *cam){
+    for (int bandY0 = 0; bandY0 < SCREEN_H; bandY0 += ZBUF_BAND_H) {
+        int bandY1 = bandY0 + ZBUF_BAND_H - 1;
+        if (bandY1 >= SCREEN_H) bandY1 = SCREEN_H - 1;
+
+        resetDepthBufferBand();
+
+        for (int i = 0; i < g_renderTriCount; i++) {
+            RenderTri *rt = &g_renderTris[i];
+
+            if (rt->maxY < bandY0 || rt->minY > bandY1) {
+                continue;
             }
-        }
-        else {  // normal render
-            for (int i = 0; i < g_renderTriCount; i++) {
-                RenderTri *rt = &g_renderTris[i];
 
+            //if (rt->color & TRI_FLAG_GOURAUD) 
+            {
+                if (rt->color & TRI_FLAG_TRANSPARENT) {
+                    uint8_t tStrength = rt->transparency;
 
-
-                if (rt->maxY < bandY0 || rt->minY > bandY1) continue;
-
-                if(rt->color & TRI_FLAG_TRANSPARENT)
-                {
-                    uint8_t tStrenth = rt->transparency;
-
-                    fillTriangleDitherZBandBayerT(
+                    fillTriangleDitherZBandBayerTGouraud(
                         rt->p0.x, rt->p0.y,
                         rt->p1.x, rt->p1.y,
                         rt->p2.x, rt->p2.y,
                         rt->z0, rt->z1, rt->z2,
                         rt->camz0, rt->camz1, rt->camz2,
                         rt->color,
-                        rt->shadeF,
-                        tStrenth,
+                        tStrength,
+                        rt->shade0F, rt->shade1F, rt->shade2F,
                         bandY0,
                         bandY1
                     );
                 } else {
-                    fillTriangleDitherZBandBayer(
+                    fillTriangleDitherZBandBayerGouraud(
                         rt->p0.x, rt->p0.y,
                         rt->p1.x, rt->p1.y,
                         rt->p2.x, rt->p2.y,
                         rt->z0, rt->z1, rt->z2,
                         rt->camz0, rt->camz1, rt->camz2,
                         rt->color,
-                        rt->shadeF,
+                        rt->shade0F, rt->shade1F, rt->shade2F,
                         bandY0,
                         bandY1
                     );
@@ -1610,6 +1742,54 @@ void Render3D(const Camera *cam)
         }
     }
 }
+
+
+
+
+void (*RenderPipe)(const Camera *cam);
+
+void setRenderMode(uint8_t mode){
+    switch (mode){
+        case REND_MODE_WIREFRAME:
+            RenderPipe = Render3DWireFrame;
+        break;
+
+        case REND_MODE_FLAT:
+            RenderPipe = Render3DFlatMode;
+        break;
+
+        case REND_MODE_TWOSHADE:
+            RenderPipe = Render3DTwoShade;
+        break;
+
+        case REND_MODE_GOURAUD:
+            RenderPipe = Render3DGouraud;
+        break;
+
+        default://REND_MODE_STANDARD
+            RenderPipe = Render3DStandard;
+        break;
+    }
+}
+
+void setDefaultRenderMode(){
+    setRenderMode(REND_MODE_GOURAUD);
+}
+
+void Render3D(const Camera *cam)
+{
+    resetRenderList();
+    submitWorldEntities(cam);
+    sb3dParticlesRender(cam);
+    RenderPipe(cam);
+}
+
+
+
+
+
+
+
 
 void submitEntitySolid(const Entity *ent, const Camera *cam)
 {
@@ -1707,6 +1887,71 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         g_camVertsCache[vi].x = (dx * crx) + (dy * cry) + (dz * crz);
         g_camVertsCache[vi].y = (dx * cux) + (dy * cuy) + (dz * cuz);
         g_camVertsCache[vi].z = (dx * cfx) + (dy * cfy) + (dz * cfz);
+
+        g_worldNormCache[vi].x = 0.0f;
+        g_worldNormCache[vi].y = 0.0f;
+        g_worldNormCache[vi].z = 0.0f;
+    }
+
+    /*
+        Build smooth world-space vertex normals by accumulating face normals
+    */
+    for (int i = 0; i < mesh->triCount; i++) {
+        const Tri *t = &mesh->tris[i];
+        const Vec3 *wa = &g_worldVertsCache[t->a];
+        const Vec3 *wb = &g_worldVertsCache[t->b];
+        const Vec3 *wc = &g_worldVertsCache[t->c];
+
+        float abx = wb->x - wa->x;
+        float aby = wb->y - wa->y;
+        float abz = wb->z - wa->z;
+
+        float acx = wc->x - wa->x;
+        float acy = wc->y - wa->y;
+        float acz = wc->z - wa->z;
+
+        float nx = (aby * acz) - (abz * acy);
+        float ny = (abz * acx) - (abx * acz);
+        float nz = (abx * acy) - (aby * acx);
+
+        g_worldNormCache[t->a].x += nx;
+        g_worldNormCache[t->a].y += ny;
+        g_worldNormCache[t->a].z += nz;
+
+        g_worldNormCache[t->b].x += nx;
+        g_worldNormCache[t->b].y += ny;
+        g_worldNormCache[t->b].z += nz;
+
+        g_worldNormCache[t->c].x += nx;
+        g_worldNormCache[t->c].y += ny;
+        g_worldNormCache[t->c].z += nz;
+    }
+
+    /*
+        Normalize accumulated vertex normals
+    */
+    for (int vi = 0; vi < mesh->vertCount; vi++) {
+        float nx = g_worldNormCache[vi].x;
+        float ny = g_worldNormCache[vi].y;
+        float nz = g_worldNormCache[vi].z;
+        float nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
+
+        if (nlen2 > 0.000001f) {
+            if (nlen2 < 0.999f || nlen2 > 1.001f) {
+                const float invNLen = 1.0f / sqrtf(nlen2);
+                nx *= invNLen;
+                ny *= invNLen;
+                nz *= invNLen;
+            }
+        } else {
+            nx = 0.0f;
+            ny = 1.0f;
+            nz = 0.0f;
+        }
+
+        g_worldNormCache[vi].x = nx;
+        g_worldNormCache[vi].y = ny;
+        g_worldNormCache[vi].z = nz;
     }
 
     for (int i = 0; i < mesh->triCount; i++) {
@@ -1720,18 +1965,16 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
 
         float abx, aby, abz;
         float acx, acy, acz;
-        float nx, ny, nz;
-        float nlen2;
+        float faceNx, faceNy, faceNz;
+        float faceNLen2;
 
         float faceCX, faceCY, faceCZ;
         float faceEmission;
-        float brightness;
         uint8_t renderColor;
 
-        float vx, vy, vz;
-        float vlen2;
+        float shade0F, shade1F, shade2F;
 
-        Vec3 clipped[CLIP_MAX_VERTS];
+        ClipVert clipped[CLIP_MAX_VERTS];
         int clippedCount;
 
         t = &mesh->tris[i];
@@ -1754,13 +1997,8 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         }
     #endif
 
-        clippedCount = clipTriangleToFrustum(*a, *b, *c, clipped, cam);
-        if (clippedCount < 3) {
-            continue;
-        }
-
         /*
-            World-space face normal
+            Face normal for culling / fallback / emission floor logic
         */
         abx = wb->x - wa->x;
         aby = wb->y - wa->y;
@@ -1770,40 +2008,63 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         acy = wc->y - wa->y;
         acz = wc->z - wa->z;
 
-        nx = (aby * acz) - (abz * acy);
-        ny = (abz * acx) - (abx * acz);
-        nz = (abx * acy) - (aby * acx);
+        faceNx = (aby * acz) - (abz * acy);
+        faceNy = (abz * acx) - (abx * acz);
+        faceNz = (abx * acy) - (aby * acx);
 
-        nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
-        if (nlen2 > 0.000001f) {
-            if (nlen2 < 0.999f || nlen2 > 1.001f) {
-                const float invNLen = 1.0f / sqrtf(nlen2);
-                nx *= invNLen;
-                ny *= invNLen;
-                nz *= invNLen;
+        faceNLen2 = (faceNx * faceNx) + (faceNy * faceNy) + (faceNz * faceNz);
+        if (faceNLen2 > 0.000001f) {
+            if (faceNLen2 < 0.999f || faceNLen2 > 1.001f) {
+                const float invNLen = 1.0f / sqrtf(faceNLen2);
+                faceNx *= invNLen;
+                faceNy *= invNLen;
+                faceNz *= invNLen;
             }
         } else {
-            nx = 0.0f;
-            ny = 0.0f;
-            nz = 0.0f;
+            faceNx = 0.0f;
+            faceNy = 0.0f;
+            faceNz = 0.0f;
         }
 
-        /*
-            World-space face center
-        */
         faceCX = (wa->x + wb->x + wc->x) * (1.0f / 3.0f);
         faceCY = (wa->y + wb->y + wc->y) * (1.0f / 3.0f);
         faceCZ = (wa->z + wb->z + wc->z) * (1.0f / 3.0f);
 
         faceEmission = (float)t->emission / 255.0f;
-        brightness = matAmbient + matEmissive;
 
         /*
-            View vector once per face
+            Per-vertex lighting
         */
-        vx = camPosX - faceCX;
-        vy = camPosY - faceCY;
-        vz = camPosZ - faceCZ;
+
+/*
+    Per-vertex lighting using FACE NORMAL.
+    This matches the SIDBOX behaviour much more closely:
+    direct light stays even across a face instead of getting
+    rounded-edge darkening from smoothed vertex normals.
+*/
+{
+    const Vec3 *wv[3] = { wa, wb, wc };
+    float *outShade[3] = { &shade0F, &shade1F, &shade2F };
+
+    for (int vi = 0; vi < 3; vi++) {
+        float brightness;
+        float vx, vy, vz;
+        float vlen2;
+
+        const float px = wv[vi]->x;
+        const float py = wv[vi]->y;
+        const float pz = wv[vi]->z;
+
+        /* use face normal for all 3 verts */
+        const float nx = faceNx;
+        const float ny = faceNy;
+        const float nz = faceNz;
+
+        brightness = matAmbient + matEmissive;
+
+        vx = camPosX - px;
+        vy = camPosY - py;
+        vz = camPosZ - pz;
 
         vlen2 = (vx * vx) + (vy * vy) + (vz * vz);
         if (vlen2 > 0.000001f) {
@@ -1835,9 +2096,9 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
                 float near2;
                 float beyond2;
 
-                lx = ls->pos.x - faceCX;
-                ly = ls->pos.y - faceCY;
-                lz = ls->pos.z - faceCZ;
+                lx = ls->pos.x - px;
+                ly = ls->pos.y - py;
+                lz = ls->pos.z - pz;
 
                 dist2   = (lx * lx) + (ly * ly) + (lz * lz);
                 near2   = ls->near   * ls->near;
@@ -1947,22 +2208,39 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         if (brightness < 0.0f) brightness = 0.0f;
         if (brightness > 1.0f) brightness = 1.0f;
 
+        *outShade[vi] = brightnessToShadeF(brightness);
+    }
+}
+
         {
-            const float shadeF = brightnessToShadeF(brightness);
+            ClipVert cv0, cv1, cv2;
+
             renderColor = (uint8_t)(t->color & TRI_COLOUR_MASK);
-            if(t->transparency > 0)
+            if (t->transparency > 0) {
                 renderColor |= TRI_FLAG_TRANSPARENT;
+            }
+
+            cv0.p = *a; cv0.shadeF = shade0F;
+            cv1.p = *b; cv1.shadeF = shade1F;
+            cv2.p = *c; cv2.shadeF = shade2F;
+
+            clippedCount = clipTriangleToFrustumClip(cv0, cv1, cv2, clipped, cam);
+            if (clippedCount < 3) {
+                continue;
+            }
 
             for (int k = 1; k < clippedCount - 1; k++) {
                 submitClippedTri(
-                    clipped[0],
-                    clipped[k],
-                    clipped[k + 1],
+                    clipped[0].p,
+                    clipped[k].p,
+                    clipped[k + 1].p,
+                    clipped[0].shadeF,
+                    clipped[k].shadeF,
+                    clipped[k + 1].shadeF,
                     (Camera *)cam,
                     renderColor,
                     t->emission,
-                    t->transparency,
-                    shadeF
+                    t->transparency
                 );
             }
         }
@@ -1976,15 +2254,7 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
 
 
 
-
-
-
-
-
-
-
-
-
+#if(0)
 void submitEntitySolid_OLD(const Entity *ent, const Camera *cam)
 {
     const Mesh *mesh = ent->mesh;
@@ -2280,6 +2550,12 @@ void submitEntitySolid_OLD(const Entity *ent, const Camera *cam)
         }
     }
 }
+#endif
+
+
+
+
+
 
 void drawWorldLine(Vec3 a, Vec3 b, const Camera *cam, uint8_t color)
 {

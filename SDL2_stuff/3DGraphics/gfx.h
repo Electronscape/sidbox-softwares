@@ -82,6 +82,44 @@ void fillTriangleDitherZ(
     DitherMode mode
 );
 
+
+void fillTriangleDitherZBandBayerGouraud(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    float shade0F,
+    float shade1F,
+    float shade2F,
+    int bandY0,
+    int bandY1
+);
+
+void fillTriangleDitherZBandBayerTGouraud(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    uint16_t z0_in,
+    uint16_t z1_in,
+    uint16_t z2_in,
+    float camz0,
+    float camz1,
+    float camz2,
+    uint8_t baseColor,
+    uint8_t transparancy,
+    float shade0F,
+    float shade1F,
+    float shade2F,
+    int bandY0,
+    int bandY1
+);
+
 void fillTriangleDitherZBayer( int x0, int y0, int x1, int y1, int x2, int y2, uint16_t z0, uint16_t z1, uint16_t z2, uint8_t baseColor, float shadeF);
 
 void resetDepthBufferBand(void);

@@ -16,6 +16,15 @@
 
 #define PROJ_F 200.0f
 
+
+typedef enum {
+    REND_MODE_WIREFRAME = 0,
+    REND_MODE_STANDARD,
+    REND_MODE_FLAT,
+    REND_MODE_TWOSHADE,
+    REND_MODE_GOURAUD
+} RENDERMODE;
+
 typedef enum {
     PLANE_NEAR = 0,
     PLANE_LEFT,
@@ -24,8 +33,19 @@ typedef enum {
     PLANE_BOTTOM
 } ClipPlane;
 
+
+
 int clipTriangleToFrustum(Vec3 a, Vec3 b, Vec3 c, Vec3 *outVerts, const Camera *cam);
-void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, uint8_t trans, float shadeF);
+//void submitClippedTri(Vec3 a, Vec3 b, Vec3 c, Camera *cam, uint8_t color, uint8_t emission, uint8_t trans, float shadeF);
+void submitClippedTri(
+    Vec3 a, Vec3 b, Vec3 c,
+    float shade0F, float shade1F, float shade2F,
+    Camera *cam,
+    uint8_t color,
+    uint8_t emission,
+    uint8_t trans
+);
+
 void entitySetBasis(int id, Vec3 right, Vec3 up, Vec3 forward);
 
 void setDefaultRenderMode();

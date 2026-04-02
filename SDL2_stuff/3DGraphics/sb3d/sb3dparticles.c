@@ -114,6 +114,12 @@ void sb3dParticleEnable(int id, uint8_t enable)
     g_quadParticles[id].active = enable ? 1 : 0;
 }
 
+
+
+
+
+
+
 void sb3dParticlesRender(const Camera *cam)
 {
     if (!cam) return;
@@ -327,11 +333,11 @@ void sb3dParticlesRender(const Camera *cam)
                             clipped[0],
                             clipped[k],
                             clipped[k + 1],
+                            finalShadeF, finalShadeF, finalShadeF,
                             (Camera *)cam,
                             p->color,
                             p->emission,
-                            255,
-                            finalShadeF
+                            255
                         );
                     }
                 }
@@ -343,11 +349,11 @@ void sb3dParticlesRender(const Camera *cam)
                             clipped[0],
                             clipped[k],
                             clipped[k + 1],
+                            finalShadeF, finalShadeF, finalShadeF,
                             (Camera *)cam,
                             p->color,
                             p->emission,
-                            255,
-                            finalShadeF
+                            255
                         );
                     }
                 }
@@ -355,3 +361,12 @@ void sb3dParticlesRender(const Camera *cam)
         }
     }
 }
+
+
+
+
+
+
+
+
+

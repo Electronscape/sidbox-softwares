@@ -383,6 +383,7 @@ int main(void) {
     cameraSetRange(&cam, 0.01, 5000.0f);
     cameraNormalize(&cam);
 
+    
     worldClear();
     lightsClear();
     sb3dParticlesClear();
@@ -733,7 +734,7 @@ int main(void) {
 
             drawFakeSkyDots(&cam, 255, 128, 32, 8);
             drawFakeHorizonDots(&cam, SeaDots, 128, 0, 110);
-            drawFakeHorizonGrid(&cam, 2, 128, 0.0f, 32);
+            //drawFakeHorizonGrid(&cam, 2, 128, 0.0f, 32);
             Render3D(&cam);
             ///////////////////////////// RENDER 3D world ////////////////////////////////////
 
