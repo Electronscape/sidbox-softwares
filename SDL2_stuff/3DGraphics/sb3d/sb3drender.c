@@ -16,7 +16,6 @@ static RenderTri g_renderTris[MAX_RENDER_TRIS];
 // cache
 static Vec3 g_worldVertsCache[SB3D_MAX_VERTS];
 static Vec3 g_camVertsCache[SB3D_MAX_VERTS];
-static Vec3 g_worldNormCache[SB3D_MAX_VERTS];
 
 
 typedef struct
@@ -1790,7 +1789,6 @@ void Render3D(const Camera *cam)
 
 
 
-
 void submitEntitySolid(const Entity *ent, const Camera *cam)
 {
     const Mesh *mesh;
@@ -1887,71 +1885,6 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         g_camVertsCache[vi].x = (dx * crx) + (dy * cry) + (dz * crz);
         g_camVertsCache[vi].y = (dx * cux) + (dy * cuy) + (dz * cuz);
         g_camVertsCache[vi].z = (dx * cfx) + (dy * cfy) + (dz * cfz);
-
-        g_worldNormCache[vi].x = 0.0f;
-        g_worldNormCache[vi].y = 0.0f;
-        g_worldNormCache[vi].z = 0.0f;
-    }
-
-    /*
-        Build smooth world-space vertex normals by accumulating face normals
-    */
-    for (int i = 0; i < mesh->triCount; i++) {
-        const Tri *t = &mesh->tris[i];
-        const Vec3 *wa = &g_worldVertsCache[t->a];
-        const Vec3 *wb = &g_worldVertsCache[t->b];
-        const Vec3 *wc = &g_worldVertsCache[t->c];
-
-        float abx = wb->x - wa->x;
-        float aby = wb->y - wa->y;
-        float abz = wb->z - wa->z;
-
-        float acx = wc->x - wa->x;
-        float acy = wc->y - wa->y;
-        float acz = wc->z - wa->z;
-
-        float nx = (aby * acz) - (abz * acy);
-        float ny = (abz * acx) - (abx * acz);
-        float nz = (abx * acy) - (aby * acx);
-
-        g_worldNormCache[t->a].x += nx;
-        g_worldNormCache[t->a].y += ny;
-        g_worldNormCache[t->a].z += nz;
-
-        g_worldNormCache[t->b].x += nx;
-        g_worldNormCache[t->b].y += ny;
-        g_worldNormCache[t->b].z += nz;
-
-        g_worldNormCache[t->c].x += nx;
-        g_worldNormCache[t->c].y += ny;
-        g_worldNormCache[t->c].z += nz;
-    }
-
-    /*
-        Normalize accumulated vertex normals
-    */
-    for (int vi = 0; vi < mesh->vertCount; vi++) {
-        float nx = g_worldNormCache[vi].x;
-        float ny = g_worldNormCache[vi].y;
-        float nz = g_worldNormCache[vi].z;
-        float nlen2 = (nx * nx) + (ny * ny) + (nz * nz);
-
-        if (nlen2 > 0.000001f) {
-            if (nlen2 < 0.999f || nlen2 > 1.001f) {
-                const float invNLen = 1.0f / sqrtf(nlen2);
-                nx *= invNLen;
-                ny *= invNLen;
-                nz *= invNLen;
-            }
-        } else {
-            nx = 0.0f;
-            ny = 1.0f;
-            nz = 0.0f;
-        }
-
-        g_worldNormCache[vi].x = nx;
-        g_worldNormCache[vi].y = ny;
-        g_worldNormCache[vi].z = nz;
     }
 
     for (int i = 0; i < mesh->triCount; i++) {
@@ -1968,7 +1901,6 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         float faceNx, faceNy, faceNz;
         float faceNLen2;
 
-        float faceCX, faceCY, faceCZ;
         float faceEmission;
         uint8_t renderColor;
 
@@ -1998,7 +1930,7 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
     #endif
 
         /*
-            Face normal for culling / fallback / emission floor logic
+            Face normal for culling and lighting
         */
         abx = wb->x - wa->x;
         aby = wb->y - wa->y;
@@ -2026,191 +1958,179 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
             faceNz = 0.0f;
         }
 
-        faceCX = (wa->x + wb->x + wc->x) * (1.0f / 3.0f);
-        faceCY = (wa->y + wb->y + wc->y) * (1.0f / 3.0f);
-        faceCZ = (wa->z + wb->z + wc->z) * (1.0f / 3.0f);
-
         faceEmission = (float)t->emission / 255.0f;
 
         /*
-            Per-vertex lighting
+            Per-vertex lighting using face normal
         */
+        {
+            const Vec3 *wv[3] = { wa, wb, wc };
+            float *outShade[3] = { &shade0F, &shade1F, &shade2F };
 
-/*
-    Per-vertex lighting using FACE NORMAL.
-    This matches the SIDBOX behaviour much more closely:
-    direct light stays even across a face instead of getting
-    rounded-edge darkening from smoothed vertex normals.
-*/
-{
-    const Vec3 *wv[3] = { wa, wb, wc };
-    float *outShade[3] = { &shade0F, &shade1F, &shade2F };
+            for (int vi = 0; vi < 3; vi++) {
+                float brightness;
+                float vx, vy, vz;
+                float vlen2;
 
-    for (int vi = 0; vi < 3; vi++) {
-        float brightness;
-        float vx, vy, vz;
-        float vlen2;
+                const float px = wv[vi]->x;
+                const float py = wv[vi]->y;
+                const float pz = wv[vi]->z;
 
-        const float px = wv[vi]->x;
-        const float py = wv[vi]->y;
-        const float pz = wv[vi]->z;
+                const float nx = faceNx;
+                const float ny = faceNy;
+                const float nz = faceNz;
 
-        /* use face normal for all 3 verts */
-        const float nx = faceNx;
-        const float ny = faceNy;
-        const float nz = faceNz;
+                brightness = matAmbient + matEmissive;
 
-        brightness = matAmbient + matEmissive;
+                vx = camPosX - px;
+                vy = camPosY - py;
+                vz = camPosZ - pz;
 
-        vx = camPosX - px;
-        vy = camPosY - py;
-        vz = camPosZ - pz;
-
-        vlen2 = (vx * vx) + (vy * vy) + (vz * vz);
-        if (vlen2 > 0.000001f) {
-            if (vlen2 < 0.999f || vlen2 > 1.001f) {
-                const float invVLen = 1.0f / sqrtf(vlen2);
-                vx *= invVLen;
-                vy *= invVLen;
-                vz *= invVLen;
-            }
-        } else {
-            vx = 0.0f;
-            vy = 0.0f;
-            vz = 0.0f;
-        }
-
-        for (int li = 0; li < lightCount; li++) {
-            const Light *ls;
-            float lx, ly, lz;
-            float attenuation;
-            float ndotl;
-
-            ls = &lights[li];
-            if (!ls->enabled) continue;
-
-            attenuation = 1.0f;
-
-            if (ls->type == LIGHT_POINT) {
-                float dist2;
-                float near2;
-                float beyond2;
-
-                lx = ls->pos.x - px;
-                ly = ls->pos.y - py;
-                lz = ls->pos.z - pz;
-
-                dist2   = (lx * lx) + (ly * ly) + (lz * lz);
-                near2   = ls->near   * ls->near;
-                beyond2 = ls->beyond * ls->beyond;
-
-                if (dist2 >= beyond2) {
-                    continue;
-                }
-
-                if (dist2 > 0.000001f) {
-                    const float invDist = 1.0f / sqrtf(dist2);
-                    const float dist = dist2 * invDist;
-
-                    lx *= invDist;
-                    ly *= invDist;
-                    lz *= invDist;
-
-                    if (dist2 <= near2) {
-                        attenuation = 1.0f;
-                    } else {
-                        float tval;
-
-                        if (ls->far <= ls->near) {
-                            continue;
-                        }
-                        else if (ls->beyond <= ls->far) {
-                            if (dist >= ls->far) {
-                                continue;
-                            }
-
-                            tval = (dist - ls->near) / (ls->far - ls->near);
-                            if (tval < 0.0f) tval = 0.0f;
-                            if (tval > 1.0f) tval = 1.0f;
-                            attenuation = 1.0f - tval;
-                        }
-                        else if (dist <= ls->far) {
-                            tval = (dist - ls->near) / (ls->far - ls->near);
-                            if (tval < 0.0f) tval = 0.0f;
-                            if (tval > 1.0f) tval = 1.0f;
-                            attenuation = 1.0f - (tval * 0.75f);
-                        } else {
-                            tval = (dist - ls->far) / (ls->beyond - ls->far);
-                            if (tval < 0.0f) tval = 0.0f;
-                            if (tval > 1.0f) tval = 1.0f;
-                            attenuation = 0.25f * (1.0f - tval);
-                        }
-
-                        if (attenuation <= 0.0f) {
-                            continue;
-                        }
+                vlen2 = (vx * vx) + (vy * vy) + (vz * vz);
+                if (vlen2 > 0.000001f) {
+                    if (vlen2 < 0.999f || vlen2 > 1.001f) {
+                        const float invVLen = 1.0f / sqrtf(vlen2);
+                        vx *= invVLen;
+                        vy *= invVLen;
+                        vz *= invVLen;
                     }
                 } else {
-                    lx = 0.0f;
-                    ly = 0.0f;
-                    lz = 0.0f;
+                    vx = 0.0f;
+                    vy = 0.0f;
+                    vz = 0.0f;
+                }
+
+                for (int li = 0; li < lightCount; li++) {
+                    const Light *ls;
+                    float lx, ly, lz;
+                    float attenuation;
+                    float ndotl;
+
+                    ls = &lights[li];
+                    if (!ls->enabled) continue;
+
                     attenuation = 1.0f;
+
+                    if (ls->type == LIGHT_POINT) {
+                        float dist2;
+                        float near2;
+                        float beyond2;
+
+                        lx = ls->pos.x - px;
+                        ly = ls->pos.y - py;
+                        lz = ls->pos.z - pz;
+
+                        dist2   = (lx * lx) + (ly * ly) + (lz * lz);
+                        near2   = ls->near   * ls->near;
+                        beyond2 = ls->beyond * ls->beyond;
+
+                        if (dist2 >= beyond2) {
+                            continue;
+                        }
+
+                        if (dist2 > 0.000001f) {
+                            const float invDist = 1.0f / sqrtf(dist2);
+                            const float dist = dist2 * invDist;
+
+                            lx *= invDist;
+                            ly *= invDist;
+                            lz *= invDist;
+
+                            if (dist2 <= near2) {
+                                attenuation = 1.0f;
+                            } else {
+                                float tval;
+
+                                if (ls->far <= ls->near) {
+                                    continue;
+                                }
+                                else if (ls->beyond <= ls->far) {
+                                    if (dist >= ls->far) {
+                                        continue;
+                                    }
+
+                                    tval = (dist - ls->near) / (ls->far - ls->near);
+                                    if (tval < 0.0f) tval = 0.0f;
+                                    if (tval > 1.0f) tval = 1.0f;
+                                    attenuation = 1.0f - tval;
+                                }
+                                else if (dist <= ls->far) {
+                                    tval = (dist - ls->near) / (ls->far - ls->near);
+                                    if (tval < 0.0f) tval = 0.0f;
+                                    if (tval > 1.0f) tval = 1.0f;
+                                    attenuation = 1.0f - (tval * 0.75f);
+                                } else {
+                                    tval = (dist - ls->far) / (ls->beyond - ls->far);
+                                    if (tval < 0.0f) tval = 0.0f;
+                                    if (tval > 1.0f) tval = 1.0f;
+                                    attenuation = 0.25f * (1.0f - tval);
+                                }
+
+                                if (attenuation <= 0.0f) {
+                                    continue;
+                                }
+                            }
+                        } else {
+                            lx = 0.0f;
+                            ly = 0.0f;
+                            lz = 0.0f;
+                            attenuation = 1.0f;
+                        }
+                    } else {
+                        lx = -ls->dir.x;
+                        ly = -ls->dir.y;
+                        lz = -ls->dir.z;
+                    }
+
+                    ndotl = (nx * lx) + (ny * ly) + (nz * lz);
+                    if (ndotl <= 0.0f) {
+                        continue;
+                    }
+
+                    brightness += ndotl * ls->intensity * attenuation * matDiffuse;
+
+                    if (matSpec > 0.0f) {
+                        float rdx, rdy, rdz;
+                        float rdotv;
+
+                        rdx = (2.0f * ndotl * nx) - lx;
+                        rdy = (2.0f * ndotl * ny) - ly;
+                        rdz = (2.0f * ndotl * nz) - lz;
+
+                        rdotv = (rdx * vx) + (rdy * vy) + (rdz * vz);
+
+                        if (rdotv > 0.0f) {
+                            float specPow;
+
+                            if (matShiny == 8.0f) {
+                                float s = rdotv * rdotv;
+                                s *= s;
+                                s *= s;
+                                specPow = s;
+                            }
+                            else if (matShiny == 16.0f) {
+                                float s = rdotv * rdotv;
+                                s *= s;
+                                s *= s;
+                                s *= s;
+                                specPow = s;
+                            }
+                            else {
+                                specPow = powf(rdotv, matShiny);
+                            }
+
+                            brightness += specPow * matSpec * ls->intensity * attenuation;
+                        }
+                    }
                 }
-            } else {
-                lx = -ls->dir.x;
-                ly = -ls->dir.y;
-                lz = -ls->dir.z;
-            }
 
-            ndotl = (nx * lx) + (ny * ly) + (nz * lz);
-            if (ndotl <= 0.0f) {
-                continue;
-            }
+                if (brightness < faceEmission) brightness = faceEmission;
+                if (brightness < 0.0f) brightness = 0.0f;
+                if (brightness > 1.0f) brightness = 1.0f;
 
-            brightness += ndotl * ls->intensity * attenuation * matDiffuse;
-
-            if (matSpec > 0.0f) {
-                float rdx, rdy, rdz;
-                float rdotv;
-
-                rdx = (2.0f * ndotl * nx) - lx;
-                rdy = (2.0f * ndotl * ny) - ly;
-                rdz = (2.0f * ndotl * nz) - lz;
-
-                rdotv = (rdx * vx) + (rdy * vy) + (rdz * vz);
-
-                if (rdotv > 0.0f) {
-                    float specPow;
-
-                    if (matShiny == 8.0f) {
-                        float s = rdotv * rdotv;
-                        s *= s;
-                        s *= s;
-                        specPow = s;
-                    }
-                    else if (matShiny == 16.0f) {
-                        float s = rdotv * rdotv;
-                        s *= s;
-                        s *= s;
-                        s *= s;
-                        specPow = s;
-                    }
-                    else {
-                        specPow = powf(rdotv, matShiny);
-                    }
-
-                    brightness += specPow * matSpec * ls->intensity * attenuation;
-                }
+                *outShade[vi] = brightnessToShadeF(brightness);
             }
         }
-
-        if (brightness < faceEmission) brightness = faceEmission;
-        if (brightness < 0.0f) brightness = 0.0f;
-        if (brightness > 1.0f) brightness = 1.0f;
-
-        *outShade[vi] = brightnessToShadeF(brightness);
-    }
-}
 
         {
             ClipVert cv0, cv1, cv2;
@@ -2246,9 +2166,6 @@ void submitEntitySolid(const Entity *ent, const Camera *cam)
         }
     }
 }
-
-
-
 
 
 
