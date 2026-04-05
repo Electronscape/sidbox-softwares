@@ -1,0 +1,11 @@
+[
+  {
+    "key": "f5",
+    "command": "-workbench.action.debug.start"
+  },
+  {
+    "key": "f5",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Build + Run raycast3ddemoEditmap"
+  }
+]
