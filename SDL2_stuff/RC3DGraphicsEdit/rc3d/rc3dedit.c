@@ -207,7 +207,7 @@ static EditorState g_ed;
 
 
 
-#define ED_HISTORY_MAX 10
+#define ED_HISTORY_MAX 100
 
 typedef struct {
     EditorMap map;
@@ -2753,7 +2753,7 @@ void rc3dEditUpdate(float dt,
         const float beforeY = worldY;
 
         g_ed.zoom *= (mouseWheelY > 0) ? 1.15f : (1.0f / 1.15f);
-        g_ed.zoom = clampf_local(g_ed.zoom, 4.0f, 128.0f);
+        g_ed.zoom = clampf_local(g_ed.zoom, 4.0f, 512.0f);
 
         {
             float afterX, afterY;
@@ -3113,7 +3113,10 @@ void rc3dEditUpdate(float dt,
     if (keyPressedOnce(keys, SDL_SCANCODE_F3)) {
         loadTextMap("rc3d_map.txt");
     }
+
     if (keyPressedOnce(keys, SDL_SCANCODE_F5)) {
+        pushUndoState();
+        cleanMapCompact();
         exportCStringMap("rc3d_map_export.c");
     }
 

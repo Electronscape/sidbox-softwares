@@ -21,11 +21,17 @@
 #define RC3D_EPSILON         0.0001f
 #define RC3D_MAX_RAY_DIST    50.0f
 #define RC3D_MAX_PORTAL_STEPS 8
-#define RC3D_EYE_Z           0.5f
+//#define RC3D_EYE_Z           0.5f
+
+#define RC3D_PLAYER_EYE_HEIGHT  0.5f
+#define RC3D_GRAVITY            18.0f
+#define RC3D_STEP_SNAP_SPEED    24.0f
 
 typedef struct {
     float x;
     float y;
+    float z;
+    float vz;
     float angle;
     int sector;
 } RC3D_Player;
@@ -62,7 +68,8 @@ static int pointInSector(float px, float py, int sectorIndex)
     const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
     int inside = 0;
 
-    for (int i = 0; i < sec->boundaryCount; i++) {
+    //for (int i = 0; i < sec->boundaryCount; i++) {
+    for (int i = 0; i < sec->wallCount; i++){
         const RC3D_Wall *w = &g_map->walls[sec->wallStart + i];
         const RC3D_Vec2 *a = &g_map->verts[w->v0];
         const RC3D_Vec2 *b = &g_map->verts[w->v1];
@@ -212,11 +219,14 @@ static inline void drawVerticalColumn(int x, int y0, int y1, uint8_t col)
     drawVerticalSpanFast(x, y0, y1, col);
 }
 
+
 static inline RC3D_WallHit findNearestWallInSector(
     int sectorIndex,
     float rox, float roy,
     float rdx, float rdy,
-    int ignoreWallIndex
+    int ignoreWallIndexA,
+    int ignoreWallIndexB,
+    float minT
 ){
     RC3D_WallHit hit;
     hit.t = RC3D_MAX_RAY_DIST;
@@ -229,7 +239,7 @@ static inline RC3D_WallHit findNearestWallInSector(
         const int wallIndex = sec->wallStart + i;
         const RC3D_Wall *w = &g_map->walls[wallIndex];
 
-        if (wallIndex == ignoreWallIndex) {
+        if (wallIndex == ignoreWallIndexA || wallIndex == ignoreWallIndexB) {
             continue;
         }
 
@@ -248,7 +258,7 @@ static inline RC3D_WallHit findNearestWallInSector(
         const float qpy = a->y - roy;
 
         const float t = ((qpx * sy) - (qpy * sx)) / denom;
-        if (t < RC3D_EPSILON) {
+        if (t < minT) {
             continue;
         }
 
@@ -310,6 +320,7 @@ static inline void renderBandIfVisible(int sx, int y0, int y1, uint8_t color, in
     fb[(y1 * SCREEN_W) + sx] = 16;
 }
 
+
 static inline void renderColumnPortalTrace(
     int sx,
     float rdx,
@@ -319,13 +330,17 @@ static inline void renderColumnPortalTrace(
     float projPlane,
     int horizon
 ){
-    float rayOx = g_player.x;
-    float rayOy = g_player.y;
+    const float rayOx = g_player.x;
+    const float rayOy = g_player.y;
 
     int currentSector = g_player.sector;
     int clipTop = 0;
     int clipBottom = SCREEN_H - 1;
-    int ignoreWallIndex = -1;
+
+    int ignoreWallIndexA = -1;
+    int ignoreWallIndexB = -1;
+
+    float rayMinT = 0.0f;
 
     fillSectorColumnSpan(sx, 0, SCREEN_H - 1, &g_map->sectors[g_player.sector], horizon);
 
@@ -345,7 +360,14 @@ static inline void renderColumnPortalTrace(
 
         sec = &g_map->sectors[currentSector];
 
-        hit = findNearestWallInSector(currentSector, rayOx, rayOy, rdx, rdy, ignoreWallIndex);
+        hit = findNearestWallInSector(
+            currentSector,
+            rayOx, rayOy,
+            rdx, rdy,
+            ignoreWallIndexA,
+            ignoreWallIndexB,
+            rayMinT
+        );
         if (!hit.hit) {
             return;
         }
@@ -361,8 +383,10 @@ static inline void renderColumnPortalTrace(
         }
 
         scale = projPlane / correctedDist;
-        secTop = (int)(horizon - ((sec->ceilHeight  - RC3D_EYE_Z) * scale));
-        secBot = (int)(horizon - ((sec->floorHeight - RC3D_EYE_Z) * scale));
+        //secTop = (int)(horizon - ((sec->ceilHeight  - RC3D_EYE_Z) * scale));
+        //secBot = (int)(horizon - ((sec->floorHeight - RC3D_EYE_Z) * scale));
+        secTop = (int)(horizon - ((sec->ceilHeight  - g_player.z) * scale));
+        secBot = (int)(horizon - ((sec->floorHeight - g_player.z) * scale));
 
         if (w->flags & RC3D_WALL_SOLID) {
             renderBandIfVisible(
@@ -377,8 +401,10 @@ static inline void renderColumnPortalTrace(
         }
 
         if ((w->flags & RC3D_WALL_MIDDLE) && !(w->flags & RC3D_WALL_PORTAL)) {
-            const int midTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
-            const int midBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
+            //const int midTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
+            //const int midBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
+            const int midTopY = (int)(horizon - ((w->openTop    - g_player.z) * scale));
+            const int midBotY = (int)(horizon - ((w->openBottom - g_player.z) * scale));
 
             renderBandIfVisible(
                 sx,
@@ -391,12 +417,13 @@ static inline void renderColumnPortalTrace(
             return;
         }
 
-        /* non-portal window / slit wall: only upper and/or lower bands */
         if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
             !(w->flags & RC3D_WALL_PORTAL) &&
             !(w->flags & RC3D_WALL_MIDDLE)) {
-            const int openTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
-            const int openBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
+            //const int openTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
+            //const int openBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
+            const int openTopY = (int)(horizon - ((w->openTop    - g_player.z) * scale));
+            const int openBotY = (int)(horizon - ((w->openBottom - g_player.z) * scale));
 
             if (w->flags & RC3D_WALL_UPPER) {
                 renderBandIfVisible(
@@ -426,11 +453,16 @@ static inline void renderColumnPortalTrace(
         if (w->flags & RC3D_WALL_PORTAL) {
             const RC3D_Sector *nextSec = &g_map->sectors[w->neighbour];
 
-            const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - RC3D_EYE_Z) * scale));
-            const int nextBot = (int)(horizon - ((nextSec->floorHeight - RC3D_EYE_Z) * scale));
+            //const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - RC3D_EYE_Z) * scale));
+            //const int nextBot = (int)(horizon - ((nextSec->floorHeight - RC3D_EYE_Z) * scale));
+            //const int wallOpenTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
+            //const int wallOpenBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
 
-            const int wallOpenTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
-            const int wallOpenBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
+            const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - g_player.z) * scale));
+            const int nextBot = (int)(horizon - ((nextSec->floorHeight - g_player.z) * scale));
+
+            const int wallOpenTopY = (int)(horizon - ((w->openTop    - g_player.z) * scale));
+            const int wallOpenBotY = (int)(horizon - ((w->openBottom - g_player.z) * scale));
 
             int openTop = secTop;
             int openBot = secBot;
@@ -474,16 +506,44 @@ static inline void renderColumnPortalTrace(
             clipTop = openTop;
             clipBottom = openBot;
 
-            rayOx = hitX + (rdx * 0.001f);
-            rayOy = hitY + (rdy * 0.001f);
-            currentSector = w->neighbour;
-            ignoreWallIndex = hit.wallIndex;
+            /* snap through the portal by topology, not by epsilon */
+            {
+                const int prevSector = currentSector;
+                int entryWallInNext = -1;
+
+                const RC3D_Sector *nsec = &g_map->sectors[w->neighbour];
+
+                for (int i = 0; i < nsec->wallCount; i++) {
+                    const int testIndex = nsec->wallStart + i;
+                    const RC3D_Wall *tw = &g_map->walls[testIndex];
+
+                    if (tw->neighbour != prevSector) {
+                        continue;
+                    }
+
+                    if ((tw->v0 == w->v1 && tw->v1 == w->v0) ||
+                        (tw->v0 == w->v0 && tw->v1 == w->v1)) {
+                        entryWallInNext = testIndex;
+                        break;
+                    }
+                }
+
+                currentSector = w->neighbour;
+
+                ignoreWallIndexA = hit.wallIndex;
+                ignoreWallIndexB = entryWallInNext;
+
+                rayMinT = hit.t;
+            }
+
             continue;
         }
 
         return;
     }
 }
+
+
 
 static void renderCurrentSectorColumns(void)
 {
@@ -635,6 +695,14 @@ void rc3dInit(void)
     g_player.y = g_map->startY;
     g_player.angle = g_map->startAngle;
     g_player.sector = g_map->startSector;
+
+    if (g_player.sector >= 0 && g_player.sector < g_map->sectorCount) {
+        g_player.z = g_map->sectors[g_player.sector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
+    } else {
+        g_player.z = RC3D_PLAYER_EYE_HEIGHT;
+    }
+
+    g_player.vz = 0.0f;
 }
 
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
@@ -669,6 +737,35 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
             if (!movePlayerWithSectorTest(g_player.x + moveX, g_player.y)) {
                 movePlayerWithSectorTest(g_player.x, g_player.y + moveY);
             }
+        }
+    }
+
+    if (g_player.sector >= 0 && g_player.sector < g_map->sectorCount) {
+        const float targetZ = g_map->sectors[g_player.sector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
+
+        if (g_player.z > targetZ) {
+            g_player.vz -= RC3D_GRAVITY * dt;
+            g_player.z  += g_player.vz * dt;
+
+            if (g_player.z <= targetZ) {
+                g_player.z = targetZ;
+                g_player.vz = 0.0f;
+            }
+        } else {
+            const float dz = targetZ - g_player.z;
+
+            if (dz > 0.0f) {
+                const float riseSpeed = dz * 10.0f;   /* bigger = snappier */
+                const float maxRise   = RC3D_STEP_SNAP_SPEED * dt;
+                float stepUp = riseSpeed * dt;
+
+                if (stepUp > maxRise) stepUp = maxRise;
+                if (stepUp > dz)      stepUp = dz;
+
+                g_player.z += stepUp;
+            }
+
+            g_player.vz = 0.0f;
         }
     }
 }

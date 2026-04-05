@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 
-#define SCREEN_TEST 3
+#define SCREEN_TEST 2
 
 #if(SCREEN_TEST == 0)
 #define ZOOM 3
