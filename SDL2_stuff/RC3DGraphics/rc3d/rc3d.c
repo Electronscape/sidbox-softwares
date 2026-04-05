@@ -19,7 +19,7 @@
 #define RC3D_MOVE_SPEED      3.0f
 #define RC3D_MOUSE_SENS      0.0035f
 #define RC3D_EPSILON         0.0001f
-#define RC3D_MAX_RAY_DIST    100.0f
+#define RC3D_MAX_RAY_DIST    50.0f
 #define RC3D_MAX_PORTAL_STEPS 8
 #define RC3D_EYE_Z           0.5f
 

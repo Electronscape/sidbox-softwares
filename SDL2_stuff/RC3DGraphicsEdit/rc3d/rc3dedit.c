@@ -24,7 +24,11 @@
 #define ED_MAX_WALLS            4096
 #define ED_MAX_SECTORS          512
 #define ED_MAX_DRAFT_POINTS     128
+
+// tab toggles hi-res to low res
+#define ED_GRID_STEP_TINY       0.1f
 #define ED_GRID_STEP            1.0f
+
 #define ED_EPSILON              0.001f
 #define ED_PICK_DIST_PX         10
 
@@ -50,6 +54,30 @@
 
 #define ED_START_COL            2   // white
 #define ED_HOME_GRID_COL        40
+
+
+
+
+
+
+
+// GUI parts
+#define ED_UI_TEXT_INFOTYPE         29
+#define ED_UI_BTN_BG                13
+#define ED_UI_BTN_BORDER            27
+#define ED_UI_BTN_TEXT              2
+#define ED_UI_BTN_HOVER             12
+
+#define ED_UI_BTN_ACTIVE            19  // background colour
+#define ED_UI_BTN_DISABLED          6   // background
+#define ED_UI_BTN_TEXT_DISABLED     5
+#define ED_UI_BTN_BORDER_DISABLED   16
+
+#define ED_UI_ID_NONE           0
+
+#define ED_BTN_W                96
+#define ED_BTN_H                16
+#define ED_BTN_GAP              4
 
 
 typedef enum {
@@ -123,6 +151,10 @@ typedef struct {
     int hoverWall;
     int hoverSector;
 
+    int splitPreviewValid;
+    float splitPreviewX;
+    float splitPreviewY;
+
     int selectedVert;
     int selectedWall;
     int selectedSector;
@@ -154,16 +186,81 @@ typedef struct {
 
     EdSelectionType selectionType;
 
+    float currentGridStep;
+    int tinyGridEnabled;
+
     int prevLeftDown;
     int prevRightDown;
     int prevMiddleDown;
     uint8_t prevKeys[SDL_NUM_SCANCODES];
+
+    // GUI parts
+    int uiMouseCaptured;
+    int uiHotId;
+    int uiActiveId;
 } EditorState;
 
 
 
 static EditorMap g_edMap;
 static EditorState g_ed;
+
+
+
+#define ED_HISTORY_MAX 10
+
+typedef struct {
+    EditorMap map;
+
+    float camX;
+    float camY;
+    float zoom;
+
+    int draftVertIndices[ED_MAX_DRAFT_POINTS];
+    int draftCount;
+
+    float sectorFloor;
+    float sectorCeil;
+    uint8_t sectorFloorColor;
+    uint8_t sectorCeilColor;
+
+    int selectedVert;
+    int selectedWall;
+    int selectedSector;
+    EdSelectionType selectionType;
+
+    float currentGridStep;
+    int tinyGridEnabled;
+} EditorSnapshot;
+
+static EditorSnapshot g_undoStack[ED_HISTORY_MAX];
+static int g_undoCount = 0;
+
+static EditorSnapshot g_redoStack[ED_HISTORY_MAX];
+static int g_redoCount = 0;
+
+
+static void rebuildSectorWallLayout(void);
+static void syncAllPortals(void);
+static int findSectorForPoint(float x, float y);
+static float draftSignedArea(void);
+static void finalizeDraftSector(void);
+static void finalizeDraftInnerSolid(void);
+static int finalizeDraftSectorAttached(void);
+static int getWallSplitPreviewPos(int wallIndex, float wx, float wy, float *outX, float *outY);
+
+static void compactOrphanVertices(void);
+static void cleanMapCompact(void);
+
+/////// GUI PARTS
+static int pointInRect(int px, int py, int x, int y, int w, int h);
+static void drawUIButton(int x, int y, int w, int h, const char *text, int hot, int active, int disabled);
+static int uiButtonLogic(int id, int x, int y, int w, int h, int mouseX, int mouseY, int leftDown, int leftPressed, int leftReleased, int disabled);
+static int uiArrowPairFloat(int *idBase, int x, int y, const char *label, float *value, float step, float minVal, float maxVal,
+                            int mouseX, int mouseY, int leftDown, int leftPressed, int leftReleased);
+static void handleEditorUI(int mouseX, int mouseY, int leftDown, int leftPressed, int leftReleased, float worldX, float worldY);
+
+
 
 static float absf_local(float v)
 {
@@ -186,13 +283,126 @@ static float clampf_local(float v, float lo, float hi)
 
 static float snapf(float v)
 {
-    const float inv = 1.0f / ED_GRID_STEP;
-    return roundf(v * inv) / inv;
+    float step = g_ed.currentGridStep;
+
+    if (step < ED_GRID_STEP_TINY) {
+        step = ED_GRID_STEP_TINY;
+    }
+
+    return roundf(v / step) * step;
+}
+
+
+static void captureSnapshot(EditorSnapshot *s)
+{
+    s->map = g_edMap;
+
+    s->camX = g_ed.camX;
+    s->camY = g_ed.camY;
+    s->zoom = g_ed.zoom;
+
+    memcpy(s->draftVertIndices, g_ed.draftVertIndices, sizeof(g_ed.draftVertIndices));
+    s->draftCount = g_ed.draftCount;
+
+    s->sectorFloor = g_ed.sectorFloor;
+    s->sectorCeil = g_ed.sectorCeil;
+    s->sectorFloorColor = g_ed.sectorFloorColor;
+    s->sectorCeilColor = g_ed.sectorCeilColor;
+
+    s->selectedVert = g_ed.selectedVert;
+    s->selectedWall = g_ed.selectedWall;
+    s->selectedSector = g_ed.selectedSector;
+    s->selectionType = g_ed.selectionType;
+
+    s->currentGridStep = g_ed.currentGridStep;
+    s->tinyGridEnabled = g_ed.tinyGridEnabled;
+}
+
+static void restoreSnapshot(const EditorSnapshot *s)
+{
+    g_edMap = s->map;
+
+    g_ed.camX = s->camX;
+    g_ed.camY = s->camY;
+    g_ed.zoom = s->zoom;
+
+    memcpy(g_ed.draftVertIndices, s->draftVertIndices, sizeof(g_ed.draftVertIndices));
+    g_ed.draftCount = s->draftCount;
+
+    g_ed.sectorFloor = s->sectorFloor;
+    g_ed.sectorCeil = s->sectorCeil;
+    g_ed.sectorFloorColor = s->sectorFloorColor;
+    g_ed.sectorCeilColor = s->sectorCeilColor;
+
+    g_ed.selectedVert = s->selectedVert;
+    g_ed.selectedWall = s->selectedWall;
+    g_ed.selectedSector = s->selectedSector;
+    g_ed.selectionType = s->selectionType;
+
+    g_ed.currentGridStep = s->currentGridStep;
+    g_ed.tinyGridEnabled = s->tinyGridEnabled;
+
+    g_ed.hoverVert = -1;
+    g_ed.hoverWall = -1;
+    g_ed.hoverSector = -1;
+
+    g_ed.draggingVertex = 0;
+    g_ed.draggingWall = 0;
+    g_ed.draggingSector = 0;
+    g_ed.draggingPan = 0;
+
+    g_ed.splitPreviewValid = 0;
 }
 
 static int keyPressedOnce(const uint8_t *keys, SDL_Scancode sc)
 {
     return keys[sc] && !g_ed.prevKeys[sc];
+}
+
+static void pushUndoState(void)
+{
+    if (g_undoCount == ED_HISTORY_MAX) {
+        memmove(&g_undoStack[0], &g_undoStack[1], sizeof(EditorSnapshot) * (ED_HISTORY_MAX - 1));
+        g_undoCount = ED_HISTORY_MAX - 1;
+    }
+
+    captureSnapshot(&g_undoStack[g_undoCount]);
+    g_undoCount++;
+
+    /* any new edit kills redo history */
+    g_redoCount = 0;
+}
+
+static void performUndo(void)
+{
+    if (g_undoCount <= 0) return;
+
+    if (g_redoCount == ED_HISTORY_MAX) {
+        memmove(&g_redoStack[0], &g_redoStack[1], sizeof(EditorSnapshot) * (ED_HISTORY_MAX - 1));
+        g_redoCount = ED_HISTORY_MAX - 1;
+    }
+
+    captureSnapshot(&g_redoStack[g_redoCount]);
+    g_redoCount++;
+
+    g_undoCount--;
+    restoreSnapshot(&g_undoStack[g_undoCount]);
+}
+
+static void performRedo(void)
+{
+    if (g_redoCount <= 0) return;
+
+    if (g_undoCount == ED_HISTORY_MAX) {
+        memmove(&g_undoStack[0], &g_undoStack[1], sizeof(EditorSnapshot) * (ED_HISTORY_MAX - 1));
+        g_undoCount = ED_HISTORY_MAX - 1;
+    }
+
+    captureSnapshot(&g_undoStack[g_undoCount]);
+    g_undoCount++;
+
+    g_redoCount--;
+    restoreSnapshot(&g_redoStack[g_redoCount]);
 }
 
 static void screenToWorld(int sx, int sy, float *wx, float *wy)
@@ -234,6 +444,137 @@ static int findOrAddVertex(float x, float y)
     const int idx = findVertexExact(x, y);
     if (idx >= 0) return idx;
     return addVertex(x, y);
+}
+
+static float cross2_local(float ax, float ay, float bx, float by)
+{
+    return (ax * by) - (ay * bx);
+}
+
+static int pointOnSegmentEps(float px, float py,
+                             float ax, float ay,
+                             float bx, float by,
+                             float eps)
+{
+    const float abx = bx - ax;
+    const float aby = by - ay;
+    const float apx = px - ax;
+    const float apy = py - ay;
+
+    const float cross = cross2_local(abx, aby, apx, apy);
+    if (absf_local(cross) > eps) return 0;
+
+    const float dot = (apx * abx) + (apy * aby);
+    if (dot < -eps) return 0;
+
+    const float lenSq = (abx * abx) + (aby * aby);
+    if (dot > lenSq + eps) return 0;
+
+    return 1;
+}
+
+static int pointsSameEps(float ax, float ay, float bx, float by, float eps)
+{
+    return (absf_local(ax - bx) <= eps) && (absf_local(ay - by) <= eps);
+}
+
+static void insertWallsIntoSector(int sectorIndex, int insertLocalIndex, const EdWall *srcWalls, int insertCount)
+{
+    if (insertCount <= 0) return;
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+    if ((g_edMap.wallCount + insertCount) > ED_MAX_WALLS) return;
+
+    EdSector *sec = &g_edMap.sectors[sectorIndex];
+    const int insertPos = sec->wallStart + insertLocalIndex;
+
+    if (insertPos < g_edMap.wallCount) {
+        memmove(&g_edMap.walls[insertPos + insertCount],
+                &g_edMap.walls[insertPos],
+                sizeof(EdWall) * (g_edMap.wallCount - insertPos));
+
+        for (int s = 0; s < g_edMap.sectorCount; s++) {
+            if (s == sectorIndex) continue;
+            if (g_edMap.sectors[s].wallStart >= insertPos) {
+                g_edMap.sectors[s].wallStart += insertCount;
+            }
+        }
+    }
+
+    for (int i = 0; i < insertCount; i++) {
+        g_edMap.walls[insertPos + i] = srcWalls[i];
+    }
+
+    g_edMap.wallCount += insertCount;
+    sec->wallCount += insertCount;
+    if (insertLocalIndex < sec->boundaryCount) {
+        sec->boundaryCount += insertCount;
+    }
+}
+
+static void removeWallFromSector(int sectorIndex, int localWallIndex)
+{
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+
+    EdSector *sec = &g_edMap.sectors[sectorIndex];
+    if (localWallIndex < 0 || localWallIndex >= sec->wallCount) return;
+
+    const int wallIndex = sec->wallStart + localWallIndex;
+    g_edMap.walls[wallIndex].v0 = -1;
+    g_edMap.walls[wallIndex].v1 = -1;
+
+    rebuildSectorWallLayout();
+}
+
+static int findDraftAttachWall(int *outSector,
+                               int *outLocalWall,
+                               int *outDraftEdge,
+                               int *outOuterV0,
+                               int *outOuterV1)
+{
+    const float eps = 0.01f;
+
+    if (g_ed.draftCount < 3) return 0;
+
+    for (int s = 0; s < g_edMap.sectorCount; s++) {
+        const EdSector *sec = &g_edMap.sectors[s];
+
+        for (int wi = 0; wi < sec->boundaryCount; wi++) {
+            const EdWall *outer = &g_edMap.walls[sec->wallStart + wi];
+            const EdVec2 *oa = &g_edMap.verts[outer->v0];
+            const EdVec2 *ob = &g_edMap.verts[outer->v1];
+
+            const float odx = ob->x - oa->x;
+            const float ody = ob->y - oa->y;
+
+            for (int di = 0; di < g_ed.draftCount; di++) {
+                const int dv0 = g_ed.draftVertIndices[di];
+                const int dv1 = g_ed.draftVertIndices[(di + 1) % g_ed.draftCount];
+
+                const EdVec2 *da = &g_edMap.verts[dv0];
+                const EdVec2 *db = &g_edMap.verts[dv1];
+
+                const float ddx = db->x - da->x;
+                const float ddy = db->y - da->y;
+
+                /* parallel + collinear */
+                if (absf_local(cross2_local(odx, ody, ddx, ddy)) > eps) continue;
+                if (absf_local(cross2_local(odx, ody, da->x - oa->x, da->y - oa->y)) > eps) continue;
+
+                /* draft edge endpoints must lie on outer wall segment */
+                if (!pointOnSegmentEps(da->x, da->y, oa->x, oa->y, ob->x, ob->y, eps)) continue;
+                if (!pointOnSegmentEps(db->x, db->y, oa->x, oa->y, ob->x, ob->y, eps)) continue;
+
+                *outSector = s;
+                *outLocalWall = wi;
+                *outDraftEdge = di;
+                *outOuterV0 = outer->v0;
+                *outOuterV1 = outer->v1;
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 static int pointInSector(float px, float py, int sectorIndex)
@@ -772,6 +1113,8 @@ static int findVertexNearWorld(float wx, float wy, float distWorld, int ignoreIn
     return best;
 }
 
+
+
 static int splitWallAtSelected(int wallIndex, float wx, float wy)
 {
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return 0;
@@ -785,12 +1128,20 @@ static int splitWallAtSelected(int wallIndex, float wx, float wy)
     const int localIndex = wallIndex - sec->wallStart;
     if (localIndex < 0 || localIndex >= sec->wallCount) return 0;
 
-    const float sx = snapf(wx);
-    const float sy = snapf(wy);
-    const int newVert = findOrAddVertex(sx, sy);
-    if (newVert < 0) return 0;
+    float sx, sy;
+    if (!getWallSplitPreviewPos(wallIndex, wx, wy, &sx, &sy)) {
+        return 0;
+    }
 
     EdWall original = g_edMap.walls[wallIndex];
+
+    int newVert = findVertexExact(sx, sy);
+    if (newVert < 0) {
+        newVert = addVertex(sx, sy);
+        if (newVert < 0) return 0;
+    }
+
+    if (newVert == original.v0 || newVert == original.v1) return 0;
 
     for (int i = g_edMap.wallCount; i > wallIndex + 1; i--) {
         g_edMap.walls[i] = g_edMap.walls[i - 1];
@@ -811,9 +1162,62 @@ static int splitWallAtSelected(int wallIndex, float wx, float wy)
     }
 
     syncAllPortals();
+
+    /* auto-select new vertex and begin dragging immediately */
+    g_ed.selectionType = ED_SEL_VERTEX;
+    g_ed.selectedVert = newVert;
+    g_ed.selectedWall = -1;
+    g_ed.selectedSector = -1;
+    g_ed.hoverVert = newVert;
+
+    g_ed.draggingVertex = 1;
+    g_ed.draggingWall = 0;
+    g_ed.draggingSector = 0;
+
+    g_ed.dragStartWorldX = wx;
+    g_ed.dragStartWorldY = wy;
+    g_ed.dragVertexStartX = g_edMap.verts[newVert].x;
+    g_ed.dragVertexStartY = g_edMap.verts[newVert].y;
+
     return 1;
 }
 
+
+
+
+
+
+
+static int getWallSplitPreviewPos(int wallIndex, float wx, float wy, float *outX, float *outY)
+{
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return 0;
+
+    const EdWall *w = &g_edMap.walls[wallIndex];
+    const EdVec2 *a = &g_edMap.verts[w->v0];
+    const EdVec2 *b = &g_edMap.verts[w->v1];
+
+    const float abx = b->x - a->x;
+    const float aby = b->y - a->y;
+    const float lenSq = (abx * abx) + (aby * aby);
+
+    if (lenSq <= ED_EPSILON) return 0;
+
+    float t = (((wx - a->x) * abx) + ((wy - a->y) * aby)) / lenSq;
+    t = clampf_local(t, 0.0f, 1.0f);
+
+    float sx = a->x + (abx * t);
+    float sy = a->y + (aby * t);
+
+    sx = snapf(sx);
+    sy = snapf(sy);
+
+    if (pointsSameEps(sx, sy, a->x, a->y, 0.01f)) return 0;
+    if (pointsSameEps(sx, sy, b->x, b->y, 0.01f)) return 0;
+
+    *outX = sx;
+    *outY = sy;
+    return 1;
+}
 
 
 static void selectBestHoverTarget(const uint8_t *keys, float worldX, float worldY)
@@ -889,6 +1293,9 @@ static void beginNewMap(void)
     g_edMap.startY = 0.0f;
     g_edMap.startAngle = 0.0f;
 
+    g_ed.currentGridStep = ED_GRID_STEP;
+    g_ed.tinyGridEnabled = 0;
+
     // id like to not change the location of the camera or zoom on load - maybe at start up
     g_ed.camX = 0.0f;
     g_ed.camY = 0.0f;
@@ -900,6 +1307,10 @@ static void beginNewMap(void)
     g_ed.hoverVert = -1;
     g_ed.hoverWall = -1;
     g_ed.hoverSector = -1;
+
+    g_ed.splitPreviewValid = 0;
+    g_ed.splitPreviewX = 0.0f;
+    g_ed.splitPreviewY = 0.0f;
 
     g_ed.sectorFloor = 0.0f;
     g_ed.sectorCeil = 2.0f;
@@ -1156,6 +1567,138 @@ static void finalizeDraftSector(void)
     clearDraft();
 }
 
+static int finalizeDraftSectorAttached(void)
+{
+    int outerSectorIndex, outerLocalWall, draftEdgeIndex;
+    int outerV0, outerV1;
+
+    if (g_ed.draftCount < 3) return 0;
+    if (g_edMap.sectorCount >= ED_MAX_SECTORS) return 0;
+
+    if (!findDraftAttachWall(&outerSectorIndex,
+                             &outerLocalWall,
+                             &draftEdgeIndex,
+                             &outerV0,
+                             &outerV1)) {
+        return 0;
+    }
+
+    const EdVec2 *outerA = &g_edMap.verts[outerV0];
+    const EdVec2 *outerB = &g_edMap.verts[outerV1];
+
+    const int draftV0 = g_ed.draftVertIndices[draftEdgeIndex];
+    const int draftV1 = g_ed.draftVertIndices[(draftEdgeIndex + 1) % g_ed.draftCount];
+
+    const EdVec2 *draftA = &g_edMap.verts[draftV0];
+    const EdVec2 *draftB = &g_edMap.verts[draftV1];
+
+    const float odx = outerB->x - outerA->x;
+    const float ody = outerB->y - outerA->y;
+
+    const float lenSq = (odx * odx) + (ody * ody);
+    if (lenSq <= ED_EPSILON) return 0;
+
+    /* project both draft points onto the outer wall so we can order them */
+    const float ta = (((draftA->x - outerA->x) * odx) + ((draftA->y - outerA->y) * ody)) / lenSq;
+    const float tb = (((draftB->x - outerA->x) * odx) + ((draftB->y - outerA->y) * ody)) / lenSq;
+
+    int splitV0, splitV1;
+
+    if (ta <= tb) {
+        splitV0 = findOrAddVertex(draftA->x, draftA->y);
+        splitV1 = findOrAddVertex(draftB->x, draftB->y);
+    } else {
+        splitV0 = findOrAddVertex(draftB->x, draftB->y);
+        splitV1 = findOrAddVertex(draftA->x, draftA->y);
+    }
+
+    if (splitV0 < 0 || splitV1 < 0) return 0;
+
+    /* create the new sector walls first */
+    const int newSectorIndex = g_edMap.sectorCount;
+    const int newWallStart = g_edMap.wallCount;
+
+    if ((g_edMap.wallCount + g_ed.draftCount) > ED_MAX_WALLS) return 0;
+
+    for (int i = 0; i < g_ed.draftCount; i++) {
+        const int v0 = g_ed.draftVertIndices[i];
+        const int v1 = g_ed.draftVertIndices[(i + 1) % g_ed.draftCount];
+        EdWall *w = &g_edMap.walls[g_edMap.wallCount++];
+
+        w->v0 = v0;
+        w->v1 = v1;
+        w->neighbour = -1;
+        w->openBottom = 0.0f;
+        w->openTop = 0.0f;
+        w->upperColor = 0;
+        w->midColor = 10 + (newSectorIndex % 22);
+        w->lowerColor = 0;
+        w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+    }
+
+    g_edMap.sectors[newSectorIndex].wallStart = newWallStart;
+    g_edMap.sectors[newSectorIndex].wallCount = g_ed.draftCount;
+    g_edMap.sectors[newSectorIndex].boundaryCount = g_ed.draftCount;
+    g_edMap.sectors[newSectorIndex].floorHeight = g_ed.sectorFloor;
+    g_edMap.sectors[newSectorIndex].ceilHeight = g_ed.sectorCeil;
+    g_edMap.sectors[newSectorIndex].floorColor = g_ed.sectorFloorColor;
+    g_edMap.sectors[newSectorIndex].ceilColor = g_ed.sectorCeilColor;
+    g_edMap.sectorCount++;
+
+    /* make the matching draft edge a portal candidate */
+    {
+        EdWall *newShared = &g_edMap.walls[newWallStart + draftEdgeIndex];
+        newShared->v0 = splitV0;
+        newShared->v1 = splitV1;
+    }
+
+    /* split outer wall into up to 3 pieces */
+    {
+        EdWall outerPieces[3];
+        int pieceCount = 0;
+        EdWall templateWall = g_edMap.walls[g_edMap.sectors[outerSectorIndex].wallStart + outerLocalWall];
+
+        if (!pointsSameEps(outerA->x, outerA->y, draftA->x, draftA->y, 0.01f)) {
+            outerPieces[pieceCount] = templateWall;
+            outerPieces[pieceCount].v0 = outerV0;
+            outerPieces[pieceCount].v1 = splitV0;
+            outerPieces[pieceCount].neighbour = -1;
+            outerPieces[pieceCount].openBottom = 0.0f;
+            outerPieces[pieceCount].openTop = 0.0f;
+            outerPieces[pieceCount].flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+            pieceCount++;
+        }
+
+        outerPieces[pieceCount] = templateWall;
+        outerPieces[pieceCount].v0 = splitV0;
+        outerPieces[pieceCount].v1 = splitV1;
+        outerPieces[pieceCount].neighbour = -1;
+        outerPieces[pieceCount].openBottom = 0.0f;
+        outerPieces[pieceCount].openTop = 0.0f;
+        outerPieces[pieceCount].flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+        pieceCount++;
+
+        if (!pointsSameEps(draftB->x, draftB->y, outerB->x, outerB->y, 0.01f)) {
+            outerPieces[pieceCount] = templateWall;
+            outerPieces[pieceCount].v0 = splitV1;
+            outerPieces[pieceCount].v1 = outerV1;
+            outerPieces[pieceCount].neighbour = -1;
+            outerPieces[pieceCount].openBottom = 0.0f;
+            outerPieces[pieceCount].openTop = 0.0f;
+            outerPieces[pieceCount].flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+            pieceCount++;
+        }
+
+        removeWallFromSector(outerSectorIndex, outerLocalWall);
+
+        /* after rebuild, sector local index still points at insertion place */
+        insertWallsIntoSector(outerSectorIndex, outerLocalWall, outerPieces, pieceCount);
+    }
+
+    syncAllPortals();
+    clearDraft();
+    return 1;
+}
 
 static float draftSignedArea(void)
 {
@@ -1227,6 +1770,194 @@ static void finalizeDraftInnerSolid(void)
     clearDraft();
 }
 
+static void cleanMapCompact(void)
+{
+    int sectorRemap[ED_MAX_SECTORS];
+    EdSector newSectors[ED_MAX_SECTORS];
+    int newSectorCount = 0;
+
+    for (int i = 0; i < ED_MAX_SECTORS; i++) {
+        sectorRemap[i] = -1;
+    }
+
+    /* first rebuild walls cleanly so sector wall ranges are sane */
+    rebuildSectorWallLayout();
+
+    /* remove sectors that have no valid walls */
+    for (int s = 0; s < g_edMap.sectorCount; s++) {
+        const EdSector *sec = &g_edMap.sectors[s];
+
+        if (sec->wallCount <= 0 || sec->boundaryCount <= 0) {
+            continue;
+        }
+
+        if (sec->wallStart < 0 || sec->wallStart >= g_edMap.wallCount) {
+            continue;
+        }
+
+        if ((sec->wallStart + sec->wallCount) > g_edMap.wallCount) {
+            continue;
+        }
+
+        sectorRemap[s] = newSectorCount;
+        newSectors[newSectorCount++] = *sec;
+    }
+
+    for (int i = 0; i < newSectorCount; i++) {
+        g_edMap.sectors[i] = newSectors[i];
+    }
+    g_edMap.sectorCount = newSectorCount;
+
+    /* fix wall neighbour sector indices */
+    for (int i = 0; i < g_edMap.wallCount; i++) {
+        EdWall *w = &g_edMap.walls[i];
+
+        if (w->neighbour >= 0 && w->neighbour < ED_MAX_SECTORS) {
+            w->neighbour = sectorRemap[w->neighbour];
+        } else {
+            w->neighbour = -1;
+        }
+    }
+
+    /* fix start sector */
+    if (g_edMap.startSector >= 0 && g_edMap.startSector < ED_MAX_SECTORS) {
+        g_edMap.startSector = sectorRemap[g_edMap.startSector];
+    } else {
+        g_edMap.startSector = -1;
+    }
+
+    if (g_edMap.startSector < 0) {
+        g_edMap.startSector = (g_edMap.sectorCount > 0) ? 0 : -1;
+    }
+
+    /* fix selected / hovered sectors */
+    if (g_ed.selectedSector >= 0 && g_ed.selectedSector < ED_MAX_SECTORS) {
+        g_ed.selectedSector = sectorRemap[g_ed.selectedSector];
+    } else {
+        g_ed.selectedSector = -1;
+    }
+
+    if (g_ed.hoverSector >= 0 && g_ed.hoverSector < ED_MAX_SECTORS) {
+        g_ed.hoverSector = sectorRemap[g_ed.hoverSector];
+    } else {
+        g_ed.hoverSector = -1;
+    }
+
+    /* wall selection safety */
+    if (g_ed.selectedWall >= g_edMap.wallCount) g_ed.selectedWall = -1;
+    if (g_ed.hoverWall >= g_edMap.wallCount) g_ed.hoverWall = -1;
+
+    /* vertex cleanup */
+    compactOrphanVertices();
+
+    /* if no sectors remain, make start sane */
+    if (g_edMap.sectorCount <= 0) {
+        g_edMap.startSector = -1;
+    }
+
+    /* selection mode safety */
+    if (g_ed.selectionType == ED_SEL_VERTEX && g_ed.selectedVert < 0) {
+        g_ed.selectionType = ED_SEL_NONE;
+    }
+    if (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall < 0) {
+        g_ed.selectionType = ED_SEL_NONE;
+    }
+    if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector < 0) {
+        g_ed.selectionType = ED_SEL_NONE;
+    }
+
+    /* drag states off */
+    g_ed.draggingVertex = 0;
+    g_ed.draggingWall = 0;
+    g_ed.draggingSector = 0;
+    g_ed.splitPreviewValid = 0;
+
+    /* final portal rebuild */
+    syncAllPortals();
+}
+
+static void compactOrphanVertices(void)
+{
+    int used[ED_MAX_VERTS];
+    int remap[ED_MAX_VERTS];
+    int newCount = 0;
+
+    for (int i = 0; i < ED_MAX_VERTS; i++) {
+        used[i] = 0;
+        remap[i] = -1;
+    }
+
+    /* mark vertices referenced by walls */
+    for (int i = 0; i < g_edMap.wallCount; i++) {
+        const EdWall *w = &g_edMap.walls[i];
+
+        if (w->v0 >= 0 && w->v0 < g_edMap.vertCount) used[w->v0] = 1;
+        if (w->v1 >= 0 && w->v1 < g_edMap.vertCount) used[w->v1] = 1;
+    }
+
+    /* build remap */
+    for (int i = 0; i < g_edMap.vertCount; i++) {
+        if (used[i]) {
+            remap[i] = newCount++;
+        }
+    }
+
+    /* compact verts */
+    if (newCount < g_edMap.vertCount) {
+        EdVec2 newVerts[ED_MAX_VERTS];
+
+        for (int i = 0; i < g_edMap.vertCount; i++) {
+            if (remap[i] >= 0) {
+                newVerts[remap[i]] = g_edMap.verts[i];
+            }
+        }
+
+        for (int i = 0; i < newCount; i++) {
+            g_edMap.verts[i] = newVerts[i];
+        }
+
+        g_edMap.vertCount = newCount;
+    }
+
+    /* remap wall vertex indices */
+    for (int i = 0; i < g_edMap.wallCount; i++) {
+        EdWall *w = &g_edMap.walls[i];
+
+        if (w->v0 >= 0) w->v0 = remap[w->v0];
+        if (w->v1 >= 0) w->v1 = remap[w->v1];
+    }
+
+    /* remap draft vertex indices, removing invalid ones */
+    for (int i = 0; i < g_ed.draftCount; ) {
+        const int oldIdx = g_ed.draftVertIndices[i];
+        const int newIdx = (oldIdx >= 0 && oldIdx < ED_MAX_VERTS) ? remap[oldIdx] : -1;
+
+        if (newIdx < 0) {
+            for (int j = i; j < g_ed.draftCount - 1; j++) {
+                g_ed.draftVertIndices[j] = g_ed.draftVertIndices[j + 1];
+            }
+            g_ed.draftCount--;
+            continue;
+        }
+
+        g_ed.draftVertIndices[i] = newIdx;
+        i++;
+    }
+
+    /* fix selected / hovered vertex */
+    if (g_ed.selectedVert >= 0 && g_ed.selectedVert < ED_MAX_VERTS) {
+        g_ed.selectedVert = remap[g_ed.selectedVert];
+    } else {
+        g_ed.selectedVert = -1;
+    }
+
+    if (g_ed.hoverVert >= 0 && g_ed.hoverVert < ED_MAX_VERTS) {
+        g_ed.hoverVert = remap[g_ed.hoverVert];
+    } else {
+        g_ed.hoverVert = -1;
+    }
+}
+
 
 
 
@@ -1273,9 +2004,6 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
 
 
 
-
-
-
 static void drawGrid(void)
 {
     const float leftW   = g_ed.camX - (SCREEN_W * 0.5f) / g_ed.zoom;
@@ -1283,30 +2011,110 @@ static void drawGrid(void)
     const float topW    = g_ed.camY - (SCREEN_H * 0.5f) / g_ed.zoom;
     const float bottomW = g_ed.camY + (SCREEN_H * 0.5f) / g_ed.zoom;
 
-    const int x0 = (int)floorf(leftW);
-    const int x1 = (int)ceilf(rightW);
-    const int y0 = (int)floorf(topW);
-    const int y1 = (int)ceilf(bottomW);
-
     clearScreen(16);
 
-    for (int gx = x0; gx <= x1; gx++) {
-        int sx0, sy0, sx1, sy1;
-        worldToScreen((float)gx, topW, &sx0, &sy0);
-        worldToScreen((float)gx, bottomW, &sx1, &sy1);
-        drawLine(sx0, sy0, sx1, sy1,
-                 (gx == 0) ? ED_HOME_GRID_COL : ((gx % 4 == 0) ? ED_GRID_MAJOR_COL : ED_GRID_MINOR_COL));
+    /* ------------------------------------------------------------ */
+    /* Base grid: always draw the normal 1.0 grid                   */
+    /* ------------------------------------------------------------ */
+
+     /* ------------------------------------------------------------ */
+    /* Tiny overlay: only when tiny mode is enabled                 */
+    /* ------------------------------------------------------------ */
+    if (g_ed.tinyGridEnabled) {
+        const float step = ED_GRID_STEP_TINY;
+
+        const int xCount0 = (int)floorf(leftW / step);
+        const int xCount1 = (int)ceilf(rightW / step);
+        const int yCount0 = (int)floorf(topW / step);
+        const int yCount1 = (int)ceilf(bottomW / step);
+
+        for (int gx = xCount0; gx <= xCount1; gx++) {
+            const float x = (float)gx * step;
+
+            /* skip lines that already belong to the 1.0 grid */
+            const float baseT = x / ED_GRID_STEP;
+            if (absf_local(baseT - roundf(baseT)) < 0.0001f) {
+                continue;
+            }
+
+            int sx0, sy0, sx1, sy1;
+            worldToScreen(x, topW, &sx0, &sy0);
+            worldToScreen(x, bottomW, &sx1, &sy1);
+
+            drawLine(sx0, sy0, sx1, sy1, 20);
+        }
+
+        for (int gy = yCount0; gy <= yCount1; gy++) {
+            const float y = (float)gy * step;
+
+            /* skip lines that already belong to the 1.0 grid */
+            const float baseT = y / ED_GRID_STEP;
+            if (absf_local(baseT - roundf(baseT)) < 0.0001f) {
+                continue;
+            }
+
+            int sx0, sy0, sx1, sy1;
+            worldToScreen(leftW, y, &sx0, &sy0);
+            worldToScreen(rightW, y, &sx1, &sy1);
+
+            drawLine(sx0, sy0, sx1, sy1, 20);
+        }
     }
 
-    for (int gy = y0; gy <= y1; gy++) {
-        int sx0, sy0, sx1, sy1;
-        worldToScreen(leftW, (float)gy, &sx0, &sy0);
-        worldToScreen(rightW, (float)gy, &sx1, &sy1);
-        drawLine(sx0, sy0, sx1, sy1,
-                 (gy == 0) ? ED_HOME_GRID_COL : ((gy % 4 == 0) ? ED_GRID_MAJOR_COL : ED_GRID_MINOR_COL));
+    {
+        const float step = ED_GRID_STEP;
+        const float majorStep = step * 4.0f;
+
+        const int xCount0 = (int)floorf(leftW / step);
+        const int xCount1 = (int)ceilf(rightW / step);
+        const int yCount0 = (int)floorf(topW / step);
+        const int yCount1 = (int)ceilf(bottomW / step);
+
+        for (int gx = xCount0; gx <= xCount1; gx++) {
+            const float x = (float)gx * step;
+            int sx0, sy0, sx1, sy1;
+            worldToScreen(x, topW, &sx0, &sy0);
+            worldToScreen(x, bottomW, &sx1, &sy1);
+
+            uint8_t col = ED_GRID_MINOR_COL;
+
+            if (absf_local(x) < 0.0001f) {
+                col = ED_HOME_GRID_COL;
+            } else {
+                const float majorT = x / majorStep;
+                const float majorRounded = roundf(majorT);
+                if (absf_local(majorT - majorRounded) < 0.0001f) {
+                    col = ED_GRID_MAJOR_COL;
+                }
+            }
+
+            drawLine(sx0, sy0, sx1, sy1, col);
+        }
+
+        for (int gy = yCount0; gy <= yCount1; gy++) {
+            const float y = (float)gy * step;
+            int sx0, sy0, sx1, sy1;
+            worldToScreen(leftW, y, &sx0, &sy0);
+            worldToScreen(rightW, y, &sx1, &sy1);
+
+            uint8_t col = ED_GRID_MINOR_COL;
+
+            if (absf_local(y) < 0.0001f) {
+                col = ED_HOME_GRID_COL;
+            } else {
+                const float majorT = y / majorStep;
+                const float majorRounded = roundf(majorT);
+                if (absf_local(majorT - majorRounded) < 0.0001f) {
+                    col = ED_GRID_MAJOR_COL;
+                }
+            }
+
+            drawLine(sx0, sy0, sx1, sy1, col);
+        }
     }
+
+   
 }
-
 
 static void drawInspectorPanel(void)
 {
@@ -1343,7 +2151,7 @@ static void drawInspectorPanel(void)
         drawText(px + 8, py + 72, buf, ED_TEXT_COL);
 
         drawText(px + 8, py + 92, "LMB drag vertex", ED_TEXT_COL);
-        drawText(px + 8, py + 106, "Drop onto another vertex to merge", ED_TEXT_COL);
+        drawText(px + 8, py + 106, "Drop onto another vertex to merge (hold shift)", ED_TEXT_COL);
     }
     else if (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall >= 0) {
         const EdWall *w = &g_edMap.walls[g_ed.selectedWall];
@@ -1368,7 +2176,7 @@ static void drawInspectorPanel(void)
 
         drawText(px + 8, py + 134, "1 solid   2 portal   3 window   4 door", ED_TEXT_COL);
         drawText(px + 8, py + 148, "R/T bot  Y/U top  A/S upper  D/F mid  H/J lower", ED_TEXT_COL);
-        drawText(px + 8, py + 162, "I split wall", ED_TEXT_COL);
+        drawText(px + 8, py + 162, "[space] split wall", ED_TEXT_COL);
     }
     else if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector >= 0) {
         const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
@@ -1402,91 +2210,169 @@ static void drawInspectorPanel(void)
     }
 }
 
+
+
+
+
+//// GUI PARTS ////
+static int pointInRect(int px, int py, int x, int y, int w, int h)
+{
+    return (px >= x && px < (x + w) && py >= y && py < (y + h));
+}
+
+static void drawUIButton(int x, int y, int w, int h, const char *text, int hot, int active, int disabled)
+{
+    uint8_t bg = ED_UI_BTN_BG;
+    uint8_t border = ED_UI_BTN_BORDER;
+    uint8_t textCol = ED_UI_BTN_TEXT;
+
+    if (disabled) {
+        bg = ED_UI_BTN_DISABLED;
+        border = ED_UI_BTN_BORDER_DISABLED;
+        textCol = ED_UI_BTN_TEXT_DISABLED;
+    } else if (active) {
+        bg = ED_UI_BTN_ACTIVE;
+    } else if (hot) {
+        bg = ED_UI_BTN_HOVER;
+    }
+
+    drawRect(x, y, w, h, bg);
+    drawLine(x, y, x + w - 1, y, border);
+    drawLine(x, y + h - 1, x + w - 1, y + h - 1, border);
+    drawLine(x, y, x, y + h - 1, border);
+    drawLine(x + w - 1, y, x + w - 1, y + h - 1, border);
+
+    drawText(x + 4, y + 4, text, textCol);
+}
+
+static int uiButtonLogic(int id, int x, int y, int w, int h,
+                         int mouseX, int mouseY,
+                         int leftDown, int leftPressed, int leftReleased,
+                         int disabled)
+{
+    const int hot = !disabled && pointInRect(mouseX, mouseY, x, y, w, h);
+
+    if (hot) {
+        g_ed.uiMouseCaptured = 1;
+        g_ed.uiHotId = id;
+    }
+
+    if (disabled) {
+        if (g_ed.uiActiveId == id && !leftDown) {
+            g_ed.uiActiveId = ED_UI_ID_NONE;
+        }
+        drawUIButton(x, y, w, h, "", hot, 0, 1);
+        return 0;
+    }
+
+    if (hot && leftPressed) {
+        g_ed.uiActiveId = id;
+    }
+
+    if (leftReleased) {
+        if (g_ed.uiActiveId == id) {
+            g_ed.uiActiveId = ED_UI_ID_NONE;
+            if (hot) {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int uiArrowPairFloat(int *idBase,
+                            int x, int y,
+                            const char *label,
+                            float *value,
+                            float step,
+                            float minVal,
+                            float maxVal,
+                            int mouseX, int mouseY,
+                            int leftDown, int leftPressed, int leftReleased)
+{
+    char buf[64];
+    int changed = 0;
+
+    drawText(x, y + 4, label, ED_TEXT_COL);
+
+    {
+        const int minusId = (*idBase)++;
+        const int plusId  = (*idBase)++;
+
+        const int bx = x + 84;
+        const int by = y;
+
+        drawUIButton(bx, by, 16, 16, "-", g_ed.uiHotId == minusId, g_ed.uiActiveId == minusId, 0);
+        drawUIButton(bx + 20, by, 16, 16, "+", g_ed.uiHotId == plusId, g_ed.uiActiveId == plusId, 0);
+
+        snprintf(buf, sizeof(buf), "%.2f", *value);
+        drawText(bx + 44, by + 4, buf, ED_TEXT_COL);
+
+        if (uiButtonLogic(minusId, bx, by, 16, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            *value -= step;
+            if (*value < minVal) *value = minVal;
+            changed = 1;
+        }
+
+        if (uiButtonLogic(plusId, bx + 20, by, 16, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            *value += step;
+            if (*value > maxVal) *value = maxVal;
+            changed = 1;
+        }
+    }
+
+    return changed;
+}
+
+
+
+
 static void drawEditorUI(void)
 {
     char buf[256];
 
-    drawRect(6, 6, 1260, 118, ED_UI_BG);
-    drawLine(6, 6, 1265, 6, ED_UI_BORDER);
-    drawLine(6, 123, 1265, 123, ED_UI_BORDER);
-    drawLine(6, 6, 6, 123, ED_UI_BORDER);
-    drawLine(1265, 6, 1265, 123, ED_UI_BORDER);
+    drawRect(6, 6, 760, 238, ED_UI_BG);
+    drawLine(6, 6, 765, 6, ED_UI_BORDER);
+    drawLine(6, 243, 765, 243, ED_UI_BORDER);
+    drawLine(6, 6, 6, 243, ED_UI_BORDER);
+    drawLine(765, 6, 765, 243, ED_UI_BORDER);
+
+    drawText(12, 10,  "RC3D EDITOR", 31);
+    drawText(12, 24,  "LMB select/drag   RMB add draft point   MMB pan   Wheel zoom", ED_TEXT_COL);
+    drawText(12, 36,  "ENTER finish draft   ESC clear draft   DEL delete hovered", ED_TEXT_COL);
+    drawText(12, 48,  "CTRL+Z undo, CTRL+Y redo, TAB grid 1.0/0.1, F6 clean map, SHIFT drop = merge", ED_TEXT_COL);
 
     snprintf(buf, sizeof(buf),
-             "RMB add point  ENTER finish sector  LMB select/drag vertex  DEL delete hovered  ESC cancel draft");
-
-
-
-    drawText(12, 10, buf, ED_TEXT_COL);
-
-    snprintf(buf, sizeof(buf),
-             "MMB pan  wheel zoom  X set start  Q/E start angle  I split wall  drag vertex onto another = merge");
-    drawText(12, 22, buf, ED_TEXT_COL);
+             "Draft: %d   SignedArea: %.2f   Grid: %.1f",
+             g_ed.draftCount,
+             draftSignedArea(),
+             g_ed.currentGridStep);
+    drawText(12, 62, buf, ED_TEXT_COL);
 
     snprintf(buf, sizeof(buf),
-             "NEW sector defaults: floor %.2f  ceil %.2f  floorCol %u  ceilCol %u",
-             g_ed.sectorFloor, g_ed.sectorCeil,
-             (unsigned)g_ed.sectorFloorColor,
-             (unsigned)g_ed.sectorCeilColor);
-    drawText(12, 34, buf, ED_TEXT_COL);
-
-    if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
-        const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
-        snprintf(buf, sizeof(buf),
-                 "SELECTED sector %d: floor %.2f  ceil %.2f  floorCol %u  ceilCol %u   (SHIFT+F/G, SHIFT+C/V, SHIFT+J/K, SHIFT+N/M)",
-                 g_ed.selectedSector,
-                 sec->floorHeight, sec->ceilHeight,
-                 (unsigned)sec->floorColor,
-                 (unsigned)sec->ceilColor);
-    } else {
-        snprintf(buf, sizeof(buf),
-                 "SELECTED sector: none");
-    }
-    drawText(12, 46, buf, ED_TEXT_COL);
-
-    if (g_ed.selectedWall >= 0 && g_ed.selectedWall < g_edMap.wallCount) {
-        const EdWall *w = &g_edMap.walls[g_ed.selectedWall];
-        snprintf(buf, sizeof(buf),
-                 "SELECTED wall %d: flags %u  neigh %d  openBot %.2f  openTop %.2f  upper %u  mid %u  lower %u",
-                 g_ed.selectedWall,
-                 (unsigned)w->flags,
-                 w->neighbour,
-                 w->openBottom, w->openTop,
-                 (unsigned)w->upperColor,
-                 (unsigned)w->midColor,
-                 (unsigned)w->lowerColor);
-    } else {
-        snprintf(buf, sizeof(buf),
-                 "SELECTED wall: none");
-    }
-    drawText(12, 58, buf, ED_TEXT_COL);
-
-    snprintf(buf, sizeof(buf),
-             "Wall edit: 1 solid  2 portal  3 window  4 door  R/T bot -/+  Y/U top -/+  A/S upper  D/F mid  H/J lower");
-    drawText(12, 70, buf, ED_TEXT_COL);
-
-    snprintf(buf, sizeof(buf),
-             "hoverV %d hoverW %d hoverS %d   selV %d selW %d selS %d   verts %d walls %d sectors %d",
+             "Hover V:%d W:%d S:%d   Selected V:%d W:%d S:%d   Verts:%d Walls:%d Sectors:%d",
              g_ed.hoverVert, g_ed.hoverWall, g_ed.hoverSector,
              g_ed.selectedVert, g_ed.selectedWall, g_ed.selectedSector,
              g_edMap.vertCount, g_edMap.wallCount, g_edMap.sectorCount);
-    drawText(12, 82, buf, ED_TEXT_COL);
+    drawText(12, 74, buf, ED_TEXT_COL);
 
     snprintf(buf, sizeof(buf),
-             "F2 save txt  F3 load txt  F5 export C");
-    drawText(12, 94, buf, ED_TEXT_COL);
-
-
-    snprintf(buf, sizeof(buf),
-         "ENTER finish draft  CCW=new sector  CW=inner solid in selected sector");
-    //drawText(12, 106, buf, ED_TEXT_COL);
+             "Start: %.2f %.2f ang %.2f sector %d",
+             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
+    drawText(12, 86, buf, ED_TEXT_COL);
 
     snprintf(buf, sizeof(buf),
-         "draftCount %d  signedArea %.2f : ENTER finish draft  CCW=new sector  CW=inner solid in selected sector",
-         g_ed.draftCount,
-         draftSignedArea());
-    drawText(12, 106, buf, ED_TEXT_COL);
+             "New sector defaults: floor %.2f  ceil %.2f  floorCol %u  ceilCol %u",
+             g_ed.sectorFloor, g_ed.sectorCeil,
+             (unsigned)g_ed.sectorFloorColor,
+             (unsigned)g_ed.sectorCeilColor);
+    drawText(12, 98, buf, ED_TEXT_COL);
+
+    drawText(12, 120, "Buttons below are clickable UI. Keyboard shortcuts still work.", ED_UI_TEXT_INFOTYPE);
 }
+
+
 
 static void drawMapGeometry(void)
 {
@@ -1543,7 +2429,7 @@ static void drawMapGeometry(void)
         }
     }
 
-        if (g_ed.selectionType == ED_SEL_SECTOR &&
+    if (g_ed.selectionType == ED_SEL_SECTOR &&
         g_ed.selectedSector >= 0 &&
         g_ed.selectedSector < g_edMap.sectorCount) {
         const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
@@ -1558,6 +2444,15 @@ static void drawMapGeometry(void)
             drawLine(x0, y0, x1, y1, ED_COLOUR_SELECTED_SECTOR);
         }
     }
+
+    if (g_ed.splitPreviewValid && g_ed.selectionType == ED_SEL_WALL) {
+        int sx, sy;
+        worldToScreen(g_ed.splitPreviewX, g_ed.splitPreviewY, &sx, &sy);
+
+        drawRect(sx - 3, sy - 3, 7, 7, 15);
+        drawRect(sx - 1, sy - 1, 3, 3, 63);
+    }
+
 }
 
 static void drawStartMarker(void)
@@ -1575,6 +2470,258 @@ void rc3dEditInit(void)
     beginNewMap();
 }
 
+static void handleEditorUI(int mouseX, int mouseY,
+                           int leftDown, int leftPressed, int leftReleased,
+                           float worldX, float worldY)
+{
+    int id = 1000;
+
+    g_ed.uiMouseCaptured = 0;
+    g_ed.uiHotId = ED_UI_ID_NONE;
+
+    /* -------------------------------------------------- */
+    /* top toolbar                                         */
+    /* -------------------------------------------------- */
+    {
+        const int x = 12;
+        const int y = 138;
+
+        int cx = x;
+
+
+
+        /* Undo */
+        drawUIButton(cx, y, 56, 16, "Undo", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_undoCount <= 0));
+        if (uiButtonLogic(id++, cx, y, 56, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, (g_undoCount <= 0))) {
+            performUndo();
+        }
+        cx += 60;
+
+        /* Redo */
+        drawUIButton(cx, y, 56, 16, "Redo", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_redoCount <= 0));
+        if (uiButtonLogic(id++, cx, y, 56, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, (g_redoCount <= 0))) {
+            performRedo();
+        }
+        cx += 60;
+
+        /* Save */
+        drawUIButton(cx, y, 56, 16, "Save", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+        if (uiButtonLogic(id++, cx, y, 56, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            saveTextMap("rc3d_map.txt");
+        }
+        cx += 60;
+
+        /* Load */
+        drawUIButton(cx, y, 56, 16, "Load", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+        if (uiButtonLogic(id++, cx, y, 56, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            loadTextMap("rc3d_map.txt");
+        }
+        cx += 60;
+
+        /* Export */
+        drawUIButton(cx, y, 64, 16, "Export", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+        if (uiButtonLogic(id++, cx, y, 64, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            exportCStringMap("rc3d_map_export.c");
+        }
+        cx += 68;
+
+        /* Grid */
+        drawUIButton(cx, y, 72, 16,
+                     g_ed.tinyGridEnabled ? "Grid 0.1" : "Grid 1.0",
+                     g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+        if (uiButtonLogic(id++, cx, y, 68, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            g_ed.tinyGridEnabled = !g_ed.tinyGridEnabled;
+            g_ed.currentGridStep = g_ed.tinyGridEnabled ? ED_GRID_STEP_TINY : ED_GRID_STEP;
+        }
+        cx += 76;
+
+        /* Finish draft */
+        drawUIButton(cx, y, 72, 16, "Finish", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_ed.draftCount < 3));
+        if (uiButtonLogic(id++, cx, y, 72, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, (g_ed.draftCount < 3))) {
+            const float area = draftSignedArea();
+
+            pushUndoState();
+
+            if (!finalizeDraftSectorAttached()) {
+                if (area < 0.0f) {
+                    finalizeDraftSector();
+                } else if (area > 0.0f) {
+                    if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+                        finalizeDraftInnerSolid();
+                    } else {
+                        finalizeDraftSector();
+                    }
+                }
+            }
+        }
+        cx += 76;
+
+        /* Clear draft */
+        drawUIButton(cx, y, 72, 16, "ClrDraft", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_ed.draftCount <= 0));
+        if (uiButtonLogic(id++, cx, y, 72, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, (g_ed.draftCount <= 0))) {
+            clearDraft();
+        }
+
+        cx += 76;
+        /* Clean map */
+        drawUIButton(cx, y, 76, 16, "CleanMap", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+        if (uiButtonLogic(id++, cx, y, 76, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+            pushUndoState();
+            cleanMapCompact();
+        }
+
+    }
+
+    /* -------------------------------------------------- */
+    /* wall tools                                           */
+    /* -------------------------------------------------- */
+    {
+        const int x = 12;
+        const int y = 160;
+
+        drawText(x, y + 4, "Wall:", ED_TEXT_COL);
+
+        if (g_ed.selectedWall >= 0 && g_ed.selectedWall < g_edMap.wallCount) {
+            EdWall *w = &g_edMap.walls[g_ed.selectedWall];
+            int cx = x + 40;
+
+            drawUIButton(cx, y, 52, 16, "Solid", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+            if (uiButtonLogic(id++, cx, y, 52, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+                pushUndoState();
+                makeWallSolid(g_ed.selectedWall, (w->midColor == 0) ? 14 : w->midColor);
+            }
+            cx += 56;
+
+            drawUIButton(cx, y, 56, 16, "Portal", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+            if (uiButtonLogic(id++, cx, y, 56, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+                pushUndoState();
+                tryMakeWallPortal(g_ed.selectedWall);
+            }
+            cx += 60;
+
+            drawUIButton(cx, y, 56, 16, "Window", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+            if (uiButtonLogic(id++, cx, y, 56, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+                float ob = w->openBottom;
+                float ot = w->openTop;
+                if (ot <= ob) {
+                    ob = 0.5f;
+                    ot = 1.4f;
+                }
+                pushUndoState();
+                makeWallWindow(g_ed.selectedWall, ob, ot,
+                               (w->upperColor == 0) ? 14 : w->upperColor,
+                               (w->lowerColor == 0) ? 14 : w->lowerColor);
+            }
+            cx += 60;
+
+            drawUIButton(cx, y, 48, 16, "Door", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0);
+            if (uiButtonLogic(id++, cx, y, 48, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, 0)) {
+                float ob = w->openBottom;
+                float ot = w->openTop;
+                if (ot <= ob) {
+                    ob = 0.0f;
+                    ot = 1.6f;
+                }
+                pushUndoState();
+                makeWallDoor(g_ed.selectedWall, ob, ot, (w->midColor == 0) ? 14 : w->midColor);
+            }
+            cx += 52;
+
+            drawUIButton(cx, y, 48, 16, "Split", g_ed.uiHotId == id, g_ed.uiActiveId == id, !g_ed.splitPreviewValid);
+            if (uiButtonLogic(id++, cx, y, 48, 16, mouseX, mouseY, leftDown, leftPressed, leftReleased, !g_ed.splitPreviewValid)) {
+                pushUndoState();
+                splitWallAtSelected(g_ed.selectedWall, worldX, worldY);
+            }
+        } else {
+            drawText(x + 40, y + 4, "No wall selected", 24);
+            id += 5;
+        }
+    }
+
+    /* -------------------------------------------------- */
+    /* selected sector controls                             */
+    /* -------------------------------------------------- */
+    {
+        const int x = 12;
+        const int y = 182;
+
+        if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+            EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
+
+            drawText(x, y + 4, "Sector:", ED_TEXT_COL);
+
+            {
+                float tempFloor = sec->floorHeight;
+                float tempCeil  = sec->ceilHeight;
+
+                if (uiArrowPairFloat(&id, x + 52, y, "Floor", &tempFloor, 0.1f, -128.0f, 128.0f,
+                                     mouseX, mouseY, leftDown, leftPressed, leftReleased)) {
+                    pushUndoState();
+                    sec->floorHeight = tempFloor;
+                    if (sec->ceilHeight < sec->floorHeight + 0.1f) {
+                        sec->ceilHeight = sec->floorHeight + 0.1f;
+                    }
+                    syncAllPortals();
+                }
+
+                if (uiArrowPairFloat(&id, x + 200, y, "Ceil", &tempCeil, 0.1f, -128.0f, 128.0f,
+                                     mouseX, mouseY, leftDown, leftPressed, leftReleased)) {
+                    pushUndoState();
+                    sec->ceilHeight = tempCeil;
+                    if (sec->ceilHeight < sec->floorHeight + 0.1f) {
+                        sec->ceilHeight = sec->floorHeight + 0.1f;
+                    }
+                    syncAllPortals();
+                }
+            }
+        } else {
+            drawText(x, y + 4, "Sector: none selected", 24);
+        }
+    }
+
+    /* -------------------------------------------------- */
+    /* selected wall float controls                         */
+    /* -------------------------------------------------- */
+    {
+        const int x = 12;
+        const int y = 204;
+
+        if (g_ed.selectedWall >= 0 && g_ed.selectedWall < g_edMap.wallCount) {
+            EdWall *w = &g_edMap.walls[g_ed.selectedWall];
+
+            drawText(x, y + 4, "Open:", ED_TEXT_COL);
+
+            {
+                float tempBot = w->openBottom;
+                float tempTop = w->openTop;
+
+                if (uiArrowPairFloat(&id, x + 40, y, "Bot", &tempBot, 0.1f, -128.0f, 128.0f,
+                                     mouseX, mouseY, leftDown, leftPressed, leftReleased)) {
+                    pushUndoState();
+                    w->openBottom = tempBot;
+                    if (w->openTop < w->openBottom) {
+                        float t = w->openTop;
+                        w->openTop = w->openBottom;
+                        w->openBottom = t;
+                    }
+                }
+
+                if (uiArrowPairFloat(&id, x + 180, y, "Top", &tempTop, 0.1f, -128.0f, 128.0f,
+                                     mouseX, mouseY, leftDown, leftPressed, leftReleased)) {
+                    pushUndoState();
+                    w->openTop = tempTop;
+                    if (w->openTop < w->openBottom) {
+                        float t = w->openTop;
+                        w->openTop = w->openBottom;
+                        w->openBottom = t;
+                    }
+                }
+            }
+        } else {
+            drawText(x, y + 4, "Open: no wall selected", 24);
+        }
+    }
+}
 
 void rc3dEditUpdate(float dt,
                     const uint8_t *keys,
@@ -1591,6 +2738,12 @@ void rc3dEditUpdate(float dt,
     const int leftDown   = (mouseButtons & SDL_BUTTON_LMASK) != 0;
     const int rightDown  = (mouseButtons & SDL_BUTTON_RMASK) != 0;
     const int middleDown = (mouseButtons & SDL_BUTTON_MMASK) != 0;
+
+    const int leftPressed  = leftDown && !g_ed.prevLeftDown;
+    const int leftReleased = !leftDown && g_ed.prevLeftDown;
+
+
+
 
     float worldX, worldY;
     screenToWorld(mouseX, mouseY, &worldX, &worldY);
@@ -1626,12 +2779,40 @@ void rc3dEditUpdate(float dt,
 
     screenToWorld(mouseX, mouseY, &worldX, &worldY);
     updateHover(worldX, worldY, mouseX, mouseY);
+    handleEditorUI(mouseX, mouseY, leftDown, leftPressed, leftReleased, worldX, worldY);
+
+
+
+
+    g_ed.splitPreviewValid = 0;
+
+    {
+        int wallToPreview = -1;
+
+        if (g_ed.hoverWall >= 0) {
+            wallToPreview = g_ed.hoverWall;
+        } else if (g_ed.selectedWall >= 0) {
+            wallToPreview = g_ed.selectedWall;
+        }
+
+        if (wallToPreview >= 0) {
+            if (getWallSplitPreviewPos(wallToPreview, worldX, worldY,
+                                       &g_ed.splitPreviewX, &g_ed.splitPreviewY)) {
+                g_ed.splitPreviewValid = 1;
+            }
+        }
+    }
+
+
+
+
     /* right click = add draft point */
     if (rightDown && !g_ed.prevRightDown) {
         addDraftPoint(worldX, worldY);
     }
 
-    if (leftDown && !g_ed.prevLeftDown) {
+    //if (leftDown && !g_ed.prevLeftDown) {
+    if (leftDown && !g_ed.prevLeftDown && !g_ed.uiMouseCaptured) {
         g_ed.draggingVertex = 0;
         g_ed.draggingWall = 0;
         g_ed.draggingSector = 0;
@@ -1639,6 +2820,8 @@ void rc3dEditUpdate(float dt,
         selectBestHoverTarget(keys, worldX, worldY);
 
         if (g_ed.selectionType == ED_SEL_VERTEX && g_ed.selectedVert >= 0) {
+            pushUndoState();
+
             g_ed.draggingVertex = 1;
 
             g_ed.dragStartWorldX = worldX;
@@ -1648,7 +2831,7 @@ void rc3dEditUpdate(float dt,
         }
         else if (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall >= 0) {
             EdWall *w = &g_edMap.walls[g_ed.selectedWall];
-
+            pushUndoState();
             g_ed.draggingWall = 1;
 
             g_ed.dragWallStartWorldX = worldX;
@@ -1660,6 +2843,7 @@ void rc3dEditUpdate(float dt,
             g_ed.dragWallV1StartY = g_edMap.verts[w->v1].y;
         }
         else if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector >= 0) {
+            pushUndoState();
             beginSectorDrag(g_ed.selectedSector, worldX, worldY);
         }
     }
@@ -1703,15 +2887,22 @@ void rc3dEditUpdate(float dt,
 
     /* release drag -> merge if dropped onto another vertex */
     if (!leftDown && g_ed.prevLeftDown && g_ed.draggingVertex && g_ed.selectedVert >= 0) {
-        const int other = findVertexNearWorld(
-            g_edMap.verts[g_ed.selectedVert].x,
-            g_edMap.verts[g_ed.selectedVert].y,
-            0.25f,
-            g_ed.selectedVert
-        );
+        if (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) {
+            float mergeDist = g_ed.currentGridStep * 0.45f;
 
-        if (other >= 0) {
-            mergeVertexInto(g_ed.selectedVert, other);
+            if (mergeDist < 0.05f) mergeDist = 0.05f;
+            if (mergeDist > 0.45f) mergeDist = 0.45f;
+
+            const int other = findVertexNearWorld(
+                g_edMap.verts[g_ed.selectedVert].x,
+                g_edMap.verts[g_ed.selectedVert].y,
+                mergeDist,
+                g_ed.selectedVert
+            );
+
+            if (other >= 0) {
+                mergeVertexInto(g_ed.selectedVert, other);
+            }
         }
     }
 
@@ -1723,8 +2914,10 @@ void rc3dEditUpdate(float dt,
 
     if (keyPressedOnce(keys, SDL_SCANCODE_DELETE)) {
         if (g_ed.hoverVert >= 0) {
+            pushUndoState();
             deleteVertexByIndex(g_ed.hoverVert);
         } else if (g_ed.hoverWall >= 0) {
+            pushUndoState();
             deleteWallByIndex(g_ed.hoverWall);
         }
     }
@@ -1735,26 +2928,54 @@ void rc3dEditUpdate(float dt,
         }
     }
 
+    if (keyPressedOnce(keys, SDL_SCANCODE_F6)) {
+        pushUndoState();
+        cleanMapCompact();
+    }
+
     if (keyPressedOnce(keys, SDL_SCANCODE_ESCAPE)) {
         clearDraft();
+    }
+
+    if ((keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) &&
+        keyPressedOnce(keys, SDL_SCANCODE_Z)) {
+        performUndo();
+    }
+
+    if ((keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) &&
+        keyPressedOnce(keys, SDL_SCANCODE_Y)) {
+        performRedo();
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_TAB)) {
+        g_ed.tinyGridEnabled = !g_ed.tinyGridEnabled;
+        g_ed.currentGridStep = g_ed.tinyGridEnabled ? ED_GRID_STEP_TINY : ED_GRID_STEP;
     }
 
     if (keyPressedOnce(keys, SDL_SCANCODE_RETURN)) {
         const float area = draftSignedArea();
 
         if (g_ed.draftCount >= 3) {
-            /* In this editor, Y grows downward, so winding is flipped */
-            if (area < 0.0f) {
-                finalizeDraftSector();
-            } else if (area > 0.0f) {
-                if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
-                    finalizeDraftInnerSolid();
-                } else {
+            /* first try boundary attach */
+            if (finalizeDraftSectorAttached()) {
+                /* done */
+            }
+            else {
+                /* In this editor, Y grows downward, so winding is flipped */
+                if (area < 0.0f) {
                     finalizeDraftSector();
+                } else if (area > 0.0f) {
+                    if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+                        finalizeDraftInnerSolid();
+                    } else {
+                        finalizeDraftSector();
+                    }
                 }
             }
         }
     }
+
+
     /* sector defaults for new sectors */
     if (keyPressedOnce(keys, SDL_SCANCODE_F)) g_ed.sectorFloor -= 0.1f;
     if (keyPressedOnce(keys, SDL_SCANCODE_G)) g_ed.sectorFloor += 0.1f;
@@ -1850,8 +3071,19 @@ void rc3dEditUpdate(float dt,
         if (keyPressedOnce(keys, SDL_SCANCODE_H)) w->lowerColor--;
         if (keyPressedOnce(keys, SDL_SCANCODE_J)) w->lowerColor++;
 
-        if (keyPressedOnce(keys, SDL_SCANCODE_I)) {
-            splitWallAtSelected(g_ed.selectedWall, worldX, worldY);
+        if (keyPressedOnce(keys, SDL_SCANCODE_SPACE)) {
+            int wallToSplit = -1;
+
+            if (g_ed.hoverWall >= 0) {
+                wallToSplit = g_ed.hoverWall;
+            } else if (g_ed.selectedWall >= 0) {
+                wallToSplit = g_ed.selectedWall;
+            }
+
+            if (wallToSplit >= 0) {
+                pushUndoState();
+                splitWallAtSelected(wallToSplit, worldX, worldY);
+            }
         }
 
         if (w->flags & RC3D_WALL_PORTAL) {
@@ -1894,15 +3126,112 @@ void rc3dEditUpdate(float dt,
     g_ed.lastMouseY = mouseY;
 }
 
+
+
+static void drawEditorButtons(void)
+{
+    int id = 1000;
+
+    {
+        const int x = 12;
+        const int y = 138;
+        int cx = x;
+
+        drawUIButton(cx, y, 56, 16, "Undo", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_undoCount <= 0)); id++; cx += 60;
+        drawUIButton(cx, y, 56, 16, "Redo", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_redoCount <= 0)); id++; cx += 60;
+        drawUIButton(cx, y, 56, 16, "Save", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 60;
+        drawUIButton(cx, y, 56, 16, "Load", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 60;
+        drawUIButton(cx, y, 64, 16, "Export", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 68;
+        drawUIButton(cx, y, 72, 16, g_ed.tinyGridEnabled ? "Grid 0.1" : "Grid 1.0", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 76;
+        drawUIButton(cx, y, 72, 16, "Finish", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_ed.draftCount < 3)); id++; cx += 76;
+        drawUIButton(cx, y, 72, 16, "ClrDraft", g_ed.uiHotId == id, g_ed.uiActiveId == id, (g_ed.draftCount <= 0)); id++; cx += 76;
+        drawUIButton(cx, y, 76, 16, "CleanMap", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 80;
+    }
+
+    {
+        const int x = 12;
+        const int y = 160;
+
+        drawText(x, y + 4, "Wall:", ED_TEXT_COL);
+
+        if (g_ed.selectedWall >= 0 && g_ed.selectedWall < g_edMap.wallCount) {
+            int cx = x + 40;
+            drawUIButton(cx, y, 52, 16, "Solid",  g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 56;
+            drawUIButton(cx, y, 56, 16, "Portal", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 60;
+            drawUIButton(cx, y, 56, 16, "Window", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 60;
+            drawUIButton(cx, y, 48, 16, "Door",   g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++; cx += 52;
+            drawUIButton(cx, y, 48, 16, "Split",  g_ed.uiHotId == id, g_ed.uiActiveId == id, !g_ed.splitPreviewValid); id++;
+        } else {
+            drawText(x + 40, y + 4, "No wall selected", 11);
+            id += 5;
+        }
+    }
+
+    {
+        const int x = 12;
+        const int y = 182;
+
+        if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+            char buf[64];
+            const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
+
+            drawText(x, y + 4, "Sector:", ED_TEXT_COL);
+
+            drawUIButton(x + 136, y, 16, 16, "-", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            drawUIButton(x + 156, y, 16, 16, "+", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            snprintf(buf, sizeof(buf), "Floor %.2f", sec->floorHeight);
+            drawText(x + 52, y + 4, buf, ED_TEXT_COL);
+
+            drawUIButton(x + 284, y, 16, 16, "-", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            drawUIButton(x + 304, y, 16, 16, "+", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            snprintf(buf, sizeof(buf), "Ceil %.2f", sec->ceilHeight);
+            drawText(x + 200, y + 4, buf, ED_TEXT_COL);
+        } else {
+            drawText(x, y + 4, "Sector: none selected", 11);
+            id += 4;
+        }
+    }
+
+    {
+        const int x = 12;
+        const int y = 204;
+
+        if (g_ed.selectedWall >= 0 && g_ed.selectedWall < g_edMap.wallCount) {
+            char buf[64];
+            const EdWall *w = &g_edMap.walls[g_ed.selectedWall];
+
+            drawText(x, y + 4, "Open:", ED_TEXT_COL);
+
+            drawUIButton(x + 124, y, 16, 16, "-", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            drawUIButton(x + 144, y, 16, 16, "+", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            snprintf(buf, sizeof(buf), "Bot %.2f", w->openBottom);
+            drawText(x + 40, y + 4, buf, ED_TEXT_COL);
+
+            drawUIButton(x + 264, y, 16, 16, "-", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            drawUIButton(x + 284, y, 16, 16, "+", g_ed.uiHotId == id, g_ed.uiActiveId == id, 0); id++;
+            snprintf(buf, sizeof(buf), "Top %.2f", w->openTop);
+            drawText(x + 180, y + 4, buf, ED_TEXT_COL);
+        } else {
+            drawText(x, y + 4, "Open: no wall selected", 11);
+            id += 4;
+        }
+    }
+}
+
+
+
+
+
+
 void rc3dEditRender(void)
 {
     drawGrid();
     drawMapGeometry();
     drawStartMarker();
     drawEditorUI();
+    drawEditorButtons();
     drawInspectorPanel();
 }
-
 
 
 
