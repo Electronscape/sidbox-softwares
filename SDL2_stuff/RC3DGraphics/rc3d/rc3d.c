@@ -20,7 +20,7 @@
 #define RC3D_MOUSE_SENS      0.0035f
 #define RC3D_EPSILON         0.0001f
 #define RC3D_MAX_RAY_DIST    50.0f
-#define RC3D_MAX_PORTAL_STEPS 8
+#define RC3D_MAX_PORTAL_STEPS 12
 //#define RC3D_EYE_Z           0.5f
 
 #define RC3D_PLAYER_EYE_HEIGHT  0.5f
@@ -66,18 +66,20 @@ static int clampi(int v, int lo, int hi)
 static int pointInSector(float px, float py, int sectorIndex)
 {
     const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
+    const RC3D_Wall *walls = g_map->walls;
+    const RC3D_Vec2 *verts = g_map->verts;
+
     int inside = 0;
+    const int start = sec->wallStart;
+    const int end   = start + sec->wallCount;
 
-    //for (int i = 0; i < sec->boundaryCount; i++) {
-    for (int i = 0; i < sec->wallCount; i++){
-        const RC3D_Wall *w = &g_map->walls[sec->wallStart + i];
-        const RC3D_Vec2 *a = &g_map->verts[w->v0];
-        const RC3D_Vec2 *b = &g_map->verts[w->v1];
+    for (int wi = start; wi < end; wi++) {
+        const RC3D_Wall *w = &walls[wi];
+        const RC3D_Vec2 *a = &verts[w->v0];
+        const RC3D_Vec2 *b = &verts[w->v1];
 
-        const int condY = ((a->y > py) != (b->y > py));
-        if (condY) {
-            const float t = (py - a->y) / (b->y - a->y);
-            const float xHit = a->x + ((b->x - a->x) * t);
+        if ((a->y > py) != (b->y > py)) {
+            const float xHit = a->x + ((py - a->y) * (b->x - a->x)) / (b->y - a->y);
             if (px < xHit) {
                 inside ^= 1;
             }
@@ -87,8 +89,10 @@ static int pointInSector(float px, float py, int sectorIndex)
     return inside;
 }
 
+
 static int findSectorForPoint(float x, float y)
 {
+    //const RC3D_Sector *secs = g_map->sectors; // <<--- why add this?? (AI said to add it, for... by why!??)
     for (int i = 0; i < g_map->sectorCount; i++) {
         if (pointInSector(x, y, i)) {
             return i;
@@ -122,28 +126,33 @@ static float pointSegmentDistSq(float px, float py, float ax, float ay, float bx
     return (dx * dx) + (dy * dy);
 }
 
-static int wallBlocksMovement(const RC3D_Wall *w)
+static inline int wallBlocksMovement(const RC3D_Wall *w)
 {
-    if (w->flags & RC3D_WALL_SOLID) return 1;
-    if (w->flags & RC3D_WALL_MIDDLE) return 1;
-    return 0;
+    return (w->flags & (RC3D_WALL_SOLID | RC3D_WALL_MIDDLE)) != 0;
 }
 
 static int positionHitsSolidWallsInSector(float px, float py, float radius, int sectorIndex)
 {
-    if (sectorIndex < 0 || sectorIndex >= g_map->sectorCount) {
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
         return 1;
     }
 
     const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
+    const RC3D_Wall *walls = g_map->walls;
+    const RC3D_Vec2 *verts = g_map->verts;
     const float radiusSq = radius * radius;
 
-    for (int i = 0; i < sec->wallCount; i++) {
-        const RC3D_Wall *w = &g_map->walls[sec->wallStart + i];
-        if (!wallBlocksMovement(w)) continue;
+    const int start = sec->wallStart;
+    const int end   = start + sec->wallCount;
 
-        const RC3D_Vec2 *a = &g_map->verts[w->v0];
-        const RC3D_Vec2 *b = &g_map->verts[w->v1];
+    for (int wi = start; wi < end; wi++) {
+        const RC3D_Wall *w = &walls[wi];
+        if ((w->flags & (RC3D_WALL_SOLID | RC3D_WALL_MIDDLE)) == 0) {
+            continue;
+        }
+
+        const RC3D_Vec2 *a = &verts[w->v0];
+        const RC3D_Vec2 *b = &verts[w->v1];
 
         if (pointSegmentDistSq(px, py, a->x, a->y, b->x, b->y) < radiusSq) {
             return 1;
@@ -152,6 +161,7 @@ static int positionHitsSolidWallsInSector(float px, float py, float radius, int 
 
     return 0;
 }
+
 
 static int canMoveToPosition(float px, float py, int newSector)
 {
@@ -234,48 +244,59 @@ static inline RC3D_WallHit findNearestWallInSector(
     hit.hit = 0;
 
     const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
+    const RC3D_Wall *walls = g_map->walls;
+    const RC3D_Vec2 *verts = g_map->verts;
 
-    for (int i = 0; i < sec->wallCount; i++) {
-        const int wallIndex = sec->wallStart + i;
-        const RC3D_Wall *w = &g_map->walls[wallIndex];
+    const int start = sec->wallStart;
+    const int end   = start + sec->wallCount;
 
+    for (int wallIndex = start; wallIndex < end; wallIndex++) {
         if (wallIndex == ignoreWallIndexA || wallIndex == ignoreWallIndexB) {
             continue;
         }
 
-        const RC3D_Vec2 *a = &g_map->verts[w->v0];
-        const RC3D_Vec2 *b = &g_map->verts[w->v1];
+        const RC3D_Wall *w = &walls[wallIndex];
+        const RC3D_Vec2 *a = &verts[w->v0];
+        const RC3D_Vec2 *b = &verts[w->v1];
 
-        const float sx = b->x - a->x;
-        const float sy = b->y - a->y;
+        const float ax = a->x;
+        const float ay = a->y;
+        const float sx = b->x - ax;
+        const float sy = b->y - ay;
+
+        const float nx = sy;
+        const float ny = -sx;
+        if ((nx * rdx) + (ny * rdy) >= 0.0f) {
+            continue;
+        }
+
         const float denom = (rdx * sy) - (rdy * sx);
-
-        if (fabsf(denom) < RC3D_EPSILON) {
+        if (denom > -RC3D_EPSILON && denom < RC3D_EPSILON) {
             continue;
         }
 
-        const float qpx = a->x - rox;
-        const float qpy = a->y - roy;
+        const float qpx = ax - rox;
+        const float qpy = ay - roy;
 
-        const float t = ((qpx * sy) - (qpy * sx)) / denom;
-        if (t < minT) {
+        const float invDenom = 1.0f / denom;
+        const float t = ((qpx * sy) - (qpy * sx)) * invDenom;
+        if (t < minT || t >= hit.t) {
             continue;
         }
 
-        const float u = ((qpx * rdy) - (qpy * rdx)) / denom;
+        const float u = ((qpx * rdy) - (qpy * rdx)) * invDenom;
         if (u < 0.0f || u > 1.0f) {
             continue;
         }
 
-        if (t < hit.t) {
-            hit.t = t;
-            hit.wallIndex = wallIndex;
-            hit.hit = 1;
-        }
+        hit.t = t;
+        hit.wallIndex = wallIndex;
+        hit.hit = 1;
     }
 
     return hit;
 }
+
 
 static inline void fillSectorColumnSpan(
     int sx,
@@ -316,9 +337,11 @@ static inline void renderBandIfVisible(int sx, int y0, int y1, uint8_t color, in
     if (y0 > y1) return;
 
     drawVerticalColumn(sx, y0, y1, color);
-    fb[(y0 * SCREEN_W) + sx] = 16;
-    fb[(y1 * SCREEN_W) + sx] = 16;
+    // black line for seems testing
+    //fb[(y0 * SCREEN_W) + sx] = 16;
+    //fb[(y1 * SCREEN_W) + sx] = 16;
 }
+
 
 
 static inline void renderColumnPortalTrace(
@@ -330,8 +353,9 @@ static inline void renderColumnPortalTrace(
     float projPlane,
     int horizon
 ){
-    const float rayOx = g_player.x;
-    const float rayOy = g_player.y;
+    const float playerX = g_player.x;
+    const float playerY = g_player.y;
+    const float playerZ = g_player.z;
 
     int currentSector = g_player.sector;
     int clipTop = 0;
@@ -342,159 +366,106 @@ static inline void renderColumnPortalTrace(
 
     float rayMinT = 0.0f;
 
-    fillSectorColumnSpan(sx, 0, SCREEN_H - 1, &g_map->sectors[g_player.sector], horizon);
+    fillSectorColumnSpan(sx, 0, SCREEN_H - 1, &g_map->sectors[currentSector], horizon);
 
     for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; step++) {
-        RC3D_WallHit hit;
-        const RC3D_Wall *w;
-        const RC3D_Sector *sec;
-        float hitX, hitY;
-        float correctedDist;
-        float scale;
-        int secTop;
-        int secBot;
-
         if ((unsigned)currentSector >= (unsigned)g_map->sectorCount) {
             return;
         }
 
-        sec = &g_map->sectors[currentSector];
+        const RC3D_Sector *sec = &g_map->sectors[currentSector];
 
-        hit = findNearestWallInSector(
+        const RC3D_WallHit hit = findNearestWallInSector(
             currentSector,
-            rayOx, rayOy,
+            playerX, playerY,
             rdx, rdy,
             ignoreWallIndexA,
             ignoreWallIndexB,
             rayMinT
         );
+
         if (!hit.hit) {
             return;
         }
 
-        w = &g_map->walls[hit.wallIndex];
+        const RC3D_Wall *w = &g_map->walls[hit.wallIndex];
 
-        hitX = rayOx + (rdx * hit.t);
-        hitY = rayOy + (rdy * hit.t);
+        const float hitX = playerX + (rdx * hit.t);
+        const float hitY = playerY + (rdy * hit.t);
 
-        correctedDist = ((hitX - g_player.x) * dirX) + ((hitY - g_player.y) * dirY);
+        const float correctedDist = ((hitX - playerX) * dirX) + ((hitY - playerY) * dirY);
         if (correctedDist <= RC3D_EPSILON) {
             return;
         }
 
-        scale = projPlane / correctedDist;
-        //secTop = (int)(horizon - ((sec->ceilHeight  - RC3D_EYE_Z) * scale));
-        //secBot = (int)(horizon - ((sec->floorHeight - RC3D_EYE_Z) * scale));
-        secTop = (int)(horizon - ((sec->ceilHeight  - g_player.z) * scale));
-        secBot = (int)(horizon - ((sec->floorHeight - g_player.z) * scale));
+        const float scale = projPlane / correctedDist;
 
-        if (w->flags & RC3D_WALL_SOLID) {
-            renderBandIfVisible(
-                sx,
-                secTop,
-                secBot,
-                w->midColor,
-                clipTop,
-                clipBottom
-            );
+        const int secTop = (int)(horizon - ((sec->ceilHeight  - playerZ) * scale));
+        const int secBot = (int)(horizon - ((sec->floorHeight - playerZ) * scale));
+
+        const uint8_t flags = w->flags;
+
+        if (flags & RC3D_WALL_SOLID) {
+            renderBandIfVisible(sx, secTop, secBot, w->midColor, clipTop, clipBottom);
             return;
         }
 
-        if ((w->flags & RC3D_WALL_MIDDLE) && !(w->flags & RC3D_WALL_PORTAL)) {
-            //const int midTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
-            //const int midBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
-            const int midTopY = (int)(horizon - ((w->openTop    - g_player.z) * scale));
-            const int midBotY = (int)(horizon - ((w->openBottom - g_player.z) * scale));
+        if ((flags & RC3D_WALL_MIDDLE) && !(flags & RC3D_WALL_PORTAL)) {
+            const int midTopY = (int)(horizon - ((w->openTop    - playerZ) * scale));
+            const int midBotY = (int)(horizon - ((w->openBottom - playerZ) * scale));
 
-            renderBandIfVisible(
-                sx,
-                midTopY,
-                midBotY,
-                w->midColor,
-                clipTop,
-                clipBottom
-            );
+            renderBandIfVisible(sx, midTopY, midBotY, w->midColor, clipTop, clipBottom);
             return;
         }
 
-        if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
-            !(w->flags & RC3D_WALL_PORTAL) &&
-            !(w->flags & RC3D_WALL_MIDDLE)) {
-            //const int openTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
-            //const int openBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
-            const int openTopY = (int)(horizon - ((w->openTop    - g_player.z) * scale));
-            const int openBotY = (int)(horizon - ((w->openBottom - g_player.z) * scale));
+        if ((flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
+            !(flags & RC3D_WALL_PORTAL) &&
+            !(flags & RC3D_WALL_MIDDLE)) {
+            const int openTopY = (int)(horizon - ((w->openTop    - playerZ) * scale));
+            const int openBotY = (int)(horizon - ((w->openBottom - playerZ) * scale));
 
-            if (w->flags & RC3D_WALL_UPPER) {
-                renderBandIfVisible(
-                    sx,
-                    secTop,
-                    openTopY - 1,
-                    w->upperColor,
-                    clipTop,
-                    clipBottom
-                );
+            if (flags & RC3D_WALL_UPPER) {
+                renderBandIfVisible(sx, secTop, openTopY - 1, w->upperColor, clipTop, clipBottom);
             }
 
-            if (w->flags & RC3D_WALL_LOWER) {
-                renderBandIfVisible(
-                    sx,
-                    openBotY + 1,
-                    secBot,
-                    w->lowerColor,
-                    clipTop,
-                    clipBottom
-                );
+            if (flags & RC3D_WALL_LOWER) {
+                renderBandIfVisible(sx, openBotY + 1, secBot, w->lowerColor, clipTop, clipBottom);
             }
 
             return;
         }
 
-        if (w->flags & RC3D_WALL_PORTAL) {
-            const RC3D_Sector *nextSec = &g_map->sectors[w->neighbour];
+        if (flags & RC3D_WALL_PORTAL) {
+            const int nextSectorIndex = w->neighbour;
+            if ((unsigned)nextSectorIndex >= (unsigned)g_map->sectorCount) {
+                return;
+            }
 
-            //const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - RC3D_EYE_Z) * scale));
-            //const int nextBot = (int)(horizon - ((nextSec->floorHeight - RC3D_EYE_Z) * scale));
-            //const int wallOpenTopY = (int)(horizon - ((w->openTop    - RC3D_EYE_Z) * scale));
-            //const int wallOpenBotY = (int)(horizon - ((w->openBottom - RC3D_EYE_Z) * scale));
+            const RC3D_Sector *nextSec = &g_map->sectors[nextSectorIndex];
 
-            const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - g_player.z) * scale));
-            const int nextBot = (int)(horizon - ((nextSec->floorHeight - g_player.z) * scale));
+            const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - playerZ) * scale));
+            const int nextBot = (int)(horizon - ((nextSec->floorHeight - playerZ) * scale));
 
-            const int wallOpenTopY = (int)(horizon - ((w->openTop    - g_player.z) * scale));
-            const int wallOpenBotY = (int)(horizon - ((w->openBottom - g_player.z) * scale));
+            const int wallOpenTopY = (int)(horizon - ((w->openTop    - playerZ) * scale));
+            const int wallOpenBotY = (int)(horizon - ((w->openBottom - playerZ) * scale));
 
             int openTop = secTop;
             int openBot = secBot;
 
-            if (nextTop > openTop) openTop = nextTop;
+            if (nextTop > openTop)      openTop = nextTop;
             if (wallOpenTopY > openTop) openTop = wallOpenTopY;
-            if (clipTop > openTop) openTop = clipTop;
+            if (clipTop > openTop)      openTop = clipTop;
 
-            if (nextBot < openBot) openBot = nextBot;
+            if (nextBot < openBot)      openBot = nextBot;
             if (wallOpenBotY < openBot) openBot = wallOpenBotY;
-            if (clipBottom < openBot) openBot = clipBottom;
+            if (clipBottom < openBot)   openBot = clipBottom;
 
-            if (w->flags & RC3D_WALL_UPPER) {
-                renderBandIfVisible(
-                    sx,
-                    secTop,
-                    openTop - 1,
-                    w->upperColor,
-                    clipTop,
-                    clipBottom
-                );
+            if (flags & RC3D_WALL_UPPER) {
+                renderBandIfVisible(sx, secTop, openTop - 1, w->upperColor, clipTop, clipBottom);
             }
 
-            if (w->flags & RC3D_WALL_LOWER) {
-                renderBandIfVisible(
-                    sx,
-                    openBot + 1,
-                    secBot,
-                    w->lowerColor,
-                    clipTop,
-                    clipBottom
-                );
+            if (flags & RC3D_WALL_LOWER) {
+                renderBandIfVisible(sx, openBot + 1, secBot, w->lowerColor, clipTop, clipBottom);
             }
 
             if (openTop > openBot) {
@@ -506,15 +477,14 @@ static inline void renderColumnPortalTrace(
             clipTop = openTop;
             clipBottom = openBot;
 
-            /* snap through the portal by topology, not by epsilon */
             {
                 const int prevSector = currentSector;
                 int entryWallInNext = -1;
 
-                const RC3D_Sector *nsec = &g_map->sectors[w->neighbour];
+                const int nextStart = nextSec->wallStart;
+                const int nextEnd   = nextStart + nextSec->wallCount;
 
-                for (int i = 0; i < nsec->wallCount; i++) {
-                    const int testIndex = nsec->wallStart + i;
+                for (int testIndex = nextStart; testIndex < nextEnd; testIndex++) {
                     const RC3D_Wall *tw = &g_map->walls[testIndex];
 
                     if (tw->neighbour != prevSector) {
@@ -528,11 +498,9 @@ static inline void renderColumnPortalTrace(
                     }
                 }
 
-                currentSector = w->neighbour;
-
+                currentSector = nextSectorIndex;
                 ignoreWallIndexA = hit.wallIndex;
                 ignoreWallIndexB = entryWallInNext;
-
                 rayMinT = hit.t;
             }
 
@@ -558,14 +526,16 @@ static void renderCurrentSectorColumns(void)
     const float planeX = -dirY * planeScale;
     const float planeY =  dirX * planeScale;
 
-    float camX = -1.0f;
     const float camStep = 2.0f / (float)(SCREEN_W - 1);
+    float camX = -1.0f;
 
-    for (int sx = 0; sx < SCREEN_W; sx++, camX += camStep) {
+    for (int sx = 0; sx < SCREEN_W; sx+=1) {
         const float rdx = dirX + (planeX * camX);
         const float rdy = dirY + (planeY * camX);
 
         renderColumnPortalTrace(sx, rdx, rdy, dirX, dirY, projPlane, horizon);
+
+        camX += camStep;
     }
 }
 
@@ -625,13 +595,13 @@ static int clipLineToRect(
         }
     }
 }
+
+
 static void drawMiniMap(void)
 {
-    
     const int mapY = 8;
     const int mapW = 140;
     const int mapH = 100;
-
     const int mapX = (SCREEN_W - mapW) - 8;
 
     const int left   = mapX + 1;
@@ -651,13 +621,18 @@ static void drawMiniMap(void)
     drawLine(mapX + mapW - 1,  mapY,             mapX + mapW - 1, mapY + mapH - 1,   15);
     drawLine(mapX,             mapY + mapH - 1,  mapX + mapW - 1, mapY + mapH - 1,   15);
 
+    const RC3D_Wall *walls = g_map->walls;
+    const RC3D_Vec2 *verts = g_map->verts;
+
     for (int s = 0; s < g_map->sectorCount; s++) {
         const RC3D_Sector *sec = &g_map->sectors[s];
+        const int start = sec->wallStart;
+        const int end   = start + sec->wallCount;
 
-        for (int i = 0; i < sec->wallCount; i++) {
-            const RC3D_Wall *w = &g_map->walls[sec->wallStart + i];
-            const RC3D_Vec2 *a = &g_map->verts[w->v0];
-            const RC3D_Vec2 *b = &g_map->verts[w->v1];
+        for (int wi = start; wi < end; wi++) {
+            const RC3D_Wall *w = &walls[wi];
+            const RC3D_Vec2 *a = &verts[w->v0];
+            const RC3D_Vec2 *b = &verts[w->v1];
 
             int x0 = centerX + (int)((a->x - g_player.x) * scale);
             int y0 = centerY + (int)((a->y - g_player.y) * scale);
@@ -675,19 +650,17 @@ static void drawMiniMap(void)
     }
 
     {
-        int fx = centerX + (int)(cosf(g_player.angle) * 12.0f);
-        int fy = centerY + (int)(sinf(g_player.angle) * 12.0f);
-
         int x0 = centerX;
         int y0 = centerY;
-        int x1 = fx;
-        int y1 = fy;
+        int x1 = centerX + (int)(cosf(g_player.angle) * 12.0f);
+        int y1 = centerY + (int)(sinf(g_player.angle) * 12.0f);
 
         if (clipLineToRect(&x0, &y0, &x1, &y1, left, top, right, bottom)) {
             drawLine(x0, y0, x1, y1, 31);
         }
     }
 }
+
 
 void rc3dInit(void)
 {

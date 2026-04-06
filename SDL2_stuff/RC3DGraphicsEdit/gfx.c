@@ -446,6 +446,17 @@ uint32_t darken(uint32_t c, float f)
     return (0xFFu << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 }
 
+void drawRectL(int x, int y, int w, int h, uint8_t col){
+    int x0 = x;
+    int y0 = y;
+    int x1 = x + w - 1;
+    int y1 = y + h - 1;
+    drawLine(x0, y0, x0, y1, col);  // left
+    drawLine(x0, y0, x1, y0, col);  // top
+    drawLine(x1, y0, x1, y1, col);  // right
+    drawLine(x0, y1, x1, y1, col);  // bottom
+}
+
 void drawRect(int x, int y, int w, int h, uint8_t col)
 {
     if (w <= 0 || h <= 0) return;
@@ -475,41 +486,69 @@ void drawChar(int x, int y, char c, uint8_t color)
     int row;
 
     if (x >= SCREEN_W || y >= SCREEN_H) return;
-    if (x <= -8 || y <= -8) return;
+    if (x <= -8 || y <= -16) return;
 
     glyph = font[(uint8_t)c];
 
     for (row = 0; row < 8; row++) {
-        int py = y + row;
-        uint8_t bits;
+        uint8_t bits = glyph[row];
+        int py0, py1;
 
-        if ((unsigned)py >= SCREEN_H) continue;
-
-        bits = glyph[row];
         if (!bits) continue;
 
-        if (x >= 0 && x <= (SCREEN_W - 8)) {
-            uint8_t *dst = &fb[(py * SCREEN_W) + x];
+        py0 = y + (row * 2);
+        py1 = py0 + 1;
 
-            if (bits & 0x80) dst[0] = color;
-            if (bits & 0x40) dst[1] = color;
-            if (bits & 0x20) dst[2] = color;
-            if (bits & 0x10) dst[3] = color;
-            if (bits & 0x08) dst[4] = color;
-            if (bits & 0x04) dst[5] = color;
-            if (bits & 0x02) dst[6] = color;
-            if (bits & 0x01) dst[7] = color;
-        } else {
-            uint8_t *dst = &fb[(py * SCREEN_W)];
+        if ((unsigned)py0 < SCREEN_H) {
+            if (x >= 0 && x <= (SCREEN_W - 8)) {
+                uint8_t *dst = &fb[(py0 * SCREEN_W) + x];
 
-            if ((bits & 0x80) && (unsigned)(x + 0) < SCREEN_W) dst[x + 0] = color;
-            if ((bits & 0x40) && (unsigned)(x + 1) < SCREEN_W) dst[x + 1] = color;
-            if ((bits & 0x20) && (unsigned)(x + 2) < SCREEN_W) dst[x + 2] = color;
-            if ((bits & 0x10) && (unsigned)(x + 3) < SCREEN_W) dst[x + 3] = color;
-            if ((bits & 0x08) && (unsigned)(x + 4) < SCREEN_W) dst[x + 4] = color;
-            if ((bits & 0x04) && (unsigned)(x + 5) < SCREEN_W) dst[x + 5] = color;
-            if ((bits & 0x02) && (unsigned)(x + 6) < SCREEN_W) dst[x + 6] = color;
-            if ((bits & 0x01) && (unsigned)(x + 7) < SCREEN_W) dst[x + 7] = color;
+                if (bits & 0x80) dst[0] = color;
+                if (bits & 0x40) dst[1] = color;
+                if (bits & 0x20) dst[2] = color;
+                if (bits & 0x10) dst[3] = color;
+                if (bits & 0x08) dst[4] = color;
+                if (bits & 0x04) dst[5] = color;
+                if (bits & 0x02) dst[6] = color;
+                if (bits & 0x01) dst[7] = color;
+            } else {
+                uint8_t *dst = &fb[(py0 * SCREEN_W)];
+
+                if ((bits & 0x80) && (unsigned)(x + 0) < SCREEN_W) dst[x + 0] = color;
+                if ((bits & 0x40) && (unsigned)(x + 1) < SCREEN_W) dst[x + 1] = color;
+                if ((bits & 0x20) && (unsigned)(x + 2) < SCREEN_W) dst[x + 2] = color;
+                if ((bits & 0x10) && (unsigned)(x + 3) < SCREEN_W) dst[x + 3] = color;
+                if ((bits & 0x08) && (unsigned)(x + 4) < SCREEN_W) dst[x + 4] = color;
+                if ((bits & 0x04) && (unsigned)(x + 5) < SCREEN_W) dst[x + 5] = color;
+                if ((bits & 0x02) && (unsigned)(x + 6) < SCREEN_W) dst[x + 6] = color;
+                if ((bits & 0x01) && (unsigned)(x + 7) < SCREEN_W) dst[x + 7] = color;
+            }
+        }
+
+        if ((unsigned)py1 < SCREEN_H) {
+            if (x >= 0 && x <= (SCREEN_W - 8)) {
+                uint8_t *dst = &fb[(py1 * SCREEN_W) + x];
+
+                if (bits & 0x80) dst[0] = color;
+                if (bits & 0x40) dst[1] = color;
+                if (bits & 0x20) dst[2] = color;
+                if (bits & 0x10) dst[3] = color;
+                if (bits & 0x08) dst[4] = color;
+                if (bits & 0x04) dst[5] = color;
+                if (bits & 0x02) dst[6] = color;
+                if (bits & 0x01) dst[7] = color;
+            } else {
+                uint8_t *dst = &fb[(py1 * SCREEN_W)];
+
+                if ((bits & 0x80) && (unsigned)(x + 0) < SCREEN_W) dst[x + 0] = color;
+                if ((bits & 0x40) && (unsigned)(x + 1) < SCREEN_W) dst[x + 1] = color;
+                if ((bits & 0x20) && (unsigned)(x + 2) < SCREEN_W) dst[x + 2] = color;
+                if ((bits & 0x10) && (unsigned)(x + 3) < SCREEN_W) dst[x + 3] = color;
+                if ((bits & 0x08) && (unsigned)(x + 4) < SCREEN_W) dst[x + 4] = color;
+                if ((bits & 0x04) && (unsigned)(x + 5) < SCREEN_W) dst[x + 5] = color;
+                if ((bits & 0x02) && (unsigned)(x + 6) < SCREEN_W) dst[x + 6] = color;
+                if ((bits & 0x01) && (unsigned)(x + 7) < SCREEN_W) dst[x + 7] = color;
+            }
         }
     }
 }
