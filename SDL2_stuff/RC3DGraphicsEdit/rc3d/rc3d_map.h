@@ -9,6 +9,15 @@
 #define RC3D_WALL_LOWER    0x08
 #define RC3D_WALL_SOLID    0x10
 
+#define RC3D_TEX_FLAG_DEFAULT       0x00000000u
+#define RC3D_TEX_FLAG_CLAMPXL       0x00000001u
+#define RC3D_TEX_FLAG_CLAMPXR       0x00000002u
+#define RC3D_TEX_FLAG_CLAMPYT       0x00000004u
+#define RC3D_TEX_FLAG_CLAMPYB       0x00000008u
+#define RC3D_TEX_WALL_ANGLE_SHIFT   4u
+#define RC3D_TEX_WALL_ANGLE_MASK    (0xFFFFu << RC3D_TEX_WALL_ANGLE_SHIFT)
+
+
 typedef struct {
     float x;
     float y;
@@ -27,18 +36,29 @@ typedef struct {
     uint8_t midColor;       /* middle slab */
     uint8_t lowerColor;     /* below opening */
 
-    uint8_t flags;
+    uint8_t flags;          /* wall flags */
+    uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: packed wall texture angle */
+
 } RC3D_Wall;
 
 typedef struct {
     int wallStart;
     int wallCount;
-    int boundaryCount;      /* outer boundary only for pointInSector */
+    int boundaryCount;
+
     float floorHeight;
-    
     float ceilHeight;
+
     uint8_t floorColor;
     uint8_t ceilColor;
+
+    float floorTexScaleX;
+    float floorTexScaleY;
+    float floorTexAngle;
+
+    float ceilTexScaleX;
+    float ceilTexScaleY;
+    float ceilTexAngle;
 } RC3D_Sector;
 
 typedef struct {

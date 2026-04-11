@@ -9,6 +9,17 @@
 #define RC3D_WALL_LOWER    0x08
 #define RC3D_WALL_SOLID    0x10
 #define RC3D_WALL_MANUAL_TARGET 0x20
+#define RC3D_WALL_TRANSPARENCY 0x40
+
+
+
+// texture flags
+#define RC3D_TEX_FLAG_DEFAULT   0x00000000u
+#define RC3D_TEX_FLAG_CLAMPXL   0x00000001u
+#define RC3D_TEX_FLAG_CLAMPXR   0x00000002u
+#define RC3D_TEX_FLAG_CLAMPYT   0x00000004u
+#define RC3D_TEX_FLAG_CLAMPYB   0x00000008u
+
 
 typedef struct {
     float x;
@@ -30,17 +41,27 @@ typedef struct {
     uint8_t lowerColor;     /* below opening */
 
     uint8_t flags;
+    uint32_t tex_flags;  // texture clamp/uv behaviour flags
 } RC3D_Wall;
 
 typedef struct {
     int wallStart;
     int wallCount;
-    int boundaryCount;      /* outer boundary only for pointInSector */
+    int boundaryCount;
+
     float floorHeight;
-    
     float ceilHeight;
+
     uint8_t floorColor;
     uint8_t ceilColor;
+
+    float floorTexScaleX;
+    float floorTexScaleY;
+    float floorTexAngle;
+
+    float ceilTexScaleX;
+    float ceilTexScaleY;
+    float ceilTexAngle;
 } RC3D_Sector;
 
 typedef struct {

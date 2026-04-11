@@ -42,6 +42,7 @@ typedef struct
     uint8_t btnBorder;
     uint8_t btnText;
     uint8_t btnHover;
+    uint8_t btnHoverText;
     uint8_t btnActive;
     uint8_t btnDisabled;
     uint8_t btnTextDisabled;

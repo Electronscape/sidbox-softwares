@@ -1,5 +1,6 @@
 // file: gfx.c
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,39 +9,37 @@
 
 // basic colour look up table, for use with the graphics memory look up
 
+// colour set for the editor / (and engine messages)
+uint32_t clut_editor[16] = {
+    0x00000000, 0xFFAFAFAF, 0xFFFFFFFF, 0xFF3B70CA, 0xFF1E4696, 0xFF00258A, 0xFFDA8F00, 0xFFFFFF00, 0xFF80FF8A, 0xFF3A7535, 0xFFFF0000, 0xFFAF0000, 0xFFFF00FF, 0xFF60004A, 0xFF00FFFF, 0xFF505050,
+};
+
 uint32_t clut[256] = {
-    0x00000000, 0xFFAFAFAF, 0xFFFFFFFF, 0xFF3B67A2, 0xFFAA907C, 0xFF959595, 0xFF7B7B7B, 0xFFFFA997,
-    0xFF37A91D, 0xFF7CA9FF, 0xFFBF8112, 0xFFEBBF66, 0xFF78C178, 0xFF3D9318, 0xFFB33418, 0xFFD9311C,
-    0xFF000000, 0xFF00000E, 0xFF00001D, 0xFF00002B, 0xFF000139, 0xFF000147, 0xFF000156, 0xFF000164,
-    0xFF0001D2, 0xFF0001FF, 0xFFCECECE, 0xFF00FF00, 0xFFB2FF00, 0xFFFFE700, 0xFFFF9600, 0xFFFF1100,
-    0xFF491200, 0xFF491355, 0xFF4914AA, 0xFF4916FF, 0xFF5B1700, 0xFF5B1855, 0xFF5B19AA, 0xFF5B1AFF,
-    0xFF6D1B00, 0xFF6D1C55, 0xFF00E300, 0xFF85FF54, 0xFFC4FF00, 0xFFFFD900, 0xFFFFA41F, 0xFFE05400,
-    0xFFFF0000, 0xFF922655, 0xFF9227AA, 0xFF9228FF, 0xFFA42900, 0xFFA42A55, 0xFFA42BAA, 0xFFA42CFF,
-    0xFFB62D00, 0xFFB62F55, 0xFFB630AA, 0xFFB631FF, 0xFFC93200, 0xFFC93355, 0xFFC934AA, 0xFFC935FF,
-    0xFFFF0000, 0xFFD80000, 0xFFB10000, 0xFF8A0000, 0xFF00FE00, 0xFF00CF00, 0xFF00A000, 0xFF007000,
-    0xFF0000FF, 0xFF0000D5, 0xFF0000AB, 0xFF000080, 0xFF9ACFFF, 0xFF67A1DE, 0xFF3473BC, 0xFF00459A,
-    0xFFF0FAEC, 0xFFEFFAEB, 0xFFEEF9E9, 0xFFEDF9E8, 0xFFEDF9E7, 0xFFECF8E6, 0xFFEBF8E4, 0xFFEAF8E3,
-    0xFFE9F7E2, 0xFFE8F7E1, 0xFFE7F7DF, 0xFFE6F6DE, 0xFFE5F6DD, 0xFFE4F6DC, 0xFFE3F5DB, 0xFFE2F5D9,
-    0xFFE1F5D8, 0xFFE0F4D7, 0xFFDFF4D6, 0xFFDEF4D4, 0xFFDDF3D3, 0xFFDCF3D2, 0xFFDBF3D1, 0xFFDBF2CF,
-    0xFFDAF2CE, 0xFFD9F2CD, 0xFFD8F1CC, 0xFFD7F1CB, 0xFFD6F1C9, 0xFFD5F0C8, 0xFFD4F0C7, 0xFFD3F0C6,
-    0xFFD2EFC4, 0xFFD1EFC3, 0xFFD0EFC2, 0xFFCFEEC1, 0xFFCEEEBF, 0xFFCDEEBE, 0xFFCCEDBD, 0xFFCBEDBC,
-    0xFFCAEDBB, 0xFFC9ECB9, 0xFFC9ECB8, 0xFFC8ECB7, 0xFFC7EBB6, 0xFFC6EBB4, 0xFFC5EBB3, 0xFFC4EAB2,
-    0xFFC3EAB1, 0xFFC2EAAF, 0xFFC1E9AE, 0xFFC0E9AD, 0xFFBFE9AC, 0xFFBEE8AB, 0xFFBDE8A9, 0xFFBCE8A8,
-    0xFFBBE7A7, 0xFFBAE7A6, 0xFFB9E7A4, 0xFFB8E6A3, 0xFFB7E6A2, 0xFFB7E6A1, 0xFFB6E59F, 0xFFB5E59E,
-    0xFFB4E59D, 0xFFB3E49C, 0xFFB2E49B, 0xFFB1E499, 0xFFB0E398, 0xFFAFE397, 0xFFAEE396, 0xFFADE294,
-    0xFFACE293, 0xFFABE292, 0xFFAAE191, 0xFFA9E18F, 0xFFA8E18E, 0xFFA7E08D, 0xFFA6E08C, 0xFFA5DF8A,
-    0xFF404A4A, 0xFF404A4A, 0xFF3F4949, 0xFF3E4849, 0xFF3E4748, 0xFF3D4747, 0xFF3C4647, 0xFF3C4546,
-    0xFF3B4445, 0xFF3A4345, 0xFF3A4344, 0xFF394243, 0xFF384143, 0xFF384042, 0xFF374041, 0xFF363F41,
-    0xFF363E40, 0xFF353D3F, 0xFF343C3F, 0xFF343C3E, 0xFF333B3D, 0xFF323A3D, 0xFF32393C, 0xFF31393B,
-    0xFF30383B, 0xFF30373A, 0xFF2F3639, 0xFF2E3539, 0xFF2E3538, 0xFF2D3437, 0xFF2C3337, 0xFF2C3236,
-    0xFF2B3235, 0xFF2A3135, 0xFF2A3034, 0xFF292F33, 0xFF282E33, 0xFF282E32, 0xFF272D31, 0xFF262C31,
-    0xFF262B30, 0xFF252B2F, 0xFF242A2F, 0xFF24292E, 0xFF23282D, 0xFF22272D, 0xFF22272C, 0xFF21262B,
-    0xFF20252B, 0xFF1F242A, 0xFF1F2429, 0xFF1E2329, 0xFF1D2228, 0xFF1D2127, 0xFF1C2027, 0xFF1B2026,
-    0xFF1B1F25, 0xFF1A1E25, 0xFF191D24, 0xFF191D23, 0xFF181C23, 0xFF171B22, 0xFF171A21, 0xFF161921,
-    0xFF151920, 0xFF15181F, 0xFF14171F, 0xFF13161E, 0xFF13161D, 0xFF12151D, 0xFF11141C, 0xFF11131B,
-    0xFF10121B, 0xFF0F121A, 0xFF0F1119, 0xFF0E1019, 0xFF0D0F18, 0xFF0D0F17, 0xFF0C0E17, 0xFF0B0D16,
-    0xFF0B0C15, 0xFF0A0B15, 0xFF090B14, 0xFF090A13, 0xFF080913, 0xFF070812, 0xFF070811, 0xFF060711,
-    0xFF050610, 0xFF05050F, 0xFF04040F, 0xFF03040E, 0xFF03030D, 0xFF02020D, 0xFF01010C, 0xFF00000B
+    // editor colours (will be over written by CLUT_EDITOR[])
+    0x00000000, 0xFFAFAFAF, 0xFFFFFFFF, 0xFF3B70CA, 0xFF1E4696, 0xFF00258A, 0xFFDA8F00, 0xFFFFFF00, 0xFF80FF8A, 0xFF3A7535, 0xFFFF0000, 0xFFAF0000, 0xFFFF00FF, 0xFF60004A, 0xFF00FFFF, 0xFF505050,
+
+    // game engine basics, that are NOT meant to be used for textures
+    0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+
+    // base colour palette for textures
+    0xFF101010, 0xFF202020, 0xFF303030, 0xFF404040, 0xFF606060, 0xFF808080, 0xFFA0A0A0, 0xFFD0D0D0, 0xFF2A0808, 0xFF4A1010, 0xFF6A1818, 0xFF8A2020, 0xFFAA3030, 0xFFC85050, 0xFFE08080, 0xFFF0B0B0,
+    0xFF2A1408, 0xFF4A2410, 0xFF6A3418, 0xFF8A4820, 0xFFAA6030, 0xFFC88048, 0xFFE0A068, 0xFFF0C090, 0xFF2A2408, 0xFF4A4010, 0xFF6A5A18, 0xFF8A7420, 0xFFAAA030, 0xFFC8C040, 0xFFE0D060, 0xFFF0E890,
+    0xFF082008, 0xFF103810, 0xFF185018, 0xFF206820, 0xFF308830, 0xFF48A848, 0xFF70C870, 0xFFA0E0A0, 0xFF082020, 0xFF103840, 0xFF185060, 0xFF206880, 0xFF3088A0, 0xFF48A8C0, 0xFF70C8D8, 0xFFA0E0E8,
+    0xFF081028, 0xFF102048, 0xFF183068, 0xFF204088, 0xFF3058A8, 0xFF5078C8, 0xFF80A0E0, 0xFFB0C8F0, 0xFF180820, 0xFF281040, 0xFF381860, 0xFF502080, 0xFF6830A0, 0xFF8850C0, 0xFFB078D8, 0xFFD8B0F0,
+
+    // base colour shade 50% 
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    
+    // base colour shade 10% (darkest)
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
+    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF
 };
 
 
@@ -369,6 +368,171 @@ void putPixel(int32_t x, int32_t y, uint8_t colIndex)
     fb[(y * SCREEN_W) + x] = colIndex;
 }
 
+void drawLineDots(int x0, int y0, int x1, int y1, uint8_t colorIndex)
+{
+    int dx = abs(x1 - x0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy;
+
+    for (;;) {
+        if ((unsigned)x0 < SCREEN_W && (unsigned)y0 < SCREEN_H) {
+            /* screen-stable dotted pattern */
+            if (((x0 + y0) & 7) == 0 ) {
+                fb[(y0 * SCREEN_W) + x0] = colorIndex;
+            }
+        }
+
+        if (x0 == x1 && y0 == y1) {
+            break;
+        }
+
+        {
+            const int e2 = err << 1;
+
+            if (e2 >= dy) {
+                err += dy;
+                x0 += sx;
+            }
+
+            if (e2 <= dx) {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+}
+
+
+
+#include <stdint.h>
+#include <stdlib.h>
+
+#define CLIP_LEFT   1
+#define CLIP_RIGHT  2
+#define CLIP_BOTTOM 4
+#define CLIP_TOP    8
+
+static int computeOutCode(int x, int y)
+{
+    int code = 0;
+
+    if (x < 0)             code |= CLIP_LEFT;
+    else if (x >= SCREEN_W) code |= CLIP_RIGHT;
+
+    if (y < 0)             code |= CLIP_TOP;
+    else if (y >= SCREEN_H) code |= CLIP_BOTTOM;
+
+    return code;
+}
+
+static int clipLineToScreen(int *x0, int *y0, int *x1, int *y1)
+{
+    int out0 = computeOutCode(*x0, *y0);
+    int out1 = computeOutCode(*x1, *y1);
+
+    for (;;)
+    {
+        if (!(out0 | out1))
+        {
+            return 1; // fully inside
+        }
+
+        if (out0 & out1)
+        {
+            return 0; // fully outside
+        }
+
+        {
+            int out = out0 ? out0 : out1;
+            int x = 0;
+            int y = 0;
+
+            if (out & CLIP_TOP)
+            {
+                if (*y1 == *y0) return 0;
+                x = *x0 + (*x1 - *x0) * (0 - *y0) / (*y1 - *y0);
+                y = 0;
+            }
+            else if (out & CLIP_BOTTOM)
+            {
+                if (*y1 == *y0) return 0;
+                x = *x0 + (*x1 - *x0) * ((SCREEN_H - 1) - *y0) / (*y1 - *y0);
+                y = SCREEN_H - 1;
+            }
+            else if (out & CLIP_RIGHT)
+            {
+                if (*x1 == *x0) return 0;
+                y = *y0 + (*y1 - *y0) * ((SCREEN_W - 1) - *x0) / (*x1 - *x0);
+                x = SCREEN_W - 1;
+            }
+            else if (out & CLIP_LEFT)
+            {
+                if (*x1 == *x0) return 0;
+                y = *y0 + (*y1 - *y0) * (0 - *x0) / (*x1 - *x0);
+                x = 0;
+            }
+
+            if (out == out0)
+            {
+                *x0 = x;
+                *y0 = y;
+                out0 = computeOutCode(*x0, *y0);
+            }
+            else
+            {
+                *x1 = x;
+                *y1 = y;
+                out1 = computeOutCode(*x1, *y1);
+            }
+        }
+    }
+}
+
+void drawLineGridDots(int x0, int y0, int x1, int y1, uint8_t colorIndex)
+{
+    if (!clipLineToScreen(&x0, &y0, &x1, &y1))
+        return;
+
+    {
+        int dx = abs(x1 - x0);
+        int sx = (x0 < x1) ? 1 : -1;
+        int dy = -abs(y1 - y0);
+        int sy = (y0 < y1) ? 1 : -1;
+        int err = dx + dy;
+
+        for (;;)
+        {
+            if (((x0 + y0) & 3) == 0)
+            {
+                fb[(y0 * SCREEN_W) + x0] = colorIndex;
+            }
+
+            if (x0 == x1 && y0 == y1)
+                break;
+
+            {
+                int e2 = err << 1;
+
+                if (e2 >= dy)
+                {
+                    err += dy;
+                    x0 += sx;
+                }
+
+                if (e2 <= dx)
+                {
+                    err += dx;
+                    y0 += sy;
+                }
+            }
+        }
+    }
+}
+
+
+
 void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex)
 {
     int dx = abs(x1 - x0);
@@ -570,11 +734,45 @@ void drawText(int x, int y, const char *text, uint8_t color)
     }
 }
 
+static uint32_t ppb_be32(uint32_t v)
+{
+    return ((v & 0x000000FFu) << 24) |
+           ((v & 0x0000FF00u) <<  8) |
+           ((v & 0x00FF0000u) >>  8) |
+           ((v & 0xFF000000u) >> 24);
+}
 
+void LoadPPB(const char *filename, uint8_t *img){
+    // [0] configbits
+    // [1..2] width  (big-endian)
+    // [3..4] height (big-endian)
+    // [5..8] payload length (big-endian)
+    // [9..15] reserved = 0
+    // colour palette info
+    // [16 + 1024]  // 1024 bytes of palette info
+    // [1040 ... n] // the 8bit pixel data
 
+    ppb_t head;
+    FILE *fp;
+    uint32_t payloadLen;
 
+    fp = fopen(filename, "rb");
+    if (!fp) {
+        return;
+    }
 
+    if (fread(&head, 1, sizeof(head), fp) != sizeof(head)) {
+        fclose(fp);
+        return;
+    }
 
+    //payloadLen = ppb_be32(head.length_be);
+    payloadLen = head.length_be;
 
+    if (fread(img, 1, payloadLen, fp) != payloadLen) {
+        fclose(fp);
+        return;
+    }
 
-
+    fclose(fp);
+}

@@ -7,6 +7,8 @@
 
 #define SCREEN_TEST 0
 
+
+
 #if(SCREEN_TEST == 0)
 #define ZOOM 3
 #define SCREEN_W  480
@@ -26,11 +28,17 @@
 #endif
 
 #if(SCREEN_TEST == 3)
-#define ZOOM 1
+#define ZOOM 2
 #define SCREEN_W  640
 #define SCREEN_H  480
 #endif
 
+
+#if(SCREEN_TEST == 4)
+#define ZOOM 4
+#define SCREEN_W  320
+#define SCREEN_H  240
+#endif
 
 
 extern uint32_t clut[256];

@@ -82,7 +82,7 @@ int BasicSDL2Setup(){
     }
 
     sdl_win = SDL_CreateWindow(
-        "Raycasting demo (SDL2)",
+        "Raycasting GAME Test (SDL2)",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SCREEN_W * ZOOM, SCREEN_H * ZOOM, 0
     );
@@ -152,14 +152,15 @@ void screenupdate(){
 #endif
 }
 
-
+void moveSprite();
 int main(int argc, char **argv)
 {
     if (BasicSDL2Setup() != 0) {
         return 1;
     }
 
-    const char *mapPath = "./load-default-map.notmap-ext";  // intentionally crazy to fall back test map.c
+    //const char *mapPath = "./load-default-map.notmap-ext";  // intentionally crazy to fall back test map.c
+    const char *mapPath = "./testmap.bin";  // intentionally crazy to fall back test map.c
 
     if (argc >= 2 && argv[1] && argv[1][0] != '\0') {
         mapPath = argv[1];
@@ -207,6 +208,7 @@ int main(int argc, char **argv)
 
         rc3dUpdate(dt, keys, mouseDx);
 
+        moveSprite();
         //clearScreen(0);
         rc3dRender();
 
@@ -220,6 +222,6 @@ int main(int argc, char **argv)
     }while (running) ;
 
     EndSDL2Session();
-    printf("END OF PLAY\n");
+    printf("Dead cool wasnt it!!?\n");
     return 0;
 }

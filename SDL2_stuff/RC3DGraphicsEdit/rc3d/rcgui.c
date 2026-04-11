@@ -1,6 +1,7 @@
 // rcgui.c
 
 #include "rcgui.h"
+#include "rc3dedit.h"
 
 #include <string.h>
 
@@ -33,7 +34,7 @@ static void rcguiDrawOneButton(const RCGUI_Context *ui, const RCGUI_Button *btn)
     drawLine(btn->x + btn->w - 1, btn->y, btn->x + btn->w - 1, btn->y + btn->h - 1, border);
 
     if (btn->text && btn->text[0]) {
-        drawText(btn->x + 4, btn->y + 2, btn->text, textCol);
+        drawText(btn->x + 4, btn->y + 2, btn->text, btn->hot ? ED_COLOUR_BTN_TEXT_HOVER : textCol);
     }
 }
 
@@ -41,14 +42,15 @@ void rcguiInit(RCGUI_Context *ui)
 {
     memset(ui, 0, sizeof(*ui));
 
-    ui->btnBg = 13;
-    ui->btnBorder = 27;
-    ui->btnText = 2;
-    ui->btnHover = 12;
-    ui->btnActive = 19;
-    ui->btnDisabled = 6;
-    ui->btnTextDisabled = 5;
-    ui->btnBorderDisabled = 16;
+    ui->btnBg = ED_COLOUR_BTN_BG;
+    ui->btnBorder = ED_COLOUR_BTN_FRAME;
+    ui->btnText = ED_COLOUR_BTN_TEXT;
+    ui->btnHover = ED_COLOUR_BTN_BG_ACTIVE;
+    ui->btnHoverText = ED_COLOUR_BTN_TEXT_HOVER;
+    ui->btnActive = ED_COLOUR_BTN_ACTIVE;
+    ui->btnDisabled = ED_COLOUR_BTN_BG_DISABLED;
+    ui->btnTextDisabled = ED_COLOUR_BTN_TXT_DISABLED;
+    ui->btnBorderDisabled = ED_COLOUR_BTN_FRAME_DISABLED;
 }
 
 void rcguiSetButtonColours(RCGUI_Context *ui,
@@ -65,6 +67,7 @@ void rcguiSetButtonColours(RCGUI_Context *ui,
     ui->btnBorder = btnBorder;
     ui->btnText = btnText;
     ui->btnHover = btnHover;
+    //ui->btnHoverText = 16;
     ui->btnActive = btnActive;
     ui->btnDisabled = btnDisabled;
     ui->btnTextDisabled = btnTextDisabled;

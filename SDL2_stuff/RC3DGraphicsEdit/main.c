@@ -84,7 +84,7 @@ int BasicSDL2Setup(){
     }
 
     sdl_win = SDL_CreateWindow(
-        "Raycasting demo (SDL2)",
+        "Raycast world editor V1.0 (SDL2)",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SCREEN_W * ZOOM, SCREEN_H * ZOOM, 0
     );
@@ -127,7 +127,7 @@ void EndSDL2Session(){
 }
 
 
-static void launchRaycastGame(const char *mapPath)
+void launchRaycastGame(const char *mapPath)
 {
     pid_t pid = fork();
 
@@ -135,21 +135,16 @@ static void launchRaycastGame(const char *mapPath)
         perror("fork failed");
         return;
     }
-
     if (pid == 0) {
-        if (chdir("../RC3DGraphics/") != 0) {
-            perror("chdir failed");
-            _exit(127);
-        }
-
         execl("./raycast3ddemo", "./raycast3ddemo", mapPath, (char *)NULL);
-
         perror("execl failed");
         _exit(127);
     }
 }
 
 int exportBinaryMap(const char *path);
+void doRunDemoGame();
+int rc3dEditConsumeQuitRequest(void);
 
 int main(void)
 {
@@ -185,12 +180,11 @@ int main(void)
 
                     case SDL_KEYDOWN:
                         if ((e.key.repeat == 0) && (e.key.keysym.sym == SDLK_F10)) {
-                            running = 0;
+                            
                         }
                         if ((e.key.repeat == 0) && (e.key.keysym.sym == SDLK_F12)) {
                             //launch the demo map.bin ;)
-                            exportBinaryMap("../RC3DGraphics/testmap.bin");
-                            launchRaycastGame("./testmap.bin");
+                            doRunDemoGame();
                         }
                         dirty = 1;
                         break;
@@ -223,6 +217,9 @@ int main(void)
         }
 
         const uint8_t *keys = SDL_GetKeyboardState(NULL);
+        if (rc3dEditConsumeQuitRequest()) {
+            running = 0;
+        }
 
         if (keys[SDL_SCANCODE_F] || keys[SDL_SCANCODE_G] ||
             keys[SDL_SCANCODE_C] || keys[SDL_SCANCODE_V] ||
@@ -259,7 +256,7 @@ int main(void)
     }
 
     EndSDL2Session();
-    printf("END OF PLAY\n");
+    printf("Did you have fun??\n");
     return 0;
 }
 
