@@ -1,6 +1,6 @@
 #include "rc3d_map.h"
 
-#define WALL_ENTRY(...)   { __VA_ARGS__, RC3D_TEX_FLAG_DEFAULT }
+#define WALL_ENTRY(...)   { __VA_ARGS__, RC3D_TEX_FLAG_DEFAULT, 1.0f, 1.0f }
 #define SECTOR_ENTRY(...) { __VA_ARGS__, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
 
 static const RC3D_Vec2 g_verts[] = {

@@ -40,6 +40,8 @@ typedef struct {
 
     uint8_t flags;          /* wall flags */
     uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
+    float texScaleX;        /* wall texture UV scale X */
+    float texScaleY;        /* wall texture UV scale Y */
 
 } RC3D_Wall;
 

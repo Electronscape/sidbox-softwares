@@ -151,6 +151,7 @@ static int g_loadedMapValid = 0;
 
 static int horizonGlobal = 0;
 static float wallTexUBaseGlobal = 0.0f;
+static float wallTexInvScaleYGlobal = 1.0f;
 static float wallTexRotCosGlobal = 1.0f;
 static float wallTexRotSinGlobal = 0.0f;
 static float projPlaneGlobal = 0.0f;
@@ -178,6 +179,8 @@ typedef struct {
     float dy;
     float len;
     float invLenSq;
+    float texInvScaleX;
+    float texInvScaleY;
 
     float texCos;
     float texSin;
@@ -830,7 +833,7 @@ static int rc3dBuildWallCacheForCurrentMap(void)
         const RC3D_Wall *w = &g_map->walls[i];
         const RC3D_Vec2 *a = &g_map->verts[w->v0];
         const RC3D_Vec2 *b = &g_map->verts[w->v1];
-        const float texAngle = rc3dWallTexAngleFromFlags(w->tex_flags);
+        const float texAngle = rc3dWallTexAngleFromFlags(w->texture_flags);
 
         RC3D_WallCache *wc = &g_wallCache[i];
 
@@ -845,6 +848,17 @@ static int rc3dBuildWallCacheForCurrentMap(void)
                 wc->len = 0.0f;
                 wc->invLenSq = 0.0f;
             }
+        }
+
+        {
+            float texScaleX = w->texScaleX;
+            float texScaleY = w->texScaleY;
+
+            if (fabsf(texScaleX) < RC3D_EPSILON) texScaleX = 1.0f;
+            if (fabsf(texScaleY) < RC3D_EPSILON) texScaleY = 1.0f;
+
+            wc->texInvScaleX = 1.0f / texScaleX;
+            wc->texInvScaleY = 1.0f / texScaleY;
         }
 
         if (fabsf(texAngle) > 0.0001f) {
@@ -879,8 +893,8 @@ static int rc3dBuildWallCacheForCurrentMap(void)
         }
 
         {
-            const int clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? 1 : 0;
-            const int clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
+            const int clampXL = (w->texture_flags & RC3D_TEX_FLAG_CLAMPXL) ? 1 : 0;
+            const int clampXR = (w->texture_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
 
             if (clampXL && clampXR) {
                 wc->texXMode = RC3D_TEX_XMODE_STRETCH;
@@ -1007,7 +1021,9 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         return 0;
     }
 
-    if (memcmp(magic, "RC3DMAP2", 8) == 0) {
+    if (memcmp(magic, "RC3DMAP3", 8) == 0) {
+        mapVersion = 3;
+    } else if (memcmp(magic, "RC3DMAP2", 8) == 0) {
         mapVersion = 2;
     } else if (memcmp(magic, "RC3DMAP1", 8) == 0) {
         mapVersion = 1;
@@ -1059,22 +1075,45 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         int32_t v1;
         int32_t neighbour;
 
-        if (!readExact(f, &v0, sizeof(v0)) ||
-            !readExact(f, &v1, sizeof(v1)) ||
-            !readExact(f, &neighbour, sizeof(neighbour)) ||
-            !readExact(f, &walls[i].openBottom, sizeof(float)) ||
-            !readExact(f, &walls[i].openTop, sizeof(float)) ||
-            !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
-            !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
-            !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
-            !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
-            !readExact(f, &walls[i].tex_flags, sizeof(uint32_t))
-        ) {
-            fclose(f);
-            free(verts);
-            free(walls);
-            free(sectors);
-            return 0;
+        if (mapVersion >= 3) {
+            if (!readExact(f, &v0, sizeof(v0)) ||
+                !readExact(f, &v1, sizeof(v1)) ||
+                !readExact(f, &neighbour, sizeof(neighbour)) ||
+                !readExact(f, &walls[i].openBottom, sizeof(float)) ||
+                !readExact(f, &walls[i].openTop, sizeof(float)) ||
+                !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].texture_flags, sizeof(uint32_t)) ||
+                !readExact(f, &walls[i].texScaleX, sizeof(float)) ||
+                !readExact(f, &walls[i].texScaleY, sizeof(float))) {
+                fclose(f);
+                free(verts);
+                free(walls);
+                free(sectors);
+                return 0;
+            }
+        } else {
+            if (!readExact(f, &v0, sizeof(v0)) ||
+                !readExact(f, &v1, sizeof(v1)) ||
+                !readExact(f, &neighbour, sizeof(neighbour)) ||
+                !readExact(f, &walls[i].openBottom, sizeof(float)) ||
+                !readExact(f, &walls[i].openTop, sizeof(float)) ||
+                !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
+                !readExact(f, &walls[i].texture_flags, sizeof(uint32_t))) {
+                fclose(f);
+                free(verts);
+                free(walls);
+                free(sectors);
+                return 0;
+            }
+
+            walls[i].texScaleX = 1.0f;
+            walls[i].texScaleY = 1.0f;
         }
 
         walls[i].v0 = (int)v0;
@@ -1982,7 +2021,7 @@ static inline void renderTexturedBandIfVisible(
 
         {
             const float k = hitDist / projPlane;
-            const float texPerWorld = (float)RC3D_TEX_SIZE;
+            const float texPerWorld = (float)RC3D_TEX_SIZE * wallTexInvScaleYGlobal;
             const float baseWorldFromTop =
                 vTopWorld - eyeZ - ((float)horizonGlobal * k);
 
@@ -2098,7 +2137,7 @@ static inline void renderMaskedTexturedBandIfVisible(
 
         {
             const float k = hitDist / projPlane;
-            const float texPerWorld = (float)RC3D_TEX_SIZE;
+            const float texPerWorld = (float)RC3D_TEX_SIZE * wallTexInvScaleYGlobal;
             const float baseWorldFromTop =
                 vTopWorld - eyeZ - ((float)horizonGlobal * k);
 
@@ -2403,8 +2442,8 @@ static void drawBackground(void)
         }
     }
 
-    for (int y = 0; y < (SCREEN_H / 2)+2; ++y) {
-        const int ty = (y * RC3D_SKYBOX_H) / (SCREEN_H / 2)-1.5f;
+    for (int y = 0; y < (SCREEN_H / 2); ++y) {
+        const int ty = (y * RC3D_SKYBOX_H) / (SCREEN_H / 2);
         const uint8_t *srcRow = &tex_skybox[ty * RC3D_SKYBOX_W];
         uint8_t *dst = &fb[y * SCREEN_W];
 
@@ -2493,6 +2532,12 @@ static inline void renderColumnPortalTraceClipped(
                 {
                     const float wallDx = wc ? wc->dx : (vb->x - va->x);
                     const float wallDy = wc ? wc->dy : (vb->y - va->y);
+                    const float wallTexInvScaleX =
+                        wc ? wc->texInvScaleX :
+                        (1.0f / ((fabsf(w->texScaleX) < RC3D_EPSILON) ? 1.0f : w->texScaleX));
+                    const float wallTexInvScaleY =
+                        wc ? wc->texInvScaleY :
+                        (1.0f / ((fabsf(w->texScaleY) < RC3D_EPSILON) ? 1.0f : w->texScaleY));
 
                     float uNorm = 0.0f;
                     float distAlongWall = 0.0f;
@@ -2515,7 +2560,7 @@ static inline void renderColumnPortalTraceClipped(
                         wallTexRotCosGlobal = wc->texCos;
                         wallTexRotSinGlobal = wc->texSin;
                     } else {
-                        const float texAngle = rc3dWallTexAngleFromFlags(w->tex_flags);
+                        const float texAngle = rc3dWallTexAngleFromFlags(w->texture_flags);
                         if (fabsf(texAngle) > 0.0001f) {
                             wallTexRotCosGlobal = cosf(texAngle);
                             wallTexRotSinGlobal = sinf(texAngle);
@@ -2525,16 +2570,18 @@ static inline void renderColumnPortalTraceClipped(
                         }
                     }
 
+                    wallTexInvScaleYGlobal = wallTexInvScaleY;
+
                     if (wc && wc->texXMode == RC3D_TEX_XMODE_STRETCH) {
                         if (uNorm < 0.0f) uNorm = 0.0f;
                         if (uNorm > 1.0f) uNorm = 1.0f;
                         wallTexUBaseGlobal = uNorm * (float)RC3D_TEX_SIZE;
                     } else if (wc && wc->texXMode == RC3D_TEX_XMODE_CLAMP_RIGHT) {
                         wallTexUBaseGlobal =
-                            (distAlongWall * (float)RC3D_TEX_SIZE) -
-                            (wallLen * (float)RC3D_TEX_SIZE);
+                            (distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE) -
+                            (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE);
                     } else {
-                        wallTexUBaseGlobal = distAlongWall * (float)RC3D_TEX_SIZE;
+                        wallTexUBaseGlobal = distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
                     }
                 }
 
@@ -2621,7 +2668,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderMaskedTexturedBandIfVisible(
                                     sx, secTop, secBot,
                                     w->midColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     sec->ceilHeight,
                                     sec->floorHeight,
                                     correctedDist,
@@ -2632,7 +2679,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderTexturedBandIfVisible(
                                     sx, secTop, secBot,
                                     w->midColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     sec->ceilHeight,
                                     sec->floorHeight,
                                     correctedDist,
@@ -2681,7 +2728,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderMaskedTexturedBandIfVisible(
                                     sx, midTopY, midBotY,
                                     w->midColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     w->openTop,
                                     w->openBottom,
                                     correctedDist,
@@ -2692,7 +2739,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderTexturedBandIfVisible(
                                     sx, midTopY, midBotY,
                                     w->midColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     w->openTop,
                                     w->openBottom,
                                     correctedDist,
@@ -2715,7 +2762,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderTexturedBandIfVisible(
                                     sx, secTop, openTopY - 1,
                                     w->upperColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     sec->ceilHeight,
                                     w->openTop,
                                     correctedDist,
@@ -2728,7 +2775,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderTexturedBandIfVisible(
                                     sx, openBotY + 1, secBot,
                                     w->lowerColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     w->openBottom,
                                     sec->floorHeight,
                                     correctedDist,
@@ -2773,7 +2820,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderTexturedBandIfVisible(
                                     sx, secTop, openTop - 1,
                                     w->upperColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     sec->ceilHeight,
                                     w->openTop,
                                     correctedDist,
@@ -2786,7 +2833,7 @@ static inline void renderColumnPortalTraceClipped(
                                 renderTexturedBandIfVisible(
                                     sx, openBot + 1, secBot,
                                     w->lowerColor,
-                                    w->tex_flags,
+                                    w->texture_flags,
                                     w->openBottom,
                                     sec->floorHeight,
                                     correctedDist,

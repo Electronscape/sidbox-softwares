@@ -746,7 +746,13 @@ static uint32_t ppb_be32(uint32_t v)
            ((v & 0xFF000000u) >> 24);
 }
 
-void LoadPPB(const char *filename, uint8_t *img){
+static uint16_t ppb_be16(uint16_t v)
+{
+    return (uint16_t)(((v & 0x00FFu) << 8) |
+                      ((v & 0xFF00u) >> 8));
+}
+
+int LoadPPB(const char *filename, uint8_t *img, int destWidth, int destHeight){
     // [0] configbits
     // [1..2] width  (big-endian)
     // [3..4] height (big-endian)
@@ -757,26 +763,87 @@ void LoadPPB(const char *filename, uint8_t *img){
     // [1040 ... n] // the 8bit pixel data
 
     ppb_t head;
-    FILE *fp;
+    FILE *fp = NULL;
     uint32_t payloadLen;
+    uint16_t srcWidth;
+    uint16_t srcHeight;
+    size_t srcSize;
+    size_t destSize;
+    uint8_t *src = NULL;
+    int ok = 0;
+
+    if (!img || destWidth <= 0 || destHeight <= 0) {
+        return 0;
+    }
+
+    destSize = (size_t)destWidth * (size_t)destHeight;
+    memset(img, 0, destSize);
 
     fp = fopen(filename, "rb");
     if (!fp) {
-        return;
+        return 0;
     }
 
     if (fread(&head, 1, sizeof(head), fp) != sizeof(head)) {
-        fclose(fp);
-        return;
+        goto cleanup;
     }
 
-    //payloadLen = ppb_be32(head.length_be);
-    payloadLen = head.length_be;
+    srcWidth = ppb_be16(head.width_be);
+    srcHeight = ppb_be16(head.height_be);
+    payloadLen = ppb_be32(head.length_be);
 
-    if (fread(img, 1, payloadLen, fp) != payloadLen) {
-        fclose(fp);
-        return;
+    if (srcWidth == 0 || srcHeight == 0 || payloadLen == 0) {
+        goto cleanup;
     }
 
-    fclose(fp);
+    srcSize = (size_t)srcWidth * (size_t)srcHeight;
+
+    /* Reject malformed or absurdly large payloads before allocating or reading. */
+    if (srcSize != (size_t)payloadLen || srcSize > (32u * 1024u * 1024u)) {
+        goto cleanup;
+    }
+
+    src = malloc(srcSize);
+    if (!src) {
+        goto cleanup;
+    }
+
+    if (fread(src, 1, srcSize, fp) != srcSize) {
+        goto cleanup;
+    }
+
+    if ((int)srcWidth == destWidth && (int)srcHeight == destHeight) {
+        memcpy(img, src, destSize);
+    } else {
+        int dy;
+        int dx;
+
+        for (dy = 0; dy < destHeight; dy++) {
+            size_t sy = ((size_t)dy * (size_t)srcHeight) / (size_t)destHeight;
+
+            if (sy >= (size_t)srcHeight) {
+                sy = (size_t)srcHeight - 1;
+            }
+
+            for (dx = 0; dx < destWidth; dx++) {
+                size_t sx = ((size_t)dx * (size_t)srcWidth) / (size_t)destWidth;
+
+                if (sx >= (size_t)srcWidth) {
+                    sx = (size_t)srcWidth - 1;
+                }
+
+                img[((size_t)dy * (size_t)destWidth) + (size_t)dx] =
+                    src[(sy * (size_t)srcWidth) + sx];
+            }
+        }
+    }
+
+    ok = 1;
+
+cleanup:
+    free(src);
+    if (fp) {
+        fclose(fp);
+    }
+    return ok;
 }

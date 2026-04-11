@@ -2,6 +2,7 @@
 #ifndef _GFX_LIB_TEST_H_
 #define _GFX_LIB_TEST_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 
@@ -70,6 +71,6 @@ void resetRand();
 void drawRect(int x, int y, int w, int h, uint8_t col);
 void drawRectL(int x, int y, int w, int h, uint8_t col);
 
-void LoadPPB(const char *filename, uint8_t *img);
+int LoadPPB(const char *filename, uint8_t *img, int destWidth, int destHeight);
 
 #endif

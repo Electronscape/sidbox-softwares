@@ -36,7 +36,6 @@ typedef struct {
     int v1;
 
     int neighbour;          /* -1 = no adjoining sector */
-    
 
     float openBottom;       /* opening lower Z */
     float openTop;          /* opening upper Z */
@@ -45,9 +44,10 @@ typedef struct {
     uint8_t midColor;       /* middle slab */
     uint8_t lowerColor;     /* below opening */
 
-    uint8_t flags;
-    /* [3: wall glow][16: texture angle][4: clamp flags] */
-    uint32_t tex_flags;
+    uint8_t flags;          /* wall flags */
+    uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
+    float texScaleX;        /* wall texture UV scale X */
+    float texScaleY;        /* wall texture UV scale Y */
 } RC3D_Wall;
 
 typedef struct {
