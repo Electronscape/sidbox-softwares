@@ -15,23 +15,32 @@
 
 
 #define FPS        60
-#define A_FPS_MS   (1000 / FPS)
 
 int tmr1;
 //static uint8_t mouseAction = 0;
+static uint32_t fpsTimer = 0;
+static Uint64 lastFrameTick = 0;
+static Uint64 perfFreq = 0;
+static int frameCount = 0;        // frames actually rendered
+static int uncappedCount = 0;     // every loop iteration
+static int fps = 0;
+static int uncappedFPS = 0;
 
 
 
 
-int updateFPS() {
-    static uint32_t fpsTimer = 0;
-    static uint32_t lastFrameTime = 0;
-    static int frameCount = 0;        // frames actually rendered
-    static int uncappedCount = 0;     // every loop iteration
-    static int fps = 0;
-    static int uncappedFPS = 0;
-
+int updateFPS(void) {
     uint32_t now = SDL_GetTicks();
+    Uint64 nowPerf = SDL_GetPerformanceCounter();
+    int allowFrame = 0;
+
+    if (perfFreq == 0) {
+        perfFreq = SDL_GetPerformanceFrequency();
+        lastFrameTick = nowPerf;
+        fpsTimer = now;
+        allowFrame = 1;
+    }
+
     uncappedCount++; // count every loop iteration
 
     // Update FPS every second
@@ -44,29 +53,37 @@ int updateFPS() {
         fpsTimer = now;
     }
 
-        char buf[32];
-        sprintf(buf, "FPS: %d (Uncapped: %d)", fps, uncappedFPS);
-        drawText(0, 1, buf, 16);
-        drawText(2, 1, buf, 16);
-        drawText(1, 0, buf, 16);
-        drawText(1, 2, buf, 16);
-        drawText(1, 1, buf, 15);
-        
-        
-    // Check if enough time has passed for next frame
-    const uint32_t targetMs = A_FPS_MS; // e.g., 1000 / 144
-    if (now - lastFrameTime >= targetMs) {
-        lastFrameTime += targetMs; // advance last frame time
-        frameCount++;              // count as a rendered frame
-
-        // Display FPS info
-
-        return 1; // time to update logic/render
+    if (allowFrame) {
+        frameCount++;
+        return 1;
     }
 
+    if (FPS <= 0) {
+        lastFrameTick = nowPerf;
+        frameCount++;
+        return 1;
+    }
 
-    
+    // Check if enough time has passed for the next frame.
+    const Uint64 targetTickDelta = (Uint64)((double)perfFreq / (double)FPS);
+    if ((targetTickDelta == 0) || ((nowPerf - lastFrameTick) >= targetTickDelta)) {
+        lastFrameTick = nowPerf;
+        frameCount++;
+        return 1;
+    }
+
     return 0; // skip this loop iteration for logic
+}
+
+static void drawFPSCounter(void) {
+    char buf[64];
+
+    snprintf(buf, sizeof(buf), "FPS: %d (Uncapped: %d)", fps, uncappedFPS);
+    drawText(0, 1, buf, 16);
+    drawText(2, 1, buf, 16);
+    drawText(1, 0, buf, 16);
+    drawText(1, 2, buf, 16);
+    drawText(1, 1, buf, 15);
 }
 
 
@@ -173,20 +190,17 @@ int main(int argc, char **argv)
 
     
     rc3dInit();
+    rc3dPreparePalette();
+    rc3dLightRange(2.0f, 1.0f, 2.0f);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     
     uint32_t lastTicks = SDL_GetTicks();
 
-    
+    int pendingMouseDx = 0;
+
     do{
-        uint32_t nowTicks = SDL_GetTicks();
-        float dt = (float)(nowTicks - lastTicks) / 1000.0f;
-        int mouseDx = 0;
-
-        lastTicks = nowTicks;
-
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -200,11 +214,21 @@ int main(int argc, char **argv)
             }
 
             if (e.type == SDL_MOUSEMOTION) {
-                mouseDx += e.motion.xrel;
+                pendingMouseDx += e.motion.xrel;
             }
         }
 
+        if (!updateFPS()) {
+            continue;
+        }
+
+        uint32_t nowTicks = SDL_GetTicks();
+        float dt = (float)(nowTicks - lastTicks) / 1000.0f;
+        int mouseDx = pendingMouseDx;
         const uint8_t *keys = SDL_GetKeyboardState(NULL);
+
+        lastTicks = nowTicks;
+        pendingMouseDx = 0;
 
         rc3dUpdate(dt, keys, mouseDx);
 
@@ -212,7 +236,7 @@ int main(int argc, char **argv)
         //clearScreen(0);
         rc3dRender();
 
-        updateFPS();
+        drawFPSCounter();
 
         screenupdate();
         //videoMemToScreen();

@@ -19,6 +19,11 @@
 #define RC3D_TEX_FLAG_CLAMPXR   0x00000002u
 #define RC3D_TEX_FLAG_CLAMPYT   0x00000004u
 #define RC3D_TEX_FLAG_CLAMPYB   0x00000008u
+#define RC3D_TEX_WALL_GLOW_SHIFT 20u
+#define RC3D_TEX_WALL_GLOW_MAX   7u
+#define RC3D_TEX_WALL_GLOW_MASK  (RC3D_TEX_WALL_GLOW_MAX << RC3D_TEX_WALL_GLOW_SHIFT)
+#define RC3D_TEX_WALL_GLOW(level) \
+    ((((uint32_t)(level)) & RC3D_TEX_WALL_GLOW_MAX) << RC3D_TEX_WALL_GLOW_SHIFT)
 
 
 typedef struct {
@@ -41,7 +46,8 @@ typedef struct {
     uint8_t lowerColor;     /* below opening */
 
     uint8_t flags;
-    uint32_t tex_flags;  // texture clamp/uv behaviour flags
+    /* [3: wall glow][16: texture angle][4: clamp flags] */
+    uint32_t tex_flags;
 } RC3D_Wall;
 
 typedef struct {
@@ -54,6 +60,7 @@ typedef struct {
 
     uint8_t floorColor;
     uint8_t ceilColor;
+    uint8_t glowlevel;      /* 0 = normal lighting, 1..7 = brighter */
 
     float floorTexScaleX;
     float floorTexScaleY;
@@ -63,6 +70,7 @@ typedef struct {
     float ceilTexScaleY;
     float ceilTexAngle;
 } RC3D_Sector;
+
 
 typedef struct {
     const RC3D_Vec2   *verts;

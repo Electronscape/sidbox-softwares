@@ -6300,7 +6300,7 @@ HOLD ALT and CLICK the ending colour.</string>
       </widget>
      </widget>
     </widget>
-    <widget class="QGroupBox" name="groupBox_7">
+    <widget class="QGroupBox" name="txtPaletteSnapValue">
      <property name="geometry">
       <rect>
        <x>4</x>
@@ -6814,6 +6814,29 @@ HOLD ALT and CLICK the ending colour.</string>
       </property>
       <property name="checked">
        <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtPaletteTolorancer">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>112</y>
+        <width>50</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="acceptDrops">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">border: 1px solid #3c6dc3;
+</string>
+      </property>
+      <property name="text">
+       <string>3</string>
+      </property>
+      <property name="maxLength">
+       <number>5</number>
       </property>
      </widget>
     </widget>

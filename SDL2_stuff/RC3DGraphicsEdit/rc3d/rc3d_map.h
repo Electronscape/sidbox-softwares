@@ -16,6 +16,8 @@
 #define RC3D_TEX_FLAG_CLAMPYB       0x00000008u
 #define RC3D_TEX_WALL_ANGLE_SHIFT   4u
 #define RC3D_TEX_WALL_ANGLE_MASK    (0xFFFFu << RC3D_TEX_WALL_ANGLE_SHIFT)
+#define RC3D_TEX_WALL_BRIGHT_SHIFT  20u
+#define RC3D_TEX_WALL_BRIGHT_MASK   (0x0Fu << RC3D_TEX_WALL_BRIGHT_SHIFT)
 
 
 typedef struct {
@@ -37,7 +39,7 @@ typedef struct {
     uint8_t lowerColor;     /* below opening */
 
     uint8_t flags;          /* wall flags */
-    uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: packed wall texture angle */
+    uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
 
 } RC3D_Wall;
 
@@ -51,6 +53,7 @@ typedef struct {
 
     uint8_t floorColor;
     uint8_t ceilColor;
+    uint8_t glowlevel;      /* 0 = normal lighting, 1..7 = brighter */
 
     float floorTexScaleX;
     float floorTexScaleY;

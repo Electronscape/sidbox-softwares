@@ -60,12 +60,24 @@
 #define ED_COLOUR_TEXT_BAR_BG       4
 #define ED_COLOUR_TEXT_BAR_BORDER   3
 
+// map validator
+#define ED_VALIDATOR_TEXT                   2
+#define ED_VALIDATOR_SELECTION_BG           3
+#define ED_VALIDATOR_SELECTION_TEXT         14
+
+// expanded panels
+#define ED_EXPANDED_MENU_TEXT               2
+
 // inspectors
+#define ED_INSPECTOR_PANELS_HEADER_TEXT     7
 #define ED_INSPECTOR_PARENT_PANELS_BG       16
 #define ED_INSPECTOR_PARENT_PANELS_FRAME    6
-#define ED_INSPECTOR_PANELS_HEADER_TEXT     7
 #define ED_INSPECTOR_PANELS_BACKPANEL       5
 #define ED_INSPECTOR_PANELS_PANELFRAME      3
+
+// texture explorer
+#define ED_TEXTURE_EXPLORER_HEADER_TEXT     2
+#define ED_TEXTURE_EXPLORER_SELECT_FRAME    8
 
 // DRAFTING colours
 // walls
@@ -79,6 +91,8 @@
 #define ED_COLOUR_VERTEX_HOVER      10
 #define ED_COLOUR_VERTEX_SELECTED   2
 
+#define ED_COLOUR_VERTEX_SPLIT_PREV 7
+#define ED_COLOUR_MULTI_SELECT_RANGE_BOX    1
 
 void rc3dEditInit(void);
 void rc3dEditUpdate(float dt,

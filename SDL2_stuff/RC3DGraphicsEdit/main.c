@@ -14,6 +14,7 @@
 #include "rc3d/rc3dedit.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 
 #define FPS        60
@@ -259,7 +260,6 @@ int main(void)
     printf("Did you have fun??\n");
     return 0;
 }
-
 
 
 

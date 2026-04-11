@@ -46,6 +46,22 @@ extern uint8_t fb[];    // framebuffer (interal)
 extern uint32_t pb[];   // the presented buffer for SDL2
 
 
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t  config;        // [0]
+
+    uint16_t width_be;      // [1..2]  big-endian
+    uint16_t height_be;     // [3..4]  big-endian
+    uint32_t length_be;     // [5..8]  big-endian payload length
+
+    uint8_t  reserved[7];   // [9..15] must be 0
+
+    uint8_t  palette[1024]; // [16..1039] fixed 1024-byte palette
+} ppb_t;
+#pragma pack(pop)
+
+
+
 #define FB_INDEX(x, y) (((x) * SCREEN_H) + (y))
 
 void drawText(int x, int y, const char *text, uint8_t color);
@@ -59,5 +75,6 @@ void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex);
 void resetRand();
 
 void drawRect(int x, int y, int w, int h, uint8_t col);
+void LoadPPB(const char *filename, uint8_t *img);
 
 #endif

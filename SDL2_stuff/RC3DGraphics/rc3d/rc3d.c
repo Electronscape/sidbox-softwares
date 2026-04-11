@@ -44,13 +44,25 @@
 #define RC3D_TEX_SIZE          64
 #define RC3D_TEX_MASK          (RC3D_TEX_SIZE - 1)
 
+#define RC3D_LIGHT_BANK_START            64
+#define RC3D_LIGHT_BANK_SIZE             64
+#define RC3D_LIGHT_BLACK_INDEX           16
+#define RC3D_LIGHT_MID_BRIGHTNESS        0.75f
+#define RC3D_LIGHT_DARK_BRIGHTNESS       0.25f
+#define RC3D_LIGHT_DEFAULT_BRIGHT_RANGE  8.0f
+#define RC3D_LIGHT_DEFAULT_MID_RANGE     6.0f
+#define RC3D_LIGHT_DEFAULT_DARK_RANGE    12.0f
+#define RC3D_LIGHT_BRIGHT_BLEND_RATIO    0.35f
+#define RC3D_LIGHT_WALL_DIST_SCALE       1.00f
+#define RC3D_LIGHT_PLANE_DIST_SCALE      0.90f
+#define RC3D_LIGHT_SPRITE_DIST_SCALE     1.00f
+
 extern uint8_t spr_man[]; // test sprite
 
 
 #define RC3D_TEXID_SPRITE_MAN  253
 #define RC3D_TEXID_SKYBOX      255
-#define RC3D_SKYBOX_W          1024
-#define RC3D_SKYBOX_H          256
+
 #define RC3D_SPRITE_TEX_TRANSPARENT 0
 #define RC3D_TEST_SPRITE_WIDTH  0.75f
 #define RC3D_TEST_SPRITE_HEIGHT 0.75f
@@ -64,6 +76,9 @@ static float g_angleToLutScale = 0.0f;
 static float g_sinLut[RC3D_TRIG_LUT_SIZE];
 static float g_cosLut[RC3D_TRIG_LUT_SIZE];
 static int g_trigLutInit = 0;
+static float g_lightBrightRange = RC3D_LIGHT_DEFAULT_BRIGHT_RANGE;
+static float g_lightMidRange = RC3D_LIGHT_DEFAULT_MID_RANGE;
+static float g_lightDarkRange = RC3D_LIGHT_DEFAULT_DARK_RANGE;
 
 
 
@@ -386,26 +401,187 @@ static inline uint8_t texelFetch(uint8_t texId, int tx, int ty)
     return t->pix[(ty * RC3D_TEX_SIZE) + tx];
 }
 
+static inline float rc3dSaturate(float v)
+{
+    if (v < 0.0f) return 0.0f;
+    if (v > 1.0f) return 1.0f;
+    return v;
+}
 
+static inline float rc3dSmoothStep01(float t)
+{
+    t = rc3dSaturate(t);
+    return t * t * (3.0f - (2.0f * t));
+}
+
+static inline float rc3dMaxf(float a, float b)
+{
+    return (a > b) ? a : b;
+}
+
+static inline uint8_t rc3dClampGlowLevel(uint8_t glowLevel)
+{
+    if (glowLevel > RC3D_TEX_WALL_GLOW_MAX) {
+        return RC3D_TEX_WALL_GLOW_MAX;
+    }
+
+    return glowLevel;
+}
+
+static inline uint8_t rc3dWallGlowFromFlags(uint32_t texture_flags)
+{
+    return rc3dClampGlowLevel(
+        (uint8_t)((texture_flags & RC3D_TEX_WALL_GLOW_MASK) >> RC3D_TEX_WALL_GLOW_SHIFT));
+}
+
+static inline float rc3dApplyGlowToDistance(float sampleDist, uint8_t glowLevel)
+{
+    glowLevel = rc3dClampGlowLevel(glowLevel);
+
+    if (sampleDist <= 0.0f || glowLevel == 0u) {
+        return sampleDist;
+    }
+
+    if (glowLevel >= RC3D_TEX_WALL_GLOW_MAX) {
+        return 0.0f;
+    }
+
+    return sampleDist * (1.0f - ((float)glowLevel / (float)RC3D_TEX_WALL_GLOW_MAX));
+}
+
+static inline uint8_t rc3dLightNoise8(int a, int b, int c, int d)
+{
+    uint32_t n = (uint32_t)a;
+
+    n *= 0x1f123bb5u;
+    n += (uint32_t)b * 0x9e3779b9u;
+    n ^= (uint32_t)c * 0x85ebca6bu;
+    n += (uint32_t)d * 0xc2b2ae35u;
+    n ^= n >> 15;
+    n *= 0x85ebca6bu;
+    n ^= n >> 13;
+    n *= 0xc2b2ae35u;
+    n ^= n >> 16;
+
+    return (uint8_t)(n >> 24);
+}
+
+static inline uint8_t rc3dShadePaletteTexel(
+    uint8_t texel,
+    float sampleDist,
+    int sampleU,
+    int sampleV,
+    uint8_t texId,
+    uint8_t glowLevel
+){
+    const int bankEnd = RC3D_LIGHT_BANK_START + (RC3D_LIGHT_BANK_SIZE * 3);
+    const uint8_t thresholdSeedA = 0;
+    const uint8_t thresholdSeedB = 1;
+    const uint8_t thresholdSeedC = 2;
+    const float brightRange = g_lightBrightRange;
+    const float midRange = g_lightMidRange;
+    const float darkRange = g_lightDarkRange;
+    const float brightEnd = brightRange;
+    const float midEnd = brightEnd + midRange;
+    const float darkEnd = midEnd + darkRange;
+
+    if (texel == RC3D_SPRITE_TEX_TRANSPARENT) {
+        return texel;
+    }
+
+    if (texel < RC3D_LIGHT_BANK_START || texel >= bankEnd) {
+        return texel;
+    }
+
+    {
+        const uint8_t baseSlot =
+            (uint8_t)((texel - RC3D_LIGHT_BANK_START) & (RC3D_LIGHT_BANK_SIZE - 1));
+        const uint8_t bright = RC3D_LIGHT_BANK_START + baseSlot;
+        const uint8_t mid    = bright + RC3D_LIGHT_BANK_SIZE;
+        const uint8_t dark   = mid + RC3D_LIGHT_BANK_SIZE;
+        const uint8_t black  = RC3D_LIGHT_BLACK_INDEX;
+
+        sampleDist = rc3dApplyGlowToDistance(sampleDist, glowLevel);
+
+        if (sampleDist <= 0.0f) {
+            return bright;
+        }
+
+        {
+            const float brightBlendWidth =
+                rc3dMaxf(brightRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
+            const float brightBlendStart = brightEnd - brightBlendWidth;
+
+            if (sampleDist <= brightBlendStart) {
+                return bright;
+            }
+
+            if ((brightBlendWidth > RC3D_EPSILON) && (sampleDist < brightEnd)) {
+                const float blend = rc3dSmoothStep01(
+                    (sampleDist - brightBlendStart) / brightBlendWidth);
+                const uint8_t threshold =
+                    (uint8_t)(blend * 255.0f);
+                const uint8_t noise =
+                    rc3dLightNoise8(sampleU, sampleV, texId, thresholdSeedA);
+
+                return (noise <= threshold) ? mid : bright;
+            }
+        }
+
+        {
+            const float midBlendWidth =
+                rc3dMaxf(midRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
+            const float midBlendStart = midEnd - midBlendWidth;
+
+            if (sampleDist <= midBlendStart) {
+                return mid;
+            }
+
+            if ((midBlendWidth > RC3D_EPSILON) && (sampleDist < midEnd)) {
+                const float blend = rc3dSmoothStep01(
+                    (sampleDist - midBlendStart) / midBlendWidth);
+                const uint8_t threshold =
+                    (uint8_t)(blend * 255.0f);
+                const uint8_t noise =
+                    rc3dLightNoise8(sampleU, sampleV, texId, thresholdSeedB);
+
+                return (noise <= threshold) ? dark : mid;
+            }
+        }
+
+        if (darkRange <= RC3D_EPSILON) {
+            return black;
+        }
+
+        if (sampleDist < darkEnd) {
+            const float blend = rc3dSmoothStep01(
+                (sampleDist - midEnd) / darkRange);
+            const uint8_t threshold =
+                (uint8_t)(blend * 255.0f);
+            const uint8_t noise =
+                rc3dLightNoise8(sampleU, sampleV, texId, thresholdSeedC);
+
+            return (noise <= threshold) ? black : dark;
+        }
+
+        return black;
+    }
+}
+
+
+extern uint8_t spr_oiiacat[];
 extern uint8_t tex_notset[];
-extern uint8_t txt_brick1[];
-extern uint8_t txt_dirt[];
-extern uint8_t txt_lava[];
-extern uint8_t txt_water[];
-extern uint8_t txt_grass[];
-extern uint8_t txt_burnedwood[];
-extern uint8_t txt_sky[];
-
-
-
-extern uint8_t tex_skybox[];    // the skybox
+extern uint8_t tex_skybox[RC3D_SKYBOX_W * RC3D_SKYBOX_H];    // the skybox
 
 static void rc3dBuildDefaultTextures(void)
 {
     int x, y, i;
     int32_t tindex = 0;
+    char filename[256];
 
+    
     for (i = 0; i < 256; ++i) {
+        tindex = 0;
         for (y = 0; y < RC3D_TEX_SIZE; ++y) {
             for (x = 0; x < RC3D_TEX_SIZE; ++x) {
                 g_rc3dTextures[i].pix[(y * RC3D_TEX_SIZE) + x] = tex_notset[tindex++];
@@ -413,19 +589,19 @@ static void rc3dBuildDefaultTextures(void)
         }
     }
 
+    // one less as thats the sky box
+    for(tindex = 0; tindex < 255; tindex++){
+        snprintf(filename, sizeof(filename), "./textures/%02u.ppb", (unsigned)tindex);
+        LoadPPB(filename, g_rc3dTextures[tindex].pix);
+    }
+
+    snprintf(filename, sizeof(filename), "./textures/255.ppb");
+    LoadPPB(filename, tex_skybox);
+    
     tindex = 0;
     for (y = 0; y < RC3D_TEX_SIZE; ++y) {
         for (x = 0; x < RC3D_TEX_SIZE; ++x) {
-            g_rc3dTextures[0].pix[tindex] = tex_notset[tindex];
-            g_rc3dTextures[1].pix[tindex] = txt_brick1[tindex];
-            g_rc3dTextures[2].pix[tindex] = txt_dirt[tindex];
-            g_rc3dTextures[3].pix[tindex] = txt_grass[tindex];
-            g_rc3dTextures[4].pix[tindex] = txt_lava[tindex];
-            g_rc3dTextures[5].pix[tindex] = txt_water[tindex];
-            g_rc3dTextures[6].pix[tindex] = txt_burnedwood[tindex];
-            g_rc3dTextures[7].pix[tindex] = txt_sky[tindex];
-            g_rc3dTextures[RC3D_TEXID_SPRITE_MAN].pix[tindex] = spr_man[tindex];
-            
+            g_rc3dTextures[RC3D_TEXID_SPRITE_MAN].pix[tindex] = spr_oiiacat[tindex];
             tindex++;
         }
     }
@@ -447,8 +623,55 @@ static inline float rc3dWallTexAngleFromFlags(uint32_t texture_flags)
 /* ------------------------------------------------------------------------- */
 /* binary map loading                                                        */
 /* ------------------------------------------------------------------------- */
+extern uint32_t clut[256];
+extern uint32_t clut[256];
 
+void rc3dPreparePalette(void)
+{
+    int p, step;
+    const int cindex = 64;
+    const float fade[2] = {
+        RC3D_LIGHT_MID_BRIGHTNESS,
+        RC3D_LIGHT_DARK_BRIGHTNESS
+    };
 
+    for (step = 0; step < 2; step++) {
+        for (p = 0; p < 64; p++) {
+            uint32_t src = clut[cindex + p];
+
+            uint8_t a = 0xff;
+            uint8_t r = (src >> 16) & 0xFF;
+            uint8_t g = (src >> 8)  & 0xFF;
+            uint8_t b = (src >> 0)  & 0xFF;
+
+            r = (uint8_t)(r * fade[step]);
+            g = (uint8_t)(g * fade[step]);
+            b = (uint8_t)(b * fade[step]);
+
+            clut[128 + (step * 64) + p] =
+                ((uint32_t)a << 24) |
+                ((uint32_t)r << 16) |
+                ((uint32_t)g << 8)  |
+                ((uint32_t)b << 0);
+        }
+    }
+}
+
+void rc3dSetLightRange(float brightRange, float midRange, float darkRange)
+{
+    if (brightRange < 0.0f) brightRange = 0.0f;
+    if (midRange < 0.0f) midRange = 0.0f;
+    if (darkRange < 0.0f) darkRange = 0.0f;
+
+    g_lightBrightRange = brightRange;
+    g_lightMidRange = midRange;
+    g_lightDarkRange = darkRange;
+}
+
+void rc3dLightRange(float brightRange, float midRange, float darkRange)
+{
+    rc3dSetLightRange(brightRange, midRange, darkRange);
+}
 
 static void rc3dFreeWallCache(void)
 {
@@ -757,6 +980,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 {
     FILE *f;
     char magic[8];
+    int mapVersion = 0;
 
     uint32_t vertCount;
     uint32_t wallCount;
@@ -783,7 +1007,11 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         return 0;
     }
 
-    if (memcmp(magic, "RC3DMAP1", 8) != 0) {
+    if (memcmp(magic, "RC3DMAP2", 8) == 0) {
+        mapVersion = 2;
+    } else if (memcmp(magic, "RC3DMAP1", 8) == 0) {
+        mapVersion = 1;
+    } else {
         fclose(f);
         return 0;
     }
@@ -859,26 +1087,52 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         int32_t wallCount_i;
         int32_t boundaryCount;
 
-        if (!readExact(f, &wallStart, sizeof(wallStart)) ||
-            !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
-            !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
-            !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
-            !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
-            !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
-            !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
-            !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
-            !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
-            !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
-            !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
-            !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
-            !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
-            fclose(f);
-            free(verts);
-            free(walls);
-            free(sectors);
-            return 0;
+        if (mapVersion >= 2) {
+            if (!readExact(f, &wallStart, sizeof(wallStart)) ||
+                !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
+                !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
+                !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].glowlevel, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
+                fclose(f);
+                free(verts);
+                free(walls);
+                free(sectors);
+                return 0;
+            }
+        } else {
+            if (!readExact(f, &wallStart, sizeof(wallStart)) ||
+                !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
+                !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
+                !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
+                fclose(f);
+                free(verts);
+                free(walls);
+                free(sectors);
+                return 0;
+            }
+
+            sectors[i].glowlevel = 0;
         }
 
+        sectors[i].glowlevel = rc3dClampGlowLevel(sectors[i].glowlevel);
         sectors[i].wallStart = (int)wallStart;
         sectors[i].wallCount = (int)wallCount_i;
         sectors[i].boundaryCount = (int)boundaryCount;
@@ -1581,6 +1835,7 @@ static inline void drawTexturedPlaneSpan(
     float rayDirY,
     float planeZ,
     uint8_t texId,
+    uint8_t glowLevel,
     int horizon,
     const RC3D_Sector *sec,
     int isCeiling
@@ -1600,6 +1855,8 @@ static inline void drawTexturedPlaneSpan(
         const float eyeY = g_player.y;
         const float eyeZ = g_renderEyeZ;
         const float planeFactor = (planeZ - eyeZ) * projPlaneGlobal;
+        const float rayLen =
+            sqrtf((rayDirX * rayDirX) + (rayDirY * rayDirY)) * RC3D_LIGHT_PLANE_DIST_SCALE;
         const float *invTable = &g_invDTable[SCREEN_H];
         const uint8_t *texels = g_rc3dTextures[texId].pix;
 
@@ -1622,9 +1879,13 @@ static inline void drawTexturedPlaneSpan(
 
                 if (d != 0) {
                     const float t = planeFactor * invTable[d];
+                    const float sampleDist = fabsf(t) * rayLen;
                     const int tx = (int)((eyeX + (rayDirX * t)) * (float)RC3D_TEX_SIZE);
                     const int ty = (int)((eyeY + (rayDirY * t)) * (float)RC3D_TEX_SIZE);
-                    *dst = texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+                    const uint8_t texel =
+                        texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+
+                    *dst = rc3dShadePaletteTexel(texel, sampleDist, tx, ty, texId, glowLevel);
                 }
 
                 dst += SCREEN_W;
@@ -1657,6 +1918,7 @@ static inline void drawTexturedPlaneSpan(
 
                 if (d != 0) {
                     const float t = planeFactor * invTable[d];
+                    const float sampleDist = fabsf(t) * rayLen;
                     const float wx = eyeX + (rayDirX * t);
                     const float wy = eyeY + (rayDirY * t);
 
@@ -1664,8 +1926,10 @@ static inline void drawTexturedPlaneSpan(
                     const float ry = (-(wx * sa) + (wy * ca)) * invScaleY;
                     const int tx = (int)(rx * (float)RC3D_TEX_SIZE);
                     const int ty = (int)(ry * (float)RC3D_TEX_SIZE);
+                    const uint8_t texel =
+                        texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
-                    *dst = texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+                    *dst = rc3dShadePaletteTexel(texel, sampleDist, tx, ty, texId, glowLevel);
                 }
 
                 dst += SCREEN_W;
@@ -1712,6 +1976,7 @@ static inline void renderTexturedBandIfVisible(
     {
         const float worldSpan = vTopWorld - vBotWorld;
         const float eyeZ = g_renderEyeZ;
+        const uint8_t wallGlow = rc3dWallGlowFromFlags(texFlags);
 
         if (worldSpan <= RC3D_EPSILON) return;
 
@@ -1738,6 +2003,7 @@ static inline void renderTexturedBandIfVisible(
 
             {
                 uint8_t *dst = &fb[(y0 * SCREEN_W) + sx];
+                const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
 
                 /* --------------------------------------------------------- */
                 /* FAST PATH: no wall texture rotation                       */
@@ -1752,7 +2018,10 @@ static inline void renderTexturedBandIfVisible(
                     const int tx = (uFixed >> 16);
 
                     for (int y = y0; y <= y1; ++y) {
-                        *dst = wallTexelFetch(texId, tx, (vFixed >> 16));
+                        const int ty = (vFixed >> 16);
+                        const uint8_t texel = wallTexelFetch(texId, tx, ty);
+
+                        *dst = rc3dShadePaletteTexel(texel, shadeDist, tx, ty, texId, wallGlow);
                         dst += SCREEN_W;
                         vFixed += vStepFixed;
                     }
@@ -1774,7 +2043,11 @@ static inline void renderTexturedBandIfVisible(
                     const int32_t vStepRot = (int32_t)(vStepF * 65536.0f);
 
                     for (int y = y0; y <= y1; ++y) {
-                        *dst = wallTexelFetch(texId, (uRot >> 16), (vRot >> 16));
+                        const int tx = (uRot >> 16);
+                        const int ty = (vRot >> 16);
+                        const uint8_t texel = wallTexelFetch(texId, tx, ty);
+
+                        *dst = rc3dShadePaletteTexel(texel, shadeDist, tx, ty, texId, wallGlow);
                         dst += SCREEN_W;
 
                         uRot += uStep;
@@ -1819,6 +2092,7 @@ static inline void renderMaskedTexturedBandIfVisible(
     {
         const float worldSpan = vTopWorld - vBotWorld;
         const float eyeZ = g_renderEyeZ;
+        const uint8_t wallGlow = rc3dWallGlowFromFlags(texFlags);
 
         if (worldSpan <= RC3D_EPSILON) return;
 
@@ -1846,6 +2120,7 @@ static inline void renderMaskedTexturedBandIfVisible(
             {
                 uint8_t *dst = &fb[(y0 * SCREEN_W) + sx];
                 int opaqueSpanStart = -1;
+                const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
 
                 if ((wallTexRotSinGlobal > -0.0001f) && (wallTexRotSinGlobal < 0.0001f) &&
                     (wallTexRotCosGlobal >  0.9999f)  && (wallTexRotCosGlobal < 1.0001f))
@@ -1857,7 +2132,15 @@ static inline void renderMaskedTexturedBandIfVisible(
                     const int tx = (uFixed >> 16);
 
                     for (int y = y0; y <= y1; ++y) {
-                        const uint8_t texel = wallTexelFetch(texId, tx, (vFixed >> 16));
+                        const int ty = (vFixed >> 16);
+                        const uint8_t texel =
+                            rc3dShadePaletteTexel(
+                                wallTexelFetch(texId, tx, ty),
+                                shadeDist,
+                                tx,
+                                ty,
+                                texId,
+                                wallGlow);
 
                         if (texel != RC3D_SPRITE_TEX_TRANSPARENT) {
                             *dst = texel;
@@ -1887,7 +2170,16 @@ static inline void renderMaskedTexturedBandIfVisible(
                     const int32_t vStepRot = (int32_t)(vStepF * 65536.0f);
 
                     for (int y = y0; y <= y1; ++y) {
-                        const uint8_t texel = wallTexelFetch(texId, (uRot >> 16), (vRot >> 16));
+                        const int tx = (uRot >> 16);
+                        const int ty = (vRot >> 16);
+                        const uint8_t texel =
+                            rc3dShadePaletteTexel(
+                                wallTexelFetch(texId, tx, ty),
+                                shadeDist,
+                                tx,
+                                ty,
+                                texId,
+                                wallGlow);
 
                         if (texel != RC3D_SPRITE_TEX_TRANSPARENT) {
                             *dst = texel;
@@ -2048,6 +2340,7 @@ static inline void fillSectorColumnSpan(
                 rayDirY,
                 sec->ceilHeight,
                 sec->ceilColor,
+                sec->glowlevel,
                 horizon,
                 sec,
                 1
@@ -2068,6 +2361,7 @@ static inline void fillSectorColumnSpan(
                 rayDirY,
                 sec->floorHeight,
                 sec->floorColor,
+                sec->glowlevel,
                 horizon,
                 sec,
                 0
@@ -3025,8 +3319,16 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
             for (int sy = colTop; sy <= colBottom; ++sy) {
                 const int ty = ((sy - topY) * RC3D_TEX_SIZE) / unclampedHeight;
                 const uint8_t texel = texels[(ty * RC3D_TEX_SIZE) + tx];
+                const uint8_t litTexel =
+                    rc3dShadePaletteTexel(
+                        texel,
+                        camDepth * RC3D_LIGHT_SPRITE_DIST_SCALE,
+                        tx,
+                        ty,
+                        sprite->texId,
+                        0u);
 
-                if (texel == RC3D_SPRITE_TEX_TRANSPARENT) {
+                if (litTexel == RC3D_SPRITE_TEX_TRANSPARENT) {
                     continue;
                 }
 
@@ -3034,7 +3336,7 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                     continue;
                 }
 
-                fb[(sy * SCREEN_W) + sx] = texel;
+                fb[(sy * SCREEN_W) + sx] = litTexel;
             }
         }
     }
