@@ -145,6 +145,8 @@ enum
     GUI_BTN_SECTOR_COPY_PROPS,
     GUI_BTN_SECTOR_PASTE_PROPS,
 
+    GUI_BTN_WALL_COPY_PROPS,
+    GUI_BTN_WALL_PASTE_PROPS,
     GUI_BTN_WALL_OPENBOT_MINUS,
     GUI_BTN_WALL_OPENBOT_PLUS,
     GUI_BTN_WALL_OPENTOP_MINUS,
@@ -311,6 +313,18 @@ typedef struct {
     float ceilTexAngle;
 } EdSectorClipboard;
 
+typedef struct {
+    float openBottom;
+    float openTop;
+    uint8_t upperColor;
+    uint8_t midColor;
+    uint8_t lowerColor;
+    uint8_t flags;
+    uint32_t tex_flags;
+    float texScaleX;
+    float texScaleY;
+} EdWallClipboard;
+
 
 typedef struct {
     EdVec2 verts[ED_MAX_VERTS];
@@ -364,6 +378,18 @@ typedef struct {
     EdSectorClipboard copiedSectorProps;
     int hasCopiedSectorProps;
     int copiedSectorPropsSourceSector;
+    uint8_t copiedWallUpperColor;
+    uint8_t copiedWallMidColor;
+    uint8_t copiedWallLowerColor;
+    int hasCopiedWallTexture;
+    float copiedWallTexScaleX;
+    float copiedWallTexScaleY;
+    int hasCopiedWallScale;
+    float copiedWallTexAngle;
+    int hasCopiedWallRotation;
+    EdWallClipboard copiedWallProps;
+    int hasCopiedWallProps;
+    int copiedWallPropsSourceWall;
 
 
     int hoverVert;
@@ -696,6 +722,18 @@ typedef struct {
     EdSectorClipboard copiedSectorProps;
     int hasCopiedSectorProps;
     int copiedSectorPropsSourceSector;
+    uint8_t copiedWallUpperColor;
+    uint8_t copiedWallMidColor;
+    uint8_t copiedWallLowerColor;
+    int hasCopiedWallTexture;
+    float copiedWallTexScaleX;
+    float copiedWallTexScaleY;
+    int hasCopiedWallScale;
+    float copiedWallTexAngle;
+    int hasCopiedWallRotation;
+    EdWallClipboard copiedWallProps;
+    int hasCopiedWallProps;
+    int copiedWallPropsSourceWall;
 
     int selectedVert;
     int selectedWall;
@@ -737,6 +775,8 @@ static int splitSelectedSectorByDraftLine(void);
 static void clearAllSelections(void);
 static void clearMultiVertexSelection(void);
 static void clearMultiWallSelection(void);
+static void setWallTexScaleX(EdWall *w, float scaleX);
+static void setWallTexScaleY(EdWall *w, float scaleY);
 static void clearPendingLeftMouseAction(void);
 static void beginBoxSelect(int mouseX, int mouseY, int selectWalls);
 static void updateBoxSelect(int mouseX, int mouseY);
@@ -1849,6 +1889,18 @@ static void captureSnapshot(EditorSnapshot *s)
     s->copiedSectorProps = g_ed.copiedSectorProps;
     s->hasCopiedSectorProps = g_ed.hasCopiedSectorProps;
     s->copiedSectorPropsSourceSector = g_ed.copiedSectorPropsSourceSector;
+    s->copiedWallUpperColor = g_ed.copiedWallUpperColor;
+    s->copiedWallMidColor = g_ed.copiedWallMidColor;
+    s->copiedWallLowerColor = g_ed.copiedWallLowerColor;
+    s->hasCopiedWallTexture = g_ed.hasCopiedWallTexture;
+    s->copiedWallTexScaleX = g_ed.copiedWallTexScaleX;
+    s->copiedWallTexScaleY = g_ed.copiedWallTexScaleY;
+    s->hasCopiedWallScale = g_ed.hasCopiedWallScale;
+    s->copiedWallTexAngle = g_ed.copiedWallTexAngle;
+    s->hasCopiedWallRotation = g_ed.hasCopiedWallRotation;
+    s->copiedWallProps = g_ed.copiedWallProps;
+    s->hasCopiedWallProps = g_ed.hasCopiedWallProps;
+    s->copiedWallPropsSourceWall = g_ed.copiedWallPropsSourceWall;
 
     s->selectedVert = g_ed.selectedVert;
     s->selectedWall = g_ed.selectedWall;
@@ -1898,6 +1950,18 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.copiedSectorProps = s->copiedSectorProps;
     g_ed.hasCopiedSectorProps = s->hasCopiedSectorProps;
     g_ed.copiedSectorPropsSourceSector = s->copiedSectorPropsSourceSector;
+    g_ed.copiedWallUpperColor = s->copiedWallUpperColor;
+    g_ed.copiedWallMidColor = s->copiedWallMidColor;
+    g_ed.copiedWallLowerColor = s->copiedWallLowerColor;
+    g_ed.hasCopiedWallTexture = s->hasCopiedWallTexture;
+    g_ed.copiedWallTexScaleX = s->copiedWallTexScaleX;
+    g_ed.copiedWallTexScaleY = s->copiedWallTexScaleY;
+    g_ed.hasCopiedWallScale = s->hasCopiedWallScale;
+    g_ed.copiedWallTexAngle = s->copiedWallTexAngle;
+    g_ed.hasCopiedWallRotation = s->hasCopiedWallRotation;
+    g_ed.copiedWallProps = s->copiedWallProps;
+    g_ed.hasCopiedWallProps = s->hasCopiedWallProps;
+    g_ed.copiedWallPropsSourceWall = s->copiedWallPropsSourceWall;
 
     g_ed.selectedVert = s->selectedVert;
     g_ed.selectedWall = s->selectedWall;
@@ -2344,6 +2408,18 @@ static void clearWallTexFlags(EdWall *w)
     w->texScaleY = 1.0f;
 }
 
+static uint8_t wallClipboardFlagsFromWall(const EdWall *w)
+{
+    if (!w) return 0;
+
+    return (uint8_t)(w->flags & (RC3D_WALL_UPPER |
+                                 RC3D_WALL_MIDDLE |
+                                 RC3D_WALL_LOWER |
+                                 RC3D_WALL_SOLID |
+                                 RC3D_WALL_TRANSPARENCY |
+                                 RC3D_WALL_MANUAL_TARGET));
+}
+
 static uint8_t clampLightLevel(int level)
 {
     if (level < 0) return 0;
@@ -2440,6 +2516,63 @@ static int pasteSectorPropertiesFromClipboard(int sectorIndex)
     snprintf(msg, sizeof(msg), "Pasted sector properties to sector %d", sectorIndex);
     setEditorStatus(msg);
     return 1;
+}
+
+static void copyWallPropsToClipboard(int wallIndex)
+{
+    EdWallClipboard *clip;
+    const EdWall *wall;
+    char msg[128];
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+
+    clip = &g_ed.copiedWallProps;
+    wall = &g_edMap.walls[wallIndex];
+
+    clip->openBottom = wall->openBottom;
+    clip->openTop = wall->openTop;
+    clip->upperColor = wall->upperColor;
+    clip->midColor = wall->midColor;
+    clip->lowerColor = wall->lowerColor;
+    clip->flags = wallClipboardFlagsFromWall(wall);
+    clip->tex_flags = wall->tex_flags;
+    clip->texScaleX = wall->texScaleX;
+    clip->texScaleY = wall->texScaleY;
+
+    g_ed.hasCopiedWallProps = 1;
+    g_ed.copiedWallPropsSourceWall = wallIndex;
+
+    snprintf(msg, sizeof(msg), "Copied wall properties from wall %d", wallIndex);
+    setEditorStatus(msg);
+}
+
+static void pasteWallPropsFromClipboardToWall(int wallIndex)
+{
+    EdWall *wall;
+    const EdWallClipboard *clip;
+    uint8_t preservedPortal;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+
+    wall = &g_edMap.walls[wallIndex];
+    clip = &g_ed.copiedWallProps;
+    preservedPortal = (uint8_t)(wall->flags & RC3D_WALL_PORTAL);
+
+    wall->openBottom = clip->openBottom;
+    wall->openTop = clip->openTop;
+    if (wall->openTop < wall->openBottom) {
+        const float t = wall->openTop;
+        wall->openTop = wall->openBottom;
+        wall->openBottom = t;
+    }
+
+    wall->upperColor = clip->upperColor;
+    wall->midColor = clip->midColor;
+    wall->lowerColor = clip->lowerColor;
+    wall->flags = preservedPortal | clip->flags;
+    wall->tex_flags = clip->tex_flags;
+    setWallTexScaleX(wall, clip->texScaleX);
+    setWallTexScaleY(wall, clip->texScaleY);
 }
 
 static float wrapAnglePositive(float angleRad)
@@ -4725,6 +4858,18 @@ static void beginNewMap(void)
     memset(&g_ed.copiedSectorProps, 0, sizeof(g_ed.copiedSectorProps));
     g_ed.hasCopiedSectorProps = 0;
     g_ed.copiedSectorPropsSourceSector = -1;
+    g_ed.copiedWallUpperColor = 0;
+    g_ed.copiedWallMidColor = 0;
+    g_ed.copiedWallLowerColor = 0;
+    g_ed.hasCopiedWallTexture = 0;
+    g_ed.copiedWallTexScaleX = 1.0f;
+    g_ed.copiedWallTexScaleY = 1.0f;
+    g_ed.hasCopiedWallScale = 0;
+    g_ed.copiedWallTexAngle = 0.0f;
+    g_ed.hasCopiedWallRotation = 0;
+    memset(&g_ed.copiedWallProps, 0, sizeof(g_ed.copiedWallProps));
+    g_ed.hasCopiedWallProps = 0;
+    g_ed.copiedWallPropsSourceWall = -1;
 
     g_ed.selectionType = ED_SEL_NONE;
     g_ed.selectedVert = -1;
@@ -6766,13 +6911,15 @@ static void drawExpandedEditorPanel(void)
         if(g_ed.selectionType == ED_SEL_WALL){
             drawText(x, y, "--- WALL HELP", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP;
-            drawText(x, y, "[R]/[T] bottom level,  [Y]/[U] top level", ED_TEXT_COL);
+            drawText(x, y, "[NUM_1]/[NUM_2]/[NUM_3] copy wall tex/scale/rot", ED_TEXT_COL);
             y += ED_ROW_STEP;
-            drawText(x, y, "[Q]/[W] wall texture angle", ED_TEXT_COL);
+            drawText(x, y, "[SHIFT+NUM_1]/[SHIFT+NUM_2]/[SHIFT+NUM_3] paste", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+            drawText(x, y, "[R]/[T] bottom level,  [Y]/[U] top level", ED_TEXT_COL);
             y += ED_ROW_STEP;
             drawText(x, y, "[A]/[S] upper texture, [D]/[F] middle texture, [H]/[J] lower texture", ED_TEXT_COL);
             y += ED_ROW_STEP;
-            drawText(x, y, "[SPACE] split wall (insert vertex)   [5] extrude wall", ED_TEXT_COL);
+            drawText(x, y, "[CTRL+1..4] wall type, [CTRL+5] extrude, [SPACE] split", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(hasMultiWallSelection()){
@@ -6780,9 +6927,13 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP;
             drawText(x, y, "[CTRL+CLICK] add/remove walls, [CTRL+DRAG] box-select walls", ED_TEXT_COL);
             y += ED_ROW_STEP;
+            drawText(x, y, "[NUM_1]/[NUM_2]/[NUM_3] copy from primary wall,", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+            drawText(x, y, "[SHIFT+NUM_1]/[SHIFT+NUM_2]/[SHIFT+NUM_3] paste to all", ED_TEXT_COL);
+            y += ED_ROW_STEP;
             drawText(x, y, "[R]/[T]/[Y]/[U], [Q]/[W], [A]/[S]/[D]/[F]/[H]/[J] apply to all", ED_TEXT_COL);
             y += ED_ROW_STEP;
-            drawText(x, y, "Texture browser and wall buttons apply to every selected wall", ED_TEXT_COL);
+            drawText(x, y, "Texture browser, Copy Props, and Paste Props apply to the full selection", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(g_ed.selectionType == ED_SEL_SECTOR){
@@ -7108,38 +7259,41 @@ void rc3dEditInit(void)
 
     #define controloff 33
     #define controloffw 16 + (SCREEN_W - ED_INSPECTOR_PANEL)
+    #define inspectWallYOffset 20
     /* expanded panel button rows aligned to 16px font + 6px spacing */
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_SOLID,    controloffw + (84 * 0), 194 + controloff, 80, ED_BTN_H, "1:Solid");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PORTAL,   controloffw + (84 * 1), 194 + controloff, 80, ED_BTN_H, "2:Portal");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_WINDOW,   controloffw + (84 * 2), 194 + controloff, 80, ED_BTN_H, "3:Window");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_DOOR,     controloffw + (84 * 3), 194 + controloff, 80, ED_BTN_H, "4:Door");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_SOLID,    controloffw + (84 * 0), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Solid");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PORTAL,   controloffw + (84 * 1), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Portal");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_WINDOW,   controloffw + (84 * 2), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Window");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_DOOR,     controloffw + (84 * 3), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Door");
     //rcguiCreateButton(&g_ui, GUI_BTN_WALL_SPLIT,    controloffw + (84 * 4), 194 + controloff, 80, ED_BTN_H, "Split");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TRANSPARENCY, controloffw + (84 * 4), 194 + controloff, 80, ED_BTN_H, "Transp.");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TRANSPARENCY, controloffw + (84 * 4), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Transp.");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_COPY_PROPS,    176 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Copy Props");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PASTE_PROPS,   278 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Paste Props");
     
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (84 * 2), 256 + controloff, 80, ED_BTN_H, "Clamp XL");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (84 * 3), 256 + controloff, 80, ED_BTN_H, "Clamp XR");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (84 * 2), 288 + controloff, 80, ED_BTN_H, "Clamp YT");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (84 * 3), 288 + controloff, 80, ED_BTN_H, "Clamp YB");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (84 * 2), 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp XL");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (84 * 3), 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp XR");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (84 * 2), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YT");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (84 * 3), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YB");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 136 + controloffw, 320 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS,  164 + controloffw, 320 + controloff, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 336 + controloffw, 320 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS,  364 + controloffw, 320 + controloff, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 136 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS,  164 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 336 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS,  364 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "+");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 156 + controloffw, 352 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS,  184 + controloffw, 352 + controloff, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 216 + controloffw, 352 + controloff, 60, 24, "Reset");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 156 + controloffw, 352 + controloff + inspectWallYOffset, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS,  184 + controloffw, 352 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 216 + controloffw, 352 + controloff + inspectWallYOffset, 60, 24, "Reset");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 162 + controloffw, 384 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS,  194 + controloffw, 384 + controloff, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 162 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS,  194 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, "+");
     
 
     // sector inspector UI - wall
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 182 + controloffw, 88 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 88 + controloff, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 116 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 182 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, "+");
 
 
     // sector inspector UI - sector / heights
@@ -7988,6 +8142,8 @@ static void refreshEditorUIButtonState(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 0);
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 0);
@@ -8048,6 +8204,10 @@ static void refreshEditorUIButtonState(void)
         rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
+        rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
+        rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_PASTE_PROPS, !g_ed.hasCopiedWallProps);
 
         rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 1);
@@ -8153,6 +8313,8 @@ static void handleEditorUI(int mouseX, int mouseY,
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 0);
     //rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SPLIT, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 0);
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 0);
@@ -8222,6 +8384,10 @@ static void handleEditorUI(int mouseX, int mouseY,
             rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
+            rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
+            rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_PASTE_PROPS, !g_ed.hasCopiedWallProps);
             //rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SPLIT, 1);
 
             rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 1);
@@ -8334,6 +8500,34 @@ static void handleEditorUI(int mouseX, int mouseY,
         case GUI_BTN_WALL_DOOR: executeEditorAction(ED_ACT_WALL_DOOR, worldX, worldY); break;
         case GUI_BTN_WALL_SPLIT: executeEditorAction(ED_ACT_WALL_SPLIT, worldX, worldY); break;
         case GUI_BTN_WALL_TRANSPARENCY: executeEditorAction(ED_ACT_WALL_TRANSPARENCY, worldX, worldY); break;
+        case GUI_BTN_WALL_COPY_PROPS:
+            if (hasAnyWallEditSelection()) {
+                const int primaryWall = getPrimaryWallEditIndex();
+                if (primaryWall >= 0) {
+                    copyWallPropsToClipboard(primaryWall);
+                }
+            }
+            break;
+        case GUI_BTN_WALL_PASTE_PROPS:
+            if (hasAnyWallEditSelection()) {
+                if (g_ed.hasCopiedWallProps) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    char msg[128];
+
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        pasteWallPropsFromClipboardToWall(wallIndices[i]);
+                    }
+
+                    snprintf(msg, sizeof(msg), "Pasted wall properties to %d selected wall%s",
+                             wallCount, (wallCount == 1) ? "" : "s");
+                    setEditorStatus(msg);
+                } else {
+                    setEditorStatus("No copied wall properties");
+                }
+            }
+            break;
 
 
         // sector texture settings //////////////////////////////////////////////////
@@ -8791,8 +8985,8 @@ static void drawInspectorPanel(void)
 
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 414, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 414, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect(px + 8, py, pw - 16, 430, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 430, ED_INSPECTOR_PARENT_PANELS_FRAME);
         py += 6;
 
         snprintf(buf, sizeof(buf), "WALL %d", g_ed.selectedWall);
@@ -8802,6 +8996,17 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
 
         snprintf(buf, sizeof(buf), "Neighbour: %d", w->neighbour);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        if (g_ed.hasCopiedWallProps) {
+            if (g_ed.copiedWallPropsSourceWall >= 0) {
+                snprintf(buf, sizeof(buf), "Props clip: Wall %d", g_ed.copiedWallPropsSourceWall);
+            } else {
+                snprintf(buf, sizeof(buf), "Props clip: Ready");
+            }
+        } else {
+            snprintf(buf, sizeof(buf), "Props clip: Empty");
+        }
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
         py += 8;
 
@@ -8949,14 +9154,25 @@ static void drawInspectorPanel(void)
 
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 414, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 414, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect(px + 8, py, pw - 16, 438, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 438, ED_INSPECTOR_PARENT_PANELS_FRAME);
         py += 6;
 
         snprintf(buf, sizeof(buf), "WALLS (%d)", wallCount);
         drawText(px + 16, py, buf, ED_INSPECTOR_TEXT_COL); py += 30;
 
         snprintf(buf, sizeof(buf), "First wall: %d", primaryWall);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        if (g_ed.hasCopiedWallProps) {
+            if (g_ed.copiedWallPropsSourceWall >= 0) {
+                snprintf(buf, sizeof(buf), "Props clip: Wall %d", g_ed.copiedWallPropsSourceWall);
+            } else {
+                snprintf(buf, sizeof(buf), "Props clip: Ready");
+            }
+        } else {
+            snprintf(buf, sizeof(buf), "Props clip: Empty");
+        }
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
 
         if (neighbourMixed) snprintf(buf, sizeof(buf), "Neighbour: Mixed");
@@ -9810,13 +10026,115 @@ void rc3dEditUpdate(float dt,
     if (hasAnyWallEditSelection()) {
         int wallIndices[ED_MAX_WALLS];
         const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+        const int shiftDown = (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) ? 1 : 0;
+        const int copyWallTexturePressed = !ctrlDown && !shiftDown &&
+            keyPressedOnce(keys, SDL_SCANCODE_KP_1);
+        const int copyWallScalePressed = !ctrlDown && !shiftDown &&
+            keyPressedOnce(keys, SDL_SCANCODE_KP_2);
+        const int copyWallRotationPressed = !ctrlDown && !shiftDown &&
+            keyPressedOnce(keys, SDL_SCANCODE_KP_3);
+        const int pasteWallTexturePressed = !ctrlDown && shiftDown &&
+            keyPressedOnce(keys, SDL_SCANCODE_KP_1);
+        const int pasteWallScalePressed = !ctrlDown && shiftDown &&
+            keyPressedOnce(keys, SDL_SCANCODE_KP_2);
+        const int pasteWallRotationPressed = !ctrlDown && shiftDown &&
+            keyPressedOnce(keys, SDL_SCANCODE_KP_3);
 
-        if (keyPressedOnce(keys, SDL_SCANCODE_1)) executeEditorAction(ED_ACT_WALL_SOLID, worldX, worldY);
-        if (keyPressedOnce(keys, SDL_SCANCODE_2)) executeEditorAction(ED_ACT_WALL_PORTAL, worldX, worldY);
-        if (keyPressedOnce(keys, SDL_SCANCODE_3)) executeEditorAction(ED_ACT_WALL_WINDOW, worldX, worldY);
-        if (keyPressedOnce(keys, SDL_SCANCODE_4)) executeEditorAction(ED_ACT_WALL_DOOR, worldX, worldY);
-        if (hasSingleWallSelection() && keyPressedOnce(keys, SDL_SCANCODE_5)) {
+        if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_1)) executeEditorAction(ED_ACT_WALL_SOLID, worldX, worldY);
+        if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_2)) executeEditorAction(ED_ACT_WALL_PORTAL, worldX, worldY);
+        if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_3)) executeEditorAction(ED_ACT_WALL_WINDOW, worldX, worldY);
+        if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_4)) executeEditorAction(ED_ACT_WALL_DOOR, worldX, worldY);
+        if (hasSingleWallSelection() && ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_5)) {
             executeEditorAction(ED_ACT_WALL_EXTRUDE, worldX, worldY);
+        }
+
+        if (copyWallTexturePressed) {
+            const int primaryWall = getPrimaryWallEditIndex();
+            char msg[128];
+            if (primaryWall >= 0) {
+                const EdWall *src = &g_edMap.walls[primaryWall];
+                g_ed.copiedWallUpperColor = src->upperColor;
+                g_ed.copiedWallMidColor = src->midColor;
+                g_ed.copiedWallLowerColor = src->lowerColor;
+                g_ed.hasCopiedWallTexture = 1;
+                snprintf(msg, sizeof(msg), "Copied wall textures from wall %d", primaryWall);
+                setEditorStatus(msg);
+            }
+        }
+
+        if (copyWallScalePressed) {
+            const int primaryWall = getPrimaryWallEditIndex();
+            char msg[128];
+            if (primaryWall >= 0) {
+                const EdWall *src = &g_edMap.walls[primaryWall];
+                g_ed.copiedWallTexScaleX = src->texScaleX;
+                g_ed.copiedWallTexScaleY = src->texScaleY;
+                g_ed.hasCopiedWallScale = 1;
+                snprintf(msg, sizeof(msg), "Copied wall scale from wall %d", primaryWall);
+                setEditorStatus(msg);
+            }
+        }
+
+        if (copyWallRotationPressed) {
+            const int primaryWall = getPrimaryWallEditIndex();
+            char msg[128];
+            if (primaryWall >= 0) {
+                const EdWall *src = &g_edMap.walls[primaryWall];
+                g_ed.copiedWallTexAngle = getWallTexAngle(src);
+                g_ed.hasCopiedWallRotation = 1;
+                snprintf(msg, sizeof(msg), "Copied wall rotation from wall %d", primaryWall);
+                setEditorStatus(msg);
+            }
+        }
+
+        if (pasteWallTexturePressed) {
+            if (g_ed.hasCopiedWallTexture) {
+                char msg[128];
+                pushUndoState();
+                for (int i = 0; i < wallCount; i++) {
+                    EdWall *w = &g_edMap.walls[wallIndices[i]];
+                    w->upperColor = g_ed.copiedWallUpperColor;
+                    w->midColor = g_ed.copiedWallMidColor;
+                    w->lowerColor = g_ed.copiedWallLowerColor;
+                }
+                snprintf(msg, sizeof(msg), "Pasted wall textures to %d selected wall%s",
+                         wallCount, (wallCount == 1) ? "" : "s");
+                setEditorStatus(msg);
+            } else {
+                setEditorStatus("No copied wall textures");
+            }
+        }
+
+        if (pasteWallScalePressed) {
+            if (g_ed.hasCopiedWallScale) {
+                char msg[128];
+                pushUndoState();
+                for (int i = 0; i < wallCount; i++) {
+                    EdWall *w = &g_edMap.walls[wallIndices[i]];
+                    setWallTexScaleX(w, g_ed.copiedWallTexScaleX);
+                    setWallTexScaleY(w, g_ed.copiedWallTexScaleY);
+                }
+                snprintf(msg, sizeof(msg), "Pasted wall scale to %d selected wall%s",
+                         wallCount, (wallCount == 1) ? "" : "s");
+                setEditorStatus(msg);
+            } else {
+                setEditorStatus("No copied wall scale");
+            }
+        }
+
+        if (pasteWallRotationPressed) {
+            if (g_ed.hasCopiedWallRotation) {
+                char msg[128];
+                pushUndoState();
+                for (int i = 0; i < wallCount; i++) {
+                    setWallTexAngleEx(wallIndices[i], g_ed.copiedWallTexAngle);
+                }
+                snprintf(msg, sizeof(msg), "Pasted wall rotation to %d selected wall%s",
+                         wallCount, (wallCount == 1) ? "" : "s");
+                setEditorStatus(msg);
+            } else {
+                setEditorStatus("No copied wall rotation");
+            }
         }
 
         for (int i = 0; i < wallCount; i++) {

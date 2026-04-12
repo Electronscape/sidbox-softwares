@@ -44,18 +44,20 @@
 #define RC3D_TEX_SIZE          64
 #define RC3D_TEX_MASK          (RC3D_TEX_SIZE - 1)
 
+// colour bank size, palette offset 64, length of each palette back is 64
 #define RC3D_LIGHT_BANK_START            64
 #define RC3D_LIGHT_BANK_SIZE             64
+
 #define RC3D_LIGHT_BLACK_INDEX           16
 #define RC3D_LIGHT_MID_BRIGHTNESS        0.75f
-#define RC3D_LIGHT_DARK_BRIGHTNESS       0.25f
+#define RC3D_LIGHT_DARK_BRIGHTNESS       0.35f
 #define RC3D_LIGHT_DEFAULT_BRIGHT_RANGE  8.0f
 #define RC3D_LIGHT_DEFAULT_MID_RANGE     6.0f
 #define RC3D_LIGHT_DEFAULT_DARK_RANGE    12.0f
-#define RC3D_LIGHT_BRIGHT_BLEND_RATIO    0.35f
+#define RC3D_LIGHT_BRIGHT_BLEND_RATIO    1.00f
 #define RC3D_LIGHT_WALL_DIST_SCALE       1.00f
-#define RC3D_LIGHT_PLANE_DIST_SCALE      0.90f
-#define RC3D_LIGHT_SPRITE_DIST_SCALE     1.00f
+#define RC3D_LIGHT_PLANE_DIST_SCALE      0.98f
+#define RC3D_LIGHT_SPRITE_DIST_SCALE     0.70f
 
 extern uint8_t spr_man[]; // test sprite
 
