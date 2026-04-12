@@ -43,6 +43,7 @@
 #define ED_EPSILON              0.001f
 #define ED_PICK_DIST_PX         25
 #define ED_CLICK_DRAG_TOLERANCE_PX 5
+#define ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT 64.0f
 
 
 
@@ -494,6 +495,7 @@ typedef struct {
     int requestQuit;
 
     int bUseVectorFill;
+    int bUseTextureFill;
     int textureBrowserOffset;
     int textureBrowserTarget;
 
@@ -803,6 +805,8 @@ static void rotateSelectedVertices(float angleRad);
 // sector fill stuffs, prototypes
 static uint8_t getSectorFillColour(int sectorIndex);
 static int getSectorFillStepY(int sectorIndex);
+static int wrapTextureCoordLocal(int v, int size);
+static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec);
 static void drawFilledSector2D(int sectorIndex);
 
 /////// GUI PARTS
@@ -4800,6 +4804,7 @@ static void beginNewMap(void)
     g_ed.selectedWallCount = 0;
 
     g_ed.bUseVectorFill = 0;
+    g_ed.bUseTextureFill = 0;
 
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
@@ -5618,6 +5623,12 @@ static int splitSelectedSectorByDraftLine(void)
     const uint8_t floorC = sec->floorColor;
     const uint8_t ceilC  = sec->ceilColor;
     const uint8_t glowL  = sec->glowlevel;
+    const float floorTexScaleX = sec->floorTexScaleX;
+    const float floorTexScaleY = sec->floorTexScaleY;
+    const float floorTexAngle  = sec->floorTexAngle;
+    const float ceilTexScaleX  = sec->ceilTexScaleX;
+    const float ceilTexScaleY  = sec->ceilTexScaleY;
+    const float ceilTexAngle   = sec->ceilTexAngle;
 
     const int oldSelectedSector = g_ed.selectedSector;
 
@@ -5651,6 +5662,13 @@ static int splitSelectedSectorByDraftLine(void)
     g_edMap.sectors[oldSelectedSector].floorColor = floorC;
     g_edMap.sectors[oldSelectedSector].ceilColor = ceilC;
     g_edMap.sectors[oldSelectedSector].glowlevel = glowL;
+    g_edMap.sectors[oldSelectedSector].floorTexScaleX = floorTexScaleX;
+    g_edMap.sectors[oldSelectedSector].floorTexScaleY = floorTexScaleY;
+    g_edMap.sectors[oldSelectedSector].floorTexAngle  = floorTexAngle;
+    g_edMap.sectors[oldSelectedSector].ceilTexScaleX  = ceilTexScaleX;
+    g_edMap.sectors[oldSelectedSector].ceilTexScaleY  = ceilTexScaleY;
+    g_edMap.sectors[oldSelectedSector].ceilTexAngle   = ceilTexAngle;
+    sanitizeSectorProperties(&g_edMap.sectors[oldSelectedSector]);
 
     /* sector B is new */
     newSector = g_edMap.sectorCount;
@@ -5667,6 +5685,13 @@ static int splitSelectedSectorByDraftLine(void)
     g_edMap.sectors[newSector].floorColor = floorC;
     g_edMap.sectors[newSector].ceilColor = ceilC;
     g_edMap.sectors[newSector].glowlevel = glowL;
+    g_edMap.sectors[newSector].floorTexScaleX = floorTexScaleX;
+    g_edMap.sectors[newSector].floorTexScaleY = floorTexScaleY;
+    g_edMap.sectors[newSector].floorTexAngle  = floorTexAngle;
+    g_edMap.sectors[newSector].ceilTexScaleX  = ceilTexScaleX;
+    g_edMap.sectors[newSector].ceilTexScaleY  = ceilTexScaleY;
+    g_edMap.sectors[newSector].ceilTexAngle   = ceilTexAngle;
+    sanitizeSectorProperties(&g_edMap.sectors[newSector]);
     g_edMap.sectorCount++;
 
     /* ---------------------------------------------------- */
@@ -6456,6 +6481,77 @@ static int getSectorFillStepY(int sectorIndex)
     return 4;
 }
 
+static int wrapTextureCoordLocal(int v, int size)
+{
+    if (size <= 0) {
+        return 0;
+    }
+
+    v %= size;
+    if (v < 0) {
+        v += size;
+    }
+
+    return v;
+}
+
+static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
+{
+    uint8_t *tex;
+    uint8_t *dst;
+    float scaleX, scaleY;
+    float cosA, sinA;
+    float worldStepX;
+    float worldX, worldY;
+    float texU, texV;
+    float texUStep, texVStep;
+
+    if (!sec) {
+        return;
+    }
+
+    if ((unsigned)y >= EDIT_VIEW_PORT_HEIGHT || x1 < x0) {
+        return;
+    }
+
+    tex = getTexturePtr(sec->floorColor);
+    if (!tex) {
+        drawLineDots(x0, y, x1, y, getSectorFillColour((int)(sec - g_edMap.sectors)));
+        return;
+    }
+
+    scaleX = sec->floorTexScaleX;
+    scaleY = sec->floorTexScaleY;
+
+    if (fabsf(scaleX) < 0.001f) scaleX = 0.1f;
+    if (fabsf(scaleY) < 0.001f) scaleY = 0.1f;
+
+    cosA = cosf(sec->floorTexAngle);
+    sinA = sinf(sec->floorTexAngle);
+
+    worldStepX = 1.0f / g_ed.zoom;
+    worldX = g_ed.camX + ((float)x0 - (EDIT_VIEW_PORT_WIDTH * 0.5f)) / g_ed.zoom;
+    worldY = g_ed.camY + ((float)y - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
+
+    texU = (((worldX * cosA) - (worldY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
+    texV = (((worldX * sinA) + (worldY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
+
+    texUStep = ((worldStepX * cosA) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
+    texVStep = ((worldStepX * sinA) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
+
+    dst = &fb[(y * SCREEN_W) + x0];
+
+    for (int x = x0; x <= x1; x++) {
+        const int tx = wrapTextureCoordLocal((int)floorf(texU), TEXTURE_WIDTH);
+        const int ty = wrapTextureCoordLocal((int)floorf(texV), TEXTURE_HEIGHT);
+
+        *dst++ = tex[(ty * TEXTURE_WIDTH) + tx];
+
+        texU += texUStep;
+        texV += texVStep;
+    }
+}
+
 static void drawFilledSector2D(int sectorIndex)
 {
     static int polyX[ED_MAX_WALLS];
@@ -6467,8 +6563,10 @@ static void drawFilledSector2D(int sectorIndex)
     int minY, maxY;
     uint8_t fillCol;
     int stepY;
+    const int useTextureFill = g_ed.bUseTextureFill != 0;
+    const int useVectorFill = !useTextureFill && (g_ed.bUseVectorFill != 0);
 
-    if(g_ed.bUseVectorFill == 0) return;
+    if (!useTextureFill && !useVectorFill) return;
 
     if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
 
@@ -6501,7 +6599,7 @@ static void drawFilledSector2D(int sectorIndex)
     maxY = clampi_local(maxY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
 
     fillCol = getSectorFillColour(sectorIndex);
-    stepY   = getSectorFillStepY(sectorIndex);
+    stepY   = useTextureFill ? 1 : getSectorFillStepY(sectorIndex);
     if (stepY < 1) stepY = 1;
 
     for (int y = minY; y <= maxY; y += stepY) {
@@ -6549,7 +6647,11 @@ static void drawFilledSector2D(int sectorIndex)
             x1 = clampi_local(x1, 0, EDIT_VIEW_PORT_WIDTH - 1);
 
             if (x1 >= x0) {
-                drawLineDots(x0, y, x1, y, fillCol);
+                if (useTextureFill) {
+                    drawTexturedSectorSpan(x0, x1, y, sec);
+                } else {
+                    drawLineDots(x0, y, x1, y, fillCol);
+                }
             }
         }
     }
@@ -6882,11 +6984,15 @@ static void drawExpandedEditorPanel(void)
         y += ED_ROW_STEP;
         drawText(x, y, "[F6] auto-build sectors from closed inner wall loops", ED_TEXT_COL);
         y += ED_ROW_STEP;
-        drawText(x, y, "[']  enable/disable filled view", ED_TEXT_COL);
+        drawText(x, y, "['] vector fill, [#] floor texture fill", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "CTRL+Z undo, CTRL+Y redo, F11 or CTRL+H history, [TAB] grid", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "[F7] Repair Topology, [F8] clean map, [SHIFT+DRAG] drop = merge", ED_TEXT_COL);
+
+        y += ED_ROW_STEP;
+        drawText(x, y, "[HOLD ALT] Priority Sector Select", ED_TEXT_COL);
+
         y += 6;//ED_ROW_STEP;
 
         if((g_ed.selectionType == ED_SEL_VERTEX) ||
@@ -7307,30 +7413,30 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 308 + controloffw,  58 + controloff, 96, ED_BTN_H, "Paste Props");
 
 
-    /* sector inspector UI - texture transform floor */
+    
     int sector_button_y_offsets = 55;
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 136 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS,  164 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "+");
-
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 336 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS,  364 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "+");
-
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 166 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS,  194 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 226 + controloffw, 258 + controloff + sector_button_y_offsets, 60, 24, "Reset");
-
     // sector inspector UI - texture transform ceiling
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 136 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS,  164 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 136 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS,  164 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "+");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 336 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS,  364 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 336 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS,  364 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "+");
 
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 166 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS,  194 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 226 + controloffw, 258 + controloff + sector_button_y_offsets, 60, 24, "Reset");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 166 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS,  194 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 226 + controloffw, 348 + controloff + sector_button_y_offsets, 60, 24, "Reset");
+    /* sector inspector UI - texture transform floor */
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 136 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS,  164 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "+");
+
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 336 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS,  364 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "+");
+
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 166 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS,  194 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 226 + controloffw, 348 + controloff + sector_button_y_offsets, 60, 24, "Reset");
 
 
     // confirmation dialog box buttons
@@ -9251,8 +9357,8 @@ static void drawInspectorPanel(void)
         const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 430, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 430, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect(px + 8, py, pw - 16, 428, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 428, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
         py += 8;
 
@@ -9287,7 +9393,7 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "Floor: %.3f", sec->floorHeight);
         drawText(px + 18,  py, buf, ED_TEXT_COL);   
 
-        snprintf(buf, sizeof(buf), "Ceil : %.3f", sec->ceilHeight);
+        snprintf(buf, sizeof(buf), "Ceiling : %.3f", sec->ceilHeight);
         drawText(px + 218,  py, buf, ED_TEXT_COL);   py += 30;
 
         py += 2;
@@ -9311,9 +9417,25 @@ static void drawInspectorPanel(void)
                  (unsigned)sec->floorColor, (unsigned)sec->ceilColor);
         drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 20;
 
+        // CEILING Texture UVs ////////////////////////////
+        py += 6;
+        drawRect(px + 12,  py, pw - 24, 86, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py, pw - 24, 86, ED_INSPECTOR_PANELS_PANELFRAME);
+        py += 6;
+        drawText(px + 18,  py, "CEILING UV", ED_INSPECTOR_PANELS_HEADER_TEXT);  py += 20;
+        py += 6;
+        snprintf(buf, sizeof(buf), "Scale X:%.3f", sec->ceilTexScaleX);
+        drawText(px + 18,  py, buf, ED_TEXT_COL); 
+
+        snprintf(buf, sizeof(buf), "Scale Y:%.3f", sec->ceilTexScaleY);
+        drawText(px + 218,  py, buf, ED_TEXT_COL);  py += 30;
+
+        snprintf(buf, sizeof(buf), "Rotate : %.1f deg", RAD2DEG(sec->ceilTexAngle));
+        drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 20;
+
 
         // FLOOR Texture UVs //////////////////////
-        py += 6;
+        py += 8;
         drawRect(px + 12,  py, pw - 24, 86, ED_INSPECTOR_PANELS_BACKPANEL);
         drawRectL(px + 12, py, pw - 24, 86, ED_INSPECTOR_PANELS_PANELFRAME);
         py += 6;
@@ -9327,23 +9449,8 @@ static void drawInspectorPanel(void)
         drawText(px + 218,  py, buf, ED_TEXT_COL); py += 30; 
 
         snprintf(buf, sizeof(buf), "Rotate : %.1f\xb0", RAD2DEG(sec->floorTexAngle));
-        drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 20;
-
-        // CEILING Texture UVs ////////////////////////////
-        py += 8;
-        drawRect(px + 12,  py, pw - 24, 86, ED_INSPECTOR_PANELS_BACKPANEL);
-        drawRectL(px + 12, py, pw - 24, 86, ED_INSPECTOR_PANELS_PANELFRAME);
-        py += 6;
-        drawText(px + 18,  py, "CEILING UV", ED_INSPECTOR_PANELS_HEADER_TEXT);  py += 20;
-        py += 6;
-        snprintf(buf, sizeof(buf), "Scale X:%.3f", sec->ceilTexScaleX);
-        drawText(px + 18,  py, buf, ED_TEXT_COL); 
-
-        snprintf(buf, sizeof(buf), "Scale Y:%.3f", sec->ceilTexScaleY);
-        drawText(px + 218,  py, buf, ED_TEXT_COL);  py += 30;
-
-        snprintf(buf, sizeof(buf), "Rotate : %.1f deg", RAD2DEG(sec->ceilTexAngle));
         drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 30;
+
     }
     else {
         drawRect(px + 8, py + 40, pw - 16, 318, ED_INSPECTOR_PARENT_PANELS_BG);
@@ -9773,9 +9880,24 @@ void rc3dEditUpdate(float dt,
         }
     }
 
-
-    if (keyPressedOnce(keys, SDL_SCANCODE_APOSTROPHE)){
+    if (keyPressedOnce(keys, SDL_SCANCODE_APOSTROPHE)) {
         g_ed.bUseVectorFill = 1 - g_ed.bUseVectorFill;
+        if (g_ed.bUseVectorFill) {
+            g_ed.bUseTextureFill = 0;
+            setEditorStatus("Vector sector fill enabled");
+        } else {
+            setEditorStatus("Vector sector fill disabled");
+        }
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_SEMICOLON) || ((keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) && keyPressedOnce(keys, SDL_SCANCODE_3))) {
+        g_ed.bUseTextureFill = 1 - g_ed.bUseTextureFill;
+        if (g_ed.bUseTextureFill) {
+            g_ed.bUseVectorFill = 0;
+            setEditorStatus("Floor texture fill enabled");
+        } else {
+            setEditorStatus("Floor texture fill disabled");
+        }
     }
 
     if (g_ed.ui_validator_visable) {

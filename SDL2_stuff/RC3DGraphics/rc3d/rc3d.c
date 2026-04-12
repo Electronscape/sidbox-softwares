@@ -3276,6 +3276,7 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
 
         for (int sx = drawLeft; sx <= drawRight; ++sx) {
             const int tx = ((sx - leftX) * RC3D_TEX_SIZE) / unclampedWidth;
+            uint8_t sectorGlow = 0u;
 
             int colTop    = (topY    < 0) ? 0 : topY;
             int colBottom = (bottomY >= SCREEN_H) ? (SCREEN_H - 1) : bottomY;
@@ -3300,6 +3301,8 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                         (int)(horizonGlobal - ((sec->ceilHeight  - eyeZ) * scale));
                     const int secBotY =
                         (int)(horizonGlobal - ((sec->floorHeight - eyeZ) * scale));
+
+                    sectorGlow = sec->glowlevel;
 
                     if (colTop < secTopY) {
                         colTop = secTopY;
@@ -3351,6 +3354,10 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                     const int visSecBotY =
                         (int)(horizonGlobal - ((visSec->floorHeight - eyeZ) * scale));
 
+                    if (sectorGlow == 0u) {
+                        sectorGlow = visSec->glowlevel;
+                    }
+
                     if (colTop < visSecTopY) {
                         colTop = visSecTopY;
                     }
@@ -3375,7 +3382,7 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                         tx,
                         ty,
                         sprite->texId,
-                        0u);
+                        sectorGlow);
 
                 if (litTexel == RC3D_SPRITE_TEX_TRANSPARENT) {
                     continue;
