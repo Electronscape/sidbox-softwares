@@ -64,7 +64,7 @@
 
 #define ED_BOTTOMBAR_X             6
 #define ED_BOTTOMBAR_Y             SCREEN_H - 60
-#define ED_BOTTOMBAR_W             890
+#define ED_BOTTOMBAR_W             758
 #define ED_BOTTOMBAR_H             (ED_FONT_H + (ED_UI_PAD * 2))
 
 #define ED_PANEL_X              6
@@ -243,6 +243,7 @@ typedef enum {
     ED_PENDING_LEFT_WALL_DRAG,
     ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX,
     ED_PENDING_LEFT_SECTOR_DRAG,
+    ED_PENDING_LEFT_EMPTY_CLICK,
     ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX
 } EdPendingLeftAction;
 
@@ -258,6 +259,11 @@ typedef struct {
     float x;
     float y;
 } EdVec2;
+
+typedef struct {
+    int index;
+    float depth;
+} IsoSortEntry;
 
 
 typedef struct {
@@ -326,6 +332,19 @@ typedef struct {
     float texScaleY;
 } EdWallClipboard;
 
+typedef struct {
+    EdVec2 verts[ED_MAX_VERTS];
+    int vertCount;
+
+    EdWall walls[ED_MAX_WALLS];
+    int wallCount;
+    EdSector sectors[ED_MAX_SECTORS];
+    int sectorCount;
+
+    float anchorX;
+    float anchorY;
+} EdSectorGeometryClipboard;
+
 
 typedef struct {
     EdVec2 verts[ED_MAX_VERTS];
@@ -391,6 +410,9 @@ typedef struct {
     EdWallClipboard copiedWallProps;
     int hasCopiedWallProps;
     int copiedWallPropsSourceWall;
+    EdSectorGeometryClipboard copiedSectorGeometry;
+    int hasCopiedSectorGeometry;
+    int copiedSectorGeometrySourceSector;
 
 
     int hoverVert;
@@ -412,6 +434,10 @@ typedef struct {
     /* multi-wall selection */
     uint8_t selectedWalls[ED_MAX_WALLS];
     int selectedWallCount;
+
+    /* multi-sector selection */
+    uint8_t selectedSectors[ED_MAX_SECTORS];
+    int selectedSectorCount;
 
     /* box select */
     int boxSelecting;
@@ -447,6 +473,10 @@ typedef struct {
     float dragWallV0StartY;
     float dragWallV1StartX;
     float dragWallV1StartY;
+    int   dragWallVertCount;
+    int   dragWallVertIndices[ED_MAX_VERTS];
+    float dragWallVertStartX[ED_MAX_VERTS];
+    float dragWallVertStartY[ED_MAX_VERTS];
 
     /* sector drag anchor */
     float dragSectorStartWorldX;
@@ -496,6 +526,7 @@ typedef struct {
 
     int bUseVectorFill;
     int bUseTextureFill;
+    int isometricView;
     int textureBrowserOffset;
     int textureBrowserTarget;
 
@@ -511,6 +542,8 @@ typedef struct {
     float pendingLeftWorldY;
     int pendingLeftTargetIndex;
     int pendingLeftCtrlDown;
+    int pendingLeftAltDown;
+    int pendingLeftBoxSelectWalls;
 
 } EditorState;
 
@@ -542,6 +575,179 @@ static int hasMultiWallSelection(void)
 static int hasAnyWallEditSelection(void)
 {
     return hasSingleWallSelection() || (g_ed.selectedWallCount > 0);
+}
+
+static void clearMultiSectorSelection(void)
+{
+    memset(g_ed.selectedSectors, 0, sizeof(g_ed.selectedSectors));
+    g_ed.selectedSectorCount = 0;
+}
+
+static int hasSingleSectorSelection(void)
+{
+    return (g_ed.selectionType == ED_SEL_SECTOR) &&
+           (g_ed.selectedSector >= 0) &&
+           (g_ed.selectedSector < g_edMap.sectorCount);
+}
+
+static int hasMultiSectorSelection(void)
+{
+    return (g_ed.selectionType == ED_SEL_NONE) &&
+           (g_ed.selectedSectorCount > 0);
+}
+
+static int hasAnySectorEditSelection(void)
+{
+    return hasSingleSectorSelection() || (g_ed.selectedSectorCount > 0);
+}
+
+static int getFirstMultiSelectedSectorIndex(void)
+{
+    for (int i = 0; i < g_edMap.sectorCount; i++) {
+        if (g_ed.selectedSectors[i]) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int getPrimarySectorEditIndex(void)
+{
+    if (hasSingleSectorSelection()) {
+        return g_ed.selectedSector;
+    }
+
+    return getFirstMultiSelectedSectorIndex();
+}
+
+static int isSectorInEditSelection(int sectorIndex)
+{
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) {
+        return 0;
+    }
+
+    if (hasSingleSectorSelection()) {
+        return g_ed.selectedSector == sectorIndex;
+    }
+
+    return g_ed.selectedSectors[sectorIndex] != 0;
+}
+
+static void addMultiSectorSelection(int sectorIndex)
+{
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+    if (g_ed.selectedSectors[sectorIndex]) return;
+
+    g_ed.selectedSectors[sectorIndex] = 1;
+    g_ed.selectedSectorCount++;
+}
+
+static void removeMultiSectorSelection(int sectorIndex)
+{
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+    if (!g_ed.selectedSectors[sectorIndex]) return;
+
+    g_ed.selectedSectors[sectorIndex] = 0;
+    if (g_ed.selectedSectorCount > 0) {
+        g_ed.selectedSectorCount--;
+    }
+}
+
+static void normalizeSectorSelectionState(void)
+{
+    if (g_ed.selectedSectorCount == 1 && g_ed.selectionType == ED_SEL_NONE) {
+        const int sectorIndex = getFirstMultiSelectedSectorIndex();
+
+        clearMultiSectorSelection();
+        if (sectorIndex >= 0 && sectorIndex < g_edMap.sectorCount) {
+            g_ed.selectionType = ED_SEL_SECTOR;
+            g_ed.selectedSector = sectorIndex;
+        }
+    }
+
+    if (g_ed.selectedSectorCount <= 0) {
+        clearMultiSectorSelection();
+    }
+
+    if (!hasSingleSectorSelection() && g_ed.selectionType == ED_SEL_SECTOR) {
+        g_ed.selectionType = ED_SEL_NONE;
+        g_ed.selectedSector = -1;
+    }
+}
+
+static void toggleSectorMultiSelection(int sectorIndex)
+{
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) {
+        return;
+    }
+
+    if (g_ed.selectionType == ED_SEL_VERTEX ||
+        g_ed.selectionType == ED_SEL_WALL ||
+        g_ed.selectedVertCount > 0 ||
+        g_ed.selectedWallCount > 0) {
+        clearAllSelections();
+    }
+
+    if (hasSingleSectorSelection()) {
+        addMultiSectorSelection(g_ed.selectedSector);
+        g_ed.selectionType = ED_SEL_NONE;
+        g_ed.selectedSector = -1;
+    }
+
+    if (g_ed.selectedSectors[sectorIndex]) {
+        removeMultiSectorSelection(sectorIndex);
+    } else {
+        addMultiSectorSelection(sectorIndex);
+    }
+
+    g_ed.selectedVert = -1;
+    g_ed.selectedWall = -1;
+    normalizeSectorSelectionState();
+}
+
+static int collectSectorEditSelectionIndices(int *outIndices, int maxOut)
+{
+    int count = 0;
+
+    if (!outIndices || maxOut <= 0) {
+        return 0;
+    }
+
+    if (hasSingleSectorSelection()) {
+        outIndices[0] = g_ed.selectedSector;
+        return 1;
+    }
+
+    for (int i = 0; i < g_edMap.sectorCount && count < maxOut; i++) {
+        if (!g_ed.selectedSectors[i]) continue;
+        outIndices[count++] = i;
+    }
+
+    return count;
+}
+
+static void remapMultiSectorSelectionFromOldToNew(const int *sectorRemap, int oldSectorCount)
+{
+    uint8_t oldSelected[ED_MAX_SECTORS];
+
+    if (!sectorRemap || oldSectorCount <= 0) {
+        clearMultiSectorSelection();
+        return;
+    }
+
+    memcpy(oldSelected, g_ed.selectedSectors, sizeof(oldSelected));
+    clearMultiSectorSelection();
+
+    for (int i = 0; i < oldSectorCount && i < ED_MAX_SECTORS; i++) {
+        const int remapped = sectorRemap[i];
+
+        if (!oldSelected[i]) continue;
+        if (remapped < 0 || remapped >= g_edMap.sectorCount) continue;
+        addMultiSectorSelection(remapped);
+    }
+
+    normalizeSectorSelectionState();
 }
 
 static int getWallEditSelectionCount(void)
@@ -636,7 +842,8 @@ static void toggleWallMultiSelection(int wallIndex)
 
     if (g_ed.selectionType == ED_SEL_VERTEX ||
         g_ed.selectionType == ED_SEL_SECTOR ||
-        g_ed.selectedVertCount > 0) {
+        g_ed.selectedVertCount > 0 ||
+        g_ed.selectedSectorCount > 0) {
         clearAllSelections();
     }
 
@@ -736,6 +943,9 @@ typedef struct {
     EdWallClipboard copiedWallProps;
     int hasCopiedWallProps;
     int copiedWallPropsSourceWall;
+    EdSectorGeometryClipboard copiedSectorGeometry;
+    int hasCopiedSectorGeometry;
+    int copiedSectorGeometrySourceSector;
 
     int selectedVert;
     int selectedWall;
@@ -745,6 +955,8 @@ typedef struct {
     int selectedVertCount;
     uint8_t selectedWalls[ED_MAX_WALLS];
     int selectedWallCount;
+    uint8_t selectedSectors[ED_MAX_SECTORS];
+    int selectedSectorCount;
 
     EdSelectionType selectionType;
 
@@ -762,6 +974,7 @@ static int g_redoCount = 0;
 static void rebuildSectorWallLayout(void);
 static void syncAllPortals(void);
 static int findSectorForPoint(float x, float y);
+static int pointInSector(float px, float py, int sectorIndex);
 static float draftSignedArea(void);
 static void finalizeDraftSector(void);
 static void finalizeDraftInnerSolid(void);
@@ -779,6 +992,7 @@ static void clearMultiVertexSelection(void);
 static void clearMultiWallSelection(void);
 static void setWallTexScaleX(EdWall *w, float scaleX);
 static void setWallTexScaleY(EdWall *w, float scaleY);
+static float getWallTexAngle(const EdWall *w);
 static void clearPendingLeftMouseAction(void);
 static void beginBoxSelect(int mouseX, int mouseY, int selectWalls);
 static void updateBoxSelect(int mouseX, int mouseY);
@@ -794,6 +1008,10 @@ static void closeConfirmDialog(void);
 static void openConfirmDialog(EdConfirmAction action, const char *text);
 static int buildInnerSectorsFromSelectedSector(void);
 static float innerLoopSignedAreaFromWalls(const int *wallIndices, int count);
+static void remapMultiSectorSelectionFromOldToNew(const int *sectorRemap, int oldSectorCount);
+static void resetSectorGeometryClipboard(void);
+static void copySelectedSectorGeometryToClipboard(void);
+static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorldY);
 
 static void pathDirnameFromFile(char *outDir, size_t outDirSize, const char *path);
 static void initRememberedDialogDirs(void);
@@ -801,13 +1019,28 @@ static void initRememberedDialogDirs(void);
 // rotation of selections - prototypes
 static int collectSelectedVertexPivot(float *outCx, float *outCy);
 static void rotateSelectedVertices(float angleRad);
+static void drawSectorSelectionHighlight(int sectorIndex);
 
 // sector fill stuffs, prototypes
 static uint8_t getSectorFillColour(int sectorIndex);
 static int getSectorFillStepY(int sectorIndex);
 static int wrapTextureCoordLocal(int v, int size);
 static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec);
+static void drawTexturedSector2DBruteForceScanline(int sectorIndex,
+                                                   int minX,
+                                                   int maxX,
+                                                   int y,
+                                                   const EdSector *sec);
 static void drawFilledSector2D(int sectorIndex);
+static void drawFilledSectorIsoBruteForceScanline(int sectorIndex,
+                                                  int minX,
+                                                  int maxX,
+                                                  int y,
+                                                  const EdSector *sec);
+static void screenToIsoWorldOnPlaneF(float sx, float sy, float wz, float *wx, float *wy);
+static void screenToIsoWorldOnPlane(int sx, int sy, float wz, float *wx, float *wy);
+static void worldToIsoScreen(float wx, float wy, float wz, int *sx, int *sy);
+static void drawIsometricPreview(void);
 
 /////// GUI PARTS
 static void handleEditorUI(int mouseX, int mouseY, int leftDown, int leftPressed, int leftReleased, float worldX, float worldY);
@@ -919,15 +1152,15 @@ static float snapf(float v){
 #define TEX_THUMB_W             64
 #define TEX_THUMB_H             64
 
-#define TEX_BROWSER_COLS        4
-#define TEX_BROWSER_ROWS        4
-#define TEX_BROWSER_CELL_W      66
-#define TEX_BROWSER_CELL_H      66
-#define TEX_BROWSER_CELL_GAP_X  20
-#define TEX_BROWSER_CELL_GAP_Y  6
+#define TEX_BROWSER_COLS            3
+#define TEX_BROWSER_ROWS            8
+#define TEX_BROWSER_CELL_W          66
+#define TEX_BROWSER_CELL_H          66
+#define TEX_BROWSER_CELL_GAP_X      8
+#define TEX_BROWSER_CELL_GAP_Y      6
 #define TEX_BROWSER_HEADER_H      32
-#define TEX_BROWSER_GRID_Y        66
-#define TEX_BROWSER_SCROLL_W      32
+#define TEX_BROWSER_GRID_Y        56
+#define TEX_BROWSER_SCROLL_W      24
 #define TEX_BROWSER_SCROLL_PAD    6
 #define TEX_BROWSER_BOTTOM_PAD    10
 #define TEX_BROWSER_OUTER_PAD     8
@@ -937,20 +1170,14 @@ static float snapf(float v){
 #define TEX_BROWSER_FRAME_PAD     2
 #define TEX_BROWSER_LABEL_GAP     2
 #define TEX_BROWSER_LABEL_TEXT_W  (ED_FONT_W * 3)
-#define TEX_BROWSER_OUTER_W \
-    (TEX_THUMB_W + (TEX_BROWSER_PREVIEW_PAD * 2) + (TEX_BROWSER_FRAME_PAD * 4))
-#define TEX_BROWSER_OUTER_H \
-    (TEX_THUMB_H + (TEX_BROWSER_PREVIEW_PAD * 2) + (TEX_BROWSER_FRAME_PAD * 4))
-#define TEX_BROWSER_CELL_USED_W \
-    ((TEX_BROWSER_CELL_W > TEX_BROWSER_OUTER_W) ? TEX_BROWSER_CELL_W : TEX_BROWSER_OUTER_W)
-#define TEX_BROWSER_CELL_USED_H \
-    ((TEX_BROWSER_CELL_H > (TEX_BROWSER_OUTER_H + TEX_BROWSER_LABEL_GAP + ED_FONT_H)) ? \
-        TEX_BROWSER_CELL_H : (TEX_BROWSER_OUTER_H + TEX_BROWSER_LABEL_GAP + ED_FONT_H))
-#define ED_INSPECTOR_TEXTURE_WINDOW_HEIGHT \
-    (TEX_BROWSER_GRID_Y + \
-     (TEX_BROWSER_ROWS * TEX_BROWSER_CELL_USED_H) + \
-     ((TEX_BROWSER_ROWS - 1) * TEX_BROWSER_CELL_GAP_Y) + \
-     TEX_BROWSER_SCROLL_PAD)
+
+#define TEX_BROWSER_PANEL_WIDTH     320
+
+#define TEX_BROWSER_OUTER_W         (TEX_THUMB_W + (TEX_BROWSER_PREVIEW_PAD * 2) + (TEX_BROWSER_FRAME_PAD * 4))
+#define TEX_BROWSER_OUTER_H         (TEX_THUMB_H + (TEX_BROWSER_PREVIEW_PAD * 2) + (TEX_BROWSER_FRAME_PAD * 4))
+#define TEX_BROWSER_CELL_USED_W     ((TEX_BROWSER_CELL_W > TEX_BROWSER_OUTER_W) ? TEX_BROWSER_CELL_W : TEX_BROWSER_OUTER_W)
+#define TEX_BROWSER_CELL_USED_H     ((TEX_BROWSER_CELL_H > (TEX_BROWSER_OUTER_H + TEX_BROWSER_LABEL_GAP + ED_FONT_H)) ? TEX_BROWSER_CELL_H : (TEX_BROWSER_OUTER_H + TEX_BROWSER_LABEL_GAP + ED_FONT_H))
+#define ED_INSPECTOR_TEXTURE_WINDOW_HEIGHT      (TEX_BROWSER_GRID_Y + (TEX_BROWSER_ROWS * TEX_BROWSER_CELL_USED_H) + ((TEX_BROWSER_ROWS - 1) * TEX_BROWSER_CELL_GAP_Y) + TEX_BROWSER_SCROLL_PAD)
 
 enum {
     TEXVIEW_UPPER = 0,
@@ -1102,6 +1329,18 @@ static const char *textureTargetName(TextureTarget t)
     }
 }
 
+static int isTextureBrowserVisible(void)
+{
+    if (g_ed.confirmVisible ||
+        g_ed.undoHistoryVisible ||
+        g_ed.ui_validator_visable ||
+        g_ed.ui_menu_visable) {
+        return 0;
+    }
+
+    return hasAnyWallEditSelection() || hasAnySectorEditSelection();
+}
+
 static int wallTextureTargetIndexForWall(const EdWall *w, TextureTarget t)
 {
     if (!w) {
@@ -1139,15 +1378,40 @@ static int textureTargetCurrentIndex(TextureTarget t)
         }
     }
 
-    if (g_ed.selectionType == ED_SEL_SECTOR &&
-        g_ed.selectedSector >= 0 &&
-        g_ed.selectedSector < g_edMap.sectorCount) {
-        EdSector *s = &g_edMap.sectors[g_ed.selectedSector];
+    if (hasAnySectorEditSelection()) {
+        int sectorIndices[ED_MAX_SECTORS];
+        const int sectorCount = collectSectorEditSelectionIndices(sectorIndices, ED_MAX_SECTORS);
 
-        switch (t) {
-            case TEX_TARGET_SECTOR_FLOOR: return s->floorColor;
-            case TEX_TARGET_SECTOR_CEIL:  return s->ceilColor;
-            default: break;
+        if (sectorCount > 0) {
+            int current = -1;
+
+            switch (t) {
+                case TEX_TARGET_SECTOR_FLOOR:
+                    current = g_edMap.sectors[sectorIndices[0]].floorColor;
+                    break;
+
+                case TEX_TARGET_SECTOR_CEIL:
+                    current = g_edMap.sectors[sectorIndices[0]].ceilColor;
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (current >= 0) {
+                for (int i = 1; i < sectorCount; i++) {
+                    const EdSector *s = &g_edMap.sectors[sectorIndices[i]];
+                    const int other = (t == TEX_TARGET_SECTOR_FLOOR)
+                        ? s->floorColor
+                        : s->ceilColor;
+
+                    if (other != current) {
+                        return -1;
+                    }
+                }
+
+                return current;
+            }
         }
     }
 
@@ -1187,15 +1451,31 @@ static void textureTargetApply(TextureTarget t, int texIndex)
         }
     }
 
-    if (g_ed.selectionType == ED_SEL_SECTOR &&
-        g_ed.selectedSector >= 0 &&
-        g_ed.selectedSector < g_edMap.sectorCount) {
-        EdSector *s = &g_edMap.sectors[g_ed.selectedSector];
+    if (hasAnySectorEditSelection()) {
+        int sectorIndices[ED_MAX_SECTORS];
+        const int sectorCount = collectSectorEditSelectionIndices(sectorIndices, ED_MAX_SECTORS);
 
-        switch (t) {
-            case TEX_TARGET_SECTOR_FLOOR: s->floorColor = (uint8_t)texIndex; syncAllPortals(); return;
-            case TEX_TARGET_SECTOR_CEIL:  s->ceilColor  = (uint8_t)texIndex; syncAllPortals(); return;
-            default: break;
+        for (int i = 0; i < sectorCount; i++) {
+            EdSector *s = &g_edMap.sectors[sectorIndices[i]];
+
+            switch (t) {
+                case TEX_TARGET_SECTOR_FLOOR:
+                    s->floorColor = (uint8_t)texIndex;
+                    break;
+
+                case TEX_TARGET_SECTOR_CEIL:
+                    s->ceilColor = (uint8_t)texIndex;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        if (sectorCount > 0 &&
+            (t == TEX_TARGET_SECTOR_FLOOR || t == TEX_TARGET_SECTOR_CEIL)) {
+            syncAllPortals();
+            return;
         }
     }
 
@@ -1211,13 +1491,10 @@ static void textureTargetApply(TextureTarget t, int texIndex)
 
 static void getTextureBrowserRect(int *x, int *y, int *w, int *h)
 {
-    *x = EDIT_VIEW_PORT_WIDTH + 8;
-    *w = ED_INSPECTOR_PANEL - 16;
+    *x = ED_PANEL_X + 2;
+    *w = TEX_BROWSER_PANEL_WIDTH - 16;
     *h = ED_INSPECTOR_TEXTURE_WINDOW_HEIGHT;    // long def!! urgg
-    *y = EDIT_VIEW_PORT_HEIGHT - *h - TEX_BROWSER_BOTTOM_PAD;
-    if (*y < 40) {
-        *y = 40;
-    }
+    *y = ED_PANEL_Y;
 }
 
 static void drawTextureTargetButton(int x, int y, int w, int h, const char *text, int active)
@@ -1246,7 +1523,7 @@ static int getTextureBrowserTargetButtons(TextureBrowserTargetButtonDef *outButt
         return count;
     }
 
-    if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector >= 0) {
+    if (hasAnySectorEditSelection()) {
         if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_SECTOR_FLOOR, "Floor" };
         if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_SECTOR_CEIL, "Ceiling" };
         return count;
@@ -1459,6 +1736,10 @@ static void drawTextureBrowser(void)
     const char *targetName;
     int targetNameX;
 
+    if (!isTextureBrowserVisible()) {
+        return;
+    }
+
     clampTextureBrowserOffset();
     getTextureBrowserRect(&bx, &by, &bw, &bh);
 
@@ -1550,6 +1831,11 @@ static void drawTextureBrowser(void)
 static int handleTextureBrowserMouse(int mouseX, int mouseY, int leftDown, int leftPressed, int mouseWheelY)
 {
     int bx, by, bw, bh;
+
+    if (!isTextureBrowserVisible()) {
+        g_ed.textureScrollbarDragging = 0;
+        return 0;
+    }
 
     getTextureBrowserRect(&bx, &by, &bw, &bh);
 
@@ -1905,6 +2191,9 @@ static void captureSnapshot(EditorSnapshot *s)
     s->copiedWallProps = g_ed.copiedWallProps;
     s->hasCopiedWallProps = g_ed.hasCopiedWallProps;
     s->copiedWallPropsSourceWall = g_ed.copiedWallPropsSourceWall;
+    s->copiedSectorGeometry = g_ed.copiedSectorGeometry;
+    s->hasCopiedSectorGeometry = g_ed.hasCopiedSectorGeometry;
+    s->copiedSectorGeometrySourceSector = g_ed.copiedSectorGeometrySourceSector;
 
     s->selectedVert = g_ed.selectedVert;
     s->selectedWall = g_ed.selectedWall;
@@ -1914,6 +2203,8 @@ static void captureSnapshot(EditorSnapshot *s)
     s->selectedVertCount = g_ed.selectedVertCount;
     memcpy(s->selectedWalls, g_ed.selectedWalls, sizeof(g_ed.selectedWalls));
     s->selectedWallCount = g_ed.selectedWallCount;
+    memcpy(s->selectedSectors, g_ed.selectedSectors, sizeof(g_ed.selectedSectors));
+    s->selectedSectorCount = g_ed.selectedSectorCount;
 
     s->selectionType = g_ed.selectionType;
 
@@ -1966,6 +2257,9 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.copiedWallProps = s->copiedWallProps;
     g_ed.hasCopiedWallProps = s->hasCopiedWallProps;
     g_ed.copiedWallPropsSourceWall = s->copiedWallPropsSourceWall;
+    g_ed.copiedSectorGeometry = s->copiedSectorGeometry;
+    g_ed.hasCopiedSectorGeometry = s->hasCopiedSectorGeometry;
+    g_ed.copiedSectorGeometrySourceSector = s->copiedSectorGeometrySourceSector;
 
     g_ed.selectedVert = s->selectedVert;
     g_ed.selectedWall = s->selectedWall;
@@ -1975,6 +2269,8 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.selectedVertCount = s->selectedVertCount;
     memcpy(g_ed.selectedWalls, s->selectedWalls, sizeof(g_ed.selectedWalls));
     g_ed.selectedWallCount = s->selectedWallCount;
+    memcpy(g_ed.selectedSectors, s->selectedSectors, sizeof(g_ed.selectedSectors));
+    g_ed.selectedSectorCount = s->selectedSectorCount;
 
     g_ed.selectionType = s->selectionType;
 
@@ -2161,6 +2457,14 @@ static void describeSnapshotSummary(const EditorSnapshot *snapshot, char *out, s
         static char multiBuf[48];
         snprintf(multiBuf, sizeof(multiBuf), "Multi-select (%d verts)", snapshot->selectedVertCount);
         focus = multiBuf;
+    } else if (snapshot->selectedWallCount > 0) {
+        static char multiWallBuf[48];
+        snprintf(multiWallBuf, sizeof(multiWallBuf), "Multi-select (%d walls)", snapshot->selectedWallCount);
+        focus = multiWallBuf;
+    } else if (snapshot->selectedSectorCount > 0) {
+        static char multiSectorBuf[52];
+        snprintf(multiSectorBuf, sizeof(multiSectorBuf), "Multi-select (%d sectors)", snapshot->selectedSectorCount);
+        focus = multiSectorBuf;
     } else if (snapshot->draftCount > 0) {
         static char draftBuf[48];
         snprintf(draftBuf, sizeof(draftBuf), "Draft (%d pts)", snapshot->draftCount);
@@ -2348,6 +2652,713 @@ static void worldToScreen(float wx, float wy, int *sx, int *sy)
     *sy = (int)lroundf((wy - g_ed.camY) * g_ed.zoom + (EDIT_VIEW_PORT_HEIGHT * 0.5f));
 }
 
+static float getIsoScaleX(void)
+{
+    return g_ed.zoom;
+}
+
+static float getIsoScaleY(void)
+{
+    return g_ed.zoom * 0.5f;
+}
+
+static float getIsoScaleZ(void)
+{
+    return g_ed.zoom * 0.5f;
+}
+
+static float getIsoCenterX(void)
+{
+    return EDIT_VIEW_PORT_WIDTH * 0.5f;
+}
+
+static float getIsoCenterY(void)
+{
+    return EDIT_VIEW_PORT_HEIGHT * 0.58f;
+}
+
+static void worldToIsoScreenF(float wx, float wy, float wz, float *sx, float *sy)
+{
+    const float dx = wx - g_ed.camX;
+    const float dy = wy - g_ed.camY;
+
+    *sx = getIsoCenterX() + ((dx - dy) * getIsoScaleX());
+    *sy = getIsoCenterY() + ((dx + dy) * getIsoScaleY()) - (wz * getIsoScaleZ());
+}
+
+static void screenToIsoWorldOnPlaneF(float sx, float sy, float wz, float *wx, float *wy)
+{
+    const float isoScaleX = getIsoScaleX();
+    const float isoScaleY = getIsoScaleY();
+    const float a = (sx - getIsoCenterX()) / isoScaleX;
+    const float b = ((sy - getIsoCenterY()) + (wz * getIsoScaleZ())) / isoScaleY;
+    const float dx = (a + b) * 0.5f;
+    const float dy = (b - a) * 0.5f;
+
+    *wx = g_ed.camX + dx;
+    *wy = g_ed.camY + dy;
+}
+
+static void screenToIsoWorldOnPlane(int sx, int sy, float wz, float *wx, float *wy)
+{
+    screenToIsoWorldOnPlaneF((float)sx, (float)sy, wz, wx, wy);
+}
+
+static void worldToIsoScreen(float wx, float wy, float wz, int *sx, int *sy)
+{
+    float fx, fy;
+
+    worldToIsoScreenF(wx, wy, wz, &fx, &fy);
+    *sx = (int)lroundf(fx);
+    *sy = (int)lroundf(fy);
+}
+
+static void panIsoCameraByScreenDelta(int dx, int dy)
+{
+    const float isoScaleX = getIsoScaleX();
+    const float isoScaleY = getIsoScaleY();
+    const float a = (float)dx / isoScaleX;
+    const float b = (float)dy / isoScaleY;
+
+    g_ed.camX -= (a + b) * 0.5f;
+    g_ed.camY += (a - b) * 0.5f;
+}
+
+static int compareIsoSortEntry(const void *a, const void *b)
+{
+    const IsoSortEntry *ea = (const IsoSortEntry *)a;
+    const IsoSortEntry *eb = (const IsoSortEntry *)b;
+
+    if (ea->depth < eb->depth) return -1;
+    if (ea->depth > eb->depth) return 1;
+    return ea->index - eb->index;
+}
+
+static float isoPolygonSignedArea(const float *xs, const float *ys, int count)
+{
+    float twiceArea = 0.0f;
+
+    for (int i = 0, j = count - 1; i < count; j = i++) {
+        twiceArea += (xs[j] * ys[i]) - (ys[j] * xs[i]);
+    }
+
+    return twiceArea * 0.5f;
+}
+
+static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
+{
+    uint8_t *tex;
+    uint8_t *dst;
+    float scaleX, scaleY;
+    float cosA, sinA;
+    float worldX, worldY;
+    float worldStepX, worldStepY;
+    float texU, texV;
+    float texUStep, texVStep;
+
+    if (!sec) {
+        return;
+    }
+
+    if ((unsigned)y >= EDIT_VIEW_PORT_HEIGHT || x1 < x0) {
+        return;
+    }
+
+    tex = getTexturePtr(sec->floorColor);
+    if (!tex) {
+        drawLineDots(x0, y, x1, y, getSectorFillColour((int)(sec - g_edMap.sectors)));
+        return;
+    }
+
+    scaleX = sec->floorTexScaleX;
+    scaleY = sec->floorTexScaleY;
+
+    if (fabsf(scaleX) < 0.001f) scaleX = 0.1f;
+    if (fabsf(scaleY) < 0.001f) scaleY = 0.1f;
+
+    cosA = cosf(sec->floorTexAngle);
+    sinA = sinf(sec->floorTexAngle);
+
+    screenToIsoWorldOnPlane(x0, y, sec->floorHeight, &worldX, &worldY);
+
+    worldStepX = 0.5f / getIsoScaleX();
+    worldStepY = -0.5f / getIsoScaleX();
+
+    texU = (((worldX * cosA) - (worldY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
+    texV = (((worldX * sinA) + (worldY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
+
+    texUStep =
+        (((worldStepX * cosA) - (worldStepY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
+    texVStep =
+        (((worldStepX * sinA) + (worldStepY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
+
+    dst = &fb[(y * SCREEN_W) + x0];
+
+    for (int x = x0; x <= x1; x++) {
+        const int tx = wrapTextureCoordLocal((int)floorf(texU), TEXTURE_WIDTH);
+        const int ty = wrapTextureCoordLocal((int)floorf(texV), TEXTURE_HEIGHT);
+
+        *dst++ = tex[(ty * TEXTURE_WIDTH) + tx];
+
+        texU += texUStep;
+        texV += texVStep;
+    }
+}
+
+static void drawFilledSectorIsoBruteForceScanline(int sectorIndex,
+                                                  int minX,
+                                                  int maxX,
+                                                  int y,
+                                                  const EdSector *sec)
+{
+    int runStart = -1;
+    float worldX;
+    float worldY;
+    const float worldStepX = 0.5f / getIsoScaleX();
+    const float worldStepY = -0.5f / getIsoScaleX();
+
+    if (!sec || minX > maxX) {
+        return;
+    }
+
+    screenToIsoWorldOnPlaneF((float)minX + 0.5f,
+                             (float)y + 0.5f,
+                             sec->floorHeight,
+                             &worldX,
+                             &worldY);
+
+    for (int x = minX; x <= maxX; x++) {
+        const int inside = pointInSector(worldX, worldY, sectorIndex);
+
+        if (inside) {
+            if (runStart < 0) {
+                runStart = x;
+            }
+        } else if (runStart >= 0) {
+            drawIsoTexturedSectorSpan(runStart, x - 1, y, sec);
+            runStart = -1;
+        }
+
+        worldX += worldStepX;
+        worldY += worldStepY;
+    }
+
+    if (runStart >= 0) {
+        drawIsoTexturedSectorSpan(runStart, maxX, y, sec);
+    }
+}
+
+static void drawFilledSectorIso(int sectorIndex)
+{
+    static float intersections[ED_MAX_WALLS];
+
+    const EdSector *sec;
+    float minFx, maxFx;
+    float minFy, maxFy;
+    int minY, maxY;
+    int minX, maxX;
+
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+
+    sec = &g_edMap.sectors[sectorIndex];
+    if (sec->boundaryCount < 3) return;
+    if (sec->boundaryCount > ED_MAX_WALLS) return;
+
+    {
+        const EdWall *w = &g_edMap.walls[sec->wallStart];
+        if (w->v0 < 0 || w->v0 >= g_edMap.vertCount) {
+            return;
+        }
+
+        worldToIsoScreenF(g_edMap.verts[w->v0].x,
+                          g_edMap.verts[w->v0].y,
+                          sec->floorHeight,
+                          &minFx,
+                          &minFy);
+        maxFx = minFx;
+        maxFy = minFy;
+    }
+
+    for (int i = 1; i < sec->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+        float fx, fy;
+
+        if (w->v0 < 0 || w->v0 >= g_edMap.vertCount) {
+            return;
+        }
+
+        worldToIsoScreenF(g_edMap.verts[w->v0].x,
+                          g_edMap.verts[w->v0].y,
+                          sec->floorHeight,
+                          &fx,
+                          &fy);
+
+        if (fx < minFx) minFx = fx;
+        if (fx > maxFx) maxFx = fx;
+        if (fy < minFy) minFy = fy;
+        if (fy > maxFy) maxFy = fy;
+    }
+
+    minX = (int)floorf(minFx);
+    maxX = (int)ceilf(maxFx);
+    minY = (int)floorf(minFy);
+    maxY = (int)ceilf(maxFy);
+
+    if (maxX < 0 || minX >= EDIT_VIEW_PORT_WIDTH) {
+        return;
+    }
+
+    if (maxY < 0 || minY >= EDIT_VIEW_PORT_HEIGHT) {
+        return;
+    }
+
+    minX = clampi_local(minX, 0, EDIT_VIEW_PORT_WIDTH - 1);
+    maxX = clampi_local(maxX, 0, EDIT_VIEW_PORT_WIDTH - 1);
+    minY = clampi_local(minY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
+    maxY = clampi_local(maxY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
+
+    for (int y = minY; y <= maxY; y++) {
+        int nodeCount = 0;
+        const float scanY = (float)y + 0.5f;
+        const float scanWorldSum =
+            g_ed.camX + g_ed.camY +
+            ((scanY - getIsoCenterY()) + (sec->floorHeight * getIsoScaleZ())) / getIsoScaleY();
+
+        for (int i = 0; i < sec->boundaryCount; i++) {
+            const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+            const EdVec2 *a = &g_edMap.verts[w->v0];
+            const EdVec2 *b = &g_edMap.verts[w->v1];
+            const float sumA = a->x + a->y;
+            const float sumB = b->x + b->y;
+            const float da = sumA - scanWorldSum;
+            const float db = sumB - scanWorldSum;
+
+            if (fabsf(sumB - sumA) <= 0.0001f) {
+                continue;
+            }
+
+            if (((da < 0.0f) && (db >= 0.0f)) || ((db < 0.0f) && (da >= 0.0f))) {
+                const float t = (scanWorldSum - sumA) / (sumB - sumA);
+                const float hitX = a->x + ((b->x - a->x) * t);
+                const float hitY = a->y + ((b->y - a->y) * t);
+
+                if (nodeCount < ED_MAX_WALLS) {
+                    intersections[nodeCount++] =
+                        getIsoCenterX() + (((hitX - g_ed.camX) - (hitY - g_ed.camY)) * getIsoScaleX());
+                }
+            }
+        }
+
+        if (nodeCount <= 0) {
+            continue;
+        }
+
+        for (int i = 1; i < nodeCount; i++) {
+            const float v = intersections[i];
+            int k = i - 1;
+
+            while (k >= 0 && intersections[k] > v) {
+                intersections[k + 1] = intersections[k];
+                k--;
+            }
+            intersections[k + 1] = v;
+        }
+
+        if ((nodeCount & 1) != 0) {
+            drawFilledSectorIsoBruteForceScanline(sectorIndex, minX, maxX, y, sec);
+            continue;
+        }
+
+        for (int i = 0; i + 1 < nodeCount; i += 2) {
+            int x0 = (int)ceilf(intersections[i]);
+            int x1 = (int)floorf(intersections[i + 1]);
+
+            if (x1 < minX || x0 > maxX) {
+                continue;
+            }
+
+            x0 = clampi_local(x0, minX, maxX);
+            x1 = clampi_local(x1, minX, maxX);
+
+            if (x1 >= x0) {
+                drawIsoTexturedSectorSpan(x0, x1, y, sec);
+            }
+        }
+    }
+}
+
+static void drawIsoWallFace(int wallIndex,
+                            float zBottom,
+                            float zTop,
+                            uint8_t textureIndex,
+                            int transparent,
+                            int flipFacing)
+{
+    float polyX[4];
+    float polyY[4];
+    float minX, maxX;
+    int minY, maxY;
+    uint8_t *tex;
+    const EdWall *w;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    const EdVec2 *v0;
+    const EdVec2 *v1;
+    float ax0, ay0, bx0, by0;
+    float faceDx, faceDy, faceLen;
+    float texScaleX, texScaleY;
+    float cosA, sinA;
+    float signedArea;
+    int backFace;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
+        return;
+    }
+
+    if (zTop <= zBottom + 0.001f) {
+        return;
+    }
+
+    tex = getTexturePtr(textureIndex);
+    if (!tex) {
+        return;
+    }
+
+    w = &g_edMap.walls[wallIndex];
+    v0 = &g_edMap.verts[w->v0];
+    v1 = &g_edMap.verts[w->v1];
+    a = flipFacing ? v1 : v0;
+    b = flipFacing ? v0 : v1;
+
+    worldToIsoScreenF(a->x, a->y, zBottom, &polyX[0], &polyY[0]);
+    worldToIsoScreenF(b->x, b->y, zBottom, &polyX[1], &polyY[1]);
+    worldToIsoScreenF(b->x, b->y, zTop,    &polyX[2], &polyY[2]);
+    worldToIsoScreenF(a->x, a->y, zTop,    &polyX[3], &polyY[3]);
+
+    signedArea = isoPolygonSignedArea(polyX, polyY, 4);
+    if (fabsf(signedArea) <= 0.5f) {
+        return;
+    }
+    backFace = (signedArea < 0.0f);
+
+    minX = polyX[0];
+    maxX = polyX[0];
+    minY = (int)floorf(polyY[0]);
+    maxY = (int)ceilf(polyY[0]);
+
+    for (int i = 1; i < 4; i++) {
+        if (polyX[i] < minX) minX = polyX[i];
+        if (polyX[i] > maxX) maxX = polyX[i];
+        if ((int)floorf(polyY[i]) < minY) minY = (int)floorf(polyY[i]);
+        if ((int)ceilf(polyY[i]) > maxY) maxY = (int)ceilf(polyY[i]);
+    }
+
+    if (maxX < 0.0f || minX >= EDIT_VIEW_PORT_WIDTH) {
+        return;
+    }
+
+    if (maxY < 0 || minY >= EDIT_VIEW_PORT_HEIGHT) {
+        return;
+    }
+
+    minY = clampi_local(minY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
+    maxY = clampi_local(maxY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
+
+    worldToIsoScreenF(a->x, a->y, zBottom, &ax0, &ay0);
+    worldToIsoScreenF(b->x, b->y, zBottom, &bx0, &by0);
+
+    faceDx = b->x - a->x;
+    faceDy = b->y - a->y;
+    faceLen = sqrtf((faceDx * faceDx) + (faceDy * faceDy));
+    if (faceLen <= 0.0001f) {
+        return;
+    }
+
+    texScaleX = w->texScaleX;
+    texScaleY = w->texScaleY;
+    if (fabsf(texScaleX) < 0.001f) texScaleX = 0.1f;
+    if (fabsf(texScaleY) < 0.001f) texScaleY = 0.1f;
+
+    cosA = cosf(getWallTexAngle(w));
+    sinA = sinf(getWallTexAngle(w));
+
+    for (int y = minY; y <= maxY; y++) {
+        float intersections[4];
+        int nodeCount = 0;
+        const float scanY = (float)y + 0.5f;
+
+        for (int i = 0, j = 3; i < 4; j = i++) {
+            const float yi = polyY[i];
+            const float yj = polyY[j];
+            const float xi = polyX[i];
+            const float xj = polyX[j];
+
+            if (((yi < scanY) && (yj >= scanY)) || ((yj < scanY) && (yi >= scanY))) {
+                if (nodeCount < 4) {
+                    const float t = (scanY - yi) / (yj - yi);
+                    intersections[nodeCount++] = xi + (t * (xj - xi));
+                }
+            }
+        }
+
+        if (nodeCount < 2) {
+            continue;
+        }
+
+        if (intersections[0] > intersections[1]) {
+            const float t = intersections[0];
+            intersections[0] = intersections[1];
+            intersections[1] = t;
+        }
+
+        {
+            int x0 = (int)ceilf(intersections[0]);
+            int x1 = (int)floorf(intersections[1]);
+            const float spanX = bx0 - ax0;
+
+            if (x1 < 0 || x0 >= EDIT_VIEW_PORT_WIDTH) {
+                continue;
+            }
+
+            x0 = clampi_local(x0, 0, EDIT_VIEW_PORT_WIDTH - 1);
+            x1 = clampi_local(x1, 0, EDIT_VIEW_PORT_WIDTH - 1);
+
+            for (int x = x0; x <= x1; x++) {
+                const float sampleX = (float)x + 0.5f;
+                const float sampleY = (float)y + 0.5f;
+                float along;
+                float baseY;
+                float relHeight;
+                float texU;
+                float texV;
+                int tx, ty;
+
+                if (fabsf(spanX) <= 0.001f) {
+                    continue;
+                }
+
+                along = (sampleX - ax0) / spanX;
+                if (along < 0.0f || along > 1.0f) {
+                    continue;
+                }
+
+                baseY = ay0 + ((by0 - ay0) * along);
+                relHeight = (baseY - sampleY) / getIsoScaleZ();
+                if (relHeight < 0.0f || relHeight > (zTop - zBottom)) {
+                    continue;
+                }
+
+                texU = ((along * faceLen) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleX;
+                texV = (relHeight * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleY;
+
+                {
+                    const float rotatedU = (texU * cosA) - (texV * sinA);
+                    const float rotatedV = (texU * sinA) + (texV * cosA);
+                    tx = wrapTextureCoordLocal((int)floorf(rotatedU), TEXTURE_WIDTH);
+                    ty = wrapTextureCoordLocal((int)floorf(rotatedV), TEXTURE_HEIGHT);
+                }
+
+                if (transparent && (((x + y) & 1) != 0)) {
+                    continue;
+                }
+
+                /* Ghost hidden faces so they read as see-through, not full solids. */
+                if (backFace && (((x + y) & 1) != 0)) {
+                    continue;
+                }
+
+                fb[(y * SCREEN_W) + x] = tex[(ty * TEXTURE_WIDTH) + tx];
+            }
+        }
+    }
+}
+
+static void drawIsoWallSections(int wallIndex, int ownerSector)
+{
+    const EdWall *w;
+    const EdSector *owner;
+    int transparent;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    float dx, dy, len;
+    float midX, midY;
+    float rightNx, rightNy;
+    float sampleDist;
+    int interiorOnRight = 1;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
+        return;
+    }
+
+    if (ownerSector < 0 || ownerSector >= g_edMap.sectorCount) {
+        return;
+    }
+
+    w = &g_edMap.walls[wallIndex];
+    owner = &g_edMap.sectors[ownerSector];
+    transparent = (w->flags & RC3D_WALL_TRANSPARENCY) ? 1 : 0;
+    a = &g_edMap.verts[w->v0];
+    b = &g_edMap.verts[w->v1];
+
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+    len = sqrtf((dx * dx) + (dy * dy));
+
+    if (len > 0.0001f) {
+        midX = (a->x + b->x) * 0.5f;
+        midY = (a->y + b->y) * 0.5f;
+        rightNx = dy / len;
+        rightNy = -dx / len;
+        sampleDist = clampf_local(g_ed.currentGridStep * 0.2f, 0.05f, 0.25f);
+        if (sampleDist > (len * 0.25f)) {
+            sampleDist = len * 0.25f;
+        }
+
+        if (sampleDist > 0.0001f) {
+            const int rightInside =
+                pointInSector(midX + (rightNx * sampleDist),
+                              midY + (rightNy * sampleDist),
+                              ownerSector);
+            const int leftInside =
+                pointInSector(midX - (rightNx * sampleDist),
+                              midY - (rightNy * sampleDist),
+                              ownerSector);
+
+            if (rightInside != leftInside) {
+                interiorOnRight = rightInside;
+            }
+        }
+    }
+
+    if ((w->flags & RC3D_WALL_LOWER) && (w->openBottom > owner->floorHeight)) {
+        drawIsoWallFace(wallIndex,
+                        owner->floorHeight,
+                        w->openBottom,
+                        w->lowerColor,
+                        transparent,
+                        !interiorOnRight);
+    }
+
+    if (w->flags & RC3D_WALL_MIDDLE) {
+        if (w->flags & RC3D_WALL_SOLID) {
+            drawIsoWallFace(wallIndex,
+                            owner->floorHeight,
+                            owner->ceilHeight,
+                            w->midColor,
+                            transparent,
+                            !interiorOnRight);
+        } else if (w->openTop > w->openBottom) {
+            drawIsoWallFace(wallIndex,
+                            w->openBottom,
+                            w->openTop,
+                            w->midColor,
+                            transparent,
+                            !interiorOnRight);
+        }
+    }
+
+    if ((w->flags & RC3D_WALL_UPPER) && (owner->ceilHeight > w->openTop)) {
+        drawIsoWallFace(wallIndex,
+                        w->openTop,
+                        owner->ceilHeight,
+                        w->upperColor,
+                        transparent,
+                        !interiorOnRight);
+    }
+}
+
+static void drawIsoStartMarker(void)
+{
+    float startZ = 0.0f;
+    int sx, sy, fx, fy;
+
+    if (g_edMap.startSector >= 0 && g_edMap.startSector < g_edMap.sectorCount) {
+        startZ = g_edMap.sectors[g_edMap.startSector].floorHeight;
+    }
+
+    worldToIsoScreen(g_edMap.startX, g_edMap.startY, startZ, &sx, &sy);
+    worldToIsoScreen(g_edMap.startX + (cosf(g_edMap.startAngle) * 0.5f),
+                     g_edMap.startY + (sinf(g_edMap.startAngle) * 0.5f),
+                     startZ,
+                     &fx,
+                     &fy);
+
+    drawRect(sx - 2, sy - 2, 5, 5, ED_START_COL);
+    drawLine(sx, sy, fx, fy, ED_START_COL);
+}
+
+static void drawIsometricPreview(void)
+{
+    IsoSortEntry sectorOrder[ED_MAX_SECTORS];
+    IsoSortEntry wallOrder[ED_MAX_WALLS];
+    int wallOwners[ED_MAX_WALLS];
+    int sectorOrderCount = 0;
+    int wallOrderCount = 0;
+
+    clearScreen(16);
+
+    for (int i = 0; i < ED_MAX_WALLS; i++) {
+        wallOwners[i] = -1;
+    }
+
+    for (int s = 0; s < g_edMap.sectorCount; s++) {
+        const EdSector *sec = &g_edMap.sectors[s];
+        float sumX = 0.0f;
+        float sumY = 0.0f;
+
+        if (sec->boundaryCount < 3) {
+            continue;
+        }
+
+        for (int i = 0; i < sec->boundaryCount; i++) {
+            const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+            const EdVec2 *v = &g_edMap.verts[w->v0];
+
+            sumX += v->x;
+            sumY += v->y;
+            if ((sec->wallStart + i) >= 0 && (sec->wallStart + i) < ED_MAX_WALLS) {
+                wallOwners[sec->wallStart + i] = s;
+            }
+        }
+
+        sectorOrder[sectorOrderCount].index = s;
+        sectorOrder[sectorOrderCount].depth =
+            (sumX + sumY) / (float)sec->boundaryCount + (sec->floorHeight * 0.25f);
+        sectorOrderCount++;
+    }
+
+    qsort(sectorOrder, sectorOrderCount, sizeof(sectorOrder[0]), compareIsoSortEntry);
+
+    for (int i = 0; i < sectorOrderCount; i++) {
+        drawFilledSectorIso(sectorOrder[i].index);
+    }
+
+    for (int i = 0; i < g_edMap.wallCount; i++) {
+        const EdWall *w = &g_edMap.walls[i];
+        const EdVec2 *a = &g_edMap.verts[w->v0];
+        const EdVec2 *b = &g_edMap.verts[w->v1];
+        const int ownerSector = wallOwners[i];
+        float zTop = 0.0f;
+
+        if (ownerSector >= 0 && ownerSector < g_edMap.sectorCount) {
+            zTop = g_edMap.sectors[ownerSector].ceilHeight;
+        }
+
+        wallOrder[wallOrderCount].index = i;
+        wallOrder[wallOrderCount].depth =
+            ((a->x + a->y + b->x + b->y) * 0.5f) + (zTop * 0.25f);
+        wallOrderCount++;
+    }
+
+    qsort(wallOrder, wallOrderCount, sizeof(wallOrder[0]), compareIsoSortEntry);
+
+    for (int i = 0; i < wallOrderCount; i++) {
+        drawIsoWallSections(wallOrder[i].index, wallOwners[wallOrder[i].index]);
+    }
+
+    drawIsoStartMarker();
+}
+
 static int addVertex(float x, float y)
 {
     if (g_edMap.vertCount >= ED_MAX_VERTS) {
@@ -2453,6 +3464,241 @@ static void sanitizeSectorProperties(EdSector *sec)
     sec->ceilTexScaleY = clampSectorTexScale(sec->ceilTexScaleY);
 }
 
+static void resetSectorGeometryClipboard(void)
+{
+    memset(&g_ed.copiedSectorGeometry, 0, sizeof(g_ed.copiedSectorGeometry));
+    g_ed.hasCopiedSectorGeometry = 0;
+    g_ed.copiedSectorGeometrySourceSector = -1;
+}
+
+static void copySelectedSectorGeometryToClipboard(void)
+{
+    EdSectorGeometryClipboard *clip = &g_ed.copiedSectorGeometry;
+    int sectorIndices[ED_MAX_SECTORS];
+    int vertRemap[ED_MAX_VERTS];
+    const int sectorCount = collectSectorEditSelectionIndices(sectorIndices, ED_MAX_SECTORS);
+    int localVertCount = 0;
+    float minX = 0.0f;
+    float minY = 0.0f;
+    int haveBounds = 0;
+    char msg[160];
+
+    if (sectorCount <= 0) {
+        setEditorStatus("Select at least one sector to copy");
+        return;
+    }
+
+    memset(vertRemap, 0xFF, sizeof(vertRemap));
+    memset(clip, 0, sizeof(*clip));
+
+    for (int si = 0; si < sectorCount; si++) {
+        const int sectorIndex = sectorIndices[si];
+        const EdSector *srcSec;
+        EdSector dstSec;
+
+        if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) {
+            resetSectorGeometryClipboard();
+            setEditorStatus("Sector geometry copy failed");
+            return;
+        }
+
+        srcSec = &g_edMap.sectors[sectorIndex];
+        if (srcSec->wallCount <= 0 ||
+            srcSec->wallCount > ED_MAX_WALLS ||
+            (clip->wallCount + srcSec->wallCount) > ED_MAX_WALLS) {
+            resetSectorGeometryClipboard();
+            setEditorStatus("Sector geometry copy failed");
+            return;
+        }
+
+        dstSec = *srcSec;
+        dstSec.wallStart = clip->wallCount;
+
+        for (int wi = 0; wi < srcSec->wallCount; wi++) {
+            const EdWall *srcWall = &g_edMap.walls[srcSec->wallStart + wi];
+            EdWall dstWall = *srcWall;
+
+            if (srcWall->v0 < 0 || srcWall->v0 >= g_edMap.vertCount ||
+                srcWall->v1 < 0 || srcWall->v1 >= g_edMap.vertCount) {
+                resetSectorGeometryClipboard();
+                setEditorStatus("Sector geometry copy failed");
+                return;
+            }
+
+            if (vertRemap[srcWall->v0] < 0) {
+                const EdVec2 *v = &g_edMap.verts[srcWall->v0];
+
+                if (localVertCount >= ED_MAX_VERTS) {
+                    resetSectorGeometryClipboard();
+                    setEditorStatus("Sector geometry copy failed");
+                    return;
+                }
+
+                vertRemap[srcWall->v0] = localVertCount;
+                clip->verts[localVertCount++] = *v;
+
+                if (!haveBounds) {
+                    minX = v->x;
+                    minY = v->y;
+                    haveBounds = 1;
+                } else {
+                    if (v->x < minX) minX = v->x;
+                    if (v->y < minY) minY = v->y;
+                }
+            }
+
+            if (vertRemap[srcWall->v1] < 0) {
+                const EdVec2 *v = &g_edMap.verts[srcWall->v1];
+
+                if (localVertCount >= ED_MAX_VERTS) {
+                    resetSectorGeometryClipboard();
+                    setEditorStatus("Sector geometry copy failed");
+                    return;
+                }
+
+                vertRemap[srcWall->v1] = localVertCount;
+                clip->verts[localVertCount++] = *v;
+
+                if (!haveBounds) {
+                    minX = v->x;
+                    minY = v->y;
+                    haveBounds = 1;
+                } else {
+                    if (v->x < minX) minX = v->x;
+                    if (v->y < minY) minY = v->y;
+                }
+            }
+
+            dstWall.v0 = vertRemap[srcWall->v0];
+            dstWall.v1 = vertRemap[srcWall->v1];
+            dstWall.neighbour = -1;
+
+            if (dstWall.flags & RC3D_WALL_PORTAL) {
+                uint8_t solidCol = dstWall.midColor;
+
+                if (solidCol == 0) solidCol = dstWall.upperColor;
+                if (solidCol == 0) solidCol = dstWall.lowerColor;
+                if (solidCol == 0) solidCol = g_ed.newWallMidColor;
+
+                dstWall.openBottom = 0.0f;
+                dstWall.openTop = 0.0f;
+                dstWall.upperColor = 0;
+                dstWall.midColor = solidCol;
+                dstWall.lowerColor = 0;
+                dstWall.flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+            }
+
+            clip->walls[clip->wallCount++] = dstWall;
+        }
+
+        sanitizeSectorProperties(&dstSec);
+        clip->sectors[clip->sectorCount++] = dstSec;
+    }
+
+    if (localVertCount <= 0 || !haveBounds || clip->sectorCount <= 0) {
+        resetSectorGeometryClipboard();
+        setEditorStatus("Sector geometry copy failed");
+        return;
+    }
+
+    clip->vertCount = localVertCount;
+    clip->anchorX = snapf(minX);
+    clip->anchorY = snapf(minY);
+
+    g_ed.hasCopiedSectorGeometry = 1;
+    g_ed.copiedSectorGeometrySourceSector = sectorIndices[0];
+
+    snprintf(msg, sizeof(msg), "Copied %d sector%s", sectorCount, (sectorCount == 1) ? "" : "s");
+    setEditorStatus(msg);
+}
+
+static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorldY)
+{
+    const EdSectorGeometryClipboard *clip = &g_ed.copiedSectorGeometry;
+    const float targetX = snapf(targetWorldX);
+    const float targetY = snapf(targetWorldY);
+    const float dx = targetX - clip->anchorX;
+    const float dy = targetY - clip->anchorY;
+    const int vertBase = g_edMap.vertCount;
+    const int wallBase = g_edMap.wallCount;
+    const int sectorBase = g_edMap.sectorCount;
+    char msg[160];
+
+    if (!g_ed.hasCopiedSectorGeometry) {
+        setEditorStatus("No copied sector geometry");
+        return 0;
+    }
+
+    if (clip->vertCount <= 0 || clip->wallCount <= 0 || clip->sectorCount <= 0) {
+        setEditorStatus("Copied sector geometry is invalid");
+        return 0;
+    }
+
+    if ((g_edMap.vertCount + clip->vertCount) > ED_MAX_VERTS) {
+        setEditorStatus("Paste failed: too many vertices");
+        return 0;
+    }
+
+    if ((g_edMap.wallCount + clip->wallCount) > ED_MAX_WALLS) {
+        setEditorStatus("Paste failed: too many walls");
+        return 0;
+    }
+
+    if ((g_edMap.sectorCount + clip->sectorCount) > ED_MAX_SECTORS) {
+        setEditorStatus("Paste failed: too many sectors");
+        return 0;
+    }
+
+    for (int i = 0; i < clip->vertCount; i++) {
+        g_edMap.verts[g_edMap.vertCount].x = clip->verts[i].x + dx;
+        g_edMap.verts[g_edMap.vertCount].y = clip->verts[i].y + dy;
+        g_edMap.vertCount++;
+    }
+
+    for (int i = 0; i < clip->wallCount; i++) {
+        EdWall wall = clip->walls[i];
+
+        wall.v0 = vertBase + wall.v0;
+        wall.v1 = vertBase + wall.v1;
+        wall.neighbour = -1;
+        g_edMap.walls[g_edMap.wallCount++] = wall;
+    }
+
+    for (int si = 0; si < clip->sectorCount; si++) {
+        g_edMap.sectors[g_edMap.sectorCount] = clip->sectors[si];
+        g_edMap.sectors[g_edMap.sectorCount].wallStart = wallBase + clip->sectors[si].wallStart;
+        sanitizeSectorProperties(&g_edMap.sectors[g_edMap.sectorCount]);
+        g_edMap.sectorCount++;
+    }
+
+    syncAllPortals();
+
+    clearAllSelections();
+    if (clip->sectorCount == 1) {
+        g_ed.selectionType = ED_SEL_SECTOR;
+        g_ed.selectedSector = sectorBase;
+    } else {
+        for (int si = 0; si < clip->sectorCount; si++) {
+            addMultiSectorSelection(sectorBase + si);
+        }
+        normalizeSectorSelectionState();
+    }
+    g_ed.hoverVert = -1;
+    g_ed.hoverWall = -1;
+    g_ed.hoverSector = sectorBase;
+    g_ed.draggingVertex = 0;
+    g_ed.draggingWall = 0;
+    g_ed.draggingSector = 0;
+    g_ed.draggingMultiVertex = 0;
+    g_ed.boxSelecting = 0;
+    clearPendingLeftMouseAction();
+
+    snprintf(msg, sizeof(msg), "Pasted %d sector%s at %.2f, %.2f",
+             clip->sectorCount, (clip->sectorCount == 1) ? "" : "s", targetX, targetY);
+    setEditorStatus(msg);
+    return 1;
+}
+
 static void copySectorPropertiesToClipboard(int sectorIndex)
 {
     EdSectorClipboard *clip;
@@ -2485,18 +3731,13 @@ static void copySectorPropertiesToClipboard(int sectorIndex)
     setEditorStatus(msg);
 }
 
-static int pasteSectorPropertiesFromClipboard(int sectorIndex)
+static int applySectorPropertiesFromClipboardToSector(int sectorIndex)
 {
     EdSector *sec;
     const EdSectorClipboard *clip;
-    char msg[128];
 
     if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
-
-    if (!g_ed.hasCopiedSectorProps) {
-        setEditorStatus("No copied sector properties");
-        return 0;
-    }
+    if (!g_ed.hasCopiedSectorProps) return 0;
 
     sec = &g_edMap.sectors[sectorIndex];
     clip = &g_ed.copiedSectorProps;
@@ -2516,8 +3757,62 @@ static int pasteSectorPropertiesFromClipboard(int sectorIndex)
     sec->ceilTexAngle = clip->ceilTexAngle;
 
     sanitizeSectorProperties(sec);
+    return 1;
+}
+
+static int pasteSectorPropertiesFromClipboard(int sectorIndex)
+{
+    char msg[128];
+
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
+
+    if (!g_ed.hasCopiedSectorProps) {
+        setEditorStatus("No copied sector properties");
+        return 0;
+    }
+
+    if (!applySectorPropertiesFromClipboardToSector(sectorIndex)) {
+        return 0;
+    }
 
     snprintf(msg, sizeof(msg), "Pasted sector properties to sector %d", sectorIndex);
+    setEditorStatus(msg);
+    return 1;
+}
+
+static int pasteSectorPropertiesFromClipboardToSelection(void)
+{
+    int sectorIndices[ED_MAX_SECTORS];
+    const int sectorCount = collectSectorEditSelectionIndices(sectorIndices, ED_MAX_SECTORS);
+    char msg[128];
+
+    if (!g_ed.hasCopiedSectorProps) {
+        setEditorStatus("No copied sector properties");
+        return 0;
+    }
+
+    if (sectorCount <= 0) {
+        setEditorStatus("Select at least one sector");
+        return 0;
+    }
+
+    if (sectorCount == 1) {
+        if (pasteSectorPropertiesFromClipboard(sectorIndices[0])) {
+            syncAllPortals();
+            return 1;
+        }
+
+        return 0;
+    }
+
+    for (int i = 0; i < sectorCount; i++) {
+        applySectorPropertiesFromClipboardToSector(sectorIndices[i]);
+    }
+
+    syncAllPortals();
+
+    snprintf(msg, sizeof(msg), "Pasted sector properties to %d selected sector%s",
+             sectorCount, (sectorCount == 1) ? "" : "s");
     setEditorStatus(msg);
     return 1;
 }
@@ -3470,19 +4765,69 @@ static int sectorCollectUniqueVerts(int sectorIndex, int *outIndices, float *out
 
 static void beginSectorDrag(int sectorIndex, float worldX, float worldY)
 {
+    int sectorIndices[ED_MAX_SECTORS];
+    int sectorCount = 0;
+
     g_ed.draggingSector = 0;
     if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+
+    if (isSectorInEditSelection(sectorIndex)) {
+        sectorCount = collectSectorEditSelectionIndices(sectorIndices, ED_MAX_SECTORS);
+    }
+
+    if (sectorCount <= 0) {
+        sectorIndices[0] = sectorIndex;
+        sectorCount = 1;
+    }
 
     g_ed.dragSectorStartWorldX = worldX;
     g_ed.dragSectorStartWorldY = worldY;
 
-    g_ed.dragSectorVertCount = sectorCollectUniqueVerts(
-        sectorIndex,
-        g_ed.dragSectorVertIndices,
-        g_ed.dragSectorVertStartX,
-        g_ed.dragSectorVertStartY,
-        ED_MAX_VERTS
-    );
+    if (sectorCount == 1) {
+        g_ed.dragSectorVertCount = sectorCollectUniqueVerts(
+            sectorIndices[0],
+            g_ed.dragSectorVertIndices,
+            g_ed.dragSectorVertStartX,
+            g_ed.dragSectorVertStartY,
+            ED_MAX_VERTS
+        );
+    } else {
+        g_ed.dragSectorVertCount = 0;
+
+        for (int si = 0; si < sectorCount; si++) {
+            const int curSector = sectorIndices[si];
+            const EdSector *sec;
+
+            if (curSector < 0 || curSector >= g_edMap.sectorCount) continue;
+
+            sec = &g_edMap.sectors[curSector];
+
+            for (int wi = 0; wi < sec->wallCount; wi++) {
+                const EdWall *w = &g_edMap.walls[sec->wallStart + wi];
+                const int verts[2] = { w->v0, w->v1 };
+
+                for (int vk = 0; vk < 2; vk++) {
+                    const int vi = verts[vk];
+                    int exists = 0;
+
+                    for (int j = 0; j < g_ed.dragSectorVertCount; j++) {
+                        if (g_ed.dragSectorVertIndices[j] == vi) {
+                            exists = 1;
+                            break;
+                        }
+                    }
+
+                    if (exists) continue;
+                    if (g_ed.dragSectorVertCount >= ED_MAX_VERTS) break;
+
+                    g_ed.dragSectorVertIndices[g_ed.dragSectorVertCount] = vi;
+                    g_ed.dragSectorVertStartX[g_ed.dragSectorVertCount] = g_edMap.verts[vi].x;
+                    g_ed.dragSectorVertStartY[g_ed.dragSectorVertCount] = g_edMap.verts[vi].y;
+                    g_ed.dragSectorVertCount++;
+                }
+            }
+        }
+    }
 
     if (g_ed.dragSectorVertCount > 0) {
         g_ed.draggingSector = 1;
@@ -3491,7 +4836,7 @@ static void beginSectorDrag(int sectorIndex, float worldX, float worldY)
 
 static void dragSelectedSectorTo(float worldX, float worldY)
 {
-    if (!g_ed.draggingSector || g_ed.selectedSector < 0) return;
+    if (!g_ed.draggingSector || g_ed.dragSectorVertCount <= 0) return;
 
     const float dx = snapDeltaf(worldX - g_ed.dragSectorStartWorldX);
     const float dy = snapDeltaf(worldY - g_ed.dragSectorStartWorldY);
@@ -3546,9 +4891,20 @@ static void rebuildSectorWallLayout(void)
 
 static void deleteSectorByIndex(int sectorIndex)
 {
+    int sectorRemap[ED_MAX_SECTORS];
+    const int oldSectorCount = g_edMap.sectorCount;
+
     clearMultiVertexSelection();
     if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) {
         return;
+    }
+
+    for (int i = 0; i < ED_MAX_SECTORS; i++) {
+        sectorRemap[i] = -1;
+    }
+    for (int i = 0; i < oldSectorCount; i++) {
+        if (i < sectorIndex) sectorRemap[i] = i;
+        else if (i > sectorIndex) sectorRemap[i] = i - 1;
     }
 
     /* first: any neighbouring walls pointing into this sector
@@ -3617,6 +4973,8 @@ static void deleteSectorByIndex(int sectorIndex)
         g_ed.hoverSector--;
     }
 
+    remapMultiSectorSelectionFromOldToNew(sectorRemap, oldSectorCount);
+
     /* clear sector drag state */
     g_ed.draggingSector = 0;
 
@@ -3635,6 +4993,8 @@ static void deleteSectorByIndex(int sectorIndex)
 static int mergeSectorsAcrossWall(int wallIndex)
 {
     static EdWall mergedWalls[ED_MAX_WALLS];
+    int sectorRemap[ED_MAX_SECTORS];
+    int oldSectorCount;
 
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
         return 0;
@@ -3708,6 +5068,7 @@ static int mergeSectorsAcrossWall(int wallIndex)
 
     const int keepSector = (sectorA < sectorB) ? sectorA : sectorB;
     const int killSector = (sectorA < sectorB) ? sectorB : sectorA;
+    oldSectorCount = g_edMap.sectorCount;
 
     const float keepFloor = g_edMap.sectors[keepSector].floorHeight;
     const float keepCeil  = g_edMap.sectors[keepSector].ceilHeight;
@@ -3746,6 +5107,14 @@ static int mergeSectorsAcrossWall(int wallIndex)
     }
     g_edMap.sectorCount--;
 
+    for (int i = 0; i < ED_MAX_SECTORS; i++) {
+        sectorRemap[i] = -1;
+    }
+    for (int i = 0; i < oldSectorCount; i++) {
+        if (i < killSector) sectorRemap[i] = i;
+        else if (i > killSector) sectorRemap[i] = i - 1;
+    }
+
     /* fix editor references */
     if (g_edMap.startSector == killSector || g_edMap.startSector == keepSector) {
         g_edMap.startSector = keepSector;
@@ -3765,6 +5134,8 @@ static int mergeSectorsAcrossWall(int wallIndex)
     } else if (g_ed.hoverSector > killSector) {
         g_ed.hoverSector--;
     }
+
+    remapMultiSectorSelectionFromOldToNew(sectorRemap, oldSectorCount);
 
     /* append clean merged boundary */
     {
@@ -4206,6 +5577,8 @@ static void clearPendingLeftMouseAction(void)
     g_ed.pendingLeftWorldY = 0.0f;
     g_ed.pendingLeftTargetIndex = -1;
     g_ed.pendingLeftCtrlDown = 0;
+    g_ed.pendingLeftAltDown = 0;
+    g_ed.pendingLeftBoxSelectWalls = 0;
 }
 
 static int pendingLeftExceededDragTolerance(int mouseX, int mouseY)
@@ -4216,54 +5589,6 @@ static int pendingLeftExceededDragTolerance(int mouseX, int mouseY)
     const int tolSq = ED_CLICK_DRAG_TOLERANCE_PX * ED_CLICK_DRAG_TOLERANCE_PX;
 
     return distSq > tolSq;
-}
-
-static void chooseBestHoverTargetFromState(int wantVertex,
-                                           int wantWall,
-                                           int wantSector,
-                                           int hoverVert,
-                                           int hoverWall,
-                                           int hoverSector,
-                                           EdSelectionType *outType,
-                                           int *outIndex)
-{
-    if (outType) *outType = ED_SEL_NONE;
-    if (outIndex) *outIndex = -1;
-
-    if (wantVertex && hoverVert >= 0) {
-        if (outType) *outType = ED_SEL_VERTEX;
-        if (outIndex) *outIndex = hoverVert;
-        return;
-    }
-
-    if (wantWall && hoverWall >= 0) {
-        if (outType) *outType = ED_SEL_WALL;
-        if (outIndex) *outIndex = hoverWall;
-        return;
-    }
-
-    if (wantSector && hoverSector >= 0) {
-        if (outType) *outType = ED_SEL_SECTOR;
-        if (outIndex) *outIndex = hoverSector;
-        return;
-    }
-
-    if (hoverVert >= 0) {
-        if (outType) *outType = ED_SEL_VERTEX;
-        if (outIndex) *outIndex = hoverVert;
-        return;
-    }
-
-    if (hoverWall >= 0) {
-        if (outType) *outType = ED_SEL_WALL;
-        if (outIndex) *outIndex = hoverWall;
-        return;
-    }
-
-    if (hoverSector >= 0) {
-        if (outType) *outType = ED_SEL_SECTOR;
-        if (outIndex) *outIndex = hoverSector;
-    }
 }
 
 static void selectExplicitTarget(EdSelectionType type, int index)
@@ -4314,21 +5639,117 @@ static void beginVertexDragFromPress(int vertIndex)
 
 static void beginWallDragFromPress(int wallIndex)
 {
-    EdWall *w;
-
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
 
     selectExplicitTarget(ED_SEL_WALL, wallIndex);
     pushUndoState();
-
-    w = &g_edMap.walls[wallIndex];
-    g_ed.draggingWall = 1;
+    g_ed.draggingWall = 0;
+    g_ed.dragWallVertCount = 0;
     g_ed.dragWallStartWorldX = g_ed.pendingLeftWorldX;
     g_ed.dragWallStartWorldY = g_ed.pendingLeftWorldY;
-    g_ed.dragWallV0StartX = g_edMap.verts[w->v0].x;
-    g_ed.dragWallV0StartY = g_edMap.verts[w->v0].y;
-    g_ed.dragWallV1StartX = g_edMap.verts[w->v1].x;
-    g_ed.dragWallV1StartY = g_edMap.verts[w->v1].y;
+
+    {
+        const EdWall *w = &g_edMap.walls[wallIndex];
+        const int verts[2] = { w->v0, w->v1 };
+
+        for (int i = 0; i < 2; i++) {
+            const int vi = verts[i];
+
+            if (vi < 0 || vi >= g_edMap.vertCount) continue;
+
+            g_ed.dragWallVertIndices[g_ed.dragWallVertCount] = vi;
+            g_ed.dragWallVertStartX[g_ed.dragWallVertCount] = g_edMap.verts[vi].x;
+            g_ed.dragWallVertStartY[g_ed.dragWallVertCount] = g_edMap.verts[vi].y;
+            g_ed.dragWallVertCount++;
+
+            if (g_ed.dragWallVertCount >= ED_MAX_VERTS) break;
+        }
+    }
+
+    if (g_ed.dragWallVertCount > 0) {
+        g_ed.draggingWall = 1;
+    }
+}
+
+static void beginWallSelectionDrag(int wallIndex, float worldX, float worldY)
+{
+    int wallIndices[ED_MAX_WALLS];
+    int wallCount = 0;
+
+    g_ed.draggingWall = 0;
+    g_ed.dragWallVertCount = 0;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+
+    if (isWallInEditSelection(wallIndex)) {
+        wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+    }
+
+    if (wallCount <= 0) {
+        wallIndices[0] = wallIndex;
+        wallCount = 1;
+    }
+
+    g_ed.dragWallStartWorldX = worldX;
+    g_ed.dragWallStartWorldY = worldY;
+
+    for (int wi = 0; wi < wallCount; wi++) {
+        const EdWall *w;
+        int verts[2];
+
+        if (wallIndices[wi] < 0 || wallIndices[wi] >= g_edMap.wallCount) continue;
+
+        w = &g_edMap.walls[wallIndices[wi]];
+        verts[0] = w->v0;
+        verts[1] = w->v1;
+
+        for (int vk = 0; vk < 2; vk++) {
+            const int vi = verts[vk];
+            int exists = 0;
+
+            if (vi < 0 || vi >= g_edMap.vertCount) continue;
+
+            for (int j = 0; j < g_ed.dragWallVertCount; j++) {
+                if (g_ed.dragWallVertIndices[j] == vi) {
+                    exists = 1;
+                    break;
+                }
+            }
+
+            if (exists) continue;
+            if (g_ed.dragWallVertCount >= ED_MAX_VERTS) break;
+
+            g_ed.dragWallVertIndices[g_ed.dragWallVertCount] = vi;
+            g_ed.dragWallVertStartX[g_ed.dragWallVertCount] = g_edMap.verts[vi].x;
+            g_ed.dragWallVertStartY[g_ed.dragWallVertCount] = g_edMap.verts[vi].y;
+            g_ed.dragWallVertCount++;
+        }
+    }
+
+    if (g_ed.dragWallVertCount > 0) {
+        g_ed.draggingWall = 1;
+    }
+}
+
+static void dragSelectedWallTo(float worldX, float worldY)
+{
+    if (!g_ed.draggingWall || g_ed.dragWallVertCount <= 0) return;
+
+    {
+        const float dx = snapDeltaf(worldX - g_ed.dragWallStartWorldX);
+        const float dy = snapDeltaf(worldY - g_ed.dragWallStartWorldY);
+
+        for (int i = 0; i < g_ed.dragWallVertCount; i++) {
+            const int vi = g_ed.dragWallVertIndices[i];
+
+            if (vi < 0 || vi >= g_edMap.vertCount) continue;
+
+            g_edMap.verts[vi].x = g_ed.dragWallVertStartX[i] + dx;
+            g_edMap.verts[vi].y = g_ed.dragWallVertStartY[i] + dy;
+        }
+    }
+
+    syncAllPortals();
 }
 
 static void beginSectorDragFromPress(int sectorIndex)
@@ -4361,12 +5782,44 @@ static void promotePendingLeftMouseAction(int mouseX, int mouseY)
             break;
 
         case ED_PENDING_LEFT_WALL_CLICK_OR_BOX:
+            if (g_ed.pendingLeftAltDown &&
+                isWallInEditSelection(g_ed.pendingLeftTargetIndex)) {
+                pushUndoState();
+                beginWallSelectionDrag(g_ed.pendingLeftTargetIndex,
+                                       g_ed.pendingLeftWorldX,
+                                       g_ed.pendingLeftWorldY);
+            } else {
+                clearAllSelections();
+                beginBoxSelect(g_ed.pendingLeftMouseX,
+                               g_ed.pendingLeftMouseY,
+                               1);
+                updateBoxSelect(mouseX, mouseY);
+            }
+            break;
+
         case ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX:
+            if (g_ed.pendingLeftCtrlDown &&
+                isSectorInEditSelection(g_ed.pendingLeftTargetIndex)) {
+                pushUndoState();
+                beginSectorDrag(g_ed.pendingLeftTargetIndex,
+                                g_ed.pendingLeftWorldX,
+                                g_ed.pendingLeftWorldY);
+            } else if (g_ed.pendingLeftCtrlDown) {
+                toggleSectorMultiSelection(g_ed.pendingLeftTargetIndex);
+            } else {
+                selectExplicitTarget(ED_SEL_SECTOR, g_ed.pendingLeftTargetIndex);
+            }
+            break;
+
+        case ED_PENDING_LEFT_EMPTY_CLICK:
+            clearAllSelections();
+            break;
+
         case ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX:
             clearAllSelections();
             beginBoxSelect(g_ed.pendingLeftMouseX,
                            g_ed.pendingLeftMouseY,
-                           g_ed.pendingLeftCtrlDown);
+                           g_ed.pendingLeftBoxSelectWalls);
             updateBoxSelect(mouseX, mouseY);
             break;
 
@@ -4386,7 +5839,7 @@ static void commitPendingLeftMouseClick(void)
             break;
 
         case ED_PENDING_LEFT_WALL_CLICK_OR_BOX:
-            if (g_ed.pendingLeftCtrlDown) {
+            if (g_ed.pendingLeftAltDown) {
                 toggleWallMultiSelection(g_ed.pendingLeftTargetIndex);
             } else {
                 selectExplicitTarget(ED_SEL_WALL, g_ed.pendingLeftTargetIndex);
@@ -4394,10 +5847,15 @@ static void commitPendingLeftMouseClick(void)
             break;
 
         case ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX:
-            selectExplicitTarget(ED_SEL_SECTOR, g_ed.pendingLeftTargetIndex);
+            if (g_ed.pendingLeftCtrlDown) {
+                toggleSectorMultiSelection(g_ed.pendingLeftTargetIndex);
+            } else {
+                selectExplicitTarget(ED_SEL_SECTOR, g_ed.pendingLeftTargetIndex);
+            }
             break;
 
         case ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX:
+        case ED_PENDING_LEFT_EMPTY_CLICK:
             clearAllSelections();
             break;
 
@@ -4433,6 +5891,7 @@ static void clearAllSelections(void)
     g_ed.selectedSector = -1;
     clearMultiVertexSelection();
     clearMultiWallSelection();
+    clearMultiSectorSelection();
 }
 
 static int hasAnyActiveSelection(void)
@@ -4440,6 +5899,7 @@ static int hasAnyActiveSelection(void)
     return (g_ed.selectionType != ED_SEL_NONE) ||
            (g_ed.selectedVertCount > 0) ||
            (g_ed.selectedWallCount > 0) ||
+           (g_ed.selectedSectorCount > 0) ||
            g_ed.boxSelecting ||
            g_ed.draggingVertex ||
            g_ed.draggingWall ||
@@ -4757,6 +6217,62 @@ static void drawBoxSelectRect(void)
     drawRectL(x0-1, y0-1, x1 - x0 + 3, y1 - y0 + 3, ED_COLOUR_MULTI_SELECT_RANGE_BOX);
 }
 
+static void drawSectorSelectionHighlight(int sectorIndex)
+{
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return;
+
+    const EdSector *sec = &g_edMap.sectors[sectorIndex];
+    float minX = 0.0f, minY = 0.0f, maxX = 0.0f, maxY = 0.0f;
+    int found = 0;
+
+    for (int i = 0; i < sec->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+        const EdVec2 *a = &g_edMap.verts[w->v0];
+        const EdVec2 *b = &g_edMap.verts[w->v1];
+        int x0, y0, x1, y1;
+
+        worldToScreen(a->x, a->y, &x0, &y0);
+        worldToScreen(b->x, b->y, &x1, &y1);
+
+        {
+            int dx = x1 - x0;
+            int dy = y1 - y0;
+            int ox = 0;
+            int oy = 0;
+
+            if (dx != 0 || dy != 0) {
+                if (abs(dx) >= abs(dy)) {
+                    oy = 1;
+                } else {
+                    ox = 1;
+                }
+            }
+
+            drawLine(x0 - ox, y0 - oy, x1 - ox, y1 - oy, 1);
+            drawLine(x0 + ox, y0 + oy, x1 + ox, y1 + oy, 1);
+            drawLine(x0, y0, x1, y1, ED_COLOUR_SELECTED_SECTOR);
+        }
+
+        if (!found) {
+            minX = maxX = a->x;
+            minY = maxY = a->y;
+            found = 1;
+        } else {
+            if (a->x < minX) minX = a->x;
+            if (a->x > maxX) maxX = a->x;
+            if (a->y < minY) minY = a->y;
+            if (a->y > maxY) maxY = a->y;
+        }
+    }
+
+    if (found) {
+        int cx, cy;
+        worldToScreen((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, &cx, &cy);
+        drawRectL(cx - 8, cy - 8, 17, 17, ED_COLOUR_SELECTED_SECTOR);
+        drawRectL(cx - 5, cy - 5, 11, 11, ED_COLOUR_SELECTED_SECTOR);
+    }
+}
+
 
 
 static void beginNewMap(void)
@@ -4802,9 +6318,12 @@ static void beginNewMap(void)
     g_ed.selectedVertCount = 0;
     memset(g_ed.selectedWalls, 0, sizeof(g_ed.selectedWalls));
     g_ed.selectedWallCount = 0;
+    memset(g_ed.selectedSectors, 0, sizeof(g_ed.selectedSectors));
+    g_ed.selectedSectorCount = 0;
 
     g_ed.bUseVectorFill = 0;
     g_ed.bUseTextureFill = 0;
+    g_ed.isometricView = 0;
 
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
@@ -4875,6 +6394,7 @@ static void beginNewMap(void)
     memset(&g_ed.copiedWallProps, 0, sizeof(g_ed.copiedWallProps));
     g_ed.hasCopiedWallProps = 0;
     g_ed.copiedWallPropsSourceWall = -1;
+    resetSectorGeometryClipboard();
 
     g_ed.selectionType = ED_SEL_NONE;
     g_ed.selectedVert = -1;
@@ -4885,6 +6405,7 @@ static void beginNewMap(void)
     g_ed.draggingSector = 0;
     clearPendingLeftMouseAction();
     g_ed.pendingLeftCtrlDown = 0;
+    g_ed.pendingLeftAltDown = 0;
 
     clearDraft();
     memset(g_ed.prevKeys, 0, sizeof(g_ed.prevKeys));
@@ -5199,6 +6720,7 @@ static int loadTextMap(const char *path)
     clearDraft();
     clearMultiVertexSelection();
     clearMultiWallSelection();
+    clearMultiSectorSelection();
 
     g_ed.hoverVert = -1;
     g_ed.hoverWall = -1;
@@ -6085,6 +7607,7 @@ static void cleanMapCompact(void)
     int sectorRemap[ED_MAX_SECTORS];
     EdSector newSectors[ED_MAX_SECTORS];
     int newSectorCount = 0;
+    const int oldSectorCount = g_edMap.sectorCount;
 
     clearMultiVertexSelection();
 
@@ -6154,6 +7677,8 @@ static void cleanMapCompact(void)
     } else {
         g_ed.hoverSector = -1;
     }
+
+    remapMultiSectorSelectionFromOldToNew(sectorRemap, oldSectorCount);
 
     /* wall selection safety */
     if (g_ed.selectedWall >= g_edMap.wallCount) g_ed.selectedWall = -1;
@@ -6418,7 +7943,7 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
 
             owner = findSectorOwningWall(i);
 
-            if (g_ed.selectedSector >= 0 && owner == g_ed.selectedSector) {
+            if (isSectorInEditSelection(owner)) {
                 priority = 3;
             }
             else if (g_ed.hoverSector >= 0 && owner == g_ed.hoverSector) {
@@ -6451,7 +7976,7 @@ static uint8_t getSectorFillColour(int sectorIndex)
         return ED_UI_BG;
     }
 
-    if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector == sectorIndex) {
+    if (isSectorInEditSelection(sectorIndex)) {
         return ED_COLOUR_SELECTED_SECTOR;
     }
 
@@ -6470,7 +7995,7 @@ static int getSectorFillStepY(int sectorIndex)
     }
 
     /* denser fill for hovered/selected sectors */
-    if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector == sectorIndex) {
+    if (isSectorInEditSelection(sectorIndex)) {
         return 2;
     }
 
@@ -6552,14 +8077,54 @@ static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
     }
 }
 
+static void drawTexturedSector2DBruteForceScanline(int sectorIndex,
+                                                   int minX,
+                                                   int maxX,
+                                                   int y,
+                                                   const EdSector *sec)
+{
+    int runStart = -1;
+    float worldX;
+    float worldY;
+    const float worldStepX = 1.0f / g_ed.zoom;
+
+    if (!sec || minX > maxX) {
+        return;
+    }
+
+    worldX = g_ed.camX + (((float)minX + 0.5f) - (EDIT_VIEW_PORT_WIDTH * 0.5f)) / g_ed.zoom;
+    worldY = g_ed.camY + (((float)y + 0.5f) - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
+
+    for (int x = minX; x <= maxX; x++) {
+        const int inside = pointInSector(worldX, worldY, sectorIndex);
+
+        if (inside) {
+            if (runStart < 0) {
+                runStart = x;
+            }
+        } else if (runStart >= 0) {
+            drawTexturedSectorSpan(runStart, x - 1, y, sec);
+            runStart = -1;
+        }
+
+        worldX += worldStepX;
+    }
+
+    if (runStart >= 0) {
+        drawTexturedSectorSpan(runStart, maxX, y, sec);
+    }
+}
+
 static void drawFilledSector2D(int sectorIndex)
 {
     static int polyX[ED_MAX_WALLS];
     static int polyY[ED_MAX_WALLS];
     static int nodes[ED_MAX_WALLS];
+    static float texNodes[ED_MAX_WALLS];
 
     const EdSector *sec;
     int count;
+    int minX, maxX;
     int minY, maxY;
     uint8_t fillCol;
     int stepY;
@@ -6587,14 +8152,21 @@ static void drawFilledSector2D(int sectorIndex)
 
     minY = polyY[0];
     maxY = polyY[0];
+    minX = polyX[0];
+    maxX = polyX[0];
 
     for (int i = 1; i < count; i++) {
         if (polyY[i] < minY) minY = polyY[i];
         if (polyY[i] > maxY) maxY = polyY[i];
+        if (polyX[i] < minX) minX = polyX[i];
+        if (polyX[i] > maxX) maxX = polyX[i];
     }
 
+    if (maxX < 0 || minX >= EDIT_VIEW_PORT_WIDTH) return;
     if (maxY < 0 || minY >= EDIT_VIEW_PORT_HEIGHT) return;
 
+    minX = clampi_local(minX, 0, EDIT_VIEW_PORT_WIDTH - 1);
+    maxX = clampi_local(maxX, 0, EDIT_VIEW_PORT_WIDTH - 1);
     minY = clampi_local(minY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
     maxY = clampi_local(maxY, 0, EDIT_VIEW_PORT_HEIGHT - 1);
 
@@ -6604,6 +8176,65 @@ static void drawFilledSector2D(int sectorIndex)
 
     for (int y = minY; y <= maxY; y += stepY) {
         int nodeCount = 0;
+
+        if (useTextureFill) {
+            const float scanWorldY =
+                g_ed.camY + (((float)y + 0.5f) - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
+
+            for (int i = 0; i < count; i++) {
+                const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+                const EdVec2 *a = &g_edMap.verts[w->v0];
+                const EdVec2 *b = &g_edMap.verts[w->v1];
+
+                if (fabsf(b->y - a->y) <= 0.0001f) {
+                    continue;
+                }
+
+                if (((a->y < scanWorldY) && (b->y >= scanWorldY)) ||
+                    ((b->y < scanWorldY) && (a->y >= scanWorldY))) {
+                    if (nodeCount < ED_MAX_WALLS) {
+                        const float t = (scanWorldY - a->y) / (b->y - a->y);
+                        const float hitWorldX = a->x + ((b->x - a->x) * t);
+
+                        texNodes[nodeCount++] =
+                            ((hitWorldX - g_ed.camX) * g_ed.zoom) + (EDIT_VIEW_PORT_WIDTH * 0.5f);
+                    }
+                }
+            }
+
+            for (int i = 1; i < nodeCount; i++) {
+                const float v = texNodes[i];
+                int k = i - 1;
+                while (k >= 0 && texNodes[k] > v) {
+                    texNodes[k + 1] = texNodes[k];
+                    k--;
+                }
+                texNodes[k + 1] = v;
+            }
+
+            if ((nodeCount & 1) != 0) {
+                drawTexturedSector2DBruteForceScanline(sectorIndex, minX, maxX, y, sec);
+                continue;
+            }
+
+            for (int i = 0; i + 1 < nodeCount; i += 2) {
+                int x0 = (int)ceilf(texNodes[i]);
+                int x1 = (int)floorf(texNodes[i + 1]);
+
+                if (x1 < minX || x0 > maxX) {
+                    continue;
+                }
+
+                x0 = clampi_local(x0, minX, maxX);
+                x1 = clampi_local(x1, minX, maxX);
+
+                if (x1 >= x0) {
+                    drawTexturedSectorSpan(x0, x1, y, sec);
+                }
+            }
+
+            continue;
+        }
 
         for (int i = 0, j = count - 1; i < count; j = i++) {
             const int yi = polyY[i];
@@ -6647,11 +8278,7 @@ static void drawFilledSector2D(int sectorIndex)
             x1 = clampi_local(x1, 0, EDIT_VIEW_PORT_WIDTH - 1);
 
             if (x1 >= x0) {
-                if (useTextureFill) {
-                    drawTexturedSectorSpan(x0, x1, y, sec);
-                } else {
-                    drawLineDots(x0, y, x1, y, fillCol);
-                }
+                drawLineDots(x0, y, x1, y, fillCol);
             }
         }
     }
@@ -6796,6 +8423,10 @@ void drawHoverPanel(void)
         g_edMap.wallCount,   ED_MAX_WALLS,
         g_edMap.sectorCount, ED_MAX_SECTORS);
     drawText(SCREEN_W - (strlen(buf) * 8), EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
+
+    if (g_ed.isometricView) {
+        drawText(340, EDIT_VIEW_PORT_HEIGHT + 4, "ISO PREVIEW [KP*] toggle  MMB pan  Wheel zoom", ED_START_COL);
+    }
 
     if(g_ed.draftCount){
         snprintf(buf, sizeof(buf), "Draft: %d   SignedArea: %.2f   Grid: %.1f", g_ed.draftCount, draftSignedArea(), g_ed.currentGridStep);
@@ -6977,21 +8608,22 @@ static void drawExpandedEditorPanel(void)
         drawText(x, y, "RC3D EDITOR ::: F12 to launch the test map", ED_EXPANDED_MENU_TEXT);
         y += ED_ROW_STEP;
 
-        drawText(x, y, "LMB select/drag, RMB add draft point, MMB pan, Wheel zoom", ED_TEXT_COL);
+        drawText(x, y, "LMB drag-box vertices, RMB add draft point, MMB pan, Wheel zoom", ED_TEXT_COL);
         y += ED_ROW_STEP;
 
         drawText(x, y, "[ENTER] finish draft, [ESC] unselect / clear draft, [DEL] delete hovered", ED_TEXT_COL);
+        y += ED_ROW_STEP;
+        drawText(x, y, "[SHIFT] vertices, [CTRL] sectors, [ALT] walls", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "[F6] auto-build sectors from closed inner wall loops", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "['] vector fill, [#] floor texture fill", ED_TEXT_COL);
         y += ED_ROW_STEP;
+        drawText(x, y, "[KP*] toggle isometric preview (view-only)", ED_TEXT_COL);
+        y += ED_ROW_STEP;
         drawText(x, y, "CTRL+Z undo, CTRL+Y redo, F11 or CTRL+H history, [TAB] grid", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "[F7] Repair Topology, [F8] clean map, [SHIFT+DRAG] drop = merge", ED_TEXT_COL);
-
-        y += ED_ROW_STEP;
-        drawText(x, y, "[HOLD ALT] Priority Sector Select", ED_TEXT_COL);
 
         y += 6;//ED_ROW_STEP;
 
@@ -6999,7 +8631,8 @@ static void drawExpandedEditorPanel(void)
              (g_ed.selectionType == ED_SEL_WALL) ||
              (g_ed.selectionType == ED_SEL_SECTOR) ||
             (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0) ||
-            hasMultiWallSelection())
+            hasMultiWallSelection() ||
+            hasMultiSectorSelection())
         {
             drawText(x, y, "________________________________________________________________________________________________", ED_TEXT_COL);
             y += ED_ROW_STEP;
@@ -7031,7 +8664,7 @@ static void drawExpandedEditorPanel(void)
         if(hasMultiWallSelection()){
             drawText(x, y, "--- MULTI WALL HELP", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP;
-            drawText(x, y, "[CTRL+CLICK] add/remove walls, [CTRL+DRAG] box-select walls", ED_TEXT_COL);
+            drawText(x, y, "[ALT+CLICK] add/remove walls, [ALT+DRAG] selected walls move / empty drag box-selects", ED_TEXT_COL);
             y += ED_ROW_STEP;
             drawText(x, y, "[NUM_1]/[NUM_2]/[NUM_3] copy from primary wall,", ED_TEXT_COL);
             y += ED_ROW_STEP;
@@ -7045,6 +8678,8 @@ static void drawExpandedEditorPanel(void)
         if(g_ed.selectionType == ED_SEL_SECTOR){
             drawText(x, y, "--- SECTOR HELP:", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP;
+            drawText(x, y, "[CTRL+CLICK] add/remove sectors, [CTRL+C]/[CTRL+V] copy/paste group", ED_TEXT_COL);
+            y += ED_ROW_STEP;
             drawText(x, y, "[1]/[2] copy floor/ceil height, [SHIFT+1]/[SHIFT+2] paste", ED_TEXT_COL);
             y += ED_ROW_STEP;
             drawText(x, y, "[4]/[5] copy floor/ceil texture_id, [SHIFT+4]/[SHIFT+5] paste", ED_TEXT_COL);
@@ -7052,6 +8687,14 @@ static void drawExpandedEditorPanel(void)
             drawText(x, y, "Inspector Copy Props / Paste Props copies the full sector setup", ED_TEXT_COL);
             y += ED_ROW_STEP;
             drawText(x, y, "Use the inspector +/- buttons for sector UV, heights, and glow", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+        }
+        if(hasMultiSectorSelection()){
+            drawText(x, y, "--- MULTI SECTOR HELP:", ED_EXPANDED_MENU_TEXT);
+            y += ED_ROW_STEP;
+            drawText(x, y, "[CTRL+CLICK] add/remove sectors, [CTRL+C] copy, [CTRL+V] paste snapped group", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+            drawText(x, y, "Paste Props and texture browsing apply to the whole sector selection", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0){
@@ -7247,57 +8890,11 @@ static void drawMapGeometry(void)
     if (g_ed.selectionType == ED_SEL_SECTOR &&
         g_ed.selectedSector >= 0 &&
         g_ed.selectedSector < g_edMap.sectorCount) {
-        const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
-        float minX = 0.0f, minY = 0.0f, maxX = 0.0f, maxY = 0.0f;
-        int found = 0;
-
-        for (int i = 0; i < sec->boundaryCount; i++) {
-            const EdWall *w = &g_edMap.walls[sec->wallStart + i];
-            const EdVec2 *a = &g_edMap.verts[w->v0];
-            const EdVec2 *b = &g_edMap.verts[w->v1];
-            int x0, y0, x1, y1;
-
-            worldToScreen(a->x, a->y, &x0, &y0);
-            worldToScreen(b->x, b->y, &x1, &y1);
-
-            {
-                int dx = x1 - x0;
-                int dy = y1 - y0;
-                int ox = 0;
-                int oy = 0;
-
-                if (dx != 0 || dy != 0) {
-                    if (abs(dx) >= abs(dy)) {
-                        ox = 0;
-                        oy = 1;
-                    } else {
-                        ox = 1;
-                        oy = 0;
-                    }
-                }
-
-                drawLine(x0 - ox, y0 - oy, x1 - ox, y1 - oy, 1);
-                drawLine(x0 + ox, y0 + oy, x1 + ox, y1 + oy, 1);
-                drawLine(x0, y0, x1, y1, ED_COLOUR_SELECTED_SECTOR);
-            }
-
-            if (!found) {
-                minX = maxX = a->x;
-                minY = maxY = a->y;
-                found = 1;
-            } else {
-                if (a->x < minX) minX = a->x;
-                if (a->x > maxX) maxX = a->x;
-                if (a->y < minY) minY = a->y;
-                if (a->y > maxY) maxY = a->y;
-            }
-        }
-
-        if (found) {
-            int cx, cy;
-            worldToScreen((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, &cx, &cy);
-            drawRectL(cx - 8, cy - 8, 17, 17, ED_COLOUR_SELECTED_SECTOR);
-            drawRectL(cx - 5, cy - 5, 11, 11, ED_COLOUR_SELECTED_SECTOR);
+        drawSectorSelectionHighlight(g_ed.selectedSector);
+    } else if (hasMultiSectorSelection()) {
+        for (int i = 0; i < g_edMap.sectorCount; i++) {
+            if (!g_ed.selectedSectors[i]) continue;
+            drawSectorSelectionHighlight(i);
         }
     }
 
@@ -8347,6 +9944,13 @@ static void refreshEditorUIButtonState(void)
         rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
     }
 
+    if (hasAnySectorEditSelection()) {
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
+        rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
+        rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
+    }
+
     if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS, 1);
@@ -8354,10 +9958,6 @@ static void refreshEditorUIButtonState(void)
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
-        rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
-        rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
 
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
@@ -8530,6 +10130,13 @@ static void handleEditorUI(int mouseX, int mouseY,
             //rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_SPLIT, !g_ed.splitPreviewValid);
         }
 
+        if (hasAnySectorEditSelection()) {
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
+            rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
+            rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
+        }
+
         if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
             sec = &g_edMap.sectors[g_ed.selectedSector];
 
@@ -8539,12 +10146,6 @@ static void handleEditorUI(int mouseX, int mouseY,
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
-            rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
-            rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
-
-
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 1);
@@ -8843,16 +10444,20 @@ static void handleEditorUI(int mouseX, int mouseY,
             break;
 
         case GUI_BTN_SECTOR_COPY_PROPS:
-            if (sec && g_ed.selectedSector >= 0) {
-                copySectorPropertiesToClipboard(g_ed.selectedSector);
+            if (hasAnySectorEditSelection()) {
+                const int primarySector = getPrimarySectorEditIndex();
+
+                if (primarySector >= 0) {
+                    copySectorPropertiesToClipboard(primarySector);
+                }
             }
             break;
 
         case GUI_BTN_SECTOR_PASTE_PROPS:
-            if (sec && g_ed.selectedSector >= 0 && g_ed.hasCopiedSectorProps) {
+            if (hasAnySectorEditSelection() && g_ed.hasCopiedSectorProps) {
                 pushUndoState();
-                if (pasteSectorPropertiesFromClipboard(g_ed.selectedSector)) {
-                    syncAllPortals();
+                if (!pasteSectorPropertiesFromClipboardToSelection()) {
+                    performUndo();
                 }
             }
             break;
@@ -9056,6 +10661,7 @@ static void drawInspectorPanel(void)
         (g_ed.selectionType == ED_SEL_VERTEX) ? "VERTEX" :
         (g_ed.selectionType == ED_SEL_WALL)   ? "WALL" :
         (g_ed.selectionType == ED_SEL_SECTOR) ? "SECTOR" :
+        hasMultiSectorSelection() ? "MULTI SECTOR" :
         hasMultiWallSelection() ? "MULTI WALL" :
         (g_ed.selectedVertCount > 0) ? "MULTI VERT" : "NONE");
     drawText(px + 120, py + 10, buf, ED_INSPECTOR_TEXT_COL);
@@ -9351,6 +10957,46 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py + 148, "SHIFT = 15\xb0, ALT = 1\xb0", ED_TEXT_COL);
     }
 
+    else if (hasMultiSectorSelection()) {
+        const int primarySector = getPrimarySectorEditIndex();
+        const int clipSectorCount = g_ed.hasCopiedSectorGeometry ? g_ed.copiedSectorGeometry.sectorCount : 0;
+
+        py = 40;
+
+        drawRect(px + 8, py, pw - 16, 180, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 180, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        py += 8;
+
+        snprintf(buf, sizeof(buf), "SECTORS (%d)", g_ed.selectedSectorCount);
+        drawText(px + 16, py, buf, ED_INSPECTOR_TEXT_COL); py += 24;
+
+        snprintf(buf, sizeof(buf), "Primary sector: %d", primarySector);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        if (g_ed.hasCopiedSectorGeometry) {
+            snprintf(buf, sizeof(buf), "Geom clip: %d sector%s",
+                     clipSectorCount, (clipSectorCount == 1) ? "" : "s");
+        } else {
+            snprintf(buf, sizeof(buf), "Geom clip: Empty");
+        }
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        if (g_ed.hasCopiedSectorProps) {
+            if (g_ed.copiedSectorPropsSourceSector >= 0) {
+                snprintf(buf, sizeof(buf), "Props clip: Sector %d", g_ed.copiedSectorPropsSourceSector);
+            } else {
+                snprintf(buf, sizeof(buf), "Props clip: Ready");
+            }
+        } else {
+            snprintf(buf, sizeof(buf), "Props clip: Empty");
+        }
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        drawText(px + 16, py, "CTRL+Click adds/removes sectors", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "CTRL+C copies the full group", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "Paste Props and the texture browser hit the full selection", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "CTRL+V pastes to a snapped group anchor", ED_TEXT_COL); py += 20;
+    }
     /// SELECTED SECTORS ///////////////////////////////////////////////////////
     
     else if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector >= 0) {
@@ -9381,6 +11027,16 @@ static void drawInspectorPanel(void)
         }
         drawText(px + 16, py, buf, ED_TEXT_COL);  py += 20;
 
+        /*
+        if (g_ed.hasCopiedSectorGeometry) {
+            snprintf(buf, sizeof(buf), "Geom clip: %d sector%s",
+                     g_ed.copiedSectorGeometry.sectorCount,
+                     (g_ed.copiedSectorGeometry.sectorCount == 1) ? "" : "s");
+        } else {
+            snprintf(buf, sizeof(buf), "Geom clip: Empty");
+        }
+        drawText(px + 16, py, buf, ED_TEXT_COL);  py += 20;
+        */
         py += 8;
 
         // heights ////////////////////////////////
@@ -9484,7 +11140,6 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py + 306, "[A]/[S] upper  [D]/[F] mid  [H]/[J] lower", ED_TEXT_COL);
     }
 
-    drawTextureBrowser();
 }
 
 
@@ -9597,6 +11252,28 @@ void rc3dEditUpdate(float dt,
         }
     }
 
+    if (keyPressedOnce(keys, SDL_SCANCODE_KP_MULTIPLY) ||
+        (g_ed.isometricView && keyPressedOnce(keys, SDL_SCANCODE_ESCAPE))) {
+        g_ed.isometricView = 1 - g_ed.isometricView;
+        g_ed.draggingPan = 0;
+        g_ed.draggingVertex = 0;
+        g_ed.draggingWall = 0;
+        g_ed.draggingSector = 0;
+        g_ed.draggingMultiVertex = 0;
+        g_ed.boxSelecting = 0;
+        g_ed.textureScrollbarDragging = 0;
+        g_ed.hoverVert = -1;
+        g_ed.hoverWall = -1;
+        g_ed.hoverSector = -1;
+        clearPendingLeftMouseAction();
+
+        if (g_ed.isometricView) {
+            setEditorStatus("Isometric preview enabled (* toggles back, view-only)");
+        } else {
+            setEditorStatus("Isometric preview disabled");
+        }
+    }
+
     if (!g_ed.undoHistoryVisible &&
         !g_ed.confirmVisible &&
         (keyPressedOnce(keys, SDL_SCANCODE_F11) ||
@@ -9625,15 +11302,26 @@ void rc3dEditUpdate(float dt,
 
         /* only zoom if UI did not consume wheel */
         if (mouseWheelY != 0 && !wheelUsedByUI) {
-            const float beforeX = worldX;
-            const float beforeY = worldY;
+            float beforeX;
+            float beforeY;
+
+            if (g_ed.isometricView) {
+                screenToIsoWorldOnPlane(mouseX, mouseY, 0.0f, &beforeX, &beforeY);
+            } else {
+                beforeX = worldX;
+                beforeY = worldY;
+            }
 
             g_ed.zoom *= (mouseWheelY > 0) ? 1.15f : (1.0f / 1.15f);
             g_ed.zoom = clampf_local(g_ed.zoom, 4.0f, 512.0f);
 
             {
                 float afterX, afterY;
-                screenToWorld(mouseX, mouseY, &afterX, &afterY);
+                if (g_ed.isometricView) {
+                    screenToIsoWorldOnPlane(mouseX, mouseY, 0.0f, &afterX, &afterY);
+                } else {
+                    screenToWorld(mouseX, mouseY, &afterX, &afterY);
+                }
                 g_ed.camX += beforeX - afterX;
                 g_ed.camY += beforeY - afterY;
             }
@@ -9650,8 +11338,22 @@ void rc3dEditUpdate(float dt,
     if (g_ed.draggingPan) {
         const int dx = mouseX - prevMouseX;
         const int dy = mouseY - prevMouseY;
-        g_ed.camX -= (float)dx / g_ed.zoom;
-        g_ed.camY -= (float)dy / g_ed.zoom;
+        if (g_ed.isometricView) {
+            panIsoCameraByScreenDelta(dx, dy);
+        } else {
+            g_ed.camX -= (float)dx / g_ed.zoom;
+            g_ed.camY -= (float)dy / g_ed.zoom;
+        }
+    }
+
+    if (g_ed.isometricView) {
+        g_ed.hoverVert = -1;
+        g_ed.hoverWall = -1;
+        g_ed.hoverSector = -1;
+        g_ed.splitPreviewValid = 0;
+        g_ed.uiMouseCaptured = 0;
+        finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
+        return;
     }
 
     screenToWorld(mouseX, mouseY, &worldX, &worldY);
@@ -9687,8 +11389,9 @@ void rc3dEditUpdate(float dt,
 
     
     if (leftDown && !g_ed.prevLeftDown && !g_ed.uiMouseCaptured) {
-        EdSelectionType pressedType = ED_SEL_NONE;
-        int pressedIndex = -1;
+        const int shiftDown = (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) ? 1 : 0;
+        const int ctrlDown = (keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) ? 1 : 0;
+        const int altDown = (keys[SDL_SCANCODE_LALT] || keys[SDL_SCANCODE_RALT]) ? 1 : 0;
 
         g_ed.draggingVertex = 0;
         g_ed.draggingWall = 0;
@@ -9702,50 +11405,49 @@ void rc3dEditUpdate(float dt,
         g_ed.pendingLeftMouseY = mouseY;
         g_ed.pendingLeftWorldX = worldX;
         g_ed.pendingLeftWorldY = worldY;
-        g_ed.pendingLeftCtrlDown = (keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) ? 1 : 0;
+        g_ed.pendingLeftCtrlDown = ctrlDown;
+        g_ed.pendingLeftAltDown = altDown;
+        g_ed.pendingLeftBoxSelectWalls = 0;
 
-        /* -------------------------------------------------- */
-        /* existing multi-vertex selection: drag it if clicked */
-        /* on one of its verts, otherwise click/drag clears it */
-        /* -------------------------------------------------- */
-        if (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0) {
-            if (findSelectedVertexNearMouse(mouseX, mouseY) >= 0) {
-                g_ed.pendingLeftAction = ED_PENDING_LEFT_MULTI_DRAG;
+        if (ctrlDown) {
+            if (g_ed.hoverSector >= 0) {
+                g_ed.pendingLeftTargetIndex = g_ed.hoverSector;
+                g_ed.pendingLeftAction =
+                    (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector == g_ed.hoverSector)
+                        ? ED_PENDING_LEFT_SECTOR_DRAG
+                        : ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX;
+            } else {
+                g_ed.pendingLeftAction = ED_PENDING_LEFT_EMPTY_CLICK;
+            }
+        }
+        else if (altDown) {
+            g_ed.pendingLeftBoxSelectWalls = 1;
+
+            if (g_ed.hoverWall >= 0) {
+                g_ed.pendingLeftTargetIndex = g_ed.hoverWall;
+                g_ed.pendingLeftAction =
+                    (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall == g_ed.hoverWall)
+                        ? ED_PENDING_LEFT_WALL_DRAG
+                        : ED_PENDING_LEFT_WALL_CLICK_OR_BOX;
             } else {
                 g_ed.pendingLeftAction = ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX;
             }
         }
-        else {
-            chooseBestHoverTargetFromState(
-                keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT],
-                keys[SDL_SCANCODE_LCTRL]  || keys[SDL_SCANCODE_RCTRL],
-                keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT],
-                g_ed.hoverVert,
-                g_ed.hoverWall,
-                g_ed.hoverSector,
-                &pressedType,
-                &pressedIndex);
-
-            g_ed.pendingLeftTargetIndex = pressedIndex;
-
-            if (pressedType == ED_SEL_VERTEX && pressedIndex >= 0) {
+        else if (shiftDown) {
+            if (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0 &&
+                findSelectedVertexNearMouse(mouseX, mouseY) >= 0) {
+                g_ed.pendingLeftAction = ED_PENDING_LEFT_MULTI_DRAG;
+            }
+            else if (g_ed.hoverVert >= 0) {
+                g_ed.pendingLeftTargetIndex = g_ed.hoverVert;
                 g_ed.pendingLeftAction = ED_PENDING_LEFT_VERTEX;
-            }
-            else if (pressedType == ED_SEL_WALL && pressedIndex >= 0) {
-                g_ed.pendingLeftAction =
-                    (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall == pressedIndex)
-                        ? ED_PENDING_LEFT_WALL_DRAG
-                        : ED_PENDING_LEFT_WALL_CLICK_OR_BOX;
-            }
-            else if (pressedType == ED_SEL_SECTOR && pressedIndex >= 0) {
-                g_ed.pendingLeftAction =
-                    (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector == pressedIndex)
-                        ? ED_PENDING_LEFT_SECTOR_DRAG
-                        : ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX;
             }
             else {
                 g_ed.pendingLeftAction = ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX;
             }
+        }
+        else {
+            g_ed.pendingLeftAction = ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX;
         }
     }
 
@@ -9766,28 +11468,15 @@ void rc3dEditUpdate(float dt,
         updateHover(worldX, worldY, mouseX, mouseY);
     }
 
-    /* drag selected wall */
-    if (leftDown && g_ed.draggingWall && g_ed.selectedWall >= 0) {
-        EdWall *w = &g_edMap.walls[g_ed.selectedWall];
-
-        const float dx = snapDeltaf(worldX - g_ed.dragWallStartWorldX);
-        const float dy = snapDeltaf(worldY - g_ed.dragWallStartWorldY);
-
-        g_edMap.verts[w->v0].x = g_ed.dragWallV0StartX + dx;
-        g_edMap.verts[w->v0].y = g_ed.dragWallV0StartY + dy;
-
-        if (w->v1 != w->v0) {
-            g_edMap.verts[w->v1].x = g_ed.dragWallV1StartX + dx;
-            g_edMap.verts[w->v1].y = g_ed.dragWallV1StartY + dy;
-        }
-
-        syncAllPortals();
+    /* drag selected wall(s) */
+    if (leftDown && g_ed.draggingWall) {
+        dragSelectedWallTo(worldX, worldY);
         updateHover(worldX, worldY, mouseX, mouseY);
     }
 
     
 
-    if (leftDown && g_ed.draggingSector && g_ed.selectedSector >= 0) {
+    if (leftDown && g_ed.draggingSector) {
         dragSelectedSectorTo(worldX, worldY);
         updateHover(worldX, worldY, mouseX, mouseY);
     }
@@ -9865,6 +11554,16 @@ void rc3dEditUpdate(float dt,
         } else if (g_ed.selectedWall >= 0) {
             pushUndoState();
             deleteWallByIndex(g_ed.selectedWall);
+        } else if (hasMultiSectorSelection()) {
+            int sectorIndices[ED_MAX_SECTORS];
+            const int sectorCount = collectSectorEditSelectionIndices(sectorIndices, ED_MAX_SECTORS);
+
+            if (sectorCount > 0) {
+                pushUndoState();
+                for (int i = sectorCount - 1; i >= 0; i--) {
+                    deleteSectorByIndex(sectorIndices[i]);
+                }
+            }
         } else if (g_ed.selectedSector >= 0) {
             pushUndoState();
             deleteSectorByIndex(g_ed.selectedSector);
@@ -9958,6 +11657,27 @@ void rc3dEditUpdate(float dt,
         executeEditorAction(ED_ACT_REDO, worldX, worldY);
     }
 
+    if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_C)) {
+        if (hasAnySectorEditSelection()) {
+            copySelectedSectorGeometryToClipboard();
+        } else {
+            setEditorStatus("Select at least one sector to copy");
+        }
+    }
+
+    if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_V)) {
+        if (g_ed.hasCopiedSectorGeometry) {
+            pushUndoState();
+            if (!pasteSectorGeometryFromClipboard(worldX, worldY)) {
+                performUndo();
+            } else {
+                updateHover(worldX, worldY, mouseX, mouseY);
+            }
+        } else {
+            setEditorStatus("No copied sector geometry");
+        }
+    }
+
     if (keyPressedOnce(keys, SDL_SCANCODE_TAB)) {
         executeEditorAction(ED_ACT_TOGGLE_GRID, worldX, worldY);
     }
@@ -9968,12 +11688,13 @@ void rc3dEditUpdate(float dt,
 
     /* sector defaults for NEW drafted sectors only when nothing is selected */
     if (!hasAnyWallEditSelection() &&
+        !hasMultiSectorSelection() &&
         g_ed.selectedSector < 0 &&
         g_ed.selectionType != ED_SEL_VERTEX) {
         if (keyPressedOnce(keys, SDL_SCANCODE_F)) g_ed.sectorFloor -= 0.1f;
         if (keyPressedOnce(keys, SDL_SCANCODE_G)) g_ed.sectorFloor += 0.1f;
-        if (keyPressedOnce(keys, SDL_SCANCODE_C)) g_ed.sectorCeil  -= 0.1f;
-        if (keyPressedOnce(keys, SDL_SCANCODE_V)) g_ed.sectorCeil  += 0.1f;
+        if (!ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_C)) g_ed.sectorCeil  -= 0.1f;
+        if (!ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_V)) g_ed.sectorCeil  += 0.1f;
 
         if (g_ed.sectorCeil < g_ed.sectorFloor + 0.1f) {
             g_ed.sectorCeil = g_ed.sectorFloor + 0.1f;
@@ -10094,8 +11815,8 @@ void rc3dEditUpdate(float dt,
         if (shiftDown) {
             if (keyPressedOnce(keys, SDL_SCANCODE_F)) { pushUndoState(); sec->floorHeight -= 0.1f; changed = 1; }
             if (keyPressedOnce(keys, SDL_SCANCODE_G)) { pushUndoState(); sec->floorHeight += 0.1f; changed = 1; }
-            if (keyPressedOnce(keys, SDL_SCANCODE_C)) { pushUndoState(); sec->ceilHeight  -= 0.1f; changed = 1; }
-            if (keyPressedOnce(keys, SDL_SCANCODE_V)) { pushUndoState(); sec->ceilHeight  += 0.1f; changed = 1; }
+            if (!ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_C)) { pushUndoState(); sec->ceilHeight  -= 0.1f; changed = 1; }
+            if (!ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_V)) { pushUndoState(); sec->ceilHeight  += 0.1f; changed = 1; }
 
             if (keyPressedOnce(keys, SDL_SCANCODE_J)) { pushUndoState(); sec->floorColor--; changed = 1; }
             if (keyPressedOnce(keys, SDL_SCANCODE_K)) { pushUndoState(); sec->floorColor++; changed = 1; }
@@ -10327,6 +12048,7 @@ void rc3dEditUpdate(float dt,
 
     if (!(g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) &&
         !hasAnyWallEditSelection() &&
+        !hasMultiSectorSelection() &&
         g_ed.selectionType != ED_SEL_VERTEX &&
         g_ed.selectedVertCount <= 0)
     {
@@ -10386,7 +12108,7 @@ void rc3dEditUpdate(float dt,
             g_ed.textureBrowserTarget = TEX_TARGET_WALL_MIDDLE;
         }
     }
-    else if (g_ed.selectionType == ED_SEL_SECTOR) {
+    else if (hasAnySectorEditSelection()) {
         if (g_ed.textureBrowserTarget != TEX_TARGET_SECTOR_FLOOR &&
             g_ed.textureBrowserTarget != TEX_TARGET_SECTOR_CEIL) {
             g_ed.textureBrowserTarget = TEX_TARGET_SECTOR_FLOOR;
@@ -10404,9 +12126,13 @@ void rc3dEditUpdate(float dt,
 
 void rc3dEditRender(void)
 {
-    drawGrid();
-    drawMapGeometry();
-    drawStartMarker();
+    if (g_ed.isometricView) {
+        drawIsometricPreview();
+    } else {
+        drawGrid();
+        drawMapGeometry();
+        drawStartMarker();
+    }
 
     drawTopMenuBar();
     drawBottomMenuBar();
@@ -10421,6 +12147,7 @@ void rc3dEditRender(void)
         drawValidatorPanel();
     }
 
+    drawTextureBrowser();
     drawInspectorPanel();
     drawHoverPanel();
     rcguiDraw(&g_ui);

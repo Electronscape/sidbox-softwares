@@ -5,7 +5,9 @@
 #include <string.h>
 #include <ctype.h>
 
-
+#include <signal.h>
+#include <sys/wait.h>
+#include <errno.h>
 
 
 
@@ -13,7 +15,6 @@
 #include "gfx.h"
 #include "rc3d/rc3dedit.h"
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 
@@ -71,6 +72,8 @@ int updateFPS() {
     
     return 0; // skip this loop iteration for logic
 }
+
+
 
 
 SDL_Window *sdl_win;
@@ -147,8 +150,44 @@ int exportBinaryMap(const char *path);
 void doRunDemoGame();
 int rc3dEditConsumeQuitRequest(void);
 
+
+
+static void reapChildren(int sig)
+{
+    (void)sig;
+
+    int savedErrno = errno;
+
+    while (waitpid(-1, NULL, WNOHANG) > 0) {
+        // reap all exited children
+    }
+
+    errno = savedErrno;
+}
+
+static int installChildReaper(void)
+{
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+
+    sa.sa_handler = reapChildren;
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(SIGCHLD, &sa, NULL) < 0) {
+        perror("sigaction(SIGCHLD) failed");
+        return -1;
+    }
+
+    return 0;
+}
+
 int main(void)
 {
+    if (installChildReaper() != 0) {
+        return 1;
+    }
+
     if (BasicSDL2Setup() != 0) {
         return 1;
     }

@@ -170,6 +170,7 @@ void screenupdate(){
 }
 
 void moveSprite();
+
 int main(int argc, char **argv)
 {
     if (BasicSDL2Setup() != 0) {
@@ -191,7 +192,8 @@ int main(int argc, char **argv)
     
     rc3dInit();
     rc3dPreparePalette();
-    rc3dLightRange(2.0f, 1.0f, 2.0f);
+    rc3dLightRange(2.0f, 1.0f, 6.0f);
+    rc3dSetDrawDistance(32.0f);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -200,6 +202,8 @@ int main(int argc, char **argv)
 
     int pendingMouseDx = 0;
 
+    //rc3dSetViewport(0, 60, 360, 200);
+
     do{
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -207,38 +211,44 @@ int main(int argc, char **argv)
                 running = 0;
             }
 
-            if ((e.type == SDL_KEYDOWN) &&
-                (e.key.repeat == 0) &&
-                (e.key.keysym.sym == SDLK_ESCAPE)) {
-                running = 0;
+            if ((e.type == SDL_KEYDOWN) && (e.key.repeat == 0)){
+                if (e.key.keysym.sym == SDLK_ESCAPE)
+                    running = 0;
+                
+                //if(e.key.keysym.sym == SDLK_0)
+                    
             }
+
+            
 
             if (e.type == SDL_MOUSEMOTION) {
                 pendingMouseDx += e.motion.xrel;
             }
+
+            if (e.type == SDL_MOUSEBUTTONDOWN){
+                moveSprite();
+            }
         }
 
-        if (!updateFPS()) {
-            continue;
-        }
+        int gFrame = updateFPS();
 
         uint32_t nowTicks = SDL_GetTicks();
         float dt = (float)(nowTicks - lastTicks) / 1000.0f;
         int mouseDx = pendingMouseDx;
         const uint8_t *keys = SDL_GetKeyboardState(NULL);
 
-        lastTicks = nowTicks;
-        pendingMouseDx = 0;
+        if(gFrame){
+            lastTicks = nowTicks;
+            pendingMouseDx = 0;
+            rc3dUpdate(dt, keys, mouseDx);
+        }
 
-        rc3dUpdate(dt, keys, mouseDx);
-
-        moveSprite();
-        //clearScreen(0);
         rc3dRender();
 
-        drawFPSCounter();
-
-        screenupdate();
+        if(!gFrame){
+            drawFPSCounter();
+            screenupdate();
+        }
         //videoMemToScreen();
         //SDL_UpdateTexture(tex, NULL, pb, SCREEN_W * (int)sizeof(uint32_t));
         //SDL_RenderCopy(ren, tex, NULL, NULL);
