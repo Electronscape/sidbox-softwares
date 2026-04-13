@@ -466,18 +466,15 @@ static uint8_t g_visibleTraceBuilt[SCREEN_W];
 static RC3D_WallDepthSpan g_wallDepthSpans[SCREEN_W][RC3D_MAX_WALL_SPANS_PER_COLUMN];
 static uint8_t g_wallDepthSpanCount[SCREEN_W];
 
-static inline int rc3dViewportScreenX(int sx)
-{
+static inline int rc3dViewportScreenX(int sx){
     return g_viewport_left + sx;
 }
 
-static inline int rc3dViewportScreenY(int sy)
-{
+static inline int rc3dViewportScreenY(int sy){
     return g_viewport_top + sy;
 }
 
-static inline uint8_t *rc3dViewportPixelPtr(int sx, int sy)
-{
+static inline uint8_t *rc3dViewportPixelPtr(int sx, int sy){
     return &fb[(rc3dViewportScreenY(sy) * SCREEN_W) + rc3dViewportScreenX(sx)];
 }
 
@@ -523,8 +520,7 @@ static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float 
     g_columnRayCacheCount = g_viewport_width;
 }
 
-static inline void rc3dInvalidateVisibleTraceCache(void)
-{
+static inline void rc3dInvalidateVisibleTraceCache(void){
     memset(g_visibleTraceBuilt, 0, sizeof(g_visibleTraceBuilt));
 }
 
@@ -538,8 +534,7 @@ static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
 void screenupdate(void);
 
-static inline RC3D_Fixed rc3dFloatToFixed(float v)
-{
+static inline RC3D_Fixed rc3dFloatToFixed(float v){
     if (v >= 0.0f) {
         return (RC3D_Fixed)(v * (float)RC3D_FIXED_ONE + 0.5f);
     }
@@ -547,36 +542,30 @@ static inline RC3D_Fixed rc3dFloatToFixed(float v)
     return (RC3D_Fixed)(v * (float)RC3D_FIXED_ONE - 0.5f);
 }
 
-static inline float rc3dFixedToFloat(RC3D_Fixed v)
-{
+static inline float rc3dFixedToFloat(RC3D_Fixed v){
     return (float)v / (float)RC3D_FIXED_ONE;
 }
 
-static inline RC3D_Fixed rc3dFixedMul(RC3D_Fixed a, RC3D_Fixed b)
-{
+static inline RC3D_Fixed rc3dFixedMul(RC3D_Fixed a, RC3D_Fixed b){
     return (RC3D_Fixed)(((int64_t)a * (int64_t)b) >> RC3D_FIXED_SHIFT);
 }
 
-static inline int64_t rc3dFixedSq(RC3D_Fixed v)
-{
+static inline int64_t rc3dFixedSq(RC3D_Fixed v){
     return (int64_t)v * (int64_t)v;
 }
 
-static inline void rc3dSyncPlayerFloatXY(void)
-{
+static inline void rc3dSyncPlayerFloatXY(void){
     g_player.x = rc3dFixedToFloat(g_player.xFixed);
     g_player.y = rc3dFixedToFloat(g_player.yFixed);
 }
 
-static inline void rc3dSetPlayerWorldXYFixed(RC3D_Fixed x, RC3D_Fixed y)
-{
+static inline void rc3dSetPlayerWorldXYFixed(RC3D_Fixed x, RC3D_Fixed y){
     g_player.xFixed = x;
     g_player.yFixed = y;
     rc3dSyncPlayerFloatXY();
 }
 
-static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, RC3D_Fixed y)
-{
+static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, RC3D_Fixed y){
     if (!sprite) return;
 
     sprite->xFixed = x;
@@ -585,18 +574,15 @@ static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, 
     sprite->y = rc3dFixedToFloat(y);
 }
 
-static inline int rc3dSpriteHandleValid(int spriteId)
-{
+static inline int rc3dSpriteHandleValid(int spriteId){
     return (spriteId >= 0) &&
            (spriteId < RC3D_MAX_SPRITES) &&
            g_sprites[spriteId].inUse;
 }
 
-static void rc3dBuildTrigTables(void)
-{
-    if (g_trigLutInit) {
+static void rc3dBuildTrigTables(void){
+    if (g_trigLutInit)
         return;
-    }
 
     for (int i = 0; i < RC3D_TRIG_LUT_SIZE; ++i) {
         const float angle =
@@ -607,44 +593,35 @@ static void rc3dBuildTrigTables(void)
 
     g_halfFovRad = (RC3D_FOV_DEG * 0.5f) * (float)(M_PI / 180.0f);
     g_planeScaleConst = tanf(g_halfFovRad);
-    g_projPlaneConst = ((float)g_viewport_width * 0.5f) / g_planeScaleConst;
-    g_camStepConst =
-        (g_viewport_width > 1) ? (2.0f / (float)(g_viewport_width - 1)) : 0.0f;
-    g_angleToLutScale =
-        (float)RC3D_TRIG_LUT_SIZE / (float)(M_PI * 2.0f);
+    g_projPlaneConst  = ((float)g_viewport_width * 0.5f) / g_planeScaleConst;
+    g_camStepConst    = (g_viewport_width > 1) ? (2.0f / (float)(g_viewport_width - 1)) : 0.0f;
+    g_angleToLutScale = (float)RC3D_TRIG_LUT_SIZE / (float)(M_PI * 2.0f);
 
     g_trigLutInit = 1;
 }
 
-static inline int rc3dAngleToLutIndex(float angle)
-{
+static inline int rc3dAngleToLutIndex(float angle){
     const float scaled = angle * g_angleToLutScale;
-    int idx =
-        (int)((scaled >= 0.0f) ? (scaled + 0.5f) : (scaled - 0.5f));
+    int idx = (int)((scaled >= 0.0f) ? (scaled + 0.5f) : (scaled - 0.5f));
 
     idx %= RC3D_TRIG_LUT_SIZE;
     if (idx < 0) idx += RC3D_TRIG_LUT_SIZE;
-
     return idx & RC3D_TRIG_LUT_MASK;
 }
 
-static inline void rc3dLookupAngleTrig(float angle, float *outCos, float *outSin)
-{
+static inline void rc3dLookupAngleTrig(float angle, float *outCos, float *outSin){
     const int idx = rc3dAngleToLutIndex(angle);
 
     if (outCos) *outCos = g_cosLut[idx];
     if (outSin) *outSin = g_sinLut[idx];
 }
 
-static inline uint16_t rc3dEncodeDepth(float dist)
-{
-    if (dist <= 0.0f) {
+static inline uint16_t rc3dEncodeDepth(float dist){
+    if (dist <= 0.0f)
         return 0;
-    }
 
-    if (dist >= g_draw_distance) {
+    if (dist >= g_draw_distance)
         return UINT16_MAX - 1u;
-    }
 
     {
         const float scaled = dist * RC3D_DEPTH_SCALE;
@@ -656,13 +633,11 @@ static inline uint16_t rc3dEncodeDepth(float dist)
     }
 }
 
-static inline void rc3dClearWallDepthSpans(void)
-{
+static inline void rc3dClearWallDepthSpans(void){
     memset(g_wallDepthSpanCount, 0, sizeof(g_wallDepthSpanCount));
 }
 
-static inline void rc3dRecordWallDepthSpan(int sx, int y0, int y1, float hitDist)
-{
+static inline void rc3dRecordWallDepthSpan(int sx, int y0, int y1, float hitDist){
     uint8_t count;
 
     if ((unsigned)sx >= (unsigned)g_viewport_width) return;
@@ -741,8 +716,7 @@ static void rc3dBuildLightVariantTables(void)
         }
 
         {
-            const uint8_t baseSlot =
-                (uint8_t)((texel - RC3D_LIGHT_BANK_START) & (RC3D_LIGHT_BANK_SIZE - 1));
+            const uint8_t baseSlot = (uint8_t)((texel - RC3D_LIGHT_BANK_START) & (RC3D_LIGHT_BANK_SIZE - 1));
             const uint8_t bright = RC3D_LIGHT_BANK_START + baseSlot;
             const uint8_t mid = bright + RC3D_LIGHT_BANK_SIZE;
             const uint8_t dark = mid + RC3D_LIGHT_BANK_SIZE;
@@ -1228,8 +1202,7 @@ static int rc3dBuildSectorCacheForCurrentMap(void)
         return 1;
     }
 
-    g_sectorCache =
-        (RC3D_SectorCache *)malloc(sizeof(RC3D_SectorCache) * (size_t)g_map->sectorCount);
+    g_sectorCache = (RC3D_SectorCache *)malloc(sizeof(RC3D_SectorCache) * (size_t)g_map->sectorCount);
     if (!g_sectorCache) {
         return 0;
     }
@@ -1240,8 +1213,7 @@ static int rc3dBuildSectorCacheForCurrentMap(void)
         const RC3D_Sector *sec = &g_map->sectors[i];
         RC3D_SectorCache *cache = &g_sectorCache[i];
         const int bboxStart = sec->wallStart;
-        const int bboxEnd =
-            bboxStart + ((sec->boundaryCount > 0) ? sec->boundaryCount : sec->wallCount);
+        const int bboxEnd = bboxStart + ((sec->boundaryCount > 0) ? sec->boundaryCount : sec->wallCount);
 
         float floorScaleX = sec->floorTexScaleX;
         float floorScaleY = sec->floorTexScaleY;
@@ -4624,6 +4596,7 @@ static void rc3dUpdateSectorMotion(float dt)
                 sec->floorHeight = target;
                 stateFlags &= ~RC3D_SECTOR_STATE_RAISE_FLOOR;
             }
+
         } else if (stateFlags & RC3D_SECTOR_STATE_LOWER_FLOOR) {
             const float speed = fabsf(sec->floorFlowHeight);
             float target = sec->floorMinHeight;
