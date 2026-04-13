@@ -181,12 +181,24 @@ enum
 
     GUI_BTN_OBJECT_TAGID_PLUS,
     GUI_BTN_OBJECT_TAGID_MINUS,
+    GUI_BTN_OBJECT_TYPE_PLUS,
+    GUI_BTN_OBJECT_TYPE_MINUS,
     GUI_BTN_OBJECT_TARGETTAGID_PLUS,
     GUI_BTN_OBJECT_TARGETTAGID_MINUS,
     GUI_BTN_OBJECT_RADIUS_PLUS,
     GUI_BTN_OBJECT_RADIUS_MINUS,
     GUI_BTN_OBJECT_ZAXIS_PLUS,
     GUI_BTN_OBJECT_ZAXIS_MINUS,
+    GUI_BTN_OBJECT_GET_ZAXIS,
+
+    GUI_BTN_OBJECT_FLAGS_bit0, 
+    GUI_BTN_OBJECT_FLAGS_bit1, 
+    GUI_BTN_OBJECT_FLAGS_bit2, 
+    GUI_BTN_OBJECT_FLAGS_bit3, 
+    GUI_BTN_OBJECT_FLAGS_bit4, 
+    GUI_BTN_OBJECT_FLAGS_bit5, 
+    GUI_BTN_OBJECT_FLAGS_bit6, 
+    GUI_BTN_OBJECT_FLAGS_bit7, 
 
     GUI_BTN_CONFIRM_YES,
     GUI_BTN_CONFIRM_NO,
@@ -397,6 +409,8 @@ typedef struct {
     float z;
     int tagId;
     int targetTagId;
+    uint32_t flags;
+    uint32_t type;
     float radius;
     uint8_t textureId;
 } EdObject;
@@ -1333,6 +1347,15 @@ static uint8_t g_textureCacheLoaded[TEXTURE_LIBRARY_COUNT] = { 0 };
 
 static int pointInRectLocal(int px, int py, int x, int y, int w, int h){
     return (px >= x && px < (x + w) && py >= y && py < (y + h));
+}
+
+static int mouseInInspectorArea(int mouseX, int mouseY)
+{
+    return pointInRectLocal(mouseX, mouseY,
+                            EDIT_VIEW_PORT_WIDTH,
+                            0,
+                            ED_INSPECTOR_PANEL,
+                            EDIT_VIEW_PORT_HEIGHT);
 }
 
 static uint8_t *getTexturePtr(int index)
@@ -6931,12 +6954,14 @@ static int saveTextMap(const char *path)
     fprintf(f, "OBJECTS %d\n", g_edMap.objectCount);
     for (int i = 0; i < g_edMap.objectCount; i++) {
         const EdObject *o = &g_edMap.objects[i];
-        fprintf(f, "%.6f %.6f %.6f %d %d %.6f %u\n",
+        fprintf(f, "%.6f %.6f %.6f %d %d %d %d %.6f %u\n",
                 o->x, 
                 o->y, 
                 o->z, 
                 o->tagId, 
                 o->targetTagId,
+                o->flags,
+                o->type,
                 o->radius, 
                 (unsigned)o->textureId);
     }
@@ -7171,14 +7196,16 @@ static int loadTextMap(const char *path)
         for (int i = 0; i < count; i++) {
             unsigned texId;
 
-            if (fscanf(f, "%f %f %f %d %d %f %u",
+            if (fscanf(f, "%f %f %f %d %d %u %u %f %u",
                        &newMap.objects[i].x,
                        &newMap.objects[i].y,
                        &newMap.objects[i].z,
                        &newMap.objects[i].tagId,
                        &newMap.objects[i].targetTagId,
+                       &newMap.objects[i].flags,
+                       &newMap.objects[i].type,
                        &newMap.objects[i].radius,
-                       &texId) != 7) {
+                       &texId) != 9) {
                 fclose(f);
                 return 0;
             }
@@ -7384,6 +7411,8 @@ int exportBinaryMap(const char *path)
         float z = o->z;
         int32_t tagId = (int32_t)o->tagId;
         int32_t targTagId = (int32_t)o->targetTagId;
+        uint32_t oflags = (uint32_t)o->flags;
+        uint32_t otype  = (uint32_t)o->type;
         float radius = o->radius;
         uint8_t textureId = o->textureId;
 
@@ -7392,6 +7421,8 @@ int exportBinaryMap(const char *path)
             fwrite(&z, sizeof(z), 1, f)           != 1 ||
             fwrite(&tagId, sizeof(tagId), 1, f)   != 1 ||
             fwrite(&targTagId, sizeof(targTagId), 1, f)   != 1 ||
+            fwrite(&oflags, sizeof(oflags), 1, f) != 1 ||
+            fwrite(&otype, sizeof(otype), 1, f)   != 1 ||
             fwrite(&radius, sizeof(radius), 1, f) != 1 ||
             fwrite(&textureId, sizeof(textureId), 1, f) != 1
         ) {
@@ -7455,12 +7486,14 @@ static int exportCStringMap(const char *path)
     fprintf(f, "static const RC3D_Object g_objects[] = {\n");
     for (int i = 0; i < g_edMap.objectCount; i++) {
         const EdObject *o = &g_edMap.objects[i];
-        fprintf(f, "    { %.6ff, %.6ff, %.6ff, %d, %d, %.6ff, %u },\n",
+        fprintf(f, "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u },\n",
                 o->x,
                 o->y,
                 o->z,
                 o->tagId,
                 o->targetTagId,
+                o->flags,
+                o->type,
                 o->radius,
                 (unsigned)o->textureId);
     }
@@ -8408,14 +8441,11 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
 
     /* -------------------------------------------------- */
     /* wall hover                                         */
-    /* for shared/reversed portal walls, prefer:          */
-    /* 1) wall owned by selected sector                   */
-    /* 2) wall owned by hovered sector                    */
-    /* 3) otherwise nearest wall                          */
+    /* selected walls get a larger grab radius            */
     /* -------------------------------------------------- */
     {
-        const float worldPick = (float)ED_PICK_DIST_PX / g_ed.zoom;
-        const float worldPickSq = worldPick * worldPick;
+        const float baseWorldPick = (float)ED_PICK_DIST_PX / g_ed.zoom;
+        const float selectedWorldPick = (float)(ED_PICK_DIST_PX * 2) / g_ed.zoom;
 
         int bestWall = -1;
         float bestWallDistSq = 99999999.0f;
@@ -8425,6 +8455,9 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
             const EdWall *w = &g_edMap.walls[i];
             const EdVec2 *a = &g_edMap.verts[w->v0];
             const EdVec2 *b = &g_edMap.verts[w->v1];
+            const int selected = isWallInEditSelection(i);
+            const float worldPick = selected ? selectedWorldPick : baseWorldPick;
+            const float worldPickSq = worldPick * worldPick;
             const float d2 = distPointSegSq(worldX, worldY, a->x, a->y, b->x, b->y);
 
             int owner;
@@ -8436,14 +8469,16 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
 
             owner = findSectorOwningWall(i);
 
-            if (isSectorInEditSelection(owner)) {
+            if (selected) {
+                priority = 4;
+            }
+            else if (isSectorInEditSelection(owner)) {
                 priority = 3;
             }
             else if (g_ed.hoverSector >= 0 && owner == g_ed.hoverSector) {
                 priority = 2;
             }
             else if (w->neighbour >= 0) {
-                /* shared boundary / portal line gets slight preference */
                 priority = 1;
             }
 
@@ -9580,6 +9615,10 @@ void rc3dEditInit(void)
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS,   164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
         sector_button_y_offsets += 30;
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TYPE_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TYPE_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+        sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
@@ -9590,6 +9629,23 @@ void rc3dEditInit(void)
         sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS,   194 + controloffw, 156 + sector_button_y_offsets, 144, 24, "Get Sector Floor");
+        
+
+        // Toggling bits
+        sector_button_y_offsets += 70;
+
+        sector_button_y_offsets += 25;
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+
+        sector_button_y_offsets += 25;
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
 
     }
 
@@ -10374,17 +10430,8 @@ static void doExtrudeWall(void)
 
 
 
-static void refreshEditorUIButtonState(void)
+static void editorHideInspectorButtons(void)
 {
-    EdWall *w = 0;
-
-    rcguiSetButtonText(&g_ui, GUI_BTN_GRID, g_ed.tinyGridEnabled ? "Grid 0.1" : "Grid 1.0");
-
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_UNDO, (g_undoCount <= 0));
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_REDO, (g_redoCount <= 0));
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_FINISH, (g_ed.draftCount < 2));
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_CLRDRAFT, (g_ed.draftCount <= 0));
-
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SOLID, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PORTAL, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 0);
@@ -10406,6 +10453,10 @@ static void refreshEditorUIButtonState(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS, 0);
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS, 0);
@@ -10432,11 +10483,6 @@ static void refreshEditorUIButtonState(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 0);
 
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS, 0);
-
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 0);
@@ -10453,18 +10499,26 @@ static void refreshEditorUIButtonState(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 0);
 
-
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TYPE_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TYPE_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 0);
 
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_YES, g_ed.confirmVisible);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_NO,  g_ed.confirmVisible);
+    for (int i = GUI_BTN_OBJECT_FLAGS_bit0; i < (GUI_BTN_OBJECT_FLAGS_bit0 + 8); i++) {
+        rcguiSetButtonVisible(&g_ui, i, 0);
+    }
+}
+
+static void editorShowWallInspectorButtons(void)
+{
+    EdWall *w = 0;
 
     if (hasAnyWallEditSelection()) {
         const int primaryWall = getPrimaryWallEditIndex();
@@ -10472,107 +10526,167 @@ static void refreshEditorUIButtonState(void)
         if (primaryWall >= 0 && primaryWall < g_edMap.wallCount) {
             w = &g_edMap.walls[primaryWall];
         }
+    }
 
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SOLID, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PORTAL, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
-        rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
-        rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_PASTE_PROPS, !g_ed.hasCopiedWallProps);
+    if (!w && !hasAnyWallEditSelection()) {
+        return;
+    }
 
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YT, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YB, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SOLID, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PORTAL, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_PASTE_PROPS, !g_ed.hasCopiedWallProps);
 
-        if (hasSingleWallSelection() && w) {
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? "Clamp XL\x2" : "Clamp XL");
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? "Clamp XR\x2" : "Clamp XR");
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? "Clamp YT\x2" : "Clamp YT");
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? "Clamp YB\x2" : "Clamp YB");
-        } else {
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, "Clamp XL");
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, "Clamp XR");
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, "Clamp YT");
-            rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, "Clamp YB");
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YT, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YB, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
+
+    if (hasSingleWallSelection() && w) {
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? "Clamp XL\x2" : "Clamp XL");
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? "Clamp XR\x2" : "Clamp XR");
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? "Clamp YT\x2" : "Clamp YT");
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? "Clamp YB\x2" : "Clamp YB");
+    } else {
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, "Clamp XL");
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, "Clamp XR");
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, "Clamp YT");
+        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, "Clamp YB");
+    }
+}
+
+static void editorShowSectorInspectorButtons(void)
+{
+    if (!hasAnySectorEditSelection()) {
+        return;
+    }
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
+
+    if (g_ed.selectedSector < 0 || g_ed.selectedSector >= g_edMap.sectorCount) {
+        return;
+    }
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 1);
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 1);
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 1);
+}
+
+static void editorShowObjectInspectorButtons(void)
+{
+    if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) {
+        return;
+    }
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TYPE_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TYPE_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 1);
+
+    for (int i = GUI_BTN_OBJECT_FLAGS_bit0; i < (GUI_BTN_OBJECT_FLAGS_bit0 + 8); i++) {
+        rcguiSetButtonVisible(&g_ui, i, 1);
+    }
+
+    {
+        const uint32_t flags = g_edMap.objects[g_ed.selectedObject].flags;
+
+        for (int bit = 0; bit < 8; bit++) {
+            const int btnId = GUI_BTN_OBJECT_FLAGS_bit0 + bit;
+            const int checked = (flags >> bit) & 1u;
+            rcguiSetToggleChecked(&g_ui, btnId, checked);
         }
+    }
+}
 
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
+static void editorRefreshConfirmButtons(void)
+{
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_YES, g_ed.confirmVisible);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_NO,  g_ed.confirmVisible);
+}
+
+
+static void refreshEditorUIButtonState(void)
+{
+    rcguiSetButtonText(&g_ui, GUI_BTN_GRID, g_ed.tinyGridEnabled ? "Grid 0.1" : "Grid 1.0");
+
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_UNDO, (g_undoCount <= 0));
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_REDO, (g_redoCount <= 0));
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_FINISH, (g_ed.draftCount < 2));
+    rcguiSetButtonDisabled(&g_ui, GUI_BTN_CLRDRAFT, (g_ed.draftCount <= 0));
+
+    editorHideInspectorButtons();
+    editorRefreshConfirmButtons();
+
+    if (g_ed.confirmVisible) {
+        return;
     }
 
-    if (hasAnySectorEditSelection()) {
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
-        rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
-        rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
-    }
-
-    if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount){
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 1);
-    }
-
-    if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 1);
-
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 1);
-
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 1);
-        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 1);
-    }
+    editorShowWallInspectorButtons();
+    editorShowSectorInspectorButtons();
+    editorShowObjectInspectorButtons();
 }
 
 
@@ -10586,221 +10700,21 @@ static void handleEditorUI(int mouseX, int mouseY,
 
     rcguiUpdate(&g_ui, mouseX, mouseY, leftDown, leftPressed, leftReleased);
 
-    const uint8_t *modKeys = SDL_GetKeyboardState(NULL);
-    float uiStep = 0.1f;
-
-    if (modKeys[SDL_SCANCODE_LCTRL] || modKeys[SDL_SCANCODE_RCTRL]) {
-        uiStep = 10.0f;
-    } else if (modKeys[SDL_SCANCODE_LSHIFT] || modKeys[SDL_SCANCODE_RSHIFT]) {
-        uiStep = 1.0f;
-    } else if (modKeys[SDL_SCANCODE_LALT] || modKeys[SDL_SCANCODE_RALT]) {
-        uiStep = 0.001f;
-    }
-
     g_ed.uiHotId = rcguiGetHotButton(&g_ui);
     g_ed.uiActiveId = rcguiGetActiveButton(&g_ui);
     g_ed.uiMouseCaptured = (g_ed.uiHotId != 0) || (g_ed.uiActiveId != 0);
 
-    rcguiSetButtonText(&g_ui, GUI_BTN_GRID, g_ed.tinyGridEnabled ? "Grid 0.1" : "Grid 1.0");
+    refreshEditorUIButtonState();
 
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_UNDO, (g_undoCount <= 0));
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_REDO, (g_redoCount <= 0));
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_FINISH, (g_ed.draftCount < 2));
-    rcguiSetButtonDisabled(&g_ui, GUI_BTN_CLRDRAFT, (g_ed.draftCount <= 0));
-
-    /* -------------------------------------------------- */
-    /* default: hide all expandable-panel buttons first   */
-    /* -------------------------------------------------- */
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SOLID, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PORTAL, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 0);
-    //rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SPLIT, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 0);
-
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YT, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YB, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 0);
-
-
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 0);
-
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS, 0);
-
-    // sector texture settings
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 0);
-
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 0);
-
-    //// Objects
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 0);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 0);   
-
-    // dialog box (yes no)
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_YES, g_ed.confirmVisible);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_NO,  g_ed.confirmVisible);
-
-    /* -------------------------------------------------- */
-    /* only enable lower panel controls if menu is open   */
-    /* -------------------------------------------------- */
-    //if (g_ed.ui_menu_visable) 
-    {
-        if (hasAnyWallEditSelection()) {
-            const int primaryWall = getPrimaryWallEditIndex();
-
-            if (primaryWall >= 0 && primaryWall < g_edMap.wallCount) {
-                w = &g_edMap.walls[primaryWall];
-            }
-
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SOLID, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PORTAL, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
-            rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
-            rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_PASTE_PROPS, !g_ed.hasCopiedWallProps);
-            //rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_SPLIT, 1);
-
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XL, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_XR, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YT, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_CLAMP_YB, 1);
-
-            if (hasSingleWallSelection() && w) {
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? "Clamp XL\x2" : "Clamp XL");
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? "Clamp XR\x2" : "Clamp XR");
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? "Clamp YT\x2" : "Clamp YT");
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? "Clamp YB\x2" : "Clamp YB");
-            } else {
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, "Clamp XL");
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, "Clamp XR");
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, "Clamp YT");
-                rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, "Clamp YB");
-            }
-
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
-
-            //rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_SPLIT, !g_ed.splitPreviewValid);
+    if (hasAnyWallEditSelection()) {
+        const int primaryWall = getPrimaryWallEditIndex();
+        if (primaryWall >= 0 && primaryWall < g_edMap.wallCount) {
+            w = &g_edMap.walls[primaryWall];
         }
+    }
 
-        if (hasAnySectorEditSelection()) {
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
-            rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
-            rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
-        }
-
-        if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
-            sec = &g_edMap.sectors[g_ed.selectedSector];
-
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 1);
-
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 1);
-            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 1);
-        }
+    if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+        sec = &g_edMap.sectors[g_ed.selectedSector];
     }
 
     hit = rcguiGetButtonHit(&g_ui);
@@ -10823,648 +10737,475 @@ static void handleEditorUI(int mouseX, int mouseY,
         return;
     }
 
-    switch (hit) {
-        case GUI_BTN_HELP:     executeEditorAction(ED_ACT_HELP, worldX, worldY); break;
-        case GUI_BTN_NEWMAP:   executeEditorAction(ED_ACT_NEW_MAP, worldX, worldY); break;
-        case GUI_BTN_QUIT:     executeEditorAction(ED_ACT_QUIT, worldX, worldY); break;
-        case GUI_BTN_UNDO:     executeEditorAction(ED_ACT_UNDO, worldX, worldY); break;
-        case GUI_BTN_REDO:     executeEditorAction(ED_ACT_REDO, worldX, worldY); break;
-        case GUI_BTN_LOAD:     executeEditorAction(ED_ACT_LOAD, worldX, worldY); break;
-        case GUI_BTN_SAVE:     executeEditorAction(ED_ACT_SAVE, worldX, worldY); break;
-        case GUI_BTN_EXPORT:   executeEditorAction(ED_ACT_EXPORT, worldX, worldY); break;
-        case GUI_BTN_GRID:     executeEditorAction(ED_ACT_TOGGLE_GRID, worldX, worldY); break;
-        case GUI_BTN_FINISH:   executeEditorAction(ED_ACT_FINISH_DRAFT, worldX, worldY); break;
-        case GUI_BTN_CLRDRAFT: executeEditorAction(ED_ACT_CLEAR_DRAFT, worldX, worldY); break;
-        case GUI_BTN_SECTOR_CUTTER: executeEditorAction(ED_ACT_SECTOR_CUTTER, worldX, worldY); break;
-        case GUI_BTN_REPAIR_TOPOLOGY: executeEditorAction(ED_ACT_REPAIR_TOPOLOGY, worldX, worldY); break;
-        case GUI_BTN_CLEANMAP: executeEditorAction(ED_ACT_CLEAN_MAP, worldX, worldY); break;
-        case GUI_BTN_MAPVALIDATOR: executeEditorAction(ED_ACT_VALIDATE_MAP, worldX, worldY); break;
-        case GUI_BTN_LAUNCH_TEST_MAP: executeEditorAction(ED_ACT_RUN_TEST, worldX, worldY); break;
-        case GUI_BTN_WALL_SOLID: executeEditorAction(ED_ACT_WALL_SOLID, worldX, worldY); break;
-        case GUI_BTN_WALL_PORTAL: executeEditorAction(ED_ACT_WALL_PORTAL, worldX, worldY); break;
-        case GUI_BTN_WALL_WINDOW: executeEditorAction(ED_ACT_WALL_WINDOW, worldX, worldY); break;
-        case GUI_BTN_WALL_DOOR: executeEditorAction(ED_ACT_WALL_DOOR, worldX, worldY); break;
-        case GUI_BTN_WALL_SPLIT: executeEditorAction(ED_ACT_WALL_SPLIT, worldX, worldY); break;
-        case GUI_BTN_WALL_TRANSPARENCY: executeEditorAction(ED_ACT_WALL_TRANSPARENCY, worldX, worldY); break;
-        case GUI_BTN_WALL_COPY_PROPS:
-            if (hasAnyWallEditSelection()) {
-                const int primaryWall = getPrimaryWallEditIndex();
-                if (primaryWall >= 0) {
-                    copyWallPropsToClipboard(primaryWall);
+    {
+        const uint8_t *modKeys = SDL_GetKeyboardState(NULL);
+        float uiStep = 0.1f;
+
+        if (modKeys[SDL_SCANCODE_LCTRL] || modKeys[SDL_SCANCODE_RCTRL]) {
+            uiStep = 10.0f;
+        } else if (modKeys[SDL_SCANCODE_LSHIFT] || modKeys[SDL_SCANCODE_RSHIFT]) {
+            uiStep = 1.0f;
+        } else if (modKeys[SDL_SCANCODE_LALT] || modKeys[SDL_SCANCODE_RALT]) {
+            uiStep = 0.001f;
+        }
+
+        switch (hit) {
+            case GUI_BTN_HELP:     executeEditorAction(ED_ACT_HELP, worldX, worldY); break;
+            case GUI_BTN_NEWMAP:   executeEditorAction(ED_ACT_NEW_MAP, worldX, worldY); break;
+            case GUI_BTN_QUIT:     executeEditorAction(ED_ACT_QUIT, worldX, worldY); break;
+            case GUI_BTN_UNDO:     executeEditorAction(ED_ACT_UNDO, worldX, worldY); break;
+            case GUI_BTN_REDO:     executeEditorAction(ED_ACT_REDO, worldX, worldY); break;
+            case GUI_BTN_LOAD:     executeEditorAction(ED_ACT_LOAD, worldX, worldY); break;
+            case GUI_BTN_SAVE:     executeEditorAction(ED_ACT_SAVE, worldX, worldY); break;
+            case GUI_BTN_EXPORT:   executeEditorAction(ED_ACT_EXPORT, worldX, worldY); break;
+            case GUI_BTN_GRID:     executeEditorAction(ED_ACT_TOGGLE_GRID, worldX, worldY); break;
+            case GUI_BTN_FINISH:   executeEditorAction(ED_ACT_FINISH_DRAFT, worldX, worldY); break;
+            case GUI_BTN_CLRDRAFT: executeEditorAction(ED_ACT_CLEAR_DRAFT, worldX, worldY); break;
+            case GUI_BTN_SECTOR_CUTTER: executeEditorAction(ED_ACT_SECTOR_CUTTER, worldX, worldY); break;
+            case GUI_BTN_REPAIR_TOPOLOGY: executeEditorAction(ED_ACT_REPAIR_TOPOLOGY, worldX, worldY); break;
+            case GUI_BTN_CLEANMAP: executeEditorAction(ED_ACT_CLEAN_MAP, worldX, worldY); break;
+            case GUI_BTN_MAPVALIDATOR: executeEditorAction(ED_ACT_VALIDATE_MAP, worldX, worldY); break;
+            case GUI_BTN_LAUNCH_TEST_MAP: executeEditorAction(ED_ACT_RUN_TEST, worldX, worldY); break;
+            case GUI_BTN_WALL_SOLID: executeEditorAction(ED_ACT_WALL_SOLID, worldX, worldY); break;
+            case GUI_BTN_WALL_PORTAL: executeEditorAction(ED_ACT_WALL_PORTAL, worldX, worldY); break;
+            case GUI_BTN_WALL_WINDOW: executeEditorAction(ED_ACT_WALL_WINDOW, worldX, worldY); break;
+            case GUI_BTN_WALL_DOOR: executeEditorAction(ED_ACT_WALL_DOOR, worldX, worldY); break;
+            case GUI_BTN_WALL_SPLIT: executeEditorAction(ED_ACT_WALL_SPLIT, worldX, worldY); break;
+            case GUI_BTN_WALL_TRANSPARENCY: executeEditorAction(ED_ACT_WALL_TRANSPARENCY, worldX, worldY); break;
+
+            case GUI_BTN_WALL_COPY_PROPS:
+                if (hasAnyWallEditSelection()) {
+                    const int primaryWall = getPrimaryWallEditIndex();
+                    if (primaryWall >= 0) {
+                        copyWallPropsToClipboard(primaryWall);
+                    }
                 }
-            }
-            break;
-        case GUI_BTN_WALL_PASTE_PROPS:
-            if (hasAnyWallEditSelection()) {
-                if (g_ed.hasCopiedWallProps) {
+                break;
+
+            case GUI_BTN_WALL_PASTE_PROPS:
+                if (hasAnyWallEditSelection()) {
+                    if (g_ed.hasCopiedWallProps) {
+                        int wallIndices[ED_MAX_WALLS];
+                        const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                        char msg[128];
+
+                        pushUndoState();
+                        for (int i = 0; i < wallCount; i++) {
+                            pasteWallPropsFromClipboardToWall(wallIndices[i]);
+                        }
+
+                        snprintf(msg, sizeof(msg), "Pasted wall properties to %d selected wall%s",
+                                 wallCount, (wallCount == 1) ? "" : "s");
+                        setEditorStatus(msg);
+                    } else {
+                        setEditorStatus("No copied wall properties");
+                    }
+                }
+                break;
+
+            case GUI_BTN_SECTOR_FTEX_SX_MINUS:
+                if (sec) { pushUndoState(); sec->floorTexScaleX -= 0.1f; if (sec->floorTexScaleX < 0.1f) sec->floorTexScaleX = 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_FTEX_SX_PLUS:
+                if (sec) { pushUndoState(); sec->floorTexScaleX += 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_FTEX_SY_MINUS:
+                if (sec) { pushUndoState(); sec->floorTexScaleY -= 0.1f; if (sec->floorTexScaleY < 0.1f) sec->floorTexScaleY = 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_FTEX_SY_PLUS:
+                if (sec) { pushUndoState(); sec->floorTexScaleY += 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_FTEX_ROT_MINUS:
+                if (sec) { pushUndoState(); sec->floorTexAngle -= DEG2RAD(15.0f); }
+                break;
+            case GUI_BTN_SECTOR_FTEX_ROT_PLUS:
+                if (sec) { pushUndoState(); sec->floorTexAngle += DEG2RAD(15.0f); }
+                break;
+            case GUI_BTN_SECTOR_CTEX_SX_MINUS:
+                if (sec) { pushUndoState(); sec->ceilTexScaleX -= 0.1f; if (sec->ceilTexScaleX < 0.1f) sec->ceilTexScaleX = 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_CTEX_SX_PLUS:
+                if (sec) { pushUndoState(); sec->ceilTexScaleX += 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_CTEX_SY_MINUS:
+                if (sec) { pushUndoState(); sec->ceilTexScaleY -= 0.1f; if (sec->ceilTexScaleY < 0.1f) sec->ceilTexScaleY = 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_CTEX_SY_PLUS:
+                if (sec) { pushUndoState(); sec->ceilTexScaleY += 0.1f; }
+                break;
+            case GUI_BTN_SECTOR_CTEX_ROT_MINUS:
+                if (sec) { pushUndoState(); sec->ceilTexAngle -= DEG2RAD(15.0f); }
+                break;
+            case GUI_BTN_SECTOR_CTEX_ROT_PLUS:
+                if (sec) { pushUndoState(); sec->ceilTexAngle += DEG2RAD(15.0f); }
+                break;
+            case GUI_BTN_SECTOR_CTEX_ROT_RESET:
+                if (sec) { pushUndoState(); sec->ceilTexAngle = 0.0f; }
+                break;
+            case GUI_BTN_SECTOR_FTEX_ROT_RESET:
+                if (sec) { pushUndoState(); sec->floorTexAngle = 0.0f; }
+                break;
+
+            case GUI_BTN_WALL_CLAMP_XL:
+                if (hasAnyWallEditSelection()) {
                     int wallIndices[ED_MAX_WALLS];
                     const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                    char msg[128];
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPXL);
+                }
+                break;
+            case GUI_BTN_WALL_CLAMP_XR:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPXR);
+                }
+                break;
+            case GUI_BTN_WALL_CLAMP_YT:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPYT);
+                }
+                break;
+            case GUI_BTN_WALL_CLAMP_YB:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPYB);
+                }
+                break;
 
+            case GUI_BTN_SECTOR_FLOOR_MINUS:
+                if (sec) { pushUndoState(); sec->floorHeight -= uiStep; if (sec->ceilHeight < sec->floorHeight + 0.1f) sec->ceilHeight = sec->floorHeight + 0.1f; syncAllPortals(); }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_PLUS:
+                if (sec) { pushUndoState(); sec->floorHeight += uiStep; if (sec->ceilHeight < sec->floorHeight + 0.1f) sec->ceilHeight = sec->floorHeight + 0.1f; syncAllPortals(); }
+                break;
+            case GUI_BTN_SECTOR_CEIL_MINUS:
+                if (sec) { pushUndoState(); sec->ceilHeight -= uiStep; if (sec->ceilHeight < sec->floorHeight + 0.1f) sec->ceilHeight = sec->floorHeight + 0.1f; syncAllPortals(); }
+                break;
+            case GUI_BTN_SECTOR_CEIL_PLUS:
+                if (sec) { pushUndoState(); sec->ceilHeight += uiStep; if (sec->ceilHeight < sec->floorHeight + 0.1f) sec->ceilHeight = sec->floorHeight + 0.1f; syncAllPortals(); }
+                break;
+            case GUI_BTN_SECTOR_GLOW_MINUS:
+                if (sec) { pushUndoState(); sec->glowlevel = clampLightLevel((int)sec->glowlevel - 1); }
+                break;
+            case GUI_BTN_SECTOR_GLOW_PLUS:
+                if (sec) { pushUndoState(); sec->glowlevel = clampLightLevel((int)sec->glowlevel + 1); }
+                break;
+            case GUI_BTN_SECTOR_TAG_MINUS:
+                if (sec) { pushUndoState(); if (sec->tagId > 0) sec->tagId--; }
+                break;
+            case GUI_BTN_SECTOR_TAG_PLUS:
+                if (sec) { pushUndoState(); sec->tagId++; }
+                break;
+            case GUI_BTN_SECTOR_STATE_MINUS:
+                if (sec) { pushUndoState(); if (sec->stateFlags > 0u) sec->stateFlags--; }
+                break;
+            case GUI_BTN_SECTOR_STATE_PLUS:
+                if (sec) { pushUndoState(); if (sec->stateFlags < 0xFFFFFFFFu) sec->stateFlags++; }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_MIN_MINUS:
+                if (sec) { pushUndoState(); sec->floorMinHeight -= uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_MIN_PLUS:
+                if (sec) { pushUndoState(); sec->floorMinHeight += uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_MAX_MINUS:
+                if (sec) { pushUndoState(); sec->floorMaxHeight -= uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_MAX_PLUS:
+                if (sec) { pushUndoState(); sec->floorMaxHeight += uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_CEIL_MIN_MINUS:
+                if (sec) { pushUndoState(); sec->ceilMinHeight -= uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_CEIL_MIN_PLUS:
+                if (sec) { pushUndoState(); sec->ceilMinHeight += uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_CEIL_MAX_MINUS:
+                if (sec) { pushUndoState(); sec->ceilMaxHeight -= uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_CEIL_MAX_PLUS:
+                if (sec) { pushUndoState(); sec->ceilMaxHeight += uiStep; sanitizeSectorProperties(sec); }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_FLOW_MINUS:
+                if (sec) { pushUndoState(); sec->floorFlowHeight -= uiStep; }
+                break;
+            case GUI_BTN_SECTOR_FLOOR_FLOW_PLUS:
+                if (sec) { pushUndoState(); sec->floorFlowHeight += uiStep; }
+                break;
+            case GUI_BTN_SECTOR_CEIL_FLOW_MINUS:
+                if (sec) { pushUndoState(); sec->ceilFlowHeight -= uiStep; }
+                break;
+            case GUI_BTN_SECTOR_CEIL_FLOW_PLUS:
+                if (sec) { pushUndoState(); sec->ceilFlowHeight += uiStep; }
+                break;
+            case GUI_BTN_SECTOR_COPY_PROPS:
+                if (hasAnySectorEditSelection()) {
+                    const int primarySector = getPrimarySectorEditIndex();
+                    if (primarySector >= 0) copySectorPropertiesToClipboard(primarySector);
+                }
+                break;
+            case GUI_BTN_SECTOR_PASTE_PROPS:
+                if (hasAnySectorEditSelection() && g_ed.hasCopiedSectorProps) {
+                    pushUndoState();
+                    if (!pasteSectorPropertiesFromClipboardToSelection()) performUndo();
+                }
+                break;
+
+            case GUI_BTN_WALL_OPENBOT_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
                     pushUndoState();
                     for (int i = 0; i < wallCount; i++) {
-                        pasteWallPropsFromClipboardToWall(wallIndices[i]);
-                    }
-
-                    snprintf(msg, sizeof(msg), "Pasted wall properties to %d selected wall%s",
-                             wallCount, (wallCount == 1) ? "" : "s");
-                    setEditorStatus(msg);
-                } else {
-                    setEditorStatus("No copied wall properties");
-                }
-            }
-            break;
-
-
-        // sector texture settings //////////////////////////////////////////////////
-        case GUI_BTN_SECTOR_FTEX_SX_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorTexScaleX -= 0.1f;
-                if (sec->floorTexScaleX < 0.1f) sec->floorTexScaleX = 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FTEX_SX_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorTexScaleX += 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FTEX_SY_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorTexScaleY -= 0.1f;
-                if (sec->floorTexScaleY < 0.1f) sec->floorTexScaleY = 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FTEX_SY_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorTexScaleY += 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FTEX_ROT_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorTexAngle -= DEG2RAD(15.0f);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FTEX_ROT_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorTexAngle += DEG2RAD(15.0f);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_SX_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilTexScaleX -= 0.1f;
-                if (sec->ceilTexScaleX < 0.1f) sec->ceilTexScaleX = 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_SX_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilTexScaleX += 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_SY_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilTexScaleY -= 0.1f;
-                if (sec->ceilTexScaleY < 0.1f) sec->ceilTexScaleY = 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_SY_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilTexScaleY += 0.1f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_ROT_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilTexAngle -= DEG2RAD(15.0f);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_ROT_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilTexAngle += DEG2RAD(15.0f);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CTEX_ROT_RESET:
-            if(sec){
-                pushUndoState();
-                sec->ceilTexAngle = 0.0f;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FTEX_ROT_RESET:
-            if(sec){
-                pushUndoState();
-                sec->floorTexAngle = 0.0f;
-            }
-            break;
-
-        case GUI_BTN_WALL_CLAMP_XL:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPXL);
-                }
-            }
-            break;
-
-        case GUI_BTN_WALL_CLAMP_XR:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPXR);
-                }
-            }
-            break;
-
-        case GUI_BTN_WALL_CLAMP_YT:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPYT);
-                }
-            }
-            break;
-
-        case GUI_BTN_WALL_CLAMP_YB:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPYB);
-                }
-            }
-            break;
-
-
-        case GUI_BTN_SECTOR_FLOOR_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorHeight -= uiStep;
-                if (sec->ceilHeight < sec->floorHeight + 0.1f) {
-                    sec->ceilHeight = sec->floorHeight + 0.1f;
-                }
-                syncAllPortals();
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorHeight += uiStep;
-                if (sec->ceilHeight < sec->floorHeight + 0.1f) {
-                    sec->ceilHeight = sec->floorHeight + 0.1f;
-                }
-                syncAllPortals();
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilHeight -= uiStep;
-                if (sec->ceilHeight < sec->floorHeight + 0.1f) {
-                    sec->ceilHeight = sec->floorHeight + 0.1f;
-                }
-                syncAllPortals();
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilHeight += uiStep;
-                if (sec->ceilHeight < sec->floorHeight + 0.1f) {
-                    sec->ceilHeight = sec->floorHeight + 0.1f;
-                }
-                syncAllPortals();
-            }
-            break;
-
-        case GUI_BTN_SECTOR_GLOW_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->glowlevel = clampLightLevel((int)sec->glowlevel - 1);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_GLOW_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->glowlevel = clampLightLevel((int)sec->glowlevel + 1);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_TAG_MINUS:
-            if (sec) {
-                pushUndoState();
-                if (sec->tagId > 0) sec->tagId--;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_TAG_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->tagId++;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_STATE_MINUS:
-            if (sec) {
-                pushUndoState();
-                if (sec->stateFlags > 0u) sec->stateFlags--;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_STATE_PLUS:
-            if (sec) {
-                pushUndoState();
-                if (sec->stateFlags < 0xFFFFFFFFu) sec->stateFlags++;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_MIN_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorMinHeight -= uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_MIN_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorMinHeight += uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_MAX_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorMaxHeight -= uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_MAX_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorMaxHeight += uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_MIN_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilMinHeight -= uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_MIN_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilMinHeight += uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_MAX_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilMaxHeight -= uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_MAX_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilMaxHeight += uiStep;
-                sanitizeSectorProperties(sec);
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_FLOW_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorFlowHeight -= uiStep;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_FLOOR_FLOW_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->floorFlowHeight += uiStep;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_FLOW_MINUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilFlowHeight -= uiStep;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_CEIL_FLOW_PLUS:
-            if (sec) {
-                pushUndoState();
-                sec->ceilFlowHeight += uiStep;
-            }
-            break;
-
-        case GUI_BTN_SECTOR_COPY_PROPS:
-            if (hasAnySectorEditSelection()) {
-                const int primarySector = getPrimarySectorEditIndex();
-
-                if (primarySector >= 0) {
-                    copySectorPropertiesToClipboard(primarySector);
-                }
-            }
-            break;
-
-        case GUI_BTN_SECTOR_PASTE_PROPS:
-            if (hasAnySectorEditSelection() && g_ed.hasCopiedSectorProps) {
-                pushUndoState();
-                if (!pasteSectorPropertiesFromClipboardToSelection()) {
-                    performUndo();
-                }
-            }
-            break;
-
-        case GUI_BTN_WALL_OPENBOT_MINUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    EdWall *wall = &g_edMap.walls[wallIndices[i]];
-                    wall->openBottom -= uiStep;
-                    if (wall->openTop < wall->openBottom) {
-                        float t = wall->openTop;
-                        wall->openTop = wall->openBottom;
-                        wall->openBottom = t;
+                        EdWall *wall = &g_edMap.walls[wallIndices[i]];
+                        wall->openBottom -= uiStep;
+                        if (wall->openTop < wall->openBottom) {
+                            float t = wall->openTop;
+                            wall->openTop = wall->openBottom;
+                            wall->openBottom = t;
+                        }
                     }
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_OPENBOT_PLUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    EdWall *wall = &g_edMap.walls[wallIndices[i]];
-                    wall->openBottom += uiStep;
-                    if (wall->openTop < wall->openBottom) {
-                        float t = wall->openTop;
-                        wall->openTop = wall->openBottom;
-                        wall->openBottom = t;
+                break;
+            case GUI_BTN_WALL_OPENBOT_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        EdWall *wall = &g_edMap.walls[wallIndices[i]];
+                        wall->openBottom += uiStep;
+                        if (wall->openTop < wall->openBottom) {
+                            float t = wall->openTop;
+                            wall->openTop = wall->openBottom;
+                            wall->openBottom = t;
+                        }
                     }
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_OPENTOP_MINUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    EdWall *wall = &g_edMap.walls[wallIndices[i]];
-                    wall->openTop -= uiStep;
-                    if (wall->openTop < wall->openBottom) {
-                        float t = wall->openTop;
-                        wall->openTop = wall->openBottom;
-                        wall->openBottom = t;
+                break;
+            case GUI_BTN_WALL_OPENTOP_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        EdWall *wall = &g_edMap.walls[wallIndices[i]];
+                        wall->openTop -= uiStep;
+                        if (wall->openTop < wall->openBottom) {
+                            float t = wall->openTop;
+                            wall->openTop = wall->openBottom;
+                            wall->openBottom = t;
+                        }
                     }
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_OPENTOP_PLUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    EdWall *wall = &g_edMap.walls[wallIndices[i]];
-                    wall->openTop += uiStep;
-                    if (wall->openTop < wall->openBottom) {
-                        float t = wall->openTop;
-                        wall->openTop = wall->openBottom;
-                        wall->openBottom = t;
+                break;
+            case GUI_BTN_WALL_OPENTOP_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        EdWall *wall = &g_edMap.walls[wallIndices[i]];
+                        wall->openTop += uiStep;
+                        if (wall->openTop < wall->openBottom) {
+                            float t = wall->openTop;
+                            wall->openTop = wall->openBottom;
+                            wall->openBottom = t;
+                        }
                     }
                 }
-            }
-            break;
+                break;
 
-        case GUI_BTN_WALL_TEX_SX_MINUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexScaleX(wallIndices[i], -uiStep);
+            case GUI_BTN_WALL_TEX_SX_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexScaleX(wallIndices[i], -uiStep);
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_SX_PLUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexScaleX(wallIndices[i], uiStep);
+                break;
+            case GUI_BTN_WALL_TEX_SX_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexScaleX(wallIndices[i], uiStep);
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_SY_MINUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexScaleY(wallIndices[i], -uiStep);
+                break;
+            case GUI_BTN_WALL_TEX_SY_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexScaleY(wallIndices[i], -uiStep);
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_SY_PLUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexScaleY(wallIndices[i], uiStep);
+                break;
+            case GUI_BTN_WALL_TEX_SY_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexScaleY(wallIndices[i], uiStep);
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_ROT_MINUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexAngle(wallIndices[i], -DEG2RAD(15.0f));
+                break;
+            case GUI_BTN_WALL_TEX_ROT_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexAngle(wallIndices[i], -DEG2RAD(15.0f));
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_ROT_PLUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexAngle(wallIndices[i], DEG2RAD(15.0f));
+                break;
+            case GUI_BTN_WALL_TEX_ROT_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexAngle(wallIndices[i], DEG2RAD(15.0f));
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_ROT_RESET:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    setWallTexAngleEx(wallIndices[i], DEG2RAD(0));
+                break;
+            case GUI_BTN_WALL_TEX_ROT_RESET:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) setWallTexAngleEx(wallIndices[i], DEG2RAD(0));
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_BRIGHT_MINUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexBrightness(wallIndices[i], -1);
+                break;
+            case GUI_BTN_WALL_TEX_BRIGHT_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexBrightness(wallIndices[i], -1);
                 }
-            }
-            break;
-
-        case GUI_BTN_WALL_TEX_BRIGHT_PLUS:
-            if (hasAnyWallEditSelection()) {
-                int wallIndices[ED_MAX_WALLS];
-                const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
-                pushUndoState();
-                for (int i = 0; i < wallCount; i++) {
-                    adjustWallTexBrightness(wallIndices[i], 1);
+                break;
+            case GUI_BTN_WALL_TEX_BRIGHT_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) adjustWallTexBrightness(wallIndices[i], 1);
                 }
-            }
-            break;
+                break;
 
-        //// OBJECT HIT BUTTONSIES
-        case GUI_BTN_OBJECT_TAGID_MINUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                if (o->tagId > 0) {
-                    o->tagId--;
+            case GUI_BTN_OBJECT_TAGID_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    if (o->tagId > 0) o->tagId--;
                 }
-            }
-            break;
-
-        case GUI_BTN_OBJECT_TAGID_PLUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                o->tagId++;
-            }
-            break;
-
-        case GUI_BTN_OBJECT_TARGETTAGID_MINUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                if (o->targetTagId > 0) {
-                    o->targetTagId--;
+                break;
+            case GUI_BTN_OBJECT_TAGID_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->tagId++;
                 }
-            }
-            break;
-
-        case GUI_BTN_OBJECT_TARGETTAGID_PLUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                o->targetTagId++;
-            }
-            break;
-
-        case GUI_BTN_OBJECT_RADIUS_MINUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                o->radius -= uiStep;
-                if (o->radius < 0.01f) {
-                    o->radius = 0.01f;
+                break;
+            case GUI_BTN_OBJECT_TYPE_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    if (o->type > 0) o->type--;
                 }
-            }
-            break;
-
-        case GUI_BTN_OBJECT_RADIUS_PLUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                o->radius += uiStep;
-                if (o->radius < 0.01f) {
-                    o->radius = 0.01f;
+                break;
+            case GUI_BTN_OBJECT_TYPE_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->type++;
                 }
-            }
-            break;
-
-        case GUI_BTN_OBJECT_ZAXIS_MINUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                break;
+            case GUI_BTN_OBJECT_TARGETTAGID_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    if (o->targetTagId > 0) o->targetTagId--;
+                }
+                break;
+            case GUI_BTN_OBJECT_TARGETTAGID_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->targetTagId++;
+                }
+                break;
+            case GUI_BTN_OBJECT_RADIUS_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->radius -= uiStep;
+                    if (o->radius < 0.01f) o->radius = 0.01f;
+                }
+                break;
+            case GUI_BTN_OBJECT_RADIUS_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->radius += uiStep;
+                    if (o->radius < 0.01f) o->radius = 0.01f;
+                }
+                break;
+            case GUI_BTN_OBJECT_ZAXIS_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->z -= uiStep;
+                }
+                break;
+            case GUI_BTN_OBJECT_ZAXIS_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->z += uiStep;
+                }
+                break;
+            case GUI_BTN_OBJECT_GET_ZAXIS:
                 pushUndoState();
-                o->z -= uiStep;
-            }
-            break;
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    int sectorId = findSectorForPoint(g_edMap.objects[g_ed.selectedObject].x,
+                                                      g_edMap.objects[g_ed.selectedObject].y);
+                    if (sectorId >= 0 && sectorId < g_edMap.sectorCount) {
+                        g_edMap.objects[g_ed.selectedObject].z = g_edMap.sectors[sectorId].floorHeight;
+                    }
+                }
+                break;
 
-        case GUI_BTN_OBJECT_ZAXIS_PLUS:
-            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
-                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-                pushUndoState();
-                o->z += uiStep;
-            }
-            break;       
+            case GUI_BTN_OBJECT_FLAGS_bit0:
+            case GUI_BTN_OBJECT_FLAGS_bit1:
+            case GUI_BTN_OBJECT_FLAGS_bit2:
+            case GUI_BTN_OBJECT_FLAGS_bit3:
+            case GUI_BTN_OBJECT_FLAGS_bit4:
+            case GUI_BTN_OBJECT_FLAGS_bit5:
+            case GUI_BTN_OBJECT_FLAGS_bit6:
+            case GUI_BTN_OBJECT_FLAGS_bit7:
+            {
+                uint32_t bitTemp = 0;
 
-        default:
-            break;
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    pushUndoState();
+
+                    for (int bit = 0; bit < 8; bit++) {
+                        const int btnId = GUI_BTN_OBJECT_FLAGS_bit0 + bit;
+                        const int checked = rcguiGetToggleChecked(&g_ui, btnId) ? 1 : 0;
+                        bitTemp |= ((uint32_t)checked << bit);
+                    }
+
+                    g_edMap.objects[g_ed.selectedObject].flags = bitTemp;
+                }
+            } break;
+
+            default:
+                break;
+        }
     }
 }
 
@@ -11515,9 +11256,9 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "Y: %.4f", v->y);
         drawText(px + 16, py + 96, buf, ED_TEXT_COL);
 
-        drawText(px + 16, py + 124, "LMB drag vertex", ED_TEXT_COL);
-        drawText(px + 16, py + 144, "SHIFT-drop onto another = merge", ED_TEXT_COL);
-        drawText(px + 16, py + 164, "Arrows 0.01  Shift 0.001  Alt 0.0001", ED_TEXT_COL);
+        drawText(px + 16, py + 124, "[LMB] drag vertex", ED_TEXT_COL);
+        drawText(px + 16, py + 144, "[SHIFT]-drop onto another = merge", ED_TEXT_COL);
+        drawText(px + 16, py + 164, "[Arrows] = 0.01, [Shift] = 0.001, [Alt] = 0.0001", ED_TEXT_COL);
     }
     ///// Wall texture / edit mode /////////////////////////////////////////
     else if (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall >= 0) {
@@ -11790,7 +11531,7 @@ static void drawInspectorPanel(void)
 
         drawText(px + 16, py + 104, "LMB drag selected vertices", ED_TEXT_COL);
         drawText(px + 16, py + 126, "Arrow Left / Right rotates selection", ED_TEXT_COL);
-        drawText(px + 16, py + 148, "SHIFT = 15\xb0, ALT = 1\xb0", ED_TEXT_COL);
+        drawText(px + 16, py + 148, "[SHIFT] = 15\xb0, [ALT] = 1\xb0", ED_TEXT_COL);
     }
 
     else if (hasMultiSectorSelection()) {
@@ -11862,17 +11603,6 @@ static void drawInspectorPanel(void)
             snprintf(buf, sizeof(buf), "Props clip: Empty");
         }
         drawText(px + 16, py, buf, ED_TEXT_COL);  py += 20;
-
-        /*
-        if (g_ed.hasCopiedSectorGeometry) {
-            snprintf(buf, sizeof(buf), "Geom clip: %d sector%s",
-                     g_ed.copiedSectorGeometry.sectorCount,
-                     (g_ed.copiedSectorGeometry.sectorCount == 1) ? "" : "s");
-        } else {
-            snprintf(buf, sizeof(buf), "Geom clip: Empty");
-        }
-        drawText(px + 16, py, buf, ED_TEXT_COL);  py += 20;
-        */
         py += 8;
 
         // heights ////////////////////////////////
@@ -11976,13 +11706,13 @@ static void drawInspectorPanel(void)
 
     }
     
-    ///// Selected Object /////////////////////////////////////
+    //### Selected Object #####################################
     else if (g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject >= 0) {
         const EdObject *o = &g_edMap.objects[g_ed.selectedObject];
         int y_off = 48;
 
-        drawRect(px + 8, py + 40, pw - 16, 272,  ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py + 40, pw - 16, 272, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect( px + 8, py + 40, pw - 16, 386, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py + 40, pw - 16, 386, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
         snprintf(buf, sizeof(buf), "OBJECT %d", g_ed.selectedObject);
         drawText(px + 16, py + y_off, buf, ED_INSPECTOR_TEXT_COL);  y_off += 30;
@@ -11991,18 +11721,22 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "X: %.4f,  Y: %.4f,  Z: %.4f", o->x, o->y, o->z);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
 
-        drawText(px + 16, py + y_off, "SHIFT+LMB drag object   DEL deletes", ED_TEXT_COL);
+        drawText(px + 16, py + y_off, "[SHIFT+LMB] drag object [DEL] deletes", ED_TEXT_COL);
 
         //----------------------------
         y_off += 30;
-        drawRect(px + 12,  py + y_off, pw - 24, 180, ED_INSPECTOR_PANELS_BACKPANEL);
-        drawRectL(px + 12, py + y_off, pw - 24, 180, ED_INSPECTOR_PANELS_PANELFRAME);
+        drawRect(px + 12,  py + y_off, pw - 24, 211, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py + y_off, pw - 24, 211, ED_INSPECTOR_PANELS_PANELFRAME);
         
         y_off += 6;
-        drawText(px + 18,  py + y_off, "PROPERTIES:", ED_INSPECTOR_PANELS_HEADER_TEXT);      py += 30;
-
+        drawText(px + 18,  py + y_off,     "PROPERTIES:", ED_INSPECTOR_PANELS_HEADER_TEXT);
+        drawText(px + 18,  py + y_off + 2, "___________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        py += 30;
 
         snprintf(buf, sizeof(buf), "Tag: %d", o->tagId);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+
+        snprintf(buf, sizeof(buf), "Type: %d", o->type);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
         snprintf(buf, sizeof(buf), "TargetTag: %d", o->targetTagId);
@@ -12015,7 +11749,20 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
         snprintf(buf, sizeof(buf), "Texture_id: %u", (unsigned)o->textureId);
-        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
+
+
+        // --------------------------------
+        y_off += 8;
+        drawRect(px + 12,  py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_PANELFRAME);
+        
+        y_off += 6;
+        snprintf(buf, sizeof(buf),     "FLAGS (generic use): 0x%02X", (unsigned)o->flags);
+        drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        py += 30;
+
 
     }
 
@@ -12273,6 +12020,20 @@ void rc3dEditUpdate(float dt,
     handleEditorUI(mouseX, mouseY, leftDown, leftPressed, leftReleased, worldX, worldY);
     if (handleTextureBrowserMouse(mouseX, mouseY, leftDown, leftPressed, 0)) {
         g_ed.uiMouseCaptured = 1;
+    }
+
+    /* blunt inspector swallow:
+    if mouse is inside inspector and no gui widget already claimed it,
+    block editor/world mouse interaction there */
+    if (!g_ed.uiMouseCaptured && mouseInInspectorArea(mouseX, mouseY)) {
+        g_ed.uiMouseCaptured = 1;
+    }
+    if (g_ed.uiMouseCaptured && mouseInInspectorArea(mouseX, mouseY)) {
+        g_ed.hoverVert = -1;
+        g_ed.hoverWall = -1;
+        g_ed.hoverSector = -1;
+        g_ed.hoverObject = -1;
+        g_ed.splitPreviewValid = 0;
     }
 
     g_ed.splitPreviewValid = 0;

@@ -7,6 +7,12 @@
 #define RCGUI_MAX_BUTTONS 256
 #endif
 
+typedef enum
+{
+    RCGUI_CONTROL_BUTTON = 0,
+    RCGUI_CONTROL_TOGGLEBOX
+} RCGUI_ControlType;
+
 typedef struct
 {
     int id;
@@ -16,11 +22,14 @@ typedef struct
     int h;
     const char *text;
 
+    uint8_t type;
     uint8_t visible;
     uint8_t disabled;
 
     uint8_t hot;
     uint8_t active;
+
+    uint8_t checked;
 } RCGUI_Button;
 
 typedef struct
@@ -69,6 +78,15 @@ int rcguiCreateButton(RCGUI_Context *ui,
                       int h,
                       const char *text);
 
+int rcguiCreateToggleBox(RCGUI_Context *ui,
+                         int id,
+                         int x,
+                         int y,
+                         int w,
+                         int h,
+                         const char *text,
+                         int checked);
+
 RCGUI_Button *rcguiGetButton(RCGUI_Context *ui, int id);
 const RCGUI_Button *rcguiGetButtonConst(const RCGUI_Context *ui, int id);
 
@@ -76,6 +94,10 @@ void rcguiSetButtonText(RCGUI_Context *ui, int id, const char *text);
 void rcguiSetButtonRect(RCGUI_Context *ui, int id, int x, int y, int w, int h);
 void rcguiSetButtonVisible(RCGUI_Context *ui, int id, int visible);
 void rcguiSetButtonDisabled(RCGUI_Context *ui, int id, int disabled);
+
+void rcguiSetToggleChecked(RCGUI_Context *ui, int id, int checked);
+int rcguiGetToggleChecked(const RCGUI_Context *ui, int id);
+void rcguiToggleChecked(RCGUI_Context *ui, int id);
 
 void rcguiUpdate(RCGUI_Context *ui,
                  int mouseX,

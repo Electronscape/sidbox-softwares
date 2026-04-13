@@ -83,6 +83,8 @@ typedef struct {
     float z;
     int tagId;
     int targetTagId;
+    uint32_t flags;
+    uint32_t type;
     float radius;
     uint8_t textureId;
 } RC3D_Object;

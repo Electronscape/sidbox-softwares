@@ -1,5 +1,3 @@
-// rcgui.c
-
 #include "rcgui.h"
 #include "rc3dedit.h"
 
@@ -35,10 +33,32 @@ static void rcguiDrawOneButton(const RCGUI_Context *ui, const RCGUI_Button *btn)
     drawLine(btn->x, btn->y, btn->x, btn->y + btn->h - 1, border);
     drawLine(btn->x + btn->w - 1, btn->y, btn->x + btn->w - 1, btn->y + btn->h - 1, border);
 
-    if (btn->text && btn->text[0]) {
-        textx = (btn->w / 2) - ((strlen(btn->text) * 8) / 2);
-        texty = (btn->h / 2) - 8;
-        drawText(btn->x + textx, btn->y + texty, btn->text, btn->hot ? ED_COLOUR_BTN_TEXT_HOVER : textCol);
+    if (btn->type == RCGUI_CONTROL_TOGGLEBOX) {
+        const int boxSize = 12;
+        const int boxX = btn->x + 4;
+        const int boxY = btn->y + ((btn->h - boxSize) / 2);
+
+        drawRect(boxX, boxY, boxSize, boxSize, 0);
+        drawLine(boxX, boxY, boxX + boxSize - 1, boxY, border);
+        drawLine(boxX, boxY + boxSize - 1, boxX + boxSize - 1, boxY + boxSize - 1, border);
+        drawLine(boxX, boxY, boxX, boxY + boxSize - 1, border);
+        drawLine(boxX + boxSize - 1, boxY, boxX + boxSize - 1, boxY + boxSize - 1, border);
+
+        if (btn->checked) {
+            drawRect(boxX + 3, boxY + 3, boxSize - 6, boxSize - 6, textCol);
+        }
+
+        if (btn->text && btn->text[0]) {
+            textx = boxX + boxSize + 6;
+            texty = btn->y + ((btn->h / 2) - 8);
+            drawText(textx, texty, btn->text, btn->hot ? ui->btnHoverText : textCol);
+        }
+    } else {
+        if (btn->text && btn->text[0]) {
+            textx = (btn->w / 2) - ((int)(strlen(btn->text) * 8) / 2);
+            texty = (btn->h / 2) - 8;
+            drawText(btn->x + textx, btn->y + texty, btn->text, btn->hot ? ui->btnHoverText : textCol);
+        }
     }
 }
 
@@ -71,7 +91,6 @@ void rcguiSetButtonColours(RCGUI_Context *ui,
     ui->btnBorder = btnBorder;
     ui->btnText = btnText;
     ui->btnHover = btnHover;
-    //ui->btnHoverText = 16;
     ui->btnActive = btnActive;
     ui->btnDisabled = btnDisabled;
     ui->btnTextDisabled = btnTextDisabled;
@@ -136,10 +155,50 @@ int rcguiCreateButton(RCGUI_Context *ui,
     btn->w = w;
     btn->h = h;
     btn->text = text;
+    btn->type = RCGUI_CONTROL_BUTTON;
     btn->visible = 1;
     btn->disabled = 0;
     btn->hot = 0;
     btn->active = 0;
+    btn->checked = 0;
+
+    return 1;
+}
+
+int rcguiCreateToggleBox(RCGUI_Context *ui,
+                         int id,
+                         int x,
+                         int y,
+                         int w,
+                         int h,
+                         const char *text,
+                         int checked)
+{
+    RCGUI_Button *btn;
+
+    if (ui->buttonCount >= RCGUI_MAX_BUTTONS) {
+        return 0;
+    }
+
+    if (rcguiGetButton(ui, id) != 0) {
+        return 0;
+    }
+
+    btn = &ui->buttons[ui->buttonCount];
+    ui->buttonCount++;
+
+    btn->id = id;
+    btn->x = x;
+    btn->y = y;
+    btn->w = w;
+    btn->h = h;
+    btn->text = text;
+    btn->type = RCGUI_CONTROL_TOGGLEBOX;
+    btn->visible = 1;
+    btn->disabled = 0;
+    btn->hot = 0;
+    btn->active = 0;
+    btn->checked = checked ? 1u : 0u;
 
     return 1;
 }
@@ -174,6 +233,30 @@ void rcguiSetButtonDisabled(RCGUI_Context *ui, int id, int disabled)
     RCGUI_Button *btn = rcguiGetButton(ui, id);
     if (!btn) return;
     btn->disabled = disabled ? 1u : 0u;
+}
+
+void rcguiSetToggleChecked(RCGUI_Context *ui, int id, int checked)
+{
+    RCGUI_Button *btn = rcguiGetButton(ui, id);
+    if (!btn) return;
+    if (btn->type != RCGUI_CONTROL_TOGGLEBOX) return;
+    btn->checked = checked ? 1u : 0u;
+}
+
+int rcguiGetToggleChecked(const RCGUI_Context *ui, int id)
+{
+    const RCGUI_Button *btn = rcguiGetButtonConst(ui, id);
+    if (!btn) return 0;
+    if (btn->type != RCGUI_CONTROL_TOGGLEBOX) return 0;
+    return btn->checked ? 1 : 0;
+}
+
+void rcguiToggleChecked(RCGUI_Context *ui, int id)
+{
+    RCGUI_Button *btn = rcguiGetButton(ui, id);
+    if (!btn) return;
+    if (btn->type != RCGUI_CONTROL_TOGGLEBOX) return;
+    btn->checked = btn->checked ? 0u : 1u;
 }
 
 void rcguiUpdate(RCGUI_Context *ui,
@@ -226,6 +309,9 @@ void rcguiUpdate(RCGUI_Context *ui,
 
         if (leftReleased && ui->activeId == btn->id) {
             if (hot) {
+                if (btn->type == RCGUI_CONTROL_TOGGLEBOX) {
+                    btn->checked = btn->checked ? 0u : 1u;
+                }
                 ui->hitId = btn->id;
             }
         }
