@@ -143,6 +143,22 @@ enum
     GUI_BTN_SECTOR_CEIL_PLUS,
     GUI_BTN_SECTOR_GLOW_MINUS,
     GUI_BTN_SECTOR_GLOW_PLUS,
+    GUI_BTN_SECTOR_TAG_MINUS,
+    GUI_BTN_SECTOR_TAG_PLUS,
+    GUI_BTN_SECTOR_STATE_MINUS,
+    GUI_BTN_SECTOR_STATE_PLUS,
+    GUI_BTN_SECTOR_FLOOR_MIN_MINUS,
+    GUI_BTN_SECTOR_FLOOR_MIN_PLUS,
+    GUI_BTN_SECTOR_FLOOR_MAX_MINUS,
+    GUI_BTN_SECTOR_FLOOR_MAX_PLUS,
+    GUI_BTN_SECTOR_CEIL_MIN_MINUS,
+    GUI_BTN_SECTOR_CEIL_MIN_PLUS,
+    GUI_BTN_SECTOR_CEIL_MAX_MINUS,
+    GUI_BTN_SECTOR_CEIL_MAX_PLUS,
+    GUI_BTN_SECTOR_FLOOR_FLOW_MINUS,
+    GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,
+    GUI_BTN_SECTOR_CEIL_FLOW_MINUS,
+    GUI_BTN_SECTOR_CEIL_FLOW_PLUS,
     GUI_BTN_SECTOR_COPY_PROPS,
     GUI_BTN_SECTOR_PASTE_PROPS,
 
@@ -295,6 +311,15 @@ typedef struct {
     uint8_t ceilColor;
     uint8_t glowlevel;
 
+    int tagId;
+    uint32_t stateFlags;
+    float floorMinHeight;
+    float floorMaxHeight;
+    float ceilMinHeight;
+    float ceilMaxHeight;
+    float floorFlowHeight;
+    float ceilFlowHeight;
+
     float floorTexScaleX;
     float floorTexScaleY;
     float floorTexAngle;
@@ -310,6 +335,15 @@ typedef struct {
     uint8_t floorColor;
     uint8_t ceilColor;
     uint8_t glowlevel;
+
+    int tagId;
+    uint32_t stateFlags;
+    float floorMinHeight;
+    float floorMaxHeight;
+    float ceilMinHeight;
+    float ceilMaxHeight;
+    float floorFlowHeight;
+    float ceilFlowHeight;
 
     float floorTexScaleX;
     float floorTexScaleY;
@@ -1002,6 +1036,7 @@ static int findBoundaryWallNearPointInSector(int sectorIndex, float wx, float wy
 static int splitBoundaryWallAtPoint(int sectorIndex, int localWallIndex, float wx, float wy);
 static float distPointSegSq(float px, float py, float ax, float ay, float bx, float by);
 static void cleanMapCompactWithReport(int *removedVerts, int *removedWalls, int *removedSectors);
+static void sanitizeSectorProperties(EdSector *sec);
 static void drawStatusPopup(void);
 static void acceptConfirmDialog(void);
 static void closeConfirmDialog(void);
@@ -1031,6 +1066,11 @@ static void drawTexturedSector2DBruteForceScanline(int sectorIndex,
                                                    int maxX,
                                                    int y,
                                                    const EdSector *sec);
+static void drawVectorSector2DBruteForceScanline(int sectorIndex,
+                                                 int minX,
+                                                 int maxX,
+                                                 int y,
+                                                 uint8_t fillCol);
 static void drawFilledSector2D(int sectorIndex);
 static void drawFilledSectorIsoBruteForceScanline(int sectorIndex,
                                                   int minX,
@@ -3448,6 +3488,70 @@ static float clampSectorTexScale(float scale)
     return scale;
 }
 
+static void normalizeSectorMoveBounds(EdSector *sec)
+{
+    float temp;
+
+    if (!sec) return;
+
+    if (sec->floorMinHeight > sec->floorMaxHeight) {
+        temp = sec->floorMinHeight;
+        sec->floorMinHeight = sec->floorMaxHeight;
+        sec->floorMaxHeight = temp;
+    }
+
+    if (sec->ceilMinHeight > sec->ceilMaxHeight) {
+        temp = sec->ceilMinHeight;
+        sec->ceilMinHeight = sec->ceilMaxHeight;
+        sec->ceilMaxHeight = temp;
+    }
+
+    if (sec->floorHeight < sec->floorMinHeight) sec->floorMinHeight = sec->floorHeight;
+    if (sec->floorHeight > sec->floorMaxHeight) sec->floorMaxHeight = sec->floorHeight;
+    if (sec->ceilHeight < sec->ceilMinHeight) sec->ceilMinHeight = sec->ceilHeight;
+    if (sec->ceilHeight > sec->ceilMaxHeight) sec->ceilMaxHeight = sec->ceilHeight;
+}
+
+static void resetSectorMovePropertiesToCurrentHeights(EdSector *sec)
+{
+    if (!sec) return;
+
+    sec->tagId = 0;
+    sec->stateFlags = 0u;
+    sec->floorMinHeight = sec->floorHeight;
+    sec->floorMaxHeight = sec->floorHeight;
+    sec->ceilMinHeight = sec->ceilHeight;
+    sec->ceilMaxHeight = sec->ceilHeight;
+    sec->floorFlowHeight = 0.0f;
+    sec->ceilFlowHeight = 0.0f;
+}
+
+static void initializeNewSectorDefaults(EdSector *sec, int wallStart, int wallCount, int boundaryCount)
+{
+    if (!sec) return;
+
+    memset(sec, 0, sizeof(*sec));
+
+    sec->wallStart = wallStart;
+    sec->wallCount = wallCount;
+    sec->boundaryCount = boundaryCount;
+    sec->floorHeight = g_ed.sectorFloor;
+    sec->ceilHeight = g_ed.sectorCeil;
+    sec->floorColor = g_ed.sectorFloorColor;
+    sec->ceilColor = g_ed.sectorCeilColor;
+    sec->glowlevel = 0;
+
+    sec->floorTexScaleX = 1.0f;
+    sec->floorTexScaleY = 1.0f;
+    sec->floorTexAngle = 0.0f;
+    sec->ceilTexScaleX = 1.0f;
+    sec->ceilTexScaleY = 1.0f;
+    sec->ceilTexAngle = 0.0f;
+
+    resetSectorMovePropertiesToCurrentHeights(sec);
+    sanitizeSectorProperties(sec);
+}
+
 static void sanitizeSectorProperties(EdSector *sec)
 {
     if (!sec) return;
@@ -3457,6 +3561,8 @@ static void sanitizeSectorProperties(EdSector *sec)
     }
 
     sec->glowlevel = clampLightLevel((int)sec->glowlevel);
+
+    normalizeSectorMoveBounds(sec);
 
     sec->floorTexScaleX = clampSectorTexScale(sec->floorTexScaleX);
     sec->floorTexScaleY = clampSectorTexScale(sec->floorTexScaleY);
@@ -3715,6 +3821,14 @@ static void copySectorPropertiesToClipboard(int sectorIndex)
     clip->floorColor = sec->floorColor;
     clip->ceilColor = sec->ceilColor;
     clip->glowlevel = sec->glowlevel;
+    clip->tagId = sec->tagId;
+    clip->stateFlags = sec->stateFlags;
+    clip->floorMinHeight = sec->floorMinHeight;
+    clip->floorMaxHeight = sec->floorMaxHeight;
+    clip->ceilMinHeight = sec->ceilMinHeight;
+    clip->ceilMaxHeight = sec->ceilMaxHeight;
+    clip->floorFlowHeight = sec->floorFlowHeight;
+    clip->ceilFlowHeight = sec->ceilFlowHeight;
 
     clip->floorTexScaleX = sec->floorTexScaleX;
     clip->floorTexScaleY = sec->floorTexScaleY;
@@ -3747,6 +3861,14 @@ static int applySectorPropertiesFromClipboardToSector(int sectorIndex)
     sec->floorColor = clip->floorColor;
     sec->ceilColor = clip->ceilColor;
     sec->glowlevel = clip->glowlevel;
+    sec->tagId = clip->tagId;
+    sec->stateFlags = clip->stateFlags;
+    sec->floorMinHeight = clip->floorMinHeight;
+    sec->floorMaxHeight = clip->floorMaxHeight;
+    sec->ceilMinHeight = clip->ceilMinHeight;
+    sec->ceilMaxHeight = clip->ceilMaxHeight;
+    sec->floorFlowHeight = clip->floorFlowHeight;
+    sec->ceilFlowHeight = clip->ceilFlowHeight;
 
     sec->floorTexScaleX = clip->floorTexScaleX;
     sec->floorTexScaleY = clip->floorTexScaleY;
@@ -4535,22 +4657,10 @@ static int buildInnerSectorsFromSelectedSector(void)
                 clearWallTexFlags(dst);
             }
 
-            g_edMap.sectors[newSectorIndex].wallStart = newWallStart;
-            g_edMap.sectors[newSectorIndex].wallCount = loopCount;
-            g_edMap.sectors[newSectorIndex].boundaryCount = loopCount;
-            g_edMap.sectors[newSectorIndex].floorHeight = g_ed.sectorFloor;
-            g_edMap.sectors[newSectorIndex].ceilHeight  = g_ed.sectorCeil;
-            g_edMap.sectors[newSectorIndex].floorColor  = g_ed.sectorFloorColor;
-            g_edMap.sectors[newSectorIndex].ceilColor   = g_ed.sectorCeilColor;
-            g_edMap.sectors[newSectorIndex].glowlevel   = 0;
-
-            g_edMap.sectors[newSectorIndex].floorTexScaleX = 1.0f;
-            g_edMap.sectors[newSectorIndex].floorTexScaleY = 1.0f;
-            g_edMap.sectors[newSectorIndex].floorTexAngle  = 0.0f;
-
-            g_edMap.sectors[newSectorIndex].ceilTexScaleX = 1.0f;
-            g_edMap.sectors[newSectorIndex].ceilTexScaleY = 1.0f;
-            g_edMap.sectors[newSectorIndex].ceilTexAngle  = 0.0f;
+            initializeNewSectorDefaults(&g_edMap.sectors[newSectorIndex],
+                                        newWallStart,
+                                        loopCount,
+                                        loopCount);
 
             g_edMap.sectorCount++;
             createdCount++;
@@ -4685,6 +4795,26 @@ static void validateMap(void)
         if (sec->ceilHeight < sec->floorHeight + 0.1f) {
             validatorAddLineEx(ED_VAL_TARGET_SECTOR, s,
                                "Sector %d has ceil too low / floor too high", s);
+        }
+
+        if (sec->floorMinHeight > sec->floorMaxHeight) {
+            validatorAddLineEx(ED_VAL_TARGET_SECTOR, s,
+                               "Sector %d has floor min above floor max", s);
+        }
+
+        if (sec->ceilMinHeight > sec->ceilMaxHeight) {
+            validatorAddLineEx(ED_VAL_TARGET_SECTOR, s,
+                               "Sector %d has ceiling min above ceiling max", s);
+        }
+
+        if (sec->floorHeight < sec->floorMinHeight || sec->floorHeight > sec->floorMaxHeight) {
+            validatorAddLineEx(ED_VAL_TARGET_SECTOR, s,
+                               "Sector %d floor height is outside mover range", s);
+        }
+
+        if (sec->ceilHeight < sec->ceilMinHeight || sec->ceilHeight > sec->ceilMaxHeight) {
+            validatorAddLineEx(ED_VAL_TARGET_SECTOR, s,
+                               "Sector %d ceiling height is outside mover range", s);
         }
 
         for (int i = 0; i < sec->boundaryCount; i++) {
@@ -5070,11 +5200,7 @@ static int mergeSectorsAcrossWall(int wallIndex)
     const int killSector = (sectorA < sectorB) ? sectorB : sectorA;
     oldSectorCount = g_edMap.sectorCount;
 
-    const float keepFloor = g_edMap.sectors[keepSector].floorHeight;
-    const float keepCeil  = g_edMap.sectors[keepSector].ceilHeight;
-    const uint8_t keepFloorCol = g_edMap.sectors[keepSector].floorColor;
-    const uint8_t keepCeilCol  = g_edMap.sectors[keepSector].ceilColor;
-    const uint8_t keepGlow     = g_edMap.sectors[keepSector].glowlevel;
+    const EdSector keepProps = g_edMap.sectors[keepSector];
 
     /* delete both original sector wall blocks */
     {
@@ -5145,14 +5271,11 @@ static int mergeSectorsAcrossWall(int wallIndex)
             g_edMap.walls[g_edMap.wallCount++] = mergedWalls[i];
         }
 
+        g_edMap.sectors[keepSector] = keepProps;
         g_edMap.sectors[keepSector].wallStart = newStart;
         g_edMap.sectors[keepSector].wallCount = mergedCount;
         g_edMap.sectors[keepSector].boundaryCount = mergedCount;
-        g_edMap.sectors[keepSector].floorHeight = keepFloor;
-        g_edMap.sectors[keepSector].ceilHeight = keepCeil;
-        g_edMap.sectors[keepSector].floorColor = keepFloorCol;
-        g_edMap.sectors[keepSector].ceilColor = keepCeilCol;
-        g_edMap.sectors[keepSector].glowlevel = keepGlow;
+        sanitizeSectorProperties(&g_edMap.sectors[keepSector]);
     }
 
     g_ed.draggingSector = 0;
@@ -6493,7 +6616,7 @@ static int saveTextMap(const char *path)
     FILE *f = fopen(path, "w");
     if (!f) return 0;
 
-    fprintf(f, "MAPEDIT3\n");
+    fprintf(f, "MAPEDIT4\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
 
@@ -6520,12 +6643,20 @@ static int saveTextMap(const char *path)
     fprintf(f, "SECTORS %d\n", g_edMap.sectorCount);
     for (int i = 0; i < g_edMap.sectorCount; i++) {
         const EdSector *s = &g_edMap.sectors[i];
-        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %.6f %.6f %.6f %.6f %.6f %.6f\n",
+        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %d %u %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
                 s->wallStart, s->wallCount, s->boundaryCount,
                 s->floorHeight, s->ceilHeight,
                 (unsigned)s->floorColor,
                 (unsigned)s->ceilColor,
                 (unsigned)clampLightLevel((int)s->glowlevel),
+                s->tagId,
+                (unsigned)s->stateFlags,
+                s->floorMinHeight,
+                s->floorMaxHeight,
+                s->ceilMinHeight,
+                s->ceilMaxHeight,
+                s->floorFlowHeight,
+                s->ceilFlowHeight,
                 s->floorTexScaleX,
                 s->floorTexScaleY,
                 s->floorTexAngle,
@@ -6568,6 +6699,8 @@ static int loadTextMap(const char *path)
         mapVersion = 2;
     } else if (strcmp(tag, "MAPEDIT3") == 0) {
         mapVersion = 3;
+    } else if (strcmp(tag, "MAPEDIT4") == 0) {
+        mapVersion = 4;
     } else {
         fclose(f);
         return 0;
@@ -6668,8 +6801,34 @@ static int loadTextMap(const char *path)
     newMap.sectorCount = count;
     for (int i = 0; i < count; i++) {
         unsigned fc, cc, glow = 0;
+        unsigned stateFlags = 0;
 
-        if (mapVersion >= 2) {
+        if (mapVersion >= 4) {
+            if (fscanf(f, "%d %d %d %f %f %u %u %u %d %u %f %f %f %f %f %f %f %f %f %f %f %f",
+                    &newMap.sectors[i].wallStart,
+                    &newMap.sectors[i].wallCount,
+                    &newMap.sectors[i].boundaryCount,
+                    &newMap.sectors[i].floorHeight,
+                    &newMap.sectors[i].ceilHeight,
+                    &fc, &cc, &glow,
+                    &newMap.sectors[i].tagId,
+                    &stateFlags,
+                    &newMap.sectors[i].floorMinHeight,
+                    &newMap.sectors[i].floorMaxHeight,
+                    &newMap.sectors[i].ceilMinHeight,
+                    &newMap.sectors[i].ceilMaxHeight,
+                    &newMap.sectors[i].floorFlowHeight,
+                    &newMap.sectors[i].ceilFlowHeight,
+                    &newMap.sectors[i].floorTexScaleX,
+                    &newMap.sectors[i].floorTexScaleY,
+                    &newMap.sectors[i].floorTexAngle,
+                    &newMap.sectors[i].ceilTexScaleX,
+                    &newMap.sectors[i].ceilTexScaleY,
+                    &newMap.sectors[i].ceilTexAngle) != 22) {
+                fclose(f);
+                return 0;
+            }
+        } else if (mapVersion >= 2) {
             if (fscanf(f, "%d %d %d %f %f %u %u %u %f %f %f %f %f %f",
                     &newMap.sectors[i].wallStart,
                     &newMap.sectors[i].wallCount,
@@ -6708,6 +6867,13 @@ static int loadTextMap(const char *path)
         newMap.sectors[i].floorColor = (uint8_t)fc;
         newMap.sectors[i].ceilColor  = (uint8_t)cc;
         newMap.sectors[i].glowlevel  = clampLightLevel((int)glow);
+        newMap.sectors[i].stateFlags = (uint32_t)stateFlags;
+
+        if (mapVersion < 4) {
+            resetSectorMovePropertiesToCurrentHeights(&newMap.sectors[i]);
+        }
+
+        sanitizeSectorProperties(&newMap.sectors[i]);
     }
 
     fclose(f);
@@ -6754,7 +6920,7 @@ int exportBinaryMap(const char *path)
 
     /* file header */
     {
-        const char magic[8] = { 'R','C','3','D','M','A','P','3' };
+        const char magic[8] = { 'R','C','3','D','M','A','P','4' };
         if (fwrite(magic, 1, sizeof(magic), f) != sizeof(magic)) {
             fclose(f);
             return 0;
@@ -6849,6 +7015,14 @@ int exportBinaryMap(const char *path)
         uint8_t floorColor    = s->floorColor;
         uint8_t ceilColor     = s->ceilColor;
         uint8_t glowlevel     = clampLightLevel((int)s->glowlevel);
+        int32_t tagId         = (int32_t)s->tagId;
+        uint32_t stateFlags   = s->stateFlags;
+        float floorMinHeight  = s->floorMinHeight;
+        float floorMaxHeight  = s->floorMaxHeight;
+        float ceilMinHeight   = s->ceilMinHeight;
+        float ceilMaxHeight   = s->ceilMaxHeight;
+        float floorFlowHeight = s->floorFlowHeight;
+        float ceilFlowHeight  = s->ceilFlowHeight;
 
         float floorTexScaleX  = s->floorTexScaleX;
         float floorTexScaleY  = s->floorTexScaleY;
@@ -6865,6 +7039,14 @@ int exportBinaryMap(const char *path)
             fwrite(&floorColor,     sizeof(floorColor),     1, f) != 1 ||
             fwrite(&ceilColor,      sizeof(ceilColor),      1, f) != 1 ||
             fwrite(&glowlevel,      sizeof(glowlevel),      1, f) != 1 ||
+            fwrite(&tagId,          sizeof(tagId),          1, f) != 1 ||
+            fwrite(&stateFlags,     sizeof(stateFlags),     1, f) != 1 ||
+            fwrite(&floorMinHeight, sizeof(floorMinHeight), 1, f) != 1 ||
+            fwrite(&floorMaxHeight, sizeof(floorMaxHeight), 1, f) != 1 ||
+            fwrite(&ceilMinHeight,  sizeof(ceilMinHeight),  1, f) != 1 ||
+            fwrite(&ceilMaxHeight,  sizeof(ceilMaxHeight),  1, f) != 1 ||
+            fwrite(&floorFlowHeight,sizeof(floorFlowHeight),1, f) != 1 ||
+            fwrite(&ceilFlowHeight, sizeof(ceilFlowHeight), 1, f) != 1 ||
             fwrite(&floorTexScaleX, sizeof(floorTexScaleX), 1, f) != 1 ||
             fwrite(&floorTexScaleY, sizeof(floorTexScaleY), 1, f) != 1 ||
             fwrite(&floorTexAngle,  sizeof(floorTexAngle),  1, f) != 1 ||
@@ -6913,11 +7095,15 @@ static int exportCStringMap(const char *path)
     for (int i = 0; i < g_edMap.sectorCount; i++) {
         const EdSector *s = &g_edMap.sectors[i];
         fprintf(f,
-            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff },\n",
+            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %d, %uu, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff },\n",
             s->wallStart, s->wallCount, s->boundaryCount,
             s->floorHeight, s->ceilHeight,
             (unsigned)s->floorColor, (unsigned)s->ceilColor,
             (unsigned)clampLightLevel((int)s->glowlevel),
+            s->tagId, (unsigned)s->stateFlags,
+            s->floorMinHeight, s->floorMaxHeight,
+            s->ceilMinHeight, s->ceilMaxHeight,
+            s->floorFlowHeight, s->ceilFlowHeight,
             s->floorTexScaleX, s->floorTexScaleY, s->floorTexAngle,
             s->ceilTexScaleX,  s->ceilTexScaleY,  s->ceilTexAngle);
     }
@@ -7140,17 +7326,7 @@ static int splitSelectedSectorByDraftLine(void)
         if (newWallsB[i].v1 != newWallsB[next].v0) return 0;
     }
 
-    const float floorH = sec->floorHeight;
-    const float ceilH  = sec->ceilHeight;
-    const uint8_t floorC = sec->floorColor;
-    const uint8_t ceilC  = sec->ceilColor;
-    const uint8_t glowL  = sec->glowlevel;
-    const float floorTexScaleX = sec->floorTexScaleX;
-    const float floorTexScaleY = sec->floorTexScaleY;
-    const float floorTexAngle  = sec->floorTexAngle;
-    const float ceilTexScaleX  = sec->ceilTexScaleX;
-    const float ceilTexScaleY  = sec->ceilTexScaleY;
-    const float ceilTexAngle   = sec->ceilTexAngle;
+    const EdSector sectorProps = *sec;
 
     const int oldSelectedSector = g_ed.selectedSector;
 
@@ -7176,20 +7352,10 @@ static int splitSelectedSectorByDraftLine(void)
         g_edMap.walls[g_edMap.wallCount++] = newWallsA[i];
     }
 
+    g_edMap.sectors[oldSelectedSector] = sectorProps;
     g_edMap.sectors[oldSelectedSector].wallStart = startA;
     g_edMap.sectors[oldSelectedSector].wallCount = countA;
     g_edMap.sectors[oldSelectedSector].boundaryCount = countA;
-    g_edMap.sectors[oldSelectedSector].floorHeight = floorH;
-    g_edMap.sectors[oldSelectedSector].ceilHeight = ceilH;
-    g_edMap.sectors[oldSelectedSector].floorColor = floorC;
-    g_edMap.sectors[oldSelectedSector].ceilColor = ceilC;
-    g_edMap.sectors[oldSelectedSector].glowlevel = glowL;
-    g_edMap.sectors[oldSelectedSector].floorTexScaleX = floorTexScaleX;
-    g_edMap.sectors[oldSelectedSector].floorTexScaleY = floorTexScaleY;
-    g_edMap.sectors[oldSelectedSector].floorTexAngle  = floorTexAngle;
-    g_edMap.sectors[oldSelectedSector].ceilTexScaleX  = ceilTexScaleX;
-    g_edMap.sectors[oldSelectedSector].ceilTexScaleY  = ceilTexScaleY;
-    g_edMap.sectors[oldSelectedSector].ceilTexAngle   = ceilTexAngle;
     sanitizeSectorProperties(&g_edMap.sectors[oldSelectedSector]);
 
     /* sector B is new */
@@ -7199,20 +7365,10 @@ static int splitSelectedSectorByDraftLine(void)
         g_edMap.walls[g_edMap.wallCount++] = newWallsB[i];
     }
 
+    g_edMap.sectors[newSector] = sectorProps;
     g_edMap.sectors[newSector].wallStart = startB;
     g_edMap.sectors[newSector].wallCount = countB;
     g_edMap.sectors[newSector].boundaryCount = countB;
-    g_edMap.sectors[newSector].floorHeight = floorH;
-    g_edMap.sectors[newSector].ceilHeight = ceilH;
-    g_edMap.sectors[newSector].floorColor = floorC;
-    g_edMap.sectors[newSector].ceilColor = ceilC;
-    g_edMap.sectors[newSector].glowlevel = glowL;
-    g_edMap.sectors[newSector].floorTexScaleX = floorTexScaleX;
-    g_edMap.sectors[newSector].floorTexScaleY = floorTexScaleY;
-    g_edMap.sectors[newSector].floorTexAngle  = floorTexAngle;
-    g_edMap.sectors[newSector].ceilTexScaleX  = ceilTexScaleX;
-    g_edMap.sectors[newSector].ceilTexScaleY  = ceilTexScaleY;
-    g_edMap.sectors[newSector].ceilTexAngle   = ceilTexAngle;
     sanitizeSectorProperties(&g_edMap.sectors[newSector]);
     g_edMap.sectorCount++;
 
@@ -7270,22 +7426,10 @@ static void finalizeDraftSector(void)
             clearWallTexFlags(w);
         }
 
-        g_edMap.sectors[g_edMap.sectorCount].wallStart = wallStart;
-        g_edMap.sectors[g_edMap.sectorCount].wallCount = g_ed.draftCount;
-        g_edMap.sectors[g_edMap.sectorCount].boundaryCount = g_ed.draftCount;
-        g_edMap.sectors[g_edMap.sectorCount].floorHeight = g_ed.sectorFloor;
-        g_edMap.sectors[g_edMap.sectorCount].ceilHeight = g_ed.sectorCeil;
-        g_edMap.sectors[g_edMap.sectorCount].floorColor = g_ed.sectorFloorColor;
-        g_edMap.sectors[g_edMap.sectorCount].ceilColor = g_ed.sectorCeilColor;
-        g_edMap.sectors[g_edMap.sectorCount].glowlevel = 0;
-
-        g_edMap.sectors[g_edMap.sectorCount].floorTexScaleX = 1.0f;
-        g_edMap.sectors[g_edMap.sectorCount].floorTexScaleY = 1.0f;
-        g_edMap.sectors[g_edMap.sectorCount].floorTexAngle  = 0.0f;
-
-        g_edMap.sectors[g_edMap.sectorCount].ceilTexScaleX = 1.0f;
-        g_edMap.sectors[g_edMap.sectorCount].ceilTexScaleY = 1.0f;
-        g_edMap.sectors[g_edMap.sectorCount].ceilTexAngle  = 0.0f;
+        initializeNewSectorDefaults(&g_edMap.sectors[g_edMap.sectorCount],
+                                    wallStart,
+                                    g_ed.draftCount,
+                                    g_ed.draftCount);
 
         g_edMap.sectorCount++;
     }
@@ -7500,22 +7644,10 @@ static int finalizeDraftSectorAttached(void)
             }
         }
 
-        g_edMap.sectors[newSectorIndex].wallStart = newWallStart;
-        g_edMap.sectors[newSectorIndex].wallCount = g_ed.draftCount;
-        g_edMap.sectors[newSectorIndex].boundaryCount = g_ed.draftCount;
-        g_edMap.sectors[newSectorIndex].floorHeight = g_ed.sectorFloor;
-        g_edMap.sectors[newSectorIndex].ceilHeight = g_ed.sectorCeil;
-        g_edMap.sectors[newSectorIndex].floorColor = g_ed.sectorFloorColor;
-        g_edMap.sectors[newSectorIndex].ceilColor = g_ed.sectorCeilColor;
-        g_edMap.sectors[newSectorIndex].glowlevel = 0;
-
-        g_edMap.sectors[newSectorIndex].floorTexScaleX = 1.0f;
-        g_edMap.sectors[newSectorIndex].floorTexScaleY = 1.0f;
-        g_edMap.sectors[newSectorIndex].floorTexAngle  = 0.0f;
-
-        g_edMap.sectors[newSectorIndex].ceilTexScaleX = 1.0f;
-        g_edMap.sectors[newSectorIndex].ceilTexScaleY = 1.0f;
-        g_edMap.sectors[newSectorIndex].ceilTexAngle  = 0.0f;
+        initializeNewSectorDefaults(&g_edMap.sectors[newSectorIndex],
+                                    newWallStart,
+                                    g_ed.draftCount,
+                                    g_ed.draftCount);
 
         g_edMap.sectorCount++;
 
@@ -8115,12 +8247,49 @@ static void drawTexturedSector2DBruteForceScanline(int sectorIndex,
     }
 }
 
+static void drawVectorSector2DBruteForceScanline(int sectorIndex,
+                                                 int minX,
+                                                 int maxX,
+                                                 int y,
+                                                 uint8_t fillCol)
+{
+    int runStart = -1;
+    float worldX;
+    float worldY;
+    const float worldStepX = 1.0f / g_ed.zoom;
+
+    if (minX > maxX) {
+        return;
+    }
+
+    worldX = g_ed.camX + (((float)minX + 0.5f) - (EDIT_VIEW_PORT_WIDTH * 0.5f)) / g_ed.zoom;
+    worldY = g_ed.camY + (((float)y + 0.5f) - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
+
+    for (int x = minX; x <= maxX; x++) {
+        const int inside = pointInSector(worldX, worldY, sectorIndex);
+
+        if (inside) {
+            if (runStart < 0) {
+                runStart = x;
+            }
+        } else if (runStart >= 0) {
+            drawLineDots(runStart, y, x - 1, y, fillCol);
+            runStart = -1;
+        }
+
+        worldX += worldStepX;
+    }
+
+    if (runStart >= 0) {
+        drawLineDots(runStart, y, maxX, y, fillCol);
+    }
+}
+
 static void drawFilledSector2D(int sectorIndex)
 {
     static int polyX[ED_MAX_WALLS];
     static int polyY[ED_MAX_WALLS];
-    static int nodes[ED_MAX_WALLS];
-    static float texNodes[ED_MAX_WALLS];
+    static float spanNodes[ED_MAX_WALLS];
 
     const EdSector *sec;
     int count;
@@ -8176,109 +8345,66 @@ static void drawFilledSector2D(int sectorIndex)
 
     for (int y = minY; y <= maxY; y += stepY) {
         int nodeCount = 0;
+        const float scanWorldY =
+            g_ed.camY + (((float)y + 0.5f) - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
 
-        if (useTextureFill) {
-            const float scanWorldY =
-                g_ed.camY + (((float)y + 0.5f) - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
+        for (int i = 0; i < count; i++) {
+            const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+            const EdVec2 *a = &g_edMap.verts[w->v0];
+            const EdVec2 *b = &g_edMap.verts[w->v1];
 
-            for (int i = 0; i < count; i++) {
-                const EdWall *w = &g_edMap.walls[sec->wallStart + i];
-                const EdVec2 *a = &g_edMap.verts[w->v0];
-                const EdVec2 *b = &g_edMap.verts[w->v1];
-
-                if (fabsf(b->y - a->y) <= 0.0001f) {
-                    continue;
-                }
-
-                if (((a->y < scanWorldY) && (b->y >= scanWorldY)) ||
-                    ((b->y < scanWorldY) && (a->y >= scanWorldY))) {
-                    if (nodeCount < ED_MAX_WALLS) {
-                        const float t = (scanWorldY - a->y) / (b->y - a->y);
-                        const float hitWorldX = a->x + ((b->x - a->x) * t);
-
-                        texNodes[nodeCount++] =
-                            ((hitWorldX - g_ed.camX) * g_ed.zoom) + (EDIT_VIEW_PORT_WIDTH * 0.5f);
-                    }
-                }
-            }
-
-            for (int i = 1; i < nodeCount; i++) {
-                const float v = texNodes[i];
-                int k = i - 1;
-                while (k >= 0 && texNodes[k] > v) {
-                    texNodes[k + 1] = texNodes[k];
-                    k--;
-                }
-                texNodes[k + 1] = v;
-            }
-
-            if ((nodeCount & 1) != 0) {
-                drawTexturedSector2DBruteForceScanline(sectorIndex, minX, maxX, y, sec);
+            if (fabsf(b->y - a->y) <= 0.0001f) {
                 continue;
             }
 
-            for (int i = 0; i + 1 < nodeCount; i += 2) {
-                int x0 = (int)ceilf(texNodes[i]);
-                int x1 = (int)floorf(texNodes[i + 1]);
+            if (((a->y < scanWorldY) && (b->y >= scanWorldY)) ||
+                ((b->y < scanWorldY) && (a->y >= scanWorldY))) {
+                if (nodeCount < ED_MAX_WALLS) {
+                    const float t = (scanWorldY - a->y) / (b->y - a->y);
+                    const float hitWorldX = a->x + ((b->x - a->x) * t);
 
-                if (x1 < minX || x0 > maxX) {
-                    continue;
-                }
-
-                x0 = clampi_local(x0, minX, maxX);
-                x1 = clampi_local(x1, minX, maxX);
-
-                if (x1 >= x0) {
-                    drawTexturedSectorSpan(x0, x1, y, sec);
+                    spanNodes[nodeCount++] =
+                        ((hitWorldX - g_ed.camX) * g_ed.zoom) + (EDIT_VIEW_PORT_WIDTH * 0.5f);
                 }
             }
+        }
 
+        for (int i = 1; i < nodeCount; i++) {
+            const float v = spanNodes[i];
+            int k = i - 1;
+            while (k >= 0 && spanNodes[k] > v) {
+                spanNodes[k + 1] = spanNodes[k];
+                k--;
+            }
+            spanNodes[k + 1] = v;
+        }
+
+        if ((nodeCount & 1) != 0) {
+            if (useTextureFill) {
+                drawTexturedSector2DBruteForceScanline(sectorIndex, minX, maxX, y, sec);
+            } else {
+                drawVectorSector2DBruteForceScanline(sectorIndex, minX, maxX, y, fillCol);
+            }
             continue;
         }
 
-        for (int i = 0, j = count - 1; i < count; j = i++) {
-            const int yi = polyY[i];
-            const int yj = polyY[j];
-            const int xi = polyX[i];
-            const int xj = polyX[j];
-
-            if (((yi < y) && (yj >= y)) || ((yj < y) && (yi >= y))) {
-                if (nodeCount < ED_MAX_WALLS) {
-                    nodes[nodeCount++] = xi + (int)(((float)(y - yi) / (float)(yj - yi)) * (float)(xj - xi));
-                }
-            }
-        }
-
-        /* simple insertion sort */
-        for (int i = 1; i < nodeCount; i++) {
-            int v = nodes[i];
-            int k = i - 1;
-            while (k >= 0 && nodes[k] > v) {
-                nodes[k + 1] = nodes[k];
-                k--;
-            }
-            nodes[k + 1] = v;
-        }
-
         for (int i = 0; i + 1 < nodeCount; i += 2) {
-            int x0 = nodes[i];
-            int x1 = nodes[i + 1];
+            int x0 = (int)ceilf(spanNodes[i]);
+            int x1 = (int)floorf(spanNodes[i + 1]);
 
-            if (x0 > x1) {
-                int t = x0;
-                x0 = x1;
-                x1 = t;
-            }
-
-            if (x1 < 0 || x0 >= EDIT_VIEW_PORT_WIDTH) {
+            if (x1 < minX || x0 > maxX) {
                 continue;
             }
 
-            x0 = clampi_local(x0, 0, EDIT_VIEW_PORT_WIDTH - 1);
-            x1 = clampi_local(x1, 0, EDIT_VIEW_PORT_WIDTH - 1);
+            x0 = clampi_local(x0, minX, maxX);
+            x1 = clampi_local(x1, minX, maxX);
 
             if (x1 >= x0) {
-                drawLineDots(x0, y, x1, y, fillCol);
+                if (useTextureFill) {
+                    drawTexturedSectorSpan(x0, x1, y, sec);
+                } else {
+                    drawLineDots(x0, y, x1, y, fillCol);
+                }
             }
         }
     }
@@ -8485,8 +8611,8 @@ void drawHoverPanel(void)
         const EdSector *s = &g_edMap.sectors[sector_id];
 
         snprintf(buf, sizeof(buf),
-                 "Sector %d  Floor %.3f  Ceil %.3f  Walls %d  Boundary %d",
-                 sector_id, s->floorHeight, s->ceilHeight,
+                 "Sector %d  Floor %.3f  Ceil %.3f  Tag %d  State 0x%X  Walls %d  Boundary %d",
+                 sector_id, s->floorHeight, s->ceilHeight, s->tagId, (unsigned)s->stateFlags,
                  s->wallCount, s->boundaryCount);
         drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
         return;
@@ -8686,7 +8812,7 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP;
             drawText(x, y, "Inspector Copy Props / Paste Props copies the full sector setup", ED_TEXT_COL);
             y += ED_ROW_STEP;
-            drawText(x, y, "Use the inspector +/- buttons for sector UV, heights, and glow", ED_TEXT_COL);
+            drawText(x, y, "Use the inspector +/- buttons for sector UV, heights, glow, and mover data", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(hasMultiSectorSelection()){
@@ -8999,19 +9125,18 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, "+");
 
 
+    int sector_button_y_offsets = 55;
+
     // sector inspector UI - sector / heights
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_COPY_PROPS,  206 + controloffw,  58 + controloff, 96, ED_BTN_H, "Copy Props");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 308 + controloffw,  58 + controloff, 96, ED_BTN_H, "Paste Props");
+
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 136 + controloffw, 114 + controloff, 24, 24, "-");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS,  164 + controloffw, 114 + controloff, 24, 24, "+");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS,  336 + controloffw, 114 + controloff, 24, 24, "-");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS,   364 + controloffw, 114 + controloff, 24, 24, "+");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS,  136 + controloffw, 172 + controloff, 24, 24, "-");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS,   164 + controloffw, 172 + controloff, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_COPY_PROPS,  206 + controloffw,  58 + controloff, 96, ED_BTN_H, "Copy Props");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 308 + controloffw,  58 + controloff, 96, ED_BTN_H, "Paste Props");
-
-
-    
-    int sector_button_y_offsets = 55;
 
     // sector inspector UI - texture transform ceiling
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 136 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
@@ -9034,6 +9159,30 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 166 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "-");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS,  194 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "+");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 226 + controloffw, 348 + controloff + sector_button_y_offsets, 60, 24, "Reset");
+
+
+    // sector inspect UI - sector moving parts bits ;)
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_TAG_MINUS,   136 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_TAG_PLUS,    164 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 336 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_STATE_PLUS,  364 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "+");
+
+    
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 136 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS,  164 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 336 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS,  364 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "+");
+
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS,  136 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS,   164 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS,  336 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS,   364 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 136 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,  164 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS,  336 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "-");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS,   364 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "+");
+
+
 
 
     // confirmation dialog box buttons
@@ -9769,22 +9918,10 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wSide1->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wSide1);
 
-    g_edMap.sectors[newSectorIndex].wallStart = newWallStart;
-    g_edMap.sectors[newSectorIndex].wallCount = 4;
-    g_edMap.sectors[newSectorIndex].boundaryCount = 4;
-    g_edMap.sectors[newSectorIndex].floorHeight = g_ed.sectorFloor;
-    g_edMap.sectors[newSectorIndex].ceilHeight  = g_ed.sectorCeil;
-    g_edMap.sectors[newSectorIndex].floorColor  = g_ed.sectorFloorColor;
-    g_edMap.sectors[newSectorIndex].ceilColor   = g_ed.sectorCeilColor;
-    g_edMap.sectors[newSectorIndex].glowlevel   = 0;
-
-    g_edMap.sectors[newSectorIndex].floorTexScaleX = 1.0f;
-    g_edMap.sectors[newSectorIndex].floorTexScaleY = 1.0f;
-    g_edMap.sectors[newSectorIndex].floorTexAngle  = 0.0f;
-
-    g_edMap.sectors[newSectorIndex].ceilTexScaleX = 1.0f;
-    g_edMap.sectors[newSectorIndex].ceilTexScaleY = 1.0f;
-    g_edMap.sectors[newSectorIndex].ceilTexAngle  = 0.0f;
+    initializeNewSectorDefaults(&g_edMap.sectors[newSectorIndex],
+                                newWallStart,
+                                4,
+                                4);
 
     g_edMap.sectorCount++;
 
@@ -9868,6 +10005,22 @@ static void refreshEditorUIButtonState(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 0);
 
@@ -9958,6 +10111,22 @@ static void refreshEditorUIButtonState(void)
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 1);
 
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
@@ -10043,6 +10212,22 @@ static void handleEditorUI(int mouseX, int mouseY,
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 0);
 
@@ -10146,6 +10331,22 @@ static void handleEditorUI(int mouseX, int mouseY,
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_TAG_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_STATE_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS, 1);
+            rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 1);
             rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 1);
@@ -10440,6 +10641,126 @@ static void handleEditorUI(int mouseX, int mouseY,
             if (sec) {
                 pushUndoState();
                 sec->glowlevel = clampLightLevel((int)sec->glowlevel + 1);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_TAG_MINUS:
+            if (sec) {
+                pushUndoState();
+                if (sec->tagId > 0) sec->tagId--;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_TAG_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->tagId++;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_STATE_MINUS:
+            if (sec) {
+                pushUndoState();
+                if (sec->stateFlags > 0u) sec->stateFlags--;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_STATE_PLUS:
+            if (sec) {
+                pushUndoState();
+                if (sec->stateFlags < 0xFFFFFFFFu) sec->stateFlags++;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_FLOOR_MIN_MINUS:
+            if (sec) {
+                pushUndoState();
+                sec->floorMinHeight -= uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_FLOOR_MIN_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->floorMinHeight += uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_FLOOR_MAX_MINUS:
+            if (sec) {
+                pushUndoState();
+                sec->floorMaxHeight -= uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_FLOOR_MAX_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->floorMaxHeight += uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_CEIL_MIN_MINUS:
+            if (sec) {
+                pushUndoState();
+                sec->ceilMinHeight -= uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_CEIL_MIN_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->ceilMinHeight += uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_CEIL_MAX_MINUS:
+            if (sec) {
+                pushUndoState();
+                sec->ceilMaxHeight -= uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_CEIL_MAX_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->ceilMaxHeight += uiStep;
+                sanitizeSectorProperties(sec);
+            }
+            break;
+
+        case GUI_BTN_SECTOR_FLOOR_FLOW_MINUS:
+            if (sec) {
+                pushUndoState();
+                sec->floorFlowHeight -= uiStep;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_FLOOR_FLOW_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->floorFlowHeight += uiStep;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_CEIL_FLOW_MINUS:
+            if (sec) {
+                pushUndoState();
+                sec->ceilFlowHeight -= uiStep;
+            }
+            break;
+
+        case GUI_BTN_SECTOR_CEIL_FLOW_PLUS:
+            if (sec) {
+                pushUndoState();
+                sec->ceilFlowHeight += uiStep;
             }
             break;
 
@@ -11003,8 +11324,8 @@ static void drawInspectorPanel(void)
         const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 428, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 428, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect(px + 8, py, pw - 16, 580, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 580, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
         py += 8;
 
@@ -11105,7 +11426,38 @@ static void drawInspectorPanel(void)
         drawText(px + 218,  py, buf, ED_TEXT_COL); py += 30; 
 
         snprintf(buf, sizeof(buf), "Rotate : %.1f\xb0", RAD2DEG(sec->floorTexAngle));
-        drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 30;
+        drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 20;
+
+
+        // Sector mover!!
+        py += 8;
+        drawRect(px + 12,  py, pw - 24, 148, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py, pw - 24, 148, ED_INSPECTOR_PANELS_PANELFRAME);
+
+        
+        py += 6;
+        drawText(px + 18,  py, "SECTOR MOVER", ED_INSPECTOR_PANELS_HEADER_TEXT); py += 20;
+
+        py += 6;
+        snprintf(buf, sizeof(buf), "Tag ID: %d", sec->tagId);
+        drawText(px + 18, py, buf, ED_TEXT_COL);
+        snprintf(buf, sizeof(buf), "State: 0x%04X", (unsigned)sec->stateFlags);
+        drawText(px + 218, py, buf, ED_TEXT_COL); py += 30;
+
+        snprintf(buf, sizeof(buf), "F_min: %.3f", sec->floorMinHeight);
+        drawText(px + 18, py, buf, ED_TEXT_COL);
+        snprintf(buf, sizeof(buf), "F_max: %.3f", sec->floorMaxHeight);
+        drawText(px + 218, py, buf, ED_TEXT_COL); py += 30;
+
+        snprintf(buf, sizeof(buf), "C_min: %.3f", sec->ceilMinHeight);
+        drawText(px + 18, py, buf, ED_TEXT_COL);
+        snprintf(buf, sizeof(buf), "C_max: %.3f", sec->ceilMaxHeight);
+        drawText(px + 218, py, buf, ED_TEXT_COL); py += 30;
+
+        snprintf(buf, sizeof(buf), "F_flow: %.3f", sec->floorFlowHeight);
+        drawText(px + 18, py, buf, ED_TEXT_COL);
+        snprintf(buf, sizeof(buf), "C_flow: %.3f", sec->ceilFlowHeight);
+        drawText(px + 218, py, buf, ED_TEXT_COL); py += 24;
 
     }
     else {

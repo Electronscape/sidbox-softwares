@@ -62,6 +62,15 @@ typedef struct {
     uint8_t ceilColor;
     uint8_t glowlevel;      /* 0 = normal lighting, 1..7 = brighter */
 
+    int32_t tagId;          /* runtime trigger/tag id */
+    uint32_t stateFlags;    /* runtime-controlled sector state flags */
+    float floorMinHeight;   /* runtime lower bound for floor */
+    float floorMaxHeight;   /* runtime upper bound for floor */
+    float ceilMinHeight;    /* runtime lower bound for ceiling */
+    float ceilMaxHeight;    /* runtime upper bound for ceiling */
+    float floorFlowHeight;  /* runtime floor step/speed amount */
+    float ceilFlowHeight;   /* runtime ceiling step/speed amount */
+
     float floorTexScaleX;
     float floorTexScaleY;
     float floorTexAngle;
@@ -88,7 +97,7 @@ typedef struct {
     float startAngle;
 } RC3D_Map;
 
-extern const RC3D_Map g_rc3dDemoMap;
+extern RC3D_Map g_rc3dDemoMap;
 
 /* runtime binary map loading */
 int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap);

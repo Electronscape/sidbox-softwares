@@ -1,9 +1,33 @@
 #include "rc3d_map.h"
 
 #define WALL_ENTRY(...)   { __VA_ARGS__, RC3D_TEX_FLAG_DEFAULT, 1.0f, 1.0f }
-#define SECTOR_ENTRY(...) { __VA_ARGS__, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
+#define SECTOR_ENTRY(wallStart, wallCount, boundaryCount, floorHeight, ceilHeight, floorColor, ceilColor) \
+    {                                                                                                      \
+        wallStart,                                                                                         \
+        wallCount,                                                                                         \
+        boundaryCount,                                                                                     \
+        floorHeight,                                                                                       \
+        ceilHeight,                                                                                        \
+        floorColor,                                                                                        \
+        ceilColor,                                                                                         \
+        0,                                                                                                 \
+        0,                                                                                                 \
+        0u,                                                                                                \
+        floorHeight,                                                                                       \
+        floorHeight,                                                                                       \
+        ceilHeight,                                                                                        \
+        ceilHeight,                                                                                        \
+        0.0f,                                                                                              \
+        0.0f,                                                                                              \
+        0.0f,                                                                                              \
+        0.0f,                                                                                              \
+        0.0f,                                                                                              \
+        0.0f,                                                                                              \
+        0.0f,                                                                                              \
+        0.0f                                                                                               \
+    }
 
-static const RC3D_Vec2 g_verts[] = {
+static RC3D_Vec2 g_verts[] = {
     { -4.000000f, 4.000000f },
     { 4.000000f, 4.000000f },
     { 4.000000f, -4.000000f },
@@ -38,7 +62,7 @@ static const RC3D_Vec2 g_verts[] = {
     { -8.000000f, -1.000000f },
 };
 
-static const RC3D_Wall g_walls[] = {
+static RC3D_Wall g_walls[] = {
     WALL_ENTRY(0, 1, 4, 0.000000f, 1.800000f, 10, 10, 10, 11),
     WALL_ENTRY(1, 2, 1, 0.000000f, 1.800000f, 10, 10, 10, 11),
     WALL_ENTRY(2, 3, 2, 0.000000f, 1.800000f, 10, 10, 10, 11),
@@ -89,7 +113,7 @@ static const RC3D_Wall g_walls[] = {
     WALL_ENTRY(30, 31, 3, 0.000000f, 1.800000f, 16, 16, 16, 1),
 };
 
-static const RC3D_Sector g_sectors[] = {
+static RC3D_Sector g_sectors[] = {
     SECTOR_ENTRY(0, 4, 4, -0.100000f, 1.900000f, 170, 255),
     SECTOR_ENTRY(4, 6, 6, 0.000000f, 1.800000f, 173, 255),
     SECTOR_ENTRY(10, 6, 6, 0.000000f, 1.800000f, 173, 255),
@@ -99,7 +123,7 @@ static const RC3D_Sector g_sectors[] = {
     SECTOR_ENTRY(38, 10, 10, 0.000000f, 1.800000f, 173, 255),
 };
 
-const RC3D_Map g_rc3dDemoMap = {
+RC3D_Map g_rc3dDemoMap = {
     g_verts,
     (int)(sizeof(g_verts) / sizeof(g_verts[0])),
 

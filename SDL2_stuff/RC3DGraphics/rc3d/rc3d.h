@@ -9,6 +9,12 @@
 #define RC3D_INVALID_SPRITE    (-1)
 #define RC3D_SPRITE_TEX_MAN    253
 
+#define RC3D_SECTOR_STATE_NONE           0u
+#define RC3D_SECTOR_STATE_RAISE_FLOOR    0x01u
+#define RC3D_SECTOR_STATE_LOWER_FLOOR    0x02u
+#define RC3D_SECTOR_STATE_LOWER_CEILING  0x04u
+#define RC3D_SECTOR_STATE_RAISE_CEILING  0x08u
+
 extern int g_viewport_top;
 extern int g_viewport_left;
 extern int g_viewport_width;
@@ -33,6 +39,7 @@ void rc3dSpriteSetPositionFixed(int spriteId, int32_t xFixed, int32_t yFixed);
 void rc3dSpriteSetSize(int spriteId, float width, float height);
 void rc3dSpriteSetTexture(int spriteId, uint8_t texId);
 void rc3dSpriteSetBaseZ(int spriteId, float baseZ);
+int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags);
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx);
 void rc3dRender(void);
 

@@ -345,6 +345,12 @@ static float projPlaneGlobal = 0.0f;
 
 static RC3D_Texture g_rc3dTextures[256];
 static int g_rc3dTexturesInit = 0;
+static uint8_t g_lightVariantBright[256];
+static uint8_t g_lightVariantMid[256];
+static uint8_t g_lightVariantDark[256];
+static uint8_t g_lightVariantBlack[256];
+static float g_glowDistScale[RC3D_TEX_WALL_GLOW_MAX + 1u];
+static int g_lightVariantTablesInit = 0;
 
 
 typedef enum {
@@ -376,10 +382,21 @@ typedef struct {
     uint8_t wallClass;
     uint8_t texXMode;
 
+    int32_t ownerSector;
     int32_t backWallIndex;   // matching wall in neighbour sector, or -1
+
+    float portalOpenBottom;
+    float portalOpenTop;
+    uint8_t portalHasUpper;
+    uint8_t portalHasLower;
 } RC3D_WallCache;
 
 typedef struct {
+    RC3D_Fixed minX;
+    RC3D_Fixed maxX;
+    RC3D_Fixed minY;
+    RC3D_Fixed maxY;
+
     float floorInvScaleX;
     float floorInvScaleY;
     float floorCos;
@@ -394,6 +411,41 @@ typedef struct {
     uint8_t ceilSimple;
 } RC3D_SectorCache;
 
+typedef struct {
+    float openBottom;
+    float openTop;
+    uint8_t hasUpper;
+    uint8_t hasLower;
+} RC3D_PortalView;
+
+typedef struct {
+    float rdx;
+    float rdy;
+    float planeLightLen;
+} RC3D_ColumnRayCache;
+
+typedef struct {
+    int16_t sector;
+    int16_t clipTop;
+    int16_t clipBottom;
+    uint16_t depthLimit;
+} RC3D_VisibleTraceSegment;
+
+typedef enum {
+    RC3D_SHADEMODE_BRIGHT = 0,
+    RC3D_SHADEMODE_MID,
+    RC3D_SHADEMODE_DARK,
+    RC3D_SHADEMODE_BLACK,
+    RC3D_SHADEMODE_DITHER_BRIGHT_MID,
+    RC3D_SHADEMODE_DITHER_MID_DARK,
+    RC3D_SHADEMODE_DITHER_DARK_BLACK
+} RC3D_ShadeMode;
+
+typedef struct {
+    uint8_t mode;
+    uint8_t threshold;
+} RC3D_ShadeProfile;
+
 
 
 static RC3D_WallCache *g_wallCache = NULL;
@@ -406,6 +458,11 @@ static int g_fixedVertCount = 0;
 static float g_invDTable[(SCREEN_H * 2) + 1];
 static int g_invDTableInit = 0;
 static uint16_t g_skyXTable[SCREEN_W];
+static RC3D_ColumnRayCache g_columnRayCache[SCREEN_W];
+static int g_columnRayCacheCount = 0;
+static RC3D_VisibleTraceSegment g_visibleTraceCache[SCREEN_W][RC3D_MAX_PORTAL_STEPS];
+static uint8_t g_visibleTraceCount[SCREEN_W];
+static uint8_t g_visibleTraceBuilt[SCREEN_W];
 static RC3D_WallDepthSpan g_wallDepthSpans[SCREEN_W][RC3D_MAX_WALL_SPANS_PER_COLUMN];
 static uint8_t g_wallDepthSpanCount[SCREEN_W];
 
@@ -433,12 +490,51 @@ static inline float rc3dViewportCameraX(int sx)
     return -1.0f + (2.0f * ((float)sx / (float)(g_viewport_width - 1)));
 }
 
+static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float planeY)
+{
+    const float rayStepX = planeX * g_camStepConst;
+    const float rayStepY = planeY * g_camStepConst;
+    float rdx = dirX - planeX;
+    float rdy = dirY - planeY;
+
+    g_columnRayCacheCount = 0;
+
+    if (g_viewport_width <= 0) {
+        return;
+    }
+
+    if (g_viewport_width <= 1) {
+        rdx = dirX;
+        rdy = dirY;
+    }
+
+    for (int sx = 0; sx < g_viewport_width; ++sx) {
+        RC3D_ColumnRayCache *cache = &g_columnRayCache[sx];
+
+        cache->rdx = rdx;
+        cache->rdy = rdy;
+        cache->planeLightLen =
+            sqrtf((rdx * rdx) + (rdy * rdy)) * RC3D_LIGHT_PLANE_DIST_SCALE;
+
+        rdx += rayStepX;
+        rdy += rayStepY;
+    }
+
+    g_columnRayCacheCount = g_viewport_width;
+}
+
+static inline void rc3dInvalidateVisibleTraceCache(void)
+{
+    memset(g_visibleTraceBuilt, 0, sizeof(g_visibleTraceBuilt));
+}
+
 
 /* ------------------------------------------------------------------------- */
 /* forward decls                                                             */
 /* ------------------------------------------------------------------------- */
 
 static int tryMovePlayerSliding(float moveX, float moveY);
+static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
 void screenupdate(void);
 
@@ -610,24 +706,6 @@ static inline int rc3dWallSpansBlockPixel(int sx, int y, uint16_t spriteDepth)
 /* texture / tables                                                          */
 /* ------------------------------------------------------------------------- */
 
-static inline uint8_t wallTexelFetch(uint8_t texId, int tx, int ty)
-{
-    const RC3D_Texture *t = &g_rc3dTextures[texId];
-
-    tx &= RC3D_TEX_MASK;
-    ty &= RC3D_TEX_MASK;
-
-    return t->pix[(ty * RC3D_TEX_SIZE) + tx];
-}
-
-static inline uint8_t texelFetch(uint8_t texId, int tx, int ty)
-{
-    const RC3D_Texture *t = &g_rc3dTextures[texId];
-    tx &= RC3D_TEX_MASK;
-    ty &= RC3D_TEX_MASK;
-    return t->pix[(ty * RC3D_TEX_SIZE) + tx];
-}
-
 static inline float rc3dSaturate(float v)
 {
     if (v < 0.0f) return 0.0f;
@@ -646,6 +724,48 @@ static inline float rc3dMaxf(float a, float b)
     return (a > b) ? a : b;
 }
 
+static void rc3dBuildLightVariantTables(void)
+{
+    const int bankEnd = RC3D_LIGHT_BANK_START + (RC3D_LIGHT_BANK_SIZE * 3);
+
+    for (int texel = 0; texel < 256; ++texel) {
+        const uint8_t texel8 = (uint8_t)texel;
+
+        g_lightVariantBright[texel] = texel8;
+        g_lightVariantMid[texel] = texel8;
+        g_lightVariantDark[texel] = texel8;
+        g_lightVariantBlack[texel] = texel8;
+
+        if (texel < RC3D_LIGHT_BANK_START || texel >= bankEnd) {
+            continue;
+        }
+
+        {
+            const uint8_t baseSlot =
+                (uint8_t)((texel - RC3D_LIGHT_BANK_START) & (RC3D_LIGHT_BANK_SIZE - 1));
+            const uint8_t bright = RC3D_LIGHT_BANK_START + baseSlot;
+            const uint8_t mid = bright + RC3D_LIGHT_BANK_SIZE;
+            const uint8_t dark = mid + RC3D_LIGHT_BANK_SIZE;
+
+            g_lightVariantBright[texel] = bright;
+            g_lightVariantMid[texel] = mid;
+            g_lightVariantDark[texel] = dark;
+            g_lightVariantBlack[texel] = RC3D_LIGHT_BLACK_INDEX;
+        }
+    }
+
+    for (uint8_t glow = 0; glow <= RC3D_TEX_WALL_GLOW_MAX; ++glow) {
+        if (glow >= RC3D_TEX_WALL_GLOW_MAX) {
+            g_glowDistScale[glow] = 0.0f;
+        } else {
+            g_glowDistScale[glow] =
+                1.0f - ((float)glow / (float)RC3D_TEX_WALL_GLOW_MAX);
+        }
+    }
+
+    g_lightVariantTablesInit = 1;
+}
+
 static inline uint8_t rc3dClampGlowLevel(uint8_t glowLevel)
 {
     if (glowLevel > RC3D_TEX_WALL_GLOW_MAX) {
@@ -661,19 +781,91 @@ static inline uint8_t rc3dWallGlowFromFlags(uint32_t texture_flags)
         (uint8_t)((texture_flags & RC3D_TEX_WALL_GLOW_MASK) >> RC3D_TEX_WALL_GLOW_SHIFT));
 }
 
-static inline float rc3dApplyGlowToDistance(float sampleDist, uint8_t glowLevel)
+static inline void rc3dBuildShadeProfile(
+    float sampleDist,
+    uint8_t glowLevel,
+    RC3D_ShadeProfile *outProfile
+)
 {
+    const float brightRange = g_lightBrightRange;
+    const float midRange = g_lightMidRange;
+    const float darkRange = g_lightDarkRange;
+    const float brightEnd = brightRange;
+    const float midEnd = brightEnd + midRange;
+    const float darkEnd = midEnd + darkRange;
+
+    if (!outProfile) {
+        return;
+    }
+
     glowLevel = rc3dClampGlowLevel(glowLevel);
 
-    if (sampleDist <= 0.0f || glowLevel == 0u) {
-        return sampleDist;
+    if (glowLevel > 0u) {
+        sampleDist *= g_glowDistScale[glowLevel];
     }
 
-    if (glowLevel >= RC3D_TEX_WALL_GLOW_MAX) {
-        return 0.0f;
+    if (sampleDist <= 0.0f) {
+        outProfile->mode = RC3D_SHADEMODE_BRIGHT;
+        outProfile->threshold = 0u;
+        return;
     }
 
-    return sampleDist * (1.0f - ((float)glowLevel / (float)RC3D_TEX_WALL_GLOW_MAX));
+    {
+        const float brightBlendWidth =
+            rc3dMaxf(brightRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
+        const float brightBlendStart = brightEnd - brightBlendWidth;
+
+        if (sampleDist <= brightBlendStart) {
+            outProfile->mode = RC3D_SHADEMODE_BRIGHT;
+            outProfile->threshold = 0u;
+            return;
+        }
+
+        if ((brightBlendWidth > RC3D_EPSILON) && (sampleDist < brightEnd)) {
+            const float blend = rc3dSmoothStep01(
+                (sampleDist - brightBlendStart) / brightBlendWidth);
+            outProfile->mode = RC3D_SHADEMODE_DITHER_BRIGHT_MID;
+            outProfile->threshold = (uint8_t)(blend * 255.0f);
+            return;
+        }
+    }
+
+    {
+        const float midBlendWidth =
+            rc3dMaxf(midRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
+        const float midBlendStart = midEnd - midBlendWidth;
+
+        if (sampleDist <= midBlendStart) {
+            outProfile->mode = RC3D_SHADEMODE_MID;
+            outProfile->threshold = 0u;
+            return;
+        }
+
+        if ((midBlendWidth > RC3D_EPSILON) && (sampleDist < midEnd)) {
+            const float blend = rc3dSmoothStep01(
+                (sampleDist - midBlendStart) / midBlendWidth);
+            outProfile->mode = RC3D_SHADEMODE_DITHER_MID_DARK;
+            outProfile->threshold = (uint8_t)(blend * 255.0f);
+            return;
+        }
+    }
+
+    if (darkRange <= RC3D_EPSILON) {
+        outProfile->mode = RC3D_SHADEMODE_BLACK;
+        outProfile->threshold = 0u;
+        return;
+    }
+
+    if (sampleDist < darkEnd) {
+        const float blend = rc3dSmoothStep01(
+            (sampleDist - midEnd) / darkRange);
+        outProfile->mode = RC3D_SHADEMODE_DITHER_DARK_BLACK;
+        outProfile->threshold = (uint8_t)(blend * 255.0f);
+        return;
+    }
+
+    outProfile->mode = RC3D_SHADEMODE_BLACK;
+    outProfile->threshold = 0u;
 }
 
 static inline uint8_t rc3dLightNoise8(int a, int b, int c, int d)
@@ -693,105 +885,48 @@ static inline uint8_t rc3dLightNoise8(int a, int b, int c, int d)
     return (uint8_t)(n >> 24);
 }
 
-static inline uint8_t rc3dShadePaletteTexel(
+static inline uint8_t rc3dApplyShadeProfileToTexel(
     uint8_t texel,
-    float sampleDist,
     int sampleU,
     int sampleV,
     uint8_t texId,
-    uint8_t glowLevel
-){
-    const int bankEnd = RC3D_LIGHT_BANK_START + (RC3D_LIGHT_BANK_SIZE * 3);
-    const uint8_t thresholdSeedA = 0;
-    const uint8_t thresholdSeedB = 1;
-    const uint8_t thresholdSeedC = 2;
-    const float brightRange = g_lightBrightRange;
-    const float midRange = g_lightMidRange;
-    const float darkRange = g_lightDarkRange;
-    const float brightEnd = brightRange;
-    const float midEnd = brightEnd + midRange;
-    const float darkEnd = midEnd + darkRange;
-
-    if (texel == RC3D_SPRITE_TEX_TRANSPARENT) {
+    const RC3D_ShadeProfile *shadeProfile
+)
+{
+    if (texel == RC3D_SPRITE_TEX_TRANSPARENT || !shadeProfile) {
         return texel;
     }
 
-    if (texel < RC3D_LIGHT_BANK_START || texel >= bankEnd) {
-        return texel;
-    }
+    switch ((RC3D_ShadeMode)shadeProfile->mode) {
+        case RC3D_SHADEMODE_BRIGHT:
+            return g_lightVariantBright[texel];
 
-    {
-        const uint8_t baseSlot =
-            (uint8_t)((texel - RC3D_LIGHT_BANK_START) & (RC3D_LIGHT_BANK_SIZE - 1));
-        const uint8_t bright = RC3D_LIGHT_BANK_START + baseSlot;
-        const uint8_t mid    = bright + RC3D_LIGHT_BANK_SIZE;
-        const uint8_t dark   = mid + RC3D_LIGHT_BANK_SIZE;
-        const uint8_t black  = RC3D_LIGHT_BLACK_INDEX;
+        case RC3D_SHADEMODE_MID:
+            return g_lightVariantMid[texel];
 
-        sampleDist = rc3dApplyGlowToDistance(sampleDist, glowLevel);
+        case RC3D_SHADEMODE_DARK:
+            return g_lightVariantDark[texel];
 
-        if (sampleDist <= 0.0f) {
-            return bright;
-        }
+        case RC3D_SHADEMODE_BLACK:
+            return g_lightVariantBlack[texel];
 
-        {
-            const float brightBlendWidth =
-                rc3dMaxf(brightRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
-            const float brightBlendStart = brightEnd - brightBlendWidth;
+        case RC3D_SHADEMODE_DITHER_BRIGHT_MID:
+            return (rc3dLightNoise8(sampleU, sampleV, texId, 0) <= shadeProfile->threshold)
+                ? g_lightVariantMid[texel]
+                : g_lightVariantBright[texel];
 
-            if (sampleDist <= brightBlendStart) {
-                return bright;
-            }
+        case RC3D_SHADEMODE_DITHER_MID_DARK:
+            return (rc3dLightNoise8(sampleU, sampleV, texId, 1) <= shadeProfile->threshold)
+                ? g_lightVariantDark[texel]
+                : g_lightVariantMid[texel];
 
-            if ((brightBlendWidth > RC3D_EPSILON) && (sampleDist < brightEnd)) {
-                const float blend = rc3dSmoothStep01(
-                    (sampleDist - brightBlendStart) / brightBlendWidth);
-                const uint8_t threshold =
-                    (uint8_t)(blend * 255.0f);
-                const uint8_t noise =
-                    rc3dLightNoise8(sampleU, sampleV, texId, thresholdSeedA);
+        case RC3D_SHADEMODE_DITHER_DARK_BLACK:
+            return (rc3dLightNoise8(sampleU, sampleV, texId, 2) <= shadeProfile->threshold)
+                ? g_lightVariantBlack[texel]
+                : g_lightVariantDark[texel];
 
-                return (noise <= threshold) ? mid : bright;
-            }
-        }
-
-        {
-            const float midBlendWidth =
-                rc3dMaxf(midRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
-            const float midBlendStart = midEnd - midBlendWidth;
-
-            if (sampleDist <= midBlendStart) {
-                return mid;
-            }
-
-            if ((midBlendWidth > RC3D_EPSILON) && (sampleDist < midEnd)) {
-                const float blend = rc3dSmoothStep01(
-                    (sampleDist - midBlendStart) / midBlendWidth);
-                const uint8_t threshold =
-                    (uint8_t)(blend * 255.0f);
-                const uint8_t noise =
-                    rc3dLightNoise8(sampleU, sampleV, texId, thresholdSeedB);
-
-                return (noise <= threshold) ? dark : mid;
-            }
-        }
-
-        if (darkRange <= RC3D_EPSILON) {
-            return black;
-        }
-
-        if (sampleDist < darkEnd) {
-            const float blend = rc3dSmoothStep01(
-                (sampleDist - midEnd) / darkRange);
-            const uint8_t threshold =
-                (uint8_t)(blend * 255.0f);
-            const uint8_t noise =
-                rc3dLightNoise8(sampleU, sampleV, texId, thresholdSeedC);
-
-            return (noise <= threshold) ? black : dark;
-        }
-
-        return black;
+        default:
+            return texel;
     }
 }
 
@@ -881,6 +1016,10 @@ void rc3dPreparePalette(void)
                 ((uint32_t)g << 8)  |
                 ((uint32_t)b << 0);
         }
+    }
+
+    if (!g_lightVariantTablesInit) {
+        rc3dBuildLightVariantTables();
     }
 }
 
@@ -1057,21 +1196,6 @@ static void rc3dFreeFixedVertCache(void)
     g_fixedVertCount = 0;
 }
 
-static int rc3dWallSectorIndex(int wallIndex)
-{
-    for (int s = 0; s < g_map->sectorCount; ++s) {
-        const RC3D_Sector *sec = &g_map->sectors[s];
-        const int start = sec->wallStart;
-        const int end   = start + sec->wallCount;
-
-        if (wallIndex >= start && wallIndex < end) {
-            return s;
-        }
-    }
-
-    return -1;
-}
-
 static int rc3dBuildFixedVertCacheForCurrentMap(void)
 {
     rc3dFreeFixedVertCache();
@@ -1115,11 +1239,57 @@ static int rc3dBuildSectorCacheForCurrentMap(void)
     for (int i = 0; i < g_map->sectorCount; ++i) {
         const RC3D_Sector *sec = &g_map->sectors[i];
         RC3D_SectorCache *cache = &g_sectorCache[i];
+        const int bboxStart = sec->wallStart;
+        const int bboxEnd =
+            bboxStart + ((sec->boundaryCount > 0) ? sec->boundaryCount : sec->wallCount);
 
         float floorScaleX = sec->floorTexScaleX;
         float floorScaleY = sec->floorTexScaleY;
         float ceilScaleX = sec->ceilTexScaleX;
         float ceilScaleY = sec->ceilTexScaleY;
+
+        if (bboxStart < bboxEnd) {
+            int bboxInit = 0;
+
+            for (int wi = bboxStart; wi < bboxEnd; ++wi) {
+                const RC3D_Wall *w = &g_map->walls[wi];
+                RC3D_Fixed vx[2];
+                RC3D_Fixed vy[2];
+
+                if (g_fixedVerts &&
+                    (unsigned)w->v0 < (unsigned)g_fixedVertCount &&
+                    (unsigned)w->v1 < (unsigned)g_fixedVertCount)
+                {
+                    vx[0] = g_fixedVerts[w->v0].x;
+                    vy[0] = g_fixedVerts[w->v0].y;
+                    vx[1] = g_fixedVerts[w->v1].x;
+                    vy[1] = g_fixedVerts[w->v1].y;
+                } else {
+                    vx[0] = rc3dFloatToFixed(g_map->verts[w->v0].x);
+                    vy[0] = rc3dFloatToFixed(g_map->verts[w->v0].y);
+                    vx[1] = rc3dFloatToFixed(g_map->verts[w->v1].x);
+                    vy[1] = rc3dFloatToFixed(g_map->verts[w->v1].y);
+                }
+
+                for (int vi = 0; vi < 2; ++vi) {
+                    if (!bboxInit) {
+                        cache->minX = cache->maxX = vx[vi];
+                        cache->minY = cache->maxY = vy[vi];
+                        bboxInit = 1;
+                    } else {
+                        if (vx[vi] < cache->minX) cache->minX = vx[vi];
+                        if (vx[vi] > cache->maxX) cache->maxX = vx[vi];
+                        if (vy[vi] < cache->minY) cache->minY = vy[vi];
+                        if (vy[vi] > cache->maxY) cache->maxY = vy[vi];
+                    }
+                }
+            }
+        } else {
+            cache->minX = 0;
+            cache->maxX = 0;
+            cache->minY = 0;
+            cache->maxY = 0;
+        }
 
         if (fabsf(floorScaleX) < RC3D_EPSILON) floorScaleX = 1.0f;
         if (fabsf(floorScaleY) < RC3D_EPSILON) floorScaleY = 1.0f;
@@ -1256,7 +1426,24 @@ static int rc3dBuildWallCacheForCurrentMap(void)
             }
         }
 
+        wc->ownerSector = -1;
         wc->backWallIndex = -1;
+        wc->portalOpenBottom = 0.0f;
+        wc->portalOpenTop = 0.0f;
+        wc->portalHasUpper = 0u;
+        wc->portalHasLower = 0u;
+    }
+
+    for (int s = 0; s < g_map->sectorCount; ++s) {
+        const RC3D_Sector *sec = &g_map->sectors[s];
+        const int start = sec->wallStart;
+        const int end = start + sec->wallCount;
+
+        for (int wi = start; wi < end; ++wi) {
+            if ((unsigned)wi < (unsigned)g_wallCacheCount) {
+                g_wallCache[wi].ownerSector = s;
+            }
+        }
     }
 
     for (int i = 0; i < g_map->wallCount; ++i) {
@@ -1265,7 +1452,7 @@ static int rc3dBuildWallCacheForCurrentMap(void)
             continue;
         }
 
-        const int thisSector = rc3dWallSectorIndex(i);
+        const int thisSector = g_wallCache[i].ownerSector;
         if (thisSector < 0) {
             continue;
         }
@@ -1290,7 +1477,63 @@ static int rc3dBuildWallCacheForCurrentMap(void)
         }
     }
 
+    rc3dRefreshDynamicPortalCache();
     return 1;
+}
+
+static void rc3dRefreshDynamicPortalCache(void)
+{
+    if (!g_map || !g_wallCache || g_wallCacheCount <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < g_wallCacheCount; ++i) {
+        const RC3D_Wall *w = &g_map->walls[i];
+        RC3D_WallCache *wc = &g_wallCache[i];
+
+        wc->portalOpenBottom = 0.0f;
+        wc->portalOpenTop = 0.0f;
+        wc->portalHasUpper = 0u;
+        wc->portalHasLower = 0u;
+
+        if (wc->wallClass != RC3D_WALLCLASS_PORTAL) {
+            continue;
+        }
+
+        if ((unsigned)wc->ownerSector >= (unsigned)g_map->sectorCount ||
+            (unsigned)w->neighbour >= (unsigned)g_map->sectorCount)
+        {
+            continue;
+        }
+
+        {
+            const RC3D_Sector *sec = &g_map->sectors[wc->ownerSector];
+            const RC3D_Sector *nextSec = &g_map->sectors[w->neighbour];
+            float openTop = w->openTop;
+            float openBottom = w->openBottom;
+
+            if (sec->ceilHeight < openTop) {
+                openTop = sec->ceilHeight;
+            }
+            if (nextSec->ceilHeight < openTop) {
+                openTop = nextSec->ceilHeight;
+            }
+
+            if (sec->floorHeight > openBottom) {
+                openBottom = sec->floorHeight;
+            }
+            if (nextSec->floorHeight > openBottom) {
+                openBottom = nextSec->floorHeight;
+            }
+
+            wc->portalOpenTop = openTop;
+            wc->portalOpenBottom = openBottom;
+            wc->portalHasUpper =
+                (sec->ceilHeight > (openTop + RC3D_EPSILON)) ? 1u : 0u;
+            wc->portalHasLower =
+                (sec->floorHeight < (openBottom - RC3D_EPSILON)) ? 1u : 0u;
+        }
+    }
 }
 
 
@@ -1374,6 +1617,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 
     if (memcmp(magic, "RC3DMAP3", 8) == 0) {
         mapVersion = 3;
+    } else if (memcmp(magic, "RC3DMAP4", 8) == 0) {
+        mapVersion = 4;
     } else if (memcmp(magic, "RC3DMAP2", 8) == 0) {
         mapVersion = 2;
     } else if (memcmp(magic, "RC3DMAP1", 8) == 0) {
@@ -1477,7 +1722,36 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         int32_t wallCount_i;
         int32_t boundaryCount;
 
-        if (mapVersion >= 2) {
+        if (mapVersion >= 4) {
+            if (!readExact(f, &wallStart, sizeof(wallStart)) ||
+                !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
+                !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
+                !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].glowlevel, sizeof(uint8_t)) ||
+                !readExact(f, &sectors[i].tagId, sizeof(int32_t)) ||
+                !readExact(f, &sectors[i].stateFlags, sizeof(uint32_t)) ||
+                !readExact(f, &sectors[i].floorMinHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorMaxHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilMinHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilMaxHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorFlowHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilFlowHeight, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
+                !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
+                !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
+                fclose(f);
+                free(verts);
+                free(walls);
+                free(sectors);
+                return 0;
+            }
+        } else if (mapVersion >= 2) {
             if (!readExact(f, &wallStart, sizeof(wallStart)) ||
                 !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
                 !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
@@ -1498,6 +1772,15 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 free(sectors);
                 return 0;
             }
+
+            sectors[i].tagId = 0;
+            sectors[i].stateFlags = 0u;
+            sectors[i].floorMinHeight = sectors[i].floorHeight;
+            sectors[i].floorMaxHeight = sectors[i].floorHeight;
+            sectors[i].ceilMinHeight = sectors[i].ceilHeight;
+            sectors[i].ceilMaxHeight = sectors[i].ceilHeight;
+            sectors[i].floorFlowHeight = 0.0f;
+            sectors[i].ceilFlowHeight = 0.0f;
         } else {
             if (!readExact(f, &wallStart, sizeof(wallStart)) ||
                 !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
@@ -1520,6 +1803,14 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             }
 
             sectors[i].glowlevel = 0;
+            sectors[i].tagId = 0;
+            sectors[i].stateFlags = 0u;
+            sectors[i].floorMinHeight = sectors[i].floorHeight;
+            sectors[i].floorMaxHeight = sectors[i].floorHeight;
+            sectors[i].ceilMinHeight = sectors[i].ceilHeight;
+            sectors[i].ceilMaxHeight = sectors[i].ceilHeight;
+            sectors[i].floorFlowHeight = 0.0f;
+            sectors[i].ceilFlowHeight = 0.0f;
         }
 
         sectors[i].glowlevel = rc3dClampGlowLevel(sectors[i].glowlevel);
@@ -1651,6 +1942,18 @@ static int clampi(int v, int lo, int hi)
     return v;
 }
 
+static inline int rc3dProjectTopPixel(int horizon, float worldZ, float eyeZ, float scale)
+{
+    const float y = (float)horizon - ((worldZ - eyeZ) * scale);
+    return (int)ceilf(y - RC3D_EPSILON);
+}
+
+static inline int rc3dProjectBottomPixel(int horizon, float worldZ, float eyeZ, float scale)
+{
+    const float y = (float)horizon - ((worldZ - eyeZ) * scale);
+    return (int)floorf(y + RC3D_EPSILON);
+}
+
 static void rc3dRefreshViewport(void)
 {
     if (g_viewport_left < 0) {
@@ -1694,12 +1997,23 @@ static void rc3dRefreshViewport(void)
 static int pointInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int sectorIndex)
 {
     const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
+    const RC3D_SectorCache *secCache =
+        (g_sectorCache && (unsigned)sectorIndex < (unsigned)g_sectorCacheCount)
+            ? &g_sectorCache[sectorIndex] : NULL;
     const RC3D_Wall *walls = g_map->walls;
     const RC3D_FixedVec2 *verts = g_fixedVerts;
 
     int inside = 0;
     const int start = sec->wallStart;
     const int end   = start + sec->boundaryCount;
+
+    if (secCache) {
+        if (px < secCache->minX || px > secCache->maxX ||
+            py < secCache->minY || py > secCache->maxY)
+        {
+            return 0;
+        }
+    }
 
     for (int wi = start; wi < end; wi++) {
         const RC3D_Wall *w = &walls[wi];
@@ -1715,6 +2029,74 @@ static int pointInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int sectorIndex)
     }
 
     return inside;
+}
+
+static int rc3dBuildPortalView(const RC3D_Wall *w, int sectorIndex, RC3D_PortalView *outView)
+{
+    const RC3D_Sector *sec;
+    const RC3D_Sector *nextSec;
+    ptrdiff_t wallIndex = -1;
+
+    if (!outView) return 0;
+
+    outView->openBottom = 0.0f;
+    outView->openTop = 0.0f;
+    outView->hasUpper = 0;
+    outView->hasLower = 0;
+
+    if (!g_map || !w || !(w->flags & RC3D_WALL_PORTAL)) {
+        return 0;
+    }
+
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    if ((unsigned)w->neighbour >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    if (g_map->walls) {
+        wallIndex = w - g_map->walls;
+    }
+
+    if (g_wallCache &&
+        wallIndex >= 0 &&
+        wallIndex < g_wallCacheCount &&
+        g_wallCache[wallIndex].ownerSector == sectorIndex &&
+        g_wallCache[wallIndex].wallClass == RC3D_WALLCLASS_PORTAL)
+    {
+        outView->openBottom = g_wallCache[wallIndex].portalOpenBottom;
+        outView->openTop = g_wallCache[wallIndex].portalOpenTop;
+        outView->hasUpper = g_wallCache[wallIndex].portalHasUpper;
+        outView->hasLower = g_wallCache[wallIndex].portalHasLower;
+        return 1;
+    }
+
+    sec = &g_map->sectors[sectorIndex];
+    nextSec = &g_map->sectors[w->neighbour];
+
+    outView->openBottom = w->openBottom;
+    outView->openTop = w->openTop;
+
+    if (sec->ceilHeight < outView->openTop) {
+        outView->openTop = sec->ceilHeight;
+    }
+    if (nextSec->ceilHeight < outView->openTop) {
+        outView->openTop = nextSec->ceilHeight;
+    }
+
+    if (sec->floorHeight > outView->openBottom) {
+        outView->openBottom = sec->floorHeight;
+    }
+    if (nextSec->floorHeight > outView->openBottom) {
+        outView->openBottom = nextSec->floorHeight;
+    }
+
+    outView->hasUpper = (sec->ceilHeight > (outView->openTop + RC3D_EPSILON)) ? 1u : 0u;
+    outView->hasLower = (sec->floorHeight < (outView->openBottom - RC3D_EPSILON)) ? 1u : 0u;
+
+    return 1;
 }
 
 static int findSectorForPointFixed(RC3D_Fixed x, RC3D_Fixed y)
@@ -1820,20 +2202,16 @@ static int wallOpeningAllowsPlayerPassage(const RC3D_Wall *w, int sectorIndex)
 {
     const float playerFeet = g_player.z - RC3D_PLAYER_EYE_HEIGHT;
     float transitionFeet = playerFeet;
-    float openBottom = w->openBottom;
-    float openTop = w->openTop;
+    float openBottom;
+    float openTop;
+    RC3D_PortalView portalView;
 
-    if (!(w->flags & RC3D_WALL_PORTAL)) {
+    if (!rc3dBuildPortalView(w, sectorIndex, &portalView)) {
         return 0;
     }
 
-    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
-        return 0;
-    }
-
-    if ((unsigned)w->neighbour >= (unsigned)g_map->sectorCount) {
-        return 0;
-    }
+    openBottom = portalView.openBottom;
+    openTop = portalView.openTop;
 
     {
         const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
@@ -1845,22 +2223,6 @@ static int wallOpeningAllowsPlayerPassage(const RC3D_Wall *w, int sectorIndex)
 
         if (nextSec->floorHeight > transitionFeet) {
             transitionFeet = nextSec->floorHeight;
-        }
-
-        if (sec->ceilHeight < openTop) {
-            openTop = sec->ceilHeight;
-        }
-
-        if (nextSec->ceilHeight < openTop) {
-            openTop = nextSec->ceilHeight;
-        }
-
-        if (sec->floorHeight > openBottom) {
-            openBottom = sec->floorHeight;
-        }
-
-        if (nextSec->floorHeight > openBottom) {
-            openBottom = nextSec->floorHeight;
         }
     }
 
@@ -2284,12 +2646,16 @@ static inline void drawTexturedPlaneSpan(
         const float eyeY = g_player.y;
         const float eyeZ = g_renderEyeZ;
         const float planeFactor = (planeZ - eyeZ) * projPlaneGlobal;
-        const float rayLen =
+        float rayLen =
             sqrtf((rayDirX * rayDirX) + (rayDirY * rayDirY)) * RC3D_LIGHT_PLANE_DIST_SCALE;
         const float *invTable = &g_invDTable[SCREEN_H];
         const uint8_t *texels = g_rc3dTextures[texId].pix;
 
         uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
+
+        if ((unsigned)sx < (unsigned)g_columnRayCacheCount) {
+            rayLen = g_columnRayCache[sx].planeLightLen;
+        }
 
         if (g_sectorCache && sec >= g_map->sectors) {
             const ptrdiff_t secIndex = sec - g_map->sectors;
@@ -2307,6 +2673,7 @@ static inline void drawTexturedPlaneSpan(
                 const int d = horizon - y;
 
                 if (d != 0) {
+                    RC3D_ShadeProfile shadeProfile;
                     const float t = planeFactor * invTable[d];
                     const float sampleDist = fabsf(t) * rayLen;
                     const int tx = (int)((eyeX + (rayDirX * t)) * (float)RC3D_TEX_SIZE);
@@ -2314,7 +2681,8 @@ static inline void drawTexturedPlaneSpan(
                     const uint8_t texel =
                         texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
-                    *dst = rc3dShadePaletteTexel(texel, sampleDist, tx, ty, texId, glowLevel);
+                    rc3dBuildShadeProfile(sampleDist, glowLevel, &shadeProfile);
+                    *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
                 }
 
                 dst += SCREEN_W;
@@ -2346,6 +2714,7 @@ static inline void drawTexturedPlaneSpan(
                 const int d = horizon - y;
 
                 if (d != 0) {
+                    RC3D_ShadeProfile shadeProfile;
                     const float t = planeFactor * invTable[d];
                     const float sampleDist = fabsf(t) * rayLen;
                     const float wx = eyeX + (rayDirX * t);
@@ -2358,7 +2727,8 @@ static inline void drawTexturedPlaneSpan(
                     const uint8_t texel =
                         texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
-                    *dst = rc3dShadePaletteTexel(texel, sampleDist, tx, ty, texId, glowLevel);
+                    rc3dBuildShadeProfile(sampleDist, glowLevel, &shadeProfile);
+                    *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
                 }
 
                 dst += SCREEN_W;
@@ -2423,7 +2793,9 @@ static inline void renderTexturedBandIfVisible(
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * scale;
                 vStep   = k * scale;
             } else if (clampYB && !clampYT) {
-                vLocal0 = ((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld;
+                vLocal0 =
+                    (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
+                    (float)(RC3D_TEX_SIZE - 1);
                 vStep   = k * texPerWorld;
             } else {
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * texPerWorld;
@@ -2431,8 +2803,12 @@ static inline void renderTexturedBandIfVisible(
             }
 
             {
+                const uint8_t *texels = g_rc3dTextures[texId].pix;
                 uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
                 const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
+                RC3D_ShadeProfile shadeProfile;
+
+                rc3dBuildShadeProfile(shadeDist, wallGlow, &shadeProfile);
 
                 /* --------------------------------------------------------- */
                 /* FAST PATH: no wall texture rotation                       */
@@ -2448,9 +2824,10 @@ static inline void renderTexturedBandIfVisible(
 
                     for (int y = y0; y <= y1; ++y) {
                         const int ty = (vFixed >> 16);
-                        const uint8_t texel = wallTexelFetch(texId, tx, ty);
+                        const uint8_t texel =
+                            texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
-                        *dst = rc3dShadePaletteTexel(texel, shadeDist, tx, ty, texId, wallGlow);
+                        *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
                         dst += SCREEN_W;
                         vFixed += vStepFixed;
                     }
@@ -2474,9 +2851,10 @@ static inline void renderTexturedBandIfVisible(
                     for (int y = y0; y <= y1; ++y) {
                         const int tx = (uRot >> 16);
                         const int ty = (vRot >> 16);
-                        const uint8_t texel = wallTexelFetch(texId, tx, ty);
+                        const uint8_t texel =
+                            texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
-                        *dst = rc3dShadePaletteTexel(texel, shadeDist, tx, ty, texId, wallGlow);
+                        *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
                         dst += SCREEN_W;
 
                         uRot += uStep;
@@ -2539,7 +2917,9 @@ static inline void renderMaskedTexturedBandIfVisible(
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * scale;
                 vStep   = k * scale;
             } else if (clampYB && !clampYT) {
-                vLocal0 = ((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld;
+                vLocal0 =
+                    (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
+                    (float)(RC3D_TEX_SIZE - 1);
                 vStep   = k * texPerWorld;
             } else {
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * texPerWorld;
@@ -2547,9 +2927,13 @@ static inline void renderMaskedTexturedBandIfVisible(
             }
 
             {
+                const uint8_t *texels = g_rc3dTextures[texId].pix;
                 uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
                 int opaqueSpanStart = -1;
                 const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
+                RC3D_ShadeProfile shadeProfile;
+
+                rc3dBuildShadeProfile(shadeDist, wallGlow, &shadeProfile);
 
                 if ((wallTexRotSinGlobal > -0.0001f) && (wallTexRotSinGlobal < 0.0001f) &&
                     (wallTexRotCosGlobal >  0.9999f)  && (wallTexRotCosGlobal < 1.0001f))
@@ -2563,13 +2947,12 @@ static inline void renderMaskedTexturedBandIfVisible(
                     for (int y = y0; y <= y1; ++y) {
                         const int ty = (vFixed >> 16);
                         const uint8_t texel =
-                            rc3dShadePaletteTexel(
-                                wallTexelFetch(texId, tx, ty),
-                                shadeDist,
+                            rc3dApplyShadeProfileToTexel(
+                                texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)],
                                 tx,
                                 ty,
                                 texId,
-                                wallGlow);
+                                &shadeProfile);
 
                         if (texel != RC3D_SPRITE_TEX_TRANSPARENT) {
                             *dst = texel;
@@ -2602,13 +2985,12 @@ static inline void renderMaskedTexturedBandIfVisible(
                         const int tx = (uRot >> 16);
                         const int ty = (vRot >> 16);
                         const uint8_t texel =
-                            rc3dShadePaletteTexel(
-                                wallTexelFetch(texId, tx, ty),
-                                shadeDist,
+                            rc3dApplyShadeProfileToTexel(
+                                texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)],
                                 tx,
                                 ty,
                                 texId,
-                                wallGlow);
+                                &shadeProfile);
 
                         if (texel != RC3D_SPRITE_TEX_TRANSPARENT) {
                             *dst = texel;
@@ -2876,8 +3258,6 @@ static inline void renderColumnPortalTraceClipped(
     int sx,
     float rdx,
     float rdy,
-    float dirX,
-    float dirY,
     float projPlane,
     int horizon,
     int currentSector,
@@ -2949,9 +3329,7 @@ static inline void renderColumnPortalTraceClipped(
                 const float hitX = playerX + (rdx * hit.t);
                 const float hitY = playerY + (rdy * hit.t);
 
-                const float correctedDist =
-                    ((hitX - playerX) * dirX) +
-                    ((hitY - playerY) * dirY);
+                const float correctedDist = hit.t;
 
                 if (correctedDist <= RC3D_EPSILON) {
                     return;
@@ -3016,8 +3394,10 @@ static inline void renderColumnPortalTraceClipped(
                 {
                     const float scale = projPlane / correctedDist;
 
-                    const int secTop = (int)(horizon - ((sec->ceilHeight  - playerZ) * scale));
-                    const int secBot = (int)(horizon - ((sec->floorHeight - playerZ) * scale));
+                    const int secTop =
+                        rc3dProjectTopPixel(horizon, sec->ceilHeight, playerZ, scale);
+                    const int secBot =
+                        rc3dProjectBottomPixel(horizon, sec->floorHeight, playerZ, scale);
 
                     const uint8_t wallClass = wc ? wc->wallClass : RC3D_WALLCLASS_NONE;
                     const int wallMasked =
@@ -3031,6 +3411,7 @@ static inline void renderColumnPortalTraceClipped(
 
                             if (wallMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
                                 const float savedWallTexUBase   = wallTexUBaseGlobal;
+                                const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos  = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin  = wallTexRotSinGlobal;
 
@@ -3056,8 +3437,6 @@ static inline void renderColumnPortalTraceClipped(
                                             sx,
                                             rdx,
                                             rdy,
-                                            dirX,
-                                            dirY,
                                             projPlane,
                                             horizon,
                                             w->neighbour,
@@ -3075,8 +3454,6 @@ static inline void renderColumnPortalTraceClipped(
                                             sx,
                                             rdx,
                                             rdy,
-                                            dirX,
-                                            dirY,
                                             projPlane,
                                             horizon,
                                             currentSector,
@@ -3094,6 +3471,7 @@ static inline void renderColumnPortalTraceClipped(
 
                                 /* restore THIS wall's UV basis after recursive trace */
                                 wallTexUBaseGlobal  = savedWallTexUBase;
+                                wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
 
@@ -3125,8 +3503,10 @@ static inline void renderColumnPortalTraceClipped(
 
                         case RC3D_WALLCLASS_MIDDLE:
                         {
-                            const int midTopY = (int)(horizon - ((w->openTop    - playerZ) * scale));
-                            const int midBotY = (int)(horizon - ((w->openBottom - playerZ) * scale));
+                            const int midTopY =
+                                rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
+                            const int midBotY =
+                                rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
 
                             fillSectorColumnSpan(sx, clipTop, midTopY - 1, sec, horizon, rdx, rdy);
                             fillSectorColumnSpan(sx, midBotY + 1, clipBottom, sec, horizon, rdx, rdy);
@@ -3143,8 +3523,6 @@ static inline void renderColumnPortalTraceClipped(
                                         sx,
                                         rdx,
                                         rdy,
-                                        dirX,
-                                        dirY,
                                         projPlane,
                                         horizon,
                                         currentSector,
@@ -3186,11 +3564,13 @@ static inline void renderColumnPortalTraceClipped(
 
                         case RC3D_WALLCLASS_UPPER_LOWER:
                         {
-                            const int openTopY = (int)(horizon - ((w->openTop    - playerZ) * scale));
-                            const int openBotY = (int)(horizon - ((w->openBottom - playerZ) * scale));
+                            const int openTopY =
+                                rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
+                            const int openBotY =
+                                rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
 
-                            fillSectorColumnSpan(sx, clipTop, openTopY - 1, sec, horizon, rdx, rdy);
-                            fillSectorColumnSpan(sx, openBotY + 1, clipBottom, sec, horizon, rdx, rdy);
+                            fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
+                            fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
 
                             if (w->flags & RC3D_WALL_UPPER) {
                                 renderTexturedBandIfVisible(
@@ -3224,51 +3604,96 @@ static inline void renderColumnPortalTraceClipped(
                         case RC3D_WALLCLASS_PORTAL:
                         {
                             const int nextSectorIndex = w->neighbour;
+                            RC3D_PortalView portalView;
+                            int portalOpenTopY;
+                            int portalOpenBotY;
+                            int portalClipTop;
+                            int portalClipBottom;
+
                             if ((unsigned)nextSectorIndex >= (unsigned)g_map->sectorCount) {
                                 return;
                             }
 
-                            const RC3D_Sector *nextSec = &g_map->sectors[nextSectorIndex];
+                            if (!rc3dBuildPortalView(w, currentSector, &portalView)) {
+                                return;
+                            }
 
-                            const int nextTop = (int)(horizon - ((nextSec->ceilHeight  - playerZ) * scale));
-                            const int nextBot = (int)(horizon - ((nextSec->floorHeight - playerZ) * scale));
-
-                            const int wallOpenTopY = (int)(horizon - ((w->openTop    - playerZ) * scale));
-                            const int wallOpenBotY = (int)(horizon - ((w->openBottom - playerZ) * scale));
+                            portalOpenTopY =
+                                rc3dProjectTopPixel(horizon, portalView.openTop, playerZ, scale);
+                            portalOpenBotY =
+                                rc3dProjectBottomPixel(
+                                    horizon, portalView.openBottom, playerZ, scale);
 
                             int openTop = secTop;
                             int openBot = secBot;
 
-                            if (nextTop > openTop)      openTop = nextTop;
-                            if (wallOpenTopY > openTop) openTop = wallOpenTopY;
-                            if (clipTop > openTop)      openTop = clipTop;
+                            if (portalOpenTopY > openTop) openTop = portalOpenTopY;
+                            if (clipTop > openTop)       openTop = clipTop;
 
-                            if (nextBot < openBot)      openBot = nextBot;
-                            if (wallOpenBotY < openBot) openBot = wallOpenBotY;
-                            if (clipBottom < openBot)   openBot = clipBottom;
+                            if (portalOpenBotY < openBot) openBot = portalOpenBotY;
+                            if (clipBottom < openBot)    openBot = clipBottom;
 
-                            fillSectorColumnSpan(sx, clipTop, openTop - 1, sec, horizon, rdx, rdy);
-                            fillSectorColumnSpan(sx, openBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
+                            fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
 
-                            if (w->flags & RC3D_WALL_UPPER) {
+                            portalClipTop = openTop + (portalView.hasUpper ? 1 : 0);
+                            portalClipBottom = openBot - (portalView.hasLower ? 1 : 0);
+
+                            {
+                                int entryWallInNext = -1;
+                                const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
+                                const float savedWallTexRotCos = wallTexRotCosGlobal;
+                                const float savedWallTexRotSin = wallTexRotSinGlobal;
+
+                                if (wc) {
+                                    entryWallInNext = wc->backWallIndex;
+                                }
+
+                                if (portalClipTop <= portalClipBottom) {
+                                    renderColumnPortalTraceClipped(
+                                        sx,
+                                        rdx,
+                                        rdy,
+                                        projPlane,
+                                        horizon,
+                                        nextSectorIndex,
+                                        portalClipTop,
+                                        portalClipBottom,
+                                        hit.wallIndex,
+                                        entryWallInNext,
+                                        hit.t,
+                                        maskedDepth,
+                                        -1,
+                                        NULL
+                                    );
+                                }
+
+                                wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexInvScaleYGlobal = savedWallTexInvScaleY;
+                                wallTexRotCosGlobal = savedWallTexRotCos;
+                                wallTexRotSinGlobal = savedWallTexRotSin;
+                            }
+
+                            if (portalView.hasUpper) {
                                 renderTexturedBandIfVisible(
-                                    sx, secTop, openTop - 1,
+                                    sx, secTop, openTop,
                                     w->upperColor,
                                     w->texture_flags,
                                     sec->ceilHeight,
-                                    w->openTop,
+                                    portalView.openTop,
                                     correctedDist,
                                     projPlane,
                                     clipTop, clipBottom
                                 );
                             }
 
-                            if (w->flags & RC3D_WALL_LOWER) {
+                            if (portalView.hasLower) {
                                 renderTexturedBandIfVisible(
-                                    sx, openBot + 1, secBot,
+                                    sx, openBot, secBot,
                                     w->lowerColor,
                                     w->texture_flags,
-                                    w->openBottom,
+                                    portalView.openBottom,
                                     sec->floorHeight,
                                     correctedDist,
                                     projPlane,
@@ -3276,27 +3701,7 @@ static inline void renderColumnPortalTraceClipped(
                                 );
                             }
 
-                            if (openTop > openBot) {
-                                return;
-                            }
-
-                            currentSector = nextSectorIndex;
-                            clipTop = openTop;
-                            clipBottom = openBot;
-
-                            {
-                                int entryWallInNext = -1;
-
-                                if (wc) {
-                                    entryWallInNext = wc->backWallIndex;
-                                }
-
-                                ignoreWallIndexA = hit.wallIndex;
-                                ignoreWallIndexB = entryWallInNext;
-                                rayMinT = hit.t;
-                            }
-
-                            continue;
+                            return;
                         }
 
                         default:
@@ -3324,8 +3729,6 @@ static inline void renderColumnPortalTrace(
     int sx,
     float rdx,
     float rdy,
-    float dirX,
-    float dirY,
     float projPlane,
     int horizon,
     int preferredWallIndex,
@@ -3335,8 +3738,6 @@ static inline void renderColumnPortalTrace(
         sx,
         rdx,
         rdy,
-        dirX,
-        dirY,
         projPlane,
         horizon,
         g_player.sector,
@@ -3349,6 +3750,263 @@ static inline void renderColumnPortalTrace(
         preferredWallIndex,
         outFirstHitWallIndex
     );
+}
+
+static inline void rc3dRecordVisibleTraceSegment(
+    int sx,
+    int sector,
+    int clipTop,
+    int clipBottom,
+    uint16_t depthLimit
+){
+    uint8_t count;
+    RC3D_VisibleTraceSegment *segment;
+
+    if ((unsigned)sx >= (unsigned)SCREEN_W) return;
+    if (clipTop > clipBottom) return;
+
+    count = g_visibleTraceCount[sx];
+    if (count >= RC3D_MAX_PORTAL_STEPS) {
+        return;
+    }
+
+    segment = &g_visibleTraceCache[sx][count];
+    segment->sector = (int16_t)sector;
+    segment->clipTop = (int16_t)clipTop;
+    segment->clipBottom = (int16_t)clipBottom;
+    segment->depthLimit = depthLimit;
+    g_visibleTraceCount[sx] = (uint8_t)(count + 1);
+}
+
+static void rc3dBuildVisibleTraceCacheForColumn(int sx)
+{
+    const float playerX = g_player.x;
+    const float playerY = g_player.y;
+    const float playerZ = g_renderEyeZ;
+    float rdx;
+    float rdy;
+
+    int currentSector = g_player.sector;
+    int clipTop = 0;
+    int clipBottom = g_viewport_height - 1;
+    int ignoreWallIndexA = -1;
+    int ignoreWallIndexB = -1;
+    float rayMinT = 0.0f;
+
+    if ((unsigned)sx >= (unsigned)g_viewport_width) {
+        return;
+    }
+
+    if (g_visibleTraceBuilt[sx]) {
+        return;
+    }
+
+    g_visibleTraceBuilt[sx] = 1u;
+    g_visibleTraceCount[sx] = 0u;
+
+    if ((unsigned)sx < (unsigned)g_columnRayCacheCount) {
+        rdx = g_columnRayCache[sx].rdx;
+        rdy = g_columnRayCache[sx].rdy;
+    } else {
+        float dirX = 1.0f;
+        float dirY = 0.0f;
+        const float cameraX = rc3dViewportCameraX(sx);
+        float planeX;
+        float planeY;
+
+        rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
+        planeX = -dirY * g_planeScaleConst;
+        planeY =  dirX * g_planeScaleConst;
+        rdx = dirX + (planeX * cameraX);
+        rdy = dirY + (planeY * cameraX);
+    }
+
+    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
+#if RC3D_DRAW_PROFILER
+        g_profiler.portalSteps++;
+#endif
+        RC3D_WallHit hit;
+        const RC3D_Sector *sec;
+        const RC3D_Wall *w;
+        const RC3D_WallCache *wc = NULL;
+        uint8_t flags;
+        uint8_t wallClass;
+        int wallMasked;
+        float correctedDist;
+        float scale;
+        int secTop;
+        int secBot;
+
+        if ((unsigned)currentSector >= (unsigned)g_map->sectorCount) {
+            return;
+        }
+
+        if (clipTop > clipBottom) {
+            return;
+        }
+
+        sec = &g_map->sectors[currentSector];
+
+        hit = findNearestWallInSector(
+            currentSector,
+            playerX, playerY,
+            rdx, rdy,
+            ignoreWallIndexA,
+            ignoreWallIndexB,
+            rayMinT,
+            -1
+        );
+
+        if (!hit.hit) {
+            rc3dRecordVisibleTraceSegment(sx, currentSector, clipTop, clipBottom, UINT16_MAX);
+            return;
+        }
+
+        correctedDist = hit.t;
+        if (correctedDist <= RC3D_EPSILON) {
+            return;
+        }
+
+        rc3dRecordVisibleTraceSegment(
+            sx,
+            currentSector,
+            clipTop,
+            clipBottom,
+            rc3dEncodeDepth(correctedDist)
+        );
+
+        w = &g_map->walls[hit.wallIndex];
+
+        if (g_wallCache && hit.wallIndex >= 0 && hit.wallIndex < g_wallCacheCount) {
+            wc = &g_wallCache[hit.wallIndex];
+            wallClass = wc->wallClass;
+        } else {
+            if (w->flags & RC3D_WALL_SOLID) {
+                wallClass = RC3D_WALLCLASS_SOLID;
+            }
+            else if ((w->flags & RC3D_WALL_MIDDLE) && !(w->flags & RC3D_WALL_PORTAL)) {
+                wallClass = RC3D_WALLCLASS_MIDDLE;
+            }
+            else if (w->flags & RC3D_WALL_PORTAL) {
+                wallClass = RC3D_WALLCLASS_PORTAL;
+            }
+            else if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
+                     !(w->flags & RC3D_WALL_MIDDLE)) {
+                wallClass = RC3D_WALLCLASS_UPPER_LOWER;
+            }
+            else {
+                wallClass = RC3D_WALLCLASS_NONE;
+            }
+        }
+
+        scale = projPlaneGlobal / correctedDist;
+        secTop = rc3dProjectTopPixel(horizonGlobal, sec->ceilHeight, playerZ, scale);
+        secBot = rc3dProjectBottomPixel(horizonGlobal, sec->floorHeight, playerZ, scale);
+
+        wallMasked = ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
+        flags = w->flags;
+
+        if (wallClass == RC3D_WALLCLASS_PORTAL) {
+            const int nextSectorIndex = w->neighbour;
+            RC3D_PortalView portalView;
+            int portalOpenTopY, portalOpenBotY;
+            int openTop, openBot;
+            int portalClipTop, portalClipBottom;
+            int entryWallInNext = -1;
+
+            if ((unsigned)nextSectorIndex >= (unsigned)g_map->sectorCount) {
+                return;
+            }
+
+            if (!rc3dBuildPortalView(w, currentSector, &portalView)) {
+                return;
+            }
+
+            portalOpenTopY =
+                rc3dProjectTopPixel(horizonGlobal, portalView.openTop, playerZ, scale);
+            portalOpenBotY =
+                rc3dProjectBottomPixel(horizonGlobal, portalView.openBottom, playerZ, scale);
+
+            openTop = secTop;
+            openBot = secBot;
+
+            if (portalOpenTopY > openTop) openTop = portalOpenTopY;
+            if (clipTop > openTop)       openTop = clipTop;
+
+            if (portalOpenBotY < openBot) openBot = portalOpenBotY;
+            if (clipBottom < openBot)    openBot = clipBottom;
+
+            portalClipTop = openTop + (portalView.hasUpper ? 1 : 0);
+            portalClipBottom = openBot - (portalView.hasLower ? 1 : 0);
+
+            if (portalClipTop > portalClipBottom) {
+                return;
+            }
+
+            if (wc) {
+                entryWallInNext = wc->backWallIndex;
+            }
+
+            currentSector = nextSectorIndex;
+            clipTop = portalClipTop;
+            clipBottom = portalClipBottom;
+            ignoreWallIndexA = hit.wallIndex;
+            ignoreWallIndexB = entryWallInNext;
+            rayMinT = hit.t;
+            continue;
+        }
+
+        if (wallMasked) {
+            if ((flags & RC3D_WALL_SOLID) && (flags & RC3D_WALL_PORTAL) &&
+                ((unsigned)w->neighbour < (unsigned)g_map->sectorCount))
+            {
+                int entryWallInNext = -1;
+
+                if (secTop > clipTop) clipTop = secTop;
+                if (secBot < clipBottom) clipBottom = secBot;
+                if (clipTop > clipBottom) return;
+
+                if (wc) {
+                    entryWallInNext = wc->backWallIndex;
+                }
+
+                currentSector = w->neighbour;
+                ignoreWallIndexA = hit.wallIndex;
+                ignoreWallIndexB = entryWallInNext;
+                rayMinT = hit.t + RC3D_EPSILON;
+                continue;
+            }
+
+            if (wallClass == RC3D_WALLCLASS_SOLID) {
+                if (secTop > clipTop) clipTop = secTop;
+                if (secBot < clipBottom) clipBottom = secBot;
+                if (clipTop > clipBottom) return;
+
+                ignoreWallIndexA = hit.wallIndex;
+                ignoreWallIndexB = -1;
+                rayMinT = hit.t + RC3D_EPSILON;
+                continue;
+            }
+
+            if (wallClass == RC3D_WALLCLASS_MIDDLE) {
+                const int midTopY =
+                    rc3dProjectTopPixel(horizonGlobal, w->openTop, playerZ, scale);
+                const int midBotY =
+                    rc3dProjectBottomPixel(horizonGlobal, w->openBottom, playerZ, scale);
+
+                if (midTopY > clipTop) clipTop = midTopY;
+                if (midBotY < clipBottom) clipBottom = midBotY;
+                if (clipTop > clipBottom) return;
+
+                ignoreWallIndexA = hit.wallIndex;
+                ignoreWallIndexB = -1;
+                rayMinT = hit.t + RC3D_EPSILON;
+                continue;
+            }
+        }
+
+        return;
+    }
 }
 
 
@@ -3376,16 +4034,8 @@ static void renderCurrentSectorColumns(void)
     const float planeX = -dirY * planeScale;
     const float planeY =  dirX * planeScale;
 
-    const float rayStepX = planeX * g_camStepConst;
-    const float rayStepY = planeY * g_camStepConst;
-
-    float rdx = dirX - planeX;
-    float rdy = dirY - planeY;
-
-    if (g_viewport_width <= 1) {
-        rdx = dirX;
-        rdy = dirY;
-    }
+    rc3dBuildColumnRayCache(dirX, dirY, planeX, planeY);
+    rc3dInvalidateVisibleTraceCache();
 
     {
         int preferredWallIndex = -1;
@@ -3395,14 +4045,13 @@ static void renderCurrentSectorColumns(void)
 #endif
 
         for (int sx = 0; sx < g_viewport_width; ++sx) {
+            const RC3D_ColumnRayCache *rayCache = &g_columnRayCache[sx];
             int firstHitWallIndex = -1;
 
             renderColumnPortalTrace(
                 sx,
-                rdx,
-                rdy,
-                dirX,
-                dirY,
+                rayCache->rdx,
+                rayCache->rdy,
                 projPlane,
                 horizon,
                 preferredWallIndex,
@@ -3410,9 +4059,6 @@ static void renderCurrentSectorColumns(void)
             );
 
             preferredWallIndex = firstHitWallIndex;
-
-            rdx += rayStepX;
-            rdy += rayStepY;
         }
     }
 }
@@ -3420,10 +4066,6 @@ static void renderCurrentSectorColumns(void)
 static int rc3dTraceVisibleSectorAtDepth(
     int sx,
     float targetDepth,
-    float dirX,
-    float dirY,
-    float planeX,
-    float planeY,
     int *outSector,
     int *outClipTop,
     int *outClipBottom
@@ -3431,207 +4073,25 @@ static int rc3dTraceVisibleSectorAtDepth(
 #if RC3D_DRAW_PROFILER
     g_profiler.spriteSectorTraces++;
 #endif
-    const float playerX = g_player.x;
-    const float playerY = g_player.y;
-    const float playerZ = g_renderEyeZ;
+    const uint16_t targetDepthCode = rc3dEncodeDepth(targetDepth);
 
-    const float cameraX =
-        rc3dViewportCameraX(sx);
+    if ((unsigned)sx >= (unsigned)g_viewport_width) {
+        return 0;
+    }
 
-    const float rdx = dirX + (planeX * cameraX);
-    const float rdy = dirY + (planeY * cameraX);
+    rc3dBuildVisibleTraceCacheForColumn(sx);
 
-    int currentSector = g_player.sector;
-    int clipTop = 0;
-    int clipBottom = g_viewport_height - 1;
-    int ignoreWallIndexA = -1;
-    int ignoreWallIndexB = -1;
-    float rayMinT = 0.0f;
+    for (uint8_t i = 0; i < g_visibleTraceCount[sx]; ++i) {
+        const RC3D_VisibleTraceSegment *segment = &g_visibleTraceCache[sx][i];
 
-    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
-#if RC3D_DRAW_PROFILER
-        g_profiler.portalSteps++;
-#endif
-        RC3D_WallHit hit;
-        const RC3D_Sector *sec;
-        const RC3D_Wall *w;
-        const RC3D_WallCache *wc = NULL;
-        uint8_t flags;
-        uint8_t wallClass;
-        int wallMasked;
-        float correctedDist;
-        float scale;
-        int secTop;
-        int secBot;
-
-        if ((unsigned)currentSector >= (unsigned)g_map->sectorCount) {
-            return 0;
-        }
-
-        if (clipTop > clipBottom) {
-            return 0;
-        }
-
-        sec = &g_map->sectors[currentSector];
-
-        hit = findNearestWallInSector(
-            currentSector,
-            playerX, playerY,
-            rdx, rdy,
-            ignoreWallIndexA,
-            ignoreWallIndexB,
-            rayMinT,
-            -1
-        );
-
-        if (!hit.hit) {
-            if (outSector) *outSector = currentSector;
-            if (outClipTop) *outClipTop = clipTop;
-            if (outClipBottom) *outClipBottom = clipBottom;
-            return 1;
-        }
-
-        w = &g_map->walls[hit.wallIndex];
-
-        if (g_wallCache && hit.wallIndex >= 0 && hit.wallIndex < g_wallCacheCount) {
-            wc = &g_wallCache[hit.wallIndex];
-            wallClass = wc->wallClass;
-        } else {
-            if (w->flags & RC3D_WALL_SOLID) {
-                wallClass = RC3D_WALLCLASS_SOLID;
-            }
-            else if ((w->flags & RC3D_WALL_MIDDLE) && !(w->flags & RC3D_WALL_PORTAL)) {
-                wallClass = RC3D_WALLCLASS_MIDDLE;
-            }
-            else if (w->flags & RC3D_WALL_PORTAL) {
-                wallClass = RC3D_WALLCLASS_PORTAL;
-            }
-            else if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
-                     !(w->flags & RC3D_WALL_MIDDLE)) {
-                wallClass = RC3D_WALLCLASS_UPPER_LOWER;
-            }
-            else {
-                wallClass = RC3D_WALLCLASS_NONE;
-            }
-        }
-
-        correctedDist = hit.t * ((rdx * dirX) + (rdy * dirY));
-        if (correctedDist <= RC3D_EPSILON) {
-            return 0;
-        }
-
-        if (targetDepth <= correctedDist) {
-            if (outSector) *outSector = currentSector;
-            if (outClipTop) *outClipTop = clipTop;
-            if (outClipBottom) *outClipBottom = clipBottom;
-            return 1;
-        }
-
-        scale = projPlaneGlobal / correctedDist;
-        secTop = (int)(horizonGlobal - ((sec->ceilHeight  - playerZ) * scale));
-        secBot = (int)(horizonGlobal - ((sec->floorHeight - playerZ) * scale));
-
-        wallMasked = ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
-        flags = w->flags;
-
-        if (wallClass == RC3D_WALLCLASS_PORTAL) {
-            const int nextSectorIndex = w->neighbour;
-            const RC3D_Sector *nextSec;
-            int nextTop, nextBot;
-            int wallOpenTopY, wallOpenBotY;
-            int openTop, openBot;
-            int entryWallInNext = -1;
-
-            if ((unsigned)nextSectorIndex >= (unsigned)g_map->sectorCount) {
-                return 0;
-            }
-
-            nextSec = &g_map->sectors[nextSectorIndex];
-
-            nextTop = (int)(horizonGlobal - ((nextSec->ceilHeight  - playerZ) * scale));
-            nextBot = (int)(horizonGlobal - ((nextSec->floorHeight - playerZ) * scale));
-
-            wallOpenTopY = (int)(horizonGlobal - ((w->openTop    - playerZ) * scale));
-            wallOpenBotY = (int)(horizonGlobal - ((w->openBottom - playerZ) * scale));
-
-            openTop = secTop;
-            openBot = secBot;
-
-            if (nextTop > openTop)      openTop = nextTop;
-            if (wallOpenTopY > openTop) openTop = wallOpenTopY;
-            if (clipTop > openTop)      openTop = clipTop;
-
-            if (nextBot < openBot)      openBot = nextBot;
-            if (wallOpenBotY < openBot) openBot = wallOpenBotY;
-            if (clipBottom < openBot)   openBot = clipBottom;
-
-            if (openTop > openBot) {
-                return 0;
-            }
-
-            if (wc) {
-                entryWallInNext = wc->backWallIndex;
-            }
-
-            currentSector = nextSectorIndex;
-            clipTop = openTop;
-            clipBottom = openBot;
-            ignoreWallIndexA = hit.wallIndex;
-            ignoreWallIndexB = entryWallInNext;
-            rayMinT = hit.t;
+        if (targetDepthCode > segment->depthLimit) {
             continue;
         }
 
-        if (wallMasked) {
-            if ((flags & RC3D_WALL_SOLID) && (flags & RC3D_WALL_PORTAL) &&
-                ((unsigned)w->neighbour < (unsigned)g_map->sectorCount))
-            {
-                int entryWallInNext = -1;
-
-                if (secTop > clipTop) clipTop = secTop;
-                if (secBot < clipBottom) clipBottom = secBot;
-                if (clipTop > clipBottom) return 0;
-
-                if (wc) {
-                    entryWallInNext = wc->backWallIndex;
-                }
-
-                currentSector = w->neighbour;
-                ignoreWallIndexA = hit.wallIndex;
-                ignoreWallIndexB = entryWallInNext;
-                rayMinT = hit.t + RC3D_EPSILON;
-                continue;
-            }
-
-            if (wallClass == RC3D_WALLCLASS_SOLID) {
-                if (secTop > clipTop) clipTop = secTop;
-                if (secBot < clipBottom) clipBottom = secBot;
-                if (clipTop > clipBottom) return 0;
-
-                ignoreWallIndexA = hit.wallIndex;
-                ignoreWallIndexB = -1;
-                rayMinT = hit.t + RC3D_EPSILON;
-                continue;
-            }
-
-            if (wallClass == RC3D_WALLCLASS_MIDDLE) {
-                const int midTopY =
-                    (int)(horizonGlobal - ((w->openTop    - playerZ) * scale));
-                const int midBotY =
-                    (int)(horizonGlobal - ((w->openBottom - playerZ) * scale));
-
-                if (midTopY > clipTop) clipTop = midTopY;
-                if (midBotY < clipBottom) clipBottom = midBotY;
-                if (clipTop > clipBottom) return 0;
-
-                ignoreWallIndexA = hit.wallIndex;
-                ignoreWallIndexB = -1;
-                rayMinT = hit.t + RC3D_EPSILON;
-                continue;
-            }
-        }
-
-        return 0;
+        if (outSector) *outSector = (int)segment->sector;
+        if (outClipTop) *outClipTop = (int)segment->clipTop;
+        if (outClipBottom) *outClipBottom = (int)segment->clipBottom;
+        return 1;
     }
 
     return 0;
@@ -3668,8 +4128,6 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
     float dirY = 0.0f;
     float rightVecX;
     float rightVecY;
-    float planeX;
-    float planeY;
 
     float toSpriteX;
     float toSpriteY;
@@ -3693,9 +4151,6 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
 
     rightVecX = -dirY;
     rightVecY =  dirX;
-
-    planeX = -dirY * g_planeScaleConst;
-    planeY =  dirX * g_planeScaleConst;
 
     toSpriteX = sprite->x - g_player.x;
     toSpriteY = sprite->y - g_player.y;
@@ -3741,6 +4196,7 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
 #if RC3D_DRAW_PROFILER
             g_profiler.spriteColumns++;
 #endif
+            RC3D_ShadeProfile shadeProfile;
             const int tx = ((sx - leftX) * RC3D_TEX_SIZE) / unclampedWidth;
             uint8_t sectorGlow = 0u;
 
@@ -3795,10 +4251,6 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                 if (!rc3dTraceVisibleSectorAtDepth(
                         sx,
                         camDepth,
-                        dirX,
-                        dirY,
-                        planeX,
-                        planeY,
                         &visSector,
                         &visClipTop,
                         &visClipBottom))
@@ -3839,17 +4291,21 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                 continue;
             }
 
+            rc3dBuildShadeProfile(
+                camDepth * RC3D_LIGHT_SPRITE_DIST_SCALE,
+                sectorGlow,
+                &shadeProfile);
+
             for (int sy = colTop; sy <= colBottom; ++sy) {
                 const int ty = ((sy - topY) * RC3D_TEX_SIZE) / unclampedHeight;
                 const uint8_t texel = texels[(ty * RC3D_TEX_SIZE) + tx];
                 const uint8_t litTexel =
-                    rc3dShadePaletteTexel(
+                    rc3dApplyShadeProfileToTexel(
                         texel,
-                        camDepth * RC3D_LIGHT_SPRITE_DIST_SCALE,
                         tx,
                         ty,
                         sprite->texId,
-                        sectorGlow);
+                        &shadeProfile);
 
                 if (litTexel == RC3D_SPRITE_TEX_TRANSPARENT) {
                     continue;
@@ -4065,6 +4521,183 @@ static void rc3dInitTestSprite(void)
         RC3D_TEXID_SPRITE_MAN);
 }
 
+static uint32_t rc3dSanitizeSectorStateFlags(uint32_t stateFlags)
+{
+    stateFlags &= (RC3D_SECTOR_STATE_RAISE_FLOOR |
+                   RC3D_SECTOR_STATE_LOWER_FLOOR |
+                   RC3D_SECTOR_STATE_LOWER_CEILING |
+                   RC3D_SECTOR_STATE_RAISE_CEILING);
+
+    if ((stateFlags & (RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_FLOOR)) ==
+        (RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_FLOOR))
+    {
+        stateFlags &= ~(RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_FLOOR);
+    }
+
+    if ((stateFlags & (RC3D_SECTOR_STATE_LOWER_CEILING | RC3D_SECTOR_STATE_RAISE_CEILING)) ==
+        (RC3D_SECTOR_STATE_LOWER_CEILING | RC3D_SECTOR_STATE_RAISE_CEILING))
+    {
+        stateFlags &= ~(RC3D_SECTOR_STATE_LOWER_CEILING | RC3D_SECTOR_STATE_RAISE_CEILING);
+    }
+
+    return stateFlags;
+}
+
+static float rc3dMoveTowardsFloat(float current, float target, float maxDelta)
+{
+    if (maxDelta <= 0.0f) {
+        return current;
+    }
+
+    if (current < target) {
+        current += maxDelta;
+        if (current > target) current = target;
+    } else if (current > target) {
+        current -= maxDelta;
+        if (current < target) current = target;
+    }
+
+    return current;
+}
+
+static RC3D_Sector *rc3dMutableSectorData(void)
+{
+    if (!g_map || !g_map->sectors || g_map->sectorCount <= 0) {
+        return NULL;
+    }
+
+    return (RC3D_Sector *)g_map->sectors;
+}
+
+static void rc3dClampPlayerIntoCurrentSector(void)
+{
+    if (!g_map) return;
+
+    if ((unsigned)g_player.sector < (unsigned)g_map->sectorCount) {
+        const RC3D_Sector *sec = &g_map->sectors[g_player.sector];
+        const float minEyeZ = sec->floorHeight + RC3D_PLAYER_EYE_HEIGHT;
+        const float maxEyeZ = sec->ceilHeight - (PLAYER_HEIGHT - RC3D_PLAYER_EYE_HEIGHT);
+
+        if (g_player.z < minEyeZ) {
+            g_player.z = minEyeZ;
+            g_player.vz = 0.0f;
+        }
+
+        if (g_player.z > maxEyeZ) {
+            g_player.z = maxEyeZ;
+            g_player.vz = 0.0f;
+        }
+    } else if (g_player.z < RC3D_PLAYER_EYE_HEIGHT) {
+        g_player.z = RC3D_PLAYER_EYE_HEIGHT;
+        g_player.vz = 0.0f;
+    }
+}
+
+static void rc3dUpdateSectorMotion(float dt)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    int anySectorMoved = 0;
+
+    if (!g_map || !sectors || dt <= 0.0f) {
+        return;
+    }
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        RC3D_Sector *sec = &sectors[i];
+        uint32_t stateFlags = rc3dSanitizeSectorStateFlags(sec->stateFlags);
+        const float oldFloorHeight = sec->floorHeight;
+        const float oldCeilHeight = sec->ceilHeight;
+
+        sec->stateFlags = stateFlags;
+
+        if (stateFlags & RC3D_SECTOR_STATE_RAISE_FLOOR) {
+            const float speed = fabsf(sec->floorFlowHeight);
+            float target = sec->floorMaxHeight;
+            const float maxFloor = sec->ceilHeight;
+
+            if (target > maxFloor) target = maxFloor;
+            if (target > (sec->floorHeight + RC3D_EPSILON)) {
+                sec->floorHeight = rc3dMoveTowardsFloat(sec->floorHeight, target, speed * dt);
+            }
+
+            if (sec->floorHeight >= (target - RC3D_EPSILON)) {
+                sec->floorHeight = target;
+                stateFlags &= ~RC3D_SECTOR_STATE_RAISE_FLOOR;
+            }
+        } else if (stateFlags & RC3D_SECTOR_STATE_LOWER_FLOOR) {
+            const float speed = fabsf(sec->floorFlowHeight);
+            float target = sec->floorMinHeight;
+            const float maxFloor = sec->ceilHeight;
+
+            if (target > maxFloor) target = maxFloor;
+            if (target < (sec->floorHeight - RC3D_EPSILON)) {
+                sec->floorHeight = rc3dMoveTowardsFloat(sec->floorHeight, target, speed * dt);
+            }
+
+            if (sec->floorHeight <= (target + RC3D_EPSILON)) {
+                sec->floorHeight = target;
+                stateFlags &= ~RC3D_SECTOR_STATE_LOWER_FLOOR;
+            }
+        }
+
+        if (stateFlags & RC3D_SECTOR_STATE_LOWER_CEILING) {
+            const float speed = fabsf(sec->ceilFlowHeight);
+            float target = sec->ceilMinHeight;
+            const float minCeiling = sec->floorHeight;
+
+            if (target < minCeiling) target = minCeiling;
+            if (target < (sec->ceilHeight - RC3D_EPSILON)) {
+                sec->ceilHeight = rc3dMoveTowardsFloat(sec->ceilHeight, target, speed * dt);
+            }
+
+            if (sec->ceilHeight <= (target + RC3D_EPSILON)) {
+                sec->ceilHeight = target;
+                stateFlags &= ~RC3D_SECTOR_STATE_LOWER_CEILING;
+            }
+        } else if (stateFlags & RC3D_SECTOR_STATE_RAISE_CEILING) {
+            const float speed = fabsf(sec->ceilFlowHeight);
+            float target = sec->ceilMaxHeight;
+            const float minCeiling = sec->floorHeight;
+
+            if (target < minCeiling) target = minCeiling;
+            if (target > (sec->ceilHeight + RC3D_EPSILON)) {
+                sec->ceilHeight = rc3dMoveTowardsFloat(sec->ceilHeight, target, speed * dt);
+            }
+
+            if (sec->ceilHeight >= (target - RC3D_EPSILON)) {
+                sec->ceilHeight = target;
+                stateFlags &= ~RC3D_SECTOR_STATE_RAISE_CEILING;
+            }
+        }
+
+        sec->stateFlags = stateFlags;
+
+        if (fabsf(sec->floorHeight - oldFloorHeight) > RC3D_EPSILON ||
+            fabsf(sec->ceilHeight - oldCeilHeight) > RC3D_EPSILON)
+        {
+            anySectorMoved = 1;
+        }
+
+        if (i == g_player.sector) {
+            const float playerFeet = g_player.z - RC3D_PLAYER_EYE_HEIGHT;
+
+            if (playerFeet <= (oldFloorHeight + RC3D_EPSILON)) {
+                g_player.z += (sec->floorHeight - oldFloorHeight);
+            }
+
+            if (sec->ceilHeight < oldCeilHeight) {
+                rc3dClampPlayerIntoCurrentSector();
+            }
+        }
+    }
+
+    if (anySectorMoved) {
+        rc3dRefreshDynamicPortalCache();
+    }
+
+    rc3dClampPlayerIntoCurrentSector();
+}
+
 void moveSprite(){
     if (rc3dSpriteHandleValid(g_demoSpriteB)) {
         rc3dSpriteSetPosition(g_demoSpriteB, g_player.x, g_player.y);
@@ -4097,6 +4730,7 @@ void rc3dInit(void)
 {
     if (!g_rc3dTexturesInit) rc3dBuildDefaultTextures();
     if (!g_invDTableInit)    rc3dBuildInvDTable();
+    if (!g_lightVariantTablesInit) rc3dBuildLightVariantTables();
     rc3dBuildTrigTables();
     rc3dRefreshViewport();
 
@@ -4122,6 +4756,27 @@ void rc3dInit(void)
     rc3dInitTestSprite();
 }
 
+int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    int changedCount = 0;
+
+    if (!g_map || !sectors) {
+        return 0;
+    }
+
+    stateFlags = rc3dSanitizeSectorStateFlags(stateFlags);
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        if (sectors[i].tagId == tagId) {
+            sectors[i].stateFlags = stateFlags;
+            changedCount++;
+        }
+    }
+
+    return changedCount;
+}
+
 
 
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
@@ -4132,6 +4787,8 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 
     float forwardX = 1.0f;
     float forwardY = 0.0f;
+
+    rc3dUpdateSectorMotion(dt);
 
     rc3dLookupAngleTrig(g_player.angle, &forwardX, &forwardY);
 
@@ -4151,6 +4808,13 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 
     if (keys[SDL_SCANCODE_F1]) { bShowProfiler = 1; }
     if (keys[SDL_SCANCODE_F2]) { bShowProfiler = 0; }
+
+    if (keys[SDL_SCANCODE_1]){ 
+        rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_CEILING); 
+    }
+    if (keys[SDL_SCANCODE_2]){ 
+        rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_LOWER_FLOOR | RC3D_SECTOR_STATE_RAISE_CEILING); 
+    }
 
     if ((moveX != 0.0f) || (moveY != 0.0f)) {
         const float len = sqrtf((moveX * moveX) + (moveY * moveY));
