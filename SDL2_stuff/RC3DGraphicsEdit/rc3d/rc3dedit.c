@@ -32,6 +32,7 @@
 #define ED_MAX_VERTS            4096
 #define ED_MAX_WALLS            4096
 #define ED_MAX_SECTORS          512
+#define ED_MAX_OBJECTS          1024
 #define ED_MAX_DRAFT_POINTS     128
 
 #define ED_ORPHANED_SECTOR_TEXTURE  254      // when deleting a sector and it leaves walls behind, set it to this texture
@@ -178,6 +179,15 @@ enum
     GUI_BTN_WALL_TEX_BRIGHT_MINUS,
     GUI_BTN_WALL_TEX_BRIGHT_PLUS,
 
+    GUI_BTN_OBJECT_TAGID_PLUS,
+    GUI_BTN_OBJECT_TAGID_MINUS,
+    GUI_BTN_OBJECT_TARGETTAGID_PLUS,
+    GUI_BTN_OBJECT_TARGETTAGID_MINUS,
+    GUI_BTN_OBJECT_RADIUS_PLUS,
+    GUI_BTN_OBJECT_RADIUS_MINUS,
+    GUI_BTN_OBJECT_ZAXIS_PLUS,
+    GUI_BTN_OBJECT_ZAXIS_MINUS,
+
     GUI_BTN_CONFIRM_YES,
     GUI_BTN_CONFIRM_NO,
 
@@ -248,7 +258,8 @@ typedef enum {
     ED_SEL_NONE = 0,
     ED_SEL_VERTEX,
     ED_SEL_WALL,
-    ED_SEL_SECTOR
+    ED_SEL_SECTOR,
+    ED_SEL_OBJECT
 } EdSelectionType;
 
 typedef enum {
@@ -267,7 +278,8 @@ typedef enum {
     ED_VAL_TARGET_NONE = 0,
     ED_VAL_TARGET_VERTEX,
     ED_VAL_TARGET_WALL,
-    ED_VAL_TARGET_SECTOR
+    ED_VAL_TARGET_SECTOR,
+    ED_VAL_TARGET_OBJECT
 } EdValidatorTargetType;
 
 
@@ -379,6 +391,15 @@ typedef struct {
     float anchorY;
 } EdSectorGeometryClipboard;
 
+typedef struct {
+    float x;
+    float y;
+    float z;
+    int tagId;
+    int targetTagId;
+    float radius;
+    uint8_t textureId;
+} EdObject;
 
 typedef struct {
     EdVec2 verts[ED_MAX_VERTS];
@@ -390,6 +411,10 @@ typedef struct {
     EdSector sectors[ED_MAX_SECTORS];
     int sectorCount;
 
+    EdObject objects[ED_MAX_OBJECTS];
+    int objectCount;
+
+    // player information
     int startSector;
     float startX;
     float startY;
@@ -452,14 +477,17 @@ typedef struct {
     int hoverVert;
     int hoverWall;
     int hoverSector;
+    int hoverObject;
 
     int splitPreviewValid;
     float splitPreviewX;
     float splitPreviewY;
 
+    // single selections
     int selectedVert;
     int selectedWall;
     int selectedSector;
+    int selectedObject;
 
     /* multi-vertex selection */
     uint8_t selectedVerts[ED_MAX_VERTS];
@@ -472,6 +500,8 @@ typedef struct {
     /* multi-sector selection */
     uint8_t selectedSectors[ED_MAX_SECTORS];
     int selectedSectorCount;
+
+    
 
     /* box select */
     int boxSelecting;
@@ -519,6 +549,14 @@ typedef struct {
     int   dragSectorVertIndices[ED_MAX_VERTS];
     float dragSectorVertStartX[ED_MAX_VERTS];
     float dragSectorVertStartY[ED_MAX_VERTS];
+
+
+    int draggingObject;
+    float dragObjectStartWorldX;
+    float dragObjectStartWorldY;
+    float dragObjectStartX;
+    float dragObjectStartY;
+    float dragObjectStartZ;
 
     EdSelectionType selectionType;
 
@@ -568,6 +606,8 @@ typedef struct {
     int textureScrollbarDragging;
     int textureScrollbarDragOffsetY;
 
+    int textureBrowserEn;
+
     int pendingLeftMouseDown;
     EdPendingLeftAction pendingLeftAction;
     int pendingLeftMouseX;
@@ -609,6 +649,17 @@ static int hasMultiWallSelection(void)
 static int hasAnyWallEditSelection(void)
 {
     return hasSingleWallSelection() || (g_ed.selectedWallCount > 0);
+}
+
+static int hasTextureBrowserEnabled(){
+    return g_ed.textureBrowserEn;
+}
+
+static int hasAnyObjectEditSelection(void)
+{
+    return (g_ed.selectionType == ED_SEL_OBJECT) &&
+           (g_ed.selectedObject >= 0) &&
+           (g_ed.selectedObject < g_edMap.objectCount);
 }
 
 static void clearMultiSectorSelection(void)
@@ -984,6 +1035,7 @@ typedef struct {
     int selectedVert;
     int selectedWall;
     int selectedSector;
+    int selectedObject;
 
     uint8_t selectedVerts[ED_MAX_VERTS];
     int selectedVertCount;
@@ -1047,6 +1099,16 @@ static void remapMultiSectorSelectionFromOldToNew(const int *sectorRemap, int ol
 static void resetSectorGeometryClipboard(void);
 static void copySelectedSectorGeometryToClipboard(void);
 static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorldY);
+
+// objects
+static int addObject(float x, float y, float z, int tagId, float radius, uint8_t textureId);
+static int findObjectNearMouse(int mouseX, int mouseY);
+static void drawEditorObjectDiamond(int cx, int cy, int size, uint8_t colour);
+static void drawMapObjects(void);
+static void deleteObjectByIndex(int objectIndex);
+static void beginObjectDragFromPress(int objectIndex);
+static void dragSelectedObjectTo(float worldX, float worldY);
+
 
 static void pathDirnameFromFile(char *outDir, size_t outDirSize, const char *path);
 static void initRememberedDialogDirs(void);
@@ -1235,6 +1297,8 @@ typedef enum {
     TEX_TARGET_SECTOR_FLOOR,
     TEX_TARGET_SECTOR_CEIL,
 
+    TEX_TARGET_OBJECT,
+
     TEX_TARGET_DEFAULT_WALL_UPPER,
     TEX_TARGET_DEFAULT_WALL_MIDDLE,
     TEX_TARGET_DEFAULT_WALL_LOWER,
@@ -1360,6 +1424,7 @@ static const char *textureTargetName(TextureTarget t)
         case TEX_TARGET_WALL_LOWER:           return "Wall Lower";
         case TEX_TARGET_SECTOR_FLOOR:         return "Sector Floor";
         case TEX_TARGET_SECTOR_CEIL:          return "Sector Ceiling";
+        case TEX_TARGET_OBJECT:               return "Object";
         case TEX_TARGET_DEFAULT_WALL_UPPER:   return "Default Wall Upper";
         case TEX_TARGET_DEFAULT_WALL_MIDDLE:  return "Default Wall Middle";
         case TEX_TARGET_DEFAULT_WALL_LOWER:   return "Default Wall Lower";
@@ -1378,7 +1443,7 @@ static int isTextureBrowserVisible(void)
         return 0;
     }
 
-    return hasAnyWallEditSelection() || hasAnySectorEditSelection();
+    return hasAnyWallEditSelection() || hasAnySectorEditSelection() || hasAnyObjectEditSelection() || hasTextureBrowserEnabled();
 }
 
 static int wallTextureTargetIndexForWall(const EdWall *w, TextureTarget t)
@@ -1394,6 +1459,7 @@ static int wallTextureTargetIndexForWall(const EdWall *w, TextureTarget t)
         default:                     return -1;
     }
 }
+
 
 static int textureTargetCurrentIndex(TextureTarget t)
 {
@@ -1455,6 +1521,12 @@ static int textureTargetCurrentIndex(TextureTarget t)
         }
     }
 
+    if (hasAnyObjectEditSelection()) {
+        if (t == TEX_TARGET_OBJECT) {
+            return g_edMap.objects[g_ed.selectedObject].textureId;
+        }
+    }
+
     switch (t) {
         case TEX_TARGET_DEFAULT_WALL_UPPER:   return g_ed.newWallUpperColor;
         case TEX_TARGET_DEFAULT_WALL_MIDDLE:  return g_ed.newWallMidColor;
@@ -1465,10 +1537,20 @@ static int textureTargetCurrentIndex(TextureTarget t)
     }
 }
 
+
+
 static void textureTargetApply(TextureTarget t, int texIndex)
 {
     if (texIndex < 0 || texIndex >= TEXTURE_LIBRARY_COUNT) {
         return;
+    }
+
+    if (hasAnyObjectEditSelection()) {
+        if (t == TEX_TARGET_OBJECT) {
+            EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+            o->textureId = (uint8_t)texIndex;
+            return;
+        }
     }
 
     if (hasAnyWallEditSelection()) {
@@ -1529,6 +1611,8 @@ static void textureTargetApply(TextureTarget t, int texIndex)
     }
 }
 
+
+
 static void getTextureBrowserRect(int *x, int *y, int *w, int *h)
 {
     *x = ED_PANEL_X + 2;
@@ -1569,8 +1653,13 @@ static int getTextureBrowserTargetButtons(TextureBrowserTargetButtonDef *outButt
         return count;
     }
 
-    if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_FLOOR, "F.Floor" };
-    if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_CEIL, "F.Ceil" };
+    if (hasAnyObjectEditSelection()) {
+        if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_OBJECT, "Object" };
+        return count;
+    }
+
+    if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_FLOOR, "S.Floor" };
+    if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_CEIL, "S.Ceil" };
     if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_WALL_UPPER, "W.Up" };
     if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_WALL_MIDDLE, "W.Mid" };
     if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_WALL_LOWER, "W.Low" };
@@ -1789,8 +1878,8 @@ static void drawTextureBrowser(void)
     buttonCount = getTextureBrowserTargetButtons(buttons, 5);
     targetName = textureTargetName((TextureTarget)g_ed.textureBrowserTarget);
     targetNameX = bx + bw - TEX_BROWSER_SCROLL_PAD - ((int)strlen(targetName) * ED_FONT_W);
-    if (targetNameX < bx + 170) {
-        targetNameX = bx + 170;
+    if (targetNameX < bx + 150) {
+        targetNameX = bx + 150;
     }
 
     drawText(bx + 6, by + 4, "TEXTURE EXPLORER", ED_TEXTURE_EXPLORER_HEADER_TEXT);
@@ -2238,6 +2327,7 @@ static void captureSnapshot(EditorSnapshot *s)
     s->selectedVert = g_ed.selectedVert;
     s->selectedWall = g_ed.selectedWall;
     s->selectedSector = g_ed.selectedSector;
+    s->selectedObject = g_ed.selectedObject;
 
     memcpy(s->selectedVerts, g_ed.selectedVerts, sizeof(g_ed.selectedVerts));
     s->selectedVertCount = g_ed.selectedVertCount;
@@ -2304,6 +2394,7 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.selectedVert = s->selectedVert;
     g_ed.selectedWall = s->selectedWall;
     g_ed.selectedSector = s->selectedSector;
+    g_ed.selectedObject = s->selectedObject;
 
     memcpy(g_ed.selectedVerts, s->selectedVerts, sizeof(g_ed.selectedVerts));
     g_ed.selectedVertCount = s->selectedVertCount;
@@ -2320,10 +2411,12 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.hoverVert = -1;
     g_ed.hoverWall = -1;
     g_ed.hoverSector = -1;
+    g_ed.hoverObject = -1;
 
     g_ed.draggingVertex = 0;
     g_ed.draggingWall = 0;
     g_ed.draggingSector = 0;
+    g_ed.draggingObject = 0;
     g_ed.draggingPan = 0;
 
     g_ed.boxSelecting = 0;
@@ -2691,6 +2784,159 @@ static void worldToScreen(float wx, float wy, int *sx, int *sy)
     *sx = (int)lroundf((wx - g_ed.camX) * g_ed.zoom + (EDIT_VIEW_PORT_WIDTH * 0.5f));
     *sy = (int)lroundf((wy - g_ed.camY) * g_ed.zoom + (EDIT_VIEW_PORT_HEIGHT * 0.5f));
 }
+
+static int addObject(float x, float y, float z, int tagId, float radius, uint8_t textureId)
+{
+    EdObject *o;
+
+    if (g_edMap.objectCount >= ED_MAX_OBJECTS) {
+        return -1;
+    }
+
+    o = &g_edMap.objects[g_edMap.objectCount];
+    o->x = snapf(x);
+    o->y = snapf(y);
+    o->z = z;
+    o->tagId = tagId;
+    o->targetTagId = 0;
+    o->radius = (radius < 0.01f) ? 0.25f : radius;
+    o->textureId = textureId;
+
+    g_edMap.objectCount++;
+    return g_edMap.objectCount - 1;
+}
+
+static int findObjectNearMouse(int mouseX, int mouseY)
+{
+    int best = -1;
+    float bestDistSq = (float)(ED_PICK_DIST_PX * ED_PICK_DIST_PX);
+
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        int sx, sy;
+        int dx, dy;
+        float d2;
+
+        worldToScreen(g_edMap.objects[i].x, g_edMap.objects[i].y, &sx, &sy);
+
+        dx = sx - mouseX;
+        dy = sy - mouseY;
+        d2 = (float)(dx * dx + dy * dy);
+
+        if (d2 <= bestDistSq) {
+            bestDistSq = d2;
+            best = i;
+        }
+    }
+
+    return best;
+}
+
+static void drawEditorObjectDiamond(int cx, int cy, int size, uint8_t colour)
+{
+    drawLine(cx, cy - size, cx + size, cy, colour);
+    drawLine(cx + size, cy, cx, cy + size, colour);
+    drawLine(cx, cy + size, cx - size, cy, colour);
+    drawLine(cx - size, cy, cx, cy - size, colour);
+}
+
+static void drawMapObjects(void)
+{
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        int sx, sy;
+        int size = 6;
+
+        worldToScreen(o->x, o->y, &sx, &sy);
+
+        if (i == g_ed.hoverObject) {
+            drawEditorObjectDiamond(sx, sy, size + 2, ED_COLOUR_HOVER_WALL);
+        }
+
+        if (g_ed.selectionType == ED_SEL_OBJECT && i == g_ed.selectedObject) {
+            drawEditorObjectDiamond(sx, sy, size + 3, 31);
+            drawEditorObjectDiamond(sx, sy, size + 1, ED_COLOUR_SELECTED_WALL);
+        }
+
+        drawEditorObjectDiamond(sx, sy, size, ED_START_COL);
+
+        drawRect(sx - 1, sy - 1, 3, 3, ED_START_COL);
+
+        if (o->radius > 0.01f) {
+            const int rs = (int)lroundf(o->radius * g_ed.zoom);
+            if (rs > 2) {
+                drawDiamond(sx, sy, rs, 6);
+            }
+        }
+    }
+}
+
+static void deleteObjectByIndex(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return;
+    }
+
+    for (int i = objectIndex; i < (g_edMap.objectCount - 1); i++) {
+        g_edMap.objects[i] = g_edMap.objects[i + 1];
+    }
+
+    g_edMap.objectCount--;
+
+    if (g_ed.selectedObject == objectIndex) {
+        g_ed.selectedObject = -1;
+        if (g_ed.selectionType == ED_SEL_OBJECT) {
+            g_ed.selectionType = ED_SEL_NONE;
+        }
+    } else if (g_ed.selectedObject > objectIndex) {
+        g_ed.selectedObject--;
+    }
+
+    if (g_ed.hoverObject == objectIndex) {
+        g_ed.hoverObject = -1;
+    } else if (g_ed.hoverObject > objectIndex) {
+        g_ed.hoverObject--;
+    }
+
+    g_ed.draggingObject = 0;
+}
+
+static void beginObjectDragFromPress(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
+
+    clearAllSelections();
+    g_ed.selectionType = ED_SEL_OBJECT;
+    g_ed.selectedObject = objectIndex;
+
+    pushUndoState();
+
+    g_ed.draggingObject = 1;
+    g_ed.dragObjectStartWorldX = g_ed.pendingLeftWorldX;
+    g_ed.dragObjectStartWorldY = g_ed.pendingLeftWorldY;
+    g_ed.dragObjectStartX = g_edMap.objects[objectIndex].x;
+    g_ed.dragObjectStartY = g_edMap.objects[objectIndex].y;
+    g_ed.dragObjectStartZ = g_edMap.objects[objectIndex].z;
+}
+
+static void dragSelectedObjectTo(float worldX, float worldY)
+{
+    EdObject *o;
+    float dx, dy;
+
+    if (!g_ed.draggingObject) return;
+    if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) return;
+
+    o = &g_edMap.objects[g_ed.selectedObject];
+
+    dx = snapDeltaf(worldX - g_ed.dragObjectStartWorldX);
+    dy = snapDeltaf(worldY - g_ed.dragObjectStartWorldY);
+
+    o->x = g_ed.dragObjectStartX + dx;
+    o->y = g_ed.dragObjectStartY + dy;
+}
+
+
+
 
 static float getIsoScaleX(void)
 {
@@ -6012,6 +6258,7 @@ static void clearAllSelections(void)
     g_ed.selectedVert = -1;
     g_ed.selectedWall = -1;
     g_ed.selectedSector = -1;
+    g_ed.selectedObject = -1;
     clearMultiVertexSelection();
     clearMultiWallSelection();
     clearMultiSectorSelection();
@@ -6027,6 +6274,7 @@ static int hasAnyActiveSelection(void)
            g_ed.draggingVertex ||
            g_ed.draggingWall ||
            g_ed.draggingSector ||
+           g_ed.draggingObject ||
            g_ed.draggingMultiVertex ||
            g_ed.pendingLeftMouseDown;
 }
@@ -6037,6 +6285,7 @@ static void cancelActiveSelection(void)
     g_ed.draggingVertex = 0;
     g_ed.draggingWall = 0;
     g_ed.draggingSector = 0;
+    g_ed.draggingObject = 0;
     g_ed.draggingMultiVertex = 0;
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
@@ -6415,6 +6664,10 @@ static void beginNewMap(void)
     g_ed.confirmAction = ED_CONFIRM_NONE;
     g_ed.confirmText[0] = '\0';
 
+    g_ed.hoverObject = -1;
+    g_ed.selectedObject = -1;
+    g_ed.textureBrowserTarget = TEX_TARGET_DEFAULT_WALL_MIDDLE;
+
     g_ed.currentGridStep = ED_GRID_STEP;
     g_ed.tinyGridEnabled = 0;
     g_ed.ui_menu_visable = 0;
@@ -6476,11 +6729,18 @@ static void beginNewMap(void)
     g_ed.hoverVert = -1;
     g_ed.hoverWall = -1;
     g_ed.hoverSector = -1;
+    g_ed.hoverObject = -1;
 
     g_ed.splitPreviewValid = 0;
     g_ed.splitPreviewX = 0.0f;
     g_ed.splitPreviewY = 0.0f;
 
+    // objects
+    g_ed.dragObjectStartWorldX = 0.0f;
+    g_ed.dragObjectStartWorldY = 0.0f;
+    g_ed.dragObjectStartX = 0.0f;
+    g_ed.dragObjectStartY = 0.0f;
+    g_ed.dragObjectStartZ = 0.0f;
 
     g_ed.sectorFloor = 0.0f;
     g_ed.sectorCeil = 2.0f;
@@ -6523,9 +6783,11 @@ static void beginNewMap(void)
     g_ed.selectedVert = -1;
     g_ed.selectedWall = -1;
     g_ed.selectedSector = -1;
+    g_ed.selectedObject = -1;
     g_ed.draggingVertex = 0;
     g_ed.draggingWall = 0;
     g_ed.draggingSector = 0;
+    g_ed.draggingObject = 0;
     clearPendingLeftMouseAction();
     g_ed.pendingLeftCtrlDown = 0;
     g_ed.pendingLeftAltDown = 0;
@@ -6616,7 +6878,7 @@ static int saveTextMap(const char *path)
     FILE *f = fopen(path, "w");
     if (!f) return 0;
 
-    fprintf(f, "MAPEDIT4\n");
+    fprintf(f, "MAPEDIT5\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
 
@@ -6665,6 +6927,20 @@ static int saveTextMap(const char *path)
                 s->ceilTexAngle);
     }
 
+
+    fprintf(f, "OBJECTS %d\n", g_edMap.objectCount);
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        fprintf(f, "%.6f %.6f %.6f %d %d %.6f %u\n",
+                o->x, 
+                o->y, 
+                o->z, 
+                o->tagId, 
+                o->targetTagId,
+                o->radius, 
+                (unsigned)o->textureId);
+    }
+
     fclose(f);
     return 1;
 }
@@ -6701,6 +6977,8 @@ static int loadTextMap(const char *path)
         mapVersion = 3;
     } else if (strcmp(tag, "MAPEDIT4") == 0) {
         mapVersion = 4;
+    } else if (strcmp(tag, "MAPEDIT5") == 0) {
+        mapVersion = 5;
     } else {
         fclose(f);
         return 0;
@@ -6876,6 +7154,42 @@ static int loadTextMap(const char *path)
         sanitizeSectorProperties(&newMap.sectors[i]);
     }
 
+    newMap.objectCount = 0;
+
+    if (mapVersion >= 5) {
+        if (fscanf(f, "%63s %d", tag, &count) != 2 || strcmp(tag, "OBJECTS") != 0) {
+            fclose(f);
+            return 0;
+        }
+
+        if (count < 0 || count > ED_MAX_OBJECTS) {
+            fclose(f);
+            return 0;
+        }
+
+        newMap.objectCount = count;
+        for (int i = 0; i < count; i++) {
+            unsigned texId;
+
+            if (fscanf(f, "%f %f %f %d %d %f %u",
+                       &newMap.objects[i].x,
+                       &newMap.objects[i].y,
+                       &newMap.objects[i].z,
+                       &newMap.objects[i].tagId,
+                       &newMap.objects[i].targetTagId,
+                       &newMap.objects[i].radius,
+                       &texId) != 7) {
+                fclose(f);
+                return 0;
+            }
+
+            newMap.objects[i].textureId = (uint8_t)texId;
+            if (newMap.objects[i].radius < 0.01f) {
+                newMap.objects[i].radius = 0.25f;
+            }
+        }
+    }
+
     fclose(f);
 
     /* only commit after full successful parse */
@@ -6891,6 +7205,7 @@ static int loadTextMap(const char *path)
     g_ed.hoverVert = -1;
     g_ed.hoverWall = -1;
     g_ed.hoverSector = -1;
+    g_ed.hoverObject = -1;
 
     g_ed.selectedVert = -1;
     g_ed.selectedWall = -1;
@@ -6900,6 +7215,7 @@ static int loadTextMap(const char *path)
     g_ed.draggingVertex = 0;
     g_ed.draggingWall = 0;
     g_ed.draggingSector = 0;
+    g_ed.draggingObject = 0;
     g_ed.draggingPan = 0;
     g_ed.boxSelectWalls = 0;
     clearPendingLeftMouseAction();
@@ -6920,7 +7236,7 @@ int exportBinaryMap(const char *path)
 
     /* file header */
     {
-        const char magic[8] = { 'R','C','3','D','M','A','P','4' };
+        const char magic[8] = { 'R','C','3','D','M','A','P','5' };
         if (fwrite(magic, 1, sizeof(magic), f) != sizeof(magic)) {
             fclose(f);
             return 0;
@@ -6932,10 +7248,13 @@ int exportBinaryMap(const char *path)
         uint32_t vertCount   = (uint32_t)g_edMap.vertCount;
         uint32_t wallCount   = (uint32_t)g_edMap.wallCount;
         uint32_t sectorCount = (uint32_t)g_edMap.sectorCount;
+        uint32_t objectCount = (uint32_t)g_edMap.objectCount;
 
         if (fwrite(&vertCount,   sizeof(vertCount),   1, f) != 1 ||
             fwrite(&wallCount,   sizeof(wallCount),   1, f) != 1 ||
-            fwrite(&sectorCount, sizeof(sectorCount), 1, f) != 1) {
+            fwrite(&sectorCount, sizeof(sectorCount), 1, f) != 1 ||
+            fwrite(&objectCount, sizeof(objectCount), 1, f) != 1
+        ) {
             fclose(f);
             return 0;
         }
@@ -7058,6 +7377,30 @@ int exportBinaryMap(const char *path)
         }
     }
 
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        float x = o->x;
+        float y = o->y;
+        float z = o->z;
+        int32_t tagId = (int32_t)o->tagId;
+        int32_t targTagId = (int32_t)o->targetTagId;
+        float radius = o->radius;
+        uint8_t textureId = o->textureId;
+
+        if (fwrite(&x, sizeof(x), 1, f)           != 1 ||
+            fwrite(&y, sizeof(y), 1, f)           != 1 ||
+            fwrite(&z, sizeof(z), 1, f)           != 1 ||
+            fwrite(&tagId, sizeof(tagId), 1, f)   != 1 ||
+            fwrite(&targTagId, sizeof(targTagId), 1, f)   != 1 ||
+            fwrite(&radius, sizeof(radius), 1, f) != 1 ||
+            fwrite(&textureId, sizeof(textureId), 1, f) != 1
+        ) {
+            fclose(f);
+            return 0;
+        }
+    }
+
+
     fclose(f);
     return 1;
 }
@@ -7109,6 +7452,21 @@ static int exportCStringMap(const char *path)
     }
     fprintf(f, "};\n\n");
 
+    fprintf(f, "static const RC3D_Object g_objects[] = {\n");
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        fprintf(f, "    { %.6ff, %.6ff, %.6ff, %d, %d, %.6ff, %u },\n",
+                o->x,
+                o->y,
+                o->z,
+                o->tagId,
+                o->targetTagId,
+                o->radius,
+                (unsigned)o->textureId);
+    }
+    fprintf(f, "};\n\n");
+
+
     fprintf(f, "const RC3D_Map g_rc3dDemoMap = {\n");
     fprintf(f, "    g_verts,\n");
     fprintf(f, "    (int)(sizeof(g_verts) / sizeof(g_verts[0])),\n\n");
@@ -7116,6 +7474,9 @@ static int exportCStringMap(const char *path)
     fprintf(f, "    (int)(sizeof(g_walls) / sizeof(g_walls[0])),\n\n");
     fprintf(f, "    g_sectors,\n");
     fprintf(f, "    (int)(sizeof(g_sectors) / sizeof(g_sectors[0])),\n\n");
+    fprintf(f, "    g_objects,\n");
+    fprintf(f, "    (int)(sizeof(g_objects) / sizeof(g_objects[0])),\n\n");
+
     fprintf(f, "    %d,\n", g_edMap.startSector);
     fprintf(f, "    %.6ff,\n", g_edMap.startX);
     fprintf(f, "    %.6ff,\n", g_edMap.startY);
@@ -8012,9 +8373,9 @@ static void repairMapTopology(void)
     g_ed.splitPreviewValid = 0;
 
     if (mergedAny) {
-        setEditorStatus("Topolgy Repair: Repair merged overlapping / near vertices and rebuilt portals");
+        setEditorStatus("Topology Repair: Repair merged overlapping / near vertices and rebuilt portals");
     } else {
-        setEditorStatus("Topolgy Repair: Repair found nothing to merge");
+        setEditorStatus("Topology Repair: Repair found nothing to merge");
     }
 }
 
@@ -8099,6 +8460,14 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
 
         g_ed.hoverWall = bestWall;
     }
+
+    g_ed.hoverObject = findObjectNearMouse(mouseX, mouseY);
+    
+    if (g_ed.hoverObject >= 0) {
+        g_ed.hoverWall = -1;
+        g_ed.hoverVert = -1;
+    }
+   
 }
 
 
@@ -8529,6 +8898,7 @@ void drawHoverPanel(void)
     int vertex_id = -1;
     int wall_id   = -1;
     int sector_id = -1;
+    int object_id = -1;
 
     const int panelX = 0;
     const int panelY = EDIT_VIEW_PORT_HEIGHT - 1;
@@ -8582,6 +8952,9 @@ void drawHoverPanel(void)
     if (g_ed.hoverSector    >= 0) sector_id = g_ed.hoverSector;
     if (g_ed.selectedSector >= 0) sector_id = g_ed.selectedSector;
 
+    if (g_ed.hoverObject >= 0) object_id = g_ed.hoverObject;
+    if (g_ed.selectedObject >= 0) object_id = g_ed.selectedObject;
+
     /* priority: vertex, then wall, then sector */
     if (vertex_id >= 0) {
         const EdVec2 *v = &g_edMap.verts[vertex_id];
@@ -8604,6 +8977,16 @@ void drawHoverPanel(void)
                 
         drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
 
+        return;
+    }
+
+    if (object_id >= 0) {
+        const EdObject *o = &g_edMap.objects[object_id];
+
+        snprintf(buf, sizeof(buf),
+                 "Object %d  X %.2f  Y %.2f  Z %.2f  Tag %d  Radius %.2f  Tex %u",
+                 object_id, o->x, o->y, o->z, o->tagId, o->radius, (unsigned)o->textureId);
+        drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
         return;
     }
 
@@ -8992,6 +9375,8 @@ static void drawMapGeometry(void)
         }
     }
 
+    drawMapObjects();
+
     /* -------------------------------------------------- */
     /* draft                                              */
     /* -------------------------------------------------- */
@@ -9054,6 +9439,10 @@ static void drawStartMarker(void)
 
 RCGUI_Context g_ui;
 
+#define GLYPH_MINUS     "\xf0\xf1"
+#define GLYPH_PLUS      "\xf2\xf3"
+
+
 void rc3dEditInit(void)
 {
     const int btnx_stdwidth = 78;
@@ -9105,24 +9494,24 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (84 * 2), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YT");
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (84 * 3), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YB");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 136 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS,  164 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 336 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS,  364 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 136 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS,  164 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_MINUS, 336 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SY_PLUS,  364 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 156 + controloffw, 352 + controloff + inspectWallYOffset, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS,  184 + controloffw, 352 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_MINUS, 156 + controloffw, 352 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_PLUS,  184 + controloffw, 352 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 216 + controloffw, 352 + controloff + inspectWallYOffset, 60, 24, "Reset");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 162 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS,  194 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 162 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS,  194 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
     
 
     // sector inspector UI - wall
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 182 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 182 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
 
 
     int sector_button_y_offsets = 55;
@@ -9131,59 +9520,78 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_COPY_PROPS,  206 + controloffw,  58 + controloff, 96, ED_BTN_H, "Copy Props");
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 308 + controloffw,  58 + controloff, 96, ED_BTN_H, "Paste Props");
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 136 + controloffw, 114 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS,  164 + controloffw, 114 + controloff, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS,  336 + controloffw, 114 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS,   364 + controloffw, 114 + controloff, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS,  136 + controloffw, 172 + controloff, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS,   164 + controloffw, 172 + controloff, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MINUS, 136 + controloffw, 114 + controloff, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_PLUS,  164 + controloffw, 114 + controloff, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MINUS,  336 + controloffw, 114 + controloff, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_PLUS,   364 + controloffw, 114 + controloff, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS,  136 + controloffw, 172 + controloff, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS,   164 + controloffw, 172 + controloff, 24, 24, GLYPH_PLUS);
 
     // sector inspector UI - texture transform ceiling
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 136 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS,  164 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 136 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS,  164 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 336 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS,  364 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_MINUS, 336 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SY_PLUS,  364 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 166 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS,  194 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 166 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS,  194 + controloffw, 258 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 226 + controloffw, 258 + controloff + sector_button_y_offsets, 60, 24, "Reset");
 
     /* sector inspector UI - texture transform floor */
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 136 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS,  164 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 136 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS,  164 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 336 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS,  364 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_MINUS, 336 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_SY_PLUS,  364 + controloffw, 316 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 166 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS,  194 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_MINUS, 166 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_PLUS,  194 + controloffw, 348 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FTEX_ROT_RESET, 226 + controloffw, 348 + controloff + sector_button_y_offsets, 60, 24, "Reset");
 
 
     // sector inspect UI - sector moving parts bits ;)
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_TAG_MINUS,   136 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_TAG_PLUS,    164 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 336 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_STATE_PLUS,  364 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_TAG_MINUS,   136 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_TAG_PLUS,    164 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_STATE_MINUS, 336 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_STATE_PLUS,  364 + controloffw, 406 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
     
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 136 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS,  164 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 336 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS,  364 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_MINUS, 136 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MIN_PLUS,  164 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_MINUS, 336 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_MAX_PLUS,  364 + controloffw, 436 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS,  136 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS,   164 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS,  336 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS,   364 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 136 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,  164 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "+");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS,  336 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "-");
-    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS,   364 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, "+");
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_MINUS,  136 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MIN_PLUS,   164 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_MINUS,  336 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_MAX_PLUS,   364 + controloffw, 466 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, 136 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,  164 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS,  336 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS,   364 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
 
+    //// OBJECT INSPECT UI - Fun stuff right?
+    {
+        int sector_button_y_offsets = 0;
 
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS,  136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS,   164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+        sector_button_y_offsets += 30;
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+        sector_button_y_offsets += 30;
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+        sector_button_y_offsets += 30;
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+    }
 
     // confirmation dialog box buttons
     rcguiCreateButton(&g_ui, GUI_BTN_CONFIRM_YES,
@@ -10045,6 +10453,16 @@ static void refreshEditorUIButtonState(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 0);
 
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 0);
+
     rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_YES, g_ed.confirmVisible);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_NO,  g_ed.confirmVisible);
 
@@ -10102,6 +10520,17 @@ static void refreshEditorUIButtonState(void)
         rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 1);
         rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
         rcguiSetButtonDisabled(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, !g_ed.hasCopiedSectorProps);
+    }
+
+    if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount){
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 1);
     }
 
     if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
@@ -10253,6 +10682,15 @@ static void handleEditorUI(int mouseX, int mouseY,
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 0);
 
+    //// Objects
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 0);   
 
     // dialog box (yes no)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_YES, g_ed.confirmVisible);
@@ -10950,6 +11388,81 @@ static void handleEditorUI(int mouseX, int mouseY,
             }
             break;
 
+        //// OBJECT HIT BUTTONSIES
+        case GUI_BTN_OBJECT_TAGID_MINUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                if (o->tagId > 0) {
+                    o->tagId--;
+                }
+            }
+            break;
+
+        case GUI_BTN_OBJECT_TAGID_PLUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                o->tagId++;
+            }
+            break;
+
+        case GUI_BTN_OBJECT_TARGETTAGID_MINUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                if (o->targetTagId > 0) {
+                    o->targetTagId--;
+                }
+            }
+            break;
+
+        case GUI_BTN_OBJECT_TARGETTAGID_PLUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                o->targetTagId++;
+            }
+            break;
+
+        case GUI_BTN_OBJECT_RADIUS_MINUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                o->radius -= uiStep;
+                if (o->radius < 0.01f) {
+                    o->radius = 0.01f;
+                }
+            }
+            break;
+
+        case GUI_BTN_OBJECT_RADIUS_PLUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                o->radius += uiStep;
+                if (o->radius < 0.01f) {
+                    o->radius = 0.01f;
+                }
+            }
+            break;
+
+        case GUI_BTN_OBJECT_ZAXIS_MINUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                o->z -= uiStep;
+            }
+            break;
+
+        case GUI_BTN_OBJECT_ZAXIS_PLUS:
+            if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                pushUndoState();
+                o->z += uiStep;
+            }
+            break;       
+
         default:
             break;
     }
@@ -11246,10 +11759,12 @@ static void drawInspectorPanel(void)
             snprintf(buf, sizeof(buf), "Scale X: Mixed          Scale Y: %.3f", texScaleY);
         } else if (texScaleYMixed) {
             snprintf(buf, sizeof(buf), "Scale X: %.3f           Scale Y: Mixed", texScaleX);
-            snprintf(buf, sizeof(buf), "Scale X: %.3f           Scale Y: %.3f", w->texScaleX, w->texScaleY);
+            //snprintf(buf, sizeof(buf), "Scale X: %.3f           Scale Y: %.3f", w->texScaleX, w->texScaleY);
         } else {
             snprintf(buf, sizeof(buf), "Scale X: %.3f           Scale Y: %.3f", texScaleX, texScaleY);
         }
+
+
         py += 5;
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
         py += 1;
@@ -11460,6 +11975,51 @@ static void drawInspectorPanel(void)
         drawText(px + 218, py, buf, ED_TEXT_COL); py += 24;
 
     }
+    
+    ///// Selected Object /////////////////////////////////////
+    else if (g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject >= 0) {
+        const EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+        int y_off = 48;
+
+        drawRect(px + 8, py + 40, pw - 16, 272,  ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py + 40, pw - 16, 272, ED_INSPECTOR_PARENT_PANELS_FRAME);
+
+        snprintf(buf, sizeof(buf), "OBJECT %d", g_ed.selectedObject);
+        drawText(px + 16, py + y_off, buf, ED_INSPECTOR_TEXT_COL);  y_off += 30;
+
+        //----------------------------
+        snprintf(buf, sizeof(buf), "X: %.4f,  Y: %.4f,  Z: %.4f", o->x, o->y, o->z);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
+
+        drawText(px + 16, py + y_off, "SHIFT+LMB drag object   DEL deletes", ED_TEXT_COL);
+
+        //----------------------------
+        y_off += 30;
+        drawRect(px + 12,  py + y_off, pw - 24, 180, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py + y_off, pw - 24, 180, ED_INSPECTOR_PANELS_PANELFRAME);
+        
+        y_off += 6;
+        drawText(px + 18,  py + y_off, "PROPERTIES:", ED_INSPECTOR_PANELS_HEADER_TEXT);      py += 30;
+
+
+        snprintf(buf, sizeof(buf), "Tag: %d", o->tagId);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+
+        snprintf(buf, sizeof(buf), "TargetTag: %d", o->targetTagId);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+
+        snprintf(buf, sizeof(buf), "Radius: %.3f", o->radius);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+
+        snprintf(buf, sizeof(buf), "Z-Axis: %.3f", o->z);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+
+        snprintf(buf, sizeof(buf), "Texture_id: %u", (unsigned)o->textureId);
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+
+    }
+
+    ////// nothing selected/editing - so must be a new draft setupsies
     else {
         drawRect(px + 8, py + 40, pw - 16, 318, ED_INSPECTOR_PARENT_PANELS_BG);
         drawRectL(px + 8, py + 40, pw - 16, 318, ED_INSPECTOR_PARENT_PANELS_FRAME);
@@ -11761,7 +12321,12 @@ void rc3dEditUpdate(float dt,
         g_ed.pendingLeftAltDown = altDown;
         g_ed.pendingLeftBoxSelectWalls = 0;
 
-        if (ctrlDown) {
+        if (shiftDown && g_ed.hoverObject >= 0) {
+            g_ed.pendingLeftTargetIndex = g_ed.hoverObject;
+            g_ed.pendingLeftAction = ED_PENDING_LEFT_NONE;
+            beginObjectDragFromPress(g_ed.hoverObject);
+        }
+        else if (ctrlDown) {
             if (g_ed.hoverSector >= 0) {
                 g_ed.pendingLeftTargetIndex = g_ed.hoverSector;
                 g_ed.pendingLeftAction =
@@ -11838,12 +12403,14 @@ void rc3dEditUpdate(float dt,
         updateBoxSelect(mouseX, mouseY);
     }
 
-
-
-
-
+    // Dragging modes
     if (leftDown && g_ed.draggingMultiVertex) {
         dragMultiVertexSelectionTo(worldX, worldY);
+        updateHover(worldX, worldY, mouseX, mouseY);
+    }
+
+    if (leftDown && g_ed.draggingObject) {
+        dragSelectedObjectTo(worldX, worldY);
         updateHover(worldX, worldY, mouseX, mouseY);
     }
 
@@ -11882,6 +12449,7 @@ void rc3dEditUpdate(float dt,
         g_ed.draggingVertex = 0;
         g_ed.draggingWall = 0;
         g_ed.draggingSector = 0;
+        g_ed.draggingObject = 0;
         g_ed.draggingMultiVertex = 0;
         g_ed.textureScrollbarDragging = 0;
         if (g_ed.pendingLeftMouseDown) {
@@ -11889,8 +12457,34 @@ void rc3dEditUpdate(float dt,
         }
     }
 
+    if (keyPressedOnce(keys, SDL_SCANCODE_O)) {
+        int objIndex;
+        int sectorId = 0;
+        float getZHeight = 0;
+
+        pushUndoState();
+        sectorId = findSectorForPoint(worldX, worldY);
+        getZHeight = g_edMap.sectors[sectorId].floorHeight;
+        objIndex = addObject(worldX, worldY, getZHeight, 0, 0.35f, 1);
+
+        if (objIndex >= 0) {
+            clearAllSelections();
+            g_ed.selectionType = ED_SEL_OBJECT;
+            g_ed.selectedObject = objIndex;
+            g_ed.hoverObject = objIndex;
+            setEditorStatus("Placed object");
+        } else {
+            performUndo();
+            setEditorStatus("Object limit reached");
+        }
+    }
+
     if (keyPressedOnce(keys, SDL_SCANCODE_DELETE)) {
-        if (g_ed.selectedVert >= 0) {
+        if (g_ed.selectedObject >= 0) {
+            pushUndoState();
+            deleteObjectByIndex(g_ed.selectedObject);
+
+        } else if (g_ed.selectedVert >= 0) {
             pushUndoState();
             deleteVertexByIndex(g_ed.selectedVert);
         } else if (hasMultiWallSelection()) {
@@ -11928,7 +12522,7 @@ void rc3dEditUpdate(float dt,
         } else if (g_ed.hoverSector >= 0) {
             pushUndoState();
             deleteSectorByIndex(g_ed.hoverSector);
-        }
+        } 
     }
 
     if (keyPressedOnce(keys, SDL_SCANCODE_APOSTROPHE)) {
@@ -12038,6 +12632,11 @@ void rc3dEditUpdate(float dt,
         executeEditorAction(ED_ACT_FINISH_DRAFT, worldX, worldY);
     }
 
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_B)){
+        g_ed.textureBrowserEn = 1 - g_ed.textureBrowserEn;
+    }
+
     /* sector defaults for NEW drafted sectors only when nothing is selected */
     if (!hasAnyWallEditSelection() &&
         !hasMultiSectorSelection() &&
@@ -12063,22 +12662,14 @@ void rc3dEditUpdate(float dt,
         EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
         int changed = 0;
         const int shiftDown = (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) ? 1 : 0;
-        const int copyFloorHeightPressed = !shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_1) || keyPressedOnce(keys, SDL_SCANCODE_KP_1));
-        const int copyCeilHeightPressed = !shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_2) || keyPressedOnce(keys, SDL_SCANCODE_KP_2));
-        const int pasteFloorHeightPressed = shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_1) || keyPressedOnce(keys, SDL_SCANCODE_KP_1));
-        const int pasteCeilHeightPressed = shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_2) || keyPressedOnce(keys, SDL_SCANCODE_KP_2));
-        const int copyFloorTexPressed = !shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_4) || keyPressedOnce(keys, SDL_SCANCODE_KP_4));
-        const int copyCeilTexPressed = !shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_5) || keyPressedOnce(keys, SDL_SCANCODE_KP_5));
-        const int pasteFloorTexPressed = shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_4) || keyPressedOnce(keys, SDL_SCANCODE_KP_4));
-        const int pasteCeilTexPressed = shiftDown &&
-            (keyPressedOnce(keys, SDL_SCANCODE_5) || keyPressedOnce(keys, SDL_SCANCODE_KP_5));
+        const int copyFloorHeightPressed = !shiftDown && (keyPressedOnce(keys, SDL_SCANCODE_1) || keyPressedOnce(keys, SDL_SCANCODE_KP_1));
+        const int copyCeilHeightPressed = !shiftDown &&  (keyPressedOnce(keys, SDL_SCANCODE_2) || keyPressedOnce(keys, SDL_SCANCODE_KP_2));
+        const int pasteFloorHeightPressed = shiftDown && (keyPressedOnce(keys, SDL_SCANCODE_1) || keyPressedOnce(keys, SDL_SCANCODE_KP_1));
+        const int pasteCeilHeightPressed = shiftDown &&  (keyPressedOnce(keys, SDL_SCANCODE_2) || keyPressedOnce(keys, SDL_SCANCODE_KP_2));
+        const int copyFloorTexPressed = !shiftDown &&    (keyPressedOnce(keys, SDL_SCANCODE_4) || keyPressedOnce(keys, SDL_SCANCODE_KP_4));
+        const int copyCeilTexPressed = !shiftDown &&     (keyPressedOnce(keys, SDL_SCANCODE_5) || keyPressedOnce(keys, SDL_SCANCODE_KP_5));
+        const int pasteFloorTexPressed = shiftDown &&    (keyPressedOnce(keys, SDL_SCANCODE_4) || keyPressedOnce(keys, SDL_SCANCODE_KP_4));
+        const int pasteCeilTexPressed = shiftDown &&     (keyPressedOnce(keys, SDL_SCANCODE_5) || keyPressedOnce(keys, SDL_SCANCODE_KP_5));
 
         if (copyFloorHeightPressed) {
             char msg[128];
@@ -12222,18 +12813,12 @@ void rc3dEditUpdate(float dt,
         int wallIndices[ED_MAX_WALLS];
         const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
         const int shiftDown = (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]) ? 1 : 0;
-        const int copyWallTexturePressed = !ctrlDown && !shiftDown &&
-            keyPressedOnce(keys, SDL_SCANCODE_KP_1);
-        const int copyWallScalePressed = !ctrlDown && !shiftDown &&
-            keyPressedOnce(keys, SDL_SCANCODE_KP_2);
-        const int copyWallRotationPressed = !ctrlDown && !shiftDown &&
-            keyPressedOnce(keys, SDL_SCANCODE_KP_3);
-        const int pasteWallTexturePressed = !ctrlDown && shiftDown &&
-            keyPressedOnce(keys, SDL_SCANCODE_KP_1);
-        const int pasteWallScalePressed = !ctrlDown && shiftDown &&
-            keyPressedOnce(keys, SDL_SCANCODE_KP_2);
-        const int pasteWallRotationPressed = !ctrlDown && shiftDown &&
-            keyPressedOnce(keys, SDL_SCANCODE_KP_3);
+        const int copyWallTexturePressed =   !ctrlDown && !shiftDown && keyPressedOnce(keys, SDL_SCANCODE_KP_1);
+        const int copyWallScalePressed =     !ctrlDown && !shiftDown && keyPressedOnce(keys, SDL_SCANCODE_KP_2);
+        const int copyWallRotationPressed =  !ctrlDown && !shiftDown && keyPressedOnce(keys, SDL_SCANCODE_KP_3);
+        const int pasteWallTexturePressed =  !ctrlDown && shiftDown &&  keyPressedOnce(keys, SDL_SCANCODE_KP_1);
+        const int pasteWallScalePressed =    !ctrlDown && shiftDown &&  keyPressedOnce(keys, SDL_SCANCODE_KP_2);
+        const int pasteWallRotationPressed = !ctrlDown && shiftDown &&  keyPressedOnce(keys, SDL_SCANCODE_KP_3);
 
         if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_1)) executeEditorAction(ED_ACT_WALL_SOLID, worldX, worldY);
         if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_2)) executeEditorAction(ED_ACT_WALL_PORTAL, worldX, worldY);
@@ -12452,7 +13037,6 @@ void rc3dEditUpdate(float dt,
 
 
 
-
     if (hasAnyWallEditSelection()) {
         if (g_ed.textureBrowserTarget != TEX_TARGET_WALL_UPPER &&
             g_ed.textureBrowserTarget != TEX_TARGET_WALL_MIDDLE &&
@@ -12464,6 +13048,11 @@ void rc3dEditUpdate(float dt,
         if (g_ed.textureBrowserTarget != TEX_TARGET_SECTOR_FLOOR &&
             g_ed.textureBrowserTarget != TEX_TARGET_SECTOR_CEIL) {
             g_ed.textureBrowserTarget = TEX_TARGET_SECTOR_FLOOR;
+        }
+    }
+    else if (hasAnyObjectEditSelection()) {
+        if (g_ed.textureBrowserTarget != TEX_TARGET_OBJECT) {
+            g_ed.textureBrowserTarget = TEX_TARGET_OBJECT;
         }
     }
     else {
@@ -12504,4 +13093,5 @@ void rc3dEditRender(void)
     drawHoverPanel();
     rcguiDraw(&g_ui);
     drawUndoHistoryPopup();
+
 }

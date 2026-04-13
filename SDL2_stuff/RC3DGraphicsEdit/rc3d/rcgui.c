@@ -12,6 +12,8 @@ static void rcguiDrawOneButton(const RCGUI_Context *ui, const RCGUI_Button *btn)
     uint8_t bg = ui->btnBg;
     uint8_t border = ui->btnBorder;
     uint8_t textCol = ui->btnText;
+    int textx = 0;
+    int texty = 0;
 
     if (!btn->visible) {
         return;
@@ -34,7 +36,9 @@ static void rcguiDrawOneButton(const RCGUI_Context *ui, const RCGUI_Button *btn)
     drawLine(btn->x + btn->w - 1, btn->y, btn->x + btn->w - 1, btn->y + btn->h - 1, border);
 
     if (btn->text && btn->text[0]) {
-        drawText(btn->x + 4, btn->y + 2, btn->text, btn->hot ? ED_COLOUR_BTN_TEXT_HOVER : textCol);
+        textx = (btn->w / 2) - ((strlen(btn->text) * 8) / 2);
+        texty = (btn->h / 2) - 8;
+        drawText(btn->x + textx, btn->y + texty, btn->text, btn->hot ? ED_COLOUR_BTN_TEXT_HOVER : textCol);
     }
 }
 

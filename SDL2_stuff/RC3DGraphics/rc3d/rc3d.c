@@ -78,8 +78,9 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 extern uint8_t spr_man[]; // test sprite
 
 
-#define RC3D_TEXID_SPRITE_MAN  RC3D_SPRITE_TEX_MAN
-#define RC3D_TEXID_SKYBOX      255
+#define RC3D_TEXID_SPRITE_MAN       RC3D_SPRITE_TEX_MAN
+#define RC3D_TEXID_SPRITE_GRICY     RC3D_SPRITE_TEX_GRICY
+#define RC3D_TEXID_SKYBOX       255
 
 #define RC3D_SPRITE_TEX_TRANSPARENT 0
 #define RC3D_TEST_SPRITE_WIDTH  0.75f
@@ -331,6 +332,7 @@ static RC3D_Sprite g_sprites[RC3D_MAX_SPRITES];
 static RC3D_SpriteOrderEntry g_spriteOrder[RC3D_MAX_SPRITES];
 static int g_demoSpriteA = RC3D_INVALID_SPRITE;
 static int g_demoSpriteB = RC3D_INVALID_SPRITE;
+static int g_demoSpriteGricy = RC3D_INVALID_SPRITE;
 
 static const RC3D_Map *g_map = &g_rc3dDemoMap;
 static RC3D_Map g_loadedMap;
@@ -907,6 +909,7 @@ static inline uint8_t rc3dApplyShadeProfileToTexel(
 
 extern uint8_t spr_oiiacat[];
 extern uint8_t tex_notset[];
+extern uint8_t spr_gricy1[];
 extern uint8_t tex_skybox[RC3D_SKYBOX_W * RC3D_SKYBOX_H];    // the skybox
 
 static void rc3dBuildDefaultTextures(void)
@@ -938,9 +941,11 @@ static void rc3dBuildDefaultTextures(void)
     for (y = 0; y < RC3D_TEX_SIZE; ++y) {
         for (x = 0; x < RC3D_TEX_SIZE; ++x) {
             g_rc3dTextures[RC3D_TEXID_SPRITE_MAN].pix[tindex] = spr_oiiacat[tindex];
+            g_rc3dTextures[RC3D_TEXID_SPRITE_GRICY].pix[tindex] = spr_gricy1[tindex];
             tindex++;
         }
     }
+
 
     g_rc3dTexturesInit = 1;
 }
@@ -1541,14 +1546,17 @@ void rc3dMapFreeBinary(RC3D_Map *map)
     if (map->verts)   free((void *)map->verts);
     if (map->walls)   free((void *)map->walls);
     if (map->sectors) free((void *)map->sectors);
+    if (map->objects) free((void *)map->objects);
 
     map->verts = NULL;
     map->walls = NULL;
     map->sectors = NULL;
+    map->objects = NULL;
 
     map->vertCount = 0;
     map->wallCount = 0;
     map->sectorCount = 0;
+    map->objectCount = 0;
 
     map->startSector = -1;
     map->startX = 0.0f;
@@ -1556,15 +1564,18 @@ void rc3dMapFreeBinary(RC3D_Map *map)
     map->startAngle = 0.0f;
 }
 
+
+
 int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 {
     FILE *f;
     char magic[8];
     int mapVersion = 0;
 
-    uint32_t vertCount;
-    uint32_t wallCount;
-    uint32_t sectorCount;
+    uint32_t vertCount = 0;
+    uint32_t wallCount = 0;
+    uint32_t sectorCount = 0;
+    uint32_t objectCount = 0;
 
     int32_t startSector;
     float startX;
@@ -1574,6 +1585,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
     RC3D_Vec2 *verts = NULL;
     RC3D_Wall *walls = NULL;
     RC3D_Sector *sectors = NULL;
+    RC3D_Object *objects = NULL;
 
     if (!path || !outMap) return 0;
 
@@ -1587,10 +1599,12 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         return 0;
     }
 
-    if (memcmp(magic, "RC3DMAP3", 8) == 0) {
-        mapVersion = 3;
+    if (memcmp(magic, "RC3DMAP5", 8) == 0) {
+        mapVersion = 5;
     } else if (memcmp(magic, "RC3DMAP4", 8) == 0) {
         mapVersion = 4;
+    } else if (memcmp(magic, "RC3DMAP3", 8) == 0) {
+        mapVersion = 3;
     } else if (memcmp(magic, "RC3DMAP2", 8) == 0) {
         mapVersion = 2;
     } else if (memcmp(magic, "RC3DMAP1", 8) == 0) {
@@ -1602,7 +1616,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 
     if (!readExact(f, &vertCount, sizeof(vertCount)) ||
         !readExact(f, &wallCount, sizeof(wallCount)) ||
-        !readExact(f, &sectorCount, sizeof(sectorCount))) {
+        !readExact(f, &sectorCount, sizeof(sectorCount)) ||
+        !readExact(f, &objectCount, sizeof(objectCount))) {
         fclose(f);
         return 0;
     }
@@ -1615,15 +1630,20 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         return 0;
     }
 
-    verts   = (RC3D_Vec2 *)malloc(sizeof(RC3D_Vec2) * vertCount);
-    walls   = (RC3D_Wall *)malloc(sizeof(RC3D_Wall) * wallCount);
-    sectors = (RC3D_Sector *)malloc(sizeof(RC3D_Sector) * sectorCount);
+    verts   = vertCount   ? (RC3D_Vec2 *)malloc(sizeof(RC3D_Vec2) * vertCount)     : NULL;
+    walls   = wallCount   ? (RC3D_Wall *)malloc(sizeof(RC3D_Wall) * wallCount)     : NULL;
+    sectors = sectorCount ? (RC3D_Sector *)malloc(sizeof(RC3D_Sector) * sectorCount) : NULL;
+    objects = objectCount ? (RC3D_Object *)malloc(sizeof(RC3D_Object) * objectCount) : NULL;
 
-    if ((vertCount && !verts) || (wallCount && !walls) || (sectorCount && !sectors)) {
+    if ((vertCount && !verts) ||
+        (wallCount && !walls) ||
+        (sectorCount && !sectors) ||
+        (objectCount && !objects)) {
         fclose(f);
         free(verts);
         free(walls);
         free(sectors);
+        free(objects);
         return 0;
     }
 
@@ -1634,6 +1654,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             free(verts);
             free(walls);
             free(sectors);
+            free(objects);
             return 0;
         }
     }
@@ -1660,6 +1681,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 free(verts);
                 free(walls);
                 free(sectors);
+                free(objects);
                 return 0;
             }
         } else {
@@ -1677,6 +1699,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 free(verts);
                 free(walls);
                 free(sectors);
+                free(objects);
                 return 0;
             }
 
@@ -1721,6 +1744,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 free(verts);
                 free(walls);
                 free(sectors);
+                free(objects);
                 return 0;
             }
         } else if (mapVersion >= 2) {
@@ -1742,6 +1766,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 free(verts);
                 free(walls);
                 free(sectors);
+                free(objects);
                 return 0;
             }
 
@@ -1771,6 +1796,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 free(verts);
                 free(walls);
                 free(sectors);
+                free(objects);
                 return 0;
             }
 
@@ -1791,12 +1817,39 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         sectors[i].boundaryCount = (int)boundaryCount;
     }
 
+    if (mapVersion >= 5) {
+        for (uint32_t i = 0; i < objectCount; i++) {
+            int32_t tagId;
+
+            if (!readExact(f, &objects[i].x, sizeof(float)) ||
+                !readExact(f, &objects[i].y, sizeof(float)) ||
+                !readExact(f, &objects[i].z, sizeof(float)) ||
+                !readExact(f, &tagId, sizeof(int32_t)) ||
+                !readExact(f, &objects[i].radius, sizeof(float)) ||
+                !readExact(f, &objects[i].textureId, sizeof(uint8_t))) {
+                fclose(f);
+                free(verts);
+                free(walls);
+                free(sectors);
+                free(objects);
+                return 0;
+            }
+
+            objects[i].tagId = (int)tagId;
+
+            if (objects[i].radius < 0.01f) {
+                objects[i].radius = 0.25f;
+            }
+        }
+    }
+
     fclose(f);
 
     if (startSector < -1 || startSector >= (int32_t)sectorCount) {
         free(verts);
         free(walls);
         free(sectors);
+        free(objects);
         return 0;
     }
 
@@ -1806,13 +1859,15 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             free(verts);
             free(walls);
             free(sectors);
+            free(objects);
             return 0;
         }
 
-        if (walls[i].neighbour >= (int)sectorCount) {
+        if (walls[i].neighbour < -1 || walls[i].neighbour >= (int)sectorCount) {
             free(verts);
             free(walls);
             free(sectors);
+            free(objects);
             return 0;
         }
     }
@@ -1826,6 +1881,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             free(verts);
             free(walls);
             free(sectors);
+            free(objects);
             return 0;
         }
     }
@@ -1836,6 +1892,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
     outMap->wallCount = (int)wallCount;
     outMap->sectors = sectors;
     outMap->sectorCount = (int)sectorCount;
+    outMap->objects = objects;
+    outMap->objectCount = (int)objectCount;
     outMap->startSector = (int)startSector;
     outMap->startX = startX;
     outMap->startY = startY;
@@ -1844,21 +1902,12 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
     return 1;
 }
 
-
 int rc3dLoadMapBinary(const char *path)
 {
     RC3D_Map newMap;
+    memset(&newMap, 0, sizeof(newMap));
 
-    newMap.verts = NULL;
-    newMap.walls = NULL;
-    newMap.sectors = NULL;
-    newMap.vertCount = 0;
-    newMap.wallCount = 0;
-    newMap.sectorCount = 0;
     newMap.startSector = -1;
-    newMap.startX = 0.0f;
-    newMap.startY = 0.0f;
-    newMap.startAngle = 0.0f;
 
     if (!rc3dMapLoadBinary(path, &newMap)) {
         return 0;
@@ -4491,6 +4540,14 @@ static void rc3dInitTestSprite(void)
         RC3D_TEST_SPRITE_WIDTH,
         RC3D_TEST_SPRITE_HEIGHT,
         RC3D_TEXID_SPRITE_MAN);
+
+    g_demoSpriteGricy = rc3dSpriteCreate(
+        -29.5f, -12.5f,
+        RC3D_TEST_SPRITE_WIDTH,
+        RC3D_TEST_SPRITE_HEIGHT,
+        RC3D_SPRITE_TEX_GRICY);
+
+
 }
 
 static uint32_t rc3dSanitizeSectorStateFlags(uint32_t stateFlags)

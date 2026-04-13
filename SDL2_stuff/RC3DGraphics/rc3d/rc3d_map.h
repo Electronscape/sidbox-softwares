@@ -82,6 +82,16 @@ typedef struct {
 
 
 typedef struct {
+    float x;
+    float y;
+    float z;
+    int tagId;
+    float radius;
+    uint8_t textureId;
+} RC3D_Object;
+
+
+typedef struct {
     const RC3D_Vec2   *verts;
     int                vertCount;
 
@@ -90,6 +100,9 @@ typedef struct {
 
     const RC3D_Sector *sectors;
     int                sectorCount;
+
+    const RC3D_Object *objects;
+    int objectCount;
 
     int startSector;
     float startX;

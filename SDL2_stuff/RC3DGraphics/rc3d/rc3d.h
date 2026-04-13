@@ -8,6 +8,7 @@
 #define RC3D_MAX_SPRITES       64
 #define RC3D_INVALID_SPRITE    (-1)
 #define RC3D_SPRITE_TEX_MAN    253
+#define RC3D_SPRITE_TEX_GRICY  252
 
 #define RC3D_SECTOR_STATE_NONE           0u
 #define RC3D_SECTOR_STATE_RAISE_FLOOR    0x01u
