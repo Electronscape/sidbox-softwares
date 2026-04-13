@@ -28,18 +28,18 @@ int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
 #define RC3D_DRAW_HUD          1
 #define RC3D_DRAW_PROFILER     1
 
-#define RC3D_FOV_DEG           75.0f
+#define RC3D_FOV_DEG           90.0f
 #define RC3D_TURN_SPEED        2.4f
 #define RC3D_MOVE_SPEED        3.0f
 #define RC3D_MOUSE_SENS        0.0035f
-#define RC3D_EPSILON           0.0001f
+#define RC3D_EPSILON           0.00001f
 #define RC3D_COLLISION_SKIN    0.02f
 #define RC3D_FIXED_SHIFT       16
 #define RC3D_FIXED_ONE         (1 << RC3D_FIXED_SHIFT)
 #define RC3D_TRIG_LUT_BITS     11
 #define RC3D_TRIG_LUT_SIZE     (1 << RC3D_TRIG_LUT_BITS)
 #define RC3D_TRIG_LUT_MASK     (RC3D_TRIG_LUT_SIZE - 1)
-#define RC3D_MAX_RAY_DIST      50.0f
+#define RC3D_MAX_RAY_DIST      40.0f
 #define RC3D_MAX_PORTAL_STEPS  24   // how many sectors we can look through to render before not bothering anymore
 #define RC3D_MAX_MASKED_TRACE_DEPTH 8
 #define RC3D_MAX_WALL_SPANS_PER_COLUMN 32

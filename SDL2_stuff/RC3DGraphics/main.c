@@ -214,12 +214,7 @@ int main(int argc, char **argv)
             if ((e.type == SDL_KEYDOWN) && (e.key.repeat == 0)){
                 if (e.key.keysym.sym == SDLK_ESCAPE)
                     running = 0;
-                
-                //if(e.key.keysym.sym == SDLK_0)
-                    
             }
-
-            
 
             if (e.type == SDL_MOUSEMOTION) {
                 pendingMouseDx += e.motion.xrel;
