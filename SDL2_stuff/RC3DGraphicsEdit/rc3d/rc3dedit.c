@@ -1281,7 +1281,7 @@ static float snapf(float v){
 #define TEX_BROWSER_BOTTOM_PAD    10
 #define TEX_BROWSER_OUTER_PAD     8
 #define TEX_BROWSER_BUTTON_H      20
-#define TEX_BROWSER_BUTTON_GAP    6
+#define TEX_BROWSER_BUTTON_GAP    2
 #define TEX_BROWSER_PREVIEW_PAD   4
 #define TEX_BROWSER_FRAME_PAD     2
 #define TEX_BROWSER_LABEL_GAP     2
@@ -1681,7 +1681,7 @@ static int getTextureBrowserTargetButtons(TextureBrowserTargetButtonDef *outButt
         return count;
     }
 
-    if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_FLOOR, "S.Floor" };
+    if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_FLOOR, "S.Flr" };
     if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_SECTOR_CEIL, "S.Ceil" };
     if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_WALL_UPPER, "W.Up" };
     if (count < maxButtons) outButtons[count++] = (TextureBrowserTargetButtonDef){ TEX_TARGET_DEFAULT_WALL_MIDDLE, "W.Mid" };
@@ -2109,7 +2109,39 @@ static void toggleWallTexFlag(int wallIndex, uint32_t flag)
     w->tex_flags ^= flag;
 }
 
+static void setWallTexFlagEnabled(int wallIndex, uint32_t flag, int enabled)
+{
+    EdWall *w;
 
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+    if (flag == 0) return;
+
+    w = &g_edMap.walls[wallIndex];
+
+    if (enabled) {
+        w->tex_flags |= flag;
+    } else {
+        w->tex_flags &= ~flag;
+    }
+}
+
+static void applySelectedWallClampFromPrimaryToggle(uint32_t flag)
+{
+    int wallIndices[ED_MAX_WALLS];
+    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+    const int primaryWall = getPrimaryWallEditIndex();
+    int newEnabled;
+
+    if (wallCount <= 0) return;
+    if (primaryWall < 0 || primaryWall >= g_edMap.wallCount) return;
+    if (flag == 0) return;
+
+    newEnabled = (g_edMap.walls[primaryWall].tex_flags & flag) ? 0 : 1;
+
+    for (int i = 0; i < wallCount; i++) {
+        setWallTexFlagEnabled(wallIndices[i], flag, newEnabled);
+    }
+}
 
 static void validatorAddLineEx(uint8_t targetType, int targetIndex, const char *fmt, ...)
 {
@@ -9524,10 +9556,15 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_PASTE_PROPS,   278 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Paste Props");
     
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (84 * 2), 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp XL");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (84 * 3), 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp XR");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (84 * 2), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YT");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (84 * 3), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YB");
+    //rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (84 * 2), 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp XL");
+    //rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (84 * 3), 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp XR");
+    //rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (84 * 2), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YT");
+    //rcguiCreateButton(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (84 * 3), 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Clamp YB");
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (114 * 0) + 80, 256 + controloff + inspectWallYOffset, 100, ED_BTN_H, "Left",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (114 * 1) + 80, 256 + controloff + inspectWallYOffset, 100, ED_BTN_H, "Right",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (114 * 0) + 80, 288 + controloff + inspectWallYOffset, 100, ED_BTN_H, "Top", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (114 * 1) + 80, 288 + controloff + inspectWallYOffset, 100, ED_BTN_H, "Bottom", 0);
+    
 
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 136 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_PLUS,  164 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
@@ -10516,9 +10553,80 @@ static void editorHideInspectorButtons(void)
     }
 }
 
+
+static void getSelectedWallClampState(int *outClampXL,
+                                      int *outClampXR,
+                                      int *outClampYT,
+                                      int *outClampYB,
+                                      int *outMixedXL,
+                                      int *outMixedXR,
+                                      int *outMixedYT,
+                                      int *outMixedYB)
+{
+    int wallIndices[ED_MAX_WALLS];
+    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+
+    int clampXL = 0;
+    int clampXR = 0;
+    int clampYT = 0;
+    int clampYB = 0;
+
+    int mixedXL = 0;
+    int mixedXR = 0;
+    int mixedYT = 0;
+    int mixedYB = 0;
+
+    if (wallCount <= 0) {
+        if (outClampXL) *outClampXL = 0;
+        if (outClampXR) *outClampXR = 0;
+        if (outClampYT) *outClampYT = 0;
+        if (outClampYB) *outClampYB = 0;
+
+        if (outMixedXL) *outMixedXL = 0;
+        if (outMixedXR) *outMixedXR = 0;
+        if (outMixedYT) *outMixedYT = 0;
+        if (outMixedYB) *outMixedYB = 0;
+        return;
+    }
+
+    {
+        const EdWall *w = &g_edMap.walls[wallIndices[0]];
+
+        clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? 1 : 0;
+        clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
+        clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
+        clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
+    }
+
+    for (int i = 1; i < wallCount; i++) {
+        const EdWall *w = &g_edMap.walls[wallIndices[i]];
+        const int curXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? 1 : 0;
+        const int curXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
+        const int curYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
+        const int curYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
+
+        if (curXL != clampXL) mixedXL = 1;
+        if (curXR != clampXR) mixedXR = 1;
+        if (curYT != clampYT) mixedYT = 1;
+        if (curYB != clampYB) mixedYB = 1;
+    }
+
+    if (outClampXL) *outClampXL = clampXL;
+    if (outClampXR) *outClampXR = clampXR;
+    if (outClampYT) *outClampYT = clampYT;
+    if (outClampYB) *outClampYB = clampYB;
+
+    if (outMixedXL) *outMixedXL = mixedXL;
+    if (outMixedXR) *outMixedXR = mixedXR;
+    if (outMixedYT) *outMixedYT = mixedYT;
+    if (outMixedYB) *outMixedYB = mixedYB;
+}
+
 static void editorShowWallInspectorButtons(void)
 {
     EdWall *w = 0;
+    int clampXL = 0, clampXR = 0, clampYT = 0, clampYB = 0;
+    int mixedXL = 0, mixedXR = 0, mixedYT = 0, mixedYB = 0;
 
     if (hasAnyWallEditSelection()) {
         const int primaryWall = getPrimaryWallEditIndex();
@@ -10560,18 +10668,22 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
 
-    if (hasSingleWallSelection() && w) {
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? "Clamp XL\x2" : "Clamp XL");
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? "Clamp XR\x2" : "Clamp XR");
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? "Clamp YT\x2" : "Clamp YT");
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? "Clamp YB\x2" : "Clamp YB");
-    } else {
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, "Clamp XL");
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, "Clamp XR");
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, "Clamp YT");
-        rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, "Clamp YB");
-    }
+    getSelectedWallClampState(&clampXL, &clampXR, &clampYT, &clampYB,
+                              &mixedXL, &mixedXR, &mixedYT, &mixedYB);
+
+    /* checked state follows the primary wall */
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_XL, clampXL);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_XR, clampXR);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_YT, clampYT);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_YB, clampYB);
+
+    /* label text exposes mixed state */
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, mixedXL ? "Left ~"   : "Left");
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, mixedXR ? "Right ~"  : "Right");
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, mixedYT ? "Top ~"    : "Top");
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, mixedYB ? "Bottom ~" : "Bottom");
 }
+
 
 static void editorShowSectorInspectorButtons(void)
 {
@@ -10846,36 +10958,32 @@ static void handleEditorUI(int mouseX, int mouseY,
                 if (sec) { pushUndoState(); sec->floorTexAngle = 0.0f; }
                 break;
 
+
             case GUI_BTN_WALL_CLAMP_XL:
                 if (hasAnyWallEditSelection()) {
-                    int wallIndices[ED_MAX_WALLS];
-                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
                     pushUndoState();
-                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPXL);
+                    applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_CLAMPXL);
                 }
                 break;
+
             case GUI_BTN_WALL_CLAMP_XR:
                 if (hasAnyWallEditSelection()) {
-                    int wallIndices[ED_MAX_WALLS];
-                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
                     pushUndoState();
-                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPXR);
+                    applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_CLAMPXR);
                 }
                 break;
+
             case GUI_BTN_WALL_CLAMP_YT:
                 if (hasAnyWallEditSelection()) {
-                    int wallIndices[ED_MAX_WALLS];
-                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
                     pushUndoState();
-                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPYT);
+                    applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_CLAMPYT);
                 }
                 break;
+
             case GUI_BTN_WALL_CLAMP_YB:
                 if (hasAnyWallEditSelection()) {
-                    int wallIndices[ED_MAX_WALLS];
-                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
                     pushUndoState();
-                    for (int i = 0; i < wallCount; i++) toggleWallTexFlag(wallIndices[i], RC3D_TEX_FLAG_CLAMPYB);
+                    applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_CLAMPYB);
                 }
                 break;
 
@@ -11188,18 +11296,15 @@ static void handleEditorUI(int mouseX, int mouseY,
             case GUI_BTN_OBJECT_FLAGS_bit6:
             case GUI_BTN_OBJECT_FLAGS_bit7:
             {
-                uint32_t bitTemp = 0;
-
                 if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    const int bit = hit - GUI_BTN_OBJECT_FLAGS_bit0;
+
                     pushUndoState();
+                    o->flags ^= (1u << bit);
 
-                    for (int bit = 0; bit < 8; bit++) {
-                        const int btnId = GUI_BTN_OBJECT_FLAGS_bit0 + bit;
-                        const int checked = rcguiGetToggleChecked(&g_ui, btnId) ? 1 : 0;
-                        bitTemp |= ((uint32_t)checked << bit);
-                    }
-
-                    g_edMap.objects[g_ed.selectedObject].flags = bitTemp;
+                    /* keep UI in sync immediately */
+                    rcguiSetToggleChecked(&g_ui, hit, (o->flags >> bit) & 1u);
                 }
             } break;
 
@@ -11314,10 +11419,12 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "Tex flags: 0x%08X", (unsigned)w->tex_flags);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
-        snprintf(buf, sizeof(buf), "Clamp X  L[%s] R[%s]", clampXL ? "\x2" : " ", clampXR ? "\x2" : " ");
+        //snprintf(buf, sizeof(buf), "Clamp X:  L[%s] R[%s]", clampXL ? "\x2" : " ", clampXR ? "\x2" : " ");
+        snprintf(buf, sizeof(buf), "Clamp X:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
-        snprintf(buf, sizeof(buf), "Clamp Y  T[%s] B[%s]", clampYT ? "\x2" : " ", clampYB ? "\x2" : " ");
+        //snprintf(buf, sizeof(buf), "Clamp Y:  T[%s] B[%s]", clampYT ? "\x2" : " ", clampYB ? "\x2" : " ");
+        snprintf(buf, sizeof(buf), "Clamp Y:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
         py += 5;
 
@@ -11488,10 +11595,10 @@ static void drawInspectorPanel(void)
         else snprintf(buf, sizeof(buf), "Tex flags: 0x%08X", texFlags);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
-        snprintf(buf, sizeof(buf), "Clamp X  L[%s] R[%s]", clampXLText, clampXRText);
+        snprintf(buf, sizeof(buf), "Clamp X:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
-        snprintf(buf, sizeof(buf), "Clamp Y  T[%s] B[%s]", clampYTText, clampYBText);
+        snprintf(buf, sizeof(buf), "Clamp Y:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
         if (texScaleXMixed && texScaleYMixed) {

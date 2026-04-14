@@ -3234,7 +3234,7 @@ static void drawBackground(void)
     const float leftAng   = g_player.angle - g_halfFovRad;
     const float skyRepeat = 4.0f;
     const int32_t oneFixed = 1 << 16;
-    const int viewportHalfHeight = g_viewport_height / 2;
+    const int viewportHalfHeight = g_viewport_height / 1.50;
 
     if (g_viewport_width <= 0 || viewportHalfHeight <= 0) {
         return;
