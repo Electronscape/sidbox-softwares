@@ -101,6 +101,13 @@ void rc3dEditUpdate(float dt,
                     int mouseY,
                     uint32_t mouseButtons,
                     int mouseWheelY);
+
+static void handleEditorUI(int mouseX, int mouseY,
+                           int leftDown, int leftPressed, int leftReleased,
+                           float worldX, float worldY,
+                           float dt);
+
+                           
 void rc3dEditRender(void);
 int rc3dGuiCheckDirty();
 

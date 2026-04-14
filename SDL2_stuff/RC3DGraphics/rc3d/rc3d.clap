@@ -1,4 +1,3 @@
-
 #include "rc3d.h"
 
 #include <math.h>
@@ -6,8 +5,6 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stddef.h>
 
 #include "gfx.h"
 #include "rc3d_map.h"
@@ -18,13 +15,14 @@
 
 #define RC3D_VIEWPORT_LEFT      0
 #define RC3D_VIEWPORT_TOP       0
-#define RC3D_VIEWPORT_WIDTH     SCREEN_W
+#define RC3D_VIEWPORT_WIDTH     SCREEN_W    // these can be adjusted
 #define RC3D_VIEWPORT_HEIGHT    SCREEN_H
 
 int g_viewport_top    = RC3D_VIEWPORT_TOP;
 int g_viewport_left   = RC3D_VIEWPORT_LEFT;
 int g_viewport_width  = RC3D_VIEWPORT_WIDTH;
 int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
+
 
 #define RC3D_DRAW_MINIMAP      1
 #define RC3D_DRAW_HUD          1
@@ -42,10 +40,11 @@ int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
 #define RC3D_TRIG_LUT_SIZE     (1 << RC3D_TRIG_LUT_BITS)
 #define RC3D_TRIG_LUT_MASK     (RC3D_TRIG_LUT_SIZE - 1)
 #define RC3D_MAX_RAY_DIST      40.0f
-#define RC3D_MAX_PORTAL_STEPS  24
+#define RC3D_MAX_PORTAL_STEPS  24   // how many sectors we can look through to render before not bothering anymore
 #define RC3D_MAX_MASKED_TRACE_DEPTH 8
 #define RC3D_MAX_WALL_SPANS_PER_COLUMN 32
 #define RC3D_DEPTH_SCALE       1024.0f
+
 
 int bShowProfiler = 0;
 float g_draw_distance = RC3D_MAX_RAY_DIST;
@@ -61,6 +60,7 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define RC3D_TEX_SIZE          64
 #define RC3D_TEX_MASK          (RC3D_TEX_SIZE - 1)
 
+// colour bank size, palette offset 64, length of each palette back is 64
 #define RC3D_LIGHT_BANK_START            64
 #define RC3D_LIGHT_BANK_SIZE             64
 
@@ -75,15 +75,16 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define RC3D_LIGHT_PLANE_DIST_SCALE      0.98f
 #define RC3D_LIGHT_SPRITE_DIST_SCALE     0.70f
 
-extern uint8_t spr_man[];
+extern uint8_t spr_man[]; // test sprite
+
 
 #define RC3D_TEXID_SPRITE_MAN       RC3D_SPRITE_TEX_MAN
 #define RC3D_TEXID_SPRITE_GRICY     RC3D_SPRITE_TEX_GRICY
-#define RC3D_TEXID_SKYBOX           255
+#define RC3D_TEXID_SKYBOX       255
 
 #define RC3D_SPRITE_TEX_TRANSPARENT 0
-#define RC3D_TEST_SPRITE_WIDTH      0.75f
-#define RC3D_TEST_SPRITE_HEIGHT     0.75f
+#define RC3D_TEST_SPRITE_WIDTH  0.75f
+#define RC3D_TEST_SPRITE_HEIGHT 0.75f
 
 static float g_renderEyeZ = 0.0f;
 static float g_halfFovRad = 0.0f;
@@ -192,42 +193,73 @@ static void rc3dDrawProfiler(void)
     drawText(panelX + 4, textY, "PROFILER (AVG MS)", 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "TOTAL FRAME   %.2f", g_profiler.avgTotalMs);
+    snprintf(
+        buf, sizeof(buf),
+        "TOTAL FRAME   %.2f",
+        g_profiler.avgTotalMs);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SKY/BG        %.2f", g_profiler.avgBackgroundMs);
+    snprintf(
+        buf, sizeof(buf),
+        "SKY/BG        %.2f",
+        g_profiler.avgBackgroundMs);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "WALLS         %.2f", g_profiler.avgWallsMs);
+    snprintf(
+        buf, sizeof(buf),
+        "WALLS         %.2f",
+        g_profiler.avgWallsMs);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SPRITES       %.2f", g_profiler.avgSpritesMs);
+    snprintf(
+        buf, sizeof(buf),
+        "SPRITES       %.2f",
+        g_profiler.avgSpritesMs);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "MINIMAP       %.2f", g_profiler.avgMinimapMs);
+    snprintf(
+        buf, sizeof(buf),
+        "MINIMAP       %.2f",
+        g_profiler.avgMinimapMs);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "RAYS %u  WALL TESTS %u", g_profiler.rays, g_profiler.wallTests);
+    snprintf(
+        buf, sizeof(buf),
+        "RAYS %u  WALL TESTS %u",
+        g_profiler.rays,
+        g_profiler.wallTests);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "PORTAL STEPS %u", g_profiler.portalSteps);
+    snprintf(
+        buf, sizeof(buf),
+        "PORTAL STEPS %u",
+        g_profiler.portalSteps);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SPRITE COLS %u", g_profiler.spriteColumns);
+    snprintf(
+        buf, sizeof(buf),
+        "SPRITE COLS %u",
+        g_profiler.spriteColumns);
     drawText(panelX + 4, textY, buf, 15);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SPRITE TRACES %u  DD %.1f", g_profiler.spriteSectorTraces, g_draw_distance);
+    snprintf(
+        buf, sizeof(buf),
+        "SPRITE TRACES %u  DD %.1f",
+        g_profiler.spriteSectorTraces,
+        g_draw_distance);
     drawText(panelX + 4, textY, buf, 15);
 }
 #endif
+
+
 
 typedef int32_t RC3D_Fixed;
 
@@ -243,10 +275,14 @@ typedef struct {
     RC3D_Fixed yFixed;
     float z;
     float vz;
-    float tHeadbob;
+    float tHeadbob; // headbob 
     float angle;
     int sector;
 } RC3D_Player;
+
+
+
+
 
 typedef struct {
     float t;
@@ -318,6 +354,7 @@ static uint8_t g_lightVariantBlack[256];
 static float g_glowDistScale[RC3D_TEX_WALL_GLOW_MAX + 1u];
 static int g_lightVariantTablesInit = 0;
 
+
 typedef enum {
     RC3D_WALLCLASS_NONE = 0,
     RC3D_WALLCLASS_SOLID,
@@ -348,7 +385,7 @@ typedef struct {
     uint8_t texXMode;
 
     int32_t ownerSector;
-    int32_t backWallIndex;
+    int32_t backWallIndex;   // matching wall in neighbour sector, or -1
 
     float portalOpenBottom;
     float portalOpenTop;
@@ -411,6 +448,8 @@ typedef struct {
     uint8_t threshold;
 } RC3D_ShadeProfile;
 
+
+
 static RC3D_WallCache *g_wallCache = NULL;
 static int g_wallCacheCount = 0;
 static RC3D_SectorCache *g_sectorCache = NULL;
@@ -429,18 +468,15 @@ static uint8_t g_visibleTraceBuilt[SCREEN_W];
 static RC3D_WallDepthSpan g_wallDepthSpans[SCREEN_W][RC3D_MAX_WALL_SPANS_PER_COLUMN];
 static uint8_t g_wallDepthSpanCount[SCREEN_W];
 
-static inline int rc3dViewportScreenX(int sx)
-{
+static inline int rc3dViewportScreenX(int sx){
     return g_viewport_left + sx;
 }
 
-static inline int rc3dViewportScreenY(int sy)
-{
+static inline int rc3dViewportScreenY(int sy){
     return g_viewport_top + sy;
 }
 
-static inline uint8_t *rc3dViewportPixelPtr(int sx, int sy)
-{
+static inline uint8_t *rc3dViewportPixelPtr(int sx, int sy){
     return &fb[(rc3dViewportScreenY(sy) * SCREEN_W) + rc3dViewportScreenX(sx)];
 }
 
@@ -476,7 +512,8 @@ static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float 
 
         cache->rdx = rdx;
         cache->rdy = rdy;
-        cache->planeLightLen = sqrtf((rdx * rdx) + (rdy * rdy)) * RC3D_LIGHT_PLANE_DIST_SCALE;
+        cache->planeLightLen =
+            sqrtf((rdx * rdx) + (rdy * rdy)) * RC3D_LIGHT_PLANE_DIST_SCALE;
 
         rdx += rayStepX;
         rdy += rayStepY;
@@ -485,10 +522,10 @@ static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float 
     g_columnRayCacheCount = g_viewport_width;
 }
 
-static inline void rc3dInvalidateVisibleTraceCache(void)
-{
+static inline void rc3dInvalidateVisibleTraceCache(void){
     memset(g_visibleTraceBuilt, 0, sizeof(g_visibleTraceBuilt));
 }
+
 
 /* ------------------------------------------------------------------------- */
 /* forward decls                                                             */
@@ -497,7 +534,6 @@ static inline void rc3dInvalidateVisibleTraceCache(void)
 static int tryMovePlayerSliding(float moveX, float moveY);
 static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
-static void rc3dResolvePlayerPenetrationInSector(int sectorIndex);
 
 static int findBlockingWallInSectorFixed(
     RC3D_Fixed px,
@@ -512,10 +548,11 @@ static int positionHitsBlockingWallsInSectorFixed(
     RC3D_Fixed radius,
     int sectorIndex);
 
+
+
 void screenupdate(void);
 
-static inline RC3D_Fixed rc3dFloatToFixed(float v)
-{
+static inline RC3D_Fixed rc3dFloatToFixed(float v){
     if (v >= 0.0f) {
         return (RC3D_Fixed)(v * (float)RC3D_FIXED_ONE + 0.5f);
     }
@@ -523,41 +560,30 @@ static inline RC3D_Fixed rc3dFloatToFixed(float v)
     return (RC3D_Fixed)(v * (float)RC3D_FIXED_ONE - 0.5f);
 }
 
-static inline float rc3dFixedToFloat(RC3D_Fixed v)
-{
+static inline float rc3dFixedToFloat(RC3D_Fixed v){
     return (float)v / (float)RC3D_FIXED_ONE;
 }
 
-static inline RC3D_Fixed rc3dFixedMul(RC3D_Fixed a, RC3D_Fixed b)
-{
+static inline RC3D_Fixed rc3dFixedMul(RC3D_Fixed a, RC3D_Fixed b){
     return (RC3D_Fixed)(((int64_t)a * (int64_t)b) >> RC3D_FIXED_SHIFT);
 }
 
-static inline int64_t rc3dFixedSq(RC3D_Fixed v)
-{
+static inline int64_t rc3dFixedSq(RC3D_Fixed v){
     return (int64_t)v * (int64_t)v;
 }
 
-static inline int rc3dSectorIndexValid(int sectorIndex)
-{
-    return g_map && ((unsigned)sectorIndex < (unsigned)g_map->sectorCount);
-}
-
-static inline void rc3dSyncPlayerFloatXY(void)
-{
+static inline void rc3dSyncPlayerFloatXY(void){
     g_player.x = rc3dFixedToFloat(g_player.xFixed);
     g_player.y = rc3dFixedToFloat(g_player.yFixed);
 }
 
-static inline void rc3dSetPlayerWorldXYFixed(RC3D_Fixed x, RC3D_Fixed y)
-{
+static inline void rc3dSetPlayerWorldXYFixed(RC3D_Fixed x, RC3D_Fixed y){
     g_player.xFixed = x;
     g_player.yFixed = y;
     rc3dSyncPlayerFloatXY();
 }
 
-static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, RC3D_Fixed y)
-{
+static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, RC3D_Fixed y){
     if (!sprite) return;
 
     sprite->xFixed = x;
@@ -566,36 +592,33 @@ static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, 
     sprite->y = rc3dFixedToFloat(y);
 }
 
-static inline int rc3dSpriteHandleValid(int spriteId)
-{
+static inline int rc3dSpriteHandleValid(int spriteId){
     return (spriteId >= 0) &&
            (spriteId < RC3D_MAX_SPRITES) &&
            g_sprites[spriteId].inUse;
 }
 
-static void rc3dBuildTrigTables(void)
-{
-    if (g_trigLutInit) {
+static void rc3dBuildTrigTables(void){
+    if (g_trigLutInit)
         return;
-    }
 
     for (int i = 0; i < RC3D_TRIG_LUT_SIZE; ++i) {
-        const float angle = ((float)i * (float)(M_PI * 2.0f)) / (float)RC3D_TRIG_LUT_SIZE;
+        const float angle =
+            ((float)i * (float)(M_PI * 2.0f)) / (float)RC3D_TRIG_LUT_SIZE;
         g_sinLut[i] = sinf(angle);
         g_cosLut[i] = cosf(angle);
     }
 
     g_halfFovRad = (RC3D_FOV_DEG * 0.5f) * (float)(M_PI / 180.0f);
     g_planeScaleConst = tanf(g_halfFovRad);
-    g_projPlaneConst = ((float)g_viewport_width * 0.5f) / g_planeScaleConst;
-    g_camStepConst = (g_viewport_width > 1) ? (2.0f / (float)(g_viewport_width - 1)) : 0.0f;
+    g_projPlaneConst  = ((float)g_viewport_width * 0.5f) / g_planeScaleConst;
+    g_camStepConst    = (g_viewport_width > 1) ? (2.0f / (float)(g_viewport_width - 1)) : 0.0f;
     g_angleToLutScale = (float)RC3D_TRIG_LUT_SIZE / (float)(M_PI * 2.0f);
 
     g_trigLutInit = 1;
 }
 
-static inline int rc3dAngleToLutIndex(float angle)
-{
+static inline int rc3dAngleToLutIndex(float angle){
     const float scaled = angle * g_angleToLutScale;
     int idx = (int)((scaled >= 0.0f) ? (scaled + 0.5f) : (scaled - 0.5f));
 
@@ -604,23 +627,19 @@ static inline int rc3dAngleToLutIndex(float angle)
     return idx & RC3D_TRIG_LUT_MASK;
 }
 
-static inline void rc3dLookupAngleTrig(float angle, float *outCos, float *outSin)
-{
+static inline void rc3dLookupAngleTrig(float angle, float *outCos, float *outSin){
     const int idx = rc3dAngleToLutIndex(angle);
 
     if (outCos) *outCos = g_cosLut[idx];
     if (outSin) *outSin = g_sinLut[idx];
 }
 
-static inline uint16_t rc3dEncodeDepth(float dist)
-{
-    if (dist <= 0.0f) {
+static inline uint16_t rc3dEncodeDepth(float dist){
+    if (dist <= 0.0f)
         return 0;
-    }
 
-    if (dist >= g_draw_distance) {
+    if (dist >= g_draw_distance)
         return UINT16_MAX - 1u;
-    }
 
     {
         const float scaled = dist * RC3D_DEPTH_SCALE;
@@ -632,13 +651,11 @@ static inline uint16_t rc3dEncodeDepth(float dist)
     }
 }
 
-static inline void rc3dClearWallDepthSpans(void)
-{
+static inline void rc3dClearWallDepthSpans(void){
     memset(g_wallDepthSpanCount, 0, sizeof(g_wallDepthSpanCount));
 }
 
-static inline void rc3dRecordWallDepthSpan(int sx, int y0, int y1, float hitDist)
-{
+static inline void rc3dRecordWallDepthSpan(int sx, int y0, int y1, float hitDist){
     uint8_t count;
 
     if ((unsigned)sx >= (unsigned)g_viewport_width) return;
@@ -733,7 +750,8 @@ static void rc3dBuildLightVariantTables(void)
         if (glow >= RC3D_TEX_WALL_GLOW_MAX) {
             g_glowDistScale[glow] = 0.0f;
         } else {
-            g_glowDistScale[glow] = 1.0f - ((float)glow / (float)RC3D_TEX_WALL_GLOW_MAX);
+            g_glowDistScale[glow] =
+                1.0f - ((float)glow / (float)RC3D_TEX_WALL_GLOW_MAX);
         }
     }
 
@@ -758,7 +776,8 @@ static inline uint8_t rc3dWallGlowFromFlags(uint32_t texture_flags)
 static inline void rc3dBuildShadeProfile(
     float sampleDist,
     uint8_t glowLevel,
-    RC3D_ShadeProfile *outProfile)
+    RC3D_ShadeProfile *outProfile
+)
 {
     const float brightRange = g_lightBrightRange;
     const float midRange = g_lightMidRange;
@@ -784,7 +803,8 @@ static inline void rc3dBuildShadeProfile(
     }
 
     {
-        const float brightBlendWidth = rc3dMaxf(brightRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
+        const float brightBlendWidth =
+            rc3dMaxf(brightRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
         const float brightBlendStart = brightEnd - brightBlendWidth;
 
         if (sampleDist <= brightBlendStart) {
@@ -794,7 +814,8 @@ static inline void rc3dBuildShadeProfile(
         }
 
         if ((brightBlendWidth > RC3D_EPSILON) && (sampleDist < brightEnd)) {
-            const float blend = rc3dSmoothStep01((sampleDist - brightBlendStart) / brightBlendWidth);
+            const float blend = rc3dSmoothStep01(
+                (sampleDist - brightBlendStart) / brightBlendWidth);
             outProfile->mode = RC3D_SHADEMODE_DITHER_BRIGHT_MID;
             outProfile->threshold = (uint8_t)(blend * 255.0f);
             return;
@@ -802,7 +823,8 @@ static inline void rc3dBuildShadeProfile(
     }
 
     {
-        const float midBlendWidth = rc3dMaxf(midRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
+        const float midBlendWidth =
+            rc3dMaxf(midRange * RC3D_LIGHT_BRIGHT_BLEND_RATIO, 0.0f);
         const float midBlendStart = midEnd - midBlendWidth;
 
         if (sampleDist <= midBlendStart) {
@@ -812,7 +834,8 @@ static inline void rc3dBuildShadeProfile(
         }
 
         if ((midBlendWidth > RC3D_EPSILON) && (sampleDist < midEnd)) {
-            const float blend = rc3dSmoothStep01((sampleDist - midBlendStart) / midBlendWidth);
+            const float blend = rc3dSmoothStep01(
+                (sampleDist - midBlendStart) / midBlendWidth);
             outProfile->mode = RC3D_SHADEMODE_DITHER_MID_DARK;
             outProfile->threshold = (uint8_t)(blend * 255.0f);
             return;
@@ -826,7 +849,8 @@ static inline void rc3dBuildShadeProfile(
     }
 
     if (sampleDist < darkEnd) {
-        const float blend = rc3dSmoothStep01((sampleDist - midEnd) / darkRange);
+        const float blend = rc3dSmoothStep01(
+            (sampleDist - midEnd) / darkRange);
         outProfile->mode = RC3D_SHADEMODE_DITHER_DARK_BLACK;
         outProfile->threshold = (uint8_t)(blend * 255.0f);
         return;
@@ -858,7 +882,8 @@ static inline uint8_t rc3dApplyShadeProfileToTexel(
     int sampleU,
     int sampleV,
     uint8_t texId,
-    const RC3D_ShadeProfile *shadeProfile)
+    const RC3D_ShadeProfile *shadeProfile
+)
 {
     if (texel == RC3D_SPRITE_TEX_TRANSPARENT || !shadeProfile) {
         return texel;
@@ -897,10 +922,11 @@ static inline uint8_t rc3dApplyShadeProfileToTexel(
     }
 }
 
+
 extern uint8_t spr_oiiacat[];
 extern uint8_t tex_notset[];
 extern uint8_t spr_gricy1[];
-extern uint8_t tex_skybox[RC3D_SKYBOX_W * RC3D_SKYBOX_H];
+extern uint8_t tex_skybox[RC3D_SKYBOX_W * RC3D_SKYBOX_H];    // the skybox
 
 static void rc3dBuildDefaultTextures(void)
 {
@@ -908,6 +934,7 @@ static void rc3dBuildDefaultTextures(void)
     int32_t tindex = 0;
     char filename[256];
 
+    
     for (i = 0; i < 256; ++i) {
         tindex = 0;
         for (y = 0; y < RC3D_TEX_SIZE; ++y) {
@@ -917,14 +944,15 @@ static void rc3dBuildDefaultTextures(void)
         }
     }
 
-    for (tindex = 0; tindex < 255; tindex++) {
+    // one less as thats the sky box
+    for(tindex = 0; tindex < 255; tindex++){
         snprintf(filename, sizeof(filename), "./textures/%02u.ppb", (unsigned)tindex);
         LoadPPB(filename, g_rc3dTextures[tindex].pix);
     }
 
     snprintf(filename, sizeof(filename), "./textures/255.ppb");
     LoadPPB(filename, tex_skybox);
-
+    
     tindex = 0;
     for (y = 0; y < RC3D_TEX_SIZE; ++y) {
         for (x = 0; x < RC3D_TEX_SIZE; ++x) {
@@ -934,6 +962,7 @@ static void rc3dBuildDefaultTextures(void)
         }
     }
 
+
     g_rc3dTexturesInit = 1;
 }
 
@@ -942,14 +971,16 @@ static void rc3dBuildDefaultTextures(void)
 
 static inline float rc3dWallTexAngleFromFlags(uint32_t texture_flags)
 {
-    const uint32_t packed = (texture_flags & RC3D_TEX_WALL_ANGLE_MASK) >> RC3D_TEX_WALL_ANGLE_SHIFT;
+    const uint32_t packed =
+        (texture_flags & RC3D_TEX_WALL_ANGLE_MASK) >> RC3D_TEX_WALL_ANGLE_SHIFT;
+
     return (float)packed * ((float)(M_PI * 2.0) / 65536.0f);
 }
 
 /* ------------------------------------------------------------------------- */
 /* binary map loading                                                        */
 /* ------------------------------------------------------------------------- */
-
+extern uint32_t clut[256];
 extern uint32_t clut[256];
 
 void rc3dPreparePalette(void)
@@ -967,8 +998,8 @@ void rc3dPreparePalette(void)
 
             uint8_t a = 0xff;
             uint8_t r = (src >> 16) & 0xFF;
-            uint8_t g = (src >> 8) & 0xFF;
-            uint8_t b = (src >> 0) & 0xFF;
+            uint8_t g = (src >> 8)  & 0xFF;
+            uint8_t b = (src >> 0)  & 0xFF;
 
             r = (uint8_t)(r * fade[step]);
             g = (uint8_t)(g * fade[step]);
@@ -977,7 +1008,7 @@ void rc3dPreparePalette(void)
             clut[128 + (step * 64) + p] =
                 ((uint32_t)a << 24) |
                 ((uint32_t)r << 16) |
-                ((uint32_t)g << 8) |
+                ((uint32_t)g << 8)  |
                 ((uint32_t)b << 0);
         }
     }
@@ -1037,10 +1068,15 @@ int rc3dSpriteCreate(float x, float y, float width, float height, uint8_t texId)
         sprite->inUse = 1u;
         sprite->active = 1u;
         sprite->texId = texId;
-        sprite->width = (width > RC3D_EPSILON) ? width : RC3D_TEST_SPRITE_WIDTH;
-        sprite->height = (height > RC3D_EPSILON) ? height : RC3D_TEST_SPRITE_HEIGHT;
+        sprite->width =
+            (width > RC3D_EPSILON) ? width : RC3D_TEST_SPRITE_WIDTH;
+        sprite->height =
+            (height > RC3D_EPSILON) ? height : RC3D_TEST_SPRITE_HEIGHT;
 
-        rc3dSetSpriteWorldXYFixed(sprite, rc3dFloatToFixed(x), rc3dFloatToFixed(y));
+        rc3dSetSpriteWorldXYFixed(
+            sprite,
+            rc3dFloatToFixed(x),
+            rc3dFloatToFixed(y));
         rc3dRefreshSpritePlacement(sprite);
         return i;
     }
@@ -1072,7 +1108,10 @@ void rc3dSpriteSetPosition(int spriteId, float x, float y)
         return;
     }
 
-    rc3dSetSpriteWorldXYFixed(&g_sprites[spriteId], rc3dFloatToFixed(x), rc3dFloatToFixed(y));
+    rc3dSetSpriteWorldXYFixed(
+        &g_sprites[spriteId],
+        rc3dFloatToFixed(x),
+        rc3dFloatToFixed(y));
     rc3dRefreshSpritePlacement(&g_sprites[spriteId]);
 }
 
@@ -1082,7 +1121,10 @@ void rc3dSpriteSetPositionFixed(int spriteId, int32_t xFixed, int32_t yFixed)
         return;
     }
 
-    rc3dSetSpriteWorldXYFixed(&g_sprites[spriteId], (RC3D_Fixed)xFixed, (RC3D_Fixed)yFixed);
+    rc3dSetSpriteWorldXYFixed(
+        &g_sprites[spriteId],
+        (RC3D_Fixed)xFixed,
+        (RC3D_Fixed)yFixed);
     rc3dRefreshSpritePlacement(&g_sprites[spriteId]);
 }
 
@@ -1157,7 +1199,8 @@ static int rc3dBuildFixedVertCacheForCurrentMap(void)
         return 1;
     }
 
-    g_fixedVerts = (RC3D_FixedVec2 *)malloc(sizeof(RC3D_FixedVec2) * (size_t)g_map->vertCount);
+    g_fixedVerts =
+        (RC3D_FixedVec2 *)malloc(sizeof(RC3D_FixedVec2) * (size_t)g_map->vertCount);
     if (!g_fixedVerts) {
         return 0;
     }
@@ -1243,13 +1286,13 @@ static int rc3dBuildSectorCacheForCurrentMap(void)
 
         if (fabsf(floorScaleX) < RC3D_EPSILON) floorScaleX = 1.0f;
         if (fabsf(floorScaleY) < RC3D_EPSILON) floorScaleY = 1.0f;
-        if (fabsf(ceilScaleX) < RC3D_EPSILON) ceilScaleX = 1.0f;
-        if (fabsf(ceilScaleY) < RC3D_EPSILON) ceilScaleY = 1.0f;
+        if (fabsf(ceilScaleX) < RC3D_EPSILON)  ceilScaleX = 1.0f;
+        if (fabsf(ceilScaleY) < RC3D_EPSILON)  ceilScaleY = 1.0f;
 
         cache->floorInvScaleX = 1.0f / floorScaleX;
         cache->floorInvScaleY = 1.0f / floorScaleY;
-        cache->ceilInvScaleX = 1.0f / ceilScaleX;
-        cache->ceilInvScaleY = 1.0f / ceilScaleY;
+        cache->ceilInvScaleX  = 1.0f / ceilScaleX;
+        cache->ceilInvScaleY  = 1.0f / ceilScaleY;
 
         if (fabsf(sec->floorTexAngle) > 0.0001f) {
             cache->floorCos = cosf(sec->floorTexAngle);
@@ -1283,6 +1326,8 @@ static int rc3dBuildSectorCacheForCurrentMap(void)
     return 1;
 }
 
+
+
 static int rc3dBuildWallCacheForCurrentMap(void)
 {
     rc3dFreeWallCache();
@@ -1303,6 +1348,7 @@ static int rc3dBuildWallCacheForCurrentMap(void)
         const RC3D_Vec2 *a = &g_map->verts[w->v0];
         const RC3D_Vec2 *b = &g_map->verts[w->v1];
         const float texAngle = rc3dWallTexAngleFromFlags(w->texture_flags);
+
         RC3D_WallCache *wc = &g_wallCache[i];
 
         wc->dx = b->x - a->x;
@@ -1406,7 +1452,7 @@ static int rc3dBuildWallCacheForCurrentMap(void)
 
         const RC3D_Sector *nextSec = &g_map->sectors[w->neighbour];
         const int nextStart = nextSec->wallStart;
-        const int nextEnd = nextStart + nextSec->wallCount;
+        const int nextEnd   = nextStart + nextSec->wallCount;
 
         for (int j = nextStart; j < nextEnd; ++j) {
             const RC3D_Wall *tw = &g_map->walls[j];
@@ -1426,13 +1472,6 @@ static int rc3dBuildWallCacheForCurrentMap(void)
 
     rc3dRefreshDynamicPortalCache();
     return 1;
-}
-
-static void rc3dRebuildCurrentMapCaches(void)
-{
-    rc3dBuildFixedVertCacheForCurrentMap();
-    rc3dBuildWallCacheForCurrentMap();
-    rc3dBuildSectorCacheForCurrentMap();
 }
 
 static void rc3dRefreshDynamicPortalCache(void)
@@ -1482,11 +1521,15 @@ static void rc3dRefreshDynamicPortalCache(void)
 
             wc->portalOpenTop = openTop;
             wc->portalOpenBottom = openBottom;
-            wc->portalHasUpper = (sec->ceilHeight > (openTop + RC3D_EPSILON)) ? 1u : 0u;
-            wc->portalHasLower = (sec->floorHeight < (openBottom - RC3D_EPSILON)) ? 1u : 0u;
+            wc->portalHasUpper =
+                (sec->ceilHeight > (openTop + RC3D_EPSILON)) ? 1u : 0u;
+            wc->portalHasLower =
+                (sec->floorHeight < (openBottom - RC3D_EPSILON)) ? 1u : 0u;
         }
     }
 }
+
+
 
 static void rc3dBuildInvDTable(void)
 {
@@ -1501,6 +1544,12 @@ static void rc3dBuildInvDTable(void)
     g_invDTableInit = 1;
 }
 
+
+
+
+
+
+
 static int readExact(FILE *f, void *dst, size_t size)
 {
     return fread(dst, 1, size, f) == size;
@@ -1510,8 +1559,8 @@ void rc3dMapFreeBinary(RC3D_Map *map)
 {
     if (!map) return;
 
-    if (map->verts) free((void *)map->verts);
-    if (map->walls) free((void *)map->walls);
+    if (map->verts)   free((void *)map->verts);
+    if (map->walls)   free((void *)map->walls);
     if (map->sectors) free((void *)map->sectors);
     if (map->objects) free((void *)map->objects);
 
@@ -1530,6 +1579,8 @@ void rc3dMapFreeBinary(RC3D_Map *map)
     map->startY = 0.0f;
     map->startAngle = 0.0f;
 }
+
+
 
 int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 {
@@ -1595,8 +1646,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         return 0;
     }
 
-    verts = vertCount ? (RC3D_Vec2 *)malloc(sizeof(RC3D_Vec2) * vertCount) : NULL;
-    walls = wallCount ? (RC3D_Wall *)malloc(sizeof(RC3D_Wall) * wallCount) : NULL;
+    verts   = vertCount   ? (RC3D_Vec2 *)malloc(sizeof(RC3D_Vec2) * vertCount)     : NULL;
+    walls   = wallCount   ? (RC3D_Wall *)malloc(sizeof(RC3D_Wall) * wallCount)     : NULL;
     sectors = sectorCount ? (RC3D_Sector *)malloc(sizeof(RC3D_Sector) * sectorCount) : NULL;
     objects = objectCount ? (RC3D_Object *)malloc(sizeof(RC3D_Object) * objectCount) : NULL;
 
@@ -1887,9 +1938,13 @@ int rc3dLoadMapBinary(const char *path)
     g_loadedMapValid = 1;
     g_map = &g_loadedMap;
 
-    rc3dRebuildCurrentMapCaches();
+    rc3dBuildFixedVertCacheForCurrentMap();
+    rc3dBuildWallCacheForCurrentMap();
+    rc3dBuildSectorCacheForCurrentMap();
+
     return 1;
 }
+
 
 void rc3dUnloadMapBinary(void)
 {
@@ -1899,8 +1954,12 @@ void rc3dUnloadMapBinary(void)
     }
 
     g_map = &g_rc3dDemoMap;
-    rc3dRebuildCurrentMapCaches();
+    rc3dBuildFixedVertCacheForCurrentMap();
+    rc3dBuildWallCacheForCurrentMap();
+    rc3dBuildSectorCacheForCurrentMap();
 }
+
+
 
 /* ------------------------------------------------------------------------- */
 /* movement / collision                                                      */
@@ -1909,7 +1968,7 @@ void rc3dUnloadMapBinary(void)
 static float wrapAngle(float a)
 {
     while (a < -(float)M_PI) a += (float)(M_PI * 2.0f);
-    while (a > (float)M_PI) a -= (float)(M_PI * 2.0f);
+    while (a >  (float)M_PI) a -= (float)(M_PI * 2.0f);
     return a;
 }
 
@@ -1963,12 +2022,14 @@ static void rc3dRefreshViewport(void)
 
     if (g_planeScaleConst > RC3D_EPSILON) {
         g_projPlaneConst = ((float)g_viewport_width * 0.5f) / g_planeScaleConst;
-        g_camStepConst = (g_viewport_width > 1) ? (2.0f / (float)(g_viewport_width - 1)) : 0.0f;
+        g_camStepConst =
+            (g_viewport_width > 1) ? (2.0f / (float)(g_viewport_width - 1)) : 0.0f;
     } else {
         g_projPlaneConst = 0.0f;
         g_camStepConst = 0.0f;
     }
 }
+
 
 static int pointInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int sectorIndex)
 {
@@ -1981,7 +2042,7 @@ static int pointInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int sectorIndex)
 
     int inside = 0;
     const int start = sec->wallStart;
-    const int end = start + sec->boundaryCount;
+    const int end   = start + sec->boundaryCount;
 
     if (secCache) {
         if (px < secCache->minX || px > secCache->maxX ||
@@ -2077,15 +2138,15 @@ static int rc3dBuildPortalView(const RC3D_Wall *w, int sectorIndex, RC3D_PortalV
 
 static int findSectorForPointFixed(RC3D_Fixed x, RC3D_Fixed y)
 {
-    const float playerFeet = g_player.z - RC3D_PLAYER_EYE_HEIGHT;
+    const float playerFeet   = g_player.z - RC3D_PLAYER_EYE_HEIGHT;
     const float playerHeight = PLAYER_HEIGHT;
-    const float playerHead = playerFeet + playerHeight;
-    const float maxStepUp = PLAYER_STEPUP;
+    const float playerHead   = playerFeet + playerHeight;
+    const float maxStepUp    = PLAYER_STEPUP;
 
     int bestSector = -1;
     float bestScore = 1e30f;
 
-    if (rc3dSectorIndexValid(g_player.sector)) {
+    if ((unsigned)g_player.sector < (unsigned)g_map->sectorCount) {
         const RC3D_Sector *sec = &g_map->sectors[g_player.sector];
 
         if (pointInSectorFixed(x, y, g_player.sector) &&
@@ -2143,8 +2204,8 @@ static int64_t pointSegmentDistSqFixed(
     RC3D_Fixed ax, RC3D_Fixed ay,
     RC3D_Fixed bx, RC3D_Fixed by,
     RC3D_Fixed *outClosestX,
-    RC3D_Fixed *outClosestY)
-{
+    RC3D_Fixed *outClosestY
+){
     const RC3D_Fixed abx = bx - ax;
     const RC3D_Fixed aby = by - ay;
     const RC3D_Fixed apx = px - ax;
@@ -2244,8 +2305,8 @@ static int findBlockingContactInSectorFixed(
     int sectorIndex,
     float fallbackNX,
     float fallbackNY,
-    RC3D_BlockingContact *outContact)
-{
+    RC3D_BlockingContact *outContact
+){
     if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
         return 0;
     }
@@ -2287,7 +2348,11 @@ static int findBlockingContactInSectorFixed(
                 RC3D_Fixed dy;
                 int64_t distSq;
 
-                distSq = pointSegmentDistSqFixed(px, py, a->x, a->y, b->x, b->y, &cx, &cy);
+                distSq = pointSegmentDistSqFixed(
+                    px, py,
+                    a->x, a->y,
+                    b->x, b->y,
+                    &cx, &cy);
 
                 if (distSq >= bestDistSq) {
                     continue;
@@ -2313,9 +2378,10 @@ static int findBlockingContactInSectorFixed(
                     } else if (abLenSq > 0) {
                         const float abxF = rc3dFixedToFloat(abx);
                         const float abyF = rc3dFixedToFloat(aby);
-                        const float invWallLen = 1.0f / sqrtf((abxF * abxF) + (abyF * abyF));
+                        const float invWallLen =
+                            1.0f / sqrtf((abxF * abxF) + (abyF * abyF));
                         nx = -abyF * invWallLen;
-                        ny = abxF * invWallLen;
+                        ny =  abxF * invWallLen;
 
                         if (((nx * fallbackNX) + (ny * fallbackNY)) < 0.0f) {
                             nx = -nx;
@@ -2351,8 +2417,8 @@ static int findBlockingContactAtPositionFixed(
     int newSector,
     float fallbackNX,
     float fallbackNY,
-    RC3D_BlockingContact *outContact)
-{
+    RC3D_BlockingContact *outContact
+){
     RC3D_BlockingContact best;
     int found = 0;
     float bestPenetration = -1.0f;
@@ -2363,7 +2429,9 @@ static int findBlockingContactAtPositionFixed(
     best.normalY = fallbackNY;
     best.penetration = 0.0f;
 
-    if (findBlockingContactInSectorFixed(px, py, radius, currentSector, fallbackNX, fallbackNY, &best)) {
+    if (findBlockingContactInSectorFixed(
+            px, py, radius, currentSector, fallbackNX, fallbackNY, &best))
+    {
         found = 1;
         bestPenetration = best.penetration;
     }
@@ -2371,8 +2439,10 @@ static int findBlockingContactAtPositionFixed(
     if (newSector != currentSector && newSector >= 0) {
         RC3D_BlockingContact other;
 
-        if (findBlockingContactInSectorFixed(px, py, radius, newSector, fallbackNX, fallbackNY, &other) &&
-            (!found || other.penetration > bestPenetration)) {
+        if (findBlockingContactInSectorFixed(
+                px, py, radius, newSector, fallbackNX, fallbackNY, &other) &&
+            (!found || other.penetration > bestPenetration))
+        {
             best = other;
             found = 1;
             bestPenetration = other.penetration;
@@ -2462,6 +2532,7 @@ static int rc3dTryOrbitalUnstuckInSector(int sectorIndex)
             {
                 const float dx = cosf(angle) * dist;
                 const float dy = sinf(angle) * dist;
+
                 const RC3D_Fixed testX = startX + rc3dFloatToFixed(dx);
                 const RC3D_Fixed testY = startY + rc3dFloatToFixed(dy);
 
@@ -2478,6 +2549,8 @@ static int rc3dTryOrbitalUnstuckInSector(int sectorIndex)
 
     return 0;
 }
+
+
 
 static void rc3dResolvePlayerPenetrationInSector(int sectorIndex)
 {
@@ -2515,15 +2588,21 @@ static void rc3dResolvePlayerPenetrationInSector(int sectorIndex)
         }
 
         {
-            const float pushDist = contact.penetration + RC3D_COLLISION_SKIN + RC3D_EPSILON;
-            const RC3D_Fixed pushX = rc3dFloatToFixed(contact.normalX * pushDist);
-            const RC3D_Fixed pushY = rc3dFloatToFixed(contact.normalY * pushDist);
+            const float pushDist =
+                contact.penetration + RC3D_COLLISION_SKIN + RC3D_EPSILON;
+
+            const RC3D_Fixed pushX =
+                rc3dFloatToFixed(contact.normalX * pushDist);
+            const RC3D_Fixed pushY =
+                rc3dFloatToFixed(contact.normalY * pushDist);
 
             if ((pushX == 0) && (pushY == 0)) {
                 break;
             }
 
-            rc3dSetPlayerWorldXYFixed(g_player.xFixed + pushX, g_player.yFixed + pushY);
+            rc3dSetPlayerWorldXYFixed(
+                g_player.xFixed + pushX,
+                g_player.yFixed + pushY);
         }
     }
 
@@ -2532,38 +2611,12 @@ static void rc3dResolvePlayerPenetrationInSector(int sectorIndex)
     }
 }
 
-static int rc3dSectorNeedsDropResolve(int oldSector, int newSector)
-{
-    if (!rc3dSectorIndexValid(oldSector) || !rc3dSectorIndexValid(newSector)) {
-        return 0;
-    }
-
-    return g_map->sectors[newSector].floorHeight <
-           (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON);
-}
-
-static int rc3dCommitPlayerMoveFixed(RC3D_Fixed newX, RC3D_Fixed newY, int newSector, int oldSector)
-{
-    if (newSector < 0) {
-        return 0;
-    }
-
-    rc3dSetPlayerWorldXYFixed(newX, newY);
-    g_player.sector = newSector;
-
-    if (rc3dSectorNeedsDropResolve(oldSector, newSector)) {
-        rc3dResolvePlayerPenetrationInSector(newSector);
-    }
-
-    return 1;
-}
-
 static int findBlockingWallInSectorFixed(
     RC3D_Fixed px, RC3D_Fixed py,
     RC3D_Fixed radius,
     int sectorIndex,
-    int *outWallIndex)
-{
+    int *outWallIndex
+){
     if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
         return 0;
     }
@@ -2574,7 +2627,7 @@ static int findBlockingWallInSectorFixed(
     const int64_t radiusSq = rc3dFixedSq(radius);
 
     const int start = sec->wallStart;
-    const int end = start + sec->wallCount;
+    const int end   = start + sec->wallCount;
 
     for (int wi = start; wi < end; ++wi) {
         const RC3D_Wall *w = &walls[wi];
@@ -2604,6 +2657,7 @@ static int positionHitsBlockingWallsInSectorFixed(
     return findBlockingWallInSectorFixed(px, py, radius, sectorIndex, NULL);
 }
 
+
 static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
 {
     const RC3D_Fixed radius = rc3dFloatToFixed(PLAYER_RADIUS);
@@ -2615,22 +2669,31 @@ static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
     }
 
     if (newSector != g_player.sector) {
-        if (rc3dSectorIndexValid(g_player.sector) && rc3dSectorIndexValid(newSector)) {
+        if ((unsigned)g_player.sector < (unsigned)g_map->sectorCount &&
+            (unsigned)newSector < (unsigned)g_map->sectorCount)
+        {
             const float fromFloor = g_map->sectors[g_player.sector].floorHeight;
-            const float toFloor = g_map->sectors[newSector].floorHeight;
+            const float toFloor   = g_map->sectors[newSector].floorHeight;
 
+            /* dropping off an edge:
+               allow the sector transition even if the destination sector's
+               copy of the ledge wall is still touching the player radius */
             if (toFloor < (fromFloor - RC3D_EPSILON)) {
                 skipNewSectorWallCheck = 1;
             }
         }
     }
 
-    if (positionHitsBlockingWallsInSectorFixed(px, py, radius, g_player.sector)) {
+    if (positionHitsBlockingWallsInSectorFixed(
+            px, py, radius, g_player.sector))
+    {
         blocked = 1;
     }
 
     if (!skipNewSectorWallCheck && newSector != g_player.sector) {
-        if (positionHitsBlockingWallsInSectorFixed(px, py, radius, newSector)) {
+        if (positionHitsBlockingWallsInSectorFixed(
+                px, py, radius, newSector))
+        {
             blocked = 1;
         }
     }
@@ -2639,6 +2702,9 @@ static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
         return 1;
     }
 
+    /* important bit:
+       if we're already slightly inside a wall, allow movement that REDUCES
+       the penetration instead of freezing the player in place */
     {
         RC3D_BlockingContact currentContact;
         RC3D_BlockingContact nextContact;
@@ -2677,6 +2743,7 @@ static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
     return 0;
 }
 
+
 static int tryMovePlayerSliding(float moveX, float moveY)
 {
     const int oldSector = g_player.sector;
@@ -2706,7 +2773,20 @@ static int tryMovePlayerSliding(float moveX, float moveY)
         const int newSector = findSectorForPointFixed(tryX, tryY);
 
         if (canMoveToPositionFixed(tryX, tryY, newSector)) {
-            return rc3dCommitPlayerMoveFixed(tryX, tryY, newSector, oldSector);
+            rc3dSetPlayerWorldXYFixed(tryX, tryY);
+            g_player.sector = newSector;
+
+            if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                (unsigned)newSector < (unsigned)g_map->sectorCount)
+            {
+                if (g_map->sectors[newSector].floorHeight <
+                    (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                {
+                    rc3dResolvePlayerPenetrationInSector(newSector);
+                }
+            }
+
+            return 1;
         }
 
         {
@@ -2740,12 +2820,28 @@ static int tryMovePlayerSliding(float moveX, float moveY)
                     const float slideAmt = (moveStepX * wallX) + (moveStepY * wallY);
                     const float slideX = wallX * slideAmt;
                     const float slideY = wallY * slideAmt;
-                    const RC3D_Fixed slideTryX = rc3dFloatToFixed(startXFloat + slideX + nudgeX);
-                    const RC3D_Fixed slideTryY = rc3dFloatToFixed(startYFloat + slideY + nudgeY);
+
+                    const RC3D_Fixed slideTryX =
+                        rc3dFloatToFixed(startXFloat + slideX + nudgeX);
+                    const RC3D_Fixed slideTryY =
+                        rc3dFloatToFixed(startYFloat + slideY + nudgeY);
                     const int slideSector = findSectorForPointFixed(slideTryX, slideTryY);
 
                     if (canMoveToPositionFixed(slideTryX, slideTryY, slideSector)) {
-                        return rc3dCommitPlayerMoveFixed(slideTryX, slideTryY, slideSector, oldSector);
+                        rc3dSetPlayerWorldXYFixed(slideTryX, slideTryY);
+                        g_player.sector = slideSector;
+
+                        if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                            (unsigned)slideSector < (unsigned)g_map->sectorCount)
+                        {
+                            if (g_map->sectors[slideSector].floorHeight <
+                                (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                            {
+                                rc3dResolvePlayerPenetrationInSector(slideSector);
+                            }
+                        }
+
+                        return 1;
                     }
                 }
             }
@@ -2758,7 +2854,20 @@ static int tryMovePlayerSliding(float moveX, float moveY)
         const int xSector = findSectorForPointFixed(xOnlyX, xOnlyY);
 
         if (canMoveToPositionFixed(xOnlyX, xOnlyY, xSector)) {
-            return rc3dCommitPlayerMoveFixed(xOnlyX, xOnlyY, xSector, oldSector);
+            rc3dSetPlayerWorldXYFixed(xOnlyX, xOnlyY);
+            g_player.sector = xSector;
+
+            if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                (unsigned)xSector < (unsigned)g_map->sectorCount)
+            {
+                if (g_map->sectors[xSector].floorHeight <
+                    (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                {
+                    rc3dResolvePlayerPenetrationInSector(xSector);
+                }
+            }
+
+            return 1;
         }
     }
 
@@ -2768,12 +2877,27 @@ static int tryMovePlayerSliding(float moveX, float moveY)
         const int ySector = findSectorForPointFixed(yOnlyX, yOnlyY);
 
         if (canMoveToPositionFixed(yOnlyX, yOnlyY, ySector)) {
-            return rc3dCommitPlayerMoveFixed(yOnlyX, yOnlyY, ySector, oldSector);
+            rc3dSetPlayerWorldXYFixed(yOnlyX, yOnlyY);
+            g_player.sector = ySector;
+
+            if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                (unsigned)ySector < (unsigned)g_map->sectorCount)
+            {
+                if (g_map->sectors[ySector].floorHeight <
+                    (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                {
+                    rc3dResolvePlayerPenetrationInSector(ySector);
+                }
+            }
+
+            return 1;
         }
     }
 
     return 0;
 }
+
+
 
 /* ------------------------------------------------------------------------- */
 /* drawing helpers                                                           */
@@ -2795,6 +2919,7 @@ static inline void drawVerticalSpanFast(int x, int y0, int y1, uint8_t col)
     }
 }
 
+
 static inline void drawTexturedPlaneSpan(
     int sx,
     int y0,
@@ -2806,8 +2931,8 @@ static inline void drawTexturedPlaneSpan(
     uint8_t glowLevel,
     int horizon,
     const RC3D_Sector *sec,
-    int isCeiling)
-{
+    int isCeiling
+){
     if (texId == RC3D_TEXID_SKYBOX) return;
     if (!sec) return;
     if ((unsigned)sx >= (unsigned)g_viewport_width) return;
@@ -2823,7 +2948,8 @@ static inline void drawTexturedPlaneSpan(
         const float eyeY = g_player.y;
         const float eyeZ = g_renderEyeZ;
         const float planeFactor = (planeZ - eyeZ) * projPlaneGlobal;
-        float rayLen = sqrtf((rayDirX * rayDirX) + (rayDirY * rayDirY)) * RC3D_LIGHT_PLANE_DIST_SCALE;
+        float rayLen =
+            sqrtf((rayDirX * rayDirX) + (rayDirY * rayDirY)) * RC3D_LIGHT_PLANE_DIST_SCALE;
         const float *invTable = &g_invDTable[SCREEN_H];
         const uint8_t *texels = g_rc3dTextures[texId].pix;
 
@@ -2840,7 +2966,11 @@ static inline void drawTexturedPlaneSpan(
             }
         }
 
-        if (secCache && (isCeiling ? secCache->ceilSimple : secCache->floorSimple)) {
+        /* ------------------------------------------------------------- */
+        /* FAST PATH: no rotation, no scaling                            */
+        /* ------------------------------------------------------------- */
+        if (secCache && (isCeiling ? secCache->ceilSimple : secCache->floorSimple))
+        {
             for (int y = y0; y <= y1; ++y) {
                 const int d = horizon - y;
 
@@ -2850,7 +2980,8 @@ static inline void drawTexturedPlaneSpan(
                     const float sampleDist = fabsf(t) * rayLen;
                     const int tx = (int)((eyeX + (rayDirX * t)) * (float)RC3D_TEX_SIZE);
                     const int ty = (int)((eyeY + (rayDirY * t)) * (float)RC3D_TEX_SIZE);
-                    const uint8_t texel = texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+                    const uint8_t texel =
+                        texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
                     rc3dBuildShadeProfile(sampleDist, glowLevel, &shadeProfile);
                     *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
@@ -2862,6 +2993,9 @@ static inline void drawTexturedPlaneSpan(
             return;
         }
 
+        /* ------------------------------------------------------------- */
+        /* general path                                                  */
+        /* ------------------------------------------------------------- */
         {
             const float ca =
                 secCache ? (isCeiling ? secCache->ceilCos : secCache->floorCos) :
@@ -2892,7 +3026,8 @@ static inline void drawTexturedPlaneSpan(
                     const float ry = (-(wx * sa) + (wy * ca)) * invScaleY;
                     const int tx = (int)(rx * (float)RC3D_TEX_SIZE);
                     const int ty = (int)(ry * (float)RC3D_TEX_SIZE);
-                    const uint8_t texel = texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+                    const uint8_t texel =
+                        texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
                     rc3dBuildShadeProfile(sampleDist, glowLevel, &shadeProfile);
                     *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
@@ -2903,6 +3038,9 @@ static inline void drawTexturedPlaneSpan(
         }
     }
 }
+
+
+
 
 static inline void renderTexturedBandIfVisible(
     int sx,
@@ -2915,14 +3053,17 @@ static inline void renderTexturedBandIfVisible(
     float hitDist,
     float projPlane,
     int clipTop,
-    int clipBottom)
-{
+    int clipBottom
+){
     const int origY0 = y0;
     const int origY1 = y1;
 
-    const int clampYT = (texFlags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
-    const int clampYB = (texFlags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
-    const int stretchY = (clampYT && clampYB) ? 1 : 0;
+    const int clampYT =
+        (texFlags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
+    const int clampYB =
+        (texFlags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
+    const int stretchY =
+        (clampYT && clampYB) ? 1 : 0;
 
     if (texId == RC3D_TEXID_SKYBOX) return;
     if (origY0 > origY1) return;
@@ -2943,7 +3084,8 @@ static inline void renderTexturedBandIfVisible(
         {
             const float k = hitDist / projPlane;
             const float texPerWorld = (float)RC3D_TEX_SIZE * wallTexInvScaleYGlobal;
-            const float baseWorldFromTop = vTopWorld - eyeZ - ((float)horizonGlobal * k);
+            const float baseWorldFromTop =
+                vTopWorld - eyeZ - ((float)horizonGlobal * k);
 
             float vLocal0;
             float vStep;
@@ -2951,14 +3093,15 @@ static inline void renderTexturedBandIfVisible(
             if (stretchY) {
                 const float scale = texPerWorld / worldSpan;
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * scale;
-                vStep = k * scale;
+                vStep   = k * scale;
             } else if (clampYB && !clampYT) {
-                vLocal0 = (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
-                          (float)(RC3D_TEX_SIZE - 1);
-                vStep = k * texPerWorld;
+                vLocal0 =
+                    (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
+                    (float)(RC3D_TEX_SIZE - 1);
+                vStep   = k * texPerWorld;
             } else {
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * texPerWorld;
-                vStep = k * texPerWorld;
+                vStep   = k * texPerWorld;
             }
 
             {
@@ -2969,28 +3112,38 @@ static inline void renderTexturedBandIfVisible(
 
                 rc3dBuildShadeProfile(shadeDist, wallGlow, &shadeProfile);
 
+                /* --------------------------------------------------------- */
+                /* FAST PATH: no wall texture rotation                       */
+                /* --------------------------------------------------------- */
                 if ((wallTexRotSinGlobal > -0.0001f) && (wallTexRotSinGlobal < 0.0001f) &&
-                    (wallTexRotCosGlobal > 0.9999f) && (wallTexRotCosGlobal < 1.0001f))
+                    (wallTexRotCosGlobal >  0.9999f)  && (wallTexRotCosGlobal < 1.0001f))
                 {
                     const int32_t uFixed = (int32_t)(wallTexUBaseGlobal * 65536.0f);
                     int32_t vFixed = (int32_t)(vLocal0 * 65536.0f);
                     const int32_t vStepFixed = (int32_t)(vStep * 65536.0f);
+
                     const int tx = (uFixed >> 16);
 
                     for (int y = y0; y <= y1; ++y) {
                         const int ty = (vFixed >> 16);
-                        const uint8_t texel = texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+                        const uint8_t texel =
+                            texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
                         *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
                         dst += SCREEN_W;
                         vFixed += vStepFixed;
                     }
-                } else {
+                }
+                else
+                {
+                    /* ----------------------------------------------------- */
+                    /* rotated path                                          */
+                    /* ----------------------------------------------------- */
                     float uRotF = (wallTexUBaseGlobal * wallTexRotCosGlobal) - (vLocal0 * wallTexRotSinGlobal);
                     float vRotF = (wallTexUBaseGlobal * wallTexRotSinGlobal) + (vLocal0 * wallTexRotCosGlobal);
 
                     const float uStepF = -vStep * wallTexRotSinGlobal;
-                    const float vStepF = vStep * wallTexRotCosGlobal;
+                    const float vStepF =  vStep * wallTexRotCosGlobal;
 
                     int32_t uRot = (int32_t)(uRotF * 65536.0f);
                     int32_t vRot = (int32_t)(vRotF * 65536.0f);
@@ -3000,7 +3153,8 @@ static inline void renderTexturedBandIfVisible(
                     for (int y = y0; y <= y1; ++y) {
                         const int tx = (uRot >> 16);
                         const int ty = (vRot >> 16);
-                        const uint8_t texel = texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
+                        const uint8_t texel =
+                            texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)];
 
                         *dst = rc3dApplyShadeProfileToTexel(texel, tx, ty, texId, &shadeProfile);
                         dst += SCREEN_W;
@@ -3025,14 +3179,17 @@ static inline void renderMaskedTexturedBandIfVisible(
     float hitDist,
     float projPlane,
     int clipTop,
-    int clipBottom)
-{
+    int clipBottom
+){
     const int origY0 = y0;
     const int origY1 = y1;
 
-    const int clampYT = (texFlags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
-    const int clampYB = (texFlags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
-    const int stretchY = (clampYT && clampYB) ? 1 : 0;
+    const int clampYT =
+        (texFlags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
+    const int clampYB =
+        (texFlags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
+    const int stretchY =
+        (clampYT && clampYB) ? 1 : 0;
 
     if (texId == RC3D_TEXID_SKYBOX) return;
     if (origY0 > origY1) return;
@@ -3051,7 +3208,8 @@ static inline void renderMaskedTexturedBandIfVisible(
         {
             const float k = hitDist / projPlane;
             const float texPerWorld = (float)RC3D_TEX_SIZE * wallTexInvScaleYGlobal;
-            const float baseWorldFromTop = vTopWorld - eyeZ - ((float)horizonGlobal * k);
+            const float baseWorldFromTop =
+                vTopWorld - eyeZ - ((float)horizonGlobal * k);
 
             float vLocal0;
             float vStep;
@@ -3059,14 +3217,15 @@ static inline void renderMaskedTexturedBandIfVisible(
             if (stretchY) {
                 const float scale = texPerWorld / worldSpan;
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * scale;
-                vStep = k * scale;
+                vStep   = k * scale;
             } else if (clampYB && !clampYT) {
-                vLocal0 = (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
-                          (float)(RC3D_TEX_SIZE - 1);
-                vStep = k * texPerWorld;
+                vLocal0 =
+                    (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
+                    (float)(RC3D_TEX_SIZE - 1);
+                vStep   = k * texPerWorld;
             } else {
                 vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * texPerWorld;
-                vStep = k * texPerWorld;
+                vStep   = k * texPerWorld;
             }
 
             {
@@ -3079,21 +3238,23 @@ static inline void renderMaskedTexturedBandIfVisible(
                 rc3dBuildShadeProfile(shadeDist, wallGlow, &shadeProfile);
 
                 if ((wallTexRotSinGlobal > -0.0001f) && (wallTexRotSinGlobal < 0.0001f) &&
-                    (wallTexRotCosGlobal > 0.9999f) && (wallTexRotCosGlobal < 1.0001f))
+                    (wallTexRotCosGlobal >  0.9999f)  && (wallTexRotCosGlobal < 1.0001f))
                 {
                     const int32_t uFixed = (int32_t)(wallTexUBaseGlobal * 65536.0f);
                     int32_t vFixed = (int32_t)(vLocal0 * 65536.0f);
                     const int32_t vStepFixed = (int32_t)(vStep * 65536.0f);
+
                     const int tx = (uFixed >> 16);
 
                     for (int y = y0; y <= y1; ++y) {
                         const int ty = (vFixed >> 16);
-                        const uint8_t texel = rc3dApplyShadeProfileToTexel(
-                            texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)],
-                            tx,
-                            ty,
-                            texId,
-                            &shadeProfile);
+                        const uint8_t texel =
+                            rc3dApplyShadeProfileToTexel(
+                                texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)],
+                                tx,
+                                ty,
+                                texId,
+                                &shadeProfile);
 
                         if (texel != RC3D_SPRITE_TEX_TRANSPARENT) {
                             *dst = texel;
@@ -3108,12 +3269,14 @@ static inline void renderMaskedTexturedBandIfVisible(
                         dst += SCREEN_W;
                         vFixed += vStepFixed;
                     }
-                } else {
+                }
+                else
+                {
                     float uRotF = (wallTexUBaseGlobal * wallTexRotCosGlobal) - (vLocal0 * wallTexRotSinGlobal);
                     float vRotF = (wallTexUBaseGlobal * wallTexRotSinGlobal) + (vLocal0 * wallTexRotCosGlobal);
 
                     const float uStepF = -vStep * wallTexRotSinGlobal;
-                    const float vStepF = vStep * wallTexRotCosGlobal;
+                    const float vStepF =  vStep * wallTexRotCosGlobal;
 
                     int32_t uRot = (int32_t)(uRotF * 65536.0f);
                     int32_t vRot = (int32_t)(vRotF * 65536.0f);
@@ -3123,12 +3286,13 @@ static inline void renderMaskedTexturedBandIfVisible(
                     for (int y = y0; y <= y1; ++y) {
                         const int tx = (uRot >> 16);
                         const int ty = (vRot >> 16);
-                        const uint8_t texel = rc3dApplyShadeProfileToTexel(
-                            texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)],
-                            tx,
-                            ty,
-                            texId,
-                            &shadeProfile);
+                        const uint8_t texel =
+                            rc3dApplyShadeProfileToTexel(
+                                texels[((ty & RC3D_TEX_MASK) * RC3D_TEX_SIZE) + (tx & RC3D_TEX_MASK)],
+                                tx,
+                                ty,
+                                texId,
+                                &shadeProfile);
 
                         if (texel != RC3D_SPRITE_TEX_TRANSPARENT) {
                             *dst = texel;
@@ -3154,6 +3318,8 @@ static inline void renderMaskedTexturedBandIfVisible(
     }
 }
 
+
+
 static inline void rc3dTryNearestWallHit(
     RC3D_WallHit *hit,
     int wallIndex,
@@ -3162,8 +3328,8 @@ static inline void rc3dTryNearestWallHit(
     float minT,
     const RC3D_Wall *walls,
     const RC3D_Vec2 *verts,
-    const RC3D_WallCache *cache)
-{
+    const RC3D_WallCache *cache
+){
     const RC3D_Wall *w = &walls[wallIndex];
     const RC3D_Vec2 *a = &verts[w->v0];
     float sx;
@@ -3217,8 +3383,8 @@ static inline RC3D_WallHit findNearestWallInSector(
     int ignoreWallIndexA,
     int ignoreWallIndexB,
     float minT,
-    int preferredWallIndex)
-{
+    int preferredWallIndex
+){
     RC3D_WallHit hit;
     hit.t = g_draw_distance;
     hit.wallIndex = -1;
@@ -3230,7 +3396,7 @@ static inline RC3D_WallHit findNearestWallInSector(
     const RC3D_WallCache *cache = g_wallCache;
 
     const int start = sec->wallStart;
-    const int end = start + sec->wallCount;
+    const int end   = start + sec->wallCount;
     const int usePreferredWall =
         (preferredWallIndex >= start) &&
         (preferredWallIndex < end) &&
@@ -3241,7 +3407,16 @@ static inline RC3D_WallHit findNearestWallInSector(
 #if RC3D_DRAW_PROFILER
         g_profiler.wallTests++;
 #endif
-        rc3dTryNearestWallHit(&hit, preferredWallIndex, rox, roy, rdx, rdy, minT, walls, verts, cache);
+        rc3dTryNearestWallHit(
+            &hit,
+            preferredWallIndex,
+            rox, roy,
+            rdx, rdy,
+            minT,
+            walls,
+            verts,
+            cache
+        );
     }
 
     for (int wallIndex = start; wallIndex < end; ++wallIndex) {
@@ -3256,11 +3431,24 @@ static inline RC3D_WallHit findNearestWallInSector(
             continue;
         }
 
-        rc3dTryNearestWallHit(&hit, wallIndex, rox, roy, rdx, rdy, minT, walls, verts, cache);
+        rc3dTryNearestWallHit(
+            &hit,
+            wallIndex,
+            rox, roy,
+            rdx, rdy,
+            minT,
+            walls,
+            verts,
+            cache
+        );
     }
 
     return hit;
 }
+
+
+
+
 
 static inline void fillSectorColumnSpan(
     int sx,
@@ -3269,8 +3457,8 @@ static inline void fillSectorColumnSpan(
     const RC3D_Sector *sec,
     int horizon,
     float rayDirX,
-    float rayDirY)
-{
+    float rayDirY
+){
     if (!sec) return;
     if (y0 > y1) return;
 
@@ -3290,7 +3478,8 @@ static inline void fillSectorColumnSpan(
                 sec->glowlevel,
                 horizon,
                 sec,
-                1);
+                1
+            );
         }
     }
 
@@ -3310,15 +3499,20 @@ static inline void fillSectorColumnSpan(
                 sec->glowlevel,
                 horizon,
                 sec,
-                0);
+                0
+            );
         }
     }
 }
 
+
+
+
+
 static void drawBackground(void)
 {
-    const float fullTurn = (float)(M_PI * 2.0f);
-    const float leftAng = g_player.angle - g_halfFovRad;
+    const float fullTurn  = (float)(M_PI * 2.0f);
+    const float leftAng   = g_player.angle - g_halfFovRad;
     const float skyRepeat = 4.0f;
     const int32_t oneFixed = 1 << 16;
     const int viewportHalfHeight = g_viewport_height / 1.50;
@@ -3360,6 +3554,8 @@ static void drawBackground(void)
     }
 }
 
+
+
 static inline void renderColumnPortalTraceClipped(
     int sx,
     float rdx,
@@ -3374,8 +3570,8 @@ static inline void renderColumnPortalTraceClipped(
     float rayMinT,
     int maskedDepth,
     int preferredWallIndex,
-    int *outFirstHitWallIndex)
-{
+    int *outFirstHitWallIndex
+){
     const float playerX = g_player.x;
     const float playerY = g_player.y;
     const float playerZ = g_renderEyeZ;
@@ -3395,6 +3591,7 @@ static inline void renderColumnPortalTraceClipped(
         {
             const RC3D_Sector *sec = &g_map->sectors[currentSector];
             const int stepPreferredWallIndex = (step == 0) ? preferredWallIndex : -1;
+
             const RC3D_WallHit hit = findNearestWallInSector(
                 currentSector,
                 playerX, playerY,
@@ -3402,10 +3599,19 @@ static inline void renderColumnPortalTraceClipped(
                 ignoreWallIndexA,
                 ignoreWallIndexB,
                 rayMinT,
-                stepPreferredWallIndex);
+                stepPreferredWallIndex
+            );
 
             if (!hit.hit) {
-                fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+                fillSectorColumnSpan(
+                    sx,
+                    clipTop,
+                    clipBottom,
+                    sec,
+                    horizon,
+                    rdx,
+                    rdy
+                );
                 return;
             }
 
@@ -3424,6 +3630,7 @@ static inline void renderColumnPortalTraceClipped(
 
                 const float hitX = playerX + (rdx * hit.t);
                 const float hitY = playerY + (rdy * hit.t);
+
                 const float correctedDist = hit.t;
 
                 if (correctedDist <= RC3D_EPSILON) {
@@ -3488,11 +3695,15 @@ static inline void renderColumnPortalTraceClipped(
 
                 {
                     const float scale = projPlane / correctedDist;
-                    const int secTop = rc3dProjectTopPixel(horizon, sec->ceilHeight, playerZ, scale);
-                    const int secBot = rc3dProjectBottomPixel(horizon, sec->floorHeight, playerZ, scale);
+
+                    const int secTop =
+                        rc3dProjectTopPixel(horizon, sec->ceilHeight, playerZ, scale);
+                    const int secBot =
+                        rc3dProjectBottomPixel(horizon, sec->floorHeight, playerZ, scale);
 
                     const uint8_t wallClass = wc ? wc->wallClass : RC3D_WALLCLASS_NONE;
-                    const int wallMasked = ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
+                    const int wallMasked =
+                        ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
 
                     switch (wallClass) {
                         case RC3D_WALLCLASS_SOLID:
@@ -3501,15 +3712,20 @@ static inline void renderColumnPortalTraceClipped(
                             fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
 
                             if (wallMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
-                                const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexUBase   = wallTexUBaseGlobal;
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
-                                const float savedWallTexRotCos = wallTexRotCosGlobal;
-                                const float savedWallTexRotSin = wallTexRotSinGlobal;
+                                const float savedWallTexRotCos  = wallTexRotCosGlobal;
+                                const float savedWallTexRotSin  = wallTexRotSinGlobal;
 
-                                const int maskedClipTop = clampi(secTop, clipTop, clipBottom);
+                                const int maskedClipTop    = clampi(secTop, clipTop, clipBottom);
                                 const int maskedClipBottom = clampi(secBot, clipTop, clipBottom);
 
                                 if (maskedClipTop <= maskedClipBottom) {
+                                    /* --------------------------------------------------------- */
+                                    /* If this masked solid wall is also a portal, trace into    */
+                                    /* the neighbour sector. Otherwise trace farther in the same */
+                                    /* sector so walls behind it can show through.              */
+                                    /* --------------------------------------------------------- */
                                     if ((w->flags & RC3D_WALL_PORTAL) &&
                                         ((unsigned)w->neighbour < (unsigned)g_map->sectorCount))
                                     {
@@ -3533,7 +3749,8 @@ static inline void renderColumnPortalTraceClipped(
                                             hit.t + RC3D_EPSILON,
                                             maskedDepth + 1,
                                             -1,
-                                            NULL);
+                                            NULL
+                                        );
                                     } else {
                                         renderColumnPortalTraceClipped(
                                             sx,
@@ -3549,11 +3766,13 @@ static inline void renderColumnPortalTraceClipped(
                                             hit.t + RC3D_EPSILON,
                                             maskedDepth + 1,
                                             -1,
-                                            NULL);
+                                            NULL
+                                        );
                                     }
                                 }
 
-                                wallTexUBaseGlobal = savedWallTexUBase;
+                                /* restore THIS wall's UV basis after recursive trace */
+                                wallTexUBaseGlobal  = savedWallTexUBase;
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
@@ -3566,7 +3785,8 @@ static inline void renderColumnPortalTraceClipped(
                                     sec->floorHeight,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             } else {
                                 renderTexturedBandIfVisible(
                                     sx, secTop, secBot,
@@ -3576,7 +3796,8 @@ static inline void renderColumnPortalTraceClipped(
                                     sec->floorHeight,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             }
 
                             return;
@@ -3584,8 +3805,10 @@ static inline void renderColumnPortalTraceClipped(
 
                         case RC3D_WALLCLASS_MIDDLE:
                         {
-                            const int midTopY = rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
-                            const int midBotY = rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
+                            const int midTopY =
+                                rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
+                            const int midBotY =
+                                rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
 
                             fillSectorColumnSpan(sx, clipTop, midTopY - 1, sec, horizon, rdx, rdy);
                             fillSectorColumnSpan(sx, midBotY + 1, clipBottom, sec, horizon, rdx, rdy);
@@ -3612,7 +3835,8 @@ static inline void renderColumnPortalTraceClipped(
                                         hit.t + RC3D_EPSILON,
                                         maskedDepth + 1,
                                         -1,
-                                        NULL);
+                                        NULL
+                                    );
                                 }
 
                                 renderMaskedTexturedBandIfVisible(
@@ -3623,7 +3847,8 @@ static inline void renderColumnPortalTraceClipped(
                                     w->openBottom,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             } else {
                                 renderTexturedBandIfVisible(
                                     sx, midTopY, midBotY,
@@ -3633,15 +3858,18 @@ static inline void renderColumnPortalTraceClipped(
                                     w->openBottom,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             }
                             return;
                         }
 
                         case RC3D_WALLCLASS_UPPER_LOWER:
                         {
-                            const int openTopY = rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
-                            const int openBotY = rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
+                            const int openTopY =
+                                rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
+                            const int openBotY =
+                                rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
 
                             fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
                             fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
@@ -3655,7 +3883,8 @@ static inline void renderColumnPortalTraceClipped(
                                     w->openTop,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             }
 
                             if (w->flags & RC3D_WALL_LOWER) {
@@ -3667,7 +3896,8 @@ static inline void renderColumnPortalTraceClipped(
                                     sec->floorHeight,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             }
 
                             return;
@@ -3690,17 +3920,20 @@ static inline void renderColumnPortalTraceClipped(
                                 return;
                             }
 
-                            portalOpenTopY = rc3dProjectTopPixel(horizon, portalView.openTop, playerZ, scale);
-                            portalOpenBotY = rc3dProjectBottomPixel(horizon, portalView.openBottom, playerZ, scale);
+                            portalOpenTopY =
+                                rc3dProjectTopPixel(horizon, portalView.openTop, playerZ, scale);
+                            portalOpenBotY =
+                                rc3dProjectBottomPixel(
+                                    horizon, portalView.openBottom, playerZ, scale);
 
                             int openTop = secTop;
                             int openBot = secBot;
 
                             if (portalOpenTopY > openTop) openTop = portalOpenTopY;
-                            if (clipTop > openTop) openTop = clipTop;
+                            if (clipTop > openTop)       openTop = clipTop;
 
                             if (portalOpenBotY < openBot) openBot = portalOpenBotY;
-                            if (clipBottom < openBot) openBot = clipBottom;
+                            if (clipBottom < openBot)    openBot = clipBottom;
 
                             fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
                             fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
@@ -3734,7 +3967,8 @@ static inline void renderColumnPortalTraceClipped(
                                         hit.t,
                                         maskedDepth,
                                         -1,
-                                        NULL);
+                                        NULL
+                                    );
                                 }
 
                                 wallTexUBaseGlobal = savedWallTexUBase;
@@ -3752,7 +3986,8 @@ static inline void renderColumnPortalTraceClipped(
                                     portalView.openTop,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             }
 
                             if (portalView.hasLower) {
@@ -3764,7 +3999,8 @@ static inline void renderColumnPortalTraceClipped(
                                     sec->floorHeight,
                                     correctedDist,
                                     projPlane,
-                                    clipTop, clipBottom);
+                                    clipTop, clipBottom
+                                );
                             }
 
                             return;
@@ -3772,7 +4008,15 @@ static inline void renderColumnPortalTraceClipped(
 
                         default:
                         {
-                            fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+                            fillSectorColumnSpan(
+                                sx,
+                                clipTop,
+                                clipBottom,
+                                sec,
+                                horizon,
+                                rdx,
+                                rdy
+                            );
                             return;
                         }
                     }
@@ -3782,6 +4026,7 @@ static inline void renderColumnPortalTraceClipped(
     }
 }
 
+
 static inline void renderColumnPortalTrace(
     int sx,
     float rdx,
@@ -3789,8 +4034,8 @@ static inline void renderColumnPortalTrace(
     float projPlane,
     int horizon,
     int preferredWallIndex,
-    int *outFirstHitWallIndex)
-{
+    int *outFirstHitWallIndex
+){
     renderColumnPortalTraceClipped(
         sx,
         rdx,
@@ -3805,7 +4050,8 @@ static inline void renderColumnPortalTrace(
         0.0f,
         0,
         preferredWallIndex,
-        outFirstHitWallIndex);
+        outFirstHitWallIndex
+    );
 }
 
 static inline void rc3dRecordVisibleTraceSegment(
@@ -3813,8 +4059,8 @@ static inline void rc3dRecordVisibleTraceSegment(
     int sector,
     int clipTop,
     int clipBottom,
-    uint16_t depthLimit)
-{
+    uint16_t depthLimit
+){
     uint8_t count;
     RC3D_VisibleTraceSegment *segment;
 
@@ -3872,7 +4118,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
 
         rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
         planeX = -dirY * g_planeScaleConst;
-        planeY = dirX * g_planeScaleConst;
+        planeY =  dirX * g_planeScaleConst;
         rdx = dirX + (planeX * cameraX);
         rdy = dirY + (planeY * cameraX);
     }
@@ -3910,7 +4156,8 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             ignoreWallIndexA,
             ignoreWallIndexB,
             rayMinT,
-            -1);
+            -1
+        );
 
         if (!hit.hit) {
             rc3dRecordVisibleTraceSegment(sx, currentSector, clipTop, clipBottom, UINT16_MAX);
@@ -3927,7 +4174,8 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             currentSector,
             clipTop,
             clipBottom,
-            rc3dEncodeDepth(correctedDist));
+            rc3dEncodeDepth(correctedDist)
+        );
 
         w = &g_map->walls[hit.wallIndex];
 
@@ -3976,17 +4224,19 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
                 return;
             }
 
-            portalOpenTopY = rc3dProjectTopPixel(horizonGlobal, portalView.openTop, playerZ, scale);
-            portalOpenBotY = rc3dProjectBottomPixel(horizonGlobal, portalView.openBottom, playerZ, scale);
+            portalOpenTopY =
+                rc3dProjectTopPixel(horizonGlobal, portalView.openTop, playerZ, scale);
+            portalOpenBotY =
+                rc3dProjectBottomPixel(horizonGlobal, portalView.openBottom, playerZ, scale);
 
             openTop = secTop;
             openBot = secBot;
 
             if (portalOpenTopY > openTop) openTop = portalOpenTopY;
-            if (clipTop > openTop) openTop = clipTop;
+            if (clipTop > openTop)       openTop = clipTop;
 
             if (portalOpenBotY < openBot) openBot = portalOpenBotY;
-            if (clipBottom < openBot) openBot = clipBottom;
+            if (clipBottom < openBot)    openBot = clipBottom;
 
             portalClipTop = openTop + (portalView.hasUpper ? 1 : 0);
             portalClipBottom = openBot - (portalView.hasLower ? 1 : 0);
@@ -4041,8 +4291,10 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             }
 
             if (wallClass == RC3D_WALLCLASS_MIDDLE) {
-                const int midTopY = rc3dProjectTopPixel(horizonGlobal, w->openTop, playerZ, scale);
-                const int midBotY = rc3dProjectBottomPixel(horizonGlobal, w->openBottom, playerZ, scale);
+                const int midTopY =
+                    rc3dProjectTopPixel(horizonGlobal, w->openTop, playerZ, scale);
+                const int midBotY =
+                    rc3dProjectBottomPixel(horizonGlobal, w->openBottom, playerZ, scale);
 
                 if (midTopY > clipTop) clipTop = midTopY;
                 if (midBotY < clipBottom) clipBottom = midBotY;
@@ -4059,15 +4311,21 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
     }
 }
 
+
+
+
+
+
 static void renderCurrentSectorColumns(void)
 {
     const float projPlane = g_projPlaneConst;
-    const int horizon = g_viewport_height / 2;
+    const int horizon     = g_viewport_height / 2;
+
     const float bobZ = sinf(g_player.tHeadbob) * 0.075f;
 
-    g_renderEyeZ = g_player.z + fabsf(bobZ);
+    g_renderEyeZ    = g_player.z + fabsf(bobZ);
     projPlaneGlobal = projPlane;
-    horizonGlobal = horizon;
+    horizonGlobal   = horizon;
 
     float dirX = 1.0f;
     float dirY = 0.0f;
@@ -4076,7 +4334,7 @@ static void renderCurrentSectorColumns(void)
 
     const float planeScale = g_planeScaleConst;
     const float planeX = -dirY * planeScale;
-    const float planeY = dirX * planeScale;
+    const float planeY =  dirX * planeScale;
 
     rc3dBuildColumnRayCache(dirX, dirY, planeX, planeY);
     rc3dInvalidateVisibleTraceCache();
@@ -4099,7 +4357,8 @@ static void renderCurrentSectorColumns(void)
                 projPlane,
                 horizon,
                 preferredWallIndex,
-                &firstHitWallIndex);
+                &firstHitWallIndex
+            );
 
             preferredWallIndex = firstHitWallIndex;
         }
@@ -4111,8 +4370,8 @@ static int rc3dTraceVisibleSectorAtDepth(
     float targetDepth,
     int *outSector,
     int *outClipTop,
-    int *outClipBottom)
-{
+    int *outClipBottom
+){
 #if RC3D_DRAW_PROFILER
     g_profiler.spriteSectorTraces++;
 #endif
@@ -4140,6 +4399,10 @@ static int rc3dTraceVisibleSectorAtDepth(
     return 0;
 }
 
+
+
+
+
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite)
 {
     int sector;
@@ -4153,6 +4416,9 @@ static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite)
 
     sprite->baseZ = g_map->sectors[sector].floorHeight;
 }
+
+
+
 
 static void renderBillboardSprite(const RC3D_Sprite *sprite)
 {
@@ -4186,13 +4452,13 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
     rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
 
     rightVecX = -dirY;
-    rightVecY = dirX;
+    rightVecY =  dirX;
 
     toSpriteX = sprite->x - g_player.x;
     toSpriteY = sprite->y - g_player.y;
 
-    camX = (toSpriteX * -dirY) + (toSpriteY * dirX);
-    camDepth = (toSpriteX * dirX) + (toSpriteY * dirY);
+    camX     = (toSpriteX * -dirY) + (toSpriteY * dirX);
+    camDepth = (toSpriteX *  dirX) + (toSpriteY * dirY);
 
     if (camDepth <= RC3D_EPSILON || camDepth >= g_draw_distance) {
         return;
@@ -4200,10 +4466,10 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
 
     scale = projPlaneGlobal / camDepth;
 
-    leftX = (int)(screenCenterX + ((camX - (sprite->width * 0.5f)) * scale));
-    rightX = (int)(screenCenterX + ((camX + (sprite->width * 0.5f)) * scale));
-    topY = (int)(horizonGlobal - (((sprite->baseZ + sprite->height) - eyeZ) * scale));
-    bottomY = (int)(horizonGlobal - ((sprite->baseZ - eyeZ) * scale));
+    leftX   = (int)(screenCenterX + ((camX - (sprite->width  * 0.5f)) * scale));
+    rightX  = (int)(screenCenterX + ((camX + (sprite->width  * 0.5f)) * scale));
+    topY    = (int)(horizonGlobal - (((sprite->baseZ + sprite->height) - eyeZ) * scale));
+    bottomY = (int)(horizonGlobal - (( sprite->baseZ                   - eyeZ) * scale));
 
     if (leftX > rightX || topY > bottomY) {
         return;
@@ -4213,7 +4479,7 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
         return;
     }
 
-    unclampedWidth = (rightX - leftX) + 1;
+    unclampedWidth  = (rightX - leftX) + 1;
     unclampedHeight = (bottomY - topY) + 1;
     if (unclampedWidth <= 0 || unclampedHeight <= 0) {
         return;
@@ -4222,8 +4488,10 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
     spriteDepth = rc3dEncodeDepth(camDepth);
 
     {
-        const int drawLeft = (leftX < 0) ? 0 : leftX;
-        const int drawRight = (rightX >= g_viewport_width) ? (g_viewport_width - 1) : rightX;
+        const int drawLeft  = (leftX  < 0) ? 0 : leftX;
+        const int drawRight =
+            (rightX >= g_viewport_width) ? (g_viewport_width - 1) : rightX;
+
         int preferredSector = g_player.sector;
 
         for (int sx = drawLeft; sx <= drawRight; ++sx) {
@@ -4234,9 +4502,14 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
             const int tx = ((sx - leftX) * RC3D_TEX_SIZE) / unclampedWidth;
             uint8_t sectorGlow = 0u;
 
-            int colTop = (topY < 0) ? 0 : topY;
-            int colBottom = (bottomY >= g_viewport_height) ? (g_viewport_height - 1) : bottomY;
+            int colTop    = (topY < 0) ? 0 : topY;
+            int colBottom =
+                (bottomY >= g_viewport_height) ? (g_viewport_height - 1) : bottomY;
 
+            /* --------------------------------------------------------- */
+            /* clip against the sector the sprite itself occupies        */
+            /* at this sprite width sample                               */
+            /* --------------------------------------------------------- */
             {
                 const float u = ((((float)(sx - leftX) + 0.5f) / (float)unclampedWidth) - 0.5f);
                 const float localX = u * sprite->width;
@@ -4244,12 +4517,15 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                 const float sampleWorldX = sprite->x + (rightVecX * localX);
                 const float sampleWorldY = sprite->y + (rightVecY * localX);
 
-                const int spriteSector = findSectorForSpritePosition(sampleWorldX, sampleWorldY, preferredSector);
+                const int spriteSector =
+                    findSectorForSpritePosition(sampleWorldX, sampleWorldY, preferredSector);
 
                 if ((unsigned)spriteSector < (unsigned)g_map->sectorCount) {
                     const RC3D_Sector *sec = &g_map->sectors[spriteSector];
-                    const int secTopY = (int)(horizonGlobal - ((sec->ceilHeight - eyeZ) * scale));
-                    const int secBotY = (int)(horizonGlobal - ((sec->floorHeight - eyeZ) * scale));
+                    const int secTopY =
+                        (int)(horizonGlobal - ((sec->ceilHeight  - eyeZ) * scale));
+                    const int secBotY =
+                        (int)(horizonGlobal - ((sec->floorHeight - eyeZ) * scale));
 
                     sectorGlow = sec->glowlevel;
 
@@ -4265,6 +4541,10 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
                 }
             }
 
+            /* --------------------------------------------------------- */
+            /* clip against the ACTUALLY visible sector in this screen   */
+            /* column at the sprite depth                                */
+            /* --------------------------------------------------------- */
             {
                 int visSector = -1;
                 int visClipTop = 0;
@@ -4290,8 +4570,10 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
 
                 if ((unsigned)visSector < (unsigned)g_map->sectorCount) {
                     const RC3D_Sector *visSec = &g_map->sectors[visSector];
-                    const int visSecTopY = (int)(horizonGlobal - ((visSec->ceilHeight - eyeZ) * scale));
-                    const int visSecBotY = (int)(horizonGlobal - ((visSec->floorHeight - eyeZ) * scale));
+                    const int visSecTopY =
+                        (int)(horizonGlobal - ((visSec->ceilHeight  - eyeZ) * scale));
+                    const int visSecBotY =
+                        (int)(horizonGlobal - ((visSec->floorHeight - eyeZ) * scale));
 
                     if (sectorGlow == 0u) {
                         sectorGlow = visSec->glowlevel;
@@ -4319,12 +4601,13 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
             for (int sy = colTop; sy <= colBottom; ++sy) {
                 const int ty = ((sy - topY) * RC3D_TEX_SIZE) / unclampedHeight;
                 const uint8_t texel = texels[(ty * RC3D_TEX_SIZE) + tx];
-                const uint8_t litTexel = rc3dApplyShadeProfileToTexel(
-                    texel,
-                    tx,
-                    ty,
-                    sprite->texId,
-                    &shadeProfile);
+                const uint8_t litTexel =
+                    rc3dApplyShadeProfileToTexel(
+                        texel,
+                        tx,
+                        ty,
+                        sprite->texId,
+                        &shadeProfile);
 
                 if (litTexel == RC3D_SPRITE_TEX_TRANSPARENT) {
                     continue;
@@ -4385,6 +4668,10 @@ static void renderSprites(void)
     }
 }
 
+
+
+
+
 /* ------------------------------------------------------------------------- */
 /* minimap                                                                   */
 /* ------------------------------------------------------------------------- */
@@ -4392,9 +4679,9 @@ static void renderSprites(void)
 static int minimapOutCode(int x, int y, int left, int top, int right, int bottom)
 {
     int code = 0;
-    if (x < left) code |= 1;
-    if (x > right) code |= 2;
-    if (y < top) code |= 4;
+    if (x < left)   code |= 1;
+    if (x > right)  code |= 2;
+    if (y < top)    code |= 4;
     if (y > bottom) code |= 8;
     return code;
 }
@@ -4403,8 +4690,8 @@ static int clipLineToRect(
     int *x0, int *y0,
     int *x1, int *y1,
     int left, int top,
-    int right, int bottom)
-{
+    int right, int bottom
+){
     int c0 = minimapOutCode(*x0, *y0, left, top, right, bottom);
     int c1 = minimapOutCode(*x1, *y1, left, top, right, bottom);
 
@@ -4455,9 +4742,9 @@ static void drawMiniMap(void)
     const int mapH = 100;
     const int mapX = (SCREEN_W - mapW) - 8;
 
-    const int left = mapX + 1;
-    const int top = mapY + 1;
-    const int right = mapX + mapW - 2;
+    const int left   = mapX + 1;
+    const int top    = mapY + 1;
+    const int right  = mapX + mapW - 2;
     const int bottom = mapY + mapH - 2;
 
     const int centerX = mapX + (mapW / 2);
@@ -4467,10 +4754,10 @@ static void drawMiniMap(void)
 
     drawRect(mapX, mapY, mapW, mapH, 16);
 
-    drawLine(mapX, mapY, mapX + mapW - 1, mapY, 15);
-    drawLine(mapX, mapY, mapX, mapY + mapH - 1, 15);
-    drawLine(mapX + mapW - 1, mapY, mapX + mapW - 1, mapY + mapH - 1, 15);
-    drawLine(mapX, mapY + mapH - 1, mapX + mapW - 1, mapY + mapH - 1, 15);
+    drawLine(mapX,             mapY,             mapX + mapW - 1, mapY,             15);
+    drawLine(mapX,             mapY,             mapX,            mapY + mapH - 1,  15);
+    drawLine(mapX + mapW - 1,  mapY,             mapX + mapW - 1, mapY + mapH - 1,  15);
+    drawLine(mapX,             mapY + mapH - 1,  mapX + mapW - 1, mapY + mapH - 1,  15);
 
     {
         const RC3D_Wall *walls = g_map->walls;
@@ -4479,7 +4766,7 @@ static void drawMiniMap(void)
         for (int s = 0; s < g_map->sectorCount; s++) {
             const RC3D_Sector *sec = &g_map->sectors[s];
             const int start = sec->wallStart;
-            const int end = start + sec->wallCount;
+            const int end   = start + sec->wallCount;
 
             for (int wi = start; wi < end; wi++) {
                 const RC3D_Wall *w = &walls[wi];
@@ -4540,6 +4827,8 @@ static void rc3dInitTestSprite(void)
         RC3D_TEST_SPRITE_WIDTH,
         RC3D_TEST_SPRITE_HEIGHT,
         RC3D_SPRITE_TEX_GRICY);
+
+
 }
 
 static uint32_t rc3dSanitizeSectorStateFlags(uint32_t stateFlags)
@@ -4590,6 +4879,8 @@ static RC3D_Sector *rc3dMutableSectorData(void)
     return (RC3D_Sector *)g_map->sectors;
 }
 
+
+
 static void rc3dClampPlayerIntoCurrentSector(void)
 {
     if (!g_map) return;
@@ -4599,11 +4890,17 @@ static void rc3dClampPlayerIntoCurrentSector(void)
         const float minEyeZ = sec->floorHeight + RC3D_PLAYER_EYE_HEIGHT;
         const float maxEyeZ = sec->ceilHeight - (PLAYER_HEIGHT - RC3D_PLAYER_EYE_HEIGHT);
 
+        /* do NOT hard-snap upward for ordinary step-ups.
+           let rc3dUpdate() smoothly rise onto the new floor.
+
+           only force upward if we're way below the floor,
+           which means something has gone properly wonky. */
         if (g_player.z < (minEyeZ - PLAYER_STEPUP - RC3D_EPSILON)) {
             g_player.z = minEyeZ;
             g_player.vz = 0.0f;
         }
 
+        /* ceiling clamp should stay hard */
         if (g_player.z > maxEyeZ) {
             g_player.z = maxEyeZ;
             g_player.vz = 0.0f;
@@ -4613,6 +4910,8 @@ static void rc3dClampPlayerIntoCurrentSector(void)
         g_player.vz = 0.0f;
     }
 }
+
+
 
 static void rc3dUpdateSectorMotion(float dt)
 {
@@ -4720,85 +5019,10 @@ static void rc3dUpdateSectorMotion(float dt)
     rc3dClampPlayerIntoCurrentSector();
 }
 
-void moveSprite(void)
-{
+void moveSprite(){
     if (rc3dSpriteHandleValid(g_demoSpriteB)) {
         rc3dSpriteSetPosition(g_demoSpriteB, g_player.x, g_player.y);
     }
-}
-
-static float rc3dGetTargetEyeZ(void)
-{
-    if (rc3dSectorIndexValid(g_player.sector)) {
-        return g_map->sectors[g_player.sector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
-    }
-
-    return RC3D_PLAYER_EYE_HEIGHT;
-}
-
-static void rc3dUpdateHeadbob(float dt, int isMoving)
-{
-    if (isMoving) {
-        g_player.tHeadbob += dt * 7.0f;
-        if (g_player.tHeadbob > (float)(M_PI)) {
-            g_player.tHeadbob -= (float)(M_PI);
-        }
-    } else {
-        if (g_player.tHeadbob > 0.0f) {
-            g_player.tHeadbob += dt * 12.0f;
-            if (g_player.tHeadbob > (float)(M_PI)) {
-                g_player.tHeadbob = 0.0f;
-            }
-        }
-    }
-}
-
-static void rc3dUpdatePlayerVertical(float dt)
-{
-    const float targetZ = rc3dGetTargetEyeZ();
-
-    if (g_player.z > targetZ) {
-        g_player.vz -= RC3D_GRAVITY * dt;
-        g_player.z += g_player.vz * dt;
-
-        if (g_player.z <= targetZ) {
-            g_player.z = targetZ;
-            g_player.vz = 0.0f;
-        }
-    } else {
-        const float dz = targetZ - g_player.z;
-
-        if (dz > 0.0f) {
-            const float riseSpeed = dz * 10.0f;
-            const float maxRise = RC3D_STEP_SNAP_SPEED * dt;
-            float stepUp = riseSpeed * dt;
-
-            if (stepUp > maxRise) stepUp = maxRise;
-            if (stepUp > dz) stepUp = dz;
-
-            g_player.z += stepUp;
-        }
-
-        g_player.vz = 0.0f;
-    }
-}
-
-static void rc3dResetPlayerFromMapStart(void)
-{
-    rc3dSetPlayerWorldXYFixed(
-        rc3dFloatToFixed(g_map->startX),
-        rc3dFloatToFixed(g_map->startY));
-    g_player.angle = g_map->startAngle;
-    g_player.sector = g_map->startSector;
-    g_player.tHeadbob = 0.0f;
-
-    if (rc3dSectorIndexValid(g_player.sector)) {
-        g_player.z = g_map->sectors[g_player.sector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
-    } else {
-        g_player.z = RC3D_PLAYER_EYE_HEIGHT;
-    }
-
-    g_player.vz = 0.0f;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -4826,13 +5050,29 @@ void rc3dResetViewport(void)
 void rc3dInit(void)
 {
     if (!g_rc3dTexturesInit) rc3dBuildDefaultTextures();
-    if (!g_invDTableInit) rc3dBuildInvDTable();
+    if (!g_invDTableInit)    rc3dBuildInvDTable();
     if (!g_lightVariantTablesInit) rc3dBuildLightVariantTables();
     rc3dBuildTrigTables();
     rc3dRefreshViewport();
 
-    rc3dRebuildCurrentMapCaches();
-    rc3dResetPlayerFromMapStart();
+    rc3dBuildFixedVertCacheForCurrentMap();
+    rc3dBuildWallCacheForCurrentMap();
+    rc3dBuildSectorCacheForCurrentMap();
+
+    rc3dSetPlayerWorldXYFixed(
+        rc3dFloatToFixed(g_map->startX),
+        rc3dFloatToFixed(g_map->startY));
+    g_player.angle = g_map->startAngle;
+    g_player.sector = g_map->startSector;
+    g_player.tHeadbob = 0.0f;
+
+    if (g_player.sector >= 0 && g_player.sector < g_map->sectorCount) {
+        g_player.z = g_map->sectors[g_player.sector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
+    } else {
+        g_player.z = RC3D_PLAYER_EYE_HEIGHT;
+    }
+
+    g_player.vz = 0.0f;
     rc3dClearSprites();
     rc3dInitTestSprite();
 }
@@ -4858,6 +5098,8 @@ int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags)
     return changedCount;
 }
 
+
+
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 {
     float moveX = 0.0f;
@@ -4868,10 +5110,11 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
     float forwardY = 0.0f;
 
     rc3dUpdateSectorMotion(dt);
+
     rc3dLookupAngleTrig(g_player.angle, &forwardX, &forwardY);
 
-    const float rightX = -forwardY;
-    const float rightY = forwardX;
+    const float rightX   = -forwardY;
+    const float rightY   =  forwardX;
 
     if (keys[SDL_SCANCODE_Q]) g_player.angle -= RC3D_TURN_SPEED * dt;
     if (keys[SDL_SCANCODE_E]) g_player.angle += RC3D_TURN_SPEED * dt;
@@ -4881,17 +5124,17 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 
     if (keys[SDL_SCANCODE_W]) { moveX += forwardX; moveY += forwardY; }
     if (keys[SDL_SCANCODE_S]) { moveX -= forwardX; moveY -= forwardY; }
-    if (keys[SDL_SCANCODE_A]) { moveX -= rightX; moveY -= rightY; }
-    if (keys[SDL_SCANCODE_D]) { moveX += rightX; moveY += rightY; }
+    if (keys[SDL_SCANCODE_A]) { moveX -= rightX;   moveY -= rightY;   }
+    if (keys[SDL_SCANCODE_D]) { moveX += rightX;   moveY += rightY;   }
 
     if (keys[SDL_SCANCODE_F1]) { bShowProfiler = 1; }
     if (keys[SDL_SCANCODE_F2]) { bShowProfiler = 0; }
 
-    if (keys[SDL_SCANCODE_1]) {
-        rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_CEILING);
+    if (keys[SDL_SCANCODE_1]){ 
+        rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_CEILING); 
     }
-    if (keys[SDL_SCANCODE_2]) {
-        rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_LOWER_FLOOR | RC3D_SECTOR_STATE_RAISE_CEILING);
+    if (keys[SDL_SCANCODE_2]){ 
+        rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_LOWER_FLOOR | RC3D_SECTOR_STATE_RAISE_CEILING); 
     }
 
     if ((moveX != 0.0f) || (moveY != 0.0f)) {
@@ -4906,9 +5149,56 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
         }
     }
 
-    rc3dUpdateHeadbob(dt, isMoving);
-    rc3dUpdatePlayerVertical(dt);
+    /* headbob timer */
+    if (isMoving) {
+        g_player.tHeadbob += dt * 7.0f;   /* speed of bob */
+        if (g_player.tHeadbob > (float)(M_PI)) {
+            g_player.tHeadbob -= (float)(M_PI);
+        }
+    } else {
+        /* settle back nicely when stopping */
+        if (g_player.tHeadbob > 0.0f) {
+            g_player.tHeadbob += dt * 12.0f;
+            if (g_player.tHeadbob > (float)(M_PI)) {
+                g_player.tHeadbob = 0.0f;
+            }
+        }
+        
+    }
+
+    if (g_player.sector >= 0 && g_player.sector < g_map->sectorCount) {
+        const float targetZ =
+            g_map->sectors[g_player.sector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
+
+        if (g_player.z > targetZ) {
+            g_player.vz -= RC3D_GRAVITY * dt;
+            g_player.z  += g_player.vz * dt;
+
+            if (g_player.z <= targetZ) {
+                g_player.z = targetZ;
+                g_player.vz = 0.0f;
+            }
+        } else {
+            const float dz = targetZ - g_player.z;
+
+            if (dz > 0.0f) {
+                const float riseSpeed = dz * 10.0f;
+                const float maxRise   = RC3D_STEP_SNAP_SPEED * dt;
+                float stepUp = riseSpeed * dt;
+
+                if (stepUp > maxRise) stepUp = maxRise;
+                if (stepUp > dz)      stepUp = dz;
+
+                g_player.z += stepUp;
+            }
+
+            g_player.vz = 0.0f;
+        }
+    }
 }
+
+
+
 
 void rc3dRender(void)
 {
@@ -4969,7 +5259,7 @@ void rc3dRender(void)
 #endif
 
 #if RC3D_DRAW_PROFILER
-    if (bShowProfiler)
+    if(bShowProfiler)
         rc3dDrawProfiler();
 #endif
 }
