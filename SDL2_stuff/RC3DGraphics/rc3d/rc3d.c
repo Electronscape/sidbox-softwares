@@ -32,7 +32,7 @@ int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
 #define RC3D_TURN_SPEED        2.4f
 #define RC3D_MOVE_SPEED        3.0f
 #define RC3D_MOUSE_SENS        0.0035f
-#define RC3D_EPSILON           0.00001f
+#define RC3D_EPSILON           0.0001f
 #define RC3D_COLLISION_SKIN    0.02f
 #define RC3D_FIXED_SHIFT       16
 #define RC3D_FIXED_ONE         (1 << RC3D_FIXED_SHIFT)
@@ -51,7 +51,7 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 
 #define RC3D_PLAYER_EYE_HEIGHT 0.5f
 #define RC3D_GRAVITY           18.0f
-#define RC3D_STEP_SNAP_SPEED   24.0f
+#define RC3D_STEP_SNAP_SPEED   114.0f
 
 #define PLAYER_HEIGHT          0.6f
 #define PLAYER_STEPUP          0.35f
@@ -534,6 +534,22 @@ static inline void rc3dInvalidateVisibleTraceCache(void){
 static int tryMovePlayerSliding(float moveX, float moveY);
 static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
+
+static int findBlockingWallInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    RC3D_Fixed radius,
+    int sectorIndex,
+    int *outWallIndex);
+
+static int positionHitsBlockingWallsInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    RC3D_Fixed radius,
+    int sectorIndex);
+
+
+
 void screenupdate(void);
 
 static inline RC3D_Fixed rc3dFloatToFixed(float v){
@@ -2440,6 +2456,161 @@ static int findBlockingContactAtPositionFixed(
     return found;
 }
 
+static int rc3dPositionFitsInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int sectorIndex)
+{
+    const RC3D_Fixed radius = rc3dFloatToFixed(PLAYER_RADIUS);
+
+    if (!g_map) {
+        return 0;
+    }
+
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    if (!pointInSectorFixed(px, py, sectorIndex)) {
+        return 0;
+    }
+
+    if (positionHitsBlockingWallsInSectorFixed(px, py, radius, sectorIndex)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int rc3dTryOrbitalUnstuckInSector(int sectorIndex)
+{
+    const RC3D_Fixed startX = g_player.xFixed;
+    const RC3D_Fixed startY = g_player.yFixed;
+    const float stepDist = 0.05f;
+    const float maxDist = PLAYER_RADIUS + 0.30f;
+    const int samples = 24;
+
+    float baseAngle = 0.0f;
+
+    if (!g_map) {
+        return 0;
+    }
+
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    if (rc3dPositionFitsInSectorFixed(startX, startY, sectorIndex)) {
+        return 1;
+    }
+
+    {
+        RC3D_BlockingContact contact;
+
+        if (findBlockingContactInSectorFixed(
+                startX,
+                startY,
+                rc3dFloatToFixed(PLAYER_RADIUS),
+                sectorIndex,
+                0.0f,
+                0.0f,
+                &contact))
+        {
+            baseAngle = atan2f(contact.normalY, contact.normalX);
+        }
+    }
+
+    for (float dist = stepDist; dist <= (maxDist + 0.0001f); dist += stepDist) {
+        for (int i = 0; i < samples; ++i) {
+            float angle;
+
+            if (i == 0) {
+                angle = baseAngle;
+            } else {
+                const int half = (i + 1) >> 1;
+                const float sign = (i & 1) ? 1.0f : -1.0f;
+                angle = baseAngle + (sign * (((float)half / (float)samples) * (float)(M_PI * 2.0f)));
+            }
+
+            {
+                const float dx = cosf(angle) * dist;
+                const float dy = sinf(angle) * dist;
+
+                const RC3D_Fixed testX = startX + rc3dFloatToFixed(dx);
+                const RC3D_Fixed testY = startY + rc3dFloatToFixed(dy);
+
+                if (!rc3dPositionFitsInSectorFixed(testX, testY, sectorIndex)) {
+                    continue;
+                }
+
+                rc3dSetPlayerWorldXYFixed(testX, testY);
+                g_player.sector = sectorIndex;
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+
+static void rc3dResolvePlayerPenetrationInSector(int sectorIndex)
+{
+    const RC3D_Fixed radius = rc3dFloatToFixed(PLAYER_RADIUS);
+
+    if (!g_map) {
+        return;
+    }
+
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
+        return;
+    }
+
+    for (int iter = 0; iter < 4; ++iter) {
+        RC3D_BlockingContact contact;
+
+        if (rc3dPositionFitsInSectorFixed(g_player.xFixed, g_player.yFixed, sectorIndex)) {
+            return;
+        }
+
+        if (!findBlockingContactInSectorFixed(
+                g_player.xFixed,
+                g_player.yFixed,
+                radius,
+                sectorIndex,
+                0.0f,
+                0.0f,
+                &contact))
+        {
+            break;
+        }
+
+        if (contact.penetration <= 0.0f) {
+            break;
+        }
+
+        {
+            const float pushDist =
+                contact.penetration + RC3D_COLLISION_SKIN + RC3D_EPSILON;
+
+            const RC3D_Fixed pushX =
+                rc3dFloatToFixed(contact.normalX * pushDist);
+            const RC3D_Fixed pushY =
+                rc3dFloatToFixed(contact.normalY * pushDist);
+
+            if ((pushX == 0) && (pushY == 0)) {
+                break;
+            }
+
+            rc3dSetPlayerWorldXYFixed(
+                g_player.xFixed + pushX,
+                g_player.yFixed + pushY);
+        }
+    }
+
+    if (!rc3dPositionFitsInSectorFixed(g_player.xFixed, g_player.yFixed, sectorIndex)) {
+        rc3dTryOrbitalUnstuckInSector(sectorIndex);
+    }
+}
+
 static int findBlockingWallInSectorFixed(
     RC3D_Fixed px, RC3D_Fixed py,
     RC3D_Fixed radius,
@@ -2486,31 +2657,96 @@ static int positionHitsBlockingWallsInSectorFixed(
     return findBlockingWallInSectorFixed(px, py, radius, sectorIndex, NULL);
 }
 
+
 static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
 {
+    const RC3D_Fixed radius = rc3dFloatToFixed(PLAYER_RADIUS);
+    int skipNewSectorWallCheck = 0;
+    int blocked = 0;
+
     if (newSector < 0) {
         return 0;
     }
 
-    if (positionHitsBlockingWallsInSectorFixed(
-            px, py, rc3dFloatToFixed(PLAYER_RADIUS), g_player.sector))
-    {
-        return 0;
-    }
-
     if (newSector != g_player.sector) {
-        if (positionHitsBlockingWallsInSectorFixed(
-                px, py, rc3dFloatToFixed(PLAYER_RADIUS), newSector))
+        if ((unsigned)g_player.sector < (unsigned)g_map->sectorCount &&
+            (unsigned)newSector < (unsigned)g_map->sectorCount)
         {
-            return 0;
+            const float fromFloor = g_map->sectors[g_player.sector].floorHeight;
+            const float toFloor   = g_map->sectors[newSector].floorHeight;
+
+            /* dropping off an edge:
+               allow the sector transition even if the destination sector's
+               copy of the ledge wall is still touching the player radius */
+            if (toFloor < (fromFloor - RC3D_EPSILON)) {
+                skipNewSectorWallCheck = 1;
+            }
         }
     }
 
-    return 1;
+    if (positionHitsBlockingWallsInSectorFixed(
+            px, py, radius, g_player.sector))
+    {
+        blocked = 1;
+    }
+
+    if (!skipNewSectorWallCheck && newSector != g_player.sector) {
+        if (positionHitsBlockingWallsInSectorFixed(
+                px, py, radius, newSector))
+        {
+            blocked = 1;
+        }
+    }
+
+    if (!blocked) {
+        return 1;
+    }
+
+    /* important bit:
+       if we're already slightly inside a wall, allow movement that REDUCES
+       the penetration instead of freezing the player in place */
+    {
+        RC3D_BlockingContact currentContact;
+        RC3D_BlockingContact nextContact;
+
+        const int currentHit = findBlockingContactAtPositionFixed(
+            g_player.xFixed,
+            g_player.yFixed,
+            radius,
+            g_player.sector,
+            g_player.sector,
+            0.0f,
+            0.0f,
+            &currentContact);
+
+        const int nextHit = findBlockingContactAtPositionFixed(
+            px,
+            py,
+            radius,
+            g_player.sector,
+            skipNewSectorWallCheck ? g_player.sector : newSector,
+            0.0f,
+            0.0f,
+            &nextContact);
+
+        if (currentHit) {
+            if (!nextHit) {
+                return 1;
+            }
+
+            if (nextContact.penetration < (currentContact.penetration - 0.0025f)) {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }
+
 
 static int tryMovePlayerSliding(float moveX, float moveY)
 {
+    const int oldSector = g_player.sector;
     const RC3D_Fixed startX = g_player.xFixed;
     const RC3D_Fixed startY = g_player.yFixed;
     const RC3D_Fixed moveXFixed = rc3dFloatToFixed(moveX);
@@ -2531,59 +2767,82 @@ static int tryMovePlayerSliding(float moveX, float moveY)
         }
     }
 
-    const RC3D_Fixed tryX = startX + moveXFixed;
-    const RC3D_Fixed tryY = startY + moveYFixed;
-    const int newSector = findSectorForPointFixed(tryX, tryY);
-
-
-    if (canMoveToPositionFixed(tryX, tryY, newSector)) {
-        rc3dSetPlayerWorldXYFixed(tryX, tryY);
-        g_player.sector = newSector;
-        return 1;
-    }
-
     {
-        RC3D_BlockingContact contact;
+        const RC3D_Fixed tryX = startX + moveXFixed;
+        const RC3D_Fixed tryY = startY + moveYFixed;
+        const int newSector = findSectorForPointFixed(tryX, tryY);
 
-        if (findBlockingContactAtPositionFixed(
-                tryX, tryY,
-                playerRadiusFixed,
-                g_player.sector,
-                newSector,
-                pushNX,
-                pushNY,
-                &contact))
+        if (canMoveToPositionFixed(tryX, tryY, newSector)) {
+            rc3dSetPlayerWorldXYFixed(tryX, tryY);
+            g_player.sector = newSector;
+
+            if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                (unsigned)newSector < (unsigned)g_map->sectorCount)
+            {
+                if (g_map->sectors[newSector].floorHeight <
+                    (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                {
+                    rc3dResolvePlayerPenetrationInSector(newSector);
+                }
+            }
+
+            return 1;
+        }
+
         {
-            const RC3D_Wall *w = &g_map->walls[contact.wallIndex];
-            const RC3D_Vec2 *a = &g_map->verts[w->v0];
-            const RC3D_Vec2 *b = &g_map->verts[w->v1];
-            const float contactNudge =
-                fminf(contact.penetration + RC3D_EPSILON, RC3D_COLLISION_SKIN * 0.5f);
-            const float nudgeX = contact.normalX * contactNudge;
-            const float nudgeY = contact.normalY * contactNudge;
+            RC3D_BlockingContact contact;
 
-            float wallX = b->x - a->x;
-            float wallY = b->y - a->y;
-            const float wallLen = sqrtf((wallX * wallX) + (wallY * wallY));
+            if (findBlockingContactAtPositionFixed(
+                    tryX, tryY,
+                    playerRadiusFixed,
+                    g_player.sector,
+                    newSector,
+                    pushNX,
+                    pushNY,
+                    &contact))
+            {
+                const RC3D_Wall *w = &g_map->walls[contact.wallIndex];
+                const RC3D_Vec2 *a = &g_map->verts[w->v0];
+                const RC3D_Vec2 *b = &g_map->verts[w->v1];
+                const float contactNudge =
+                    fminf(contact.penetration + RC3D_EPSILON, RC3D_COLLISION_SKIN * 0.5f);
+                const float nudgeX = contact.normalX * contactNudge;
+                const float nudgeY = contact.normalY * contactNudge;
 
-            if (wallLen > RC3D_EPSILON) {
-                wallX /= wallLen;
-                wallY /= wallLen;
+                float wallX = b->x - a->x;
+                float wallY = b->y - a->y;
+                const float wallLen = sqrtf((wallX * wallX) + (wallY * wallY));
 
-                const float slideAmt = (moveStepX * wallX) + (moveStepY * wallY);
-                const float slideX = wallX * slideAmt;
-                const float slideY = wallY * slideAmt;
+                if (wallLen > RC3D_EPSILON) {
+                    wallX /= wallLen;
+                    wallY /= wallLen;
 
-                const RC3D_Fixed slideTryX =
-                    rc3dFloatToFixed(startXFloat + slideX + nudgeX);
-                const RC3D_Fixed slideTryY =
-                    rc3dFloatToFixed(startYFloat + slideY + nudgeY);
-                const int slideSector = findSectorForPointFixed(slideTryX, slideTryY);
+                    const float slideAmt = (moveStepX * wallX) + (moveStepY * wallY);
+                    const float slideX = wallX * slideAmt;
+                    const float slideY = wallY * slideAmt;
 
-                if (canMoveToPositionFixed(slideTryX, slideTryY, slideSector)) {
-                    rc3dSetPlayerWorldXYFixed(slideTryX, slideTryY);
-                    g_player.sector = slideSector;
-                    return 1;
+                    const RC3D_Fixed slideTryX =
+                        rc3dFloatToFixed(startXFloat + slideX + nudgeX);
+                    const RC3D_Fixed slideTryY =
+                        rc3dFloatToFixed(startYFloat + slideY + nudgeY);
+                    const int slideSector = findSectorForPointFixed(slideTryX, slideTryY);
+
+                    if (canMoveToPositionFixed(slideTryX, slideTryY, slideSector)) {
+                        rc3dSetPlayerWorldXYFixed(slideTryX, slideTryY);
+                        g_player.sector = slideSector;
+
+                        if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                            (unsigned)slideSector < (unsigned)g_map->sectorCount)
+                        {
+                            if (g_map->sectors[slideSector].floorHeight <
+                                (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                            {
+                                rc3dResolvePlayerPenetrationInSector(slideSector);
+                            }
+                        }
+
+                        return 1;
+                    }
                 }
             }
         }
@@ -2597,6 +2856,17 @@ static int tryMovePlayerSliding(float moveX, float moveY)
         if (canMoveToPositionFixed(xOnlyX, xOnlyY, xSector)) {
             rc3dSetPlayerWorldXYFixed(xOnlyX, xOnlyY);
             g_player.sector = xSector;
+
+            if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                (unsigned)xSector < (unsigned)g_map->sectorCount)
+            {
+                if (g_map->sectors[xSector].floorHeight <
+                    (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                {
+                    rc3dResolvePlayerPenetrationInSector(xSector);
+                }
+            }
+
             return 1;
         }
     }
@@ -2609,6 +2879,17 @@ static int tryMovePlayerSliding(float moveX, float moveY)
         if (canMoveToPositionFixed(yOnlyX, yOnlyY, ySector)) {
             rc3dSetPlayerWorldXYFixed(yOnlyX, yOnlyY);
             g_player.sector = ySector;
+
+            if ((unsigned)oldSector < (unsigned)g_map->sectorCount &&
+                (unsigned)ySector < (unsigned)g_map->sectorCount)
+            {
+                if (g_map->sectors[ySector].floorHeight <
+                    (g_map->sectors[oldSector].floorHeight - RC3D_EPSILON))
+                {
+                    rc3dResolvePlayerPenetrationInSector(ySector);
+                }
+            }
+
             return 1;
         }
     }
@@ -4598,6 +4879,8 @@ static RC3D_Sector *rc3dMutableSectorData(void)
     return (RC3D_Sector *)g_map->sectors;
 }
 
+
+
 static void rc3dClampPlayerIntoCurrentSector(void)
 {
     if (!g_map) return;
@@ -4607,11 +4890,17 @@ static void rc3dClampPlayerIntoCurrentSector(void)
         const float minEyeZ = sec->floorHeight + RC3D_PLAYER_EYE_HEIGHT;
         const float maxEyeZ = sec->ceilHeight - (PLAYER_HEIGHT - RC3D_PLAYER_EYE_HEIGHT);
 
-        if (g_player.z < minEyeZ) {
+        /* do NOT hard-snap upward for ordinary step-ups.
+           let rc3dUpdate() smoothly rise onto the new floor.
+
+           only force upward if we're way below the floor,
+           which means something has gone properly wonky. */
+        if (g_player.z < (minEyeZ - PLAYER_STEPUP - RC3D_EPSILON)) {
             g_player.z = minEyeZ;
             g_player.vz = 0.0f;
         }
 
+        /* ceiling clamp should stay hard */
         if (g_player.z > maxEyeZ) {
             g_player.z = maxEyeZ;
             g_player.vz = 0.0f;
@@ -4621,6 +4910,8 @@ static void rc3dClampPlayerIntoCurrentSector(void)
         g_player.vz = 0.0f;
     }
 }
+
+
 
 static void rc3dUpdateSectorMotion(float dt)
 {
