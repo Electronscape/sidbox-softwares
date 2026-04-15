@@ -45,6 +45,13 @@ typedef struct {
 
 } RC3D_Wall;
 
+
+#define RC3D_SECTORTEX_CLAMPX1  0x01
+#define RC3D_SECTORTEX_CLAMPX2  0x02
+#define RC3D_SECTORTEX_CLAMPY1  0x04
+#define RC3D_SECTORTEX_CLAMPY2  0x08
+
+
 typedef struct {
     int wallStart;
     int wallCount;
@@ -56,6 +63,7 @@ typedef struct {
     uint8_t floorColor;
     uint8_t ceilColor;
     uint8_t glowlevel;      /* 0 = normal lighting, 1..7 = brighter */
+    uint8_t texFlags;       // texture clamping flags  ;)
 
     int32_t tagId;          /* runtime trigger/tag id */
     uint32_t stateFlags;    /* runtime-controlled sector state flags */

@@ -68,11 +68,13 @@ void drawDiamond(int x, int y, int radius, uint8_t col);
 void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex);
 void drawLineDots(int x0, int y0, int x1, int y1, uint8_t colorIndex);
 void drawLineGridDots(int x0, int y0, int x1, int y1, uint8_t colorIndex);
+void drawCircle(int cx, int cy, int radius, uint8_t col);
 
 
 void resetRand();
 
 void drawRect(int x, int y, int w, int h, uint8_t col);
+void drawRectDots(int x, int y, int w, int h, uint8_t col);
 void drawRectL(int x, int y, int w, int h, uint8_t col);
 
 int LoadPPB(const char *filename, uint8_t *img, int destWidth, int destHeight);

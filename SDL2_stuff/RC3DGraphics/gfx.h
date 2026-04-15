@@ -65,6 +65,7 @@ typedef struct {
 #define FB_INDEX(x, y) (((x) * SCREEN_H) + (y))
 
 void drawText(int x, int y, const char *text, uint8_t color);
+void drawTextO(int x, int y, const char *text, uint8_t color);
 
 void videoMemToScreen();// real basic clear screen
 void clearScreen(uint8_t colIndex);
@@ -75,6 +76,7 @@ void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex);
 void resetRand();
 
 void drawRect(int x, int y, int w, int h, uint8_t col);
+void drawRectSemi(int x, int y, int w, int h, uint8_t col);
 void LoadPPB(const char *filename, uint8_t *img);
 
 #endif

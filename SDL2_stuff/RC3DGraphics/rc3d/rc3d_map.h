@@ -12,6 +12,11 @@
 #define RC3D_WALL_TRANSPARENCY 0x40
 
 
+#define RC3D_SECTORTEX_CLAMPX1  0x01
+#define RC3D_SECTORTEX_CLAMPX2  0x02
+#define RC3D_SECTORTEX_CLAMPY1  0x04
+#define RC3D_SECTORTEX_CLAMPY2  0x08
+
 
 // texture flags
 #define RC3D_TEX_FLAG_DEFAULT   0x00000000u
@@ -61,6 +66,7 @@ typedef struct {
     uint8_t floorColor;
     uint8_t ceilColor;
     uint8_t glowlevel;      /* 0 = normal lighting, 1..7 = brighter */
+    uint8_t texFlags;       // texture clamping flags  ;)
 
     int32_t tagId;          /* runtime trigger/tag id */
     uint32_t stateFlags;    /* runtime-controlled sector state flags */
@@ -82,16 +88,24 @@ typedef struct {
 
 
 typedef struct {
-    float x;
+float x;
     float y;
     float z;
     int tagId;
+    int targetTagId;
+    uint32_t flags;
+    uint32_t type;
     float radius;
     uint8_t textureId;
     uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
     
+    
+    // runtime side only
+    uint8_t trigger;    // used to savestate
 } RC3D_Object;
+
+
 
 
 typedef struct {

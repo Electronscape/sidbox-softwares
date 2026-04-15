@@ -56,7 +56,7 @@
 #define ED_UI_PAD               6
 #define ED_FONT_W               8
 #define ED_FONT_H               16
-#define ED_ROW_STEP             (ED_FONT_H + ED_UI_PAD)
+#define ED_ROW_STEP             (ED_FONT_H + 2)
 
 #define ED_TOPBAR_X             6
 #define ED_TOPBAR_Y             6
@@ -3078,7 +3078,7 @@ static void drawMapObjects(void)
         if (o->radius > 0.01f) {
             const int rs = (int)lroundf(o->radius * g_ed.zoom);
             if (rs > 2) {
-                drawDiamond(sx, sy, rs, 6);
+                drawCircle(sx, sy, rs, 6);
             }
         }
     }
@@ -7082,8 +7082,9 @@ static void drawConfirmPopup(void)
     if (!g_ed.confirmVisible) return;
 
     /* dim background a bit */
-    //drawRect(0, 0, EDIT_VIEW_PORT_WIDTH, EDIT_VIEW_PORT_HEIGHT, 4);
+    drawRectDots(0, 0, EDIT_VIEW_PORT_WIDTH, EDIT_VIEW_PORT_HEIGHT, 4);
 
+    drawRect(x - 6, y - 6, boxW + 12, boxH + 12, 16);
     drawRect(x, y, boxW, boxH, ED_UI_BG);
     drawRectL(x, y, boxW, boxH, ED_UI_BORDER);
 
@@ -9440,6 +9441,7 @@ static void drawExpandedEditorPanel(void)
         if((g_ed.selectionType == ED_SEL_VERTEX) ||
              (g_ed.selectionType == ED_SEL_WALL) ||
              (g_ed.selectionType == ED_SEL_SECTOR) ||
+             (g_ed.selectionType == ED_SEL_OBJECT) ||
             (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0) ||
             hasMultiWallSelection() ||
             hasMultiSectorSelection())
@@ -9465,6 +9467,28 @@ static void drawExpandedEditorPanel(void)
             drawText(x, y, "[SHIFT+NUM_1]/[SHIFT+NUM_2]/[SHIFT+NUM_3] paste", ED_TEXT_COL);
             y += ED_ROW_STEP;
             drawText(x, y, "[CTRL+1..4] wall type, [CTRL+E] extrude, [SPACE] split", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+        }
+        if(g_ed.selectionType == ED_SEL_OBJECT){
+            drawText(x, y, "--- OBJECTS HELP", ED_EXPANDED_MENU_TEXT);
+            y += ED_ROW_STEP; drawText(x, y, "Tag: Just an identifier for the object", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Type: Is used to identify what this object is", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Radius: Collision test area for the object", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "InFlag: These are flags that get copied to the Target Id", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "OutFlag: These are flags that get copied to the Target Id", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "TYPES: (Arbitrary types just for Advise, these are used for the run time demo though)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "0 - a floating sprite", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "1 - sector trigger type. eg. open / close doors", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "2 - sector trigger type on entry (player walks into object). eg. open / close doors", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "3 - sector trigger type on exit  (player walks out of object). eg. open / close doors", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Flags to use: (but not set in stone)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_NONE          = 0x00", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_RAISE_FLOOR   = 0x01", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_LOWER_FLOOR   = 0x02", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_LOWER_CEILING = 0x04", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_RAISE_CEILING = 0x08", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(hasMultiWallSelection()){
@@ -9633,6 +9657,108 @@ static void drawWallNormal(int wallIndex, uint8_t colour)
     //drawRect(sx1 - 1, sy1 - 1, 3, 3, colour);
 }
 
+static int objectUsesSectorTarget(const EdObject *o)
+{
+    if (!o) return 0;
+
+    return (o->type >= 1u && o->type <= 3u);
+}
+
+static int findSectorByTagId(int tagId)
+{
+    if (tagId <= 0) {
+        return -1;
+    }
+
+    for (int i = 0; i < g_edMap.sectorCount; i++) {
+        if (g_edMap.sectors[i].tagId == tagId) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int getSectorCenter(int sectorIndex, float *outX, float *outY)
+{
+    const EdSector *sec;
+    float sumX = 0.0f;
+    float sumY = 0.0f;
+    int count = 0;
+
+    if (!outX || !outY) return 0;
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
+
+    sec = &g_edMap.sectors[sectorIndex];
+    if (sec->boundaryCount <= 0) return 0;
+
+    for (int i = 0; i < sec->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+
+        if (w->v0 < 0 || w->v0 >= g_edMap.vertCount) {
+            continue;
+        }
+
+        sumX += g_edMap.verts[w->v0].x;
+        sumY += g_edMap.verts[w->v0].y;
+        count++;
+    }
+
+    if (count <= 0) {
+        return 0;
+    }
+
+    *outX = sumX / (float)count;
+    *outY = sumY / (float)count;
+    return 1;
+}
+
+
+
+static void drawObjectSectorLinks(void)
+{
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        int x0, y0;
+
+        if (!objectUsesSectorTarget(o)) {
+            continue;
+        }
+
+        if (o->targetTagId <= 0) {
+            continue;
+        }
+
+        worldToScreen(o->x, o->y, &x0, &y0);
+
+        for (int sectorIndex = 0; sectorIndex < g_edMap.sectorCount; sectorIndex++) {
+            float sectorX, sectorY;
+            int x1, y1;
+            uint8_t col = ED_PORTAL_COL;
+
+            if (g_edMap.sectors[sectorIndex].tagId != o->targetTagId) {
+                continue;
+            }
+
+            if (!getSectorCenter(sectorIndex, &sectorX, &sectorY)) {
+                continue;
+            }
+
+            worldToScreen(sectorX, sectorY, &x1, &y1);
+
+            if ((g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject == i) ||
+                isSectorInEditSelection(sectorIndex)) {
+                col = ED_COLOUR_SELECTED_SECTOR;
+            } else if (g_ed.hoverObject == i || g_ed.hoverSector == sectorIndex) {
+                col = ED_COLOUR_HOVER_WALL;
+            }
+
+            drawLineDots(x0, y0, x1, y1, col);
+            drawRect(x1 - 1, y1 - 1, 3, 3, col);
+        }
+    }
+}
+
 
 
 static void drawMapGeometry(void)
@@ -9765,6 +9891,7 @@ static void drawMapGeometry(void)
     }
 
     drawMapObjects();
+    drawObjectSectorLinks();
 
     /* -------------------------------------------------- */
     /* draft                                              */
@@ -13477,7 +13604,6 @@ extern uint8_t bg1[];
 void rc3dEditRender(void)
 {
     if (g_ed.isometricView) {
-        //drawImage(0, 0, SCREEN_W, SCREEN_H, bg1);
         clearScreen(16);
         drawImage(0, 0, SCREEN_W, SCREEN_H, bg1);
         drawIsometricPreview();
@@ -13490,7 +13616,6 @@ void rc3dEditRender(void)
     drawTopMenuBar();
     drawBottomMenuBar();
     drawStatusPopup();
-    drawConfirmPopup();
 
     if (g_ed.ui_menu_visable) {
         drawExpandedEditorPanel();
@@ -13503,9 +13628,11 @@ void rc3dEditRender(void)
     drawTextureBrowser();
     drawInspectorPanel();
     drawHoverPanel();
-    rcguiDraw(&g_ui);
+
+    drawConfirmPopup();
     drawUndoHistoryPopup();
     drawFilename();
     drawActiveTips();
 
+    rcguiDraw(&g_ui);
 }

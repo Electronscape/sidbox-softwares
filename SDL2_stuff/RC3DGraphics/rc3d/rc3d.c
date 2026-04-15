@@ -47,6 +47,7 @@ int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
 #define RC3D_MAX_WALL_SPANS_PER_COLUMN 32
 #define RC3D_DEPTH_SCALE       1024.0f
 
+int bShowMiniMap = 1;
 int bShowProfiler = 0;
 float g_draw_distance = RC3D_MAX_RAY_DIST;
 
@@ -113,28 +114,55 @@ static float g_wallShadeBiasGlobal = 0.0f;
 
 #if RC3D_DRAW_PROFILER
 typedef struct {
+double updateMs;
     double backgroundMs;
     double wallsMs;
     double spritesMs;
     double minimapMs;
     double totalMs;
 
+    double avgUpdateMs;
     double avgBackgroundMs;
     double avgWallsMs;
     double avgSpritesMs;
     double avgMinimapMs;
     double avgTotalMs;
 
+    double peakUpdateMs;
+    double peakBackgroundMs;
+    double peakWallsMs;
+    double peakSpritesMs;
+    double peakMinimapMs;
+    double peakTotalMs;
+
+    double fpsNow;
+    double fpsAvg;
+
     uint32_t rays;
     uint32_t wallTests;
     uint32_t portalSteps;
     uint32_t spriteColumns;
     uint32_t spriteSectorTraces;
+
+    uint32_t wallSpans;
+    uint32_t visibleTraceSegments;
+    uint32_t spritesVisible;
+    uint32_t spritesDrawn;
+
+    uint32_t objectsProcessed;
+    uint32_t objectEdgeChanges;
+    uint32_t sectorStateWrites;
+    uint32_t sectorsMoved;
 } RC3D_Profiler;
 
 static RC3D_Profiler g_profiler;
 static Uint64 g_profilerFreq = 0;
 static int g_profilerHasHistory = 0;
+
+static int g_profilerFrameActive = 0;
+
+#define RC3D_PROFILER_DO(stmt) \
+    do { if (g_profilerFrameActive) { stmt; } } while (0)
 
 static inline double rc3dProfilerTicksToMs(Uint64 ticks)
 {
@@ -149,96 +177,166 @@ static inline double rc3dProfilerTicksToMs(Uint64 ticks)
     return ((double)ticks * 1000.0) / (double)g_profilerFreq;
 }
 
+
 static inline void rc3dProfilerBeginFrame(void)
 {
+    g_profiler.updateMs = 0.0;
     g_profiler.backgroundMs = 0.0;
     g_profiler.wallsMs = 0.0;
     g_profiler.spritesMs = 0.0;
     g_profiler.minimapMs = 0.0;
     g_profiler.totalMs = 0.0;
+    g_profiler.fpsNow = 0.0;
 
     g_profiler.rays = 0u;
     g_profiler.wallTests = 0u;
     g_profiler.portalSteps = 0u;
     g_profiler.spriteColumns = 0u;
     g_profiler.spriteSectorTraces = 0u;
+
+    g_profiler.wallSpans = 0u;
+    g_profiler.visibleTraceSegments = 0u;
+    g_profiler.spritesVisible = 0u;
+    g_profiler.spritesDrawn = 0u;
+
+    g_profiler.objectsProcessed = 0u;
+    g_profiler.objectEdgeChanges = 0u;
+    g_profiler.sectorStateWrites = 0u;
+    g_profiler.sectorsMoved = 0u;
+
+    g_profilerFrameActive = 1;
 }
+
 
 static inline void rc3dProfilerBlendAverages(void)
 {
-    const double alpha = 0.20;
+    const double alphaMs  = 0.02;   /* smoother timing average */
+    const double alphaFps = 0.02;   /* even smoother fps average */
+
+    g_profiler.fpsNow = (g_profiler.totalMs > 0.0) ? (1000.0 / g_profiler.totalMs) : 0.0;
 
     if (!g_profilerHasHistory) {
+        g_profiler.avgUpdateMs = g_profiler.updateMs;
         g_profiler.avgBackgroundMs = g_profiler.backgroundMs;
         g_profiler.avgWallsMs = g_profiler.wallsMs;
         g_profiler.avgSpritesMs = g_profiler.spritesMs;
         g_profiler.avgMinimapMs = g_profiler.minimapMs;
         g_profiler.avgTotalMs = g_profiler.totalMs;
+
+        g_profiler.peakUpdateMs = g_profiler.updateMs;
+        g_profiler.peakBackgroundMs = g_profiler.backgroundMs;
+        g_profiler.peakWallsMs = g_profiler.wallsMs;
+        g_profiler.peakSpritesMs = g_profiler.spritesMs;
+        g_profiler.peakMinimapMs = g_profiler.minimapMs;
+        g_profiler.peakTotalMs = g_profiler.totalMs;
+
+        g_profiler.fpsAvg = g_profiler.fpsNow;
+
         g_profilerHasHistory = 1;
         return;
     }
 
-    g_profiler.avgBackgroundMs += (g_profiler.backgroundMs - g_profiler.avgBackgroundMs) * alpha;
-    g_profiler.avgWallsMs += (g_profiler.wallsMs - g_profiler.avgWallsMs) * alpha;
-    g_profiler.avgSpritesMs += (g_profiler.spritesMs - g_profiler.avgSpritesMs) * alpha;
-    g_profiler.avgMinimapMs += (g_profiler.minimapMs - g_profiler.avgMinimapMs) * alpha;
-    g_profiler.avgTotalMs += (g_profiler.totalMs - g_profiler.avgTotalMs) * alpha;
+    g_profiler.avgUpdateMs += (g_profiler.updateMs - g_profiler.avgUpdateMs) * alphaMs;
+    g_profiler.avgBackgroundMs += (g_profiler.backgroundMs - g_profiler.avgBackgroundMs) * alphaMs;
+    g_profiler.avgWallsMs += (g_profiler.wallsMs - g_profiler.avgWallsMs) * alphaMs;
+    g_profiler.avgSpritesMs += (g_profiler.spritesMs - g_profiler.avgSpritesMs) * alphaMs;
+    g_profiler.avgMinimapMs += (g_profiler.minimapMs - g_profiler.avgMinimapMs) * alphaMs;
+    g_profiler.avgTotalMs += (g_profiler.totalMs - g_profiler.avgTotalMs) * alphaMs;
+
+    g_profiler.fpsAvg += (g_profiler.fpsNow - g_profiler.fpsAvg) * alphaFps;
+
+    if (g_profiler.updateMs > g_profiler.peakUpdateMs) g_profiler.peakUpdateMs = g_profiler.updateMs;
+    if (g_profiler.backgroundMs > g_profiler.peakBackgroundMs) g_profiler.peakBackgroundMs = g_profiler.backgroundMs;
+    if (g_profiler.wallsMs > g_profiler.peakWallsMs) g_profiler.peakWallsMs = g_profiler.wallsMs;
+    if (g_profiler.spritesMs > g_profiler.peakSpritesMs) g_profiler.peakSpritesMs = g_profiler.spritesMs;
+    if (g_profiler.minimapMs > g_profiler.peakMinimapMs) g_profiler.peakMinimapMs = g_profiler.minimapMs;
+    if (g_profiler.totalMs > g_profiler.peakTotalMs) g_profiler.peakTotalMs = g_profiler.totalMs;
 }
 
+#define PROFILE_COLOUR      116
 static void rc3dDrawProfiler(void)
 {
-    char buf[80];
+    char buf[96];
     const int textW = 8;
     const int lineH = 8;
     const int panelX = 6;
-    const int panelW = (27 * textW) + 8;
-    const int panelH = (10 * lineH) + 8;
-    const int panelY = SCREEN_H - panelH - 6;
-    int textY = panelY + 4;
+    const int panelW = (34 * textW) + 8;
+    const int panelH = (15 * lineH) + 8;
+    int panelY = SCREEN_H - panelH - 6;
+    int textY;
+    double testsPerRay = 0.0;
+    double portalsPerRay = 0.0;
 
-    drawRect(panelX, panelY, panelW, panelH, 16);
-    drawLine(panelX, panelY, panelX + panelW - 1, panelY, 15);
-    drawLine(panelX, panelY, panelX, panelY + panelH - 1, 15);
-    drawLine(panelX + panelW - 1, panelY, panelX + panelW - 1, panelY + panelH - 1, 15);
-    drawLine(panelX, panelY + panelH - 1, panelX + panelW - 1, panelY + panelH - 1, 15);
+    if (panelY < 6) {
+        panelY = 6;
+    }
 
-    drawText(panelX + 4, textY, "PROFILER (AVG MS)", 15);
+    if (g_profiler.rays > 0u) {
+        testsPerRay = (double)g_profiler.wallTests / (double)g_profiler.rays;
+        portalsPerRay = (double)g_profiler.portalSteps / (double)g_profiler.rays;
+    }
+
+    drawRectSemi(panelX, panelY, panelW, panelH, 16);
+    drawLine(panelX, panelY, panelX + panelW - 1, panelY, PROFILE_COLOUR);
+    drawLine(panelX, panelY, panelX, panelY + panelH - 1, PROFILE_COLOUR);
+    drawLine(panelX + panelW - 1, panelY, panelX + panelW - 1, panelY + panelH - 1, PROFILE_COLOUR);
+    drawLine(panelX, panelY + panelH - 1, panelX + panelW - 1, panelY + panelH - 1, PROFILE_COLOUR);
+
+    textY = panelY + 4;
+
+    drawTextO(panelX + 4, textY, "PROFILER      NOW    AVG    PEAK", PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "TOTAL FRAME   %.2f", g_profiler.avgTotalMs);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "FPS         %6.1f %6.1f", g_profiler.fpsNow, g_profiler.fpsAvg);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SKY/BG        %.2f", g_profiler.avgBackgroundMs);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "FRAME       %6.2f %6.2f %6.2f", g_profiler.totalMs, g_profiler.avgTotalMs, g_profiler.peakTotalMs);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "WALLS         %.2f", g_profiler.avgWallsMs);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "UPDATE      %6.2f %6.2f %6.2f", g_profiler.updateMs, g_profiler.avgUpdateMs, g_profiler.peakUpdateMs);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SPRITES       %.2f", g_profiler.avgSpritesMs);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "SKY/BG      %6.2f %6.2f %6.2f", g_profiler.backgroundMs, g_profiler.avgBackgroundMs, g_profiler.peakBackgroundMs);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "MINIMAP       %.2f", g_profiler.avgMinimapMs);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "WALLS       %6.2f %6.2f %6.2f", g_profiler.wallsMs, g_profiler.avgWallsMs, g_profiler.peakWallsMs);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "RAYS %u  WALL TESTS %u", g_profiler.rays, g_profiler.wallTests);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "SPRITES     %6.2f %6.2f %6.2f", g_profiler.spritesMs, g_profiler.avgSpritesMs, g_profiler.peakSpritesMs);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "PORTAL STEPS %u", g_profiler.portalSteps);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "MINIMAP     %6.2f %6.2f %6.2f", g_profiler.minimapMs, g_profiler.avgMinimapMs, g_profiler.peakMinimapMs);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SPRITE COLS %u", g_profiler.spriteColumns);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "RAYS %u  WTEST %u  T/R %.1f", g_profiler.rays, g_profiler.wallTests, testsPerRay);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
     textY += lineH;
 
-    snprintf(buf, sizeof(buf), "SPRITE TRACES %u  DD %.1f", g_profiler.spriteSectorTraces, g_draw_distance);
-    drawText(panelX + 4, textY, buf, 15);
+    snprintf(buf, sizeof(buf), "PORT %u  VIS %u  P/R %.1f", g_profiler.portalSteps, g_profiler.visibleTraceSegments, portalsPerRay);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
+    textY += lineH;
+
+    snprintf(buf, sizeof(buf), "SPAN %u  SCOL %u", g_profiler.wallSpans, g_profiler.spriteColumns);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
+    textY += lineH;
+
+    snprintf(buf, sizeof(buf), "SPR V %u  D %u  TR %u", g_profiler.spritesVisible, g_profiler.spritesDrawn, g_profiler.spriteSectorTraces);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
+    textY += lineH;
+
+    snprintf(buf, sizeof(buf), "OBJ P %u  E %u  W %u", g_profiler.objectsProcessed, g_profiler.objectEdgeChanges, g_profiler.sectorStateWrites);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
+    textY += lineH;
+
+    snprintf(buf, sizeof(buf), "SECT MOVED %2u  DD %.1f", g_profiler.sectorsMoved, g_draw_distance);
+    drawTextO(panelX + 4, textY, buf, PROFILE_COLOUR);
 }
 #endif
 
@@ -666,6 +764,8 @@ static inline void rc3dRecordWallDepthSpan(int sx, int y0, int y1, float hitDist
     g_wallDepthSpans[sx][count].y1 = (int16_t)y1;
     g_wallDepthSpans[sx][count].depth = rc3dEncodeDepth(hitDist);
     g_wallDepthSpanCount[sx] = (uint8_t)(count + 1);
+
+    RC3D_PROFILER_DO(g_profiler.wallSpans++);
 }
 
 static inline int rc3dWallSpansBlockPixel(int sx, int y, uint16_t spriteDepth)
@@ -1605,6 +1705,8 @@ void rc3dMapFreeBinary(RC3D_Map *map)
     map->startAngle = 0.0f;
 }
 
+
+
 int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 {
     FILE *f;
@@ -1638,16 +1740,9 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         return 0;
     }
 
+    // only map version 5 no backwards compatibility wanted
     if (memcmp(magic, "RC3DMAP5", 8) == 0) {
         mapVersion = 5;
-    } else if (memcmp(magic, "RC3DMAP4", 8) == 0) {
-        mapVersion = 4;
-    } else if (memcmp(magic, "RC3DMAP3", 8) == 0) {
-        mapVersion = 3;
-    } else if (memcmp(magic, "RC3DMAP2", 8) == 0) {
-        mapVersion = 2;
-    } else if (memcmp(magic, "RC3DMAP1", 8) == 0) {
-        mapVersion = 1;
     } else {
         fclose(f);
         return 0;
@@ -1672,7 +1767,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
     verts = vertCount ? (RC3D_Vec2 *)malloc(sizeof(RC3D_Vec2) * vertCount) : NULL;
     walls = wallCount ? (RC3D_Wall *)malloc(sizeof(RC3D_Wall) * wallCount) : NULL;
     sectors = sectorCount ? (RC3D_Sector *)malloc(sizeof(RC3D_Sector) * sectorCount) : NULL;
-    objects = objectCount ? (RC3D_Object *)malloc(sizeof(RC3D_Object) * objectCount) : NULL;
+    //objects = objectCount ? (RC3D_Object *)malloc(sizeof(RC3D_Object) * objectCount) : NULL;
+    objects = objectCount ? (RC3D_Object *)calloc(objectCount, sizeof(RC3D_Object)) : NULL;
 
     if ((vertCount && !verts) ||
         (wallCount && !walls) ||
@@ -1703,47 +1799,24 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         int32_t v1;
         int32_t neighbour;
 
-        if (mapVersion >= 3) {
-            if (!readExact(f, &v0, sizeof(v0)) ||
-                !readExact(f, &v1, sizeof(v1)) ||
-                !readExact(f, &neighbour, sizeof(neighbour)) ||
-                !readExact(f, &walls[i].openBottom, sizeof(float)) ||
-                !readExact(f, &walls[i].openTop, sizeof(float)) ||
-                !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].texture_flags, sizeof(uint32_t)) ||
-                !readExact(f, &walls[i].texScaleX, sizeof(float)) ||
-                !readExact(f, &walls[i].texScaleY, sizeof(float))) {
-                fclose(f);
-                free(verts);
-                free(walls);
-                free(sectors);
-                free(objects);
-                return 0;
-            }
-        } else {
-            if (!readExact(f, &v0, sizeof(v0)) ||
-                !readExact(f, &v1, sizeof(v1)) ||
-                !readExact(f, &neighbour, sizeof(neighbour)) ||
-                !readExact(f, &walls[i].openBottom, sizeof(float)) ||
-                !readExact(f, &walls[i].openTop, sizeof(float)) ||
-                !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
-                !readExact(f, &walls[i].texture_flags, sizeof(uint32_t))) {
-                fclose(f);
-                free(verts);
-                free(walls);
-                free(sectors);
-                free(objects);
-                return 0;
-            }
-
-            walls[i].texScaleX = 1.0f;
-            walls[i].texScaleY = 1.0f;
+        if (!readExact(f, &v0, sizeof(v0)) ||
+            !readExact(f, &v1, sizeof(v1)) ||
+            !readExact(f, &neighbour, sizeof(neighbour)) ||
+            !readExact(f, &walls[i].openBottom, sizeof(float)) ||
+            !readExact(f, &walls[i].openTop, sizeof(float)) ||
+            !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].texture_flags, sizeof(uint32_t)) ||
+            !readExact(f, &walls[i].texScaleX, sizeof(float)) ||
+            !readExact(f, &walls[i].texScaleY, sizeof(float))) {
+            fclose(f);
+            free(verts);
+            free(walls);
+            free(sectors);
+            free(objects);
+            return 0;
         }
 
         walls[i].v0 = (int)v0;
@@ -1756,132 +1829,80 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         int32_t wallCount_i;
         int32_t boundaryCount;
 
-        if (mapVersion >= 4) {
-            if (!readExact(f, &wallStart, sizeof(wallStart)) ||
-                !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
-                !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
-                !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].glowlevel, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].tagId, sizeof(int32_t)) ||
-                !readExact(f, &sectors[i].stateFlags, sizeof(uint32_t)) ||
-                !readExact(f, &sectors[i].floorMinHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorMaxHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilMinHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilMaxHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorFlowHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilFlowHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
-                fclose(f);
-                free(verts);
-                free(walls);
-                free(sectors);
-                free(objects);
-                return 0;
-            }
-        } else if (mapVersion >= 2) {
-            if (!readExact(f, &wallStart, sizeof(wallStart)) ||
-                !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
-                !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
-                !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].glowlevel, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
-                fclose(f);
-                free(verts);
-                free(walls);
-                free(sectors);
-                free(objects);
-                return 0;
-            }
-
-            sectors[i].tagId = 0;
-            sectors[i].stateFlags = 0u;
-            sectors[i].floorMinHeight = sectors[i].floorHeight;
-            sectors[i].floorMaxHeight = sectors[i].floorHeight;
-            sectors[i].ceilMinHeight = sectors[i].ceilHeight;
-            sectors[i].ceilMaxHeight = sectors[i].ceilHeight;
-            sectors[i].floorFlowHeight = 0.0f;
-            sectors[i].ceilFlowHeight = 0.0f;
-        } else {
-            if (!readExact(f, &wallStart, sizeof(wallStart)) ||
-                !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
-                !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
-                !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
-                !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
-                !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
-                !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
-                fclose(f);
-                free(verts);
-                free(walls);
-                free(sectors);
-                free(objects);
-                return 0;
-            }
-
-            sectors[i].glowlevel = 0;
-            sectors[i].tagId = 0;
-            sectors[i].stateFlags = 0u;
-            sectors[i].floorMinHeight = sectors[i].floorHeight;
-            sectors[i].floorMaxHeight = sectors[i].floorHeight;
-            sectors[i].ceilMinHeight = sectors[i].ceilHeight;
-            sectors[i].ceilMaxHeight = sectors[i].ceilHeight;
-            sectors[i].floorFlowHeight = 0.0f;
-            sectors[i].ceilFlowHeight = 0.0f;
+        if (!readExact(f, &wallStart, sizeof(wallStart)) ||
+            !readExact(f, &wallCount_i, sizeof(wallCount_i)) ||
+            !readExact(f, &boundaryCount, sizeof(boundaryCount)) ||
+            !readExact(f, &sectors[i].floorHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].floorColor, sizeof(uint8_t)) ||
+            !readExact(f, &sectors[i].ceilColor, sizeof(uint8_t)) ||
+            !readExact(f, &sectors[i].glowlevel, sizeof(uint8_t)) ||
+            !readExact(f, &sectors[i].tagId, sizeof(int32_t)) ||
+            !readExact(f, &sectors[i].stateFlags, sizeof(uint32_t)) ||
+            !readExact(f, &sectors[i].floorMinHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].floorMaxHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilMinHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilMaxHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].floorFlowHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilFlowHeight, sizeof(float)) ||
+            !readExact(f, &sectors[i].floorTexScaleX, sizeof(float)) ||
+            !readExact(f, &sectors[i].floorTexScaleY, sizeof(float)) ||
+            !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
+            !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
+            fclose(f);
+            free(verts);
+            free(walls);
+            free(sectors);
+            free(objects);
+            return 0;
         }
-
         sectors[i].glowlevel = rc3dClampGlowLevel(sectors[i].glowlevel);
         sectors[i].wallStart = (int)wallStart;
         sectors[i].wallCount = (int)wallCount_i;
         sectors[i].boundaryCount = (int)boundaryCount;
+        sectors[i].texFlags = 0xf;  // everything is clamped for now ;)
+        
     }
 
-    if (mapVersion >= 5) {
-        for (uint32_t i = 0; i < objectCount; i++) {
-            int32_t tagId;
+    for (uint32_t i = 0; i < objectCount; i++) {
+        int32_t tagId;
+        int32_t targTagId;
+        uint32_t oflags;
+        uint32_t otype;
 
-            if (!readExact(f, &objects[i].x, sizeof(float)) ||
-                !readExact(f, &objects[i].y, sizeof(float)) ||
-                !readExact(f, &objects[i].z, sizeof(float)) ||
-                !readExact(f, &tagId, sizeof(int32_t)) ||
-                !readExact(f, &objects[i].radius, sizeof(float)) ||
-                !readExact(f, &objects[i].textureId, sizeof(uint8_t)) ||
-                !readExact(f, &objects[i].inFlag, sizeof(uint8_t)) ||
-                !readExact(f, &objects[i].outFlag, sizeof(uint8_t))
-            ) {
-                fclose(f);
-                free(verts);
-                free(walls);
-                free(sectors);
-                free(objects);
-                return 0;
-            }
+        if (!readExact(f, &objects[i].x, sizeof(float)) ||
+            !readExact(f, &objects[i].y, sizeof(float)) ||
+            !readExact(f, &objects[i].z, sizeof(float)) ||
+            !readExact(f, &tagId, sizeof(int32_t)) ||
+            !readExact(f, &targTagId, sizeof(int32_t)) ||
+            !readExact(f, &oflags, sizeof(uint32_t)) ||
+            !readExact(f, &otype, sizeof(uint32_t)) ||
+            !readExact(f, &objects[i].radius, sizeof(float)) ||
+            !readExact(f, &objects[i].textureId, sizeof(uint8_t)) ||
+            !readExact(f, &objects[i].inFlag, sizeof(uint8_t)) ||
+            !readExact(f, &objects[i].outFlag, sizeof(uint8_t)))
+        {
+            fclose(f);
+            free(verts);
+            free(walls);
+            free(sectors);
+            free(objects);
+            return 0;
+        }
 
-            objects[i].tagId = (int)tagId;
+        objects[i].tagId = (int)tagId;
 
-            if (objects[i].radius < 0.01f) {
-                objects[i].radius = 0.25f;
-            }
+        /* only keep these if RC3D_Object actually has them */
+        objects[i].targetTagId = (int)targTagId;
+        objects[i].flags = oflags;
+        objects[i].type = otype;
+
+        objects[i].trigger = 0;
+
+        if (objects[i].radius < 0.01f) {
+            objects[i].radius = 0.25f;
         }
     }
 
@@ -1943,6 +1964,9 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
 
     return 1;
 }
+
+
+
 
 int rc3dLoadMapBinary(const char *path)
 {
@@ -3317,9 +3341,7 @@ static inline RC3D_WallHit findNearestWallInSector(
         (preferredWallIndex != ignoreWallIndexB);
 
     if (usePreferredWall) {
-#if RC3D_DRAW_PROFILER
-        g_profiler.wallTests++;
-#endif
+        RC3D_PROFILER_DO(g_profiler.wallTests++);
         rc3dTryNearestWallHit(&hit, preferredWallIndex, rox, roy, rdx, rdy, minT, walls, verts, cache);
     }
 
@@ -3328,9 +3350,7 @@ static inline RC3D_WallHit findNearestWallInSector(
             continue;
         }
 
-#if RC3D_DRAW_PROFILER
-        g_profiler.wallTests++;
-#endif
+        RC3D_PROFILER_DO(g_profiler.wallTests++);
         if (wallIndex == ignoreWallIndexA || wallIndex == ignoreWallIndexB) {
             continue;
         }
@@ -3460,9 +3480,8 @@ static inline void renderColumnPortalTraceClipped(
     const float playerZ = g_renderEyeZ;
 
     for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
-#if RC3D_DRAW_PROFILER
-        g_profiler.portalSteps++;
-#endif
+        RC3D_PROFILER_DO(g_profiler.portalSteps++);
+
         if ((unsigned)currentSector >= (unsigned)g_map->sectorCount) {
             return;
         }
@@ -3940,6 +3959,8 @@ static inline void rc3dRecordVisibleTraceSegment(
     segment->clipBottom = (int16_t)clipBottom;
     segment->depthLimit = depthLimit;
     g_visibleTraceCount[sx] = (uint8_t)(count + 1);
+
+    RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
 }
 
 static void rc3dBuildVisibleTraceCacheForColumn(int sx)
@@ -3986,9 +4007,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
     }
 
     for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
-#if RC3D_DRAW_PROFILER
-        g_profiler.portalSteps++;
-#endif
+        RC3D_PROFILER_DO(g_profiler.portalSteps++);
         RC3D_WallHit hit;
         const RC3D_Sector *sec;
         const RC3D_Wall *w;
@@ -4191,9 +4210,7 @@ static void renderCurrentSectorColumns(void)
     {
         int preferredWallIndex = -1;
 
-#if RC3D_DRAW_PROFILER
-        g_profiler.rays = (g_viewport_width > 0) ? (uint32_t)g_viewport_width : 0u;
-#endif
+        RC3D_PROFILER_DO(g_profiler.rays = (g_viewport_width > 0) ? (uint32_t)g_viewport_width : 0u;);
 
         for (int sx = 0; sx < g_viewport_width; ++sx) {
             const RC3D_ColumnRayCache *rayCache = &g_columnRayCache[sx];
@@ -4220,9 +4237,7 @@ static int rc3dTraceVisibleSectorAtDepth(
     int *outClipTop,
     int *outClipBottom)
 {
-#if RC3D_DRAW_PROFILER
-    g_profiler.spriteSectorTraces++;
-#endif
+    RC3D_PROFILER_DO(g_profiler.spriteSectorTraces++);
     const uint16_t targetDepthCode = rc3dEncodeDepth(targetDepth);
 
     if ((unsigned)sx >= (unsigned)g_viewport_width) {
@@ -4326,6 +4341,8 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
         return;
     }
 
+    RC3D_PROFILER_DO(g_profiler.spritesDrawn++);
+
     spriteDepth = rc3dEncodeDepth(camDepth);
 
     {
@@ -4334,9 +4351,8 @@ static void renderBillboardSprite(const RC3D_Sprite *sprite)
         int preferredSector = g_player.sector;
 
         for (int sx = drawLeft; sx <= drawRight; ++sx) {
-#if RC3D_DRAW_PROFILER
-            g_profiler.spriteColumns++;
-#endif
+            RC3D_PROFILER_DO(g_profiler.spriteColumns++);
+
             RC3D_ShadeProfile shadeProfile;
             const int tx = ((sx - leftX) * RC3D_TEX_SIZE) / unclampedWidth;
             uint8_t sectorGlow = 0u;
@@ -4471,6 +4487,8 @@ static void renderSprites(void)
             if (camDepth <= RC3D_EPSILON || camDepth >= g_draw_distance) {
                 continue;
             }
+
+            RC3D_PROFILER_DO(g_profiler.spritesVisible++);
 
             while (insertAt > 0) {
                 if (g_spriteOrder[insertAt - 1].camDepth >= camDepth) {
@@ -4805,6 +4823,7 @@ static void rc3dUpdateSectorMotion(float dt)
             fabsf(sec->ceilHeight - oldCeilHeight) > RC3D_EPSILON)
         {
             anySectorMoved = 1;
+            RC3D_PROFILER_DO(g_profiler.sectorsMoved++);
         }
 
         if (i == g_player.sector) {
@@ -4965,8 +4984,106 @@ int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags)
     return changedCount;
 }
 
+
+
+static inline float distance3D(float x1, float y1, float z1,   float x2, float y2, float z2){
+    const float dx = x2 - x1;
+    const float dy = y2 - y1;
+    const float dz = z2 - z1;
+    return sqrtf((dx * dx) + (dy * dy) + (dz * dz));
+}
+
+static inline float distance2D(float x1, float y1,   float x2, float y2){
+    const float dx = x2 - x1;
+    const float dy = y2 - y1;
+    return sqrtf((dx * dx) + (dy * dy));
+}
+
+#define RC3D_PROFILE_OBJ_LINES 16
+static float obj1dist[RC3D_PROFILE_OBJ_LINES] = {0.0f};
+
+
+void processObjects(void)
+{
+    int objCnt;
+    const float px = g_player.x;
+    const float py = g_player.y;
+
+    if (!g_map || !g_map->objects) {
+        return;
+    }
+
+    objCnt = g_map->objectCount;
+    if (objCnt <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < objCnt; i++) {
+        RC3D_Object *obj = &g_map->objects[i];
+        const float dist = distance2D(px, py, obj->x, obj->y);
+        const int inside = (dist < obj->radius) ? 1 : 0;
+        const int wasInside = (obj->trigger != 0) ? 1 : 0;
+        uint8_t flagToSet = 0;
+
+        RC3D_PROFILER_DO(g_profiler.objectsProcessed++);
+
+        if (i < RC3D_PROFILE_OBJ_LINES) {
+            obj1dist[i] = dist;
+        }
+
+        /* no edge change */
+        if (inside == wasInside) {
+            continue;
+        }
+
+        RC3D_PROFILER_DO(g_profiler.objectEdgeChanges++);
+
+        /* store current state as a clean boolean */
+        obj->trigger = (uint8_t)inside;
+
+        switch (obj->type) {
+            case OBJECT_TRIGGER_SIMPLESPRITE:
+                break;
+
+            case OBJECT_TRIGGER_SECTOR_DISTANCE:
+                flagToSet = inside ? obj->inFlag : obj->outFlag;
+                break;
+
+            case OBJECT_TRIGGER_SECTOR_STEPPED_IN:
+                if (inside) {
+                    flagToSet = obj->inFlag;
+                }
+                break;
+
+            case OBJECT_TRIGGER_SECTOR_STEPPED_OUT:
+                if (!inside) {
+                    flagToSet = obj->outFlag;
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        if (obj->targetTagId != 0 && flagToSet != 0) {
+            const int changed = rc3dSetSectorStateByTag(obj->targetTagId, flagToSet);
+            RC3D_PROFILER_DO(
+                if (changed > 0) {
+                    g_profiler.sectorStateWrites += (uint32_t)changed;
+                }
+            );
+        }
+    }
+}
+
+
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 {
+#if RC3D_DRAW_PROFILER
+    const Uint64 updateStart = SDL_GetPerformanceCounter();
+    rc3dProfilerBeginFrame();
+#endif
+
     float moveX = 0.0f;
     float moveY = 0.0f;
     int isMoving = 0;
@@ -4991,8 +5108,9 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
     if (keys[SDL_SCANCODE_A]) { moveX -= rightX; moveY -= rightY; }
     if (keys[SDL_SCANCODE_D]) { moveX += rightX; moveY += rightY; }
 
-    if (keys[SDL_SCANCODE_F1]) { bShowProfiler = 1; }
-    if (keys[SDL_SCANCODE_F2]) { bShowProfiler = 0; }
+    if (keys[SDL_SCANCODE_F1]) { bShowProfiler = 1 - bShowProfiler; }
+
+    if (keys[SDL_SCANCODE_M]) { bShowMiniMap = 1 - bShowMiniMap;}
 
     if (keys[SDL_SCANCODE_1]) {
         rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_CEILING);
@@ -5013,41 +5131,58 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
         }
     }
 
+    processObjects();
+
     rc3dUpdateHeadbob(dt, isMoving);
     rc3dUpdatePlayerVertical(dt);
+
+#if RC3D_DRAW_PROFILER
+    g_profiler.updateMs = rc3dProfilerTicksToMs(SDL_GetPerformanceCounter() - updateStart);
+#endif
 }
+
 
 void rc3dRender(void)
 {
 #if RC3D_DRAW_PROFILER
-    const Uint64 frameStart = SDL_GetPerformanceCounter();
+    const int profileThisPass = g_profilerFrameActive;
+    const Uint64 frameStart = profileThisPass ? SDL_GetPerformanceCounter() : 0;
     Uint64 sectionStart = frameStart;
 #endif
+
     rc3dRefreshViewport();
     rc3dClearWallDepthSpans();
+
 #if RC3D_DRAW_PROFILER
-    rc3dProfilerBeginFrame();
-    sectionStart = SDL_GetPerformanceCounter();
+    if (profileThisPass) {
+        sectionStart = SDL_GetPerformanceCounter();
+    }
 #endif
+
     drawBackground();
+
 #if RC3D_DRAW_PROFILER
-    {
+    if (profileThisPass) {
         const Uint64 now = SDL_GetPerformanceCounter();
         g_profiler.backgroundMs = rc3dProfilerTicksToMs(now - sectionStart);
         sectionStart = now;
     }
 #endif
+
     renderCurrentSectorColumns();
+
 #if RC3D_DRAW_PROFILER
-    {
+    if (profileThisPass) {
         const Uint64 now = SDL_GetPerformanceCounter();
         g_profiler.wallsMs = rc3dProfilerTicksToMs(now - sectionStart);
         sectionStart = now;
     }
 #endif
+
     renderSprites();
+
 #if RC3D_DRAW_PROFILER
-    {
+    if (profileThisPass) {
         const Uint64 now = SDL_GetPerformanceCounter();
         g_profiler.spritesMs = rc3dProfilerTicksToMs(now - sectionStart);
         sectionStart = now;
@@ -5055,28 +5190,49 @@ void rc3dRender(void)
 #endif
 
 #if RC3D_DRAW_MINIMAP
-    drawMiniMap();
+    if(bShowMiniMap)
+        drawMiniMap();
 #endif
 
 #if RC3D_DRAW_PROFILER
-    {
+    if (profileThisPass) {
         const Uint64 now = SDL_GetPerformanceCounter();
-        g_profiler.minimapMs = rc3dProfilerTicksToMs(now - sectionStart);
-        g_profiler.totalMs = rc3dProfilerTicksToMs(now - frameStart);
-        rc3dProfilerBlendAverages();
-    }
-#endif
+        const double renderMs = rc3dProfilerTicksToMs(now - frameStart);
 
-#if RC3D_DRAW_HUD
-    {
-        char buf[64];
-        snprintf(buf, sizeof(buf), "SECTOR %d", g_player.sector);
-        drawText(8, 18, buf, 2);
+        g_profiler.minimapMs = rc3dProfilerTicksToMs(now - sectionStart);
+        g_profiler.totalMs = g_profiler.updateMs + renderMs;
+        rc3dProfilerBlendAverages();
+
+        g_profilerFrameActive = 0;
     }
 #endif
 
 #if RC3D_DRAW_PROFILER
-    if (bShowProfiler)
+    if (bShowProfiler) {
+        char buf[64];
+        const int dbgObjectCount =
+            (g_map->objectCount < RC3D_PROFILE_OBJ_LINES) ? g_map->objectCount : RC3D_PROFILE_OBJ_LINES;
+
+        snprintf(buf, sizeof(buf), "SECTOR %d", g_player.sector);
+        drawTextO(8, 16, buf, 92);
+
+        for (int oi = 0; oi < dbgObjectCount; oi++) {
+            snprintf(buf, sizeof(buf), "OBJ:%.1f (%.1f), trgd:%d, type:%d",
+                     obj1dist[oi],
+                     g_map->objects[oi].radius,
+                     g_map->objects[oi].trigger,
+                     g_map->objects[oi].type);
+            drawTextO(8, 30 + (oi * 8), buf, 2);
+        }
+
+        if (g_map->objectCount > dbgObjectCount) {
+            drawTextO(8, 38 + (dbgObjectCount * 16), "...", 2);
+        }
+
         rc3dDrawProfiler();
+    }
 #endif
 }
+
+
+

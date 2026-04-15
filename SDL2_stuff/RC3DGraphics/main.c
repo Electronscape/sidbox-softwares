@@ -77,13 +77,8 @@ int updateFPS(void) {
 
 static void drawFPSCounter(void) {
     char buf[64];
-
     snprintf(buf, sizeof(buf), "FPS: %d (Uncapped: %d)", fps, uncappedFPS);
-    drawText(0, 1, buf, 16);
-    drawText(2, 1, buf, 16);
-    drawText(1, 0, buf, 16);
-    drawText(1, 2, buf, 16);
-    drawText(1, 1, buf, 15);
+    drawTextO(0, 1, buf, 15);
 }
 
 

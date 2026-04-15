@@ -16,6 +16,12 @@
 #define RC3D_SECTOR_STATE_LOWER_CEILING  0x04u
 #define RC3D_SECTOR_STATE_RAISE_CEILING  0x08u
 
+#define OBJECT_TRIGGER_SIMPLESPRITE 0
+#define OBJECT_TRIGGER_SECTOR_DISTANCE     1
+#define OBJECT_TRIGGER_SECTOR_STEPPED_IN   2
+#define OBJECT_TRIGGER_SECTOR_STEPPED_OUT  3
+
+
 extern int g_viewport_top;
 extern int g_viewport_left;
 extern int g_viewport_width;
@@ -40,9 +46,14 @@ void rc3dSpriteSetPositionFixed(int spriteId, int32_t xFixed, int32_t yFixed);
 void rc3dSpriteSetSize(int spriteId, float width, float height);
 void rc3dSpriteSetTexture(int spriteId, uint8_t texId);
 void rc3dSpriteSetBaseZ(int spriteId, float baseZ);
+
 int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags);
+
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx);
 void rc3dRender(void);
+
+
+void processObjects();
 
 int rc3dLoadMapBinary(const char *path);
 void rc3dUnloadMapBinary(void);

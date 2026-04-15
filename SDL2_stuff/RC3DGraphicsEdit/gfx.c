@@ -384,16 +384,18 @@ void drawImage(int x, int y, int width, int height, uint8_t *img){
 
 void drawLineDots(int x0, int y0, int x1, int y1, uint8_t colorIndex)
 {
+    const int dotStep = 4;   /* 1 = solid, 2 = every other pixel, 4 = dotted */
+
     int dx = abs(x1 - x0);
     int sx = (x0 < x1) ? 1 : -1;
     int dy = -abs(y1 - y0);
     int sy = (y0 < y1) ? 1 : -1;
     int err = dx + dy;
+    int step = 0;
 
     for (;;) {
         if ((unsigned)x0 < SCREEN_W && (unsigned)y0 < SCREEN_H) {
-            /* screen-stable dotted pattern */
-            if (((x0 + y0) & 7) == 0 ) {
+            if ((step % dotStep) == 0) {
                 fb[(y0 * SCREEN_W) + x0] = colorIndex;
             }
         }
@@ -415,9 +417,10 @@ void drawLineDots(int x0, int y0, int x1, int y1, uint8_t colorIndex)
                 y0 += sy;
             }
         }
+
+        step++;
     }
 }
-
 
 
 #include <stdint.h>
@@ -547,6 +550,8 @@ void drawLineGridDots(int x0, int y0, int x1, int y1, uint8_t colorIndex)
 
 
 
+
+
 void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex)
 {
     int dx = abs(x1 - x0);
@@ -658,6 +663,35 @@ void drawRect(int x, int y, int w, int h, uint8_t col)
     }
 }
 
+void drawRectDots(int x, int y, int w, int h, uint8_t col)
+{
+    if (w <= 0 || h <= 0) return;
+
+    int x0 = x;
+    int y0 = y;
+    int x1 = x + w - 1;
+    int y1 = y + h - 1;
+    int gx = x; 
+    int gy = y;
+
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 >= SCREEN_W) x1 = SCREEN_W - 1;
+    if (y1 >= SCREEN_H) y1 = SCREEN_H - 1;
+
+    if (x0 > x1 || y0 > y1) return;
+
+    const int fillW = (x1 - x0) + 1;
+
+    for (int yy = y0; yy <= y1; yy++) {
+        //memset(&fb[(yy * SCREEN_W) + x0], col, fillW);
+        for (int xx = x0; xx <= x1; xx++){
+            if (((xx + yy) & 3) == 0 ) {
+                fb[(yy * SCREEN_W) + xx] = col;
+            }
+        }
+    }
+}
 
 void drawDiamond(int cx, int cy, int radius, uint8_t col)
 {
@@ -668,6 +702,38 @@ void drawDiamond(int cx, int cy, int radius, uint8_t col)
     drawLine(cx, cy + radius, cx - radius, cy, col);
     drawLine(cx - radius, cy, cx, cy - radius, col);
 }
+
+
+void drawCircle(int cx, int cy, int radius, uint8_t col)
+{
+    if (radius <= 0) return;
+
+    int x = radius;
+    int y = 0;
+    int err = 1 - x;
+
+    while (x >= y) {
+        if ((unsigned)(cx + x) < SCREEN_W && (unsigned)(cy + y) < SCREEN_H) fb[(cy + y) * SCREEN_W + (cx + x)] = col;
+        if ((unsigned)(cx + y) < SCREEN_W && (unsigned)(cy + x) < SCREEN_H) fb[(cy + x) * SCREEN_W + (cx + y)] = col;
+        if ((unsigned)(cx - y) < SCREEN_W && (unsigned)(cy + x) < SCREEN_H) fb[(cy + x) * SCREEN_W + (cx - y)] = col;
+        if ((unsigned)(cx - x) < SCREEN_W && (unsigned)(cy + y) < SCREEN_H) fb[(cy + y) * SCREEN_W + (cx - x)] = col;
+        if ((unsigned)(cx - x) < SCREEN_W && (unsigned)(cy - y) < SCREEN_H) fb[(cy - y) * SCREEN_W + (cx - x)] = col;
+        if ((unsigned)(cx - y) < SCREEN_W && (unsigned)(cy - x) < SCREEN_H) fb[(cy - x) * SCREEN_W + (cx - y)] = col;
+        if ((unsigned)(cx + y) < SCREEN_W && (unsigned)(cy - x) < SCREEN_H) fb[(cy - x) * SCREEN_W + (cx + y)] = col;
+        if ((unsigned)(cx + x) < SCREEN_W && (unsigned)(cy - y) < SCREEN_H) fb[(cy - y) * SCREEN_W + (cx + x)] = col;
+
+        y++;
+
+        if (err < 0) {
+            err += (2 * y) + 1;
+        } else {
+            x--;
+            err += (2 * (y - x)) + 1;
+        }
+    }
+}
+
+
 
 void drawChar(int x, int y, char c, uint8_t color)
 {
