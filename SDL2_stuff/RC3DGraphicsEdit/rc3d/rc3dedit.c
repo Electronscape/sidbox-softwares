@@ -167,6 +167,10 @@ enum
     GUI_BTN_SECTOR_CEIL_FLOW_PLUS,
     GUI_BTN_SECTOR_COPY_PROPS,
     GUI_BTN_SECTOR_PASTE_PROPS,
+    GUI_BTN_SECTOR_CLAMP_X1,
+    GUI_BTN_SECTOR_CLAMP_X2,
+    GUI_BTN_SECTOR_CLAMP_Y1,
+    GUI_BTN_SECTOR_CLAMP_Y2,
 
     GUI_BTN_WALL_COPY_PROPS,
     GUI_BTN_WALL_PASTE_PROPS,
@@ -360,6 +364,7 @@ typedef struct {
     uint8_t floorColor;
     uint8_t ceilColor;
     uint8_t glowlevel;
+    uint8_t texFlags;
 
     int tagId;
     uint32_t stateFlags;
@@ -385,6 +390,7 @@ typedef struct {
     uint8_t floorColor;
     uint8_t ceilColor;
     uint8_t glowlevel;
+    uint8_t texFlags;
 
     int tagId;
     uint32_t stateFlags;
@@ -1156,6 +1162,14 @@ static void deleteObjectByIndex(int objectIndex);
 static void beginObjectDragFromPress(int objectIndex);
 static void dragSelectedObjectTo(float worldX, float worldY);
 
+static int resolveSectorTextureCoord(int v, int size, int clampLow, int clampHigh);
+static int resolveSectorTextureCoordFitted(float coord,
+                                           int size,
+                                           int doFitStretch,
+                                           int clampLow,
+                                           int clampHigh,
+                                           float fitMin,
+                                           float fitMax);
 
 static void pathDirnameFromFile(char *outDir, size_t outDirSize, const char *path);
 static void initRememberedDialogDirs(void);
@@ -1233,6 +1247,7 @@ static void normalizeWallSelectionState(void);
 static void toggleWallMultiSelection(int wallIndex);
 static int collectWallEditSelectionIndices(int *outIndices, int maxOut);
 
+static void getSectorUVOrigin(const EdSector *sec, float *outX, float *outY);
 
 #define ED_GUI_DIRTY_FRAME_COUNT 2
 
@@ -3150,7 +3165,9 @@ static void dragSelectedObjectTo(float worldX, float worldY)
 }
 
 
-
+static void getSectorTextureUVBounds(const EdSector *sec,
+                                     float *outUMin, float *outUMax,
+                                     float *outVMin, float *outVMax);
 
 static float getIsoScaleX(void)
 {
@@ -3245,6 +3262,8 @@ static float isoPolygonSignedArea(const float *xs, const float *ys, int count)
     return twiceArea * 0.5f;
 }
 
+
+
 static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
 {
     uint8_t *tex;
@@ -3253,8 +3272,18 @@ static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec
     float cosA, sinA;
     float worldX, worldY;
     float worldStepX, worldStepY;
+    float localX, localY;
+    float originX, originY;
     float texU, texV;
     float texUStep, texVStep;
+    float fitUMin, fitUMax, fitVMin, fitVMax;
+    float clampUMin, clampUMax, clampVMin, clampVMax;
+    const int clampX1 = (sec->texFlags & RC3D_SECTORTEX_CLAMPX1) != 0;
+    const int clampX2 = (sec->texFlags & RC3D_SECTORTEX_CLAMPX2) != 0;
+    const int clampY1 = (sec->texFlags & RC3D_SECTORTEX_CLAMPY1) != 0;
+    const int clampY2 = (sec->texFlags & RC3D_SECTORTEX_CLAMPY2) != 0;
+    const int doFitStretchX = clampX1 && clampX2;
+    const int doFitStretchY = clampY1 && clampY2;
 
     if (!sec) {
         return;
@@ -3279,13 +3308,36 @@ static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec
     cosA = cosf(sec->floorTexAngle);
     sinA = sinf(sec->floorTexAngle);
 
+    getSectorUVOrigin(sec, &originX, &originY);
+    getSectorTextureUVBounds(sec, &fitUMin, &fitUMax, &fitVMin, &fitVMax);
+
+    /* convert sector bounds into the SAME scaled UV space that texU/texV use */
+    clampUMin = fitUMin / scaleX;
+    clampUMax = fitUMax / scaleX;
+    clampVMin = fitVMin / scaleY;
+    clampVMax = fitVMax / scaleY;
+
+    if (clampUMin > clampUMax) {
+        const float t = clampUMin;
+        clampUMin = clampUMax;
+        clampUMax = t;
+    }
+    if (clampVMin > clampVMax) {
+        const float t = clampVMin;
+        clampVMin = clampVMax;
+        clampVMax = t;
+    }
+
     screenToIsoWorldOnPlane(x0, y, sec->floorHeight, &worldX, &worldY);
+
+    localX = worldX - originX;
+    localY = worldY - originY;
 
     worldStepX = 0.5f / getIsoScaleX();
     worldStepY = -0.5f / getIsoScaleX();
 
-    texU = (((worldX * cosA) - (worldY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
-    texV = (((worldX * sinA) + (worldY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
+    texU = (((localX * cosA) - (localY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
+    texV = (((localX * sinA) + (localY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
 
     texUStep =
         (((worldStepX * cosA) - (worldStepY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
@@ -3295,8 +3347,19 @@ static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec
     dst = &fb[(y * SCREEN_W) + x0];
 
     for (int x = x0; x <= x1; x++) {
-        const int tx = wrapTextureCoordLocal((int)floorf(texU), TEXTURE_WIDTH);
-        const int ty = wrapTextureCoordLocal((int)floorf(texV), TEXTURE_HEIGHT);
+        const int tx = resolveSectorTextureCoordFitted(
+            texU, TEXTURE_WIDTH,
+            doFitStretchX,
+            clampX1, clampX2,
+            clampUMin, clampUMax
+        );
+
+        const int ty = resolveSectorTextureCoordFitted(
+            texV, TEXTURE_HEIGHT,
+            doFitStretchY,
+            clampY1, clampY2,
+            clampVMin, clampVMax
+        );
 
         *dst++ = tex[(ty * TEXTURE_WIDTH) + tx];
 
@@ -3304,6 +3367,8 @@ static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec
         texV += texVStep;
     }
 }
+
+
 
 static void drawFilledSectorIsoBruteForceScanline(int sectorIndex,
                                                   int minX,
@@ -4281,6 +4346,7 @@ static void copySectorPropertiesToClipboard(int sectorIndex)
     clip->floorColor = sec->floorColor;
     clip->ceilColor = sec->ceilColor;
     clip->glowlevel = sec->glowlevel;
+    clip->texFlags = sec->texFlags;
     clip->tagId = sec->tagId;
     clip->stateFlags = sec->stateFlags;
     clip->floorMinHeight = sec->floorMinHeight;
@@ -4321,6 +4387,7 @@ static int applySectorPropertiesFromClipboardToSector(int sectorIndex)
     sec->floorColor = clip->floorColor;
     sec->ceilColor = clip->ceilColor;
     sec->glowlevel = clip->glowlevel;
+    sec->texFlags  = clip->texFlags;
     sec->tagId = clip->tagId;
     sec->stateFlags = clip->stateFlags;
     sec->floorMinHeight = clip->floorMinHeight;
@@ -7126,12 +7193,13 @@ static int saveTextMap(const char *path)
     fprintf(f, "SECTORS %d\n", g_edMap.sectorCount);
     for (int i = 0; i < g_edMap.sectorCount; i++) {
         const EdSector *s = &g_edMap.sectors[i];
-        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %d %u %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
+        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %d %u %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
                 s->wallStart, s->wallCount, s->boundaryCount,
                 s->floorHeight, s->ceilHeight,
                 (unsigned)s->floorColor,
                 (unsigned)s->ceilColor,
                 (unsigned)clampLightLevel((int)s->glowlevel),
+                (unsigned)s->texFlags,
                 s->tagId,
                 (unsigned)s->stateFlags,
                 s->floorMinHeight,
@@ -7305,73 +7373,39 @@ static int loadTextMap(const char *path)
     newMap.sectorCount = count;
     for (int i = 0; i < count; i++) {
         unsigned fc, cc, glow = 0;
+        uint8_t texFlag;
         unsigned stateFlags = 0;
 
-        if (mapVersion >= 4) {
-            if (fscanf(f, "%d %d %d %f %f %u %u %u %d %u %f %f %f %f %f %f %f %f %f %f %f %f",
-                    &newMap.sectors[i].wallStart,
-                    &newMap.sectors[i].wallCount,
-                    &newMap.sectors[i].boundaryCount,
-                    &newMap.sectors[i].floorHeight,
-                    &newMap.sectors[i].ceilHeight,
-                    &fc, &cc, &glow,
-                    &newMap.sectors[i].tagId,
-                    &stateFlags,
-                    &newMap.sectors[i].floorMinHeight,
-                    &newMap.sectors[i].floorMaxHeight,
-                    &newMap.sectors[i].ceilMinHeight,
-                    &newMap.sectors[i].ceilMaxHeight,
-                    &newMap.sectors[i].floorFlowHeight,
-                    &newMap.sectors[i].ceilFlowHeight,
-                    &newMap.sectors[i].floorTexScaleX,
-                    &newMap.sectors[i].floorTexScaleY,
-                    &newMap.sectors[i].floorTexAngle,
-                    &newMap.sectors[i].ceilTexScaleX,
-                    &newMap.sectors[i].ceilTexScaleY,
-                    &newMap.sectors[i].ceilTexAngle) != 22) {
-                fclose(f);
-                return 0;
-            }
-        } else if (mapVersion >= 2) {
-            if (fscanf(f, "%d %d %d %f %f %u %u %u %f %f %f %f %f %f",
-                    &newMap.sectors[i].wallStart,
-                    &newMap.sectors[i].wallCount,
-                    &newMap.sectors[i].boundaryCount,
-                    &newMap.sectors[i].floorHeight,
-                    &newMap.sectors[i].ceilHeight,
-                    &fc, &cc, &glow,
-                    &newMap.sectors[i].floorTexScaleX,
-                    &newMap.sectors[i].floorTexScaleY,
-                    &newMap.sectors[i].floorTexAngle,
-                    &newMap.sectors[i].ceilTexScaleX,
-                    &newMap.sectors[i].ceilTexScaleY,
-                    &newMap.sectors[i].ceilTexAngle) != 14) {
-                fclose(f);
-                return 0;
-            }
-        } else {
-            if (fscanf(f, "%d %d %d %f %f %u %u %f %f %f %f %f %f",
-                    &newMap.sectors[i].wallStart,
-                    &newMap.sectors[i].wallCount,
-                    &newMap.sectors[i].boundaryCount,
-                    &newMap.sectors[i].floorHeight,
-                    &newMap.sectors[i].ceilHeight,
-                    &fc, &cc,
-                    &newMap.sectors[i].floorTexScaleX,
-                    &newMap.sectors[i].floorTexScaleY,
-                    &newMap.sectors[i].floorTexAngle,
-                    &newMap.sectors[i].ceilTexScaleX,
-                    &newMap.sectors[i].ceilTexScaleY,
-                    &newMap.sectors[i].ceilTexAngle) != 13) {
-                fclose(f);
-                return 0;
-            }
+        if (fscanf(f, "%d %d %d %f %f %u %u %u %u %d %u %f %f %f %f %f %f %f %f %f %f %f %f",
+                &newMap.sectors[i].wallStart,
+                &newMap.sectors[i].wallCount,
+                &newMap.sectors[i].boundaryCount,
+                &newMap.sectors[i].floorHeight,
+                &newMap.sectors[i].ceilHeight,
+                &fc, &cc, &glow, &texFlag, 
+                &newMap.sectors[i].tagId,
+                &stateFlags,
+                &newMap.sectors[i].floorMinHeight,
+                &newMap.sectors[i].floorMaxHeight,
+                &newMap.sectors[i].ceilMinHeight,
+                &newMap.sectors[i].ceilMaxHeight,
+                &newMap.sectors[i].floorFlowHeight,
+                &newMap.sectors[i].ceilFlowHeight,
+                &newMap.sectors[i].floorTexScaleX,
+                &newMap.sectors[i].floorTexScaleY,
+                &newMap.sectors[i].floorTexAngle,
+                &newMap.sectors[i].ceilTexScaleX,
+                &newMap.sectors[i].ceilTexScaleY,
+                &newMap.sectors[i].ceilTexAngle) != 23) {
+            fclose(f);
+            return 0;
         }
 
         newMap.sectors[i].floorColor = (uint8_t)fc;
         newMap.sectors[i].ceilColor  = (uint8_t)cc;
         newMap.sectors[i].glowlevel  = clampLightLevel((int)glow);
         newMap.sectors[i].stateFlags = (uint32_t)stateFlags;
+        newMap.sectors[i].texFlags   = (uint8_t)texFlag;
 
         if (mapVersion < 4) {
             resetSectorMovePropertiesToCurrentHeights(&newMap.sectors[i]);
@@ -7584,6 +7618,7 @@ int exportBinaryMap(const char *path)
         uint8_t ceilColor     = s->ceilColor;
         uint8_t glowlevel     = clampLightLevel((int)s->glowlevel);
         int32_t tagId         = (int32_t)s->tagId;
+        uint8_t sectorClamps  = (uint8_t)s->texFlags;
         uint32_t stateFlags   = s->stateFlags;
         float floorMinHeight  = s->floorMinHeight;
         float floorMaxHeight  = s->floorMaxHeight;
@@ -7599,6 +7634,8 @@ int exportBinaryMap(const char *path)
         float ceilTexScaleY   = s->ceilTexScaleY;
         float ceilTexAngle    = s->ceilTexAngle;
 
+        
+
         if (fwrite(&wallStart,      sizeof(wallStart),      1, f) != 1 ||
             fwrite(&wallCount,      sizeof(wallCount),      1, f) != 1 ||
             fwrite(&boundaryCount,  sizeof(boundaryCount),  1, f) != 1 ||
@@ -7607,6 +7644,7 @@ int exportBinaryMap(const char *path)
             fwrite(&floorColor,     sizeof(floorColor),     1, f) != 1 ||
             fwrite(&ceilColor,      sizeof(ceilColor),      1, f) != 1 ||
             fwrite(&glowlevel,      sizeof(glowlevel),      1, f) != 1 ||
+            fwrite(&sectorClamps,   sizeof(sectorClamps),      1, f) != 1 ||
             fwrite(&tagId,          sizeof(tagId),          1, f) != 1 ||
             fwrite(&stateFlags,     sizeof(stateFlags),     1, f) != 1 ||
             fwrite(&floorMinHeight, sizeof(floorMinHeight), 1, f) != 1 ||
@@ -7662,6 +7700,7 @@ int exportBinaryMap(const char *path)
     return 1;
 }
 
+
 static int exportCStringMap(const char *path)
 {
     FILE *f = fopen(path, "w");
@@ -7671,16 +7710,23 @@ static int exportCStringMap(const char *path)
 
     fprintf(f, "static const RC3D_Vec2 g_verts[] = {\n");
     for (int i = 0; i < g_edMap.vertCount; i++) {
-        fprintf(f, "    { %.6ff, %.6ff },\n", g_edMap.verts[i].x, g_edMap.verts[i].y);
+        fprintf(f, "    { %.6ff, %.6ff },\n",
+                g_edMap.verts[i].x,
+                g_edMap.verts[i].y);
     }
     fprintf(f, "};\n\n");
 
     fprintf(f, "static const RC3D_Wall g_walls[] = {\n");
     for (int i = 0; i < g_edMap.wallCount; i++) {
         const EdWall *w = &g_edMap.walls[i];
+
         fprintf(f,
             "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %uu, %.6ff, %.6ff },\n",
-            w->v0, w->v1, w->neighbour, w->openBottom, w->openTop,
+            w->v0,
+            w->v1,
+            w->neighbour,
+            w->openBottom,
+            w->openTop,
             (unsigned)w->upperColor,
             (unsigned)w->midColor,
             (unsigned)w->lowerColor,
@@ -7694,37 +7740,54 @@ static int exportCStringMap(const char *path)
     fprintf(f, "static const RC3D_Sector g_sectors[] = {\n");
     for (int i = 0; i < g_edMap.sectorCount; i++) {
         const EdSector *s = &g_edMap.sectors[i];
+
         fprintf(f,
-            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %d, %uu, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff },\n",
-            s->wallStart, s->wallCount, s->boundaryCount,
-            s->floorHeight, s->ceilHeight,
-            (unsigned)s->floorColor, (unsigned)s->ceilColor,
+            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %d, %uu, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff },\n",
+            s->wallStart,
+            s->wallCount,
+            s->boundaryCount,
+            s->floorHeight,
+            s->ceilHeight,
+            (unsigned)s->floorColor,
+            (unsigned)s->ceilColor,
             (unsigned)clampLightLevel((int)s->glowlevel),
-            s->tagId, (unsigned)s->stateFlags,
-            s->floorMinHeight, s->floorMaxHeight,
-            s->ceilMinHeight, s->ceilMaxHeight,
-            s->floorFlowHeight, s->ceilFlowHeight,
-            s->floorTexScaleX, s->floorTexScaleY, s->floorTexAngle,
-            s->ceilTexScaleX,  s->ceilTexScaleY,  s->ceilTexAngle);
+            (unsigned)s->texFlags,
+            s->tagId,
+            (unsigned)s->stateFlags,
+            s->floorMinHeight,
+            s->floorMaxHeight,
+            s->ceilMinHeight,
+            s->ceilMaxHeight,
+            s->floorFlowHeight,
+            s->ceilFlowHeight,
+            s->floorTexScaleX,
+            s->floorTexScaleY,
+            s->floorTexAngle,
+            s->ceilTexScaleX,
+            s->ceilTexScaleY,
+            s->ceilTexAngle);
     }
     fprintf(f, "};\n\n");
 
     fprintf(f, "static const RC3D_Object g_objects[] = {\n");
     for (int i = 0; i < g_edMap.objectCount; i++) {
         const EdObject *o = &g_edMap.objects[i];
-        fprintf(f, "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u },\n",
-                o->x,
-                o->y,
-                o->z,
-                o->tagId,
-                o->targetTagId,
-                o->flags,
-                o->type,
-                o->radius,
-                (unsigned)o->textureId);
+
+        fprintf(f,
+            "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u, %u, %u },\n",
+            o->x,
+            o->y,
+            o->z,
+            o->tagId,
+            o->targetTagId,
+            (unsigned)o->flags,
+            (unsigned)o->type,
+            o->radius,
+            (unsigned)o->textureId,
+            (unsigned)o->inFlag,
+            (unsigned)o->outFlag);
     }
     fprintf(f, "};\n\n");
-
 
     fprintf(f, "const RC3D_Map g_rc3dDemoMap = {\n");
     fprintf(f, "    g_verts,\n");
@@ -8782,6 +8845,239 @@ static int wrapTextureCoordLocal(int v, int size)
     return v;
 }
 
+static int resolveSectorTextureCoord(int v, int size, int clampLow, int clampHigh)
+{
+    if (size <= 0) {
+        return 0;
+    }
+
+    if (v < 0) {
+        if (clampLow) {
+            return 0;
+        }
+        v %= size;
+        if (v < 0) v += size;
+        return v;
+    }
+
+    if (v >= size) {
+        if (clampHigh) {
+            return size - 1;
+        }
+        v %= size;
+        return v;
+    }
+
+    return v;
+}
+static void getSectorTextureUVBounds(const EdSector *sec,
+                                     float *outUMin, float *outUMax,
+                                     float *outVMin, float *outVMax)
+{
+    float originX, originY;
+    float cosA, sinA;
+    float uMin = 0.0f, uMax = 0.0f;
+    float vMin = 0.0f, vMax = 0.0f;
+    int found = 0;
+
+    if (!sec || !outUMin || !outUMax || !outVMin || !outVMax) {
+        return;
+    }
+
+    getSectorUVOrigin(sec, &originX, &originY);
+
+    cosA = cosf(sec->floorTexAngle);
+    sinA = sinf(sec->floorTexAngle);
+
+    for (int i = 0; i < sec->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+        const EdVec2 *v = &g_edMap.verts[w->v0];
+        const float localX = v->x - originX;
+        const float localY = v->y - originY;
+
+        /* IMPORTANT:
+           bounds are computed in RAW texel space, NOT divided by scale.
+           This keeps clamp-fit from cancelling the scale factor.
+        */
+        const float u = ((localX * cosA) - (localY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT;
+        const float vtex = ((localX * sinA) + (localY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT;
+
+        if (!found) {
+            uMin = uMax = u;
+            vMin = vMax = vtex;
+            found = 1;
+        } else {
+            if (u < uMin) uMin = u;
+            if (u > uMax) uMax = u;
+            if (vtex < vMin) vMin = vtex;
+            if (vtex > vMax) vMax = vtex;
+        }
+    }
+
+    if (!found) {
+        uMin = 0.0f; uMax = (float)(TEXTURE_WIDTH - 1);
+        vMin = 0.0f; vMax = (float)(TEXTURE_HEIGHT - 1);
+    }
+
+    if (fabsf(uMax - uMin) < 0.0001f) uMax = uMin + 1.0f;
+    if (fabsf(vMax - vMin) < 0.0001f) vMax = vMin + 1.0f;
+
+    *outUMin = uMin;
+    *outUMax = uMax;
+    *outVMin = vMin;
+    *outVMax = vMax;
+}
+
+
+static int resolveSectorTextureCoordFitted(float coord,
+                                           int size,
+                                           int doFitStretch,
+                                           int clampLow,
+                                           int clampHigh,
+                                           float fitMin,
+                                           float fitMax)
+{
+    float raw = coord;
+    float shifted;
+    int v;
+
+    if (size <= 0) {
+        return 0;
+    }
+
+    if (fitMin > fitMax) {
+        const float t = fitMin;
+        fitMin = fitMax;
+        fitMax = t;
+    }
+
+    /* ONLY do full stretch when all four clamp bits are enabled */
+    if (doFitStretch) {
+        float t;
+
+        if (fabsf(fitMax - fitMin) < 0.0001f) {
+            return 0;
+        }
+
+        t = (coord - fitMin) / (fitMax - fitMin);
+        t = clampf_local(t, 0.0f, 1.0f);
+
+        return clampi_local((int)floorf(t * (float)(size - 1) + 0.5f), 0, size - 1);
+    }
+
+    /*
+        Non-stretch clamp behaviour:
+
+        clampLow only:
+            anchor texture so fitMin maps to texel 0
+
+        clampHigh only:
+            anchor texture so fitMax maps to texel size-1
+
+        clampLow + clampHigh (same axis only, but not full 4-way fit):
+            keep scaled/tiled behaviour, anchored from low side
+            (NO stretching here)
+    */
+
+    if (clampLow && clampHigh) {
+        shifted = raw - fitMin;
+
+        if (shifted < 0.0f) {
+            shifted = 0.0f;
+        }
+
+        if (raw > fitMax) {
+            shifted = fitMax - fitMin;
+        }
+
+        v = (int)floorf(shifted);
+        v %= size;
+        if (v < 0) {
+            v += size;
+        }
+        return v;
+    }
+
+    if (clampLow) {
+        shifted = raw - fitMin;
+
+        if (shifted < 0.0f) {
+            shifted = 0.0f;
+        }
+
+        v = (int)floorf(shifted);
+        v %= size;
+        if (v < 0) {
+            v += size;
+        }
+        return v;
+    }
+
+    if (clampHigh) {
+        shifted = raw - fitMax + (float)(size - 1);
+
+        if (raw > fitMax) {
+            shifted = (float)(size - 1);
+        }
+
+        v = (int)floorf(shifted);
+        v %= size;
+        if (v < 0) {
+            v += size;
+        }
+        return v;
+    }
+
+    v = (int)floorf(raw);
+    v %= size;
+    if (v < 0) {
+        v += size;
+    }
+
+    return v;
+}
+
+
+
+
+static void getSectorUVOrigin(const EdSector *sec, float *outX, float *outY)
+{
+    float minX, minY;
+    int found = 0;
+
+    if (!sec || !outX || !outY) {
+        return;
+    }
+
+    minX = 0.0f;
+    minY = 0.0f;
+
+    for (int i = 0; i < sec->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+        const EdVec2 *v = &g_edMap.verts[w->v0];
+
+        if (!found) {
+            minX = v->x;
+            minY = v->y;
+            found = 1;
+        } else {
+            if (v->x < minX) minX = v->x;
+            if (v->y < minY) minY = v->y;
+        }
+    }
+
+    if (!found) {
+        minX = 0.0f;
+        minY = 0.0f;
+    }
+
+    *outX = minX;
+    *outY = minY;
+}
+
+
+
+
 static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
 {
     uint8_t *tex;
@@ -8790,8 +9086,18 @@ static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
     float cosA, sinA;
     float worldStepX;
     float worldX, worldY;
+    float localX, localY;
+    float originX, originY;
     float texU, texV;
     float texUStep, texVStep;
+    float fitUMin, fitUMax, fitVMin, fitVMax;
+    float clampUMin, clampUMax, clampVMin, clampVMax;
+    const int clampX1 = (sec->texFlags & RC3D_SECTORTEX_CLAMPX1) != 0;
+    const int clampX2 = (sec->texFlags & RC3D_SECTORTEX_CLAMPX2) != 0;
+    const int clampY1 = (sec->texFlags & RC3D_SECTORTEX_CLAMPY1) != 0;
+    const int clampY2 = (sec->texFlags & RC3D_SECTORTEX_CLAMPY2) != 0;
+    const int doFitStretchX = clampX1 && clampX2;
+    const int doFitStretchY = clampY1 && clampY2;
 
     if (!sec) {
         return;
@@ -8816,12 +9122,35 @@ static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
     cosA = cosf(sec->floorTexAngle);
     sinA = sinf(sec->floorTexAngle);
 
+    getSectorUVOrigin(sec, &originX, &originY);
+    getSectorTextureUVBounds(sec, &fitUMin, &fitUMax, &fitVMin, &fitVMax);
+
+    /* convert sector bounds into the SAME scaled UV space that texU/texV use */
+    clampUMin = fitUMin / scaleX;
+    clampUMax = fitUMax / scaleX;
+    clampVMin = fitVMin / scaleY;
+    clampVMax = fitVMax / scaleY;
+
+    if (clampUMin > clampUMax) {
+        const float t = clampUMin;
+        clampUMin = clampUMax;
+        clampUMax = t;
+    }
+    if (clampVMin > clampVMax) {
+        const float t = clampVMin;
+        clampVMin = clampVMax;
+        clampVMax = t;
+    }
+
     worldStepX = 1.0f / g_ed.zoom;
     worldX = g_ed.camX + ((float)x0 - (EDIT_VIEW_PORT_WIDTH * 0.5f)) / g_ed.zoom;
     worldY = g_ed.camY + ((float)y - (EDIT_VIEW_PORT_HEIGHT * 0.5f)) / g_ed.zoom;
 
-    texU = (((worldX * cosA) - (worldY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
-    texV = (((worldX * sinA) + (worldY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
+    localX = worldX - originX;
+    localY = worldY - originY;
+
+    texU = (((localX * cosA) - (localY * sinA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
+    texV = (((localX * sinA) + (localY * cosA)) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
 
     texUStep = ((worldStepX * cosA) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleX;
     texVStep = ((worldStepX * sinA) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / scaleY;
@@ -8829,8 +9158,19 @@ static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
     dst = &fb[(y * SCREEN_W) + x0];
 
     for (int x = x0; x <= x1; x++) {
-        const int tx = wrapTextureCoordLocal((int)floorf(texU), TEXTURE_WIDTH);
-        const int ty = wrapTextureCoordLocal((int)floorf(texV), TEXTURE_HEIGHT);
+        const int tx = resolveSectorTextureCoordFitted(
+            texU, TEXTURE_WIDTH,
+            doFitStretchX,
+            clampX1, clampX2,
+            clampUMin, clampUMax
+        );
+
+        const int ty = resolveSectorTextureCoordFitted(
+            texV, TEXTURE_HEIGHT,
+            doFitStretchY,
+            clampY1, clampY2,
+            clampVMin, clampVMax
+        );
 
         *dst++ = tex[(ty * TEXTURE_WIDTH) + tx];
 
@@ -8838,6 +9178,7 @@ static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
         texV += texVStep;
     }
 }
+
 
 static void drawTexturedSector2DBruteForceScanline(int sectorIndex,
                                                    int minX,
@@ -10039,7 +10380,7 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
 
 
-    int sector_button_y_offsets = 55;
+    
 
     // sector inspector UI - sector / heights
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_COPY_PROPS,  206 + controloffw,  58 + controloff, 96, ED_BTN_H, "Copy Props");
@@ -10052,6 +10393,14 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_MINUS,  136 + controloffw, 172 + controloff, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_GLOW_PLUS,   164 + controloffw, 172 + controloff, 24, 24, GLYPH_PLUS);
 
+    int sector_button_y_offsets = 85;
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_CLAMP_X1, 100 + controloffw, 172 + controloff + sector_button_y_offsets, 80, 24, "X1", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_CLAMP_X2, 200 + controloffw, 172 + controloff + sector_button_y_offsets, 80, 24, "X2", 0);
+    sector_button_y_offsets += 30;
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_CLAMP_Y1, 100 + controloffw, 172 + controloff + sector_button_y_offsets, 80, 24, "Y1", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_CLAMP_Y2, 200 + controloffw, 172 + controloff + sector_button_y_offsets, 80, 24, "Y2", 0);
+
+    sector_button_y_offsets += 5;
     // sector inspector UI - texture transform ceiling
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_MINUS, 136 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CTEX_SX_PLUS,  164 + controloffw, 228 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
@@ -10982,7 +11331,7 @@ static void doExtrudeWall(void)
 
     pushUndoState();
 
-    if (!extrudeWallToNewSector(g_ed.selectedWall, 2.0f)) {
+    if (!extrudeWallToNewSector(g_ed.selectedWall, 1.0f)) {
         performUndo();
         setEditorStatus("Wall extrude failed");
         return;
@@ -11051,6 +11400,11 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_COPY_PROPS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_PASTE_PROPS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_X1, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_X2, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_Y1, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_Y2, 0);
+    
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_PLUS, 0);
@@ -11094,6 +11448,7 @@ static void editorHideInspectorButtons(void)
 }
 
 
+
 static void getSelectedWallClampState(int *outClampXL,
                                       int *outClampXR,
                                       int *outClampYT,
@@ -11131,7 +11486,6 @@ static void getSelectedWallClampState(int *outClampXL,
 
     {
         const EdWall *w = &g_edMap.walls[wallIndices[0]];
-
         clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) ? 1 : 0;
         clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
         clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
@@ -11162,9 +11516,11 @@ static void getSelectedWallClampState(int *outClampXL,
     if (outMixedYB) *outMixedYB = mixedYB;
 }
 
+
+
 static void editorShowWallInspectorButtons(void)
 {
-    EdWall *w = 0;
+    EdWall *w = NULL;
     int clampXL = 0, clampXR = 0, clampYT = 0, clampYB = 0;
     int mixedXL = 0, mixedXR = 0, mixedYT = 0, mixedYB = 0;
 
@@ -11176,7 +11532,7 @@ static void editorShowWallInspectorButtons(void)
         }
     }
 
-    if (!w && !hasAnyWallEditSelection()) {
+    if (!w) {
         return;
     }
 
@@ -11213,17 +11569,21 @@ static void editorShowWallInspectorButtons(void)
     getSelectedWallClampState(&clampXL, &clampXR, &clampYT, &clampYB,
                               &mixedXL, &mixedXR, &mixedYT, &mixedYB);
 
-    /* checked state follows the primary wall */
+    /* checked state follows primary wall */
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_XL, clampXL);
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_XR, clampXR);
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_YT, clampYT);
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_YB, clampYB);
 
-    /* label text exposes mixed state */
+    /* label shows mixed state */
     rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XL, mixedXL ? "Left ~"   : "Left");
     rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_XR, mixedXR ? "Right ~"  : "Right");
     rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YT, mixedYT ? "Top ~"    : "Top");
     rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, mixedYB ? "Bottom ~" : "Bottom");
+
+    /* flip buttons stay normal labels */
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_FLIP_X, "Flip");
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_FLIP_Y, "Flip");
 }
 
 
@@ -11280,6 +11640,20 @@ static void editorShowSectorInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CTEX_ROT_RESET, 1);
+
+
+
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_X1, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_X2, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_Y1, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_Y2, 1);
+
+
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_X1, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPX1));
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_X2, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPX2));
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_Y1, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPY1));
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_Y2, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPY2));
 }
 
 static void editorShowObjectInspectorButtons(void)
@@ -11311,6 +11685,7 @@ static void editorShowObjectInspectorButtons(void)
     for (int i = GUI_BTN_OBJECT_OUTFLAGS_bit0; i < (GUI_BTN_OBJECT_OUTFLAGS_bit0 + 8); i++) {
         rcguiSetButtonVisible(&g_ui, i, 1);
     }
+
 
 
     {   // the Object Flags
@@ -11571,6 +11946,25 @@ static void handleEditorUI(int mouseX, int mouseY,
                     applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_CLAMPYB);
                 }
                 break;
+
+            // ######## SECTORS ################
+
+            case GUI_BTN_SECTOR_CLAMP_X1:
+            case GUI_BTN_SECTOR_CLAMP_X2:
+            case GUI_BTN_SECTOR_CLAMP_Y1:
+            case GUI_BTN_SECTOR_CLAMP_Y2:
+            {
+                if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+                    EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
+                    const int bit = hit - GUI_BTN_SECTOR_CLAMP_X1;
+                    pushUndoState();
+                    sec->texFlags ^= (1u << bit);
+
+                    /* keep UI in sync immediately */
+                    rcguiSetToggleChecked(&g_ui, hit, (sec->texFlags >> bit) & 1u);
+                }
+            }
+            break; 
 
             case GUI_BTN_SECTOR_FLOOR_MINUS:
                 if (sec) { pushUndoState(); sec->floorHeight -= uiStep; if (sec->ceilHeight < sec->floorHeight + 0.1f) sec->ceilHeight = sec->floorHeight + 0.1f; syncAllPortals(); }
@@ -12367,13 +12761,17 @@ static void drawInspectorPanel(void)
         py += 4;
         // TEXTURES ///////////////////////////////
         
-        drawRect(px + 12,  py, pw - 24, 48, ED_INSPECTOR_PANELS_BACKPANEL);
-        drawRectL(px + 12, py, pw - 24, 48, ED_INSPECTOR_PANELS_PANELFRAME);
+        drawRect(px + 12,  py, pw - 24, 114, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py, pw - 24, 114, ED_INSPECTOR_PANELS_PANELFRAME);
         py += 6;
-        drawText(px + 18,  py, "TEXTURES", ED_INSPECTOR_PANELS_HEADER_TEXT);     py += 20;
+        drawText(px + 18,  py, "TEXTURES", ED_INSPECTOR_PANELS_HEADER_TEXT);     py += 25;
 
-        snprintf(buf, sizeof(buf), "Floor tex: %u   Ceil tex: %u",
-                 (unsigned)sec->floorColor, (unsigned)sec->ceilColor);
+        snprintf(buf, sizeof(buf), "Floor tex: %u   Ceil tex: %u    TexFlag: 0x%02X", (unsigned)sec->floorColor, (unsigned)sec->ceilColor, (unsigned)sec->texFlags);
+        drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 30;
+
+        snprintf(buf, sizeof(buf), "Clamp X:");
+        drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 30;
+        snprintf(buf, sizeof(buf), "Clamp Y:");
         drawText(px + 18,  py, buf, ED_TEXT_COL);  py += 20;
 
         // CEILING Texture UVs ////////////////////////////

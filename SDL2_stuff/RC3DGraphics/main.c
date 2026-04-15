@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     
     rc3dInit();
     rc3dPreparePalette();
-    rc3dLightRange(2.0f, 1.0f, 6.0f);
+    rc3dLightRange(1.0f, 0.75f, 6.0f);
     rc3dSetDrawDistance(32.0f);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
