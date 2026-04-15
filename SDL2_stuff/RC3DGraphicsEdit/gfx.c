@@ -373,6 +373,15 @@ void putPixel(int32_t x, int32_t y, uint8_t colIndex)
     fb[(y * SCREEN_W) + x] = colIndex;
 }
 
+void drawImage(int x, int y, int width, int height, uint8_t *img){
+    int g = 0;
+    for(int y = 0; y < height; y++){
+        for(int x = 0; x < width; x++){
+            putPixel(x,y, *img ++);
+        }
+    }
+}
+
 void drawLineDots(int x0, int y0, int x1, int y1, uint8_t colorIndex)
 {
     int dx = abs(x1 - x0);

@@ -84,7 +84,9 @@
 #define ED_COLOUR_DRAFTWALL         11
 #define ED_COLOUR_HOVER_WALL        9  
 #define ED_COLOUR_SELECTED_WALL     8  
-#define ED_COLOUR_WALL              10
+#define ED_COLOUR_WALL              11
+#define ED_COLOUR_WALLO             8
+#define ED_COLOUR_WALL_SPECIAL      14
 
 // vertex
 #define ED_COLOUR_VERTEX            11

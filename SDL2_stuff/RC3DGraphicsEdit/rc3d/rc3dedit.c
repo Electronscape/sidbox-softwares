@@ -107,6 +107,9 @@
 #define EDIT_VIEW_PORT_HEIGHT   (SCREEN_H - ED_HOVER_FOCUS_INFO_PANEL)
 
 
+uint8_t bShiftHold   = 0;
+uint8_t bCtrlHold   = 0;
+uint8_t bAltHold   = 0;
 
 
 enum
@@ -201,6 +204,26 @@ enum
     GUI_BTN_OBJECT_FLAGS_bit5, 
     GUI_BTN_OBJECT_FLAGS_bit6, 
     GUI_BTN_OBJECT_FLAGS_bit7, 
+
+    GUI_BTN_OBJECT_INFLAGS_bit0,
+    GUI_BTN_OBJECT_INFLAGS_bit1,
+    GUI_BTN_OBJECT_INFLAGS_bit2,
+    GUI_BTN_OBJECT_INFLAGS_bit3,
+    GUI_BTN_OBJECT_INFLAGS_bit4,
+    GUI_BTN_OBJECT_INFLAGS_bit5,
+    GUI_BTN_OBJECT_INFLAGS_bit6,
+    GUI_BTN_OBJECT_INFLAGS_bit7,
+
+    GUI_BTN_OBJECT_OUTFLAGS_bit0,
+    GUI_BTN_OBJECT_OUTFLAGS_bit1,
+    GUI_BTN_OBJECT_OUTFLAGS_bit2,
+    GUI_BTN_OBJECT_OUTFLAGS_bit3,
+    GUI_BTN_OBJECT_OUTFLAGS_bit4,
+    GUI_BTN_OBJECT_OUTFLAGS_bit5,
+    GUI_BTN_OBJECT_OUTFLAGS_bit6,
+    GUI_BTN_OBJECT_OUTFLAGS_bit7,
+
+
 
     GUI_BTN_CONFIRM_YES,
     GUI_BTN_CONFIRM_NO,
@@ -416,6 +439,8 @@ typedef struct {
     uint32_t type;
     float radius;
     uint8_t textureId;
+    uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag
+    uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
 } EdObject;
 
 typedef struct {
@@ -2988,6 +3013,8 @@ static int addObject(float x, float y, float z, int tagId, float radius, uint8_t
     o->targetTagId = 0;
     o->radius = (radius < 0.01f) ? 0.25f : radius;
     o->textureId = textureId;
+    o->inFlag = 0x00;
+    o->outFlag = 0x00;
 
     g_edMap.objectCount++;
     return g_edMap.objectCount - 1;
@@ -3768,7 +3795,7 @@ static void drawIsometricPreview(void)
     int sectorOrderCount = 0;
     int wallOrderCount = 0;
 
-    clearScreen(16);
+    //clearScreen(16);
 
     for (int i = 0; i < ED_MAX_WALLS; i++) {
         wallOwners[i] = -1;
@@ -7124,16 +7151,19 @@ static int saveTextMap(const char *path)
     fprintf(f, "OBJECTS %d\n", g_edMap.objectCount);
     for (int i = 0; i < g_edMap.objectCount; i++) {
         const EdObject *o = &g_edMap.objects[i];
-        fprintf(f, "%.6f %.6f %.6f %d %d %d %d %.6f %u\n",
-                o->x, 
-                o->y, 
-                o->z, 
-                o->tagId, 
+
+        fprintf(f, "%.6f %.6f %.6f %d %d %u %u %.6f %u %u %u\n",
+                o->x,
+                o->y,
+                o->z,
+                o->tagId,
                 o->targetTagId,
-                o->flags,
-                o->type,
-                o->radius, 
-                (unsigned)o->textureId);
+                (unsigned)o->flags,
+                (unsigned)o->type,
+                o->radius,
+                (unsigned)o->textureId,
+                (unsigned)o->inFlag,
+                (unsigned)o->outFlag);
     }
 
     fclose(f);
@@ -7364,23 +7394,34 @@ static int loadTextMap(const char *path)
 
         newMap.objectCount = count;
         for (int i = 0; i < count; i++) {
+            unsigned flags;
+            unsigned type;
             unsigned texId;
+            unsigned inFlag;
+            unsigned outFlag;
 
-            if (fscanf(f, "%f %f %f %d %d %u %u %f %u",
-                       &newMap.objects[i].x,
-                       &newMap.objects[i].y,
-                       &newMap.objects[i].z,
-                       &newMap.objects[i].tagId,
-                       &newMap.objects[i].targetTagId,
-                       &newMap.objects[i].flags,
-                       &newMap.objects[i].type,
-                       &newMap.objects[i].radius,
-                       &texId) != 9) {
+            if (fscanf(f, "%f %f %f %d %d %u %u %f %u %u %u",
+                    &newMap.objects[i].x,
+                    &newMap.objects[i].y,
+                    &newMap.objects[i].z,
+                    &newMap.objects[i].tagId,
+                    &newMap.objects[i].targetTagId,
+                    &flags,
+                    &type,
+                    &newMap.objects[i].radius,
+                    &texId,
+                    &inFlag,
+                    &outFlag) != 11) {
                 fclose(f);
                 return 0;
             }
 
+            newMap.objects[i].flags = (uint32_t)flags;
+            newMap.objects[i].type = (uint32_t)type;
             newMap.objects[i].textureId = (uint8_t)texId;
+            newMap.objects[i].inFlag = (uint8_t)inFlag;
+            newMap.objects[i].outFlag = (uint8_t)outFlag;
+
             if (newMap.objects[i].radius < 0.01f) {
                 newMap.objects[i].radius = 0.25f;
             }
@@ -7595,6 +7636,8 @@ int exportBinaryMap(const char *path)
         uint32_t otype  = (uint32_t)o->type;
         float radius = o->radius;
         uint8_t textureId = o->textureId;
+        uint8_t inFlag = o->inFlag;
+        uint8_t outFlag = o->outFlag;
 
         if (fwrite(&x, sizeof(x), 1, f)           != 1 ||
             fwrite(&y, sizeof(y), 1, f)           != 1 ||
@@ -7604,7 +7647,9 @@ int exportBinaryMap(const char *path)
             fwrite(&oflags, sizeof(oflags), 1, f) != 1 ||
             fwrite(&otype, sizeof(otype), 1, f)   != 1 ||
             fwrite(&radius, sizeof(radius), 1, f) != 1 ||
-            fwrite(&textureId, sizeof(textureId), 1, f) != 1
+            fwrite(&textureId, sizeof(textureId), 1, f) != 1 ||
+            fwrite(&inFlag, sizeof(inFlag), 1, f) != 1 ||
+            fwrite(&outFlag, sizeof(outFlag), 1, f) != 1
         ) {
             fclose(f);
             return 0;
@@ -9386,7 +9431,7 @@ static void drawExpandedEditorPanel(void)
         //y += ED_ROW_STEP;
         //drawText(x, y, "[KP*] toggle isometric preview (view-only)", ED_TEXT_COL);
         y += ED_ROW_STEP;
-        drawText(x, y, "CTRL+Z undo, CTRL+Y redo, F11 or CTRL+H history, [TAB] grid", ED_TEXT_COL);
+        drawText(x, y, "CTRL+Z undo, CTRL+Y redo, F11 or CTRL+H history, [TAB] grid scale, [G] grid mode", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "[F7] Repair Topology, [F8] clean map, [SHIFT+DRAG] drop = merge", ED_TEXT_COL);
 
@@ -9470,6 +9515,87 @@ static void drawExpandedEditorPanel(void)
     }
 }
 
+
+static int getWallNormal(int wallIndex)
+{
+    const EdWall *w;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    float dx, dy, len;
+    float mx, my;
+    float nx, ny;
+    float sampleDist;
+    int ownerSector;
+    int rightInside;
+    int leftInside;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
+        return -1;
+    }
+
+    ownerSector = findSectorOwningWall(wallIndex);
+    if (ownerSector < 0 || ownerSector >= g_edMap.sectorCount) {
+        return -1;
+    }
+
+    w = &g_edMap.walls[wallIndex];
+    if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+        w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+        return -1;
+    }
+
+    a = &g_edMap.verts[w->v0];
+    b = &g_edMap.verts[w->v1];
+
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+    len = sqrtf((dx * dx) + (dy * dy));
+
+    if (len <= 0.0001f) {
+        return -1;
+    }
+
+    /* midpoint of wall */
+    mx = (a->x + b->x) * 0.5f;
+    my = (a->y + b->y) * 0.5f;
+
+    /* right-hand normal from v0 -> v1 */
+    nx =  dy / len;
+    ny = -dx / len;
+
+    /* small probe distance */
+    sampleDist = clampf_local(g_ed.currentGridStep * 0.2f, 0.05f, 0.25f);
+    if (sampleDist > (len * 0.25f)) {
+        sampleDist = len * 0.25f;
+    }
+
+    if (sampleDist <= 0.0001f) {
+        return -1;
+    }
+
+    rightInside = pointInSector(mx + (nx * sampleDist),
+                                my + (ny * sampleDist),
+                                ownerSector);
+
+    leftInside  = pointInSector(mx - (nx * sampleDist),
+                                my - (ny * sampleDist),
+                                ownerSector);
+
+    /*
+        return values:
+        1  = right-hand normal points inward into owner sector
+        0  = right-hand normal points outward from owner sector
+       -1  = ambiguous / invalid
+    */
+    if (rightInside && !leftInside) return 1;
+    if (!rightInside && leftInside) return 0;
+
+    return -1;
+}
+
+
+
+
 static void drawWallNormal(int wallIndex, uint8_t colour)
 {
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
@@ -9533,14 +9659,27 @@ static void drawMapGeometry(void)
         {
             uint8_t c = ED_COLOUR_WALL;
 
-            if (w->flags & RC3D_WALL_PORTAL) c = ED_PORTAL_COL;
-            if (w->flags & RC3D_WALL_MIDDLE) c = ED_COLOUR_WALL;
-            if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) && !(w->flags & RC3D_WALL_MIDDLE) && !(w->flags & RC3D_WALL_PORTAL)) {
-                c = 32;
+            if (w->flags & RC3D_WALL_PORTAL) {
+                c = ED_PORTAL_COL;
+            }
+            else if ((w->flags & RC3D_WALL_MIDDLE) || (w->flags & RC3D_WALL_SOLID)) {
+                const int inward = getWallNormal(i);
+
+                if (inward == 1) {
+                    c = ED_COLOUR_WALL;   /* inward-facing: red */
+                } else if (inward == 0) {
+                    c = ED_COLOUR_WALLO;  /* outward-facing: yellow, pick whatever */
+                } else {
+                    c = ED_COLOUR_WALL;   /* ambiguous */
+                }
+            }
+            else if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
+                     !(w->flags & RC3D_WALL_MIDDLE)) {
+                c = ED_COLOUR_WALL_SPECIAL;
             }
 
             /* base line */
-            //drawLine(x0, y0, x1, y1, c);
+            drawLine(x0, y0, x1, y1, c);
 
             /* perpendicular screen-space normal for highlight thickness */
             {
@@ -9572,8 +9711,8 @@ static void drawMapGeometry(void)
 
                 /* selected wall */
                 if (isWallInEditSelection(i)) {
-                    drawLine(x0 - (ox * 2), y0 - (oy * 2), x1 - (ox * 2), y1 - (oy * 2), 31);
-                    drawLine(x0 + (ox * 2), y0 + (oy * 2), x1 + (ox * 2), y1 + (oy * 2), 31);
+                    drawLine(x0 - (ox * 2), y0 - (oy * 2), x1 - (ox * 2), y1 - (oy * 2), ED_COLOUR_SELECTED_WALL);
+                    drawLine(x0 + (ox * 2), y0 + (oy * 2), x1 + (ox * 2), y1 + (oy * 2), ED_COLOUR_SELECTED_WALL);
 
                     drawLine(x0 - ox, y0 - oy, x1 - ox, y1 - oy, ED_COLOUR_SELECTED_WALL);
                     drawLine(x0 + ox, y0 + oy, x1 + ox, y1 + oy, ED_COLOUR_SELECTED_WALL);
@@ -9856,9 +9995,8 @@ void rc3dEditInit(void)
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS,   194 + controloffw, 156 + sector_button_y_offsets, 144, 24, "Get Sector Floor");
         
 
-        // Toggling bits
+        // Toggling bits    // object flags
         sector_button_y_offsets += 70;
-
         sector_button_y_offsets += 25;
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
@@ -9870,6 +10008,34 @@ void rc3dEditInit(void)
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
+
+        // Toggling InFlags
+        sector_button_y_offsets += 33;
+        sector_button_y_offsets += 25;
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+
+        sector_button_y_offsets += 25;
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
+
+        // Toggling OutFlags
+        sector_button_y_offsets += 33;
+        sector_button_y_offsets += 25;
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+
+        sector_button_y_offsets += 25;
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
 
     }
 
@@ -10790,6 +10956,14 @@ static void editorHideInspectorButtons(void)
     for (int i = GUI_BTN_OBJECT_FLAGS_bit0; i < (GUI_BTN_OBJECT_FLAGS_bit0 + 8); i++) {
         rcguiSetButtonVisible(&g_ui, i, 0);
     }
+
+    for (int i = GUI_BTN_OBJECT_INFLAGS_bit0; i < (GUI_BTN_OBJECT_INFLAGS_bit0 + 8); i++) {
+        rcguiSetButtonVisible(&g_ui, i, 0);
+    }
+
+    for (int i = GUI_BTN_OBJECT_OUTFLAGS_bit0; i < (GUI_BTN_OBJECT_OUTFLAGS_bit0 + 8); i++) {
+        rcguiSetButtonVisible(&g_ui, i, 0);
+    }
 }
 
 
@@ -10999,15 +11173,44 @@ static void editorShowObjectInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 1);
 
+    
+
     for (int i = GUI_BTN_OBJECT_FLAGS_bit0; i < (GUI_BTN_OBJECT_FLAGS_bit0 + 8); i++) {
         rcguiSetButtonVisible(&g_ui, i, 1);
     }
+    for (int i = GUI_BTN_OBJECT_INFLAGS_bit0; i < (GUI_BTN_OBJECT_INFLAGS_bit0 + 8); i++) {
+        rcguiSetButtonVisible(&g_ui, i, 1);
+    }
+    for (int i = GUI_BTN_OBJECT_OUTFLAGS_bit0; i < (GUI_BTN_OBJECT_OUTFLAGS_bit0 + 8); i++) {
+        rcguiSetButtonVisible(&g_ui, i, 1);
+    }
 
-    {
+
+    {   // the Object Flags
         const uint32_t flags = g_edMap.objects[g_ed.selectedObject].flags;
 
         for (int bit = 0; bit < 8; bit++) {
             const int btnId = GUI_BTN_OBJECT_FLAGS_bit0 + bit;
+            const int checked = (flags >> bit) & 1u;
+            rcguiSetToggleChecked(&g_ui, btnId, checked);
+        }
+    }
+
+    {   // the InFlags
+        const uint32_t flags = g_edMap.objects[g_ed.selectedObject].inFlag;
+
+        for (int bit = 0; bit < 8; bit++) {
+            const int btnId = GUI_BTN_OBJECT_INFLAGS_bit0 + bit;
+            const int checked = (flags >> bit) & 1u;
+            rcguiSetToggleChecked(&g_ui, btnId, checked);
+        }
+    }
+
+    {   // the OutFlags
+        const uint32_t flags = g_edMap.objects[g_ed.selectedObject].outFlag;
+
+        for (int bit = 0; bit < 8; bit++) {
+            const int btnId = GUI_BTN_OBJECT_OUTFLAGS_bit0 + bit;
             const int checked = (flags >> bit) & 1u;
             rcguiSetToggleChecked(&g_ui, btnId, checked);
         }
@@ -11542,6 +11745,7 @@ static void handleEditorUI(int mouseX, int mouseY,
                 }
                 break;
 
+            // Object Flag Bits
             case GUI_BTN_OBJECT_FLAGS_bit0:
             case GUI_BTN_OBJECT_FLAGS_bit1:
             case GUI_BTN_OBJECT_FLAGS_bit2:
@@ -11560,6 +11764,50 @@ static void handleEditorUI(int mouseX, int mouseY,
 
                     /* keep UI in sync immediately */
                     rcguiSetToggleChecked(&g_ui, hit, (o->flags >> bit) & 1u);
+                }
+            } break;
+
+            // Object Inside Radius Flag
+            case GUI_BTN_OBJECT_INFLAGS_bit0:
+            case GUI_BTN_OBJECT_INFLAGS_bit1:
+            case GUI_BTN_OBJECT_INFLAGS_bit2:
+            case GUI_BTN_OBJECT_INFLAGS_bit3:
+            case GUI_BTN_OBJECT_INFLAGS_bit4:
+            case GUI_BTN_OBJECT_INFLAGS_bit5:
+            case GUI_BTN_OBJECT_INFLAGS_bit6:
+            case GUI_BTN_OBJECT_INFLAGS_bit7:
+            {
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    const int bit = hit - GUI_BTN_OBJECT_INFLAGS_bit0;
+
+                    pushUndoState();
+                    o->inFlag ^= (1u << bit);
+
+                    /* keep UI in sync immediately */
+                    rcguiSetToggleChecked(&g_ui, hit, (o->inFlag >> bit) & 1u);
+                }
+            } break;
+            
+            // Object Outside Radius Flag
+            case GUI_BTN_OBJECT_OUTFLAGS_bit0:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit1:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit2:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit3:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit4:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit5:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit6:
+            case GUI_BTN_OBJECT_OUTFLAGS_bit7:
+            {
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    const int bit = hit - GUI_BTN_OBJECT_OUTFLAGS_bit0;
+
+                    pushUndoState();
+                    o->outFlag ^= (1u << bit);
+
+                    /* keep UI in sync immediately */
+                    rcguiSetToggleChecked(&g_ui, hit, (o->outFlag >> bit) & 1u);
                 }
             } break;
 
@@ -11623,10 +11871,10 @@ static void drawInspectorPanel(void)
     ///// Wall texture / edit mode /////////////////////////////////////////
     else if (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall >= 0) {
         const EdWall *w = &g_edMap.walls[g_ed.selectedWall];
-        const int clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
-        const int clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
-        const int clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
-        const int clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
+        //const int clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
+        //const int clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
+        //const int clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
+        //const int clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
         const float wallTexAngleDeg = RAD2DEG(getWallTexAngle(w));
         const unsigned wallTexBrightness = (unsigned)getWallTexBrightness(w);
 
@@ -11719,13 +11967,13 @@ static void drawInspectorPanel(void)
         unsigned texFlags = 0;
         int texFlagsMixed = 0;
         int clampXL = 0;
-        int clampXLMixed = 0;
+        //int clampXLMixed = 0;
         int clampXR = 0;
-        int clampXRMixed = 0;
+        //int clampXRMixed = 0;
         int clampYT = 0;
-        int clampYTMixed = 0;
+        //int clampYTMixed = 0;
         int clampYB = 0;
-        int clampYBMixed = 0;
+        //int clampYBMixed = 0;
         float texScaleX = 0.0f;
         int texScaleXMixed = 0;
         float texScaleY = 0.0f;
@@ -11737,10 +11985,10 @@ static void drawInspectorPanel(void)
         char upperBuf[16];
         char midBuf[16];
         char lowerBuf[16];
-        const char *clampXLText = " ";
-        const char *clampXRText = " ";
-        const char *clampYTText = " ";
-        const char *clampYBText = " ";
+        //const char *clampXLText = " ";
+        //const char *clampXRText = " ";
+        //const char *clampYTText = " ";
+        //const char *clampYBText = " ";
 
         if (w) {
             neighbour = w->neighbour;
@@ -11776,10 +12024,10 @@ static void drawInspectorPanel(void)
                 if (other->midColor != midColor) midColorMixed = 1;
                 if (other->lowerColor != lowerColor) lowerColorMixed = 1;
                 if (other->tex_flags != texFlags) texFlagsMixed = 1;
-                if (otherClampXL != clampXL) clampXLMixed = 1;
-                if (otherClampXR != clampXR) clampXRMixed = 1;
-                if (otherClampYT != clampYT) clampYTMixed = 1;
-                if (otherClampYB != clampYB) clampYBMixed = 1;
+                //if (otherClampXL != clampXL) clampXLMixed = 1;
+                //if (otherClampXR != clampXR) clampXRMixed = 1;
+                //if (otherClampYT != clampYT) clampYTMixed = 1;
+                //if (otherClampYB != clampYB) clampYBMixed = 1;
                 if (fabsf(other->texScaleX - texScaleX) > ED_EPSILON) texScaleXMixed = 1;
                 if (fabsf(other->texScaleY - texScaleY) > ED_EPSILON) texScaleYMixed = 1;
                 if (fabsf(otherTexAngleDeg - wallTexAngleDeg) > 0.05f) wallTexAngleMixed = 1;
@@ -11796,10 +12044,10 @@ static void drawInspectorPanel(void)
         if (lowerColorMixed) snprintf(lowerBuf, sizeof(lowerBuf), "Mixed");
         else snprintf(lowerBuf, sizeof(lowerBuf), "%u", lowerColor);
 
-        clampXLText = clampXLMixed ? "Mix" : (clampXL ? "\x2" : " ");
-        clampXRText = clampXRMixed ? "Mix" : (clampXR ? "\x2" : " ");
-        clampYTText = clampYTMixed ? "Mix" : (clampYT ? "\x2" : " ");
-        clampYBText = clampYBMixed ? "Mix" : (clampYB ? "\x2" : " ");
+        //clampXLText = clampXLMixed ? "Mix" : (clampXL ? "\x2" : " ");
+        //clampXRText = clampXRMixed ? "Mix" : (clampXR ? "\x2" : " ");
+        //clampYTText = clampYTMixed ? "Mix" : (clampYT ? "\x2" : " ");
+        //clampYBText = clampYBMixed ? "Mix" : (clampYB ? "\x2" : " ");
 
         py = 40;
 
@@ -12073,8 +12321,8 @@ static void drawInspectorPanel(void)
         const EdObject *o = &g_edMap.objects[g_ed.selectedObject];
         int y_off = 48;
 
-        drawRect( px + 8, py + 40, pw - 16, 386, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py + 40, pw - 16, 386, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect( px + 8, py + 40, pw - 16, 552, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py + 40, pw - 16, 552, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
         snprintf(buf, sizeof(buf), "OBJECT %d", g_ed.selectedObject);
         drawText(px + 16, py + y_off, buf, ED_INSPECTOR_TEXT_COL);  y_off += 30;
@@ -12123,7 +12371,26 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf),     "FLAGS (generic use): 0x%02X", (unsigned)o->flags);
         drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
         drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
-        py += 30;
+        
+        /////////////////////
+        y_off += 77;
+        drawRect(px + 12,  py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_PANELFRAME);
+
+        y_off += 6;
+        snprintf(buf, sizeof(buf),     "Inside Object Radius: 0x%02X", (unsigned)o->inFlag);
+        drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
+
+        /////////////////////
+        y_off += 77;
+        drawRect(px + 12,  py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_PANELFRAME);
+
+        y_off += 6;
+        snprintf(buf, sizeof(buf),     "Outside Object Radius: 0x%02X", (unsigned)o->outFlag);
+        drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
 
 
     }
@@ -12272,6 +12539,11 @@ void rc3dEditUpdate(float dt,
             g_ed.statusText[0] = '\0';
         }
     }
+
+
+    bCtrlHold = ctrlDown;
+    bShiftHold = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
+    bAltHold = keys[SDL_SCANCODE_LALT] || keys[SDL_SCANCODE_RALT];
 
     if (keyPressedOnce(keys, SDL_SCANCODE_KP_MULTIPLY) ||
         (g_ed.isometricView && keyPressedOnce(keys, SDL_SCANCODE_ESCAPE))) {
@@ -13163,23 +13435,51 @@ void rc3dEditUpdate(float dt,
 
 void drawFilename(){
     //ED_TOPBAR_H
-    //int drawx = (SCREEN_W - ED_INSPECTOR_PANEL) - (ED_TOPBAR_X + ED_TOPBAR_W + 16);
-    
     int drawy = ED_TOPBAR_Y;
     int oborder = 6;
     int boxwidth = strlen(mapfilename) * 8;
-
     int drawx = (SCREEN_W - ED_INSPECTOR_PANEL) - (boxwidth + 20);// - (ED_TOPBAR_W + 16);
 
     drawRect(drawx,  drawy, boxwidth + (oborder * 2), ED_TOPBAR_H, ED_INSPECTOR_PANELS_BACKPANEL);
     drawRectL(drawx, drawy, boxwidth + (oborder * 2), ED_TOPBAR_H, ED_INSPECTOR_PARENT_PANELS_FRAME);
-
     drawText(drawx + oborder, drawy + oborder, mapfilename, 6);
 }
+
+void drawActiveTips(){
+    char tipstring[64];
+    int drawy = ED_TOPBAR_Y + 30;
+    int oborder = 6;
+    int boxwidth = strlen(mapfilename) * 8;
+    int drawx = (SCREEN_W - ED_INSPECTOR_PANEL) - (boxwidth + 20);// - (ED_TOPBAR_W + 16);
+
+    //bShiftHold   = 0;
+    //bCtrlHold   = 0;
+    //bAltHold   = 0;
+
+    if(bShiftHold) snprintf(tipstring,64, "Vertex control");
+    if(bCtrlHold)  snprintf(tipstring,64, "Sector control");
+    if(bAltHold)   snprintf(tipstring,64, "Wall control");
+    
+
+    if (!bShiftHold && !bCtrlHold && !bAltHold) return;
+    
+
+    boxwidth = strlen(tipstring) * 8;
+    drawx = (SCREEN_W - ED_INSPECTOR_PANEL) - (boxwidth + 20);// - (ED_TOPBAR_W + 16);
+
+    drawRect(drawx,  drawy, boxwidth + (oborder * 2), ED_TOPBAR_H, ED_INSPECTOR_PANELS_BACKPANEL);
+    drawRectL(drawx, drawy, boxwidth + (oborder * 2), ED_TOPBAR_H, ED_INSPECTOR_PARENT_PANELS_FRAME);
+    drawText(drawx + oborder, drawy + oborder, tipstring, 6);
+}
+
+extern uint8_t bg1[];
 
 void rc3dEditRender(void)
 {
     if (g_ed.isometricView) {
+        //drawImage(0, 0, SCREEN_W, SCREEN_H, bg1);
+        clearScreen(16);
+        drawImage(0, 0, SCREEN_W, SCREEN_H, bg1);
         drawIsometricPreview();
     } else {
         drawGrid();
@@ -13206,5 +13506,6 @@ void rc3dEditRender(void)
     rcguiDraw(&g_ui);
     drawUndoHistoryPopup();
     drawFilename();
+    drawActiveTips();
 
 }

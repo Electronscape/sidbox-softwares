@@ -61,6 +61,7 @@ void drawText(int x, int y, const char *text, uint8_t color);
 void videoMemToScreen();// real basic clear screen
 void clearScreen(uint8_t colIndex);
 void putPixel(int32_t x, int32_t y, uint8_t colIndex);
+void drawImage(int x, int y, int width, int height, uint8_t *img);
 
 //void drawCircle(int x, int y, int radius, uint8_t col);
 void drawDiamond(int x, int y, int radius, uint8_t col);

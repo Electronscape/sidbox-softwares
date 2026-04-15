@@ -75,6 +75,15 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define RC3D_LIGHT_PLANE_DIST_SCALE      0.98f
 #define RC3D_LIGHT_SPRITE_DIST_SCALE     0.70f
 
+// i'll keep this i DO like the sunlight feature!
+//#define RC3D_WALL_DIRLIGHT_ENABLE     1
+//#define RC3D_WALL_DIRLIGHT_X         -0.70710678f
+//#define RC3D_WALL_DIRLIGHT_Y          0.70710678f
+//#define RC3D_WALL_DIRLIGHT_STRENGTH   2.25f
+
+#define RC3D_WALL_POINTLIGHT_ENABLE    1
+#define RC3D_WALL_POINTLIGHT_STRENGTH  1.25f
+
 extern uint8_t spr_man[];
 
 #define RC3D_TEXID_SPRITE_MAN       RC3D_SPRITE_TEX_MAN
@@ -97,6 +106,10 @@ static int g_trigLutInit = 0;
 static float g_lightBrightRange = RC3D_LIGHT_DEFAULT_BRIGHT_RANGE;
 static float g_lightMidRange = RC3D_LIGHT_DEFAULT_MID_RANGE;
 static float g_lightDarkRange = RC3D_LIGHT_DEFAULT_DARK_RANGE;
+
+
+static float g_wallShadeBiasGlobal = 0.0f;
+
 
 #if RC3D_DRAW_PROFILER
 typedef struct {
@@ -699,6 +712,67 @@ static inline float rc3dMaxf(float a, float b)
 {
     return (a > b) ? a : b;
 }
+
+
+
+static inline float rc3dComputeWallShadeBias(
+    float wallDx, float wallDy,
+    float hitX, float hitY,
+    float lightX, float lightY)
+{
+#if RC3D_WALL_POINTLIGHT_ENABLE
+    float wallLen;
+    float nx, ny;
+    float lx, ly;
+    float lightLen;
+    float facing;
+
+    wallLen = sqrtf((wallDx * wallDx) + (wallDy * wallDy));
+    if (wallLen <= RC3D_EPSILON) {
+        return 0.0f;
+    }
+
+    /* wall normal */
+    nx = -wallDy / wallLen;
+    ny =  wallDx / wallLen;
+
+    /* vector from wall hit point toward the light */
+    lx = lightX - hitX;
+    ly = lightY - hitY;
+
+    lightLen = sqrtf((lx * lx) + (ly * ly));
+    if (lightLen <= RC3D_EPSILON) {
+        return 0.0f;
+    }
+
+    lx /= lightLen;
+    ly /= lightLen;
+
+    /*
+        abs() avoids winding flipping the result.
+        We only want "how aligned is this wall with the light",
+        not "did this map wall happen to be authored backwards".
+    */
+    facing = fabsf((nx * lx) + (ny * ly));
+
+    if (facing < 0.0f) facing = 0.0f;
+    if (facing > 1.0f) facing = 1.0f;
+
+    /* facing light -> less extra darkening, grazing -> more */
+    return (1.0f - facing) * RC3D_WALL_POINTLIGHT_STRENGTH;
+#else
+    (void)wallDx;
+    (void)wallDy;
+    (void)hitX;
+    (void)hitY;
+    (void)lightX;
+    (void)lightY;
+    return 0.0f;
+#endif
+}
+
+
+
 
 static void rc3dBuildLightVariantTables(void)
 {
@@ -1791,7 +1865,10 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
                 !readExact(f, &objects[i].z, sizeof(float)) ||
                 !readExact(f, &tagId, sizeof(int32_t)) ||
                 !readExact(f, &objects[i].radius, sizeof(float)) ||
-                !readExact(f, &objects[i].textureId, sizeof(uint8_t))) {
+                !readExact(f, &objects[i].textureId, sizeof(uint8_t)) ||
+                !readExact(f, &objects[i].inFlag, sizeof(uint8_t)) ||
+                !readExact(f, &objects[i].outFlag, sizeof(uint8_t))
+            ) {
                 fclose(f);
                 free(verts);
                 free(walls);
@@ -2964,7 +3041,8 @@ static inline void renderTexturedBandIfVisible(
             {
                 const uint8_t *texels = g_rc3dTextures[texId].pix;
                 uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
-                const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
+                //const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
+                const float shadeDist = (hitDist * RC3D_LIGHT_WALL_DIST_SCALE) + g_wallShadeBiasGlobal;
                 RC3D_ShadeProfile shadeProfile;
 
                 rc3dBuildShadeProfile(shadeDist, wallGlow, &shadeProfile);
@@ -3073,7 +3151,8 @@ static inline void renderMaskedTexturedBandIfVisible(
                 const uint8_t *texels = g_rc3dTextures[texId].pix;
                 uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
                 int opaqueSpanStart = -1;
-                const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
+                //const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
+                const float shadeDist = (hitDist * RC3D_LIGHT_WALL_DIST_SCALE) + g_wallShadeBiasGlobal;
                 RC3D_ShadeProfile shadeProfile;
 
                 rc3dBuildShadeProfile(shadeDist, wallGlow, &shadeProfile);
@@ -3433,12 +3512,8 @@ static inline void renderColumnPortalTraceClipped(
                 {
                     const float wallDx = wc ? wc->dx : (vb->x - va->x);
                     const float wallDy = wc ? wc->dy : (vb->y - va->y);
-                    const float wallTexInvScaleX =
-                        wc ? wc->texInvScaleX :
-                        (1.0f / ((fabsf(w->texScaleX) < RC3D_EPSILON) ? 1.0f : w->texScaleX));
-                    const float wallTexInvScaleY =
-                        wc ? wc->texInvScaleY :
-                        (1.0f / ((fabsf(w->texScaleY) < RC3D_EPSILON) ? 1.0f : w->texScaleY));
+                    const float wallTexInvScaleX = wc ? wc->texInvScaleX : (1.0f / ((fabsf(w->texScaleX) < RC3D_EPSILON) ? 1.0f : w->texScaleX));
+                    const float wallTexInvScaleY = wc ? wc->texInvScaleY : (1.0f / ((fabsf(w->texScaleY) < RC3D_EPSILON) ? 1.0f : w->texScaleY));
 
                     float uNorm = 0.0f;
                     float distAlongWall = 0.0f;
@@ -3484,6 +3559,16 @@ static inline void renderColumnPortalTraceClipped(
                     } else {
                         wallTexUBaseGlobal = distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
                     }
+
+                    {
+                        const float wallMidX = (va->x + vb->x) * 0.5f;
+                        const float wallMidY = (va->y + vb->y) * 0.5f;
+
+                        g_wallShadeBiasGlobal = rc3dComputeWallShadeBias(
+                            wallDx, wallDy,
+                            wallMidX, wallMidY,
+                            playerX, playerY);
+                    }
                 }
 
                 {
@@ -3505,6 +3590,7 @@ static inline void renderColumnPortalTraceClipped(
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
+                                const float savedWallShadeBias = g_wallShadeBiasGlobal;
 
                                 const int maskedClipTop = clampi(secTop, clipTop, clipBottom);
                                 const int maskedClipBottom = clampi(secBot, clipTop, clipBottom);
@@ -3557,6 +3643,7 @@ static inline void renderColumnPortalTraceClipped(
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
+                                g_wallShadeBiasGlobal = savedWallShadeBias;
 
                                 renderMaskedTexturedBandIfVisible(
                                     sx, secTop, secBot,
@@ -3594,6 +3681,12 @@ static inline void renderColumnPortalTraceClipped(
                                 int maskedClipTop = clipTop;
                                 int maskedClipBottom = clipBottom;
 
+                                const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
+                                const float savedWallTexRotCos = wallTexRotCosGlobal;
+                                const float savedWallTexRotSin = wallTexRotSinGlobal;
+                                const float savedWallShadeBias = g_wallShadeBiasGlobal;
+
                                 if (midTopY > maskedClipTop) maskedClipTop = midTopY;
                                 if (midBotY < maskedClipBottom) maskedClipBottom = midBotY;
 
@@ -3614,6 +3707,12 @@ static inline void renderColumnPortalTraceClipped(
                                         -1,
                                         NULL);
                                 }
+
+                                wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexInvScaleYGlobal = savedWallTexInvScaleY;
+                                wallTexRotCosGlobal = savedWallTexRotCos;
+                                wallTexRotSinGlobal = savedWallTexRotSin;
+                                g_wallShadeBiasGlobal = savedWallShadeBias;
 
                                 renderMaskedTexturedBandIfVisible(
                                     sx, midTopY, midBotY,
@@ -3674,11 +3773,13 @@ static inline void renderColumnPortalTraceClipped(
                         }
 
                         case RC3D_WALLCLASS_PORTAL:
-                        {
+{
                             const int nextSectorIndex = w->neighbour;
                             RC3D_PortalView portalView;
                             int portalOpenTopY;
                             int portalOpenBotY;
+                            int openTop;
+                            int openBot;
                             int portalClipTop;
                             int portalClipBottom;
 
@@ -3693,20 +3794,24 @@ static inline void renderColumnPortalTraceClipped(
                             portalOpenTopY = rc3dProjectTopPixel(horizon, portalView.openTop, playerZ, scale);
                             portalOpenBotY = rc3dProjectBottomPixel(horizon, portalView.openBottom, playerZ, scale);
 
-                            int openTop = secTop;
-                            int openBot = secBot;
+                            openTop = portalOpenTopY;
+                            if (openTop < secTop) openTop = secTop;
+                            if (openTop < clipTop) openTop = clipTop;
 
-                            if (portalOpenTopY > openTop) openTop = portalOpenTopY;
-                            if (clipTop > openTop) openTop = clipTop;
-
-                            if (portalOpenBotY < openBot) openBot = portalOpenBotY;
-                            if (clipBottom < openBot) openBot = clipBottom;
+                            openBot = portalOpenBotY;
+                            if (openBot > secBot) openBot = secBot;
+                            if (openBot > clipBottom) openBot = clipBottom;
 
                             fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
                             fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
 
-                            portalClipTop = openTop + (portalView.hasUpper ? 1 : 0);
-                            portalClipBottom = openBot - (portalView.hasLower ? 1 : 0);
+                            /*
+                                Opening owns [openTop .. openBot]
+                                Upper wall owns [secTop .. openTop-1]
+                                Lower wall owns [openBot+1 .. secBot]
+                            */
+                            portalClipTop = openTop;
+                            portalClipBottom = openBot;
 
                             {
                                 int entryWallInNext = -1;
@@ -3714,6 +3819,7 @@ static inline void renderColumnPortalTraceClipped(
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
+                                const float savedWallShadeBias = g_wallShadeBiasGlobal;
 
                                 if (wc) {
                                     entryWallInNext = wc->backWallIndex;
@@ -3741,11 +3847,13 @@ static inline void renderColumnPortalTraceClipped(
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
+                                g_wallShadeBiasGlobal = savedWallShadeBias;
+
                             }
 
                             if (portalView.hasUpper) {
                                 renderTexturedBandIfVisible(
-                                    sx, secTop, openTop,
+                                    sx, secTop, openTop - 1,
                                     w->upperColor,
                                     w->texture_flags,
                                     sec->ceilHeight,
@@ -3757,7 +3865,7 @@ static inline void renderColumnPortalTraceClipped(
 
                             if (portalView.hasLower) {
                                 renderTexturedBandIfVisible(
-                                    sx, openBot, secBot,
+                                    sx, openBot + 1, secBot,
                                     w->lowerColor,
                                     w->texture_flags,
                                     portalView.openBottom,
@@ -3979,17 +4087,16 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             portalOpenTopY = rc3dProjectTopPixel(horizonGlobal, portalView.openTop, playerZ, scale);
             portalOpenBotY = rc3dProjectBottomPixel(horizonGlobal, portalView.openBottom, playerZ, scale);
 
-            openTop = secTop;
-            openBot = secBot;
+            openTop = portalOpenTopY;
+            if (openTop < secTop) openTop = secTop;
+            if (openTop < clipTop) openTop = clipTop;
 
-            if (portalOpenTopY > openTop) openTop = portalOpenTopY;
-            if (clipTop > openTop) openTop = clipTop;
+            openBot = portalOpenBotY;
+            if (openBot > secBot) openBot = secBot;
+            if (openBot > clipBottom) openBot = clipBottom;
 
-            if (portalOpenBotY < openBot) openBot = portalOpenBotY;
-            if (clipBottom < openBot) openBot = clipBottom;
-
-            portalClipTop = openTop + (portalView.hasUpper ? 1 : 0);
-            portalClipBottom = openBot - (portalView.hasLower ? 1 : 0);
+            portalClipTop = openTop;
+            portalClipBottom = openBot;
 
             if (portalClipTop > portalClipBottom) {
                 return;
