@@ -9829,18 +9829,21 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "InFlag: These are flags that get copied to the Target Id", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "OutFlag: These are flags that get copied to the Target Id", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
-            y += ED_ROW_STEP; drawText(x, y, "TYPES: (Arbitrary types just for Advise, these are used for the run time demo though)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "TYPES: (Arbitrary types just for Advise, these are used for the run time demo though)", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "0 - a floating sprite", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "1 - sector trigger type. eg. open / close doors", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "2 - sector trigger type on entry (player walks into object). eg. open / close doors", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "3 - sector trigger type on exit  (player walks out of object). eg. open / close doors", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
-            y += ED_ROW_STEP; drawText(x, y, "Flags to use: (but not set in stone)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_NONE          = 0x00", ED_TEXT_COL);
-            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_RAISE_FLOOR   = 0x01", ED_TEXT_COL);
-            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_LOWER_FLOOR   = 0x02", ED_TEXT_COL);
-            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_LOWER_CEILING = 0x04", ED_TEXT_COL);
-            y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_RAISE_CEILING = 0x08", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "bit 0 : 0x01 = RC3D_SECTOR_STATE_RAISE_FLOOR", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "bit 1 : 0x02 = RC3D_SECTOR_STATE_LOWER_FLOOR", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "bit 2 : 0x04 = RC3D_SECTOR_STATE_LOWER_CEILING", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "bit 3 : 0x08 = RC3D_SECTOR_STATE_RAISE_CEILING", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Generic Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
+            y += ED_ROW_STEP; drawText(x, y, "bit 0 : 0x01 = enable / disable (recommended use of this flag)", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(hasMultiWallSelection()){

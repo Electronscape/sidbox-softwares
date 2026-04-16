@@ -5334,7 +5334,22 @@ static float obj1dist[RC3D_PROFILE_OBJ_LINES] = {0.0f};
 
 
 
-void processObjects(void)
+// API CALL
+void enableObject(int tagId, uint8_t en){
+    int objCnt = g_map->objectCount;
+    for (int i = 0; i < objCnt; i++) {
+        RC3D_Object *obj = &g_map->objects[i];
+        if(tagId == obj->tagId){
+            if(en)
+                obj->flags |= en;
+            else
+                obj->flags &= ~en;
+        }
+    }
+}
+
+// API CALLER
+void processObjects(int pTagId, int pType)
 {
     int objCnt;
     const float px = g_player.x;
@@ -5363,6 +5378,7 @@ void processObjects(void)
 
         RC3D_PROFILER_DO(g_profiler.objectsProcessed++);
 
+        // for debug information only
         if (i < RC3D_PROFILE_OBJ_LINES) {
             obj1dist[i] = sqrtf(distSq);
         }
@@ -5370,6 +5386,11 @@ void processObjects(void)
         if (inside == wasInside) {
             continue;
         }
+
+        if (!(obj->flags & 0x01)) continue;
+        if (pType  != 0 && obj->type  != pType)  continue;
+        if (pTagId != 0 && obj->tagId != pTagId) continue;
+
 
         RC3D_PROFILER_DO(g_profiler.objectEdgeChanges++);
 
@@ -5486,7 +5507,10 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
     gamelogictime++;
     if(gamelogictime> 8){
         gamelogictime = 0;
-        processObjects();
+        // standard object(triggers)
+        processObjects(0, OBJECT_TYPE_ENTEREXIT);
+        processObjects(0, OBJECT_TYPE_ENTERONLY);
+        processObjects(0, OBJECT_TYPE_EXITONLY);
     }
 
     rc3dUpdateHeadbob(dt, isMoving);

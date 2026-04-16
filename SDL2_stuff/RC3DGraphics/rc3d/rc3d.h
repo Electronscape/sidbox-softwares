@@ -22,6 +22,11 @@
 #define OBJECT_TRIGGER_SECTOR_STEPPED_OUT  3
 
 
+#define OBJECT_TYPE_ENTEREXIT       1
+#define OBJECT_TYPE_ENTERONLY       2
+#define OBJECT_TYPE_EXITONLY        3
+
+
 extern int g_viewport_top;
 extern int g_viewport_left;
 extern int g_viewport_width;
