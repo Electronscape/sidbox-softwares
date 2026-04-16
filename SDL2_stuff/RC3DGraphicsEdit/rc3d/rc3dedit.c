@@ -21,6 +21,8 @@
 #define RC3D_WALL_SOLID         0x10
 #define RC3D_WALL_MANUAL_TARGET 0x20
 #define RC3D_WALL_TRANSPARENCY  0x40    
+#define RC3D_WALL_DOUBLESIDED   0x80
+
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -128,11 +130,15 @@ enum
     GUI_BTN_VALIDATOR,
     GUI_BTN_SHOWTEXTURE_BROWSER,
 
+    GUI_BTN_PLAYER_START_ANGLE_MINUS,
+    GUI_BTN_PLAYER_START_ANGLE_PLUS,
+
     GUI_BTN_WALL_SOLID,
     GUI_BTN_WALL_PORTAL,
     GUI_BTN_WALL_WINDOW,
     GUI_BTN_WALL_DOOR,
     GUI_BTN_WALL_TRANSPARENCY,
+    GUI_BTN_WALL_FLAG_DOUBLESIDED,
     GUI_BTN_WALL_SPLIT,
 
     GUI_BTN_WALL_CLAMP_XL,
@@ -283,6 +289,7 @@ typedef enum {
     ED_ACT_WALL_DOOR,
     ED_ACT_WALL_SPLIT,
     ED_ACT_WALL_TRANSPARENCY,
+    ED_ACT_WALL_DOUBLESIDED,
 
     ED_ACT_WALL_EXTRUDE
 } EdAction;
@@ -1369,6 +1376,10 @@ static int isAutoRepeatUIButton(int buttonId)
         case GUI_BTN_OBJECT_RADIUS_MINUS:
         case GUI_BTN_OBJECT_ZAXIS_PLUS:
         case GUI_BTN_OBJECT_ZAXIS_MINUS:
+
+        // player angle change
+        case GUI_BTN_PLAYER_START_ANGLE_MINUS:
+        case GUI_BTN_PLAYER_START_ANGLE_PLUS:
             return 1;
 
         default:
@@ -3091,7 +3102,7 @@ static void drawMapObjects(void)
         drawRect(sx - 1, sy - 1, 3, 3, ED_START_COL);
 
         if (o->radius > 0.01f) {
-            const int rs = (int)lroundf(o->radius * g_ed.zoom);
+            const int rs = (int)lroundf(o->radius * g_ed.zoom)/2.0f;
             if (rs > 2) {
                 drawCircle(sx, sy, rs, 6);
             }
@@ -10290,6 +10301,8 @@ static void drawStartMarker(void)
     fy = sy + (int)(sinf(g_edMap.startAngle) * 16.0f);
     drawRect(sx - 2, sy - 2, 5, 5, ED_START_COL);
     drawLine(sx, sy, fx, fy, ED_START_COL);
+    const int rs = (int)lroundf(0.40f * g_ed.zoom)/2.0f;
+    drawCircle(sx, sy, rs, 7);
 }
 
 #include "rcgui.h"
@@ -10341,13 +10354,20 @@ void rc3dEditInit(void)
     #define controloff 33
     #define controloffw 16 + (SCREEN_W - ED_INSPECTOR_PANEL)
     #define inspectWallYOffset 20
+
+
+    // Player Angle settings
+    rcguiCreateButton(&g_ui, GUI_BTN_PLAYER_START_ANGLE_MINUS, controloffw + (50 * 2) + 14, 234 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_PLAYER_START_ANGLE_PLUS,  controloffw + (50 * 5) + 14, 234 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+
     /* expanded panel button rows aligned to 16px font + 6px spacing */
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_SOLID,    controloffw + (84 * 0), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Solid");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PORTAL,   controloffw + (84 * 1), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Portal");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_WINDOW,   controloffw + (84 * 2), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Window");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_DOOR,     controloffw + (84 * 3), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Door");
-    //rcguiCreateButton(&g_ui, GUI_BTN_WALL_SPLIT,    controloffw + (84 * 4), 194 + controloff, 80, ED_BTN_H, "Split");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TRANSPARENCY, controloffw + (84 * 4), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Transp.");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_SOLID,               controloffw + (64 * 0), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Sld");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PORTAL,              controloffw + (64 * 1), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Prtl");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_WINDOW,              controloffw + (64 * 2), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Wndw");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_DOOR,                controloffw + (64 * 3), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Door");
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_TRANSPARENCY,     controloffw + (64 * 4), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Transp",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, controloffw + (68 * 5), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "DblSdd", 0);
+
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_COPY_PROPS,    176 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Copy Props");
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_PASTE_PROPS,   278 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Paste Props");
     
@@ -11065,16 +11085,55 @@ static void doWallMakeTransparent(void)
 
     pushUndoState();
 
-    for (int i = 0; i < wallCount; i++) {
-        EdWall *w = &g_edMap.walls[wallIndices[i]];
+    /* use first selected wall as the source */
+    {
+        const EdWall *host = &g_edMap.walls[wallIndices[0]];
+        const int newState = (host->flags & RC3D_WALL_TRANSPARENCY) ? 0 : 1;
 
-        if (w->flags & RC3D_WALL_TRANSPARENCY) {
-            w->flags &= ~RC3D_WALL_TRANSPARENCY;
-        } else {
-            w->flags |= RC3D_WALL_TRANSPARENCY;
+        for (int i = 0; i < wallCount; i++) {
+            EdWall *w = &g_edMap.walls[wallIndices[i]];
+
+            if (newState) {
+                w->flags |= RC3D_WALL_TRANSPARENCY;
+            } else {
+                w->flags &= ~RC3D_WALL_TRANSPARENCY;
+            }
         }
+
+        rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_TRANSPARENCY, newState);
     }
 }
+
+static void doWallMakeDoubleSided(void)
+{
+    int wallIndices[ED_MAX_WALLS];
+    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+
+    if (wallCount <= 0) {
+        return;
+    }
+
+    pushUndoState();
+
+    /* use first selected wall as the source */
+    {
+        const EdWall *host = &g_edMap.walls[wallIndices[0]];
+        const int newState = (host->flags & RC3D_WALL_DOUBLESIDED) ? 0 : 1;
+
+        for (int i = 0; i < wallCount; i++) {
+            EdWall *w = &g_edMap.walls[wallIndices[i]];
+
+            if (newState) {
+                w->flags |= RC3D_WALL_DOUBLESIDED;
+            } else {
+                w->flags &= ~RC3D_WALL_DOUBLESIDED;
+            }
+        }
+
+        rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, newState);
+    }
+}
+
 
 static void doWallSplitAtCursor(float worldX, float worldY)
 {
@@ -11141,6 +11200,7 @@ static void executeEditorAction(EdAction action, float worldX, float worldY)
         case ED_ACT_WALL_DOOR: doWallMakeDoor(); break;
         case ED_ACT_WALL_SPLIT: doWallSplitAtCursor(worldX, worldY); break;
         case ED_ACT_WALL_TRANSPARENCY: doWallMakeTransparent(); break;
+        case ED_ACT_WALL_DOUBLESIDED:  doWallMakeDoubleSided(); break;
         case ED_ACT_WALL_EXTRUDE: doExtrudeWall(); break;
         case ED_ACT_OPENTEXTUREBROWSER: doOpenTextureBrowser(); break;
         
@@ -11353,6 +11413,7 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 0);
 
@@ -11445,6 +11506,9 @@ static void editorHideInspectorButtons(void)
     for (int i = GUI_BTN_OBJECT_OUTFLAGS_bit0; i < (GUI_BTN_OBJECT_OUTFLAGS_bit0 + 8); i++) {
         rcguiSetButtonVisible(&g_ui, i, 0);
     }
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_PLUS, 0);
 }
 
 
@@ -11453,10 +11517,15 @@ static void getSelectedWallClampState(int *outClampXL,
                                       int *outClampXR,
                                       int *outClampYT,
                                       int *outClampYB,
+                                      int *outFlipX,
+                                      int *outFlipY,
                                       int *outMixedXL,
                                       int *outMixedXR,
                                       int *outMixedYT,
-                                      int *outMixedYB)
+                                      int *outMixedYB,
+                                      int *outMixedFlipX,
+                                      int *outMixedFlipY)
+
 {
     int wallIndices[ED_MAX_WALLS];
     const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
@@ -11471,6 +11540,11 @@ static void getSelectedWallClampState(int *outClampXL,
     int mixedYT = 0;
     int mixedYB = 0;
 
+    int flipX = 0;
+    int flipY = 0;
+    int MixedFlipX = 0;
+    int MixedFlipY = 0;
+
     if (wallCount <= 0) {
         if (outClampXL) *outClampXL = 0;
         if (outClampXR) *outClampXR = 0;
@@ -11481,6 +11555,11 @@ static void getSelectedWallClampState(int *outClampXL,
         if (outMixedXR) *outMixedXR = 0;
         if (outMixedYT) *outMixedYT = 0;
         if (outMixedYB) *outMixedYB = 0;
+
+        if (outFlipX) *outFlipX = 0;
+        if (outFlipY) *outFlipY = 0;
+        if (outMixedFlipX) *outMixedFlipX = 0;
+        if (outMixedFlipY) *outMixedFlipY = 0;
         return;
     }
 
@@ -11490,6 +11569,8 @@ static void getSelectedWallClampState(int *outClampXL,
         clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
         clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
         clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
+        flipX   = (w->tex_flags & RC3D_TEX_FLAG_FLIPX)   ? 1 : 0;
+        flipY   = (w->tex_flags & RC3D_TEX_FLAG_FLIPY)   ? 1 : 0;
     }
 
     for (int i = 1; i < wallCount; i++) {
@@ -11498,11 +11579,15 @@ static void getSelectedWallClampState(int *outClampXL,
         const int curXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) ? 1 : 0;
         const int curYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
         const int curYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
+        const int curFX = (w->tex_flags & RC3D_TEX_FLAG_FLIPX)   ? 1 : 0;
+        const int curFY = (w->tex_flags & RC3D_TEX_FLAG_FLIPY)   ? 1 : 0;
 
         if (curXL != clampXL) mixedXL = 1;
         if (curXR != clampXR) mixedXR = 1;
         if (curYT != clampYT) mixedYT = 1;
         if (curYB != clampYB) mixedYB = 1;
+        if (curFX != flipX)   MixedFlipX = 1;
+        if (curFY != flipY)   MixedFlipY = 1;
     }
 
     if (outClampXL) *outClampXL = clampXL;
@@ -11514,6 +11599,11 @@ static void getSelectedWallClampState(int *outClampXL,
     if (outMixedXR) *outMixedXR = mixedXR;
     if (outMixedYT) *outMixedYT = mixedYT;
     if (outMixedYB) *outMixedYB = mixedYB;
+
+    if (outFlipX) *outFlipX = flipX;
+    if (outFlipY) *outFlipY = flipY;
+    if (outMixedFlipX) *outMixedFlipX = MixedFlipX;
+    if (outMixedFlipY) *outMixedFlipY = MixedFlipY;
 }
 
 
@@ -11523,6 +11613,7 @@ static void editorShowWallInspectorButtons(void)
     EdWall *w = NULL;
     int clampXL = 0, clampXR = 0, clampYT = 0, clampYB = 0;
     int mixedXL = 0, mixedXR = 0, mixedYT = 0, mixedYB = 0;
+    int flipX = 0, flipY = 0, mixedFlipX = 0, mixedFlipY = 0;
 
     if (hasAnyWallEditSelection()) {
         const int primaryWall = getPrimaryWallEditIndex();
@@ -11541,6 +11632,13 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_WINDOW, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, 1);
+
+
+
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_TRANSPARENCY, w->flags & RC3D_WALL_TRANSPARENCY ? 1 : 0);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, w->flags & RC3D_WALL_DOUBLESIDED ? 1 : 0);
+
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
     rcguiSetButtonDisabled(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
@@ -11566,8 +11664,8 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
 
-    getSelectedWallClampState(&clampXL, &clampXR, &clampYT, &clampYB,
-                              &mixedXL, &mixedXR, &mixedYT, &mixedYB);
+    getSelectedWallClampState(&clampXL, &clampXR, &clampYT, &clampYB, &flipX, &flipY,
+                              &mixedXL, &mixedXR, &mixedYT, &mixedYB, &mixedFlipX, &mixedFlipY);
 
     /* checked state follows primary wall */
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_CLAMP_XL, clampXL);
@@ -11582,8 +11680,10 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonText(&g_ui, GUI_BTN_WALL_CLAMP_YB, mixedYB ? "Bottom ~" : "Bottom");
 
     /* flip buttons stay normal labels */
-    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_FLIP_X, "Flip");
-    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_FLIP_Y, "Flip");
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLIP_X, flipX);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLIP_Y, flipY);
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_FLIP_X, mixedFlipX ? "Flip ~"  : "Flip");
+    rcguiSetButtonText(&g_ui, GUI_BTN_WALL_FLIP_Y, mixedFlipY ? "Flip ~"  : "Flip");
 }
 
 
@@ -11844,6 +11944,7 @@ static void handleEditorUI(int mouseX, int mouseY,
             case GUI_BTN_WALL_DOOR: executeEditorAction(ED_ACT_WALL_DOOR, worldX, worldY); break;
             case GUI_BTN_WALL_SPLIT: executeEditorAction(ED_ACT_WALL_SPLIT, worldX, worldY); break;
             case GUI_BTN_WALL_TRANSPARENCY: executeEditorAction(ED_ACT_WALL_TRANSPARENCY, worldX, worldY); break;
+            case GUI_BTN_WALL_FLAG_DOUBLESIDED: executeEditorAction(ED_ACT_WALL_DOUBLESIDED, worldX, worldY); break;
 
             case GUI_BTN_WALL_COPY_PROPS:
                 if (hasAnyWallEditSelection()) {
@@ -11917,6 +12018,20 @@ static void handleEditorUI(int mouseX, int mouseY,
             case GUI_BTN_SECTOR_FTEX_ROT_RESET:
                 if (sec) { pushUndoState(); sec->floorTexAngle = 0.0f; }
                 break;
+
+            case GUI_BTN_WALL_FLIP_X:
+                if (hasAnyWallEditSelection()) {
+                    pushUndoState();
+                    applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_FLIPX);
+                }
+            break;
+
+            case GUI_BTN_WALL_FLIP_Y:
+                if (hasAnyWallEditSelection()) {
+                    pushUndoState();
+                    applySelectedWallClampFromPrimaryToggle(RC3D_TEX_FLAG_FLIPY);
+                }
+            break;
 
 
             case GUI_BTN_WALL_CLAMP_XL:
@@ -12332,6 +12447,28 @@ static void handleEditorUI(int mouseX, int mouseY,
                 }
             } break;
 
+            // Player setups //
+            case GUI_BTN_PLAYER_START_ANGLE_MINUS:
+                g_edMap.startAngle -= DEG2RAD(5.0f);
+                while (g_edMap.startAngle < 0.0f)
+                    g_edMap.startAngle += (float)(M_PI * 2.0f);
+            break;
+
+            case GUI_BTN_PLAYER_START_ANGLE_PLUS:
+                g_edMap.startAngle += DEG2RAD(5.0f);
+                while (g_edMap.startAngle >= (float)(M_PI * 2.0f))
+                    g_edMap.startAngle -= (float)(M_PI * 2.0f);
+            break;
+            /*
+            if (keyPressedOnce(keys, SDL_SCANCODE_Q)) {
+            g_edMap.startAngle -= 0.1f;
+            }
+            if (keyPressedOnce(keys, SDL_SCANCODE_E)) {
+            g_edMap.startAngle += 0.1f;
+            }
+            */
+
+
             default:
                 break;
         }
@@ -12531,10 +12668,10 @@ static void drawInspectorPanel(void)
 
             for (int i = 1; i < wallCount; i++) {
                 const EdWall *other = &g_edMap.walls[wallIndices[i]];
-                const int otherClampXL = (other->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
-                const int otherClampXR = (other->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
-                const int otherClampYT = (other->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
-                const int otherClampYB = (other->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
+                //const int otherClampXL = (other->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
+                //const int otherClampXR = (other->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
+                //const int otherClampYT = (other->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
+                //const int otherClampYB = (other->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
                 const float otherTexAngleDeg = RAD2DEG(getWallTexAngle(other));
 
                 if (other->neighbour != neighbour) neighbourMixed = 1;
@@ -12951,6 +13088,13 @@ static void drawInspectorPanel(void)
         //drawText(px + 16, py + 262, "[F]/[G] floor   [C]/[V] ceil", ED_TEXT_COL);
         //drawText(px + 16, py + 284, "[J]/[K] floor tex  [N]/[M] ceil tex", ED_TEXT_COL);
         //drawText(px + 16, py + 306, "[A]/[S] upper  [D]/[F] mid  [H]/[J] lower", ED_TEXT_COL);
+
+        snprintf(buf, sizeof(buf), "Player Angle:       %.1f deg", g_edMap.startAngle * (180.0f / (float)M_PI));
+        //snprintf(buf, sizeof(buf), "Player Angle:       %.02f", g_edMap.startAngle);
+        drawText(px + 16, py + 292, buf, ED_TEXT_COL);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_MINUS, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_PLUS, 1);
+
     }
 
 }
@@ -13880,10 +14024,10 @@ void rc3dEditUpdate(float dt,
         g_ed.selectedVertCount <= 0)
     {
         if (keyPressedOnce(keys, SDL_SCANCODE_Q)) {
-            g_edMap.startAngle -= 0.1f;
+            g_edMap.startAngle -= DEG2RAD(5.0f);
         }
         if (keyPressedOnce(keys, SDL_SCANCODE_E)) {
-            g_edMap.startAngle += 0.1f;
+            g_edMap.startAngle += DEG2RAD(5.0f);
         }
     }
 

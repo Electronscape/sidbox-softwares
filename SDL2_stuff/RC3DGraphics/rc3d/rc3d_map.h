@@ -3,13 +3,14 @@
 
 #include <stdint.h>
 
-#define RC3D_WALL_PORTAL   0x01
-#define RC3D_WALL_UPPER    0x02
-#define RC3D_WALL_MIDDLE   0x04
-#define RC3D_WALL_LOWER    0x08
-#define RC3D_WALL_SOLID    0x10
+#define RC3D_WALL_PORTAL        0x01
+#define RC3D_WALL_UPPER         0x02
+#define RC3D_WALL_MIDDLE        0x04
+#define RC3D_WALL_LOWER         0x08
+#define RC3D_WALL_SOLID         0x10
 #define RC3D_WALL_MANUAL_TARGET 0x20
-#define RC3D_WALL_TRANSPARENCY 0x40
+#define RC3D_WALL_TRANSPARENCY  0x40
+#define RC3D_WALL_DOUBLESIDED   0x80
 
 
 #define RC3D_SECTORTEX_CLAMPX1  0x01
@@ -27,8 +28,9 @@
 #define RC3D_TEX_WALL_GLOW_SHIFT 20u
 #define RC3D_TEX_WALL_GLOW_MAX   7u
 #define RC3D_TEX_WALL_GLOW_MASK  (RC3D_TEX_WALL_GLOW_MAX << RC3D_TEX_WALL_GLOW_SHIFT)
-#define RC3D_TEX_WALL_GLOW(level) \
-    ((((uint32_t)(level)) & RC3D_TEX_WALL_GLOW_MAX) << RC3D_TEX_WALL_GLOW_SHIFT)
+#define RC3D_TEX_WALL_GLOW(level) \ ((((uint32_t)(level)) & RC3D_TEX_WALL_GLOW_MAX) << RC3D_TEX_WALL_GLOW_SHIFT)
+#define RC3D_TEX_FLAG_FLIPX     0x1000000u
+#define RC3D_TEX_FLAG_FLIPY     0x2000000u
 
 
 typedef struct {

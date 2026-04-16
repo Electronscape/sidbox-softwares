@@ -338,6 +338,7 @@ static void rc3dDrawProfiler(void)
 }
 #endif
 
+
 typedef int32_t RC3D_Fixed;
 
 typedef struct {
@@ -542,32 +543,32 @@ static uint8_t g_wallDepthSpanCount[SCREEN_W];
 static int rc3dEnsurePlayerSectorValid(void);
 static void rc3dBuildVisibleTraceCacheForColumn(int sx);
 
-static inline int rc3dViewportScreenX(int sx)
-{
+static int rc3dPositionBlockedInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    RC3D_Fixed radius,
+    int sectorIndex);
+
+static inline int rc3dViewportScreenX(int sx){
     return g_viewport_left + sx;
 }
 
-static inline int rc3dViewportScreenY(int sy)
-{
+static inline int rc3dViewportScreenY(int sy){
     return g_viewport_top + sy;
 }
 
-static inline uint8_t *rc3dViewportPixelPtr(int sx, int sy)
-{
+static inline uint8_t *rc3dViewportPixelPtr(int sx, int sy){
     return &fb[(rc3dViewportScreenY(sy) * SCREEN_W) + rc3dViewportScreenX(sx)];
 }
 
-static inline float rc3dViewportCameraX(int sx)
-{
+static inline float rc3dViewportCameraX(int sx){
     if (g_viewport_width <= 1) {
         return 0.0f;
     }
-
     return -1.0f + (2.0f * ((float)sx / (float)(g_viewport_width - 1)));
 }
 
-static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float planeY)
-{
+static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float planeY){
     const float rayStepX = planeX * g_camStepConst;
     const float rayStepY = planeY * g_camStepConst;
     float rdx = dirX - planeX;
@@ -598,8 +599,7 @@ static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float 
     g_columnRayCacheCount = g_viewport_width;
 }
 
-static inline void rc3dInvalidateVisibleTraceCache(void)
-{
+static inline void rc3dInvalidateVisibleTraceCache(void){
     memset(g_visibleTraceBuilt, 0, sizeof(g_visibleTraceBuilt));
 }
 
@@ -612,65 +612,44 @@ static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
 static void rc3dResolvePlayerPenetrationInSector(int sectorIndex);
 
-static int findBlockingWallInSectorFixed(
-    RC3D_Fixed px,
-    RC3D_Fixed py,
-    RC3D_Fixed radius,
-    int sectorIndex,
-    int *outWallIndex);
-
-static int positionHitsBlockingWallsInSectorFixed(
-    RC3D_Fixed px,
-    RC3D_Fixed py,
-    RC3D_Fixed radius,
-    int sectorIndex);
 
 void screenupdate(void);
 
-static inline RC3D_Fixed rc3dFloatToFixed(float v)
-{
+static inline RC3D_Fixed rc3dFloatToFixed(float v){
     if (v >= 0.0f) {
         return (RC3D_Fixed)(v * (float)RC3D_FIXED_ONE + 0.5f);
     }
-
     return (RC3D_Fixed)(v * (float)RC3D_FIXED_ONE - 0.5f);
 }
 
-static inline float rc3dFixedToFloat(RC3D_Fixed v)
-{
+static inline float rc3dFixedToFloat(RC3D_Fixed v){
     return (float)v / (float)RC3D_FIXED_ONE;
 }
 
-static inline RC3D_Fixed rc3dFixedMul(RC3D_Fixed a, RC3D_Fixed b)
-{
+static inline RC3D_Fixed rc3dFixedMul(RC3D_Fixed a, RC3D_Fixed b){
     return (RC3D_Fixed)(((int64_t)a * (int64_t)b) >> RC3D_FIXED_SHIFT);
 }
 
-static inline int64_t rc3dFixedSq(RC3D_Fixed v)
-{
+static inline int64_t rc3dFixedSq(RC3D_Fixed v){
     return (int64_t)v * (int64_t)v;
 }
 
-static inline int rc3dSectorIndexValid(int sectorIndex)
-{
+static inline int rc3dSectorIndexValid(int sectorIndex){
     return g_map && ((unsigned)sectorIndex < (unsigned)g_map->sectorCount);
 }
 
-static inline void rc3dSyncPlayerFloatXY(void)
-{
+static inline void rc3dSyncPlayerFloatXY(void){
     g_player.x = rc3dFixedToFloat(g_player.xFixed);
     g_player.y = rc3dFixedToFloat(g_player.yFixed);
 }
 
-static inline void rc3dSetPlayerWorldXYFixed(RC3D_Fixed x, RC3D_Fixed y)
-{
+static inline void rc3dSetPlayerWorldXYFixed(RC3D_Fixed x, RC3D_Fixed y){
     g_player.xFixed = x;
     g_player.yFixed = y;
     rc3dSyncPlayerFloatXY();
 }
 
-static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, RC3D_Fixed y)
-{
+static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, RC3D_Fixed y){
     if (!sprite) return;
 
     sprite->xFixed = x;
@@ -679,15 +658,11 @@ static inline void rc3dSetSpriteWorldXYFixed(RC3D_Sprite *sprite, RC3D_Fixed x, 
     sprite->y = rc3dFixedToFloat(y);
 }
 
-static inline int rc3dSpriteHandleValid(int spriteId)
-{
-    return (spriteId >= 0) &&
-           (spriteId < RC3D_MAX_SPRITES) &&
-           g_sprites[spriteId].inUse;
+static inline int rc3dSpriteHandleValid(int spriteId){
+    return (spriteId >= 0) && (spriteId < RC3D_MAX_SPRITES) && g_sprites[spriteId].inUse;
 }
 
-static void rc3dBuildTrigTables(void)
-{
+static void rc3dBuildTrigTables(void){
     if (g_trigLutInit) {
         return;
     }
@@ -1353,6 +1328,30 @@ static int rc3dBuildFixedVertCacheForCurrentMap(void)
     return 1;
 }
 
+
+static inline uint8_t rc3dClassifyWallFlags(uint8_t flags)
+{
+    if (flags & RC3D_WALL_SOLID) {
+        return RC3D_WALLCLASS_SOLID;
+    }
+
+    if ((flags & RC3D_WALL_MIDDLE) && !(flags & RC3D_WALL_PORTAL)) {
+        return RC3D_WALLCLASS_MIDDLE;
+    }
+
+    if (flags & RC3D_WALL_PORTAL) {
+        return RC3D_WALLCLASS_PORTAL;
+    }
+
+    if ((flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
+        !(flags & RC3D_WALL_MIDDLE)) {
+        return RC3D_WALLCLASS_UPPER_LOWER;
+    }
+
+    return RC3D_WALLCLASS_NONE;
+}
+
+
 static inline int rc3dGetWallFixedEndpoints(
     const RC3D_Wall *w,
     RC3D_Fixed *ax, RC3D_Fixed *ay,
@@ -1562,24 +1561,7 @@ static int rc3dBuildWallCacheForCurrentMap(void)
             }
 
             {
-                const uint8_t flags = w->flags;
-
-                if (flags & RC3D_WALL_SOLID) {
-                    wc->wallClass = RC3D_WALLCLASS_SOLID;
-                }
-                else if ((flags & RC3D_WALL_MIDDLE) && !(flags & RC3D_WALL_PORTAL)) {
-                    wc->wallClass = RC3D_WALLCLASS_MIDDLE;
-                }
-                else if (flags & RC3D_WALL_PORTAL) {
-                    wc->wallClass = RC3D_WALLCLASS_PORTAL;
-                }
-                else if ((flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
-                         !(flags & RC3D_WALL_MIDDLE)) {
-                    wc->wallClass = RC3D_WALLCLASS_UPPER_LOWER;
-                }
-                else {
-                    wc->wallClass = RC3D_WALLCLASS_NONE;
-                }
+                wc->wallClass = rc3dClassifyWallFlags(w->flags);
             }
 
             {
@@ -2638,7 +2620,7 @@ static int rc3dPositionFitsInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int secto
         return 0;
     }
 
-    if (positionHitsBlockingWallsInSectorFixed(px, py, radius, sectorIndex)) {
+    if (rc3dPositionBlockedInSectorFixed(px, py, radius, sectorIndex)) {
         return 0;
     }
 
@@ -2650,7 +2632,7 @@ static int rc3dTryOrbitalUnstuckInSector(int sectorIndex)
     const RC3D_Fixed startX = g_player.xFixed;
     const RC3D_Fixed startY = g_player.yFixed;
     const float stepDist = 0.05f;
-    const float maxDist = PLAYER_RADIUS + 0.30f;
+    const float maxDist = PLAYER_RADIUS;// + 0.30f;
     const int samples = 24;
 
     float baseAngle = 0.0f;
@@ -2797,11 +2779,12 @@ static int rc3dCommitPlayerMoveFixed(RC3D_Fixed newX, RC3D_Fixed newY, int newSe
 
 
 
-static int findBlockingWallInSectorFixed(
-    RC3D_Fixed px, RC3D_Fixed py,
+
+static int rc3dPositionBlockedInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
     RC3D_Fixed radius,
-    int sectorIndex,
-    int *outWallIndex)
+    int sectorIndex)
 {
     if (!g_map || !g_map->sectors || !g_map->walls) {
         return 0;
@@ -2835,26 +2818,12 @@ static int findBlockingWallInSectorFixed(
             }
 
             if (pointSegmentDistSqFixed(px, py, ax, ay, bx, by, NULL, NULL) < radiusSq) {
-                if (outWallIndex) *outWallIndex = wi;
                 return 1;
             }
         }
     }
 
     return 0;
-}
-
-
-
-
-
-static int positionHitsBlockingWallsInSectorFixed(
-    RC3D_Fixed px,
-    RC3D_Fixed py,
-    RC3D_Fixed radius,
-    int sectorIndex)
-{
-    return findBlockingWallInSectorFixed(px, py, radius, sectorIndex, NULL);
 }
 
 static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
@@ -2878,12 +2847,12 @@ static int canMoveToPositionFixed(RC3D_Fixed px, RC3D_Fixed py, int newSector)
         }
     }
 
-    if (positionHitsBlockingWallsInSectorFixed(px, py, radius, g_player.sector)) {
+    if (rc3dPositionBlockedInSectorFixed(px, py, radius, g_player.sector)) {
         blocked = 1;
     }
 
     if (!skipNewSectorWallCheck && newSector != g_player.sector) {
-        if (positionHitsBlockingWallsInSectorFixed(px, py, radius, newSector)) {
+        if (rc3dPositionBlockedInSectorFixed(px, py, radius, newSector)) {
             blocked = 1;
         }
     }
@@ -3031,24 +3000,6 @@ static int tryMovePlayerSliding(float moveX, float moveY)
 /* ------------------------------------------------------------------------- */
 /* drawing helpers                                                           */
 /* ------------------------------------------------------------------------- */
-
-static inline void drawVerticalSpanFast(int x, int y0, int y1, uint8_t col)
-{
-    if ((unsigned)x >= SCREEN_W) return;
-    if (y0 < 0) y0 = 0;
-    if (y1 >= SCREEN_H) y1 = SCREEN_H - 1;
-    if (y0 > y1) return;
-
-    uint8_t *dst = &fb[(y0 * SCREEN_W) + x];
-    const int count = y1 - y0 + 1;
-
-    for (int i = 0; i < count; i++) {
-        *dst = col;
-        dst += SCREEN_W;
-    }
-}
-
-
 static inline int rc3dPlaneResolveAxisTexel(
     float coord,
     float minCoord,
@@ -3306,6 +3257,7 @@ static inline void renderTexturedBandIfVisible(
     const int clampYT = (texFlags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
     const int clampYB = (texFlags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
     const int stretchY = (clampYT && clampYB) ? 1 : 0;
+    const int flipY = (texFlags & RC3D_TEX_FLAG_FLIPY) ? 1 : 0;
 
     if (texId == RC3D_TEXID_SKYBOX) return;
     if (origY0 > origY1) return;
@@ -3331,17 +3283,39 @@ static inline void renderTexturedBandIfVisible(
             float vLocal0;
             float vStep;
 
-            if (stretchY) {
-                const float scale = texPerWorld / worldSpan;
-                vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * scale;
-                vStep = k * scale;
-            } else if (clampYB && !clampYT) {
-                vLocal0 = (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
-                          (float)(RC3D_TEX_SIZE - 1);
-                vStep = k * texPerWorld;
-            } else {
-                vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * texPerWorld;
-                vStep = k * texPerWorld;
+            {
+                const float sample0 = baseWorldFromTop + ((float)y0 * k);
+
+                if (stretchY) {
+                    const float scale = texPerWorld / worldSpan;
+
+                    if (flipY) {
+                        vLocal0 = ((worldSpan - sample0) * scale);
+                        vStep = -(k * scale);
+                    } else {
+                        vLocal0 = sample0 * scale;
+                        vStep = k * scale;
+                    }
+
+                } else if (clampYB && !clampYT) {
+                    if (flipY) {
+                        vLocal0 = (worldSpan - sample0) * texPerWorld;
+                        vStep = -(k * texPerWorld);
+                    } else {
+                        vLocal0 = ((sample0 - worldSpan) * texPerWorld) +
+                                (float)(RC3D_TEX_SIZE - 1);
+                        vStep = k * texPerWorld;
+                    }
+
+                } else {
+                    if (flipY) {
+                        vLocal0 = -sample0 * texPerWorld;
+                        vStep = -(k * texPerWorld);
+                    } else {
+                        vLocal0 = sample0 * texPerWorld;
+                        vStep = k * texPerWorld;
+                    }
+                }
             }
 
             {
@@ -3417,6 +3391,7 @@ static inline void renderMaskedTexturedBandIfVisible(
     const int clampYT = (texFlags & RC3D_TEX_FLAG_CLAMPYT) ? 1 : 0;
     const int clampYB = (texFlags & RC3D_TEX_FLAG_CLAMPYB) ? 1 : 0;
     const int stretchY = (clampYT && clampYB) ? 1 : 0;
+    const int flipY = (texFlags & RC3D_TEX_FLAG_FLIPY) ? 1 : 0;
 
     if (texId == RC3D_TEXID_SKYBOX) return;
     if (origY0 > origY1) return;
@@ -3440,17 +3415,39 @@ static inline void renderMaskedTexturedBandIfVisible(
             float vLocal0;
             float vStep;
 
-            if (stretchY) {
-                const float scale = texPerWorld / worldSpan;
-                vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * scale;
-                vStep = k * scale;
-            } else if (clampYB && !clampYT) {
-                vLocal0 = (((baseWorldFromTop + ((float)y0 * k)) - worldSpan) * texPerWorld) +
-                          (float)(RC3D_TEX_SIZE - 1);
-                vStep = k * texPerWorld;
-            } else {
-                vLocal0 = (baseWorldFromTop + ((float)y0 * k)) * texPerWorld;
-                vStep = k * texPerWorld;
+            {
+                const float sample0 = baseWorldFromTop + ((float)y0 * k);
+
+                if (stretchY) {
+                    const float scale = texPerWorld / worldSpan;
+
+                    if (flipY) {
+                        vLocal0 = ((worldSpan - sample0) * scale);
+                        vStep = -(k * scale);
+                    } else {
+                        vLocal0 = sample0 * scale;
+                        vStep = k * scale;
+                    }
+
+                } else if (clampYB && !clampYT) {
+                    if (flipY) {
+                        vLocal0 = (worldSpan - sample0) * texPerWorld;
+                        vStep = -(k * texPerWorld);
+                    } else {
+                        vLocal0 = ((sample0 - worldSpan) * texPerWorld) +
+                                (float)(RC3D_TEX_SIZE - 1);
+                        vStep = k * texPerWorld;
+                    }
+
+                } else {
+                    if (flipY) {
+                        vLocal0 = -sample0 * texPerWorld;
+                        vStep = -(k * texPerWorld);
+                    } else {
+                        vLocal0 = sample0 * texPerWorld;
+                        vStep = k * texPerWorld;
+                    }
+                }
             }
 
             {
@@ -3539,61 +3536,6 @@ static inline void renderMaskedTexturedBandIfVisible(
     }
 }
 
-static inline void rc3dTryNearestWallHit(
-    RC3D_WallHit *hit,
-    int wallIndex,
-    float rox, float roy,
-    float rdx, float rdy,
-    float minT,
-    const RC3D_Wall *walls,
-    const RC3D_Vec2 *verts,
-    const RC3D_WallCache *cache)
-{
-    const RC3D_Wall *w = &walls[wallIndex];
-    const RC3D_Vec2 *a = &verts[w->v0];
-    float sx;
-    float sy;
-
-    if (cache) {
-        const RC3D_WallCache *wc = &cache[wallIndex];
-        sx = wc->dx;
-        sy = wc->dy;
-    } else {
-        const RC3D_Vec2 *b = &verts[w->v1];
-        sx = b->x - a->x;
-        sy = b->y - a->y;
-    }
-
-    {
-        const float denom = (rdx * sy) - (rdy * sx);
-
-        if (denom >= -RC3D_EPSILON) {
-            return;
-        }
-
-        {
-            const float qpx = a->x - rox;
-            const float qpy = a->y - roy;
-            const float invDenom = 1.0f / denom;
-            const float t = ((qpx * sy) - (qpy * sx)) * invDenom;
-
-            if (t < minT || t >= hit->t) {
-                return;
-            }
-
-            {
-                const float u = ((qpx * rdy) - (qpy * rdx)) * invDenom;
-                if (u < 0.0f || u > 1.0f) {
-                    return;
-                }
-            }
-
-            hit->t = t;
-            hit->wallIndex = wallIndex;
-            hit->hit = 1;
-        }
-    }
-}
 
 
 
@@ -3607,6 +3549,12 @@ static inline RC3D_WallHit findNearestWallInSector(
     int preferredWallIndex)
 {
     RC3D_WallHit hit;
+    const RC3D_Sector *sec;
+    const RC3D_Wall *walls;
+    const RC3D_Vec2 *verts;
+    const RC3D_WallCache *cache;
+    int start, end;
+
     hit.t = g_draw_distance;
     hit.wallIndex = -1;
     hit.hit = 0;
@@ -3619,50 +3567,137 @@ static inline RC3D_WallHit findNearestWallInSector(
         return hit;
     }
 
+    sec = &g_map->sectors[sectorIndex];
+    walls = g_map->walls;
+    verts = g_map->verts;
+    cache = g_wallCache;
+
+    start = sec->wallStart;
+    end   = start + sec->wallCount;
+
+    if (start < 0 || end < start || end > g_map->wallCount) {
+        return hit;
+    }
+
+    if ((preferredWallIndex >= start) &&
+        (preferredWallIndex < end) &&
+        (preferredWallIndex != ignoreWallIndexA) &&
+        (preferredWallIndex != ignoreWallIndexB))
     {
-        const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
-        const RC3D_Wall *walls = g_map->walls;
-        const RC3D_Vec2 *verts = g_map->verts;
-        const RC3D_WallCache *cache = g_wallCache;
+        const RC3D_Wall *w = &walls[preferredWallIndex];
+        const RC3D_Vec2 *a = &verts[w->v0];
+        float sx, sy;
+        float denom, qpx, qpy, invDenom, t, u;
+        int doubleSided = 0;
 
-        const int start = sec->wallStart;
-        const int end = start + sec->wallCount;
-
-        if (start < 0 || end < start || end > g_map->wallCount) {
-            return hit;
+        if (cache) {
+            sx = cache[preferredWallIndex].dx;
+            sy = cache[preferredWallIndex].dy;
+        } else {
+            const RC3D_Vec2 *b = &verts[w->v1];
+            sx = b->x - a->x;
+            sy = b->y - a->y;
         }
 
-        {
-            const int usePreferredWall =
-                (preferredWallIndex >= start) &&
-                (preferredWallIndex < end) &&
-                (preferredWallIndex != ignoreWallIndexA) &&
-                (preferredWallIndex != ignoreWallIndexB);
+        /* portals must be traceable from either side */
+        if (w->flags & RC3D_WALL_PORTAL) {
+            doubleSided = 1;
+        }
 
-            if (usePreferredWall) {
-                RC3D_PROFILER_DO(g_profiler.wallTests++);
-                rc3dTryNearestWallHit(&hit, preferredWallIndex, rox, roy, rdx, rdy, minT, walls, verts, cache);
+        /* optional explicit double-sided flag */
+        if (w->flags & RC3D_WALL_DOUBLESIDED) {
+            doubleSided = 1;
+        }
+
+        RC3D_PROFILER_DO(g_profiler.wallTests++);
+
+        denom = (rdx * sy) - (rdy * sx);
+
+        if (doubleSided) {
+            if (fabsf(denom) <= RC3D_EPSILON) {
+                goto skip_preferred_wall;
+            }
+        } else {
+            if (denom >= -RC3D_EPSILON) {
+                goto skip_preferred_wall;
             }
         }
 
-        for (int wallIndex = start; wallIndex < end; ++wallIndex) {
-            if (wallIndex == preferredWallIndex) {
-                continue;
+        qpx = a->x - rox;
+        qpy = a->y - roy;
+        invDenom = 1.0f / denom;
+        t = ((qpx * sy) - (qpy * sx)) * invDenom;
+
+        if (t > minT && t < hit.t) {
+            u = ((qpx * rdy) - (qpy * rdx)) * invDenom;
+            if (u >= 0.0f && u <= 1.0f) {
+                hit.t = t;
+                hit.wallIndex = preferredWallIndex;
+                hit.hit = 1;
             }
-
-            RC3D_PROFILER_DO(g_profiler.wallTests++);
-
-            if (wallIndex == ignoreWallIndexA || wallIndex == ignoreWallIndexB) {
-                continue;
-            }
-
-            rc3dTryNearestWallHit(&hit, wallIndex, rox, roy, rdx, rdy, minT, walls, verts, cache);
         }
+    }
+
+skip_preferred_wall:
+    for (int wallIndex = start; wallIndex < end; ++wallIndex) {
+        const RC3D_Wall *w;
+        const RC3D_Vec2 *a;
+        float sx, sy;
+        float denom, qpx, qpy, invDenom, t, u;
+        int doubleSided = 0;
+
+        if (wallIndex == preferredWallIndex) continue;
+        if (wallIndex == ignoreWallIndexA || wallIndex == ignoreWallIndexB) continue;
+
+        w = &walls[wallIndex];
+        a = &verts[w->v0];
+
+        if (cache) {
+            sx = cache[wallIndex].dx;
+            sy = cache[wallIndex].dy;
+        } else {
+            const RC3D_Vec2 *b = &verts[w->v1];
+            sx = b->x - a->x;
+            sy = b->y - a->y;
+        }
+
+        /* portals must be traceable from either side */
+        if (w->flags & RC3D_WALL_PORTAL) {
+            doubleSided = 1;
+        }
+
+        /* optional explicit double-sided flag */
+        if (w->flags & RC3D_WALL_DOUBLESIDED) {
+            doubleSided = 1;
+        }
+
+        RC3D_PROFILER_DO(g_profiler.wallTests++);
+
+        denom = (rdx * sy) - (rdy * sx);
+
+        if (doubleSided) {
+            if (fabsf(denom) <= RC3D_EPSILON) continue;
+        } else {
+            if (denom >= -RC3D_EPSILON) continue;
+        }
+
+        qpx = a->x - rox;
+        qpy = a->y - roy;
+        invDenom = 1.0f / denom;
+        t = ((qpx * sy) - (qpy * sx)) * invDenom;
+
+        if (t <= minT || t >= hit.t) continue;
+
+        u = ((qpx * rdy) - (qpy * rdx)) * invDenom;
+        if (u < 0.0f || u > 1.0f) continue;
+
+        hit.t = t;
+        hit.wallIndex = wallIndex;
+        hit.hit = 1;
     }
 
     return hit;
 }
-
 
 
 static inline void fillSectorColumnSpan(
@@ -3730,8 +3765,7 @@ static void drawBackground(void)
         return;
     }
 
-    const float uStepRaw =
-        (((g_halfFovRad * 2.0f) / (float)g_viewport_width) / fullTurn) * skyRepeat;
+    const float uStepRaw = (((g_halfFovRad * 2.0f) / (float)g_viewport_width) / fullTurn) * skyRepeat;
 
     float uStart = (leftAng / fullTurn) * skyRepeat;
     uStart -= floorf(uStart);
@@ -3763,7 +3797,7 @@ static void drawBackground(void)
     }
 }
 
-static inline void renderColumnPortalTraceClipped(
+static inline void renderColumnTrace(
     int sx,
     float rdx,
     float rdy,
@@ -3817,9 +3851,7 @@ static inline void renderColumnPortalTraceClipped(
 
             {
                 const RC3D_Wall *w = &g_map->walls[hit.wallIndex];
-                const RC3D_WallCache *wc =
-                    (g_wallCache && hit.wallIndex >= 0 && hit.wallIndex < g_wallCacheCount)
-                        ? &g_wallCache[hit.wallIndex] : NULL;
+                const RC3D_WallCache *wc = (g_wallCache && hit.wallIndex >= 0 && hit.wallIndex < g_wallCacheCount) ? &g_wallCache[hit.wallIndex] : NULL;
 
                 const RC3D_Vec2 *va = &g_map->verts[w->v0];
                 const RC3D_Vec2 *vb = &g_map->verts[w->v1];
@@ -3835,8 +3867,10 @@ static inline void renderColumnPortalTraceClipped(
                 {
                     const float wallDx = wc ? wc->dx : (vb->x - va->x);
                     const float wallDy = wc ? wc->dy : (vb->y - va->y);
-                    const float wallTexInvScaleX = wc ? wc->texInvScaleX : (1.0f / ((fabsf(w->texScaleX) < RC3D_EPSILON) ? 1.0f : w->texScaleX));
-                    const float wallTexInvScaleY = wc ? wc->texInvScaleY : (1.0f / ((fabsf(w->texScaleY) < RC3D_EPSILON) ? 1.0f : w->texScaleY));
+                    float wallTexInvScaleX = wc ? wc->texInvScaleX : (1.0f / ((fabsf(w->texScaleX) < RC3D_EPSILON) ? 1.0f : w->texScaleX));
+                    float wallTexInvScaleY = wc ? wc->texInvScaleY : (1.0f / ((fabsf(w->texScaleY) < RC3D_EPSILON) ? 1.0f : w->texScaleY));
+
+                    //wallTexInvScaleX *= -1.0f;
 
                     float uNorm = 0.0f;
                     float distAlongWall = 0.0f;
@@ -3868,19 +3902,41 @@ static inline void renderColumnPortalTraceClipped(
                             wallTexRotSinGlobal = 0.0f;
                         }
                     }
-
                     wallTexInvScaleYGlobal = wallTexInvScaleY;
 
-                    if (wc && wc->texXMode == RC3D_TEX_XMODE_STRETCH) {
-                        if (uNorm < 0.0f) uNorm = 0.0f;
-                        if (uNorm > 1.0f) uNorm = 1.0f;
-                        wallTexUBaseGlobal = uNorm * (float)RC3D_TEX_SIZE;
-                    } else if (wc && wc->texXMode == RC3D_TEX_XMODE_CLAMP_RIGHT) {
-                        wallTexUBaseGlobal =
-                            (distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE) -
-                            (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE);
-                    } else {
-                        wallTexUBaseGlobal = distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
+                    {
+                        const int flipX = (w->texture_flags & RC3D_TEX_FLAG_FLIPX) ? 1 : 0;
+
+                        if (wc && wc->texXMode == RC3D_TEX_XMODE_STRETCH) {
+                            if (uNorm < 0.0f) uNorm = 0.0f;
+                            if (uNorm > 1.0f) uNorm = 1.0f;
+
+                            if (flipX) {
+                                uNorm = 1.0f - uNorm;
+                            }
+
+                            wallTexUBaseGlobal = uNorm * (float)RC3D_TEX_SIZE;
+
+                        } else if (wc && wc->texXMode == RC3D_TEX_XMODE_CLAMP_RIGHT) {
+                            if (flipX) {
+                                wallTexUBaseGlobal =
+                                    ((wallLen - distAlongWall) * wallTexInvScaleX * (float)RC3D_TEX_SIZE) -
+                                    (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE);
+                            } else {
+                                wallTexUBaseGlobal =
+                                    (distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE) -
+                                    (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE);
+                            }
+
+                        } else {
+                            if (flipX) {
+                                wallTexUBaseGlobal =
+                                    (wallLen - distAlongWall) * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
+                            } else {
+                                wallTexUBaseGlobal =
+                                    distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
+                            }
+                        }
                     }
 
                     {
@@ -3899,7 +3955,8 @@ static inline void renderColumnPortalTraceClipped(
                     const int secTop = rc3dProjectTopPixel(horizon, sec->ceilHeight, playerZ, scale);
                     const int secBot = rc3dProjectBottomPixel(horizon, sec->floorHeight, playerZ, scale);
 
-                    const uint8_t wallClass = wc ? wc->wallClass : RC3D_WALLCLASS_NONE;
+                    //const uint8_t wallClass = wc ? wc->wallClass : RC3D_WALLCLASS_NONE;
+                    const uint8_t wallClass = wc ? wc->wallClass : rc3dClassifyWallFlags(w->flags);
                     const int wallMasked = ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
 
                     switch (wallClass) {
@@ -3928,7 +3985,7 @@ static inline void renderColumnPortalTraceClipped(
                                             entryWallInNext = wc->backWallIndex;
                                         }
 
-                                        renderColumnPortalTraceClipped(
+                                        renderColumnTrace(
                                             sx,
                                             rdx,
                                             rdy,
@@ -3939,12 +3996,12 @@ static inline void renderColumnPortalTraceClipped(
                                             maskedClipBottom,
                                             hit.wallIndex,
                                             entryWallInNext,
-                                            hit.t + RC3D_EPSILON,
+                                            hit.t,
                                             maskedDepth + 1,
                                             -1,
                                             NULL);
                                     } else {
-                                        renderColumnPortalTraceClipped(
+                                        renderColumnTrace(
                                             sx,
                                             rdx,
                                             rdy,
@@ -3955,7 +4012,7 @@ static inline void renderColumnPortalTraceClipped(
                                             maskedClipBottom,
                                             hit.wallIndex,
                                             -1,
-                                            hit.t + RC3D_EPSILON,
+                                            hit.t,
                                             maskedDepth + 1,
                                             -1,
                                             NULL);
@@ -4014,7 +4071,7 @@ static inline void renderColumnPortalTraceClipped(
                                 if (midBotY < maskedClipBottom) maskedClipBottom = midBotY;
 
                                 if (maskedClipTop <= maskedClipBottom) {
-                                    renderColumnPortalTraceClipped(
+                                    renderColumnTrace(
                                         sx,
                                         rdx,
                                         rdy,
@@ -4025,7 +4082,7 @@ static inline void renderColumnPortalTraceClipped(
                                         maskedClipBottom,
                                         hit.wallIndex,
                                         -1,
-                                        hit.t + RC3D_EPSILON,
+                                        hit.t,
                                         maskedDepth + 1,
                                         -1,
                                         NULL);
@@ -4149,7 +4206,7 @@ static inline void renderColumnPortalTraceClipped(
                                 }
 
                                 if (portalClipTop <= portalClipBottom) {
-                                    renderColumnPortalTraceClipped(
+                                    renderColumnTrace(
                                         sx,
                                         rdx,
                                         rdy,
@@ -4213,59 +4270,7 @@ static inline void renderColumnPortalTraceClipped(
     }
 }
 
-static inline void renderColumnPortalTrace(
-    int sx,
-    float rdx,
-    float rdy,
-    float projPlane,
-    int horizon,
-    int preferredWallIndex,
-    int *outFirstHitWallIndex)
-{
-    renderColumnPortalTraceClipped(
-        sx,
-        rdx,
-        rdy,
-        projPlane,
-        horizon,
-        g_player.sector,
-        0,
-        g_viewport_height - 1,
-        -1,
-        -1,
-        0.0f,
-        0,
-        preferredWallIndex,
-        outFirstHitWallIndex);
-}
 
-static inline void rc3dRecordVisibleTraceSegment(
-    int sx,
-    int sector,
-    int clipTop,
-    int clipBottom,
-    uint16_t depthLimit)
-{
-    uint8_t count;
-    RC3D_VisibleTraceSegment *segment;
-
-    if ((unsigned)sx >= (unsigned)g_viewport_width) return;
-    if (clipTop > clipBottom) return;
-
-    count = g_visibleTraceCount[sx];
-    if (count >= RC3D_MAX_PORTAL_STEPS) {
-        return;
-    }
-
-    segment = &g_visibleTraceCache[sx][count];
-    segment->sector = (int16_t)sector;
-    segment->clipTop = (int16_t)clipTop;
-    segment->clipBottom = (int16_t)clipBottom;
-    segment->depthLimit = depthLimit;
-    g_visibleTraceCount[sx] = (uint8_t)(count + 1);
-
-    RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
-}
 
 static void rc3dBuildVisibleTraceCacheForColumn(int sx)
 {
@@ -4344,7 +4349,14 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             -1);
 
         if (!hit.hit) {
-            rc3dRecordVisibleTraceSegment(sx, currentSector, clipTop, clipBottom, UINT16_MAX);
+            if (clipTop <= clipBottom && g_visibleTraceCount[sx] < RC3D_MAX_PORTAL_STEPS) {
+                RC3D_VisibleTraceSegment *segment = &g_visibleTraceCache[sx][g_visibleTraceCount[sx]++];
+                segment->sector = (int16_t)currentSector;
+                segment->clipTop = (int16_t)clipTop;
+                segment->clipBottom = (int16_t)clipBottom;
+                segment->depthLimit = UINT16_MAX;
+                RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
+            }
             return;
         }
 
@@ -4353,12 +4365,14 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             return;
         }
 
-        rc3dRecordVisibleTraceSegment(
-            sx,
-            currentSector,
-            clipTop,
-            clipBottom,
-            rc3dEncodeDepth(correctedDist));
+        if (clipTop <= clipBottom && g_visibleTraceCount[sx] < RC3D_MAX_PORTAL_STEPS) {
+            RC3D_VisibleTraceSegment *segment = &g_visibleTraceCache[sx][g_visibleTraceCount[sx]++];
+            segment->sector = (int16_t)currentSector;
+            segment->clipTop = (int16_t)clipTop;
+            segment->clipBottom = (int16_t)clipBottom;
+            segment->depthLimit = rc3dEncodeDepth(correctedDist);
+            RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
+        }
 
         w = &g_map->walls[hit.wallIndex];
 
@@ -4366,22 +4380,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             wc = &g_wallCache[hit.wallIndex];
             wallClass = wc->wallClass;
         } else {
-            if (w->flags & RC3D_WALL_SOLID) {
-                wallClass = RC3D_WALLCLASS_SOLID;
-            }
-            else if ((w->flags & RC3D_WALL_MIDDLE) && !(w->flags & RC3D_WALL_PORTAL)) {
-                wallClass = RC3D_WALLCLASS_MIDDLE;
-            }
-            else if (w->flags & RC3D_WALL_PORTAL) {
-                wallClass = RC3D_WALLCLASS_PORTAL;
-            }
-            else if ((w->flags & (RC3D_WALL_UPPER | RC3D_WALL_LOWER)) &&
-                     !(w->flags & RC3D_WALL_MIDDLE)) {
-                wallClass = RC3D_WALLCLASS_UPPER_LOWER;
-            }
-            else {
-                wallClass = RC3D_WALLCLASS_NONE;
-            }
+            wallClass = rc3dClassifyWallFlags(w->flags);
         }
 
         scale = projPlaneGlobal / correctedDist;
@@ -4455,7 +4454,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
                 currentSector = w->neighbour;
                 ignoreWallIndexA = hit.wallIndex;
                 ignoreWallIndexB = entryWallInNext;
-                rayMinT = hit.t + RC3D_EPSILON;
+                rayMinT = hit.t;
                 continue;
             }
 
@@ -4466,7 +4465,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
 
                 ignoreWallIndexA = hit.wallIndex;
                 ignoreWallIndexB = -1;
-                rayMinT = hit.t + RC3D_EPSILON;
+                rayMinT = hit.t;
                 continue;
             }
 
@@ -4480,7 +4479,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
 
                 ignoreWallIndexA = hit.wallIndex;
                 ignoreWallIndexB = -1;
-                rayMinT = hit.t + RC3D_EPSILON;
+                rayMinT = hit.t;
                 continue;
             }
         }
@@ -4520,12 +4519,19 @@ static void renderCurrentSectorColumns(void)
             const RC3D_ColumnRayCache *rayCache = &g_columnRayCache[sx];
             int firstHitWallIndex = -1;
 
-            renderColumnPortalTrace(
+            renderColumnTrace(
                 sx,
                 rayCache->rdx,
                 rayCache->rdy,
                 projPlane,
                 horizon,
+                g_player.sector,
+                0,
+                g_viewport_height - 1,
+                -1,
+                -1,
+                0.0f,
+                0,
                 preferredWallIndex,
                 &firstHitWallIndex);
 
