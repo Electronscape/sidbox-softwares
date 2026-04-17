@@ -99,6 +99,8 @@ typedef struct {
     uint8_t textureId;
     uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
+    float scalex;
+    float scaley;
 } RC3D_Object;
 
 

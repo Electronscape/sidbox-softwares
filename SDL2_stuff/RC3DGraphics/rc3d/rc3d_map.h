@@ -101,7 +101,8 @@ float x;
     uint8_t textureId;
     uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
-    
+    float scalex;       // texture scale x
+    float scaley;       // texture scale y
     
     // runtime side only
     uint8_t trigger;    // used to savestate

@@ -1193,8 +1193,8 @@ int rc3dSpriteCreate(float x, float y, float width, float height, uint8_t texId)
         sprite->active = 1u;
         sprite->texId = texId;
         
-        sprite->width = (width > RC3D_EPSILON) ? width : RC3D_TEST_SPRITE_WIDTH;
-        sprite->height = (height > RC3D_EPSILON) ? height : RC3D_TEST_SPRITE_HEIGHT;
+        sprite->width = (width > RC3D_EPSILON) ? width : RC3D_EPSILON;
+        sprite->height = (height > RC3D_EPSILON) ? height : RC3D_EPSILON;
 
         rc3dSetSpriteWorldXYFixed(sprite, rc3dFloatToFixed(x), rc3dFloatToFixed(y));
         rc3dRefreshSpritePlacement(sprite);
@@ -1933,7 +1933,10 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             !readExact(f, &objects[i].radius, sizeof(float)) ||
             !readExact(f, &objects[i].textureId, sizeof(uint8_t)) ||
             !readExact(f, &objects[i].inFlag, sizeof(uint8_t)) ||
-            !readExact(f, &objects[i].outFlag, sizeof(uint8_t)))
+            !readExact(f, &objects[i].outFlag, sizeof(uint8_t)) ||
+            !readExact(f, &objects[i].scalex, sizeof(float)) || 
+            !readExact(f, &objects[i].scaley, sizeof(float)) 
+        )
         {
             fclose(f);
             free(verts);
@@ -2053,7 +2056,10 @@ int rc3dLoadMapBinary(const char *path)
 
     rc3dResetPlayerFromMapStart();
     rc3dClearSprites();
-    rc3dInitTestSprite();
+    //rc3dInitTestSprite();
+
+
+
 
     return 1;
 }
@@ -2073,7 +2079,7 @@ void rc3dUnloadMapBinary(void)
 
     rc3dResetPlayerFromMapStart();
     rc3dClearSprites();
-    rc3dInitTestSprite();
+    //rc3dInitTestSprite();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -5290,7 +5296,19 @@ void rc3dInit(void)
 
     rc3dResetPlayerFromMapStart();
     rc3dClearSprites();
-    rc3dInitTestSprite();
+    //rc3dInitTestSprite();
+    int spriteTmp = 0;
+
+    for(int o = 0; o < g_map->objectCount; o++){
+        if(g_map->objects[o].type == OBJECT_TYPE_BASIC_SPRITE){    // basic Sprites
+            //spriteTmp = rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, g_map->objects[o].scalex, g_map->objects[o].scalex, g_map->objects[o].textureId);
+            rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, 
+                g_map->objects[o].scalex, 
+                g_map->objects[o].scaley, 
+                g_map->objects[o].textureId
+            );
+        }
+    }
 }
 
 int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags)

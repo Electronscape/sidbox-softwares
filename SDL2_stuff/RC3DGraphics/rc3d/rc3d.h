@@ -21,10 +21,12 @@
 #define OBJECT_TRIGGER_SECTOR_STEPPED_IN   2
 #define OBJECT_TRIGGER_SECTOR_STEPPED_OUT  3
 
-
+#define OBJECT_TYPE_BASIC_SPRITE    0
 #define OBJECT_TYPE_ENTEREXIT       1
 #define OBJECT_TYPE_ENTERONLY       2
 #define OBJECT_TYPE_EXITONLY        3
+#define OBJECT_TYPE_NAVIGATION      4
+#define OBJECT_TYPE_BAKEDNAV        5   // use this in the run time
 
 
 extern int g_viewport_top;

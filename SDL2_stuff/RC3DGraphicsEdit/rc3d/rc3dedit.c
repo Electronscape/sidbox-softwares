@@ -47,6 +47,11 @@
 #define ED_PICK_DIST_PX         25
 #define ED_CLICK_DRAG_TOLERANCE_PX 5
 #define ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT 64.0f
+#define ED_OBJECT_TYPE_ROUTE_PREVIEW 4u
+#define ED_OBJECT_TYPE_BAKED_ROUTE_NODE 5u
+#define ED_ROUTE_PREVIEW_MAX_POINTS 4096
+#define ED_ROUTE_PREVIEW_MAX_GRID_CELLS 120000
+#define ED_ROUTE_PREVIEW_PORTAL_SAMPLES 9
 
 
 
@@ -204,7 +209,13 @@ enum
     GUI_BTN_OBJECT_RADIUS_MINUS,
     GUI_BTN_OBJECT_ZAXIS_PLUS,
     GUI_BTN_OBJECT_ZAXIS_MINUS,
+    GUI_BTN_OBJECT_TSCALEX_MINUS,
+    GUI_BTN_OBJECT_TSCALEX_PLUS,
+    GUI_BTN_OBJECT_TSCALEY_MINUS,
+    GUI_BTN_OBJECT_TSCALEY_PLUS,
     GUI_BTN_OBJECT_GET_ZAXIS,
+    GUI_BTN_OBJECT_BAKE_ROUTE,
+    GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE,
 
     GUI_BTN_OBJECT_FLAGS_bit0, 
     GUI_BTN_OBJECT_FLAGS_bit1, 
@@ -454,6 +465,8 @@ typedef struct {
     uint8_t textureId;
     uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
+    float scalex;
+    float scaley;
 } EdObject;
 
 typedef struct {
@@ -681,11 +694,58 @@ typedef struct {
     float holdRepeatRateTimer;
 } EditorState;
 
+typedef struct {
+    int valid;
+    uint32_t mapSerial;
+    int selectedObject;
+    int targetObjectIndex;
+    int vertCount;
+    int wallCount;
+    int sectorCount;
+    int objectCount;
+
+    float srcX;
+    float srcY;
+    float srcRadius;
+    int srcTagId;
+    int srcTargetTagId;
+    uint32_t srcType;
+
+    float dstX;
+    float dstY;
+    float dstRadius;
+    int dstTagId;
+    int dstTargetTagId;
+    uint32_t dstType;
+
+    int pathCount;
+    float pathX[ED_ROUTE_PREVIEW_MAX_POINTS];
+    float pathY[ED_ROUTE_PREVIEW_MAX_POINTS];
+} EdRoutePreviewCache;
+
 
 char mapfilename[256];
 static EditorMap g_edMap;
 static EditorState g_ed;
+static EdRoutePreviewCache g_routePreviewCache;
+static uint32_t g_routePreviewMapSerial = 1u;
 static void clearAllSelections(void);
+
+static void invalidateRoutePreviewCache(void)
+{
+    g_routePreviewCache.valid = 0;
+    g_routePreviewCache.pathCount = 0;
+}
+
+static void touchRoutePreviewMap(void)
+{
+    g_routePreviewMapSerial++;
+    if (g_routePreviewMapSerial == 0u) {
+        g_routePreviewMapSerial = 1u;
+    }
+
+    invalidateRoutePreviewCache();
+}
 
 static void clearMultiWallSelection(void)
 {
@@ -1159,15 +1219,42 @@ static void remapMultiSectorSelectionFromOldToNew(const int *sectorRemap, int ol
 static void resetSectorGeometryClipboard(void);
 static void copySelectedSectorGeometryToClipboard(void);
 static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorldY);
+static int autoLinkPastedInnerSectors(int sectorBase, int sectorCount, int preferredContainerSector);
+static int clipboardGeometryFitsInsideSector(const EdSectorGeometryClipboard *clip,
+                                             float dx,
+                                             float dy,
+                                             int sectorIndex);
+static int pointInSectorOrOnBoundary(float px, float py, int sectorIndex);
 
 // objects
 static int addObject(float x, float y, float z, int tagId, float radius, uint8_t textureId);
 static int findObjectNearMouse(int mouseX, int mouseY);
 static void drawEditorObjectDiamond(int cx, int cy, int size, uint8_t colour);
 static void drawMapObjects(void);
+static void drawObjectBakedLinks(void);
+static void drawSelectedObjectRoutePreview(void);
 static void deleteObjectByIndex(int objectIndex);
 static void beginObjectDragFromPress(int objectIndex);
 static void dragSelectedObjectTo(float worldX, float worldY);
+static int findObjectByTagId(int tagId);
+static int clearBakedRouteNodesFromObject(int objectIndex);
+static int bakeSelectedObjectRouteToNodes(void);
+static int objectIsBakedRouteNode(const EdObject *o);
+static int findNextAvailableObjectTagId(void);
+static int collectBakedRouteNodeChain(int objectIndex,
+                                      int *outNodeIndices,
+                                      int maxOut,
+                                      int *outFinalTargetTag);
+static int buildSectorRouteAStar(int startSector, int goalSector, float clearance, int *outSectors, int maxOut);
+static int appendPreviewPathPoint(float *outX, float *outY, int count, int maxOut, float x, float y);
+static int buildObjectBakedRoutePath(int objectIndex,
+                                     float *outX,
+                                     float *outY,
+                                     int maxOut);
+static int buildObjectRoutePreviewPath(int objectIndex,
+                                       float *outX,
+                                       float *outY,
+                                       int maxOut);
 
 static int resolveSectorTextureCoord(int v, int size, int clampLow, int clampHigh);
 static int resolveSectorTextureCoordFitted(float coord,
@@ -1376,6 +1463,9 @@ static int isAutoRepeatUIButton(int buttonId)
         case GUI_BTN_OBJECT_RADIUS_MINUS:
         case GUI_BTN_OBJECT_ZAXIS_PLUS:
         case GUI_BTN_OBJECT_ZAXIS_MINUS:
+        case GUI_BTN_OBJECT_GET_ZAXIS:
+        case GUI_BTN_OBJECT_BAKE_ROUTE:
+        case GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE:
 
         // player angle change
         case GUI_BTN_PLAYER_START_ANGLE_MINUS:
@@ -1567,36 +1657,6 @@ static uint8_t *getTexturePtr(int index)
     return g_textureCache[index];
 }
 
-static void getTexture(uint8_t index, uint8_t part)
-{
-    uint8_t *src;
-
-    if (part >= TEXTURE_PARTS) {
-        return;
-    }
-
-    if (!textureview[part]) {
-        textureview[part] = malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT);
-        if (!textureview[part]) {
-            return;
-        }
-        textureviewLoadedIndex[part] = -1;
-    }
-
-    if (textureviewLoadedIndex[part] == (int)index) {
-        return;
-    }
-
-    src = getTexturePtr(index);
-    if (!src) {
-        memset(textureview[part], 0, TEXTURE_WIDTH * TEXTURE_HEIGHT);
-        textureviewLoadedIndex[part] = -1;
-        return;
-    }
-
-    memcpy(textureview[part], src, TEXTURE_WIDTH * TEXTURE_HEIGHT);
-    textureviewLoadedIndex[part] = (int)index;
-}
 
 
 static void drawTextureThumb(int x, int y, uint8_t *tex)
@@ -2667,6 +2727,7 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.textureScrollbarDragOffsetY = 0;
 
     g_ed.splitPreviewValid = 0;
+    touchRoutePreviewMap();
 }
 
 static void resetUndoRedoHistory(void)
@@ -2696,6 +2757,7 @@ static void pushUndoState(void)
 
     /* any new edit kills redo history */
     g_redoCount = 0;
+    touchRoutePreviewMap();
 }
 
 static void performUndo(void)
@@ -3041,6 +3103,8 @@ static int addObject(float x, float y, float z, int tagId, float radius, uint8_t
     o->textureId = textureId;
     o->inFlag = 0x00;
     o->outFlag = 0x00;
+    o->scalex = 1.0f;
+    o->scaley = 1.0f;
 
     g_edMap.objectCount++;
     return g_edMap.objectCount - 1;
@@ -3085,6 +3149,13 @@ static void drawMapObjects(void)
         const EdObject *o = &g_edMap.objects[i];
         int sx, sy;
         int size = 6;
+        uint8_t objectCol = ED_START_COL;
+
+        if (o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW) {
+            objectCol = ED_PORTAL_COL;
+        } else if (o->type == ED_OBJECT_TYPE_BAKED_ROUTE_NODE) {
+            objectCol = ED_COLOUR_WALL_SPECIAL;
+        }
 
         worldToScreen(o->x, o->y, &sx, &sy);
 
@@ -3097,12 +3168,12 @@ static void drawMapObjects(void)
             drawEditorObjectDiamond(sx, sy, size + 1, ED_COLOUR_SELECTED_WALL);
         }
 
-        drawEditorObjectDiamond(sx, sy, size, ED_START_COL);
+        drawEditorObjectDiamond(sx, sy, size, objectCol);
 
-        drawRect(sx - 1, sy - 1, 3, 3, ED_START_COL);
+        drawRect(sx - 1, sy - 1, 3, 3, objectCol);
 
         if (o->radius > 0.01f) {
-            const int rs = (int)lroundf(o->radius * g_ed.zoom)/2.0f;
+            const int rs = (int)lroundf(o->radius * g_ed.zoom);
             if (rs > 2) {
                 drawCircle(sx, sy, rs, 6);
             }
@@ -3138,6 +3209,144 @@ static void deleteObjectByIndex(int objectIndex)
     }
 
     g_ed.draggingObject = 0;
+}
+
+static int clearBakedRouteNodesFromObject(int objectIndex)
+{
+    int nodeIndices[ED_MAX_OBJECTS];
+    int nodeCount;
+    int finalTargetTag = 0;
+
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return 0;
+    }
+
+    nodeCount = collectBakedRouteNodeChain(objectIndex,
+                                          nodeIndices,
+                                          ED_MAX_OBJECTS,
+                                          &finalTargetTag);
+    if (nodeCount <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < nodeCount - 1; i++) {
+        for (int j = i + 1; j < nodeCount; j++) {
+            if (nodeIndices[j] > nodeIndices[i]) {
+                const int tmp = nodeIndices[i];
+                nodeIndices[i] = nodeIndices[j];
+                nodeIndices[j] = tmp;
+            }
+        }
+    }
+
+    g_edMap.objects[objectIndex].targetTagId = finalTargetTag;
+
+    for (int i = 0; i < nodeCount; i++) {
+        deleteObjectByIndex(nodeIndices[i]);
+    }
+
+    return nodeCount;
+}
+
+static int bakeSelectedObjectRouteToNodes(void)
+{
+    float pathX[ED_ROUTE_PREVIEW_MAX_POINTS];
+    float pathY[ED_ROUTE_PREVIEW_MAX_POINTS];
+    char status[128];
+    int sourceIndex;
+    int chainedTargetIndex;
+    int finalTargetTag;
+    int finalTargetIndex;
+    int pathCount;
+    int firstNodeTag = 0;
+    int nodeCount = 0;
+
+    if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) {
+        return 0;
+    }
+
+    if (g_edMap.objects[g_ed.selectedObject].type != ED_OBJECT_TYPE_ROUTE_PREVIEW) {
+        setEditorStatus("Bake Route only works on Type 4 route objects");
+        return 0;
+    }
+
+    sourceIndex = g_ed.selectedObject;
+    finalTargetTag = g_edMap.objects[sourceIndex].targetTagId;
+
+    chainedTargetIndex = findObjectByTagId(finalTargetTag);
+    if (chainedTargetIndex >= 0 && chainedTargetIndex < g_edMap.objectCount &&
+        objectIsBakedRouteNode(&g_edMap.objects[chainedTargetIndex])) {
+        clearBakedRouteNodesFromObject(sourceIndex);
+        sourceIndex = g_ed.selectedObject;
+        if (sourceIndex < 0 || sourceIndex >= g_edMap.objectCount) {
+            return 0;
+        }
+        finalTargetTag = g_edMap.objects[sourceIndex].targetTagId;
+    }
+
+    finalTargetIndex = findObjectByTagId(finalTargetTag);
+    if (finalTargetIndex < 0 || finalTargetIndex >= g_edMap.objectCount ||
+        finalTargetIndex == sourceIndex ||
+        objectIsBakedRouteNode(&g_edMap.objects[finalTargetIndex])) {
+        setEditorStatus("Route object needs a real target object before baking");
+        return 0;
+    }
+
+    pathCount = buildObjectRoutePreviewPath(sourceIndex,
+                                            pathX,
+                                            pathY,
+                                            ED_ROUTE_PREVIEW_MAX_POINTS);
+    if (pathCount <= 1) {
+        setEditorStatus("Could not bake route from the current preview");
+        return 0;
+    }
+
+    if (pathCount <= 2) {
+        setEditorStatus("Route is already direct, no baked nodes needed");
+        return 1;
+    }
+
+    firstNodeTag = findNextAvailableObjectTagId();
+
+    for (int i = 1; i + 1 < pathCount; i++) {
+        const int nodeTag = firstNodeTag + nodeCount;
+        const int nextTag = (i + 2 < pathCount) ? (nodeTag + 1) : g_edMap.objects[finalTargetIndex].tagId;
+        float nodeZ = g_edMap.objects[sourceIndex].z;
+        const int sectorIndex = findSectorForPoint(pathX[i], pathY[i]);
+        const int newIndex = addObject(pathX[i], pathY[i], nodeZ,
+                                       nodeTag,
+                                       g_edMap.objects[sourceIndex].radius,
+                                       g_edMap.objects[sourceIndex].textureId);
+
+        if (newIndex < 0 || newIndex >= g_edMap.objectCount) {
+            setEditorStatus("Object limit reached while baking route");
+            return 0;
+        }
+
+        if (sectorIndex >= 0 && sectorIndex < g_edMap.sectorCount) {
+            nodeZ = g_edMap.sectors[sectorIndex].floorHeight;
+            g_edMap.objects[newIndex].z = nodeZ;
+        }
+
+        g_edMap.objects[newIndex].type = ED_OBJECT_TYPE_BAKED_ROUTE_NODE;
+        g_edMap.objects[newIndex].targetTagId = nextTag;
+        g_edMap.objects[newIndex].flags = 0u;
+        g_edMap.objects[newIndex].inFlag = 0u;
+        g_edMap.objects[newIndex].outFlag = 0u;
+        g_edMap.objects[newIndex].scalex = 1.0f;
+        g_edMap.objects[newIndex].scaley = 1.0f;
+        nodeCount++;
+    }
+
+    if (sourceIndex >= 0 && sourceIndex < g_edMap.objectCount && nodeCount > 0) {
+        g_edMap.objects[sourceIndex].targetTagId = firstNodeTag;
+        g_ed.selectedObject = sourceIndex;
+    }
+
+    snprintf(status, sizeof(status), "Baked %d nav node%s into the map",
+             nodeCount, (nodeCount == 1) ? "" : "s");
+    setEditorStatus(status);
+    return 1;
 }
 
 static void beginObjectDragFromPress(int objectIndex)
@@ -4264,6 +4473,8 @@ static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorl
     const int vertBase = g_edMap.vertCount;
     const int wallBase = g_edMap.wallCount;
     const int sectorBase = g_edMap.sectorCount;
+    const int selectedContainerSector = hasSingleSectorSelection() ? g_ed.selectedSector : -1;
+    int linkedInnerCount = 0;
     char msg[160];
 
     if (!g_ed.hasCopiedSectorGeometry) {
@@ -4291,6 +4502,12 @@ static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorl
         return 0;
     }
 
+    if (selectedContainerSector >= 0 &&
+        !clipboardGeometryFitsInsideSector(clip, dx, dy, selectedContainerSector)) {
+        setEditorStatus("Paste needs to be fully inside the selected sector.");
+        return 0;
+    }
+
     for (int i = 0; i < clip->vertCount; i++) {
         g_edMap.verts[g_edMap.vertCount].x = clip->verts[i].x + dx;
         g_edMap.verts[g_edMap.vertCount].y = clip->verts[i].y + dy;
@@ -4311,6 +4528,13 @@ static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorl
         g_edMap.sectors[g_edMap.sectorCount].wallStart = wallBase + clip->sectors[si].wallStart;
         sanitizeSectorProperties(&g_edMap.sectors[g_edMap.sectorCount]);
         g_edMap.sectorCount++;
+    }
+
+    linkedInnerCount = autoLinkPastedInnerSectors(sectorBase,
+                                                  clip->sectorCount,
+                                                  selectedContainerSector);
+    if (linkedInnerCount < 0) {
+        return 0;
     }
 
     syncAllPortals();
@@ -4335,8 +4559,15 @@ static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorl
     g_ed.boxSelecting = 0;
     clearPendingLeftMouseAction();
 
-    snprintf(msg, sizeof(msg), "Pasted %d sector%s at %.2f, %.2f",
-             clip->sectorCount, (clip->sectorCount == 1) ? "" : "s", targetX, targetY);
+    if (linkedInnerCount > 0) {
+        snprintf(msg, sizeof(msg), "Pasted %d sector%s at %.2f, %.2f and linked %d inner sector%s",
+                 clip->sectorCount, (clip->sectorCount == 1) ? "" : "s",
+                 targetX, targetY,
+                 linkedInnerCount, (linkedInnerCount == 1) ? "" : "s");
+    } else {
+        snprintf(msg, sizeof(msg), "Pasted %d sector%s at %.2f, %.2f",
+                 clip->sectorCount, (clip->sectorCount == 1) ? "" : "s", targetX, targetY);
+    }
     setEditorStatus(msg);
     return 1;
 }
@@ -4901,6 +5132,222 @@ static float sectorAreaAbs(int sectorIndex)
 
     if (area < 0.0f) area = -area;
     return area * 0.5f;
+}
+
+static int pointInSectorOrOnBoundary(float px, float py, int sectorIndex)
+{
+    const EdSector *sec;
+    const float eps = 0.01f;
+    const float epsSq = eps * eps;
+
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
+    if (pointInSector(px, py, sectorIndex)) return 1;
+
+    sec = &g_edMap.sectors[sectorIndex];
+    for (int i = 0; i < sec->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[sec->wallStart + i];
+        const EdVec2 *a = &g_edMap.verts[w->v0];
+        const EdVec2 *b = &g_edMap.verts[w->v1];
+
+        if (distPointSegSq(px, py, a->x, a->y, b->x, b->y) <= epsSq) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int clipboardGeometryFitsInsideSector(const EdSectorGeometryClipboard *clip,
+                                             float dx,
+                                             float dy,
+                                             int sectorIndex)
+{
+    if (!clip) return 0;
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
+
+    for (int si = 0; si < clip->sectorCount; si++) {
+        const EdSector *srcSec = &clip->sectors[si];
+
+        if (srcSec->boundaryCount < 3) {
+            return 0;
+        }
+
+        for (int wi = 0; wi < srcSec->boundaryCount; wi++) {
+            const EdWall *w = &clip->walls[srcSec->wallStart + wi];
+            const EdVec2 *a = &clip->verts[w->v0];
+            const EdVec2 *b = &clip->verts[w->v1];
+            const float ax = a->x + dx;
+            const float ay = a->y + dy;
+            const float bx = b->x + dx;
+            const float by = b->y + dy;
+            const float midX = (ax + bx) * 0.5f;
+            const float midY = (ay + by) * 0.5f;
+
+            if (!pointInSectorOrOnBoundary(ax, ay, sectorIndex)) {
+                return 0;
+            }
+
+            if (!pointInSectorOrOnBoundary(midX, midY, sectorIndex)) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+static int sectorContainsSectorBoundaryLoop(int containerSectorIndex, int childSectorIndex)
+{
+    const EdSector *child;
+    const float childArea = sectorAreaAbs(childSectorIndex);
+    const float containerArea = sectorAreaAbs(containerSectorIndex);
+
+    if (containerSectorIndex < 0 || containerSectorIndex >= g_edMap.sectorCount) return 0;
+    if (childSectorIndex < 0 || childSectorIndex >= g_edMap.sectorCount) return 0;
+    if (containerSectorIndex == childSectorIndex) return 0;
+    if (containerArea <= (childArea + 0.0001f)) return 0;
+
+    child = &g_edMap.sectors[childSectorIndex];
+    if (child->boundaryCount < 3) return 0;
+
+    for (int i = 0; i < child->boundaryCount; i++) {
+        const EdWall *w = &g_edMap.walls[child->wallStart + i];
+        const EdVec2 *a = &g_edMap.verts[w->v0];
+        const EdVec2 *b = &g_edMap.verts[w->v1];
+        const float midX = (a->x + b->x) * 0.5f;
+        const float midY = (a->y + b->y) * 0.5f;
+
+        if (!pointInSectorOrOnBoundary(a->x, a->y, containerSectorIndex)) {
+            return 0;
+        }
+
+        if (!pointInSectorOrOnBoundary(midX, midY, containerSectorIndex)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int sectorHasReversedLoopForSector(int containerSectorIndex, int childSectorIndex)
+{
+    const EdSector *container;
+    const EdSector *child;
+
+    if (containerSectorIndex < 0 || containerSectorIndex >= g_edMap.sectorCount) return 0;
+    if (childSectorIndex < 0 || childSectorIndex >= g_edMap.sectorCount) return 0;
+
+    container = &g_edMap.sectors[containerSectorIndex];
+    child = &g_edMap.sectors[childSectorIndex];
+
+    for (int i = 0; i < child->boundaryCount; i++) {
+        const EdWall *childWall = &g_edMap.walls[child->wallStart + i];
+        int found = 0;
+
+        for (int j = 0; j < container->wallCount; j++) {
+            const EdWall *containerWall = &g_edMap.walls[container->wallStart + j];
+
+            if (containerWall->v0 == childWall->v1 &&
+                containerWall->v1 == childWall->v0) {
+                found = 1;
+                break;
+            }
+        }
+
+        if (!found) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int findBestContainerSectorForPastedSector(int childSectorIndex, int preferredSectorIndex)
+{
+    const float childArea = sectorAreaAbs(childSectorIndex);
+    int bestSector = -1;
+    float bestArea = 99999999.0f;
+
+    if (preferredSectorIndex >= 0 &&
+        preferredSectorIndex < g_edMap.sectorCount &&
+        preferredSectorIndex != childSectorIndex) {
+        const float preferredArea = sectorAreaAbs(preferredSectorIndex);
+
+        if (preferredArea > (childArea + 0.0001f) &&
+            sectorContainsSectorBoundaryLoop(preferredSectorIndex, childSectorIndex)) {
+            return preferredSectorIndex;
+        }
+    }
+
+    for (int i = 0; i < g_edMap.sectorCount; i++) {
+        const float area = sectorAreaAbs(i);
+
+        if (i == childSectorIndex) continue;
+        if (area <= (childArea + 0.0001f)) continue;
+        if (!sectorContainsSectorBoundaryLoop(i, childSectorIndex)) continue;
+
+        if (area < bestArea) {
+            bestArea = area;
+            bestSector = i;
+        }
+    }
+
+    return bestSector;
+}
+
+static int autoLinkPastedInnerSectors(int sectorBase, int sectorCount, int preferredContainerSector)
+{
+    int linkedCount = 0;
+
+    for (int si = 0; si < sectorCount; si++) {
+        const int childSectorIndex = sectorBase + si;
+        const int containerSectorIndex = findBestContainerSectorForPastedSector(childSectorIndex,
+                                                                               preferredContainerSector);
+        const EdSector *child;
+        EdWall loopWalls[ED_MAX_WALLS];
+
+        if (childSectorIndex < 0 || childSectorIndex >= g_edMap.sectorCount) {
+            continue;
+        }
+
+        if (containerSectorIndex < 0 || containerSectorIndex >= g_edMap.sectorCount) {
+            continue;
+        }
+
+        if (sectorHasReversedLoopForSector(containerSectorIndex, childSectorIndex)) {
+            continue;
+        }
+
+        child = &g_edMap.sectors[childSectorIndex];
+        if (child->boundaryCount < 3 || child->boundaryCount > ED_MAX_WALLS) {
+            continue;
+        }
+
+        if ((g_edMap.wallCount + child->boundaryCount) > ED_MAX_WALLS) {
+            setEditorStatus("Paste failed: too many walls to link inner sector");
+            return -1;
+        }
+
+        for (int i = child->boundaryCount - 1, out = 0; i >= 0; i--, out++) {
+            const EdWall *src = &g_edMap.walls[child->wallStart + i];
+
+            loopWalls[out] = *src;
+            loopWalls[out].v0 = src->v1;
+            loopWalls[out].v1 = src->v0;
+            loopWalls[out].neighbour = -1;
+            loopWalls[out].openBottom = 0.0f;
+            loopWalls[out].openTop = 0.0f;
+            loopWalls[out].flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+        }
+
+        insertWallsIntoSector(containerSectorIndex,
+                              g_edMap.sectors[containerSectorIndex].wallCount,
+                              loopWalls,
+                              child->boundaryCount);
+        linkedCount++;
+    }
+
+    return linkedCount;
 }
 
 static int findSectorForPoint(float x, float y)
@@ -6942,6 +7389,7 @@ static void drawSectorSelectionHighlight(int sectorIndex)
 static void beginNewMap(void)
 {
     memset(&g_edMap, 0, sizeof(g_edMap));
+    touchRoutePreviewMap();
     resetUndoRedoHistory();
 
     strcpy(mapfilename, "new_map.txt");
@@ -6966,8 +7414,8 @@ static void beginNewMap(void)
     g_ed.selectedObject = -1;
     g_ed.textureBrowserTarget = TEX_TARGET_DEFAULT_WALL_MIDDLE;
 
-    g_ed.currentGridStep = ED_GRID_STEP;
-    g_ed.tinyGridEnabled = 0;
+    g_ed.currentGridStep = 0.1;//ED_GRID_STEP;
+    g_ed.tinyGridEnabled = 1;
     g_ed.ui_menu_visable = 0;
     g_ed.ui_validator_visable = 0;
     g_ed.validatorRan = 0;
@@ -7232,18 +7680,22 @@ static int saveTextMap(const char *path)
     for (int i = 0; i < g_edMap.objectCount; i++) {
         const EdObject *o = &g_edMap.objects[i];
 
-        fprintf(f, "%.6f %.6f %.6f %d %d %u %u %.6f %u %u %u\n",
-                o->x,
-                o->y,
-                o->z,
-                o->tagId,
-                o->targetTagId,
-                (unsigned)o->flags,
-                (unsigned)o->type,
-                o->radius,
-                (unsigned)o->textureId,
-                (unsigned)o->inFlag,
-                (unsigned)o->outFlag);
+        // commented types! damn this would get messy real quick
+        fprintf(f, "%.6f %.6f %.6f %d %d %u %u %.6f %u %u %u %.6f %.6f\n",
+                o->x,       // %.6f
+                o->y,       // %.6f
+                o->z,       // %.6f
+                o->tagId,   // % d
+                o->targetTagId, // %d
+                (unsigned)o->flags, // %u
+                (unsigned)o->type,  // %u
+                o->radius,  // %.6f
+                (unsigned)o->textureId, // %u
+                (unsigned)o->inFlag,    // %u
+                (unsigned)o->outFlag,   // %u
+                o->scalex,  // %.6f
+                o->scaley   // %.6f
+            );
     }
 
     fclose(f);
@@ -7446,7 +7898,7 @@ static int loadTextMap(const char *path)
             unsigned inFlag;
             unsigned outFlag;
 
-            if (fscanf(f, "%f %f %f %d %d %u %u %f %u %u %u",
+            if (fscanf(f, "%f %f %f %d %d %u %u %f %u %u %u %f %f",
                     &newMap.objects[i].x,
                     &newMap.objects[i].y,
                     &newMap.objects[i].z,
@@ -7457,7 +7909,10 @@ static int loadTextMap(const char *path)
                     &newMap.objects[i].radius,
                     &texId,
                     &inFlag,
-                    &outFlag) != 11) {
+                    &outFlag,
+                    &newMap.objects[i].scalex,
+                    &newMap.objects[i].scaley
+                ) != 13) {
                 fclose(f);
                 return 0;
             }
@@ -7478,6 +7933,7 @@ static int loadTextMap(const char *path)
 
     /* only commit after full successful parse */
     g_edMap = newMap;
+    touchRoutePreviewMap();
     resetUndoRedoHistory();
 
     /* editor state cleanup, but keep camera/zoom */
@@ -7688,6 +8144,8 @@ int exportBinaryMap(const char *path)
         uint8_t textureId = o->textureId;
         uint8_t inFlag = o->inFlag;
         uint8_t outFlag = o->outFlag;
+        float sclx = o->scalex;
+        float scly = o->scaley;
 
         if (fwrite(&x, sizeof(x), 1, f)           != 1 ||
             fwrite(&y, sizeof(y), 1, f)           != 1 ||
@@ -7699,7 +8157,9 @@ int exportBinaryMap(const char *path)
             fwrite(&radius, sizeof(radius), 1, f) != 1 ||
             fwrite(&textureId, sizeof(textureId), 1, f) != 1 ||
             fwrite(&inFlag, sizeof(inFlag), 1, f) != 1 ||
-            fwrite(&outFlag, sizeof(outFlag), 1, f) != 1
+            fwrite(&outFlag, sizeof(outFlag), 1, f) != 1 ||
+            fwrite(&sclx, sizeof(sclx), 1, f) != 1 ||
+            fwrite(&scly, sizeof(scly), 1, f) != 1
         ) {
             fclose(f);
             return 0;
@@ -7785,7 +8245,7 @@ static int exportCStringMap(const char *path)
         const EdObject *o = &g_edMap.objects[i];
 
         fprintf(f,
-            "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u, %u, %u },\n",
+            "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u, %u, %u, %.6ff, %.6ff},\n",
             o->x,
             o->y,
             o->z,
@@ -7796,7 +8256,10 @@ static int exportCStringMap(const char *path)
             o->radius,
             (unsigned)o->textureId,
             (unsigned)o->inFlag,
-            (unsigned)o->outFlag);
+            (unsigned)o->outFlag,
+            o->scalex,
+            o->scaley
+        );
     }
     fprintf(f, "};\n\n");
 
@@ -9834,6 +10297,10 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "1 - sector trigger type. eg. open / close doors", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "2 - sector trigger type on entry (player walks into object). eg. open / close doors", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "3 - sector trigger type on exit  (player walks out of object). eg. open / close doors", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "4 - route preview object (TargetTag -> another object's Tag)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Type 4 uses object Radius as wall-clearance for the preview path", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "5 - baked nav node (TargetTag -> next node or final object)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Type 4 Bake Route turns the current preview into movable Type 5 nodes", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_NONE          = 0x00", ED_TEXT_COL);
@@ -10019,19 +10486,147 @@ static int objectUsesSectorTarget(const EdObject *o)
     return (o->type >= 1u && o->type <= 3u);
 }
 
-static int findSectorByTagId(int tagId)
+static int objectUsesObjectTarget(const EdObject *o)
+{
+    if (!o) return 0;
+
+    return (o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW);
+}
+
+static int findObjectByTagId(int tagId)
 {
     if (tagId <= 0) {
         return -1;
     }
 
-    for (int i = 0; i < g_edMap.sectorCount; i++) {
-        if (g_edMap.sectors[i].tagId == tagId) {
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        if (g_edMap.objects[i].tagId == tagId) {
             return i;
         }
     }
 
     return -1;
+}
+
+static int objectIsBakedRouteNode(const EdObject *o)
+{
+    if (!o) return 0;
+
+    return (o->type == ED_OBJECT_TYPE_BAKED_ROUTE_NODE);
+}
+
+static int findNextAvailableObjectTagId(void)
+{
+    int maxTag = 0;
+
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        if (g_edMap.objects[i].tagId > maxTag) {
+            maxTag = g_edMap.objects[i].tagId;
+        }
+    }
+
+    return maxTag + 1;
+}
+
+static int collectBakedRouteNodeChain(int objectIndex,
+                                      int *outNodeIndices,
+                                      int maxOut,
+                                      int *outFinalTargetTag)
+{
+    uint8_t visited[ED_MAX_OBJECTS];
+    int count = 0;
+    int targetTag;
+
+    if (outFinalTargetTag) *outFinalTargetTag = 0;
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
+
+    memset(visited, 0, sizeof(visited));
+    targetTag = g_edMap.objects[objectIndex].targetTagId;
+
+    while (targetTag > 0) {
+        const int targetIndex = findObjectByTagId(targetTag);
+
+        if (targetIndex < 0 || targetIndex >= g_edMap.objectCount) {
+            if (outFinalTargetTag) *outFinalTargetTag = targetTag;
+            break;
+        }
+
+        if (visited[targetIndex]) {
+            if (outFinalTargetTag) *outFinalTargetTag = g_edMap.objects[targetIndex].tagId;
+            break;
+        }
+
+        visited[targetIndex] = 1;
+
+        if (!objectIsBakedRouteNode(&g_edMap.objects[targetIndex])) {
+            if (outFinalTargetTag) *outFinalTargetTag = g_edMap.objects[targetIndex].tagId;
+            break;
+        }
+
+        if (outNodeIndices && count < maxOut) {
+            outNodeIndices[count] = targetIndex;
+        }
+        count++;
+
+        targetTag = g_edMap.objects[targetIndex].targetTagId;
+        if (outFinalTargetTag) {
+            *outFinalTargetTag = targetTag;
+        }
+    }
+
+    return count;
+}
+
+static int buildObjectBakedRoutePath(int objectIndex,
+                                     float *outX,
+                                     float *outY,
+                                     int maxOut)
+{
+    uint8_t visited[ED_MAX_OBJECTS];
+    int pathCount = 0;
+    int currentIndex = objectIndex;
+    int firstTargetIndex;
+
+    if (!outX || !outY || maxOut <= 0) return 0;
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
+
+    firstTargetIndex = findObjectByTagId(g_edMap.objects[objectIndex].targetTagId);
+    if (!objectIsBakedRouteNode(&g_edMap.objects[objectIndex]) &&
+        (firstTargetIndex < 0 || firstTargetIndex >= g_edMap.objectCount ||
+         !objectIsBakedRouteNode(&g_edMap.objects[firstTargetIndex]))) {
+        return 0;
+    }
+
+    memset(visited, 0, sizeof(visited));
+
+    for (;;) {
+        const EdObject *cur = &g_edMap.objects[currentIndex];
+        const int nextIndex = findObjectByTagId(cur->targetTagId);
+
+        pathCount = appendPreviewPathPoint(outX, outY, pathCount, maxOut, cur->x, cur->y);
+        if (pathCount < 0) return 0;
+
+        if (nextIndex < 0 || nextIndex >= g_edMap.objectCount) {
+            break;
+        }
+
+        if (visited[nextIndex]) {
+            break;
+        }
+
+        visited[nextIndex] = 1;
+        currentIndex = nextIndex;
+
+        if (!objectIsBakedRouteNode(&g_edMap.objects[currentIndex])) {
+            pathCount = appendPreviewPathPoint(outX, outY, pathCount, maxOut,
+                                               g_edMap.objects[currentIndex].x,
+                                               g_edMap.objects[currentIndex].y);
+            if (pathCount < 0) return 0;
+            break;
+        }
+    }
+
+    return (pathCount > 1) ? pathCount : 0;
 }
 
 static int getSectorCenter(int sectorIndex, float *outX, float *outY)
@@ -10066,6 +10661,1370 @@ static int getSectorCenter(int sectorIndex, float *outX, float *outY)
     *outX = sumX / (float)count;
     *outY = sumY / (float)count;
     return 1;
+}
+
+static float sectorCenterDistance(int sectorA, int sectorB)
+{
+    float ax, ay;
+    float bx, by;
+    float dx, dy;
+
+    if (!getSectorCenter(sectorA, &ax, &ay)) return 1.0f;
+    if (!getSectorCenter(sectorB, &bx, &by)) return 1.0f;
+
+    dx = bx - ax;
+    dy = by - ay;
+    return sqrtf((dx * dx) + (dy * dy));
+}
+
+static int getPortalSegmentForSectorPair(int fromSector,
+                                         int toSector,
+                                         float *outAx,
+                                         float *outAy,
+                                         float *outBx,
+                                         float *outBy,
+                                         int *outWallIndex)
+{
+    const EdSector *sec;
+
+    if (!outAx || !outAy || !outBx || !outBy) return 0;
+    if (fromSector < 0 || fromSector >= g_edMap.sectorCount) return 0;
+    if (toSector < 0 || toSector >= g_edMap.sectorCount) return 0;
+
+    sec = &g_edMap.sectors[fromSector];
+
+    for (int i = 0; i < sec->wallCount; i++) {
+        const int wallIndex = sec->wallStart + i;
+        const EdWall *w = &g_edMap.walls[wallIndex];
+
+        if (!(w->flags & RC3D_WALL_PORTAL)) continue;
+        if (w->neighbour != toSector) continue;
+        if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+            w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+            continue;
+        }
+
+        *outAx = g_edMap.verts[w->v0].x;
+        *outAy = g_edMap.verts[w->v0].y;
+        *outBx = g_edMap.verts[w->v1].x;
+        *outBy = g_edMap.verts[w->v1].y;
+        if (outWallIndex) {
+            *outWallIndex = wallIndex;
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
+static float routePreviewPortalWidth(int wallIndex)
+{
+    const EdWall *w;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    float dx;
+    float dy;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return 0.0f;
+
+    w = &g_edMap.walls[wallIndex];
+    if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+        w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+        return 0.0f;
+    }
+
+    a = &g_edMap.verts[w->v0];
+    b = &g_edMap.verts[w->v1];
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+    return sqrtf((dx * dx) + (dy * dy));
+}
+
+static int routePreviewPortalHasClearance(int wallIndex, float clearance)
+{
+    const EdWall *w;
+    const float minWidth = (clearance * 2.0f) - 0.001f;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return 0;
+
+    w = &g_edMap.walls[wallIndex];
+    if (!(w->flags & RC3D_WALL_PORTAL)) return 0;
+    if (w->neighbour < 0 || w->neighbour >= g_edMap.sectorCount) return 0;
+    if (w->openTop <= (w->openBottom + 0.01f)) return 0;
+
+    return routePreviewPortalWidth(wallIndex) >= minWidth;
+}
+
+static int buildSectorRouteAStar(int startSector, int goalSector, float clearance, int *outSectors, int maxOut)
+{
+    float gScore[ED_MAX_SECTORS];
+    float fScore[ED_MAX_SECTORS];
+    int cameFrom[ED_MAX_SECTORS];
+    uint8_t openSet[ED_MAX_SECTORS];
+    uint8_t closedSet[ED_MAX_SECTORS];
+    const float inf = 1.0e30f;
+
+    if (!outSectors || maxOut <= 0) return 0;
+    if (startSector < 0 || startSector >= g_edMap.sectorCount) return 0;
+    if (goalSector < 0 || goalSector >= g_edMap.sectorCount) return 0;
+
+    for (int i = 0; i < g_edMap.sectorCount; i++) {
+        gScore[i] = inf;
+        fScore[i] = inf;
+        cameFrom[i] = -1;
+        openSet[i] = 0;
+        closedSet[i] = 0;
+    }
+
+    gScore[startSector] = 0.0f;
+    fScore[startSector] = sectorCenterDistance(startSector, goalSector);
+    openSet[startSector] = 1;
+
+    for (;;) {
+        float bestScore = inf;
+        int current = -1;
+
+        for (int i = 0; i < g_edMap.sectorCount; i++) {
+            if (!openSet[i]) continue;
+            if (fScore[i] >= bestScore) continue;
+
+            bestScore = fScore[i];
+            current = i;
+        }
+
+        if (current < 0) {
+            break;
+        }
+
+        if (current == goalSector) {
+            int reversePath[ED_MAX_SECTORS];
+            int count = 0;
+            int walk = current;
+
+            while (walk >= 0 && count < ED_MAX_SECTORS) {
+                reversePath[count++] = walk;
+                walk = cameFrom[walk];
+            }
+
+            if (count > maxOut || walk >= 0) {
+                return 0;
+            }
+
+            for (int i = 0; i < count; i++) {
+                outSectors[i] = reversePath[count - 1 - i];
+            }
+
+            return count;
+        }
+
+        openSet[current] = 0;
+        closedSet[current] = 1;
+
+        {
+            const EdSector *sec = &g_edMap.sectors[current];
+
+            for (int i = 0; i < sec->wallCount; i++) {
+                const int wallIndex = sec->wallStart + i;
+                const EdWall *w = &g_edMap.walls[wallIndex];
+                const int neighbour = w->neighbour;
+                float tentativeG;
+
+                if (!(w->flags & RC3D_WALL_PORTAL)) continue;
+                if (neighbour < 0 || neighbour >= g_edMap.sectorCount) continue;
+                if (!routePreviewPortalHasClearance(wallIndex, clearance)) continue;
+                if (closedSet[neighbour]) continue;
+
+                tentativeG = gScore[current] + sectorCenterDistance(current, neighbour);
+                if (!openSet[neighbour] || tentativeG < gScore[neighbour]) {
+                    cameFrom[neighbour] = current;
+                    gScore[neighbour] = tentativeG;
+                    fScore[neighbour] = tentativeG + sectorCenterDistance(neighbour, goalSector);
+                    openSet[neighbour] = 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+static float getRoutePreviewClearance(const EdObject *src, const EdObject *dst)
+{
+    float radius = 0.05f;
+
+    if (src && src->radius > radius) radius = src->radius;
+    if (dst && dst->radius > radius) radius = dst->radius;
+
+    return radius;
+}
+
+static void markRoutePreviewAllowedSectors(const int *sectorPath,
+                                           int sectorCount,
+                                           float clearance,
+                                           uint8_t *outAllowedSectorMask)
+{
+    if (!outAllowedSectorMask) return;
+
+    memset(outAllowedSectorMask, 0, ED_MAX_SECTORS * sizeof(uint8_t));
+
+    for (int i = 0; i < sectorCount; i++) {
+        const int sectorIndex = sectorPath[i];
+
+        if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) {
+            continue;
+        }
+
+        outAllowedSectorMask[sectorIndex] = 1;
+    }
+
+    for (int i = 0; i < sectorCount; i++) {
+        const int sectorIndex = sectorPath[i];
+        const EdSector *sec;
+
+        if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) {
+            continue;
+        }
+
+        sec = &g_edMap.sectors[sectorIndex];
+        for (int wi = 0; wi < sec->wallCount; wi++) {
+            const int wallIndex = sec->wallStart + wi;
+            const EdWall *w = &g_edMap.walls[wallIndex];
+
+            if (!routePreviewPortalHasClearance(wallIndex, clearance)) continue;
+            if (w->neighbour < 0 || w->neighbour >= g_edMap.sectorCount) continue;
+
+            outAllowedSectorMask[w->neighbour] = 1;
+        }
+    }
+}
+
+static int appendPreviewPathPoint(float *outX, float *outY, int count, int maxOut,
+                                  float x, float y)
+{
+    if (count > 0 && pointsSameEps(outX[count - 1], outY[count - 1], x, y, 0.0001f)) {
+        return count;
+    }
+
+    if (count >= maxOut) {
+        return -1;
+    }
+
+    outX[count] = x;
+    outY[count] = y;
+    return count + 1;
+}
+
+static int collectRoutePreviewWallsAndBounds(const uint8_t *allowedSectorMask,
+                                             float clearance,
+                                             int *outBlockingWalls,
+                                             int maxOut,
+                                             float *outMinX,
+                                             float *outMinY,
+                                             float *outMaxX,
+                                             float *outMaxY)
+{
+    uint8_t wallSeen[ED_MAX_WALLS];
+    int count = 0;
+    int haveBounds = 0;
+    float minX = 0.0f;
+    float minY = 0.0f;
+    float maxX = 0.0f;
+    float maxY = 0.0f;
+
+    if (!allowedSectorMask || !outBlockingWalls || maxOut <= 0) return 0;
+
+    memset(wallSeen, 0, sizeof(wallSeen));
+
+    for (int s = 0; s < g_edMap.sectorCount; s++) {
+        const EdSector *sec;
+
+        if (!allowedSectorMask[s]) continue;
+        sec = &g_edMap.sectors[s];
+
+        for (int i = 0; i < sec->wallCount; i++) {
+            const int wallIndex = sec->wallStart + i;
+            const EdWall *w = &g_edMap.walls[wallIndex];
+
+            if (w->v0 >= 0 && w->v0 < g_edMap.vertCount &&
+                w->v1 >= 0 && w->v1 < g_edMap.vertCount) {
+                const EdVec2 *a = &g_edMap.verts[w->v0];
+                const EdVec2 *b = &g_edMap.verts[w->v1];
+
+                if (!haveBounds) {
+                    minX = maxX = a->x;
+                    minY = maxY = a->y;
+                    haveBounds = 1;
+                }
+
+                if (a->x < minX) minX = a->x;
+                if (a->y < minY) minY = a->y;
+                if (a->x > maxX) maxX = a->x;
+                if (a->y > maxY) maxY = a->y;
+                if (b->x < minX) minX = b->x;
+                if (b->y < minY) minY = b->y;
+                if (b->x > maxX) maxX = b->x;
+                if (b->y > maxY) maxY = b->y;
+            }
+
+            if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) continue;
+            if (wallSeen[wallIndex]) continue;
+            wallSeen[wallIndex] = 1;
+
+            if ((w->flags & RC3D_WALL_PORTAL) &&
+                w->neighbour >= 0 && w->neighbour < g_edMap.sectorCount &&
+                allowedSectorMask[w->neighbour] &&
+                routePreviewPortalHasClearance(wallIndex, clearance)) {
+                continue;
+            }
+
+            if (count >= maxOut) {
+                return 0;
+            }
+
+            outBlockingWalls[count++] = wallIndex;
+        }
+    }
+
+    if (outMinX) *outMinX = haveBounds ? minX : 0.0f;
+    if (outMinY) *outMinY = haveBounds ? minY : 0.0f;
+    if (outMaxX) *outMaxX = haveBounds ? maxX : 0.0f;
+    if (outMaxY) *outMaxY = haveBounds ? maxY : 0.0f;
+
+    return count;
+}
+
+static int routePreviewPointWithinAllowedSectors(float x,
+                                                 float y,
+                                                 const uint8_t *allowedSectorMask)
+{
+    const int sectorIndex = findSectorForPoint(x, y);
+
+    if (!allowedSectorMask) return 0;
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
+
+    return allowedSectorMask[sectorIndex] ? 1 : 0;
+}
+
+static int routePreviewPointClearOfWalls(float x,
+                                         float y,
+                                         float clearance,
+                                         const int *blockingWalls,
+                                         int blockingWallCount)
+{
+    const float minDist = (clearance > 0.001f) ? (clearance - 0.0005f) : clearance;
+    const float minDistSq = minDist * minDist;
+
+    for (int i = 0; i < blockingWallCount; i++) {
+        const int wallIndex = blockingWalls[i];
+        const EdWall *w;
+        const EdVec2 *a;
+        const EdVec2 *b;
+
+        if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) continue;
+
+        w = &g_edMap.walls[wallIndex];
+        if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+            w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+            continue;
+        }
+
+        a = &g_edMap.verts[w->v0];
+        b = &g_edMap.verts[w->v1];
+
+        if (distPointSegSq(x, y, a->x, a->y, b->x, b->y) < minDistSq) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int routePreviewPointIsWalkable(float x,
+                                       float y,
+                                       float clearance,
+                                       const uint8_t *allowedSectorMask,
+                                       const int *blockingWalls,
+                                       int blockingWallCount)
+{
+    if (!routePreviewPointWithinAllowedSectors(x, y, allowedSectorMask)) return 0;
+
+    return routePreviewPointClearOfWalls(x, y, clearance, blockingWalls, blockingWallCount);
+}
+
+static void routePreviewNodeToWorld(int nodeX,
+                                    int nodeY,
+                                    float minX,
+                                    float minY,
+                                    float cellSize,
+                                    float *outX,
+                                    float *outY)
+{
+    if (outX) *outX = minX + (((float)nodeX + 0.5f) * cellSize);
+    if (outY) *outY = minY + (((float)nodeY + 0.5f) * cellSize);
+}
+
+static int routePreviewFindClosestWalkableNode(float x,
+                                               float y,
+                                               float minX,
+                                               float minY,
+                                               float cellSize,
+                                               int gridW,
+                                               int gridH,
+                                               const uint8_t *walkable)
+{
+    const int seedX = clampi_local((int)floorf((x - minX) / cellSize), 0, gridW - 1);
+    const int seedY = clampi_local((int)floorf((y - minY) / cellSize), 0, gridH - 1);
+    const int maxRadius = (gridW > gridH) ? gridW : gridH;
+
+    if (!walkable || gridW <= 0 || gridH <= 0) return -1;
+
+    for (int radius = 0; radius <= maxRadius; radius++) {
+        const int minCellX = clampi_local(seedX - radius, 0, gridW - 1);
+        const int maxCellX = clampi_local(seedX + radius, 0, gridW - 1);
+        const int minCellY = clampi_local(seedY - radius, 0, gridH - 1);
+        const int maxCellY = clampi_local(seedY + radius, 0, gridH - 1);
+        int bestNode = -1;
+        float bestDistSq = 0.0f;
+
+        for (int cellY = minCellY; cellY <= maxCellY; cellY++) {
+            for (int cellX = minCellX; cellX <= maxCellX; cellX++) {
+                float worldX;
+                float worldY;
+                float dx;
+                float dy;
+                float distSq;
+                const int nodeIndex = (cellY * gridW) + cellX;
+
+                if (radius > 0 &&
+                    cellX > minCellX && cellX < maxCellX &&
+                    cellY > minCellY && cellY < maxCellY) {
+                    continue;
+                }
+
+                if (!walkable[nodeIndex]) continue;
+
+                routePreviewNodeToWorld(cellX, cellY, minX, minY, cellSize, &worldX, &worldY);
+                dx = worldX - x;
+                dy = worldY - y;
+                distSq = (dx * dx) + (dy * dy);
+
+                if (bestNode < 0 || distSq < bestDistSq) {
+                    bestNode = nodeIndex;
+                    bestDistSq = distSq;
+                }
+            }
+        }
+
+        if (bestNode >= 0) {
+            return bestNode;
+        }
+    }
+
+    return -1;
+}
+
+static void routePreviewHeapSwap(int *heapNodes, int *heapPos, int a, int b)
+{
+    const int tmp = heapNodes[a];
+
+    heapNodes[a] = heapNodes[b];
+    heapNodes[b] = tmp;
+    heapPos[heapNodes[a]] = a;
+    heapPos[heapNodes[b]] = b;
+}
+
+static void routePreviewHeapSiftUp(int *heapNodes,
+                                   int *heapPos,
+                                   int pos,
+                                   const float *fScore)
+{
+    while (pos > 1) {
+        const int parent = pos / 2;
+
+        if (fScore[heapNodes[parent]] <= fScore[heapNodes[pos]]) {
+            break;
+        }
+
+        routePreviewHeapSwap(heapNodes, heapPos, parent, pos);
+        pos = parent;
+    }
+}
+
+static void routePreviewHeapSiftDown(int *heapNodes,
+                                     int *heapPos,
+                                     int heapCount,
+                                     int pos,
+                                     const float *fScore)
+{
+    for (;;) {
+        int smallest = pos;
+        const int left = pos * 2;
+        const int right = left + 1;
+
+        if (left <= heapCount &&
+            fScore[heapNodes[left]] < fScore[heapNodes[smallest]]) {
+            smallest = left;
+        }
+
+        if (right <= heapCount &&
+            fScore[heapNodes[right]] < fScore[heapNodes[smallest]]) {
+            smallest = right;
+        }
+
+        if (smallest == pos) {
+            break;
+        }
+
+        routePreviewHeapSwap(heapNodes, heapPos, pos, smallest);
+        pos = smallest;
+    }
+}
+
+static void routePreviewHeapPushOrDecrease(int node,
+                                           int *heapNodes,
+                                           int *heapPos,
+                                           int *heapCount,
+                                           const float *fScore)
+{
+    int pos;
+
+    if (node < 0 || !heapNodes || !heapPos || !heapCount || !fScore) return;
+
+    pos = heapPos[node];
+    if (pos < 0) {
+        (*heapCount)++;
+        pos = *heapCount;
+        heapNodes[pos] = node;
+        heapPos[node] = pos;
+    }
+
+    routePreviewHeapSiftUp(heapNodes, heapPos, pos, fScore);
+}
+
+static int routePreviewHeapPopMin(int *heapNodes,
+                                  int *heapPos,
+                                  int *heapCount,
+                                  const float *fScore)
+{
+    int node;
+
+    if (!heapNodes || !heapPos || !heapCount || *heapCount <= 0) return -1;
+
+    node = heapNodes[1];
+    heapPos[node] = -1;
+
+    if (*heapCount == 1) {
+        *heapCount = 0;
+        return node;
+    }
+
+    heapNodes[1] = heapNodes[*heapCount];
+    heapPos[heapNodes[1]] = 1;
+    (*heapCount)--;
+    routePreviewHeapSiftDown(heapNodes, heapPos, *heapCount, 1, fScore);
+
+    return node;
+}
+
+static float routePreviewGridHeuristic(int ax, int ay, int bx, int by, float cellSize)
+{
+    const int dx = abs(ax - bx);
+    const int dy = abs(ay - by);
+    const int diag = (dx < dy) ? dx : dy;
+    const int straight = ((dx > dy) ? dx : dy) - diag;
+
+    return (((float)diag * 1.41421356f) + (float)straight) * cellSize;
+}
+
+static int routePreviewSegmentIsWalkable(float ax,
+                                         float ay,
+                                         float bx,
+                                         float by,
+                                         float clearance,
+                                         const uint8_t *allowedSectorMask,
+                                         const int *blockingWalls,
+                                         int blockingWallCount,
+                                         float sampleStep)
+{
+    const float dx = bx - ax;
+    const float dy = by - ay;
+    const float len = sqrtf((dx * dx) + (dy * dy));
+    const int steps = (len <= 0.0001f)
+        ? 1
+        : clampi_local((int)ceilf(len / sampleStep), 1, 8192);
+
+    for (int i = 0; i <= steps; i++) {
+        const float t = (steps > 0) ? ((float)i / (float)steps) : 0.0f;
+        const float x = ax + (dx * t);
+        const float y = ay + (dy * t);
+
+        if (!routePreviewPointIsWalkable(x, y, clearance,
+                                         allowedSectorMask,
+                                         blockingWalls,
+                                         blockingWallCount)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static float routePreviewDistance(float ax, float ay, float bx, float by)
+{
+    const float dx = bx - ax;
+    const float dy = by - ay;
+
+    return sqrtf((dx * dx) + (dy * dy));
+}
+
+static int buildObjectRoutePreviewPathFast(int objectIndex,
+                                           float *outX,
+                                           float *outY,
+                                           int maxOut)
+{
+    int sectorPath[ED_MAX_SECTORS];
+    uint8_t allowedSectorMask[ED_MAX_SECTORS];
+    int blockingWalls[ED_MAX_WALLS];
+    float nodeX[(ED_MAX_SECTORS * ED_ROUTE_PREVIEW_PORTAL_SAMPLES) + 2];
+    float nodeY[(ED_MAX_SECTORS * ED_ROUTE_PREVIEW_PORTAL_SAMPLES) + 2];
+    int nodeStage[(ED_MAX_SECTORS * ED_ROUTE_PREVIEW_PORTAL_SAMPLES) + 2];
+    float nodeCost[(ED_MAX_SECTORS * ED_ROUTE_PREVIEW_PORTAL_SAMPLES) + 2];
+    int nodePrev[(ED_MAX_SECTORS * ED_ROUTE_PREVIEW_PORTAL_SAMPLES) + 2];
+    int pathNodes[(ED_MAX_SECTORS * ED_ROUTE_PREVIEW_PORTAL_SAMPLES) + 2];
+    const EdObject *src;
+    const EdObject *dst;
+    int targetObjectIndex;
+    int startSector;
+    int goalSector;
+    int sectorCount;
+    float clearance;
+    int blockingWallCount;
+    int nodeCount = 0;
+    int pathNodeCount = 0;
+    int pathCount = 0;
+    float sampleStep;
+    const float inf = 1.0e30f;
+
+    if (!outX || !outY || maxOut <= 0) return 0;
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
+
+    src = &g_edMap.objects[objectIndex];
+    if (!objectUsesObjectTarget(src)) return 0;
+
+    targetObjectIndex = findObjectByTagId(src->targetTagId);
+    if (targetObjectIndex < 0 || targetObjectIndex >= g_edMap.objectCount) return 0;
+    if (targetObjectIndex == objectIndex) return 0;
+
+    dst = &g_edMap.objects[targetObjectIndex];
+    startSector = findSectorForPoint(src->x, src->y);
+    goalSector = findSectorForPoint(dst->x, dst->y);
+    clearance = getRoutePreviewClearance(src, dst);
+
+    if (startSector < 0 || goalSector < 0) return 0;
+
+    sectorCount = buildSectorRouteAStar(startSector, goalSector, clearance, sectorPath, ED_MAX_SECTORS);
+    if (sectorCount <= 0) return 0;
+
+    markRoutePreviewAllowedSectors(sectorPath, sectorCount, clearance, allowedSectorMask);
+    blockingWallCount = collectRoutePreviewWallsAndBounds(allowedSectorMask,
+                                                          clearance,
+                                                          blockingWalls,
+                                                          ED_MAX_WALLS,
+                                                          NULL,
+                                                          NULL,
+                                                          NULL,
+                                                          NULL);
+
+    if (!routePreviewPointIsWalkable(src->x, src->y, clearance,
+                                     allowedSectorMask,
+                                     blockingWalls,
+                                     blockingWallCount)) {
+        return 0;
+    }
+
+    if (!routePreviewPointIsWalkable(dst->x, dst->y, clearance,
+                                     allowedSectorMask,
+                                     blockingWalls,
+                                     blockingWallCount)) {
+        return 0;
+    }
+
+    nodeX[nodeCount] = src->x;
+    nodeY[nodeCount] = src->y;
+    nodeStage[nodeCount] = 0;
+    nodeCount++;
+
+    for (int i = 0; i + 1 < sectorCount; i++) {
+        float ax;
+        float ay;
+        float bx;
+        float by;
+        float dx;
+        float dy;
+        float len;
+        float outwardNx = 0.0f;
+        float outwardNy = 0.0f;
+        float nudge;
+        int wallIndex = -1;
+        int inward;
+
+        if (!getPortalSegmentForSectorPair(sectorPath[i], sectorPath[i + 1],
+                                           &ax, &ay, &bx, &by,
+                                           &wallIndex)) {
+            return 0;
+        }
+
+        dx = bx - ax;
+        dy = by - ay;
+        len = sqrtf((dx * dx) + (dy * dy));
+        if (len < ((clearance * 2.0f) - 0.001f)) {
+            return 0;
+        }
+
+        ax += (dx / len) * clearance;
+        ay += (dy / len) * clearance;
+        bx -= (dx / len) * clearance;
+        by -= (dy / len) * clearance;
+
+        inward = getWallNormal(wallIndex);
+        if (inward >= 0) {
+            const float nx = dy / len;
+            const float ny = -dx / len;
+
+            if (inward) {
+                outwardNx = -nx;
+                outwardNy = -ny;
+            } else {
+                outwardNx = nx;
+                outwardNy = ny;
+            }
+        }
+
+        nudge = clampf_local(clearance * 0.05f, 0.005f, 0.02f);
+
+        for (int sample = 0; sample < ED_ROUTE_PREVIEW_PORTAL_SAMPLES; sample++) {
+            const float t = (ED_ROUTE_PREVIEW_PORTAL_SAMPLES <= 1)
+                ? 0.5f
+                : ((float)sample / (float)(ED_ROUTE_PREVIEW_PORTAL_SAMPLES - 1));
+            const float px = ax + ((bx - ax) * t) + (outwardNx * nudge);
+            const float py = ay + ((by - ay) * t) + (outwardNy * nudge);
+
+            if (nodeCount >= (int)(sizeof(nodeX) / sizeof(nodeX[0])) - 1) {
+                return 0;
+            }
+
+            if (!routePreviewPointIsWalkable(px, py, clearance,
+                                             allowedSectorMask,
+                                             blockingWalls,
+                                             blockingWallCount)) {
+                continue;
+            }
+
+            nodeX[nodeCount] = px;
+            nodeY[nodeCount] = py;
+            nodeStage[nodeCount] = i + 1;
+            nodeCount++;
+        }
+    }
+
+    nodeX[nodeCount] = dst->x;
+    nodeY[nodeCount] = dst->y;
+    nodeStage[nodeCount] = sectorCount;
+    nodeCount++;
+
+    sampleStep = clampf_local(clearance * 0.6f, 0.05f, 0.20f);
+
+    for (int i = 0; i < nodeCount; i++) {
+        nodeCost[i] = inf;
+        nodePrev[i] = -1;
+    }
+
+    nodeCost[0] = 0.0f;
+
+    for (int to = 1; to < nodeCount; to++) {
+        for (int from = 0; from < to; from++) {
+            const float edgeCost = routePreviewDistance(nodeX[from], nodeY[from],
+                                                        nodeX[to], nodeY[to]);
+            const float totalCost = nodeCost[from] + edgeCost;
+
+            if (nodeStage[from] >= nodeStage[to]) continue;
+            if (nodeCost[from] >= inf) continue;
+
+            if (!routePreviewSegmentIsWalkable(nodeX[from], nodeY[from],
+                                               nodeX[to], nodeY[to],
+                                               clearance,
+                                               allowedSectorMask,
+                                               blockingWalls,
+                                               blockingWallCount,
+                                               sampleStep)) {
+                continue;
+            }
+
+            if (totalCost < nodeCost[to]) {
+                nodeCost[to] = totalCost;
+                nodePrev[to] = from;
+            }
+        }
+    }
+
+    if (nodePrev[nodeCount - 1] < 0) {
+        return 0;
+    }
+
+    for (int walk = nodeCount - 1;
+         walk >= 0 && pathNodeCount < (int)(sizeof(pathNodes) / sizeof(pathNodes[0]));
+         walk = nodePrev[walk]) {
+        pathNodes[pathNodeCount++] = walk;
+    }
+
+    if (pathNodeCount <= 0) {
+        return 0;
+    }
+
+    for (int i = pathNodeCount - 1; i >= 0; i--) {
+        pathCount = appendPreviewPathPoint(outX, outY, pathCount, maxOut,
+                                           nodeX[pathNodes[i]], nodeY[pathNodes[i]]);
+        if (pathCount < 0) {
+            return 0;
+        }
+    }
+
+    return pathCount;
+}
+
+static int buildObjectRoutePreviewPathGrid(int objectIndex,
+                                           float *outX,
+                                           float *outY,
+                                           int maxOut)
+{
+    int sectorPath[ED_MAX_SECTORS];
+    uint8_t allowedSectorMask[ED_MAX_SECTORS];
+    int blockingWalls[ED_MAX_WALLS];
+    const EdObject *src;
+    const EdObject *dst;
+    uint8_t *walkable = NULL;
+    uint8_t *closedSet = NULL;
+    float *gScore = NULL;
+    float *fScore = NULL;
+    int *cameFrom = NULL;
+    int *heapNodes = NULL;
+    int *heapPos = NULL;
+    int *nodePath = NULL;
+    float *rawX = NULL;
+    float *rawY = NULL;
+    int targetObjectIndex;
+    int startSector;
+    int goalSector;
+    int sectorCount;
+    float clearance;
+    int blockingWallCount;
+    float boundsMinX;
+    float boundsMinY;
+    float boundsMaxX;
+    float boundsMaxY;
+    float cellSize;
+    float pad;
+    float sampleStep;
+    int gridW;
+    int gridH;
+    size_t gridCellCount;
+    int startNode;
+    int goalNode;
+    int heapCount = 0;
+    int pathCount = 0;
+    int reachedGoal = 0;
+    const float inf = 1.0e30f;
+    int rawCount = 0;
+    int result = 0;
+    int goalCellX;
+    int goalCellY;
+    static const int stepX[8] = { 1, -1,  0,  0,  1,  1, -1, -1 };
+    static const int stepY[8] = { 0,  0,  1, -1,  1, -1,  1, -1 };
+    static const float stepCost[8] = {
+        1.0f, 1.0f, 1.0f, 1.0f,
+        1.41421356f, 1.41421356f, 1.41421356f, 1.41421356f
+    };
+
+    if (!outX || !outY || maxOut <= 0) return 0;
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
+
+    src = &g_edMap.objects[objectIndex];
+    if (!objectUsesObjectTarget(src)) return 0;
+
+    targetObjectIndex = findObjectByTagId(src->targetTagId);
+    if (targetObjectIndex < 0 || targetObjectIndex >= g_edMap.objectCount) return 0;
+    if (targetObjectIndex == objectIndex) return 0;
+
+    dst = &g_edMap.objects[targetObjectIndex];
+    startSector = findSectorForPoint(src->x, src->y);
+    goalSector = findSectorForPoint(dst->x, dst->y);
+    clearance = getRoutePreviewClearance(src, dst);
+
+    if (startSector < 0 || goalSector < 0) return 0;
+
+    sectorCount = buildSectorRouteAStar(startSector, goalSector, clearance, sectorPath, ED_MAX_SECTORS);
+    if (sectorCount <= 0) return 0;
+
+    markRoutePreviewAllowedSectors(sectorPath, sectorCount, clearance, allowedSectorMask);
+    blockingWallCount = collectRoutePreviewWallsAndBounds(allowedSectorMask,
+                                                          clearance,
+                                                          blockingWalls,
+                                                          ED_MAX_WALLS,
+                                                          &boundsMinX,
+                                                          &boundsMinY,
+                                                          &boundsMaxX,
+                                                          &boundsMaxY);
+
+    if (boundsMinX > boundsMaxX || boundsMinY > boundsMaxY) {
+        boundsMinX = boundsMaxX = src->x;
+        boundsMinY = boundsMaxY = src->y;
+    }
+
+    if (src->x < boundsMinX) boundsMinX = src->x;
+    if (src->y < boundsMinY) boundsMinY = src->y;
+    if (src->x > boundsMaxX) boundsMaxX = src->x;
+    if (src->y > boundsMaxY) boundsMaxY = src->y;
+    if (dst->x < boundsMinX) boundsMinX = dst->x;
+    if (dst->y < boundsMinY) boundsMinY = dst->y;
+    if (dst->x > boundsMaxX) boundsMaxX = dst->x;
+    if (dst->y > boundsMaxY) boundsMaxY = dst->y;
+
+    if (!routePreviewPointIsWalkable(src->x, src->y, clearance,
+                                     allowedSectorMask,
+                                     blockingWalls,
+                                     blockingWallCount)) {
+        return 0;
+    }
+
+    if (!routePreviewPointIsWalkable(dst->x, dst->y, clearance,
+                                     allowedSectorMask,
+                                     blockingWalls,
+                                     blockingWallCount)) {
+        return 0;
+    }
+
+    cellSize = clampf_local(clearance * 0.75f, 0.08f, 0.35f);
+    pad = clearance + (cellSize * 3.0f);
+    boundsMinX -= pad;
+    boundsMinY -= pad;
+    boundsMaxX += pad;
+    boundsMaxY += pad;
+
+    if ((boundsMaxX - boundsMinX) < cellSize) boundsMaxX = boundsMinX + cellSize;
+    if ((boundsMaxY - boundsMinY) < cellSize) boundsMaxY = boundsMinY + cellSize;
+
+    gridW = (int)floorf((boundsMaxX - boundsMinX) / cellSize) + 1;
+    gridH = (int)floorf((boundsMaxY - boundsMinY) / cellSize) + 1;
+    if (gridW < 1) gridW = 1;
+    if (gridH < 1) gridH = 1;
+
+    gridCellCount = (size_t)gridW * (size_t)gridH;
+    if (gridCellCount > ED_ROUTE_PREVIEW_MAX_GRID_CELLS) {
+        const float scale = sqrtf((float)gridCellCount / (float)ED_ROUTE_PREVIEW_MAX_GRID_CELLS);
+
+        cellSize *= scale;
+        gridW = (int)floorf((boundsMaxX - boundsMinX) / cellSize) + 1;
+        gridH = (int)floorf((boundsMaxY - boundsMinY) / cellSize) + 1;
+        if (gridW < 1) gridW = 1;
+        if (gridH < 1) gridH = 1;
+        gridCellCount = (size_t)gridW * (size_t)gridH;
+    }
+
+    while (gridCellCount > ED_ROUTE_PREVIEW_MAX_GRID_CELLS) {
+        cellSize *= 1.1f;
+        gridW = (int)floorf((boundsMaxX - boundsMinX) / cellSize) + 1;
+        gridH = (int)floorf((boundsMaxY - boundsMinY) / cellSize) + 1;
+        if (gridW < 1) gridW = 1;
+        if (gridH < 1) gridH = 1;
+        gridCellCount = (size_t)gridW * (size_t)gridH;
+    }
+
+    walkable = (uint8_t *)malloc(gridCellCount * sizeof(uint8_t));
+    closedSet = (uint8_t *)malloc(gridCellCount * sizeof(uint8_t));
+    gScore = (float *)malloc(gridCellCount * sizeof(float));
+    fScore = (float *)malloc(gridCellCount * sizeof(float));
+    cameFrom = (int *)malloc(gridCellCount * sizeof(int));
+    heapNodes = (int *)malloc((gridCellCount + 1u) * sizeof(int));
+    heapPos = (int *)malloc(gridCellCount * sizeof(int));
+
+    if (!walkable || !closedSet || !gScore || !fScore ||
+        !cameFrom || !heapNodes || !heapPos) {
+        goto cleanup;
+    }
+
+    for (int cellY = 0; cellY < gridH; cellY++) {
+        for (int cellX = 0; cellX < gridW; cellX++) {
+            const size_t idx = (size_t)cellY * (size_t)gridW + (size_t)cellX;
+            float worldX;
+            float worldY;
+
+            routePreviewNodeToWorld(cellX, cellY, boundsMinX, boundsMinY, cellSize, &worldX, &worldY);
+            walkable[idx] = (uint8_t)routePreviewPointIsWalkable(worldX, worldY, clearance,
+                                                                 allowedSectorMask,
+                                                                 blockingWalls,
+                                                                 blockingWallCount);
+        }
+    }
+
+    startNode = routePreviewFindClosestWalkableNode(src->x, src->y,
+                                                    boundsMinX, boundsMinY,
+                                                    cellSize,
+                                                    gridW, gridH,
+                                                    walkable);
+    goalNode = routePreviewFindClosestWalkableNode(dst->x, dst->y,
+                                                   boundsMinX, boundsMinY,
+                                                   cellSize,
+                                                   gridW, gridH,
+                                                   walkable);
+
+    if (startNode < 0 || goalNode < 0) {
+        goto cleanup;
+    }
+
+    goalCellX = goalNode % gridW;
+    goalCellY = goalNode / gridW;
+
+    for (size_t i = 0; i < gridCellCount; i++) {
+        closedSet[i] = 0;
+        gScore[i] = inf;
+        fScore[i] = inf;
+        cameFrom[i] = -1;
+        heapPos[i] = -1;
+    }
+
+    gScore[startNode] = 0.0f;
+    fScore[startNode] = routePreviewGridHeuristic(startNode % gridW,
+                                                  startNode / gridW,
+                                                  goalCellX,
+                                                  goalCellY,
+                                                  cellSize);
+    routePreviewHeapPushOrDecrease(startNode, heapNodes, heapPos, &heapCount, fScore);
+
+    while (heapCount > 0) {
+        const int current = routePreviewHeapPopMin(heapNodes, heapPos, &heapCount, fScore);
+        int currentX;
+        int currentY;
+
+        if (current < 0) {
+            break;
+        }
+
+        currentX = current % gridW;
+        currentY = current / gridW;
+
+        if (closedSet[current]) {
+            continue;
+        }
+
+        if (current == goalNode) {
+            reachedGoal = 1;
+            break;
+        }
+
+        closedSet[current] = 1;
+
+        for (int dir = 0; dir < 8; dir++) {
+            const int nextX = currentX + stepX[dir];
+            const int nextY = currentY + stepY[dir];
+            int nextNode;
+            float tentativeG;
+
+            if (nextX < 0 || nextX >= gridW || nextY < 0 || nextY >= gridH) continue;
+
+            nextNode = (nextY * gridW) + nextX;
+            if (!walkable[nextNode] || closedSet[nextNode]) continue;
+
+            if (stepX[dir] != 0 && stepY[dir] != 0) {
+                const int sideA = (currentY * gridW) + nextX;
+                const int sideB = (nextY * gridW) + currentX;
+
+                if (!walkable[sideA] || !walkable[sideB]) {
+                    continue;
+                }
+            }
+
+            tentativeG = gScore[current] + (stepCost[dir] * cellSize);
+            if (tentativeG + 0.0001f < gScore[nextNode]) {
+                cameFrom[nextNode] = current;
+                gScore[nextNode] = tentativeG;
+                fScore[nextNode] = tentativeG + routePreviewGridHeuristic(nextX, nextY,
+                                                                          goalCellX, goalCellY,
+                                                                          cellSize);
+                routePreviewHeapPushOrDecrease(nextNode, heapNodes, heapPos, &heapCount, fScore);
+            }
+        }
+    }
+
+    if (!reachedGoal) {
+        goto cleanup;
+    }
+
+    {
+        int nodeCount = 0;
+        int walk = goalNode;
+
+        while (walk >= 0 && nodeCount < (int)gridCellCount) {
+            nodeCount++;
+            walk = cameFrom[walk];
+        }
+
+        if (nodeCount <= 0 || walk >= 0) {
+            goto cleanup;
+        }
+
+        nodePath = (int *)malloc((size_t)nodeCount * sizeof(int));
+        rawX = (float *)malloc((size_t)(nodeCount + 2) * sizeof(float));
+        rawY = (float *)malloc((size_t)(nodeCount + 2) * sizeof(float));
+        if (!nodePath || !rawX || !rawY) {
+            goto cleanup;
+        }
+
+        walk = goalNode;
+        for (int i = nodeCount - 1; i >= 0; i--) {
+            nodePath[i] = walk;
+            walk = cameFrom[walk];
+        }
+
+        rawCount = appendPreviewPathPoint(rawX, rawY, rawCount, nodeCount + 2, src->x, src->y);
+        if (rawCount < 0) goto cleanup;
+
+        for (int i = 0; i < nodeCount; i++) {
+            float worldX;
+            float worldY;
+
+            routePreviewNodeToWorld(nodePath[i] % gridW, nodePath[i] / gridW,
+                                    boundsMinX, boundsMinY, cellSize,
+                                    &worldX, &worldY);
+            rawCount = appendPreviewPathPoint(rawX, rawY, rawCount, nodeCount + 2, worldX, worldY);
+            if (rawCount < 0) goto cleanup;
+        }
+
+        rawCount = appendPreviewPathPoint(rawX, rawY, rawCount, nodeCount + 2, dst->x, dst->y);
+        if (rawCount < 0) goto cleanup;
+    }
+
+    sampleStep = clampf_local(cellSize * 0.5f, 0.04f, 0.20f);
+
+    for (int i = 1; i < rawCount; i++) {
+        if (!routePreviewSegmentIsWalkable(rawX[i - 1], rawY[i - 1],
+                                           rawX[i], rawY[i],
+                                           clearance,
+                                           allowedSectorMask,
+                                           blockingWalls,
+                                           blockingWallCount,
+                                           sampleStep)) {
+            goto cleanup;
+        }
+    }
+
+    {
+        int anchor = 0;
+
+        pathCount = appendPreviewPathPoint(outX, outY, pathCount, maxOut, rawX[0], rawY[0]);
+        if (pathCount < 0) goto cleanup;
+
+        while (anchor < (rawCount - 1)) {
+            int next = rawCount - 1;
+
+            while (next > (anchor + 1)) {
+                if (routePreviewSegmentIsWalkable(rawX[anchor], rawY[anchor],
+                                                  rawX[next], rawY[next],
+                                                  clearance,
+                                                  allowedSectorMask,
+                                                  blockingWalls,
+                                                  blockingWallCount,
+                                                  sampleStep)) {
+                    break;
+                }
+
+                next--;
+            }
+
+            pathCount = appendPreviewPathPoint(outX, outY, pathCount, maxOut, rawX[next], rawY[next]);
+            if (pathCount < 0) goto cleanup;
+            if (next <= anchor) goto cleanup;
+
+            anchor = next;
+        }
+    }
+
+    result = pathCount;
+
+cleanup:
+    free(rawY);
+    free(rawX);
+    free(nodePath);
+    free(heapPos);
+    free(heapNodes);
+    free(cameFrom);
+    free(fScore);
+    free(gScore);
+    free(closedSet);
+    free(walkable);
+
+    return result;
+}
+
+static int buildObjectRoutePreviewPath(int objectIndex,
+                                       float *outX,
+                                       float *outY,
+                                       int maxOut)
+{
+    const int bakedPathCount = buildObjectBakedRoutePath(objectIndex, outX, outY, maxOut);
+
+    if (bakedPathCount > 0) {
+        return bakedPathCount;
+    }
+
+    {
+        const int fastPathCount = buildObjectRoutePreviewPathFast(objectIndex, outX, outY, maxOut);
+
+        if (fastPathCount > 0) {
+            return fastPathCount;
+        }
+    }
+
+    return buildObjectRoutePreviewPathGrid(objectIndex, outX, outY, maxOut);
+}
+
+static int routePreviewNeedsLiveRefresh(void)
+{
+    return g_ed.draggingVertex ||
+           g_ed.draggingWall ||
+           g_ed.draggingSector ||
+           g_ed.draggingMultiVertex ||
+           g_ed.draggingObject;
+}
+
+static int routePreviewCacheMatchesState(int objectIndex, int targetObjectIndex)
+{
+    const EdObject *src;
+    const EdObject *dst = NULL;
+
+    if (!g_routePreviewCache.valid) return 0;
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
+
+    src = &g_edMap.objects[objectIndex];
+    if (targetObjectIndex >= 0 && targetObjectIndex < g_edMap.objectCount) {
+        dst = &g_edMap.objects[targetObjectIndex];
+    }
+
+    if (g_routePreviewCache.mapSerial != g_routePreviewMapSerial) return 0;
+    if (g_routePreviewCache.selectedObject != objectIndex) return 0;
+    if (g_routePreviewCache.targetObjectIndex != targetObjectIndex) return 0;
+    if (g_routePreviewCache.vertCount != g_edMap.vertCount) return 0;
+    if (g_routePreviewCache.wallCount != g_edMap.wallCount) return 0;
+    if (g_routePreviewCache.sectorCount != g_edMap.sectorCount) return 0;
+    if (g_routePreviewCache.objectCount != g_edMap.objectCount) return 0;
+
+    if (g_routePreviewCache.srcX != src->x ||
+        g_routePreviewCache.srcY != src->y ||
+        g_routePreviewCache.srcRadius != src->radius ||
+        g_routePreviewCache.srcTagId != src->tagId ||
+        g_routePreviewCache.srcTargetTagId != src->targetTagId ||
+        g_routePreviewCache.srcType != src->type) {
+        return 0;
+    }
+
+    if (!dst) {
+        return 1;
+    }
+
+    if (g_routePreviewCache.dstX != dst->x ||
+        g_routePreviewCache.dstY != dst->y ||
+        g_routePreviewCache.dstRadius != dst->radius ||
+        g_routePreviewCache.dstTagId != dst->tagId ||
+        g_routePreviewCache.dstTargetTagId != dst->targetTagId ||
+        g_routePreviewCache.dstType != dst->type) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static void routePreviewCacheStoreState(int objectIndex, int targetObjectIndex, int pathCount)
+{
+    const EdObject *src;
+    const EdObject *dst = NULL;
+
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
+
+    src = &g_edMap.objects[objectIndex];
+    if (targetObjectIndex >= 0 && targetObjectIndex < g_edMap.objectCount) {
+        dst = &g_edMap.objects[targetObjectIndex];
+    }
+
+    g_routePreviewCache.valid = 1;
+    g_routePreviewCache.mapSerial = g_routePreviewMapSerial;
+    g_routePreviewCache.selectedObject = objectIndex;
+    g_routePreviewCache.targetObjectIndex = targetObjectIndex;
+    g_routePreviewCache.vertCount = g_edMap.vertCount;
+    g_routePreviewCache.wallCount = g_edMap.wallCount;
+    g_routePreviewCache.sectorCount = g_edMap.sectorCount;
+    g_routePreviewCache.objectCount = g_edMap.objectCount;
+    g_routePreviewCache.srcX = src->x;
+    g_routePreviewCache.srcY = src->y;
+    g_routePreviewCache.srcRadius = src->radius;
+    g_routePreviewCache.srcTagId = src->tagId;
+    g_routePreviewCache.srcTargetTagId = src->targetTagId;
+    g_routePreviewCache.srcType = src->type;
+    g_routePreviewCache.pathCount = pathCount;
+
+    if (dst) {
+        g_routePreviewCache.dstX = dst->x;
+        g_routePreviewCache.dstY = dst->y;
+        g_routePreviewCache.dstRadius = dst->radius;
+        g_routePreviewCache.dstTagId = dst->tagId;
+        g_routePreviewCache.dstTargetTagId = dst->targetTagId;
+        g_routePreviewCache.dstType = dst->type;
+    } else {
+        g_routePreviewCache.dstX = 0.0f;
+        g_routePreviewCache.dstY = 0.0f;
+        g_routePreviewCache.dstRadius = 0.0f;
+        g_routePreviewCache.dstTagId = -1;
+        g_routePreviewCache.dstTargetTagId = -1;
+        g_routePreviewCache.dstType = 0u;
+    }
+}
+
+static int getObjectRoutePreviewPathCached(int objectIndex,
+                                           const float **outX,
+                                           const float **outY)
+{
+    const EdObject *src;
+    int targetObjectIndex = -1;
+    int pathCount;
+    const int liveRefresh = routePreviewNeedsLiveRefresh();
+
+    if (outX) *outX = g_routePreviewCache.pathX;
+    if (outY) *outY = g_routePreviewCache.pathY;
+
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return 0;
+    }
+
+    src = &g_edMap.objects[objectIndex];
+    if (src->targetTagId > 0) {
+        targetObjectIndex = findObjectByTagId(src->targetTagId);
+    }
+
+    if (!liveRefresh && routePreviewCacheMatchesState(objectIndex, targetObjectIndex)) {
+        return g_routePreviewCache.pathCount;
+    }
+
+    pathCount = buildObjectRoutePreviewPath(objectIndex,
+                                            g_routePreviewCache.pathX,
+                                            g_routePreviewCache.pathY,
+                                            ED_ROUTE_PREVIEW_MAX_POINTS);
+    g_routePreviewCache.pathCount = pathCount;
+
+    if (liveRefresh) {
+        g_routePreviewCache.valid = 0;
+    } else {
+        routePreviewCacheStoreState(objectIndex, targetObjectIndex, pathCount);
+    }
+
+    return pathCount;
 }
 
 
@@ -10111,6 +12070,61 @@ static void drawObjectSectorLinks(void)
             drawLineDots(x0, y0, x1, y1, col);
             drawRect(x1 - 1, y1 - 1, 3, 3, col);
         }
+    }
+}
+
+static void drawObjectBakedLinks(void)
+{
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        const int targetIndex = findObjectByTagId(o->targetTagId);
+        uint8_t col = ED_COLOUR_WALL_SPECIAL;
+        int x0, y0, x1, y1;
+
+        if (targetIndex < 0 || targetIndex >= g_edMap.objectCount) {
+            continue;
+        }
+
+        if (!objectIsBakedRouteNode(o) &&
+            !(o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW &&
+              objectIsBakedRouteNode(&g_edMap.objects[targetIndex]))) {
+            continue;
+        }
+
+        if ((g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject == i) ||
+            (g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject == targetIndex)) {
+            col = ED_COLOUR_SELECTED_SECTOR;
+        } else if (g_ed.hoverObject == i || g_ed.hoverObject == targetIndex) {
+            col = ED_COLOUR_HOVER_WALL;
+        }
+
+        worldToScreen(o->x, o->y, &x0, &y0);
+        worldToScreen(g_edMap.objects[targetIndex].x, g_edMap.objects[targetIndex].y, &x1, &y1);
+        drawLineDots(x0, y0, x1, y1, col);
+        drawRect(x1 - 1, y1 - 1, 3, 3, col);
+    }
+}
+
+static void drawSelectedObjectRoutePreview(void)
+{
+    const float *pathX = NULL;
+    const float *pathY = NULL;
+    const int pathCount = getObjectRoutePreviewPathCached(g_ed.selectedObject,
+                                                          &pathX,
+                                                          &pathY);
+
+    if (g_ed.selectionType != ED_SEL_OBJECT) return;
+    if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) return;
+    if (pathCount <= 1) return;
+
+    for (int i = 1; i < pathCount; i++) {
+        int x0, y0, x1, y1;
+
+        worldToScreen(pathX[i - 1], pathY[i - 1], &x0, &y0);
+        worldToScreen(pathX[i], pathY[i], &x1, &y1);
+        drawLine(x0, y0, x1, y1, ED_COLOUR_SELECTED_SECTOR);
+        drawLineDots(x0, y0, x1, y1, ED_COLOUR_SELECTED_SECTOR);
+        drawRect(x1 - 2, y1 - 2, 5, 5, ED_COLOUR_SELECTED_SECTOR);
     }
 }
 
@@ -10247,6 +12261,8 @@ static void drawMapGeometry(void)
 
     drawMapObjects();
     drawObjectSectorLinks();
+    drawObjectBakedLinks();
+    drawSelectedObjectRoutePreview();
 
     /* -------------------------------------------------- */
     /* draft                                              */
@@ -10471,14 +12487,20 @@ void rc3dEditInit(void)
 
     //// OBJECT INSPECT UI - Fun stuff right?
     {
-        int sector_button_y_offsets = 0;
+        int sector_button_y_offsets = 2;
 
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS,  136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS,   164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE,   220 + controloffw, 156 + sector_button_y_offsets, 156, 24, "Bake Route");
+
         sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TYPE_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TYPE_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+        
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, 220 + controloffw, 156 + sector_button_y_offsets, 156, 24, "Clear Baked");
+        
 
         sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
@@ -10492,10 +12514,18 @@ void rc3dEditInit(void)
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS,   194 + controloffw, 156 + sector_button_y_offsets, 144, 24, "Get Sector Floor");
-        
+
+        sector_button_y_offsets += 30;
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TSCALEX_MINUS, 244 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TSCALEX_PLUS , 270 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TSCALEY_MINUS, 366 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TSCALEY_PLUS , 392 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
 
         // Toggling bits    // object flags
-        sector_button_y_offsets += 70;
+        sector_button_y_offsets += 4;
+        sector_button_y_offsets += 34;
         sector_button_y_offsets += 25;
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
         rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
@@ -11497,6 +13527,16 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEX_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEX_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEY_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEY_PLUS, 0);
+
+    
+
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, 0);
 
     for (int i = GUI_BTN_OBJECT_FLAGS_bit0; i < (GUI_BTN_OBJECT_FLAGS_bit0 + 8); i++) {
         rcguiSetButtonVisible(&g_ui, i, 0);
@@ -11761,9 +13801,14 @@ static void editorShowSectorInspectorButtons(void)
 
 static void editorShowObjectInspectorButtons(void)
 {
+    const EdObject *o;
+    int bakedNodeCount = 0;
+
     if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) {
         return;
     }
+
+    o = &g_edMap.objects[g_ed.selectedObject];
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 1);
@@ -11776,6 +13821,19 @@ static void editorShowObjectInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEX_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEX_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEY_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEY_PLUS, 1);
+
+
+    if (o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW) {
+        bakedNodeCount = collectBakedRouteNodeChain(g_ed.selectedObject, NULL, 0, NULL);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE, 1);
+        rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, 1);
+        rcguiSetButtonDisabled(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE, (o->targetTagId <= 0));
+        rcguiSetButtonDisabled(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, (bakedNodeCount <= 0));
+    }
 
     
 
@@ -12383,6 +14441,60 @@ static void handleEditorUI(int mouseX, int mouseY,
                     }
                 }
                 break;
+            case GUI_BTN_OBJECT_BAKE_ROUTE:
+                pushUndoState();
+                if (!bakeSelectedObjectRouteToNodes()) {
+                    performUndo();
+                }
+                break;
+            case GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE:
+                pushUndoState();
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    if (clearBakedRouteNodesFromObject(g_ed.selectedObject) <= 0) {
+                        performUndo();
+                        setEditorStatus("No baked route nodes to clear");
+                    } else {
+                        setEditorStatus("Cleared baked route nodes");
+                    }
+                } else {
+                    performUndo();
+                }
+                break;
+
+            case GUI_BTN_OBJECT_TSCALEX_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->scalex -= uiStep;
+                    if(o->scalex < 0.0f) o->scalex = 0.0f;
+                }
+            break;
+            case GUI_BTN_OBJECT_TSCALEX_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->scalex += uiStep;
+                    if(o->scalex > 2.0f) o->scalex = 2.0f;
+                }
+            break;
+
+
+            case GUI_BTN_OBJECT_TSCALEY_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->scaley -= uiStep;
+                    if(o->scaley < 0.0f) o->scaley = 0.0f;
+                }
+            break;
+            case GUI_BTN_OBJECT_TSCALEY_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->scaley += uiStep;
+                    if(o->scaley > 2.0f) o->scaley = 2.0f;
+                }
+            break;
 
             // Object Flag Bits
             case GUI_BTN_OBJECT_FLAGS_bit0:
@@ -12450,7 +14562,7 @@ static void handleEditorUI(int mouseX, int mouseY,
                 }
             } break;
 
-            // Player setups //
+            // ####### Player setups ########### //
             case GUI_BTN_PLAYER_START_ANGLE_MINUS:
                 g_edMap.startAngle -= DEG2RAD(5.0f);
                 while (g_edMap.startAngle < 0.0f)
@@ -13004,8 +15116,8 @@ static void drawInspectorPanel(void)
         drawRectL(px + 12, py + y_off, pw - 24, 211, ED_INSPECTOR_PANELS_PANELFRAME);
         
         y_off += 6;
-        drawText(px + 18,  py + y_off,     "PROPERTIES:", ED_INSPECTOR_PANELS_HEADER_TEXT);
-        drawText(px + 18,  py + y_off + 2, "___________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        drawText(px + 18,  py + y_off,     "PROPERTIES:                  PATHING NODES:", ED_INSPECTOR_PANELS_HEADER_TEXT);
+        drawText(px + 18,  py + y_off + 2, "___________                  ______________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
         py += 30;
 
         snprintf(buf, sizeof(buf), "Tag: %d", o->tagId);
@@ -13023,7 +15135,7 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "Z-Axis: %.3f", o->z);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
-        snprintf(buf, sizeof(buf), "Texture_id: %u", (unsigned)o->textureId);
+        snprintf(buf, sizeof(buf), "Texture:%3u     Scale X:%.03f         Y:%.03f", (unsigned)o->textureId, (float)o->scalex, (float)o->scaley);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
 
 
