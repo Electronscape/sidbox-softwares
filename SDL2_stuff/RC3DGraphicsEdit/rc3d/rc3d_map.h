@@ -8,6 +8,9 @@
 #define RC3D_WALL_MIDDLE   0x04
 #define RC3D_WALL_LOWER    0x08
 #define RC3D_WALL_SOLID    0x10
+#define RC3D_WALL_MANUAL_TARGET 0x20
+#define RC3D_WALL_TRANSPARENCY  0x40
+#define RC3D_WALL_DOUBLESIDED   0x80
 
 #define RC3D_TEX_FLAG_DEFAULT       0x00u
 #define RC3D_TEX_FLAG_CLAMPXL       0x01u
@@ -69,6 +72,7 @@ typedef struct {
 
     int32_t tagId;          /* runtime trigger/tag id */
     uint32_t stateFlags;    /* runtime-controlled sector state flags */
+    uint32_t sectorFlags;   /* runtime-stuff the sectors can do */
     float floorMinHeight;   /* runtime lower bound for floor */
     float floorMaxHeight;   /* runtime upper bound for floor */
     float ceilMinHeight;    /* runtime lower bound for ceiling */

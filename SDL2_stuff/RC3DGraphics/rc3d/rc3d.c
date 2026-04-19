@@ -16,10 +16,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define RC3D_VIEWPORT_LEFT      0
-#define RC3D_VIEWPORT_TOP       0
-#define RC3D_VIEWPORT_WIDTH     SCREEN_W
-#define RC3D_VIEWPORT_HEIGHT    SCREEN_H
 
 int g_viewport_top    = RC3D_VIEWPORT_TOP;
 int g_viewport_left   = RC3D_VIEWPORT_LEFT;
@@ -34,7 +30,7 @@ int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
 #define RC3D_TURN_SPEED        2.4f
 #define RC3D_MOVE_SPEED        2.0f
 #define RC3D_MOUSE_SENS        0.0035f
-#define RC3D_EPSILON           0.0001f
+#define RC3D_EPSILON           0.000000f
 #define RC3D_COLLISION_SKIN    0.02f
 #define RC3D_FIXED_SHIFT       16
 #define RC3D_FIXED_ONE         (1 << RC3D_FIXED_SHIFT)
@@ -46,6 +42,15 @@ int g_viewport_height = RC3D_VIEWPORT_HEIGHT;
 #define RC3D_MAX_MASKED_TRACE_DEPTH 8
 #define RC3D_MAX_WALL_SPANS_PER_COLUMN 32
 #define RC3D_DEPTH_SCALE       256.0f
+#define RC3D_VISIBLE_TRACE_CACHE_SEGMENTS 21
+#define RC3D_VISIBLE_TRACE_CLIP_BITS 10u
+#define RC3D_VISIBLE_TRACE_CLIP_MASK ((1u << RC3D_VISIBLE_TRACE_CLIP_BITS) - 1u)
+#define RC3D_VISIBLE_TRACE_SECTOR_BITS (32u - (RC3D_VISIBLE_TRACE_CLIP_BITS * 2u))
+#define RC3D_VISIBLE_TRACE_SECTOR_MASK ((1u << RC3D_VISIBLE_TRACE_SECTOR_BITS) - 1u)
+
+#if SCREEN_H > RC3D_VISIBLE_TRACE_CLIP_MASK
+#error "Visible trace cache clip packing needs more bits for current SCREEN_H"
+#endif
 
 int bShowMiniMap = 1;
 int bShowProfiler = 0;
@@ -59,8 +64,6 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define PLAYER_STEPUP          0.35f
 #define PLAYER_RADIUS          0.40f
 
-#define RC3D_TEX_SIZE          64
-#define RC3D_TEX_MASK          (RC3D_TEX_SIZE - 1)
 
 #define RC3D_LIGHT_BANK_START            64
 #define RC3D_LIGHT_BANK_SIZE             64
@@ -339,75 +342,12 @@ static void rc3dDrawProfiler(void)
 #endif
 
 
-typedef int32_t RC3D_Fixed;
 
-typedef struct {
-    RC3D_Fixed x;
-    RC3D_Fixed y;
-} RC3D_FixedVec2;
-
-typedef struct {
-    float x;
-    float y;
-    RC3D_Fixed xFixed;
-    RC3D_Fixed yFixed;
-    float z;
-    float vz;
-    float tHeadbob;
-    float angle;
-    int sector;
-} RC3D_Player;
-
-typedef struct {
-    float t;
-    int wallIndex;
-    int hit;
-} RC3D_WallHit;
-
-typedef struct {
-    int hit;
-    int wallIndex;
-    float normalX;
-    float normalY;
-    float penetration;
-} RC3D_BlockingContact;
-
-typedef struct {
-    uint8_t pix[RC3D_TEX_SIZE * RC3D_TEX_SIZE];
-} RC3D_Texture;
-
-typedef struct {
-    float x;
-    float y;
-    RC3D_Fixed xFixed;
-    RC3D_Fixed yFixed;
-    float baseZ;
-    float width;
-    float height;
-    int16_t sector;
-    uint8_t texId;
-    uint8_t inUse;
-    uint8_t active;
-    uint8_t reserved;
-} RC3D_Sprite;
-
-typedef struct {
-    int spriteId;
-    float camDepth;
-} RC3D_SpriteOrderEntry;
-
-typedef struct {
-    int16_t y0;
-    int16_t y1;
-    uint16_t depth;
-} RC3D_WallDepthSpan;
 
 static RC3D_Player g_player;
 static RC3D_Sprite g_sprites[RC3D_MAX_SPRITES];
-static RC3D_SpriteOrderEntry g_spriteOrder[RC3D_MAX_SPRITES];
-static int g_demoSpriteA = RC3D_INVALID_SPRITE;
-static int g_demoSpriteB = RC3D_INVALID_SPRITE;
-static int g_demoSpriteGricy = RC3D_INVALID_SPRITE;
+//static int g_demoSpriteA = RC3D_INVALID_SPRITE;
+//static int g_demoSpriteB = RC3D_INVALID_SPRITE;
 
 static const RC3D_Map *g_map = &g_rc3dDemoMap;
 static RC3D_Map g_loadedMap;
@@ -422,6 +362,8 @@ static float projPlaneGlobal = 0.0f;
 
 static RC3D_Texture g_rc3dTextures[256];
 static int g_rc3dTexturesInit = 0;
+static uint64_t g_textureTransparentColumnMask[256];
+static uint8_t g_textureHasTransparency[256];
 static uint8_t g_lightVariantBright[256];
 static uint8_t g_lightVariantMid[256];
 static uint8_t g_lightVariantDark[256];
@@ -500,13 +442,6 @@ typedef struct {
     float planeLightLen;
 } RC3D_ColumnRayCache;
 
-typedef struct {
-    int16_t sector;
-    int16_t clipTop;
-    int16_t clipBottom;
-    uint16_t depthLimit;
-} RC3D_VisibleTraceSegment;
-
 typedef enum {
     RC3D_SHADEMODE_BRIGHT = 0,
     RC3D_SHADEMODE_MID,
@@ -534,20 +469,88 @@ static int g_invDTableInit = 0;
 static uint16_t g_skyXTable[SCREEN_W];
 static RC3D_ColumnRayCache g_columnRayCache[SCREEN_W];
 static int g_columnRayCacheCount = 0;
-static RC3D_VisibleTraceSegment g_visibleTraceCache[SCREEN_W][RC3D_MAX_PORTAL_STEPS];
-static uint8_t g_visibleTraceCount[SCREEN_W];
-static uint8_t g_visibleTraceBuilt[SCREEN_W];
-static RC3D_WallDepthSpan g_wallDepthSpans[SCREEN_W][RC3D_MAX_WALL_SPANS_PER_COLUMN];
-static uint8_t g_wallDepthSpanCount[SCREEN_W];
+static RC3D_VisibleSprite g_visibleSprites[RC3D_MAX_SPRITES];
+static int g_visibleSpriteCount = 0;
+/*
+    63,360 bytes total:
+    - packed visible trace cache: 40,320 bytes
+    - trace depth cache: 20,160 bytes
+    - per-column trace counts/overflow: 960 bytes
+    - per-column sprite coverage: 1,920 bytes
+*/
+static uint32_t g_cachedVisibleTracePacked[SCREEN_W][RC3D_VISIBLE_TRACE_CACHE_SEGMENTS];
+static uint16_t g_cachedVisibleTraceDepth[SCREEN_W][RC3D_VISIBLE_TRACE_CACHE_SEGMENTS];
+static uint8_t g_cachedVisibleTraceCount[SCREEN_W];
+static uint8_t g_cachedVisibleTraceOverflow[SCREEN_W];
+static int16_t g_spriteColumnFirstIndex[SCREEN_W];
+static int16_t g_spriteColumnLastIndex[SCREEN_W];
+static RC3D_ColumnContext g_columnContext = { 0 };
+static int g_traceSuppressSectorPlanes = 0;
 
 static int rc3dEnsurePlayerSectorValid(void);
-static void rc3dBuildVisibleTraceCacheForColumn(int sx);
+static void rc3dBuildTextureTransparencyMasks(void);
+static inline int rc3dTextureColumnNeedsMaskedTrace(uint8_t texId);
+static int rc3dBuildVisibleSpriteList(float eyeZ, float dirX, float dirY);
+static void rc3dBuildSpriteColumnCoverage(void);
+static void rc3dRenderSpriteColumn(
+    int sx,
+    float eyeZ,
+    const RC3D_VisibleTraceSegment *visibleTrace,
+    uint8_t visibleTraceCount,
+    const RC3D_WallDepthSpan *wallSpans,
+    uint8_t wallSpanCount);
 
 static int rc3dPositionBlockedInSectorFixed(
     RC3D_Fixed px,
     RC3D_Fixed py,
     RC3D_Fixed radius,
     int sectorIndex);
+
+
+
+
+
+
+
+static uint32_t g_randState = 0x12345678u;
+
+void randSeed(uint32_t seed)
+{
+    g_randState = seed ? seed : 0x12345678u;
+}
+
+uint32_t rand32(void)
+{
+    g_randState ^= g_randState << 13;
+    g_randState ^= g_randState >> 17;
+    g_randState ^= g_randState << 5;
+    return g_randState;
+}
+
+uint32_t randRange(uint32_t min, uint32_t max)
+{
+    if (max <= min) return min;
+    return min + (rand32() % (max - min + 1));
+}
+
+float randFloat(void)
+{
+    return (rand32() / 4294967295.0f);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static inline int rc3dViewportScreenX(int sx){
     return g_viewport_left + sx;
@@ -599,8 +602,24 @@ static void rc3dBuildColumnRayCache(float dirX, float dirY, float planeX, float 
     g_columnRayCacheCount = g_viewport_width;
 }
 
-static inline void rc3dInvalidateVisibleTraceCache(void){
-    memset(g_visibleTraceBuilt, 0, sizeof(g_visibleTraceBuilt));
+static inline void rc3dSetColumnContext(
+    RC3D_VisibleTraceSegment *visibleTrace,
+    uint8_t *visibleTraceCount,
+    RC3D_WallDepthSpan *wallSpans,
+    uint8_t *wallSpanCount)
+{
+    g_columnContext.visibleTrace = visibleTrace;
+    g_columnContext.visibleTraceCount = visibleTraceCount;
+    g_columnContext.wallSpans = wallSpans;
+    g_columnContext.wallSpanCount = wallSpanCount;
+
+    if (visibleTraceCount) {
+        *visibleTraceCount = 0u;
+    }
+
+    if (wallSpanCount) {
+        *wallSpanCount = 0u;
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -683,7 +702,6 @@ static void rc3dBuildTrigTables(void){
 }
 
 static void rc3dResetPlayerFromMapStart(void);
-static void rc3dInitTestSprite(void);
 
 static inline int rc3dAngleToLutIndex(float angle)
 {
@@ -723,49 +741,190 @@ static inline uint16_t rc3dEncodeDepth(float dist)
     }
 }
 
-static inline void rc3dClearWallDepthSpans(void)
-{
-    memset(g_wallDepthSpanCount, 0, sizeof(g_wallDepthSpanCount));
-}
-
 static inline void rc3dRecordWallDepthSpan(int sx, int y0, int y1, float hitDist)
 {
     uint8_t count;
+    (void)sx;
 
-    if ((unsigned)sx >= (unsigned)g_viewport_width) return;
     if (y0 > y1) return;
+    if (!g_columnContext.wallSpans || !g_columnContext.wallSpanCount) return;
 
-    count = g_wallDepthSpanCount[sx];
+    count = *g_columnContext.wallSpanCount;
     if (count >= RC3D_MAX_WALL_SPANS_PER_COLUMN) {
         return;
     }
 
-    g_wallDepthSpans[sx][count].y0 = (int16_t)y0;
-    g_wallDepthSpans[sx][count].y1 = (int16_t)y1;
-    g_wallDepthSpans[sx][count].depth = rc3dEncodeDepth(hitDist);
-    g_wallDepthSpanCount[sx] = (uint8_t)(count + 1);
+    g_columnContext.wallSpans[count].y0 = (int16_t)y0;
+    g_columnContext.wallSpans[count].y1 = (int16_t)y1;
+    g_columnContext.wallSpans[count].depth = rc3dEncodeDepth(hitDist);
+    *g_columnContext.wallSpanCount = (uint8_t)(count + 1);
 
     RC3D_PROFILER_DO(g_profiler.wallSpans++);
 }
 
-static inline int rc3dWallSpansBlockPixel(int sx, int y, uint16_t spriteDepth)
+static inline void rc3dRecordVisibleTraceSegment(
+    int sector,
+    int clipTop,
+    int clipBottom,
+    uint16_t depthLimit)
 {
+    uint8_t count;
+
+    if (!g_columnContext.visibleTrace || !g_columnContext.visibleTraceCount) {
+        return;
+    }
+
+    if (clipTop > clipBottom) {
+        return;
+    }
+
+    count = *g_columnContext.visibleTraceCount;
+    if (count >= RC3D_MAX_PORTAL_STEPS) {
+        return;
+    }
+
+    g_columnContext.visibleTrace[count].sector = (int16_t)sector;
+    g_columnContext.visibleTrace[count].clipTop = (int16_t)clipTop;
+    g_columnContext.visibleTrace[count].clipBottom = (int16_t)clipBottom;
+    g_columnContext.visibleTrace[count].depthLimit = depthLimit;
+    *g_columnContext.visibleTraceCount = (uint8_t)(count + 1);
+
+    RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
+}
+
+static inline void rc3dRecordCachedVisibleTraceSegment(
+    int sx,
+    int sector,
+    int clipTop,
+    int clipBottom,
+    uint16_t depthLimit)
+{
+    uint8_t count;
+
     if ((unsigned)sx >= (unsigned)g_viewport_width) {
+        return;
+    }
+
+    if (g_spriteColumnFirstIndex[sx] < 0) {
+        return;
+    }
+
+    if (clipTop > clipBottom) {
+        return;
+    }
+
+    if ((unsigned)sector > RC3D_VISIBLE_TRACE_SECTOR_MASK ||
+        (unsigned)clipTop > RC3D_VISIBLE_TRACE_CLIP_MASK ||
+        (unsigned)clipBottom > RC3D_VISIBLE_TRACE_CLIP_MASK)
+    {
+        g_cachedVisibleTraceOverflow[sx] = 1u;
+        return;
+    }
+
+    count = g_cachedVisibleTraceCount[sx];
+    if (count >= RC3D_VISIBLE_TRACE_CACHE_SEGMENTS) {
+        g_cachedVisibleTraceOverflow[sx] = 1u;
+        return;
+    }
+
+    g_cachedVisibleTracePacked[sx][count] =
+        (((uint32_t)sector & RC3D_VISIBLE_TRACE_SECTOR_MASK) << (RC3D_VISIBLE_TRACE_CLIP_BITS * 2u)) |
+        (((uint32_t)clipTop & RC3D_VISIBLE_TRACE_CLIP_MASK) << RC3D_VISIBLE_TRACE_CLIP_BITS) |
+        ((uint32_t)clipBottom & RC3D_VISIBLE_TRACE_CLIP_MASK);
+    g_cachedVisibleTraceDepth[sx][count] = depthLimit;
+    g_cachedVisibleTraceCount[sx] = (uint8_t)(count + 1u);
+
+    RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
+}
+
+static inline int rc3dWallSpansBlockPixel(
+    const RC3D_WallDepthSpan *wallSpans,
+    uint8_t wallSpanCount,
+    int y,
+    uint16_t spriteDepth)
+{
+    if (!wallSpans || wallSpanCount == 0u) {
         return 0;
     }
 
-    const uint8_t count = g_wallDepthSpanCount[sx];
+    for (uint8_t i = 0; i < wallSpanCount; ++i) {
+        const RC3D_WallDepthSpan *span = &wallSpans[i];
 
-    for (uint8_t i = 0; i < count; ++i) {
-        const RC3D_WallDepthSpan *span = &g_wallDepthSpans[sx][i];
+        if (y >= span->y0 && y <= span->y1 && span->depth <= spriteDepth) {
+            return 1;
+        }
+    }
 
-        if (y < span->y0 || y > span->y1) {
+    return 0;
+}
+
+static inline int rc3dTraceVisibleSectorAtDepthCached(
+    int sx,
+    uint16_t targetDepthCode,
+    int *outSector,
+    int *outClipTop,
+    int *outClipBottom)
+{
+    const uint8_t visibleTraceCount =
+        ((unsigned)sx < (unsigned)g_viewport_width) ? g_cachedVisibleTraceCount[sx] : 0u;
+
+    RC3D_PROFILER_DO(g_profiler.spriteSectorTraces++);
+
+    if (visibleTraceCount == 0u) {
+        return 0;
+    }
+
+    for (uint8_t i = 0; i < visibleTraceCount; ++i) {
+        const uint16_t depthLimit = g_cachedVisibleTraceDepth[sx][i];
+        const uint32_t packed = g_cachedVisibleTracePacked[sx][i];
+
+        if (targetDepthCode > depthLimit) {
             continue;
         }
 
-        if (span->depth <= spriteDepth) {
-            return 1;
+        if (outSector) {
+            *outSector = (int)(packed >> (RC3D_VISIBLE_TRACE_CLIP_BITS * 2u));
         }
+
+        if (outClipTop) {
+            *outClipTop = (int)((packed >> RC3D_VISIBLE_TRACE_CLIP_BITS) & RC3D_VISIBLE_TRACE_CLIP_MASK);
+        }
+
+        if (outClipBottom) {
+            *outClipBottom = (int)(packed & RC3D_VISIBLE_TRACE_CLIP_MASK);
+        }
+
+        return 1;
+    }
+
+    return 0;
+}
+
+static inline int rc3dTraceVisibleSectorAtDepth(
+    const RC3D_VisibleTraceSegment *visibleTrace,
+    uint8_t visibleTraceCount,
+    uint16_t targetDepthCode,
+    int *outSector,
+    int *outClipTop,
+    int *outClipBottom)
+{
+    RC3D_PROFILER_DO(g_profiler.spriteSectorTraces++);
+
+    if (!visibleTrace || visibleTraceCount == 0u) {
+        return 0;
+    }
+
+    for (uint8_t i = 0; i < visibleTraceCount; ++i) {
+        const RC3D_VisibleTraceSegment *segment = &visibleTrace[i];
+
+        if (targetDepthCode > segment->depthLimit) {
+            continue;
+        }
+
+        if (outSector) *outSector = (int)segment->sector;
+        if (outClipTop) *outClipTop = (int)segment->clipTop;
+        if (outClipBottom) *outClipBottom = (int)segment->clipBottom;
+        return 1;
     }
 
     return 0;
@@ -1088,7 +1247,236 @@ static void rc3dBuildDefaultTextures(void)
         }
     }
 
+    rc3dBuildTextureTransparencyMasks();
     g_rc3dTexturesInit = 1;
+}
+
+uint8_t *rc3d_GetTexturePtr(uint8_t textureindex){
+    return g_rc3dTextures[textureindex].pix;
+}
+
+void copyTextureToTexture(uint8_t *from, uint8_t *to, int sizex, int sizey){
+    for(int p = 0; p < (sizex * sizey); p++){
+        *to++ = *from++;
+    }
+}
+
+
+
+
+void shiftTexture(uint8_t texIndex, int8_t dir)
+{
+    uint8_t *tex = rc3d_GetTexturePtr(texIndex);
+    if (!tex) return;
+
+    switch (dir) {
+        case TEXSHIFT_LEFT: /* left */
+            for (int y = 0; y < 64; y++) {
+                const int row = y * 64;
+                uint8_t first = tex[row];
+
+                for (int x = 0; x < 63; x++) {
+                    tex[row + x] = tex[row + x + 1];
+                }
+
+                tex[row + 63] = first;
+            }
+            break;
+
+        case TEXSHIFT_RIGHT: /* right */
+            for (int y = 0; y < 64; y++) {
+                const int row = y * 64;
+                uint8_t last = tex[row + 63];
+
+                for (int x = 63; x > 0; x--) {
+                    tex[row + x] = tex[row + x - 1];
+                }
+
+                tex[row] = last;
+            }
+            break;
+
+        case TEXSHIFT_UP: /* up */
+            for (int x = 0; x < 64; x++) {
+                uint8_t first = tex[x];
+
+                for (int y = 0; y < 63; y++) {
+                    tex[(y * 64) + x] = tex[((y + 1) * 64) + x];
+                }
+
+                tex[(63 * 64) + x] = first;
+            }
+            break;
+
+        case TEXSHIFT_DOWN: /* down */
+            for (int x = 0; x < 64; x++) {
+                uint8_t last = tex[(63 * 64) + x];
+
+                for (int y = 63; y > 0; y--) {
+                    tex[(y * 64) + x] = tex[((y - 1) * 64) + x];
+                }
+
+                tex[x] = last;
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+static void shiftTexturePixelsX(uint8_t *tex, int dx)
+{
+    if (!tex) return;
+
+    dx %= 64;
+    if (dx < 0) dx += 64;
+    if (dx == 0) return;
+
+    for (int y = 0; y < 64; y++) {
+        uint8_t row[64];
+        const int base = y * 64;
+
+        for (int x = 0; x < 64; x++) {
+            row[x] = tex[base + x];
+        }
+
+        for (int x = 0; x < 64; x++) {
+            tex[base + ((x + dx) & 63)] = row[x];
+        }
+    }
+}
+
+static void shiftTexturePixelsY(uint8_t *tex, int dy)
+{
+    if (!tex) return;
+
+    dy %= 64;
+    if (dy < 0) dy += 64;
+    if (dy == 0) return;
+
+    for (int x = 0; x < 64; x++) {
+        uint8_t col[64];
+
+        for (int y = 0; y < 64; y++) {
+            col[y] = tex[(y * 64) + x];
+        }
+
+        for (int y = 0; y < 64; y++) {
+            tex[(((y + dy) & 63) * 64) + x] = col[y];
+        }
+    }
+}
+
+void shiftTextureFX(
+    uint8_t texIndex,
+    uint8_t flags,
+    float speedscalex,
+    float speedscaley,
+    float timescalex,
+    float timescaley,
+    float frametime)
+{
+    uint8_t *tex = rc3d_GetTexturePtr(texIndex);
+    if (!tex) return;
+
+    if (speedscalex < 0.0f) speedscalex = 0.0f;
+    if (speedscaley < 0.0f) speedscaley = 0.0f;
+
+    {
+        static float phaseX[256]  = {0.0f};
+        static float phaseY[256]  = {0.0f};
+        static float scrollX[256] = {0.0f};
+        static float scrollY[256] = {0.0f};
+        static int   lastX[256]   = {0};
+        static int   lastY[256]   = {0};
+
+        float wantedX;
+        float wantedY;
+        int newX;
+        int newY;
+        int dx;
+        int dy;
+
+        /* tune these */
+        const float waveSpeedX = timescalex;   /* radians/sec */
+        const float waveSpeedY = timescaley;   /* radians/sec */
+
+        /* advance wave time independently of amplitude */
+        phaseX[texIndex] += frametime * waveSpeedX;
+        phaseY[texIndex] += frametime * waveSpeedY;
+
+        if (phaseX[texIndex] >= (float)(M_PI * 2.0))
+            phaseX[texIndex] -= (float)(M_PI * 2.0);
+
+        if (phaseY[texIndex] >= (float)(M_PI * 2.0))
+            phaseY[texIndex] -= (float)(M_PI * 2.0);
+
+        /* continuous scroll accumulation */
+        if (flags & TEXSHIFT_LEFT)  scrollX[texIndex] -= speedscalex * frametime;
+        if (flags & TEXSHIFT_RIGHT) scrollX[texIndex] += speedscalex * frametime;
+        if (flags & TEXSHIFT_UP)    scrollY[texIndex] -= speedscaley * frametime;
+        if (flags & TEXSHIFT_DOWN)  scrollY[texIndex] += speedscaley * frametime;
+
+        wantedX = scrollX[texIndex];
+        wantedY = scrollY[texIndex];
+
+        /* smooth whole-texture oscillation */
+        if (flags & TEXSHIFT_SINOUSSX) wantedX += sinf(phaseX[texIndex]) * speedscalex;
+        if (flags & TEXSHIFT_SINOUSSY) wantedY += sinf(phaseY[texIndex]) * speedscaley;
+
+        if (flags & TEXSHIFT_SINOUSCX) wantedX += cosf(phaseX[texIndex]) * speedscalex;
+        if (flags & TEXSHIFT_SINOUSCY) wantedY += cosf(phaseY[texIndex]) * speedscaley;
+
+        /* use nearest whole pixel, not truncation */
+        newX = (int)((wantedX >= 0.0f) ? (wantedX + 0.5f) : (wantedX - 0.5f));
+        newY = (int)((wantedY >= 0.0f) ? (wantedY + 0.5f) : (wantedY - 0.5f));
+
+        dx = newX - lastX[texIndex];
+        dy = newY - lastY[texIndex];
+
+        if (dx) shiftTexturePixelsX(tex, dx);
+        if (dy) shiftTexturePixelsY(tex, dy);
+
+        lastX[texIndex] = newX;
+        lastY[texIndex] = newY;
+    }
+}
+
+
+static void rc3dBuildTextureTransparencyMasks(void)
+{
+    for (int texId = 0; texId < 256; ++texId) {
+        uint64_t columnMask = 0u;
+        int hasTransparency = 0;
+
+        for (int x = 0; x < RC3D_TEX_SIZE; ++x) {
+            for (int y = 0; y < RC3D_TEX_SIZE; ++y) {
+                if (g_rc3dTextures[texId].pix[(y * RC3D_TEX_SIZE) + x] == RC3D_SPRITE_TEX_TRANSPARENT) {
+                    columnMask |= (1ULL << x);
+                    hasTransparency = 1;
+                    break;
+                }
+            }
+        }
+
+        g_textureTransparentColumnMask[texId] = columnMask;
+        g_textureHasTransparency[texId] = (uint8_t)hasTransparency;
+    }
+}
+
+static inline int rc3dTextureColumnNeedsMaskedTrace(uint8_t texId)
+{
+    if (!g_textureHasTransparency[texId]) {
+        return 0;
+    }
+
+    if ((wallTexRotSinGlobal > -0.0001f) && (wallTexRotSinGlobal < 0.0001f)) {
+        const float texX = wallTexUBaseGlobal * wallTexRotCosGlobal;
+        const int tx = (((int32_t)(texX * 65536.0f)) >> 16) & RC3D_TEX_MASK;
+        return (int)((g_textureTransparentColumnMask[texId] >> tx) & 1ULL);
+    }
+
+    return 1;
 }
 
 #define RC3D_TEX_WALL_ANGLE_SHIFT   4u
@@ -1173,12 +1561,11 @@ void rc3dSetDrawDistance(float distance)
 void rc3dClearSprites(void)
 {
     memset(g_sprites, 0, sizeof(g_sprites));
-    memset(g_spriteOrder, 0, sizeof(g_spriteOrder));
-    g_demoSpriteA = RC3D_INVALID_SPRITE;
-    g_demoSpriteB = RC3D_INVALID_SPRITE;
+    memset(g_visibleSprites, 0, sizeof(g_visibleSprites));
+    g_visibleSpriteCount = 0;
 }
 
-int rc3dSpriteCreate(float x, float y, float width, float height, uint8_t texId)
+int rc3dSpriteCreate(float x, float y, float z, float width, float height, uint8_t texId)
 {
     for (int i = 0; i < RC3D_MAX_SPRITES; ++i) {
         RC3D_Sprite *sprite = &g_sprites[i];
@@ -1197,7 +1584,8 @@ int rc3dSpriteCreate(float x, float y, float width, float height, uint8_t texId)
         sprite->height = (height > RC3D_EPSILON) ? height : RC3D_EPSILON;
 
         rc3dSetSpriteWorldXYFixed(sprite, rc3dFloatToFixed(x), rc3dFloatToFixed(y));
-        rc3dRefreshSpritePlacement(sprite);
+        rc3dRefreshSpritePlacement(sprite); // usually just used to put the sprite on the floor, Comment out if not wanted later
+        sprite->baseZ = z;
         return i;
     }
 
@@ -1901,7 +2289,9 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             !readExact(f, &sectors[i].floorTexAngle, sizeof(float)) ||
             !readExact(f, &sectors[i].ceilTexScaleX, sizeof(float)) ||
             !readExact(f, &sectors[i].ceilTexScaleY, sizeof(float)) ||
-            !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))) {
+            !readExact(f, &sectors[i].ceilTexAngle, sizeof(float))  ||
+            !readExact(f, &sectors[i].sectorFlags, sizeof(uint32_t))
+        ) {
             fclose(f);
             free(verts);
             free(walls);
@@ -1913,6 +2303,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         sectors[i].wallStart = (int)wallStart;
         sectors[i].wallCount = (int)wallCount_i;
         sectors[i].boundaryCount = (int)boundaryCount;
+        sectors[i].originalLightLevel = sectors[i].glowlevel;
+        sectors[i].PulsatingLightTimeDir = 1;
         //sectors[i].texFlags = 0xf;  // everything is clamped for now ;)
         
     }
@@ -2201,9 +2593,7 @@ static int pointInSectorFixed(RC3D_Fixed px, RC3D_Fixed py, int sectorIndex)
 
         if ((ay > py) != (by > py)) {
             const int64_t dy = (int64_t)(by - ay);
-            const int64_t xHit =
-                (int64_t)ax +
-                (((int64_t)(py - ay) * (int64_t)(bx - ax)) / dy);
+            const int64_t xHit = (int64_t)ax + (((int64_t)(py - ay) * (int64_t)(bx - ax)) / dy);
 
             if ((int64_t)px < xHit) {
                 inside ^= 1;
@@ -2278,7 +2668,7 @@ static int rc3dBuildPortalView(const RC3D_Wall *w, int sectorIndex, RC3D_PortalV
         outView->openBottom = nextSec->floorHeight;
     }
 
-    outView->hasUpper = (sec->ceilHeight > (outView->openTop + RC3D_EPSILON)) ? 1u : 0u;
+    outView->hasUpper = (sec->ceilHeight >  (outView->openTop + RC3D_EPSILON)) ? 1u : 0u;
     outView->hasLower = (sec->floorHeight < (outView->openBottom - RC3D_EPSILON)) ? 1u : 0u;
 
     return 1;
@@ -3763,7 +4153,7 @@ static void drawBackground(void)
 {
     const float fullTurn = (float)(M_PI * 2.0f);
     const float leftAng = g_player.angle - g_halfFovRad;
-    const float skyRepeat = 4.0f;
+    const float skyRepeat = 2.0f;
     const int32_t oneFixed = 1 << 16;
     const int viewportHalfHeight = g_viewport_height / 1.50;
 
@@ -3803,6 +4193,9 @@ static void drawBackground(void)
     }
 }
 
+
+static int g_traceAllowBackSectorPlaneFills = 0;
+//recursive function, CEARLY with the STACK!! GOBBLE GOBBLE
 static inline void renderColumnTrace(
     int sx,
     float rdx,
@@ -3823,7 +4216,8 @@ static inline void renderColumnTrace(
     const float playerY = g_player.y;
     const float playerZ = g_renderEyeZ;
 
-    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
+    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) 
+    {
         RC3D_PROFILER_DO(g_profiler.portalSteps++);
 
         if ((unsigned)currentSector >= (unsigned)g_map->sectorCount) {
@@ -3837,6 +4231,11 @@ static inline void renderColumnTrace(
         {
             const RC3D_Sector *sec = &g_map->sectors[currentSector];
             const int stepPreferredWallIndex = (step == 0) ? preferredWallIndex : -1;
+            const int allowNormalPlaneFills = !g_traceSuppressSectorPlanes;
+
+            if (g_traceSuppressSectorPlanes && g_traceAllowBackSectorPlaneFills) {
+                fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+            }
             const RC3D_WallHit hit = findNearestWallInSector(
                 currentSector,
                 playerX, playerY,
@@ -3847,7 +4246,11 @@ static inline void renderColumnTrace(
                 stepPreferredWallIndex);
 
             if (!hit.hit) {
-                fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+                rc3dRecordCachedVisibleTraceSegment(sx, currentSector, clipTop, clipBottom, UINT16_MAX);
+
+                if (allowNormalPlaneFills) {
+                    fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+                }
                 return;
             }
 
@@ -3869,6 +4272,13 @@ static inline void renderColumnTrace(
                 if (correctedDist <= RC3D_EPSILON) {
                     return;
                 }
+
+                rc3dRecordCachedVisibleTraceSegment(
+                    sx,
+                    currentSector,
+                    clipTop,
+                    clipBottom,
+                    rc3dEncodeDepth(correctedDist));
 
                 {
                     const float wallDx = wc ? wc->dx : (vb->x - va->x);
@@ -3963,15 +4373,19 @@ static inline void renderColumnTrace(
 
                     //const uint8_t wallClass = wc ? wc->wallClass : RC3D_WALLCLASS_NONE;
                     const uint8_t wallClass = wc ? wc->wallClass : rc3dClassifyWallFlags(w->flags);
-                    const int wallMasked = ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
+                    const int wallTransparent = ((w->flags & RC3D_WALL_TRANSPARENCY) != 0);
 
                     switch (wallClass) {
                         case RC3D_WALLCLASS_SOLID:
                         {
-                            fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
-                            fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            const int midMasked = wallTransparent && rc3dTextureColumnNeedsMaskedTrace(w->midColor);
 
-                            if (wallMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
+                            if (allowNormalPlaneFills) {
+                                fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
+                                fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            }
+
+                            if (midMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
                                 const float savedWallTexUBase = wallTexUBaseGlobal;
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
@@ -4059,11 +4473,14 @@ static inline void renderColumnTrace(
                         {
                             const int midTopY = rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
                             const int midBotY = rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
+                            const int midMasked = wallTransparent && rc3dTextureColumnNeedsMaskedTrace(w->midColor);
 
-                            fillSectorColumnSpan(sx, clipTop, midTopY - 1, sec, horizon, rdx, rdy);
-                            fillSectorColumnSpan(sx, midBotY + 1, clipBottom, sec, horizon, rdx, rdy);
+                            if (allowNormalPlaneFills) {
+                                fillSectorColumnSpan(sx, clipTop, midTopY - 1, sec, horizon, rdx, rdy);
+                                fillSectorColumnSpan(sx, midBotY + 1, clipBottom, sec, horizon, rdx, rdy);
+                            }
 
-                            if (wallMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
+                            if (midMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
                                 int maskedClipTop = clipTop;
                                 int maskedClipBottom = clipBottom;
 
@@ -4127,32 +4544,100 @@ static inline void renderColumnTrace(
                         {
                             const int openTopY = rc3dProjectTopPixel(horizon, w->openTop, playerZ, scale);
                             const int openBotY = rc3dProjectBottomPixel(horizon, w->openBottom, playerZ, scale);
+                            const int upperMasked =
+                                ((w->flags & RC3D_WALL_UPPER) != 0) &&
+                                wallTransparent &&
+                                rc3dTextureColumnNeedsMaskedTrace(w->upperColor);
+                            const int lowerMasked =
+                                ((w->flags & RC3D_WALL_LOWER) != 0) &&
+                                wallTransparent &&
+                                rc3dTextureColumnNeedsMaskedTrace(w->lowerColor);
 
-                            fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
-                            fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            if (allowNormalPlaneFills) {
+                                fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
+                                fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            }
+
+                            if ((upperMasked || lowerMasked) && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
+                                const int maskedClipTop = clampi(secTop, clipTop, clipBottom);
+                                const int maskedClipBottom = clampi(secBot, clipTop, clipBottom);
+                                const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
+                                const float savedWallTexRotCos = wallTexRotCosGlobal;
+                                const float savedWallTexRotSin = wallTexRotSinGlobal;
+                                const float savedWallShadeBias = g_wallShadeBiasGlobal;
+
+                                if (maskedClipTop <= maskedClipBottom) {
+                                    renderColumnTrace(
+                                        sx,
+                                        rdx,
+                                        rdy,
+                                        projPlane,
+                                        horizon,
+                                        currentSector,
+                                        maskedClipTop,
+                                        maskedClipBottom,
+                                        hit.wallIndex,
+                                        -1,
+                                        hit.t + RC3D_EPSILON,
+                                        maskedDepth + 1,
+                                        -1,
+                                        NULL);
+                                }
+
+                                wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexInvScaleYGlobal = savedWallTexInvScaleY;
+                                wallTexRotCosGlobal = savedWallTexRotCos;
+                                wallTexRotSinGlobal = savedWallTexRotSin;
+                                g_wallShadeBiasGlobal = savedWallShadeBias;
+                            }
 
                             if (w->flags & RC3D_WALL_UPPER) {
-                                renderTexturedBandIfVisible(
-                                    sx, secTop, openTopY - 1,
-                                    w->upperColor,
-                                    w->texture_flags,
-                                    sec->ceilHeight,
-                                    w->openTop,
-                                    correctedDist,
-                                    projPlane,
-                                    clipTop, clipBottom);
+                                if (upperMasked) {
+                                    renderMaskedTexturedBandIfVisible(
+                                        sx, secTop, openTopY - 1,
+                                        w->upperColor,
+                                        w->texture_flags,
+                                        sec->ceilHeight,
+                                        w->openTop,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                } else {
+                                    renderTexturedBandIfVisible(
+                                        sx, secTop, openTopY - 1,
+                                        w->upperColor,
+                                        w->texture_flags,
+                                        sec->ceilHeight,
+                                        w->openTop,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                }
                             }
 
                             if (w->flags & RC3D_WALL_LOWER) {
-                                renderTexturedBandIfVisible(
-                                    sx, openBotY + 1, secBot,
-                                    w->lowerColor,
-                                    w->texture_flags,
-                                    w->openBottom,
-                                    sec->floorHeight,
-                                    correctedDist,
-                                    projPlane,
-                                    clipTop, clipBottom);
+                                if (lowerMasked) {
+                                    renderMaskedTexturedBandIfVisible(
+                                        sx, openBotY + 1, secBot,
+                                        w->lowerColor,
+                                        w->texture_flags,
+                                        w->openBottom,
+                                        sec->floorHeight,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                } else {
+                                    renderTexturedBandIfVisible(
+                                        sx, openBotY + 1, secBot,
+                                        w->lowerColor,
+                                        w->texture_flags,
+                                        w->openBottom,
+                                        sec->floorHeight,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                }
                             }
 
                             return;
@@ -4188,16 +4673,45 @@ static inline void renderColumnTrace(
                             if (openBot > secBot) openBot = secBot;
                             if (openBot > clipBottom) openBot = clipBottom;
 
-                            fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
-                            fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            if (allowNormalPlaneFills) {
+                                fillSectorColumnSpan(sx, clipTop, secTop - 1, sec, horizon, rdx, rdy);
+                                fillSectorColumnSpan(sx, secBot + 1, clipBottom, sec, horizon, rdx, rdy);
+                            }
+
+                            const int upperMasked =
+                                portalView.hasUpper &&
+                                wallTransparent &&
+                                rc3dTextureColumnNeedsMaskedTrace(w->upperColor);
+                            const int lowerMasked =
+                                portalView.hasLower &&
+                                wallTransparent &&
+                                rc3dTextureColumnNeedsMaskedTrace(w->lowerColor);
+                            const int midMasked =
+                                ((w->flags & RC3D_WALL_MIDDLE) != 0) &&
+                                wallTransparent &&
+                                rc3dTextureColumnNeedsMaskedTrace(w->midColor);
+                            const int fullMaskedPortalTrace =
+                                (upperMasked || lowerMasked) &&
+                                (maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH);
 
                             /*
                                 Opening owns [openTop .. openBot]
                                 Upper wall owns [secTop .. openTop-1]
                                 Lower wall owns [openBot+1 .. secBot]
                             */
-                            portalClipTop = openTop;
-                            portalClipBottom = openBot;
+                            if (fullMaskedPortalTrace) {
+                                portalClipTop = secTop;
+                                if (portalClipTop < clipTop) portalClipTop = clipTop;
+
+                                portalClipBottom = secBot;
+                                if (portalClipBottom > clipBottom) portalClipBottom = clipBottom;
+                            } else if (g_traceSuppressSectorPlanes) {
+                                portalClipTop = clipTop;
+                                portalClipBottom = clipBottom;
+                            } else {
+                                portalClipTop = openTop;
+                                portalClipBottom = openBot;
+                            }
 
                             {
                                 int entryWallInNext = -1;
@@ -4206,9 +4720,19 @@ static inline void renderColumnTrace(
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
                                 const float savedWallShadeBias = g_wallShadeBiasGlobal;
+                                const int savedSuppressSectorPlanes = g_traceSuppressSectorPlanes;
+                                const int savedAllowBackSectorPlaneFills = g_traceAllowBackSectorPlaneFills;
 
                                 if (wc) {
                                     entryWallInNext = wc->backWallIndex;
+                                }
+
+                                if (fullMaskedPortalTrace) {
+                                    g_traceSuppressSectorPlanes = 1;
+                                    g_traceAllowBackSectorPlaneFills = 0;
+                                } else if (g_traceSuppressSectorPlanes) {
+                                    g_traceSuppressSectorPlanes = 0;
+                                    g_traceAllowBackSectorPlaneFills = 0;
                                 }
 
                                 if (portalClipTop <= portalClipBottom) {
@@ -4223,12 +4747,14 @@ static inline void renderColumnTrace(
                                         portalClipBottom,
                                         hit.wallIndex,
                                         entryWallInNext,
-                                        hit.t,
+                                        hit.t + RC3D_EPSILON,
                                         maskedDepth,
                                         -1,
                                         NULL);
                                 }
 
+                                g_traceSuppressSectorPlanes = savedSuppressSectorPlanes;
+                                g_traceAllowBackSectorPlaneFills = savedAllowBackSectorPlaneFills;
                                 wallTexUBaseGlobal = savedWallTexUBase;
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
@@ -4238,27 +4764,75 @@ static inline void renderColumnTrace(
                             }
 
                             if (portalView.hasUpper) {
-                                renderTexturedBandIfVisible(
-                                    sx, secTop, openTop - 1,
-                                    w->upperColor,
-                                    w->texture_flags,
-                                    sec->ceilHeight,
-                                    portalView.openTop,
-                                    correctedDist,
-                                    projPlane,
-                                    clipTop, clipBottom);
+                                if (upperMasked) {
+                                    renderMaskedTexturedBandIfVisible(
+                                        sx, secTop, openTop - 1,
+                                        w->upperColor,
+                                        w->texture_flags,
+                                        sec->ceilHeight,
+                                        portalView.openTop,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                } else {
+                                    renderTexturedBandIfVisible(
+                                        sx, secTop, openTop - 1,
+                                        w->upperColor,
+                                        w->texture_flags,
+                                        sec->ceilHeight,
+                                        portalView.openTop,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                }
                             }
 
                             if (portalView.hasLower) {
-                                renderTexturedBandIfVisible(
-                                    sx, openBot + 1, secBot,
-                                    w->lowerColor,
-                                    w->texture_flags,
-                                    portalView.openBottom,
-                                    sec->floorHeight,
-                                    correctedDist,
-                                    projPlane,
-                                    clipTop, clipBottom);
+                                if (lowerMasked) {
+                                    renderMaskedTexturedBandIfVisible(
+                                        sx, openBot + 1, secBot,
+                                        w->lowerColor,
+                                        w->texture_flags,
+                                        portalView.openBottom,
+                                        sec->floorHeight,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                } else {
+                                    renderTexturedBandIfVisible(
+                                        sx, openBot + 1, secBot,
+                                        w->lowerColor,
+                                        w->texture_flags,
+                                        portalView.openBottom,
+                                        sec->floorHeight,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                }
+                            }
+
+                            if (w->flags & RC3D_WALL_MIDDLE) {
+                                if (midMasked) {
+                                    renderMaskedTexturedBandIfVisible(
+                                        sx, openTop, openBot,
+                                        w->midColor,
+                                        w->texture_flags,
+                                        portalView.openTop,
+                                        portalView.openBottom,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                } else {
+                                    renderTexturedBandIfVisible(
+                                        sx, openTop, openBot,
+                                        w->midColor,
+                                        w->texture_flags,
+                                        portalView.openTop,
+                                        portalView.openBottom,
+                                        correctedDist,
+                                        projPlane,
+                                        clipTop, clipBottom);
+                                }
                             }
 
                             return;
@@ -4266,7 +4840,9 @@ static inline void renderColumnTrace(
 
                         default:
                         {
-                            fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+                            if (allowNormalPlaneFills) {
+                                fillSectorColumnSpan(sx, clipTop, clipBottom, sec, horizon, rdx, rdy);
+                            }
                             return;
                         }
                     }
@@ -4277,8 +4853,7 @@ static inline void renderColumnTrace(
 }
 
 
-
-static void rc3dBuildVisibleTraceCacheForColumn(int sx)
+static void rc3dBuildVisibleTraceForColumn(int sx)
 {
     const float playerX = g_player.x;
     const float playerY = g_player.y;
@@ -4293,16 +4868,15 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
     int ignoreWallIndexB = -1;
     float rayMinT = 0.0f;
 
+    if (!g_columnContext.visibleTrace || !g_columnContext.visibleTraceCount) {
+        return;
+    }
+
+    *g_columnContext.visibleTraceCount = 0u;
+
     if ((unsigned)sx >= (unsigned)g_viewport_width) {
         return;
     }
-
-    if (g_visibleTraceBuilt[sx]) {
-        return;
-    }
-
-    g_visibleTraceBuilt[sx] = 1u;
-    g_visibleTraceCount[sx] = 0u;
 
     if ((unsigned)sx < (unsigned)g_columnRayCacheCount) {
         rdx = g_columnRayCache[sx].rdx;
@@ -4321,7 +4895,8 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
         rdy = dirY + (planeY * cameraX);
     }
 
-    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
+    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step)
+    {
         RC3D_PROFILER_DO(g_profiler.portalSteps++);
         RC3D_WallHit hit;
         const RC3D_Sector *sec;
@@ -4355,14 +4930,7 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             -1);
 
         if (!hit.hit) {
-            if (clipTop <= clipBottom && g_visibleTraceCount[sx] < RC3D_MAX_PORTAL_STEPS) {
-                RC3D_VisibleTraceSegment *segment = &g_visibleTraceCache[sx][g_visibleTraceCount[sx]++];
-                segment->sector = (int16_t)currentSector;
-                segment->clipTop = (int16_t)clipTop;
-                segment->clipBottom = (int16_t)clipBottom;
-                segment->depthLimit = UINT16_MAX;
-                RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
-            }
+            rc3dRecordVisibleTraceSegment(currentSector, clipTop, clipBottom, UINT16_MAX);
             return;
         }
 
@@ -4371,14 +4939,11 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
             return;
         }
 
-        if (clipTop <= clipBottom && g_visibleTraceCount[sx] < RC3D_MAX_PORTAL_STEPS) {
-            RC3D_VisibleTraceSegment *segment = &g_visibleTraceCache[sx][g_visibleTraceCount[sx]++];
-            segment->sector = (int16_t)currentSector;
-            segment->clipTop = (int16_t)clipTop;
-            segment->clipBottom = (int16_t)clipBottom;
-            segment->depthLimit = rc3dEncodeDepth(correctedDist);
-            RC3D_PROFILER_DO(g_profiler.visibleTraceSegments++);
-        }
+        rc3dRecordVisibleTraceSegment(
+            currentSector,
+            clipTop,
+            clipBottom,
+            rc3dEncodeDepth(correctedDist));
 
         w = &g_map->walls[hit.wallIndex];
 
@@ -4494,98 +5059,145 @@ static void rc3dBuildVisibleTraceCacheForColumn(int sx)
     }
 }
 
-static void renderCurrentSectorColumns(void)
+
+static int rc3dBuildVisibleSpriteList(float eyeZ, float dirX, float dirY)
 {
-    const float projPlane = g_projPlaneConst;
-    const int horizon = g_viewport_height / 2;
-    const float bobZ = sinf(g_player.tHeadbob) * 0.075f;
+    const float screenCenterX = (float)g_viewport_width * 0.5f;
+    int visibleCount = 0;
 
-    g_renderEyeZ = g_player.z + fabsf(bobZ);
-    projPlaneGlobal = projPlane;
-    horizonGlobal = horizon;
+    g_visibleSpriteCount = 0;
 
-    float dirX = 1.0f;
-    float dirY = 0.0f;
+    for (int i = 0; i < RC3D_MAX_SPRITES; ++i) {
+        const RC3D_Sprite *sprite = &g_sprites[i];
+        const RC3D_Sector *sec = NULL;
+        const uint8_t *texels;
+        const float toSpriteX = sprite->x - g_player.x;
+        const float toSpriteY = sprite->y - g_player.y;
+        const float camX = (toSpriteX * -dirY) + (toSpriteY * dirX);
+        const float camDepth = (toSpriteX * dirX) + (toSpriteY * dirY);
+        float scale;
+        int leftX;
+        int rightX;
+        int topY;
+        int bottomY;
+        int unclampedWidth;
+        int unclampedHeight;
+        int spriteClipTop = 0;
+        int spriteClipBottom = g_viewport_height - 1;
+        uint8_t spriteGlow = 0u;
+        int insertAt;
 
-    rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
-
-    const float planeScale = g_planeScaleConst;
-    const float planeX = -dirY * planeScale;
-    const float planeY = dirX * planeScale;
-
-    rc3dBuildColumnRayCache(dirX, dirY, planeX, planeY);
-    rc3dInvalidateVisibleTraceCache();
-
-    {
-        int preferredWallIndex = -1;
-
-        RC3D_PROFILER_DO(g_profiler.rays = (g_viewport_width > 0) ? (uint32_t)g_viewport_width : 0u;);
-
-        for (int sx = 0; sx < g_viewport_width; ++sx) {
-            const RC3D_ColumnRayCache *rayCache = &g_columnRayCache[sx];
-            int firstHitWallIndex = -1;
-
-            renderColumnTrace(
-                sx,
-                rayCache->rdx,
-                rayCache->rdy,
-                projPlane,
-                horizon,
-                g_player.sector,
-                0,
-                g_viewport_height - 1,
-                -1,
-                -1,
-                0.0f,
-                0,
-                preferredWallIndex,
-                &firstHitWallIndex);
-
-            preferredWallIndex = firstHitWallIndex;
+        if (!sprite->inUse || !sprite->active) {
+            continue;
         }
-    }
-}
 
+        if (camDepth <= RC3D_EPSILON || camDepth >= g_draw_distance) {
+            continue;
+        }
 
+        RC3D_PROFILER_DO(g_profiler.spritesVisible++);
 
-static int rc3dTraceVisibleSectorAtDepth(
-    int sx,
-    float targetDepth,
-    int *outSector,
-    int *outClipTop,
-    int *outClipBottom)
-{
-    RC3D_PROFILER_DO(g_profiler.spriteSectorTraces++);
+        scale = g_projPlaneConst / camDepth;
+        leftX = (int)(screenCenterX + ((camX - (sprite->width * 0.5f)) * scale));
+        rightX = (int)(screenCenterX + ((camX + (sprite->width * 0.5f)) * scale));
+        topY = (int)(horizonGlobal - (((sprite->baseZ + sprite->height) - eyeZ) * scale));
+        bottomY = (int)(horizonGlobal - ((sprite->baseZ - eyeZ) * scale));
 
-    if ((unsigned)sx >= (unsigned)g_viewport_width) {
-        return 0;
-    }
+        if (leftX > rightX || topY > bottomY) {
+            continue;
+        }
 
-    if (!g_visibleTraceBuilt[sx]) {
-        rc3dBuildVisibleTraceCacheForColumn(sx);
-    }
+        if (rightX < 0 || leftX >= g_viewport_width || bottomY < 0 || topY >= g_viewport_height) {
+            continue;
+        }
 
-    {
-        const uint16_t targetDepthCode = rc3dEncodeDepth(targetDepth);
+        unclampedWidth = (rightX - leftX) + 1;
+        unclampedHeight = (bottomY - topY) + 1;
 
-        for (uint8_t i = 0; i < g_visibleTraceCount[sx]; ++i) {
-            const RC3D_VisibleTraceSegment *segment = &g_visibleTraceCache[sx][i];
+        if (unclampedWidth <= 0 || unclampedHeight <= 0) {
+            continue;
+        }
 
-            if (targetDepthCode > segment->depthLimit) {
-                continue;
+        if ((unsigned)sprite->sector < (unsigned)g_map->sectorCount) {
+            sec = &g_map->sectors[sprite->sector];
+            spriteClipTop = (int)(horizonGlobal - ((sec->ceilHeight - eyeZ) * scale));
+            spriteClipBottom = (int)(horizonGlobal - ((sec->floorHeight - eyeZ) * scale));
+            spriteGlow = sec->glowlevel;
+        }
+
+        if (visibleCount >= RC3D_MAX_SPRITES) {
+            break;
+        }
+
+        texels = g_rc3dTextures[sprite->texId].pix;
+        insertAt = visibleCount;
+
+        while (insertAt > 0) {
+            if (g_visibleSprites[insertAt - 1].camDepth >= camDepth) {
+                break;
             }
 
-            if (outSector) *outSector = (int)segment->sector;
-            if (outClipTop) *outClipTop = (int)segment->clipTop;
-            if (outClipBottom) *outClipBottom = (int)segment->clipBottom;
-            return 1;
+            g_visibleSprites[insertAt] = g_visibleSprites[insertAt - 1];
+            insertAt--;
         }
+
+        g_visibleSprites[insertAt].sprite = sprite;
+        g_visibleSprites[insertAt].texels = texels;
+        g_visibleSprites[insertAt].camDepth = camDepth;
+        g_visibleSprites[insertAt].scale = scale;
+        g_visibleSprites[insertAt].leftX = leftX;
+        g_visibleSprites[insertAt].rightX = rightX;
+        g_visibleSprites[insertAt].topY = topY;
+        g_visibleSprites[insertAt].bottomY = bottomY;
+        g_visibleSprites[insertAt].unclampedWidth = unclampedWidth;
+        g_visibleSprites[insertAt].unclampedHeight = unclampedHeight;
+        g_visibleSprites[insertAt].spriteClipTop = spriteClipTop;
+        g_visibleSprites[insertAt].spriteClipBottom = spriteClipBottom;
+        g_visibleSprites[insertAt].spriteGlow = spriteGlow;
+        g_visibleSprites[insertAt].depthCode = rc3dEncodeDepth(camDepth);
+
+        visibleCount++;
+        RC3D_PROFILER_DO(g_profiler.spritesDrawn++);
     }
 
-    return 0;
+    g_visibleSpriteCount = visibleCount;
+    return visibleCount;
 }
 
+static void rc3dBuildSpriteColumnCoverage(void)
+{
+    for (int sx = 0; sx < g_viewport_width; ++sx) {
+        g_spriteColumnFirstIndex[sx] = -1;
+        g_spriteColumnLastIndex[sx] = -1;
+        g_cachedVisibleTraceCount[sx] = 0u;
+        g_cachedVisibleTraceOverflow[sx] = 0u;
+    }
 
+    for (int i = 0; i < g_visibleSpriteCount; ++i) {
+        int leftX = g_visibleSprites[i].leftX;
+        int rightX = g_visibleSprites[i].rightX;
+
+        if (leftX < 0) {
+            leftX = 0;
+        }
+
+        if (rightX >= g_viewport_width) {
+            rightX = g_viewport_width - 1;
+        }
+
+        if (leftX > rightX) {
+            continue;
+        }
+
+        for (int sx = leftX; sx <= rightX; ++sx) {
+            if (g_spriteColumnFirstIndex[sx] < 0) {
+                g_spriteColumnFirstIndex[sx] = (int16_t)i;
+            }
+
+            g_spriteColumnLastIndex[sx] = (int16_t)i;
+        }
+    }
+}
 
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite)
 {
@@ -4603,238 +5215,309 @@ static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite)
     }
 }
 
-
-
-
-static void renderBillboardSprite(const RC3D_Sprite *sprite)
+static void rc3dRenderSpriteColumn(
+    int sx,
+    float eyeZ,
+    const RC3D_VisibleTraceSegment *visibleTrace,
+    uint8_t visibleTraceCount,
+    const RC3D_WallDepthSpan *wallSpans,
+    uint8_t wallSpanCount)
 {
-    const float screenCenterX = (float)g_viewport_width * 0.5f;
-    const float eyeZ = g_renderEyeZ;
-    const uint8_t *texels;
+    int spriteStart;
+    int spriteEnd;
 
-    float dirX = 1.0f;
-    float dirY = 0.0f;
-
-    float toSpriteX;
-    float toSpriteY;
-    float camX;
-    float camDepth;
-    float scale;
-
-    int leftX;
-    int rightX;
-    int topY;
-    int bottomY;
-    int unclampedWidth;
-    int unclampedHeight;
-
-    int spriteSector = -1;
-    int spriteClipTop = 0;
-    int spriteClipBottom = g_viewport_height - 1;
-    uint8_t spriteGlow = 0u;
-
-    uint16_t spriteDepth;
-
-    if (!sprite || !sprite->inUse || !sprite->active) return;
-
-    texels = g_rc3dTextures[sprite->texId].pix;
-    rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
-
-    toSpriteX = sprite->x - g_player.x;
-    toSpriteY = sprite->y - g_player.y;
-
-    camX = (toSpriteX * -dirY) + (toSpriteY * dirX);
-    camDepth = (toSpriteX * dirX) + (toSpriteY * dirY);
-
-    if (camDepth <= RC3D_EPSILON || camDepth >= g_draw_distance) {
+    if ((unsigned)sx >= (unsigned)g_viewport_width) {
         return;
     }
 
-    scale = projPlaneGlobal / camDepth;
+    spriteStart = g_spriteColumnFirstIndex[sx];
+    spriteEnd = g_spriteColumnLastIndex[sx];
 
-    leftX = (int)(screenCenterX + ((camX - (sprite->width * 0.5f)) * scale));
-    rightX = (int)(screenCenterX + ((camX + (sprite->width * 0.5f)) * scale));
-    topY = (int)(horizonGlobal - (((sprite->baseZ + sprite->height) - eyeZ) * scale));
-    bottomY = (int)(horizonGlobal - ((sprite->baseZ - eyeZ) * scale));
-
-    if (leftX > rightX || topY > bottomY) {
+    if (spriteStart < 0 || spriteEnd < spriteStart) {
         return;
     }
 
-    if (rightX < 0 || leftX >= g_viewport_width || bottomY < 0 || topY >= g_viewport_height) {
-        return;
-    }
+    for (int i = spriteStart; i <= spriteEnd; ++i) {
+        const RC3D_VisibleSprite *visibleSprite = &g_visibleSprites[i];
+        const RC3D_Sprite *sprite = visibleSprite->sprite;
+        int visSector = -1;
+        int visClipTop = 0;
+        int visClipBottom = g_viewport_height - 1;
+        int colTop;
+        int colBottom;
+        int tx;
+        uint8_t spriteGlow;
+        RC3D_ShadeProfile shadeProfile;
 
-    unclampedWidth = (rightX - leftX) + 1;
-    unclampedHeight = (bottomY - topY) + 1;
-    if (unclampedWidth <= 0 || unclampedHeight <= 0) {
-        return;
-    }
+        if (sx < visibleSprite->leftX || sx > visibleSprite->rightX) {
+            continue;
+        }
 
-    spriteSector = sprite->sector;
-    if ((unsigned)spriteSector < (unsigned)g_map->sectorCount) {
-        const RC3D_Sector *sec = &g_map->sectors[spriteSector];
-        spriteClipTop = (int)(horizonGlobal - ((sec->ceilHeight - eyeZ) * scale));
-        spriteClipBottom = (int)(horizonGlobal - ((sec->floorHeight - eyeZ) * scale));
-        spriteGlow = sec->glowlevel;
-    } else {
-        spriteClipTop = 0;
-        spriteClipBottom = g_viewport_height - 1;
-        spriteGlow = 0u;
-    }
+        colTop = visibleSprite->topY;
+        colBottom = visibleSprite->bottomY;
+        tx = ((sx - visibleSprite->leftX) * RC3D_TEX_SIZE) / visibleSprite->unclampedWidth;
+        spriteGlow = visibleSprite->spriteGlow;
 
-    RC3D_PROFILER_DO(g_profiler.spritesDrawn++);
+        if (tx < 0) {
+            tx = 0;
+        } else if (tx >= RC3D_TEX_SIZE) {
+            tx = RC3D_TEX_SIZE - 1;
+        }
 
-    spriteDepth = rc3dEncodeDepth(camDepth);
+        if (colTop < 0) {
+            colTop = 0;
+        }
 
-    {
-        const int drawLeft = (leftX < 0) ? 0 : leftX;
-        const int drawRight = (rightX >= g_viewport_width) ? (g_viewport_width - 1) : rightX;
+        if (colBottom >= g_viewport_height) {
+            colBottom = g_viewport_height - 1;
+        }
 
-        for (int sx = drawLeft; sx <= drawRight; ++sx) {
-            RC3D_PROFILER_DO(g_profiler.spriteColumns++);
+        if (colTop < visibleSprite->spriteClipTop) {
+            colTop = visibleSprite->spriteClipTop;
+        }
 
-            int visSector = -1;
-            int visClipTop = 0;
-            int visClipBottom = g_viewport_height - 1;
+        if (colBottom > visibleSprite->spriteClipBottom) {
+            colBottom = visibleSprite->spriteClipBottom;
+        }
 
-            int colTop = (topY < 0) ? 0 : topY;
-            int colBottom = (bottomY >= g_viewport_height) ? (g_viewport_height - 1) : bottomY;
+        if (colTop > colBottom) {
+            continue;
+        }
 
-            RC3D_ShadeProfile shadeProfile;
-            const int tx = ((sx - leftX) * RC3D_TEX_SIZE) / unclampedWidth;
-
-            if (colTop < spriteClipTop) {
-                colTop = spriteClipTop;
-            }
-
-            if (colBottom > spriteClipBottom) {
-                colBottom = spriteClipBottom;
-            }
-
-            if (colTop > colBottom) {
-                continue;
-            }
-
-            if (!rc3dTraceVisibleSectorAtDepth(
-                    sx,
-                    camDepth,
+        if (!(visibleTrace
+                ? rc3dTraceVisibleSectorAtDepth(
+                    visibleTrace,
+                    visibleTraceCount,
+                    visibleSprite->depthCode,
                     &visSector,
                     &visClipTop,
-                    &visClipBottom))
-            {
-                continue;
+                    &visClipBottom)
+                : rc3dTraceVisibleSectorAtDepthCached(
+                    sx,
+                    visibleSprite->depthCode,
+                    &visSector,
+                    &visClipTop,
+                    &visClipBottom)))
+        {
+            continue;
+        }
+
+        if (colTop < visClipTop) {
+            colTop = visClipTop;
+        }
+
+        if (colBottom > visClipBottom) {
+            colBottom = visClipBottom;
+        }
+
+        if ((unsigned)visSector < (unsigned)g_map->sectorCount) {
+            const RC3D_Sector *visSec = &g_map->sectors[visSector];
+            const int visSecTopY = (int)(horizonGlobal - ((visSec->ceilHeight - eyeZ) * visibleSprite->scale));
+            const int visSecBotY = (int)(horizonGlobal - ((visSec->floorHeight - eyeZ) * visibleSprite->scale));
+
+            if (colTop < visSecTopY) {
+                colTop = visSecTopY;
             }
 
-            if (colTop < visClipTop) {
-                colTop = visClipTop;
+            if (colBottom > visSecBotY) {
+                colBottom = visSecBotY;
             }
 
-            if (colBottom > visClipBottom) {
-                colBottom = visClipBottom;
+            if (spriteGlow == 0u) {
+                spriteGlow = visSec->glowlevel;
             }
+        }
 
-            if ((unsigned)visSector < (unsigned)g_map->sectorCount) {
-                const RC3D_Sector *visSec = &g_map->sectors[visSector];
-                const int visSecTopY = (int)(horizonGlobal - ((visSec->ceilHeight - eyeZ) * scale));
-                const int visSecBotY = (int)(horizonGlobal - ((visSec->floorHeight - eyeZ) * scale));
+        if (colTop > colBottom) {
+            continue;
+        }
 
-                if (colTop < visSecTopY) {
-                    colTop = visSecTopY;
-                }
+        RC3D_PROFILER_DO(g_profiler.spriteColumns++);
 
-                if (colBottom > visSecBotY) {
-                    colBottom = visSecBotY;
-                }
+        rc3dBuildShadeProfile(
+            visibleSprite->camDepth * RC3D_LIGHT_SPRITE_DIST_SCALE,
+            spriteGlow,
+            &shadeProfile);
 
-                if (spriteGlow == 0u) {
-                    spriteGlow = visSec->glowlevel;
-                }
-            }
-
-            if (colTop > colBottom) {
-                continue;
-            }
-
-            rc3dBuildShadeProfile(
-                camDepth * RC3D_LIGHT_SPRITE_DIST_SCALE,
-                spriteGlow,
-                &shadeProfile);
+        {
+            uint8_t *dst = rc3dViewportPixelPtr(sx, colTop);
 
             for (int sy = colTop; sy <= colBottom; ++sy) {
-                const int ty = ((sy - topY) * RC3D_TEX_SIZE) / unclampedHeight;
-                const uint8_t texel = texels[(ty * RC3D_TEX_SIZE) + tx];
-                const uint8_t litTexel = rc3dApplyShadeProfileToTexel(
+                int ty = ((sy - visibleSprite->topY) * RC3D_TEX_SIZE) / visibleSprite->unclampedHeight;
+                uint8_t texel;
+                uint8_t litTexel;
+
+                if (ty < 0) {
+                    ty = 0;
+                } else if (ty >= RC3D_TEX_SIZE) {
+                    ty = RC3D_TEX_SIZE - 1;
+                }
+
+                texel = visibleSprite->texels[(ty * RC3D_TEX_SIZE) + tx];
+                litTexel = rc3dApplyShadeProfileToTexel(
                     texel,
                     tx,
                     ty,
                     sprite->texId,
                     &shadeProfile);
 
-                if (litTexel == RC3D_SPRITE_TEX_TRANSPARENT) {
-                    continue;
+                if (litTexel != RC3D_SPRITE_TEX_TRANSPARENT &&
+                    !rc3dWallSpansBlockPixel(wallSpans, wallSpanCount, sy, visibleSprite->depthCode))
+                {
+                    *dst = litTexel;
                 }
 
-                if (rc3dWallSpansBlockPixel(sx, sy, spriteDepth)) {
-                    continue;
-                }
-
-                fb[(rc3dViewportScreenY(sy) * SCREEN_W) + rc3dViewportScreenX(sx)] = litTexel;
+                dst += SCREEN_W;
             }
         }
     }
 }
 
-
-
-
-
-
-
-static void renderSprites(void)
+static void renderCurrentSectorColumns(Uint64 *outWallTicks, Uint64 *outSpriteTicks)
 {
+    const float projPlane = g_projPlaneConst;
+    const int horizon = g_viewport_height / 2;
+    const float bobZ = sinf(g_player.tHeadbob) * 0.075f;
     float dirX = 1.0f;
     float dirY = 0.0f;
-    int orderCount = 0;
+    const float planeScale = g_planeScaleConst;
+    Uint64 wallTicks = 0;
+    Uint64 spriteTicks = 0;
+
+    g_renderEyeZ = g_player.z + fabsf(bobZ);
+    projPlaneGlobal = projPlane;
+    horizonGlobal = horizon;
 
     rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
 
-    for (int i = 0; i < RC3D_MAX_SPRITES; ++i) {
-        const RC3D_Sprite *sprite = &g_sprites[i];
+    rc3dBuildColumnRayCache(
+        dirX,
+        dirY,
+        -dirY * planeScale,
+        dirX * planeScale);
 
-        if (!sprite->inUse || !sprite->active) {
-            continue;
-        }
+    rc3dBuildVisibleSpriteList(g_renderEyeZ, dirX, dirY);
+    rc3dBuildSpriteColumnCoverage();
+    RC3D_PROFILER_DO(g_profiler.rays = (g_viewport_width > 0) ? (uint32_t)g_viewport_width : 0u;);
 
-        {
-            const float toSpriteX = sprite->x - g_player.x;
-            const float toSpriteY = sprite->y - g_player.y;
-            const float camDepth = (toSpriteX * dirX) + (toSpriteY * dirY);
-            int insertAt = orderCount;
+    {
+        int preferredWallIndex = -1;
 
-            if (camDepth <= RC3D_EPSILON || camDepth >= g_draw_distance) {
+        for (int sx = 0; sx < g_viewport_width; ++sx) {
+            RC3D_VisibleTraceSegment visibleTrace[RC3D_MAX_PORTAL_STEPS];
+            RC3D_WallDepthSpan wallSpans[RC3D_MAX_WALL_SPANS_PER_COLUMN];
+            uint8_t visibleTraceCount = 0u;
+            uint8_t wallSpanCount = 0u;
+            const RC3D_ColumnRayCache *rayCache = &g_columnRayCache[sx];
+            int firstHitWallIndex = -1;
+            const int needsSpriteColumn = (g_spriteColumnFirstIndex[sx] >= 0);
+
+            rc3dSetColumnContext(visibleTrace, &visibleTraceCount, wallSpans, &wallSpanCount);
+
+#if RC3D_DRAW_PROFILER
+            if (g_profilerFrameActive) {
+                const Uint64 start = SDL_GetPerformanceCounter();
+
+                renderColumnTrace(
+                    sx,
+                    rayCache->rdx,
+                    rayCache->rdy,
+                    projPlane,
+                    horizon,
+                    g_player.sector,
+                    0,
+                    g_viewport_height - 1,
+                    -1,
+                    -1,
+                    0.0f,
+                    0,
+                    preferredWallIndex,
+                    &firstHitWallIndex);
+
+                wallTicks += SDL_GetPerformanceCounter() - start;
+            } else
+#endif
+            {
+                renderColumnTrace(
+                    sx,
+                    rayCache->rdx,
+                    rayCache->rdy,
+                    projPlane,
+                    horizon,
+                    g_player.sector,
+                    0,
+                    g_viewport_height - 1,
+                    -1,
+                    -1,
+                    0.0f,
+                    0,
+                    preferredWallIndex,
+                    &firstHitWallIndex);
+            }
+
+            preferredWallIndex = firstHitWallIndex;
+
+            if (!needsSpriteColumn) {
                 continue;
             }
 
-            RC3D_PROFILER_DO(g_profiler.spritesVisible++);
+#if RC3D_DRAW_PROFILER
+            if (g_profilerFrameActive) {
+                const Uint64 start = SDL_GetPerformanceCounter();
 
-            while (insertAt > 0) {
-                if (g_spriteOrder[insertAt - 1].camDepth >= camDepth) {
-                    break;
+                if (g_cachedVisibleTraceOverflow[sx]) {
+                    rc3dBuildVisibleTraceForColumn(sx);
+                    rc3dRenderSpriteColumn(
+                        sx,
+                        g_renderEyeZ,
+                        visibleTrace,
+                        visibleTraceCount,
+                        wallSpans,
+                        wallSpanCount);
+                } else {
+                    rc3dRenderSpriteColumn(
+                        sx,
+                        g_renderEyeZ,
+                        NULL,
+                        0u,
+                        wallSpans,
+                        wallSpanCount);
                 }
 
-                g_spriteOrder[insertAt] = g_spriteOrder[insertAt - 1];
-                insertAt--;
+                spriteTicks += SDL_GetPerformanceCounter() - start;
+            } else
+#endif
+            {
+                if (g_cachedVisibleTraceOverflow[sx]) {
+                    rc3dBuildVisibleTraceForColumn(sx);
+                    rc3dRenderSpriteColumn(
+                        sx,
+                        g_renderEyeZ,
+                        visibleTrace,
+                        visibleTraceCount,
+                        wallSpans,
+                        wallSpanCount);
+                } else {
+                    rc3dRenderSpriteColumn(
+                        sx,
+                        g_renderEyeZ,
+                        NULL,
+                        0u,
+                        wallSpans,
+                        wallSpanCount);
+                }
             }
-
-            g_spriteOrder[insertAt].spriteId = i;
-            g_spriteOrder[insertAt].camDepth = camDepth;
-            orderCount++;
         }
     }
 
-    for (int i = 0; i < orderCount; ++i) {
-        renderBillboardSprite(&g_sprites[g_spriteOrder[i].spriteId]);
+    rc3dSetColumnContext(NULL, NULL, NULL, NULL);
+
+    if (outWallTicks) {
+        *outWallTicks = wallTicks;
+    }
+
+    if (outSpriteTicks) {
+        *outSpriteTicks = spriteTicks;
     }
 }
 
@@ -4973,30 +5656,6 @@ static void drawMiniMap(void)
 }
 
 
-
-static void rc3dInitTestSprite(void)
-{
-    g_demoSpriteA = rc3dSpriteCreate(
-        g_map->startX,
-        g_map->startY,
-        RC3D_TEST_SPRITE_WIDTH,
-        RC3D_TEST_SPRITE_HEIGHT,
-        RC3D_TEXID_SPRITE_MAN);
-
-    g_demoSpriteB = rc3dSpriteCreate(
-        g_map->startX,
-        g_map->startY,
-        RC3D_TEST_SPRITE_WIDTH,
-        RC3D_TEST_SPRITE_HEIGHT,
-        RC3D_TEXID_SPRITE_MAN);
-
-    g_demoSpriteGricy = rc3dSpriteCreate(
-        -29.5f, -12.5f,
-        RC3D_TEST_SPRITE_WIDTH,
-        RC3D_TEST_SPRITE_HEIGHT,
-        RC3D_SPRITE_TEX_GRICY);
-}
-
 static uint32_t rc3dSanitizeSectorStateFlags(uint32_t stateFlags)
 {
     stateFlags &= (RC3D_SECTOR_STATE_RAISE_FLOOR |
@@ -5069,6 +5728,14 @@ static void rc3dClampPlayerIntoCurrentSector(void)
     }
 }
 
+void rc3dSetSectorLightLevel(int sectorId, uint8_t level){
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    RC3D_Sector *sec = &sectors[sectorId];
+    sec->glowlevel = level;
+
+}
+
+static int lightPulsationTimer = 0;
 static void rc3dUpdateSectorMotion(float dt)
 {
     RC3D_Sector *sectors = rc3dMutableSectorData();
@@ -5081,10 +5748,34 @@ static void rc3dUpdateSectorMotion(float dt)
     for (int i = 0; i < g_map->sectorCount; ++i) {
         RC3D_Sector *sec = &sectors[i];
         uint32_t stateFlags = rc3dSanitizeSectorStateFlags(sec->stateFlags);
+        uint32_t sectorFlags = sec->sectorFlags;
         const float oldFloorHeight = sec->floorHeight;
         const float oldCeilHeight = sec->ceilHeight;
 
         sec->stateFlags = stateFlags;
+
+        // do the sectorFlags
+        if (sectorFlags & RC3D_SECTOR_FLAGS_FLICKERING_LIGHTS){
+            int secFlicker = randRange(1, 8);
+            // sec->PulsatingLightTimeDir;
+            if(secFlicker == 2) rc3dSetSectorLightLevel(i, (sectorFlags & RC3D_SECTOR_FLAGS_FULLBRIGHT) ? 7 : sec->originalLightLevel);
+            if(secFlicker == 5) rc3dSetSectorLightLevel(i, 0);
+        }
+        
+        if (sectorFlags & RC3D_SECTOR_FLAGS_PULSATING_LIGHT){
+            lightPulsationTimer++;
+            if(lightPulsationTimer > 4){
+                lightPulsationTimer = 0;
+                uint8_t tLightB = (sectorFlags & RC3D_SECTOR_FLAGS_FULLBRIGHT) ? 7 : sec->originalLightLevel;
+                sec->glowlevel += sec->PulsatingLightTimeDir;
+                if(sec->glowlevel > tLightB) sec->PulsatingLightTimeDir = -1;
+                if(sec->glowlevel == 0) sec->PulsatingLightTimeDir =  1;
+                
+                //sec->PulsatingLightTimeDir = 1 - sec->PulsatingLightTimeDir;
+
+            }
+
+        }
 
         if (stateFlags & RC3D_SECTOR_STATE_RAISE_FLOOR) {
             const float speed = fabsf(sec->floorFlowHeight);
@@ -5178,9 +5869,9 @@ static void rc3dUpdateSectorMotion(float dt)
 
 void moveSprite(void)
 {
-    if (rc3dSpriteHandleValid(g_demoSpriteB)) {
-        rc3dSpriteSetPosition(g_demoSpriteB, g_player.x, g_player.y);
-    }
+    //if (rc3dSpriteHandleValid(g_demoSpriteB)) {
+        //rc3dSpriteSetPosition(g_demoSpriteB, g_player.x, g_player.y);
+    //}
 }
 
 static float rc3dGetTargetEyeZ(void)
@@ -5245,7 +5936,9 @@ static void rc3dResetPlayerFromMapStart(void)
 {
     rc3dSetPlayerWorldXYFixed(
         rc3dFloatToFixed(g_map->startX),
-        rc3dFloatToFixed(g_map->startY));
+        rc3dFloatToFixed(g_map->startY)
+    );
+    
     g_player.angle = g_map->startAngle;
     g_player.sector = g_map->startSector;
     g_player.tHeadbob = 0.0f;
@@ -5302,7 +5995,7 @@ void rc3dInit(void)
     for(int o = 0; o < g_map->objectCount; o++){
         if(g_map->objects[o].type == OBJECT_TYPE_BASIC_SPRITE){    // basic Sprites
             //spriteTmp = rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, g_map->objects[o].scalex, g_map->objects[o].scalex, g_map->objects[o].textureId);
-            rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, 
+            rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, g_map->objects[o].z, 
                 g_map->objects[o].scalex, 
                 g_map->objects[o].scaley, 
                 g_map->objects[o].textureId
@@ -5579,10 +6272,11 @@ void rc3dRender(void)
     const int profileThisPass = g_profilerFrameActive;
     const Uint64 frameStart = profileThisPass ? SDL_GetPerformanceCounter() : 0;
     Uint64 sectionStart = frameStart;
+    Uint64 wallTicks = 0;
+    Uint64 spriteTicks = 0;
 #endif
 
     rc3dRefreshViewport();
-    rc3dClearWallDepthSpans();
 
 #if RC3D_DRAW_PROFILER
     if (profileThisPass) {
@@ -5600,30 +6294,26 @@ void rc3dRender(void)
     }
 #endif
 
-    renderCurrentSectorColumns();
-    
-
 #if RC3D_DRAW_PROFILER
-    if (profileThisPass) {
-        const Uint64 now = SDL_GetPerformanceCounter();
-        g_profiler.wallsMs = rc3dProfilerTicksToMs(now - sectionStart);
-        sectionStart = now;
-    }
+    renderCurrentSectorColumns(
+        profileThisPass ? &wallTicks : NULL,
+        profileThisPass ? &spriteTicks : NULL);
+#else
+    renderCurrentSectorColumns(NULL, NULL);
 #endif
 
-    renderSprites();
-
 #if RC3D_DRAW_PROFILER
     if (profileThisPass) {
-        const Uint64 now = SDL_GetPerformanceCounter();
-        g_profiler.spritesMs = rc3dProfilerTicksToMs(now - sectionStart);
-        sectionStart = now;
+        g_profiler.wallsMs = rc3dProfilerTicksToMs(wallTicks);
+        g_profiler.spritesMs = rc3dProfilerTicksToMs(spriteTicks);
+        sectionStart = SDL_GetPerformanceCounter();
     }
 #endif
 
 #if RC3D_DRAW_MINIMAP
-    if (bShowMiniMap)
+    if (bShowMiniMap) {
         drawMiniMap();
+    }
 #endif
 
 #if RC3D_DRAW_PROFILER
@@ -5667,6 +6357,3 @@ void rc3dRender(void)
     }
 #endif
 }
-
-
-

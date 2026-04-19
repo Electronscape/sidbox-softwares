@@ -166,6 +166,9 @@ void screenupdate(){
 
 void moveSprite();
 
+RC3D_Texture forcefield[4];
+RC3D_Texture water[4];
+
 int main(int argc, char **argv)
 {
     if (BasicSDL2Setup() != 0) {
@@ -184,6 +187,16 @@ int main(int argc, char **argv)
         printf("Using built-in map instead\n");
     }
 
+
+    LoadPPB("textures/15a.ppb", forcefield[0].pix);
+    LoadPPB("textures/15b.ppb", forcefield[1].pix);
+    LoadPPB("textures/15c.ppb", forcefield[2].pix);
+    LoadPPB("textures/15d.ppb", forcefield[3].pix);
+
+    LoadPPB("textures/05a.ppb", water[0].pix);
+    LoadPPB("textures/05b.ppb", water[1].pix);
+    LoadPPB("textures/05c.ppb", water[2].pix);
+    LoadPPB("textures/05d.ppb", water[3].pix);
     
     rc3dInit();
     rc3dPreparePalette();
@@ -198,6 +211,7 @@ int main(int argc, char **argv)
     int pendingMouseDx = 0;
 
     //rc3dSetViewport(0, 60, 360, 200);
+    randSeed(12345);
 
     do{
         SDL_Event e;
@@ -226,14 +240,41 @@ int main(int argc, char **argv)
         float dt = (float)(nowTicks - lastTicks) / 1000.0f;
         int mouseDx = pendingMouseDx;
         const uint8_t *keys = SDL_GetKeyboardState(NULL);
+        static float nframeT[2] = {
+            0.250f,
+            0.150f
+        };
+        static float nextFrame[2] = {
+            0.0f,
+            0.0f
+        };
+        static int ffFrame[2] = {0,0};
 
         if(gFrame){
             lastTicks = nowTicks;
             pendingMouseDx = 0;
             rc3dUpdate(dt, keys, mouseDx);
+
+            for(int tfrm = 0; tfrm < 2; tfrm++){
+                nextFrame[tfrm] += dt;
+                if(nextFrame[tfrm] > nframeT[tfrm]){
+                    nextFrame[tfrm] = 0.0f;
+                    ffFrame[tfrm] ++;
+                    if(ffFrame[tfrm] > 3){
+                        ffFrame[tfrm] = 0;
+                    }
+                    if(tfrm == 0) copyTextureToTexture(forcefield[ffFrame[tfrm]].pix, rc3d_GetTexturePtr(15), RC3D_TEX_SIZE, RC3D_TEX_SIZE);
+                    if(tfrm == 1) copyTextureToTexture(water[ffFrame[tfrm]].pix, rc3d_GetTexturePtr(5), RC3D_TEX_SIZE, RC3D_TEX_SIZE);
+                }
+            }            
+
+            shiftTexture(4, TEXSHIFT_UP);
+            shiftTextureFX(4, TEXSHIFT_SINOUSSX | TEXSHIFT_SINOUSCY, 12.0f, 12.0f, 2.0f, 1.0f, dt);
+        
+            rc3dRender();
         }
 
-        rc3dRender();
+        //rc3dRender();
 
         if(!gFrame){
             drawFPSCounter();

@@ -347,7 +347,9 @@ void videoMemToScreen(void)
 
     while (src < end) {
         *dst++ = lut[*src++];
+        
     }
+
 }
 
 void clearScreen(uint8_t colIndex)

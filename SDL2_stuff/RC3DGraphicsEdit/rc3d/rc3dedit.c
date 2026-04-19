@@ -14,16 +14,6 @@
 #include "../gfx.h"
 #include "rc3d_map.h"
 
-#define RC3D_WALL_PORTAL        0x01
-#define RC3D_WALL_UPPER         0x02
-#define RC3D_WALL_MIDDLE        0x04
-#define RC3D_WALL_LOWER         0x08
-#define RC3D_WALL_SOLID         0x10
-#define RC3D_WALL_MANUAL_TARGET 0x20
-#define RC3D_WALL_TRANSPARENCY  0x40    
-#define RC3D_WALL_DOUBLESIDED   0x80
-
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -38,6 +28,7 @@
 #define ED_MAX_DRAFT_POINTS     128
 
 #define ED_ORPHANED_SECTOR_TEXTURE  254      // when deleting a sector and it leaves walls behind, set it to this texture
+#define ED_SOLID_MIDDLE_TEXTURE     1      // default solid wall middle texture for freshly built sectors
 
 // tab toggles hi-res to low res
 #define ED_GRID_STEP_TINY       0.1f
@@ -52,6 +43,11 @@
 #define ED_ROUTE_PREVIEW_MAX_POINTS 4096
 #define ED_ROUTE_PREVIEW_MAX_GRID_CELLS 120000
 #define ED_ROUTE_PREVIEW_PORTAL_SAMPLES 9
+#define ED_TEXTURE_BASE_PAL_START    64u
+#define ED_TEXTURE_DIM_PAL_START    128u
+#define ED_TEXTURE_BRIGHT_PAL_START 192u
+#define ED_TEXTURE_PAL_COUNT         64u
+#define RC3D_WALL_PORTAL_STYLE_FLAGS (RC3D_WALL_MIDDLE | RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED)
 
 
 
@@ -153,6 +149,8 @@ enum
     GUI_BTN_WALL_CLAMP_YB,
     GUI_BTN_WALL_FLIP_Y,
 
+    GUI_BTN_WALL_QUICK_TEXTURE,
+
     
     GUI_BTN_SECTOR_FLOOR_MINUS,
     GUI_BTN_SECTOR_FLOOR_PLUS,
@@ -182,6 +180,23 @@ enum
     GUI_BTN_SECTOR_CLAMP_X2,
     GUI_BTN_SECTOR_CLAMP_Y1,
     GUI_BTN_SECTOR_CLAMP_Y2,
+
+    GUI_BTN_SECTOR_FLAGS_BIT0,  ///// 0-7 BITS //////////////
+    GUI_BTN_SECTOR_FLAGS_BIT1,
+    GUI_BTN_SECTOR_FLAGS_BIT2,
+    GUI_BTN_SECTOR_FLAGS_BIT3,
+    GUI_BTN_SECTOR_FLAGS_BIT4,
+    GUI_BTN_SECTOR_FLAGS_BIT5,
+    GUI_BTN_SECTOR_FLAGS_BIT6,
+    GUI_BTN_SECTOR_FLAGS_BIT7,
+    GUI_BTN_SECTOR_FLAGS_BIT8,  ///// 8-15 BITS /////////////
+    GUI_BTN_SECTOR_FLAGS_BIT9,
+    GUI_BTN_SECTOR_FLAGS_BIT10,
+    GUI_BTN_SECTOR_FLAGS_BIT11,
+    GUI_BTN_SECTOR_FLAGS_BIT12,
+    GUI_BTN_SECTOR_FLAGS_BIT13,
+    GUI_BTN_SECTOR_FLAGS_BIT14,
+    GUI_BTN_SECTOR_FLAGS_BIT15,
 
     GUI_BTN_WALL_COPY_PROPS,
     GUI_BTN_WALL_PASTE_PROPS,
@@ -323,9 +338,16 @@ typedef enum {
 } EdSelectionType;
 
 typedef enum {
+    ED_CLIPBOARD_NONE = 0,
+    ED_CLIPBOARD_SECTOR_GEOMETRY,
+    ED_CLIPBOARD_OBJECT
+} EdClipboardMode;
+
+typedef enum {
     ED_PENDING_LEFT_NONE = 0,
     ED_PENDING_LEFT_MULTI_DRAG,
     ED_PENDING_LEFT_VERTEX,
+    ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG,
     ED_PENDING_LEFT_WALL_CLICK_OR_BOX,
     ED_PENDING_LEFT_WALL_DRAG,
     ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX,
@@ -386,6 +408,7 @@ typedef struct {
 
     int tagId;
     uint32_t stateFlags;
+    uint32_t sectorFlags;   // stuff the sectors can do
     float floorMinHeight;
     float floorMaxHeight;
     float ceilMinHeight;
@@ -412,6 +435,7 @@ typedef struct {
 
     int tagId;
     uint32_t stateFlags;
+    uint32_t sectorFlags;
     float floorMinHeight;
     float floorMaxHeight;
     float ceilMinHeight;
@@ -470,6 +494,12 @@ typedef struct {
 } EdObject;
 
 typedef struct {
+    EdObject object;
+    int sourceObjectIndex;
+    int sourceSectorIndex;
+} EdObjectClipboard;
+
+typedef struct {
     EdVec2 verts[ED_MAX_VERTS];
     int vertCount;
 
@@ -491,6 +521,7 @@ typedef struct {
 
 
 typedef struct {
+    int clipboardMode;
     float camX;
     float camY;
     float zoom;
@@ -541,6 +572,9 @@ typedef struct {
     EdSectorGeometryClipboard copiedSectorGeometry;
     int hasCopiedSectorGeometry;
     int copiedSectorGeometrySourceSector;
+    EdObjectClipboard copiedObject;
+    int hasCopiedObject;
+    int copiedObjectSourceObject;
 
 
     int hoverVert;
@@ -569,6 +603,10 @@ typedef struct {
     /* multi-sector selection */
     uint8_t selectedSectors[ED_MAX_SECTORS];
     int selectedSectorCount;
+
+    /* multi-object selection */
+    uint8_t selectedObjects[ED_MAX_OBJECTS];
+    int selectedObjectCount;
 
     
 
@@ -623,9 +661,11 @@ typedef struct {
     int draggingObject;
     float dragObjectStartWorldX;
     float dragObjectStartWorldY;
-    float dragObjectStartX;
-    float dragObjectStartY;
-    float dragObjectStartZ;
+    int   dragObjectCount;
+    int   dragObjectIndices[ED_MAX_OBJECTS];
+    float dragObjectStartX[ED_MAX_OBJECTS];
+    float dragObjectStartY[ED_MAX_OBJECTS];
+    float dragObjectStartZ[ED_MAX_OBJECTS];
 
     EdSelectionType selectionType;
 
@@ -775,11 +815,167 @@ static int hasTextureBrowserEnabled(){
     return g_ed.textureBrowserEn;
 }
 
-static int hasAnyObjectEditSelection(void)
+static int hasSingleObjectSelection(void)
 {
     return (g_ed.selectionType == ED_SEL_OBJECT) &&
            (g_ed.selectedObject >= 0) &&
            (g_ed.selectedObject < g_edMap.objectCount);
+}
+
+static void clearMultiObjectSelection(void)
+{
+    memset(g_ed.selectedObjects, 0, sizeof(g_ed.selectedObjects));
+    g_ed.selectedObjectCount = 0;
+    g_ed.dragObjectCount = 0;
+}
+
+static int hasMultiObjectSelection(void)
+{
+    return (g_ed.selectionType == ED_SEL_NONE) &&
+           (g_ed.selectedObjectCount > 0);
+}
+
+static int getObjectEditSelectionCount(void)
+{
+    if (hasSingleObjectSelection()) {
+        return 1;
+    }
+
+    return g_ed.selectedObjectCount;
+}
+
+static int getFirstMultiSelectedObjectIndex(void)
+{
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        if (g_ed.selectedObjects[i]) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int getPrimaryObjectEditIndex(void)
+{
+    if (hasSingleObjectSelection()) {
+        return g_ed.selectedObject;
+    }
+
+    return getFirstMultiSelectedObjectIndex();
+}
+
+static int isObjectInEditSelection(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return 0;
+    }
+
+    if (hasSingleObjectSelection()) {
+        return g_ed.selectedObject == objectIndex;
+    }
+
+    return g_ed.selectedObjects[objectIndex] != 0;
+}
+
+static void addMultiObjectSelection(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
+    if (g_ed.selectedObjects[objectIndex]) return;
+
+    g_ed.selectedObjects[objectIndex] = 1;
+    g_ed.selectedObjectCount++;
+}
+
+static void removeMultiObjectSelection(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
+    if (!g_ed.selectedObjects[objectIndex]) return;
+
+    g_ed.selectedObjects[objectIndex] = 0;
+    if (g_ed.selectedObjectCount > 0) {
+        g_ed.selectedObjectCount--;
+    }
+}
+
+static void normalizeObjectSelectionState(void)
+{
+    if (g_ed.selectedObjectCount == 1 && g_ed.selectionType == ED_SEL_NONE) {
+        const int objectIndex = getFirstMultiSelectedObjectIndex();
+
+        clearMultiObjectSelection();
+        if (objectIndex >= 0 && objectIndex < g_edMap.objectCount) {
+            g_ed.selectionType = ED_SEL_OBJECT;
+            g_ed.selectedObject = objectIndex;
+        }
+    }
+
+    if (g_ed.selectedObjectCount <= 0) {
+        clearMultiObjectSelection();
+    }
+
+    if (!hasSingleObjectSelection() && g_ed.selectionType == ED_SEL_OBJECT) {
+        g_ed.selectionType = ED_SEL_NONE;
+        g_ed.selectedObject = -1;
+    }
+}
+
+static void toggleObjectMultiSelection(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return;
+    }
+
+    if (g_ed.selectionType == ED_SEL_VERTEX ||
+        g_ed.selectionType == ED_SEL_WALL ||
+        g_ed.selectionType == ED_SEL_SECTOR ||
+        g_ed.selectedVertCount > 0 ||
+        g_ed.selectedWallCount > 0 ||
+        g_ed.selectedSectorCount > 0) {
+        clearAllSelections();
+    }
+
+    if (hasSingleObjectSelection()) {
+        addMultiObjectSelection(g_ed.selectedObject);
+        g_ed.selectionType = ED_SEL_NONE;
+        g_ed.selectedObject = -1;
+    }
+
+    if (g_ed.selectedObjects[objectIndex]) {
+        removeMultiObjectSelection(objectIndex);
+    } else {
+        addMultiObjectSelection(objectIndex);
+    }
+
+    g_ed.selectedVert = -1;
+    g_ed.selectedWall = -1;
+    g_ed.selectedSector = -1;
+    normalizeObjectSelectionState();
+}
+
+static int collectObjectEditSelectionIndices(int *outIndices, int maxOut)
+{
+    int count = 0;
+
+    if (!outIndices || maxOut <= 0) {
+        return 0;
+    }
+
+    if (hasSingleObjectSelection()) {
+        outIndices[0] = g_ed.selectedObject;
+        return 1;
+    }
+
+    for (int i = 0; i < g_edMap.objectCount && count < maxOut; i++) {
+        if (!g_ed.selectedObjects[i]) continue;
+        outIndices[count++] = i;
+    }
+
+    return count;
+}
+
+static int hasAnyObjectEditSelection(void)
+{
+    return hasSingleObjectSelection();
 }
 
 static void clearMultiSectorSelection(void)
@@ -1099,14 +1295,16 @@ static void repairMapTopology(void);
 
 
 #define ED_HISTORY_MAX 1000
-#define ED_UNDO_HISTORY_VISIBLE_ROWS 10
+#define ED_UNDO_HISTORY_VISIBLE_ROWS 30
 #define ED_UNDO_HISTORY_ROW_H       24
+#define ED_UNDO_HISTORY_HEADER_H    56
+#define ED_UNDO_HISTORY_FOOTER_H    32
 #define ED_UNDO_HISTORY_POPUP_W     660
-#define ED_UNDO_HISTORY_POPUP_H     336
 
 typedef struct {
     EditorMap map;
 
+    int clipboardMode;
     float camX;
     float camY;
     float zoom;
@@ -1151,6 +1349,9 @@ typedef struct {
     EdSectorGeometryClipboard copiedSectorGeometry;
     int hasCopiedSectorGeometry;
     int copiedSectorGeometrySourceSector;
+    EdObjectClipboard copiedObject;
+    int hasCopiedObject;
+    int copiedObjectSourceObject;
 
     int selectedVert;
     int selectedWall;
@@ -1163,6 +1364,8 @@ typedef struct {
     int selectedWallCount;
     uint8_t selectedSectors[ED_MAX_SECTORS];
     int selectedSectorCount;
+    uint8_t selectedObjects[ED_MAX_OBJECTS];
+    int selectedObjectCount;
 
     EdSelectionType selectionType;
 
@@ -1187,11 +1390,17 @@ static void finalizeDraftInnerSolid(void);
 static int finalizeDraftSectorAttached(void);
 static int getWallSplitPreviewPos(int wallIndex, float wx, float wy, float *outX, float *outY);
 static void resetWallToSolidFromOwnColour(int wallIndex);
+static void collapseUnlinkedPortalWallToSolid(int wallIndex);
 static int findSectorOwningWall(int wallIndex);
+static int findReversedWall(int v0, int v1);
+static int getWallNormal(int wallIndex);
+static int isPointOnWallOwnerSide(int wallIndex, float px, float py);
+static uint8_t clampLightLevel(int level);
 static void compactOrphanVertices(void);
 static void cleanMapCompact(void);
 static int findBoundaryVertexIndexInSector(int sectorIndex, int vertIndex);
 static int splitSelectedSectorByDraftLine(void);
+static uint8_t getWallTexBrightness(const EdWall *w);
 
 static void clearAllSelections(void);
 static void clearMultiVertexSelection(void);
@@ -1200,6 +1409,7 @@ static void setWallTexScaleX(EdWall *w, float scaleX);
 static void setWallTexScaleY(EdWall *w, float scaleY);
 static float getWallTexAngle(const EdWall *w);
 static void clearPendingLeftMouseAction(void);
+static void selectExplicitTarget(EdSelectionType type, int index);
 static void beginBoxSelect(int mouseX, int mouseY, int selectWalls);
 static void updateBoxSelect(int mouseX, int mouseY);
 static void beginMultiVertexDrag(float worldX, float worldY);
@@ -1219,6 +1429,9 @@ static void remapMultiSectorSelectionFromOldToNew(const int *sectorRemap, int ol
 static void resetSectorGeometryClipboard(void);
 static void copySelectedSectorGeometryToClipboard(void);
 static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorldY);
+static void resetObjectClipboard(void);
+static void copySelectedObjectToClipboard(void);
+static int pasteObjectFromClipboard(float targetWorldX, float targetWorldY);
 static int autoLinkPastedInnerSectors(int sectorBase, int sectorCount, int preferredContainerSector);
 static int clipboardGeometryFitsInsideSector(const EdSectorGeometryClipboard *clip,
                                              float dx,
@@ -1828,7 +2041,16 @@ static void textureTargetApply(TextureTarget t, int texIndex)
 
             switch (t) {
                 case TEX_TARGET_WALL_UPPER:  w->upperColor = (uint8_t)texIndex; break;
-                case TEX_TARGET_WALL_MIDDLE: w->midColor   = (uint8_t)texIndex; break;
+                case TEX_TARGET_WALL_MIDDLE:
+                    w->midColor = (uint8_t)texIndex;
+                    if (w->flags & RC3D_WALL_PORTAL) {
+                        if (texIndex == 255) {
+                            w->flags &= ~RC3D_WALL_MIDDLE;
+                        } else {
+                            w->flags |= RC3D_WALL_MIDDLE;
+                        }
+                    }
+                    break;
                 case TEX_TARGET_WALL_LOWER:  w->lowerColor = (uint8_t)texIndex; break;
                 default: break;
             }
@@ -2325,6 +2547,7 @@ static int handleTextureBrowserMouse(int mouseX, int mouseY, int leftDown, int l
                         if (pointInRectLocal(mouseX, mouseY, cx, cy, cw, ch)) {
                             pushUndoState();
                             textureTargetApply((TextureTarget)g_ed.textureBrowserTarget, texIndex);
+                            //textureTargetApply()
                             return 1;
                         }
                     }
@@ -2585,6 +2808,7 @@ static void captureSnapshot(EditorSnapshot *s)
     memcpy(s->draftVertIndices, g_ed.draftVertIndices, sizeof(g_ed.draftVertIndices));
     s->draftCount = g_ed.draftCount;
 
+    s->clipboardMode = g_ed.clipboardMode;
     s->sectorFloor = g_ed.sectorFloor;
     s->sectorCeil = g_ed.sectorCeil;
     s->sectorFloorColor = g_ed.sectorFloorColor;
@@ -2621,6 +2845,9 @@ static void captureSnapshot(EditorSnapshot *s)
     s->copiedSectorGeometry = g_ed.copiedSectorGeometry;
     s->hasCopiedSectorGeometry = g_ed.hasCopiedSectorGeometry;
     s->copiedSectorGeometrySourceSector = g_ed.copiedSectorGeometrySourceSector;
+    s->copiedObject = g_ed.copiedObject;
+    s->hasCopiedObject = g_ed.hasCopiedObject;
+    s->copiedObjectSourceObject = g_ed.copiedObjectSourceObject;
 
     s->selectedVert = g_ed.selectedVert;
     s->selectedWall = g_ed.selectedWall;
@@ -2633,6 +2860,8 @@ static void captureSnapshot(EditorSnapshot *s)
     s->selectedWallCount = g_ed.selectedWallCount;
     memcpy(s->selectedSectors, g_ed.selectedSectors, sizeof(g_ed.selectedSectors));
     s->selectedSectorCount = g_ed.selectedSectorCount;
+    memcpy(s->selectedObjects, g_ed.selectedObjects, sizeof(g_ed.selectedObjects));
+    s->selectedObjectCount = g_ed.selectedObjectCount;
 
     s->selectionType = g_ed.selectionType;
 
@@ -2652,6 +2881,7 @@ static void restoreSnapshot(const EditorSnapshot *s)
     memcpy(g_ed.draftVertIndices, s->draftVertIndices, sizeof(g_ed.draftVertIndices));
     g_ed.draftCount = s->draftCount;
 
+    g_ed.clipboardMode = s->clipboardMode;
     g_ed.sectorFloor = s->sectorFloor;
     g_ed.sectorCeil = s->sectorCeil;
     g_ed.sectorFloorColor = s->sectorFloorColor;
@@ -2688,6 +2918,9 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.copiedSectorGeometry = s->copiedSectorGeometry;
     g_ed.hasCopiedSectorGeometry = s->hasCopiedSectorGeometry;
     g_ed.copiedSectorGeometrySourceSector = s->copiedSectorGeometrySourceSector;
+    g_ed.copiedObject = s->copiedObject;
+    g_ed.hasCopiedObject = s->hasCopiedObject;
+    g_ed.copiedObjectSourceObject = s->copiedObjectSourceObject;
 
     g_ed.selectedVert = s->selectedVert;
     g_ed.selectedWall = s->selectedWall;
@@ -2700,6 +2933,8 @@ static void restoreSnapshot(const EditorSnapshot *s)
     g_ed.selectedWallCount = s->selectedWallCount;
     memcpy(g_ed.selectedSectors, s->selectedSectors, sizeof(g_ed.selectedSectors));
     g_ed.selectedSectorCount = s->selectedSectorCount;
+    memcpy(g_ed.selectedObjects, s->selectedObjects, sizeof(g_ed.selectedObjects));
+    g_ed.selectedObjectCount = s->selectedObjectCount;
 
     g_ed.selectionType = s->selectionType;
 
@@ -2792,15 +3027,41 @@ static void performRedo(void)
     restoreSnapshot(&g_redoStack[g_redoCount]);
 }
 
+static int getUndoHistoryVisibleRowCapacity(void)
+{
+    int maxRowsByViewport;
+
+    maxRowsByViewport = (EDIT_VIEW_PORT_HEIGHT - (ED_UNDO_HISTORY_HEADER_H + ED_UNDO_HISTORY_FOOTER_H)) /
+                        ED_UNDO_HISTORY_ROW_H;
+    if (maxRowsByViewport < 1) {
+        maxRowsByViewport = 1;
+    }
+
+    if (ED_UNDO_HISTORY_VISIBLE_ROWS < maxRowsByViewport) {
+        return ED_UNDO_HISTORY_VISIBLE_ROWS;
+    }
+
+    return maxRowsByViewport;
+}
+
 static int getUndoHistoryMaxScrollPos(void)
 {
-    int maxScroll = g_undoCount - ED_UNDO_HISTORY_VISIBLE_ROWS;
+    const int visibleRows = getUndoHistoryVisibleRowCapacity();
+    int maxScroll = g_undoCount - visibleRows;
     if (maxScroll < 0) maxScroll = 0;
     return maxScroll;
 }
 
+static int getUndoHistoryPopupHeight(void)
+{
+    return ED_UNDO_HISTORY_HEADER_H +
+           ED_UNDO_HISTORY_FOOTER_H +
+           (getUndoHistoryVisibleRowCapacity() * ED_UNDO_HISTORY_ROW_H);
+}
+
 static void clampUndoHistoryPopupState(void)
 {
+    const int visibleRows = getUndoHistoryVisibleRowCapacity();
     const int maxScroll = getUndoHistoryMaxScrollPos();
 
     if (g_undoCount <= 0) {
@@ -2827,8 +3088,8 @@ static void clampUndoHistoryPopupState(void)
     if (g_ed.undoHistorySelectedPos < g_ed.undoHistoryScrollPos) {
         g_ed.undoHistoryScrollPos = g_ed.undoHistorySelectedPos;
     }
-    if (g_ed.undoHistorySelectedPos >= (g_ed.undoHistoryScrollPos + ED_UNDO_HISTORY_VISIBLE_ROWS)) {
-        g_ed.undoHistoryScrollPos = g_ed.undoHistorySelectedPos - ED_UNDO_HISTORY_VISIBLE_ROWS + 1;
+    if (g_ed.undoHistorySelectedPos >= (g_ed.undoHistoryScrollPos + visibleRows)) {
+        g_ed.undoHistoryScrollPos = g_ed.undoHistorySelectedPos - visibleRows + 1;
     }
 
     if (g_ed.undoHistoryScrollPos > maxScroll) {
@@ -2898,6 +3159,10 @@ static void describeSnapshotSummary(const EditorSnapshot *snapshot, char *out, s
         static char multiSectorBuf[52];
         snprintf(multiSectorBuf, sizeof(multiSectorBuf), "Multi-select (%d sectors)", snapshot->selectedSectorCount);
         focus = multiSectorBuf;
+    } else if (snapshot->selectedObjectCount > 0) {
+        static char multiObjectBuf[52];
+        snprintf(multiObjectBuf, sizeof(multiObjectBuf), "Multi-select (%d objects)", snapshot->selectedObjectCount);
+        focus = multiObjectBuf;
     } else if (snapshot->draftCount > 0) {
         static char draftBuf[48];
         snprintf(draftBuf, sizeof(draftBuf), "Draft (%d pts)", snapshot->draftCount);
@@ -2969,10 +3234,12 @@ static void performUndoToHistoryPosition(int pos)
 
 static void getUndoHistoryPopupRect(int *x, int *y, int *w, int *h)
 {
+    const int popupH = getUndoHistoryPopupHeight();
+
     if (x) *x = (EDIT_VIEW_PORT_WIDTH - ED_UNDO_HISTORY_POPUP_W) / 2;
-    if (y) *y = (EDIT_VIEW_PORT_HEIGHT - ED_UNDO_HISTORY_POPUP_H) / 2;
+    if (y) *y = (EDIT_VIEW_PORT_HEIGHT - popupH) / 2;
     if (w) *w = ED_UNDO_HISTORY_POPUP_W;
-    if (h) *h = ED_UNDO_HISTORY_POPUP_H;
+    if (h) *h = popupH;
 }
 
 static int handleUndoHistoryPopupInput(const uint8_t *keys,
@@ -2982,6 +3249,7 @@ static int handleUndoHistoryPopupInput(const uint8_t *keys,
                                        int mouseWheelY)
 {
     int px, py, pw, ph;
+    const int visibleRows = getUndoHistoryVisibleRowCapacity();
     const int ctrlDown = keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL];
 
     if (!g_ed.undoHistoryVisible) return 0;
@@ -3007,10 +3275,10 @@ static int handleUndoHistoryPopupInput(const uint8_t *keys,
         g_ed.undoHistorySelectedPos++;
     }
     if (keyPressedOnce(keys, SDL_SCANCODE_PAGEUP)) {
-        g_ed.undoHistorySelectedPos -= ED_UNDO_HISTORY_VISIBLE_ROWS;
+        g_ed.undoHistorySelectedPos -= visibleRows;
     }
     if (keyPressedOnce(keys, SDL_SCANCODE_PAGEDOWN)) {
-        g_ed.undoHistorySelectedPos += ED_UNDO_HISTORY_VISIBLE_ROWS;
+        g_ed.undoHistorySelectedPos += visibleRows;
     }
     if (keyPressedOnce(keys, SDL_SCANCODE_HOME)) {
         g_ed.undoHistorySelectedPos = 0;
@@ -3033,8 +3301,8 @@ static int handleUndoHistoryPopupInput(const uint8_t *keys,
     }
 
     if (leftPressed) {
-        const int rowsY = py + 56;
-        const int rowsH = ED_UNDO_HISTORY_VISIBLE_ROWS * ED_UNDO_HISTORY_ROW_H;
+        const int rowsY = py + ED_UNDO_HISTORY_HEADER_H;
+        const int rowsH = visibleRows * ED_UNDO_HISTORY_ROW_H;
 
         if (!pointInRectLocal(mouseX, mouseY, px, py, pw, ph)) {
             closeUndoHistoryPopup();
@@ -3163,7 +3431,7 @@ static void drawMapObjects(void)
             drawEditorObjectDiamond(sx, sy, size + 2, ED_COLOUR_HOVER_WALL);
         }
 
-        if (g_ed.selectionType == ED_SEL_OBJECT && i == g_ed.selectedObject) {
+        if (isObjectInEditSelection(i)) {
             drawEditorObjectDiamond(sx, sy, size + 3, 31);
             drawEditorObjectDiamond(sx, sy, size + 1, ED_COLOUR_SELECTED_WALL);
         }
@@ -3209,6 +3477,21 @@ static void deleteObjectByIndex(int objectIndex)
     }
 
     g_ed.draggingObject = 0;
+    g_ed.dragObjectCount = 0;
+
+    for (int i = objectIndex; i < g_edMap.objectCount; i++) {
+        g_ed.selectedObjects[i] = g_ed.selectedObjects[i + 1];
+    }
+    g_ed.selectedObjects[g_edMap.objectCount] = 0;
+
+    g_ed.selectedObjectCount = 0;
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        if (g_ed.selectedObjects[i]) {
+            g_ed.selectedObjectCount++;
+        }
+    }
+
+    normalizeObjectSelectionState();
 }
 
 static int clearBakedRouteNodesFromObject(int objectIndex)
@@ -3351,37 +3634,62 @@ static int bakeSelectedObjectRouteToNodes(void)
 
 static void beginObjectDragFromPress(int objectIndex)
 {
+    int objectIndices[ED_MAX_OBJECTS];
+    int objectCount;
+
     if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
 
-    clearAllSelections();
-    g_ed.selectionType = ED_SEL_OBJECT;
-    g_ed.selectedObject = objectIndex;
+    if (!isObjectInEditSelection(objectIndex)) {
+        selectExplicitTarget(ED_SEL_OBJECT, objectIndex);
+    }
 
     pushUndoState();
 
-    g_ed.draggingObject = 1;
+    g_ed.draggingObject = 0;
+    g_ed.dragObjectCount = 0;
     g_ed.dragObjectStartWorldX = g_ed.pendingLeftWorldX;
     g_ed.dragObjectStartWorldY = g_ed.pendingLeftWorldY;
-    g_ed.dragObjectStartX = g_edMap.objects[objectIndex].x;
-    g_ed.dragObjectStartY = g_edMap.objects[objectIndex].y;
-    g_ed.dragObjectStartZ = g_edMap.objects[objectIndex].z;
+
+    objectCount = collectObjectEditSelectionIndices(objectIndices, ED_MAX_OBJECTS);
+
+    for (int i = 0; i < objectCount; i++) {
+        const int oi = objectIndices[i];
+
+        if (oi < 0 || oi >= g_edMap.objectCount) continue;
+        if (g_ed.dragObjectCount >= ED_MAX_OBJECTS) break;
+
+        g_ed.dragObjectIndices[g_ed.dragObjectCount] = oi;
+        g_ed.dragObjectStartX[g_ed.dragObjectCount] = g_edMap.objects[oi].x;
+        g_ed.dragObjectStartY[g_ed.dragObjectCount] = g_edMap.objects[oi].y;
+        g_ed.dragObjectStartZ[g_ed.dragObjectCount] = g_edMap.objects[oi].z;
+        g_ed.dragObjectCount++;
+    }
+
+    if (g_ed.dragObjectCount > 0) {
+        g_ed.draggingObject = 1;
+    }
 }
 
 static void dragSelectedObjectTo(float worldX, float worldY)
 {
-    EdObject *o;
     float dx, dy;
 
     if (!g_ed.draggingObject) return;
-    if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) return;
-
-    o = &g_edMap.objects[g_ed.selectedObject];
+    if (g_ed.dragObjectCount <= 0) return;
 
     dx = snapDeltaf(worldX - g_ed.dragObjectStartWorldX);
     dy = snapDeltaf(worldY - g_ed.dragObjectStartWorldY);
 
-    o->x = g_ed.dragObjectStartX + dx;
-    o->y = g_ed.dragObjectStartY + dy;
+    for (int i = 0; i < g_ed.dragObjectCount; i++) {
+        EdObject *o;
+        const int oi = g_ed.dragObjectIndices[i];
+
+        if (oi < 0 || oi >= g_edMap.objectCount) continue;
+
+        o = &g_edMap.objects[oi];
+        o->x = g_ed.dragObjectStartX[i] + dx;
+        o->y = g_ed.dragObjectStartY[i] + dy;
+    }
 }
 
 
@@ -3480,6 +3788,75 @@ static float isoPolygonSignedArea(const float *xs, const float *ys, int count)
     }
 
     return twiceArea * 0.5f;
+}
+
+static uint8_t getIsoLitTextureIndex(uint8_t texel, uint8_t lightLevel, int x, int y)
+{
+    static const uint8_t isoBayer4x4[4][4] = {
+        {  0,  8,  2, 10 },
+        { 12,  4, 14,  6 },
+        {  3, 11,  1,  9 },
+        { 15,  7, 13,  5 }
+    };
+    const uint8_t dither = isoBayer4x4[y & 3][x & 3];
+    unsigned baseOffset;
+
+    lightLevel = clampLightLevel((int)lightLevel);
+
+    if (texel >= ED_TEXTURE_BASE_PAL_START &&
+        texel < (ED_TEXTURE_BASE_PAL_START + ED_TEXTURE_PAL_COUNT)) {
+        baseOffset = texel - ED_TEXTURE_BASE_PAL_START;
+    } else if (texel >= ED_TEXTURE_DIM_PAL_START &&
+               texel < (ED_TEXTURE_DIM_PAL_START + ED_TEXTURE_PAL_COUNT)) {
+        baseOffset = texel - ED_TEXTURE_DIM_PAL_START;
+    } else if (texel >= ED_TEXTURE_BRIGHT_PAL_START) {
+        baseOffset = texel - ED_TEXTURE_BRIGHT_PAL_START;
+    } else {
+        return texel;
+    }
+
+    if (lightLevel == 0) {
+        return (uint8_t)(ED_TEXTURE_DIM_PAL_START + baseOffset);
+    }
+
+    if (lightLevel < 4) {
+        const uint8_t threshold = (uint8_t)(lightLevel * 4);
+        return (dither < threshold)
+            ? (uint8_t)(ED_TEXTURE_BASE_PAL_START + baseOffset)
+            : (uint8_t)(ED_TEXTURE_DIM_PAL_START + baseOffset);
+    }
+
+    if (lightLevel == 4) {
+        return (uint8_t)(ED_TEXTURE_BASE_PAL_START + baseOffset);
+    }
+
+    if (lightLevel < 7) {
+        const uint8_t threshold = (uint8_t)((lightLevel - 4) * 4);
+        return (dither < threshold)
+            ? (uint8_t)(ED_TEXTURE_BRIGHT_PAL_START + baseOffset)
+            : (uint8_t)(ED_TEXTURE_BASE_PAL_START + baseOffset);
+    }
+
+    return (uint8_t)(ED_TEXTURE_BRIGHT_PAL_START + baseOffset);
+}
+
+static uint8_t getIsoWallLightLevel(const EdSector *owner, const EdWall *w)
+{
+    int lightLevel = 0;
+
+    if (owner) {
+        lightLevel = (int)clampLightLevel((int)owner->glowlevel);
+    }
+
+    if (w) {
+        const int wallLight = (int)getWallTexBrightness(w);
+
+        if (wallLight > lightLevel) {
+            lightLevel = wallLight;
+        }
+    }
+
+    return (uint8_t)lightLevel;
 }
 
 
@@ -3581,7 +3958,10 @@ static void drawIsoTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec
             clampVMin, clampVMax
         );
 
-        *dst++ = tex[(ty * TEXTURE_WIDTH) + tx];
+        *dst++ = getIsoLitTextureIndex(tex[(ty * TEXTURE_WIDTH) + tx],
+                                       sec->glowlevel,
+                                       x,
+                                       y);
 
         texU += texUStep;
         texV += texVStep;
@@ -3776,8 +4156,10 @@ static void drawIsoWallFace(int wallIndex,
                             float zBottom,
                             float zTop,
                             uint8_t textureIndex,
+                            uint8_t lightLevel,
                             int transparent,
-                            int flipFacing)
+                            int flipFacing,
+                            int doubleSided)
 {
     float polyX[4];
     float polyY[4];
@@ -3793,8 +4175,15 @@ static void drawIsoWallFace(int wallIndex,
     float faceDx, faceDy, faceLen;
     float texScaleX, texScaleY;
     float cosA, sinA;
+    float fitUMin, fitUMax, fitVMin, fitVMax;
     float signedArea;
+    float faceUSpan;
+    float faceVSpan;
     int backFace;
+    int clampXL, clampXR, clampYT, clampYB;
+    int clampULow, clampUHigh, clampVLow, clampVHigh;
+    int flipTexX, flipTexY;
+    int doFitStretchX, doFitStretchY;
 
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
         return;
@@ -3810,6 +4199,12 @@ static void drawIsoWallFace(int wallIndex,
     }
 
     w = &g_edMap.walls[wallIndex];
+    flipTexX = (w->tex_flags & RC3D_TEX_FLAG_FLIPX) != 0;
+    flipTexY = (w->tex_flags & RC3D_TEX_FLAG_FLIPY) != 0;
+    flipTexY = 1 - flipTexY;    // (inverted input, works fine in runtime, but just reversed here)
+
+    doFitStretchX = ((w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0) && ((w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0);
+    doFitStretchY = ((w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0) && ((w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0);
     v0 = &g_edMap.verts[w->v0];
     v1 = &g_edMap.verts[w->v1];
     a = flipFacing ? v1 : v0;
@@ -3864,8 +4259,61 @@ static void drawIsoWallFace(int wallIndex,
     if (fabsf(texScaleX) < 0.001f) texScaleX = 0.1f;
     if (fabsf(texScaleY) < 0.001f) texScaleY = 0.1f;
 
+    faceUSpan = (faceLen * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleX;
+    faceVSpan = ((zTop - zBottom) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleY;
+
+    fitUMin = 0.0f;
+    fitUMax = 0.0f;
+    fitVMin = 0.0f;
+    fitVMax = 0.0f;
+
+    if (backFace && lightLevel > 0 && !doubleSided) {
+        lightLevel--;
+    }
+
     cosA = cosf(getWallTexAngle(w));
     sinA = sinf(getWallTexAngle(w));
+    clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
+    clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
+    clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
+    clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
+
+    clampULow = clampXL;
+    clampUHigh = clampXR;
+    clampVLow = clampYB;
+    clampVHigh = clampYT;
+
+    if (flipTexX) {
+        const int t = clampULow;
+        clampULow = clampUHigh;
+        clampUHigh = t;
+    }
+
+    if (flipTexY) {    // inverted this because it draws upside down, simple, but affective
+        const int t = clampVLow;
+        clampVLow = clampVHigh;
+        clampVHigh = t;
+    }
+
+    {
+        const float cornerU[4] = { 0.0f, faceUSpan, faceUSpan, 0.0f };
+        const float cornerV[4] = { 0.0f, 0.0f, faceVSpan, faceVSpan };
+
+        for (int i = 0; i < 4; i++) {
+            const float rotatedU = (cornerU[i] * cosA) - (cornerV[i] * sinA);
+            const float rotatedV = (cornerU[i] * sinA) + (cornerV[i] * cosA);
+
+            if (i == 0) {
+                fitUMin = fitUMax = rotatedU;
+                fitVMin = fitVMax = rotatedV;
+            } else {
+                if (rotatedU < fitUMin) fitUMin = rotatedU;
+                if (rotatedU > fitUMax) fitUMax = rotatedU;
+                if (rotatedV < fitVMin) fitVMin = rotatedV;
+                if (rotatedV > fitVMax) fitVMax = rotatedV;
+            }
+        }
+    }
 
     for (int y = minY; y <= maxY; y++) {
         float intersections[4];
@@ -3933,14 +4381,34 @@ static void drawIsoWallFace(int wallIndex,
                     continue;
                 }
 
-                texU = ((along * faceLen) * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleX;
-                texV = (relHeight * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleY;
+                texU = along * faceUSpan;
+                texV = relHeight * faceVSpan / (zTop - zBottom);
+
+                if (flipTexX) {
+                    texU = faceUSpan - texU;
+                }
+
+                if (flipTexY) {
+                    texV = faceVSpan - texV;
+                }
 
                 {
                     const float rotatedU = (texU * cosA) - (texV * sinA);
                     const float rotatedV = (texU * sinA) + (texV * cosA);
-                    tx = wrapTextureCoordLocal((int)floorf(rotatedU), TEXTURE_WIDTH);
-                    ty = wrapTextureCoordLocal((int)floorf(rotatedV), TEXTURE_HEIGHT);
+
+                    tx = resolveSectorTextureCoordFitted(
+                        rotatedU, TEXTURE_WIDTH,
+                        doFitStretchX,
+                        clampULow, clampUHigh,
+                        fitUMin, fitUMax
+                    );
+
+                    ty = resolveSectorTextureCoordFitted(
+                        rotatedV, TEXTURE_HEIGHT,
+                        doFitStretchY,
+                        clampVLow, clampVHigh,
+                        fitVMin, fitVMax
+                    );
                 }
 
                 if (transparent && (((x + y) & 1) != 0)) {
@@ -3948,11 +4416,14 @@ static void drawIsoWallFace(int wallIndex,
                 }
 
                 /* Ghost hidden faces so they read as see-through, not full solids. */
-                if (backFace && (((x + y) & 1) != 0)) {
+                if (backFace && !doubleSided && (((x + y) & 1) != 0)) {
                     continue;
                 }
 
-                fb[(y * SCREEN_W) + x] = tex[(ty * TEXTURE_WIDTH) + tx];
+                fb[(y * SCREEN_W) + x] = getIsoLitTextureIndex(tex[(ty * TEXTURE_WIDTH) + tx],
+                                                               lightLevel,
+                                                               x,
+                                                               y);
             }
         }
     }
@@ -3962,7 +4433,9 @@ static void drawIsoWallSections(int wallIndex, int ownerSector)
 {
     const EdWall *w;
     const EdSector *owner;
+    uint8_t lightLevel;
     int transparent;
+    int doubleSided;
     const EdVec2 *a;
     const EdVec2 *b;
     float dx, dy, len;
@@ -3981,7 +4454,9 @@ static void drawIsoWallSections(int wallIndex, int ownerSector)
 
     w = &g_edMap.walls[wallIndex];
     owner = &g_edMap.sectors[ownerSector];
+    lightLevel = getIsoWallLightLevel(owner, w);
     transparent = (w->flags & RC3D_WALL_TRANSPARENCY) ? 1 : 0;
+    doubleSided = (w->flags & RC3D_WALL_DOUBLESIDED) ? 1 : 0;
     a = &g_edMap.verts[w->v0];
     b = &g_edMap.verts[w->v1];
 
@@ -4020,8 +4495,10 @@ static void drawIsoWallSections(int wallIndex, int ownerSector)
                         owner->floorHeight,
                         w->openBottom,
                         w->lowerColor,
-                        transparent,
-                        !interiorOnRight);
+                        lightLevel,
+                        (w->flags & RC3D_WALL_PORTAL) ? 0 : transparent,
+                        !interiorOnRight,
+                        (w->flags & RC3D_WALL_PORTAL) ? 0 : doubleSided);
     }
 
     if (w->flags & RC3D_WALL_MIDDLE) {
@@ -4030,15 +4507,21 @@ static void drawIsoWallSections(int wallIndex, int ownerSector)
                             owner->floorHeight,
                             owner->ceilHeight,
                             w->midColor,
+                            lightLevel,
                             transparent,
-                            !interiorOnRight);
+                            !interiorOnRight,
+                            doubleSided);
         } else if (w->openTop > w->openBottom) {
-            drawIsoWallFace(wallIndex,
+            if(w->midColor!=255){    // hide anything with the skybox, needed as it looks odd in this view ;)
+                drawIsoWallFace(wallIndex,
                             w->openBottom,
                             w->openTop,
                             w->midColor,
+                            lightLevel,
                             transparent,
-                            !interiorOnRight);
+                            !interiorOnRight,
+                            doubleSided);
+            }
         }
     }
 
@@ -4047,8 +4530,10 @@ static void drawIsoWallSections(int wallIndex, int ownerSector)
                         w->openTop,
                         owner->ceilHeight,
                         w->upperColor,
-                        transparent,
-                        !interiorOnRight);
+                        lightLevel,
+                        (w->flags & RC3D_WALL_PORTAL) ? 0 : transparent,
+                        !interiorOnRight,
+                        (w->flags & RC3D_WALL_PORTAL) ? 0 : doubleSided);
     }
 }
 
@@ -4320,6 +4805,21 @@ static void resetSectorGeometryClipboard(void)
     memset(&g_ed.copiedSectorGeometry, 0, sizeof(g_ed.copiedSectorGeometry));
     g_ed.hasCopiedSectorGeometry = 0;
     g_ed.copiedSectorGeometrySourceSector = -1;
+    if (g_ed.clipboardMode == ED_CLIPBOARD_SECTOR_GEOMETRY) {
+        g_ed.clipboardMode = ED_CLIPBOARD_NONE;
+    }
+}
+
+static void resetObjectClipboard(void)
+{
+    memset(&g_ed.copiedObject, 0, sizeof(g_ed.copiedObject));
+    g_ed.hasCopiedObject = 0;
+    g_ed.copiedObjectSourceObject = -1;
+    g_ed.copiedObject.sourceObjectIndex = -1;
+    g_ed.copiedObject.sourceSectorIndex = -1;
+    if (g_ed.clipboardMode == ED_CLIPBOARD_OBJECT) {
+        g_ed.clipboardMode = ED_CLIPBOARD_NONE;
+    }
 }
 
 static void copySelectedSectorGeometryToClipboard(void)
@@ -4424,21 +4924,6 @@ static void copySelectedSectorGeometryToClipboard(void)
             dstWall.v1 = vertRemap[srcWall->v1];
             dstWall.neighbour = -1;
 
-            if (dstWall.flags & RC3D_WALL_PORTAL) {
-                uint8_t solidCol = dstWall.midColor;
-
-                if (solidCol == 0) solidCol = dstWall.upperColor;
-                if (solidCol == 0) solidCol = dstWall.lowerColor;
-                if (solidCol == 0) solidCol = g_ed.newWallMidColor;
-
-                dstWall.openBottom = 0.0f;
-                dstWall.openTop = 0.0f;
-                dstWall.upperColor = 0;
-                dstWall.midColor = solidCol;
-                dstWall.lowerColor = 0;
-                dstWall.flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
-            }
-
             clip->walls[clip->wallCount++] = dstWall;
         }
 
@@ -4458,9 +4943,104 @@ static void copySelectedSectorGeometryToClipboard(void)
 
     g_ed.hasCopiedSectorGeometry = 1;
     g_ed.copiedSectorGeometrySourceSector = sectorIndices[0];
+    g_ed.clipboardMode = ED_CLIPBOARD_SECTOR_GEOMETRY;
 
     snprintf(msg, sizeof(msg), "Copied %d sector%s", sectorCount, (sectorCount == 1) ? "" : "s");
     setEditorStatus(msg);
+}
+
+static void copySelectedObjectToClipboard(void)
+{
+    const EdObject *src;
+    char msg[128];
+
+    if (g_ed.selectedObject < 0 || g_ed.selectedObject >= g_edMap.objectCount) {
+        setEditorStatus("Select an object to copy");
+        return;
+    }
+
+    src = &g_edMap.objects[g_ed.selectedObject];
+    g_ed.copiedObject.object = *src;
+    g_ed.copiedObject.sourceObjectIndex = g_ed.selectedObject;
+    g_ed.copiedObject.sourceSectorIndex = findSectorForPoint(src->x, src->y);
+    g_ed.hasCopiedObject = 1;
+    g_ed.copiedObjectSourceObject = g_ed.selectedObject;
+    g_ed.clipboardMode = ED_CLIPBOARD_OBJECT;
+
+    snprintf(msg, sizeof(msg), "Copied object %d", g_ed.selectedObject);
+    setEditorStatus(msg);
+}
+
+static int pasteObjectFromClipboard(float targetWorldX, float targetWorldY)
+{
+    const EdObjectClipboard *clip = &g_ed.copiedObject;
+    EdObject *dst;
+    float sourceFloor = 0.0f;
+    float targetFloor = 0.0f;
+    float targetZ;
+    int targetSector = -1;
+    int newIndex;
+    int newTagId = 0;
+    char msg[160];
+
+    if (!g_ed.hasCopiedObject) {
+        setEditorStatus("No copied object");
+        return 0;
+    }
+
+    if (g_edMap.objectCount >= ED_MAX_OBJECTS) {
+        setEditorStatus("Paste failed: object limit reached");
+        return 0;
+    }
+
+    if (clip->sourceSectorIndex >= 0 && clip->sourceSectorIndex < g_edMap.sectorCount) {
+        sourceFloor = g_edMap.sectors[clip->sourceSectorIndex].floorHeight;
+    } else {
+        sourceFloor = clip->object.z;
+    }
+
+    targetSector = findSectorForPoint(targetWorldX, targetWorldY);
+    if (targetSector >= 0 && targetSector < g_edMap.sectorCount) {
+        targetFloor = g_edMap.sectors[targetSector].floorHeight;
+        targetZ = targetFloor + (clip->object.z - sourceFloor);
+    } else {
+        targetZ = clip->object.z;
+    }
+
+    if (clip->object.tagId > 0) {
+        newTagId = findNextAvailableObjectTagId();
+    }
+
+    newIndex = addObject(targetWorldX,
+                         targetWorldY,
+                         targetZ,
+                         newTagId,
+                         clip->object.radius,
+                         clip->object.textureId);
+    if (newIndex < 0 || newIndex >= g_edMap.objectCount) {
+        setEditorStatus("Paste failed: object limit reached");
+        return 0;
+    }
+
+    dst = &g_edMap.objects[newIndex];
+    *dst = clip->object;
+    dst->x = snapf(targetWorldX);
+    dst->y = snapf(targetWorldY);
+    dst->z = targetZ;
+    dst->tagId = newTagId;
+
+    clearAllSelections();
+    g_ed.selectionType = ED_SEL_OBJECT;
+    g_ed.selectedObject = newIndex;
+    g_ed.hoverObject = newIndex;
+
+    if (newTagId > 0) {
+        snprintf(msg, sizeof(msg), "Pasted object %d as tag %d", newIndex, newTagId);
+    } else {
+        snprintf(msg, sizeof(msg), "Pasted object %d", newIndex);
+    }
+    setEditorStatus(msg);
+    return 1;
 }
 
 static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorldY)
@@ -4539,6 +5119,19 @@ static int pasteSectorGeometryFromClipboard(float targetWorldX, float targetWorl
 
     syncAllPortals();
 
+    for (int si = 0; si < clip->sectorCount; si++) {
+        const EdSector *sec = &g_edMap.sectors[sectorBase + si];
+
+        for (int wi = 0; wi < sec->wallCount; wi++) {
+            const int wallIndex = sec->wallStart + wi;
+            const EdWall *wall = &g_edMap.walls[wallIndex];
+
+            if ((wall->flags & RC3D_WALL_PORTAL) && wall->neighbour < 0) {
+                collapseUnlinkedPortalWallToSolid(wallIndex);
+            }
+        }
+    }
+
     clearAllSelections();
     if (clip->sectorCount == 1) {
         g_ed.selectionType = ED_SEL_SECTOR;
@@ -4591,6 +5184,7 @@ static void copySectorPropertiesToClipboard(int sectorIndex)
     clip->texFlags = sec->texFlags;
     clip->tagId = sec->tagId;
     clip->stateFlags = sec->stateFlags;
+    clip->sectorFlags = sec->sectorFlags;
     clip->floorMinHeight = sec->floorMinHeight;
     clip->floorMaxHeight = sec->floorMaxHeight;
     clip->ceilMinHeight = sec->ceilMinHeight;
@@ -4632,6 +5226,7 @@ static int applySectorPropertiesFromClipboardToSector(int sectorIndex)
     sec->texFlags  = clip->texFlags;
     sec->tagId = clip->tagId;
     sec->stateFlags = clip->stateFlags;
+    sec->sectorFlags = clip->sectorFlags;
     sec->floorMinHeight = clip->floorMinHeight;
     sec->floorMaxHeight = clip->floorMaxHeight;
     sec->ceilMinHeight = clip->ceilMinHeight;
@@ -4985,6 +5580,85 @@ static int findBoundaryWallNearPointInSector(int sectorIndex, float wx, float wy
     return bestLocal;
 }
 
+static int splitWallWithVertex(int wallIndex, int newVert)
+{
+    int sectorIndex;
+    int localWallIndex;
+    EdSector *sec;
+    EdWall original;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return 0;
+    if (newVert < 0 || newVert >= g_edMap.vertCount) return 0;
+    if (g_edMap.wallCount >= ED_MAX_WALLS) return 0;
+
+    sectorIndex = findSectorOwningWall(wallIndex);
+    if (sectorIndex < 0 || sectorIndex >= g_edMap.sectorCount) return 0;
+
+    sec = &g_edMap.sectors[sectorIndex];
+    localWallIndex = wallIndex - sec->wallStart;
+    if (localWallIndex < 0 || localWallIndex >= sec->wallCount) return 0;
+
+    original = g_edMap.walls[wallIndex];
+    if (newVert == original.v0 || newVert == original.v1) return 0;
+
+    for (int i = g_edMap.wallCount; i > wallIndex + 1; i--) {
+        g_edMap.walls[i] = g_edMap.walls[i - 1];
+    }
+    g_edMap.wallCount++;
+
+    g_edMap.walls[wallIndex].v1 = newVert;
+    g_edMap.walls[wallIndex + 1] = original;
+    g_edMap.walls[wallIndex + 1].v0 = newVert;
+
+    sec->wallCount++;
+    if (localWallIndex < sec->boundaryCount) {
+        sec->boundaryCount++;
+    }
+
+    for (int s = 0; s < g_edMap.sectorCount; s++) {
+        if (s == sectorIndex) continue;
+        if (g_edMap.sectors[s].wallStart > wallIndex) {
+            g_edMap.sectors[s].wallStart++;
+        }
+    }
+
+    return 1;
+}
+
+static int splitWallAndReversedPartner(int wallIndex, int newVert)
+{
+    const EdWall original = g_edMap.walls[wallIndex];
+    const int otherWall = findReversedWall(original.v0, original.v1);
+    int splitOther = 0;
+
+    if (otherWall >= 0 && otherWall < g_edMap.wallCount && otherWall != wallIndex) {
+        const int sectorA = findSectorOwningWall(wallIndex);
+        const int sectorB = findSectorOwningWall(otherWall);
+
+        if (sectorA >= 0 && sectorB >= 0 && sectorA != sectorB) {
+            splitOther = 1;
+        }
+    }
+
+    if ((g_edMap.wallCount + (splitOther ? 2 : 1)) > ED_MAX_WALLS) {
+        return 0;
+    }
+
+    if (splitOther) {
+        if (otherWall > wallIndex) {
+            if (!splitWallWithVertex(otherWall, newVert)) return 0;
+            if (!splitWallWithVertex(wallIndex, newVert)) return 0;
+        } else {
+            if (!splitWallWithVertex(wallIndex, newVert)) return 0;
+            if (!splitWallWithVertex(otherWall, newVert)) return 0;
+        }
+    } else {
+        if (!splitWallWithVertex(wallIndex, newVert)) return 0;
+    }
+
+    return 1;
+}
+
 
 
 
@@ -5017,23 +5691,8 @@ static int splitBoundaryWallAtPoint(int sectorIndex, int localWallIndex, float w
         return -1;
     }
 
-    /* make room for one new wall directly after this wall */
-    for (int i = g_edMap.wallCount; i > wallIndex + 1; i--) {
-        g_edMap.walls[i] = g_edMap.walls[i - 1];
-    }
-    g_edMap.wallCount++;
-
-    /* split original into two */
-    g_edMap.walls[wallIndex].v1 = newVert;
-    g_edMap.walls[wallIndex + 1] = original;
-    g_edMap.walls[wallIndex + 1].v0 = newVert;
-
-    sec->wallCount++;
-    sec->boundaryCount++;
-
-    /* shift later sector wallStart values */
-    for (int s = sectorIndex + 1; s < g_edMap.sectorCount; s++) {
-        g_edMap.sectors[s].wallStart++;
+    if (!splitWallAndReversedPartner(wallIndex, newVert)) {
+        return -1;
     }
 
     syncAllPortals();
@@ -5408,6 +6067,8 @@ static void setPortalPair(int wallA, int sectorA, int wallB, int sectorB)
     EdWall *b = &g_edMap.walls[wallB];
     const EdSector *sa = &g_edMap.sectors[sectorA];
     const EdSector *sb = &g_edMap.sectors[sectorB];
+    const uint8_t preservedA = (uint8_t)(a->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
+    const uint8_t preservedB = (uint8_t)(b->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
 
     const float openBottom = (sa->floorHeight > sb->floorHeight) ? sa->floorHeight : sb->floorHeight;
     const float openTop    = (sa->ceilHeight  < sb->ceilHeight)  ? sa->ceilHeight  : sb->ceilHeight;
@@ -5420,13 +6081,13 @@ static void setPortalPair(int wallA, int sectorA, int wallB, int sectorB)
     b->openBottom = openBottom;
     b->openTop = openTop;
 
-    a->upperColor = a->midColor;
-    a->lowerColor = a->midColor;
-    b->upperColor = b->midColor;
-    b->lowerColor = b->midColor;
+    if (a->upperColor == 0) a->upperColor = a->midColor;
+    if (a->lowerColor == 0) a->lowerColor = a->midColor;
+    if (b->upperColor == 0) b->upperColor = b->midColor;
+    if (b->lowerColor == 0) b->lowerColor = b->midColor;
 
-    a->flags = RC3D_WALL_PORTAL;
-    b->flags = RC3D_WALL_PORTAL;
+    a->flags = RC3D_WALL_PORTAL | preservedA;
+    b->flags = RC3D_WALL_PORTAL | preservedB;
 
     if (sb->ceilHeight < sa->ceilHeight) a->flags |= RC3D_WALL_UPPER;
     if (sb->floorHeight > sa->floorHeight) a->flags |= RC3D_WALL_LOWER;
@@ -5434,8 +6095,10 @@ static void setPortalPair(int wallA, int sectorA, int wallB, int sectorB)
     if (sa->floorHeight > sb->floorHeight) b->flags |= RC3D_WALL_LOWER;
 
     if (openTop <= openBottom) {
-        a->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
-        b->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+        a->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE |
+                   (preservedA & (RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED));
+        b->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE |
+                   (preservedB & (RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED));
         a->neighbour = -1;
         b->neighbour = -1;
         a->openBottom = 0.0f;
@@ -5450,10 +6113,11 @@ static void syncAllPortals(void)
     for (int wi = 0; wi < g_edMap.wallCount; wi++) {
         EdWall *w = &g_edMap.walls[wi];
         if (w->neighbour >= 0) {
+            const uint8_t preservedFlags = (uint8_t)(w->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
             w->neighbour = -1;
             w->openBottom = 0.0f;
             w->openTop = 0.0f;
-            w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
+            w->flags = RC3D_WALL_SOLID | preservedFlags;
         }
     }
 
@@ -5636,7 +6300,7 @@ static int buildInnerSectorsFromSelectedSector(void)
                 dst->openBottom = 0.0f;
                 dst->openTop = 0.0f;
                 dst->upperColor = src->upperColor;
-                dst->midColor   = src->midColor;
+                dst->midColor   = ED_SOLID_MIDDLE_TEXTURE;
                 dst->lowerColor = src->lowerColor;
                 dst->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
                 clearWallTexFlags(dst);
@@ -6443,6 +7107,34 @@ static void resetWallToSolidFromOwnColour(int wallIndex)
     clearWallTexFlags(w);
 }
 
+static void collapseUnlinkedPortalWallToSolid(int wallIndex)
+{
+    EdWall *w;
+    uint8_t solidCol;
+    uint8_t preservedFlags;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+
+    w = &g_edMap.walls[wallIndex];
+    if ((w->flags & RC3D_WALL_PORTAL) == 0) return;
+    if (w->neighbour >= 0) return;
+
+    solidCol = w->midColor;
+    if (solidCol == 0) solidCol = w->upperColor;
+    if (solidCol == 0) solidCol = w->lowerColor;
+    if (solidCol == 0) solidCol = g_ed.newWallMidColor;
+
+    preservedFlags = (uint8_t)(w->flags & (RC3D_WALL_MANUAL_TARGET |
+                                           RC3D_WALL_TRANSPARENCY |
+                                           RC3D_WALL_DOUBLESIDED));
+
+    w->neighbour = -1;
+    w->openBottom = 0.0f;
+    w->openTop = 0.0f;
+    w->midColor = solidCol;
+    w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE | preservedFlags;
+}
+
 static void makeWallWindow(int wallIndex, float openBottom, float openTop,
                            uint8_t upperColor, uint8_t lowerColor)
 {
@@ -6510,6 +7202,13 @@ static void tryMakeWallPortal(int wallIndex)
         return;
     }
 
+    if (!(w->flags & RC3D_WALL_PORTAL)) {
+        w->flags &= ~RC3D_WALL_MIDDLE;
+    }
+    if (!(g_edMap.walls[other].flags & RC3D_WALL_PORTAL)) {
+        g_edMap.walls[other].flags &= ~RC3D_WALL_MIDDLE;
+    }
+
     setPortalPair(wallIndex, sectorA, other, sectorB);
 }
 
@@ -6574,22 +7273,14 @@ static int findVertexNearWorld(float wx, float wy, float distWorld, int ignoreIn
 static int splitWallAtSelected(int wallIndex, float wx, float wy)
 {
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return 0;
-    if (g_edMap.wallCount >= ED_MAX_WALLS) return 0;
     if (g_edMap.vertCount >= ED_MAX_VERTS) return 0;
 
-    const int sectorIndex = findSectorOwningWall(wallIndex);
-    if (sectorIndex < 0) return 0;
-
-    EdSector *sec = &g_edMap.sectors[sectorIndex];
-    const int localIndex = wallIndex - sec->wallStart;
-    if (localIndex < 0 || localIndex >= sec->wallCount) return 0;
+    if (findSectorOwningWall(wallIndex) < 0) return 0;
 
     float sx, sy;
     if (!getWallSplitPreviewPos(wallIndex, wx, wy, &sx, &sy)) {
         return 0;
     }
-
-    EdWall original = g_edMap.walls[wallIndex];
 
     int newVert = findVertexExact(sx, sy);
     if (newVert < 0) {
@@ -6597,24 +7288,12 @@ static int splitWallAtSelected(int wallIndex, float wx, float wy)
         if (newVert < 0) return 0;
     }
 
-    if (newVert == original.v0 || newVert == original.v1) return 0;
-
-    for (int i = g_edMap.wallCount; i > wallIndex + 1; i--) {
-        g_edMap.walls[i] = g_edMap.walls[i - 1];
-    }
-    g_edMap.wallCount++;
-
-    g_edMap.walls[wallIndex].v1 = newVert;
-    g_edMap.walls[wallIndex + 1] = original;
-    g_edMap.walls[wallIndex + 1].v0 = newVert;
-
-    sec->wallCount++;
-    if (localIndex < sec->boundaryCount) {
-        sec->boundaryCount++;
+    if (newVert == g_edMap.walls[wallIndex].v0 || newVert == g_edMap.walls[wallIndex].v1) {
+        return 0;
     }
 
-    for (int s = sectorIndex + 1; s < g_edMap.sectorCount; s++) {
-        g_edMap.sectors[s].wallStart++;
+    if (!splitWallAndReversedPartner(wallIndex, newVert)) {
+        return 0;
     }
 
     syncAllPortals();
@@ -6722,6 +7401,13 @@ static void selectExplicitTarget(EdSelectionType type, int index)
             if (index >= 0 && index < g_edMap.sectorCount) {
                 g_ed.selectionType = ED_SEL_SECTOR;
                 g_ed.selectedSector = index;
+            }
+            break;
+
+        case ED_SEL_OBJECT:
+            if (index >= 0 && index < g_edMap.objectCount) {
+                g_ed.selectionType = ED_SEL_OBJECT;
+                g_ed.selectedObject = index;
             }
             break;
 
@@ -6881,6 +7567,14 @@ static void promotePendingLeftMouseAction(int mouseX, int mouseY)
             beginVertexDragFromPress(g_ed.pendingLeftTargetIndex);
             break;
 
+        case ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG:
+            if (g_ed.pendingLeftCtrlDown) {
+                toggleObjectMultiSelection(g_ed.pendingLeftTargetIndex);
+            } else {
+                beginObjectDragFromPress(g_ed.pendingLeftTargetIndex);
+            }
+            break;
+
         case ED_PENDING_LEFT_WALL_DRAG:
             beginWallDragFromPress(g_ed.pendingLeftTargetIndex);
             break;
@@ -6946,6 +7640,14 @@ static void commitPendingLeftMouseClick(void)
             selectExplicitTarget(ED_SEL_VERTEX, g_ed.pendingLeftTargetIndex);
             break;
 
+        case ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG:
+            if (g_ed.pendingLeftCtrlDown) {
+                toggleObjectMultiSelection(g_ed.pendingLeftTargetIndex);
+            } else {
+                selectExplicitTarget(ED_SEL_OBJECT, g_ed.pendingLeftTargetIndex);
+            }
+            break;
+
         case ED_PENDING_LEFT_WALL_CLICK_OR_BOX:
             if (g_ed.pendingLeftAltDown) {
                 toggleWallMultiSelection(g_ed.pendingLeftTargetIndex);
@@ -7001,6 +7703,7 @@ static void clearAllSelections(void)
     clearMultiVertexSelection();
     clearMultiWallSelection();
     clearMultiSectorSelection();
+    clearMultiObjectSelection();
 }
 
 static int hasAnyActiveSelection(void)
@@ -7008,6 +7711,7 @@ static int hasAnyActiveSelection(void)
     return (g_ed.selectionType != ED_SEL_NONE) ||
            (g_ed.selectedVertCount > 0) ||
            (g_ed.selectedWallCount > 0) ||
+           (g_ed.selectedObjectCount > 0) ||
            (g_ed.selectedSectorCount > 0) ||
            g_ed.boxSelecting ||
            g_ed.draggingVertex ||
@@ -7442,6 +8146,8 @@ static void beginNewMap(void)
     g_ed.selectedWallCount = 0;
     memset(g_ed.selectedSectors, 0, sizeof(g_ed.selectedSectors));
     g_ed.selectedSectorCount = 0;
+    memset(g_ed.selectedObjects, 0, sizeof(g_ed.selectedObjects));
+    g_ed.selectedObjectCount = 0;
 
     g_ed.bUseVectorFill = 0;
     g_ed.bUseTextureFill = 0;
@@ -7484,9 +8190,11 @@ static void beginNewMap(void)
     // objects
     g_ed.dragObjectStartWorldX = 0.0f;
     g_ed.dragObjectStartWorldY = 0.0f;
-    g_ed.dragObjectStartX = 0.0f;
-    g_ed.dragObjectStartY = 0.0f;
-    g_ed.dragObjectStartZ = 0.0f;
+    g_ed.dragObjectCount = 0;
+    memset(g_ed.dragObjectIndices, 0, sizeof(g_ed.dragObjectIndices));
+    memset(g_ed.dragObjectStartX, 0, sizeof(g_ed.dragObjectStartX));
+    memset(g_ed.dragObjectStartY, 0, sizeof(g_ed.dragObjectStartY));
+    memset(g_ed.dragObjectStartZ, 0, sizeof(g_ed.dragObjectStartZ));
 
     g_ed.sectorFloor = 0.0f;
     g_ed.sectorCeil = 2.0f;
@@ -7498,6 +8206,7 @@ static void beginNewMap(void)
     g_ed.newWallMidColor   = ED_DEFAULT_WALL_MED_TEX_ID;
     g_ed.newWallLowerColor = ED_DEFAULT_WALL_LOWER_TEX_ID;
 
+    g_ed.clipboardMode = ED_CLIPBOARD_NONE;
 
     g_ed.copiedSectorFloor = 0.0f;
     g_ed.copiedSectorCeil = 0.0f;
@@ -7524,6 +8233,7 @@ static void beginNewMap(void)
     g_ed.hasCopiedWallProps = 0;
     g_ed.copiedWallPropsSourceWall = -1;
     resetSectorGeometryClipboard();
+    resetObjectClipboard();
 
     g_ed.selectionType = ED_SEL_NONE;
     g_ed.selectedVert = -1;
@@ -7652,7 +8362,7 @@ static int saveTextMap(const char *path)
     fprintf(f, "SECTORS %d\n", g_edMap.sectorCount);
     for (int i = 0; i < g_edMap.sectorCount; i++) {
         const EdSector *s = &g_edMap.sectors[i];
-        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %d %u %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
+        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %d %u %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %u\n",
                 s->wallStart, s->wallCount, s->boundaryCount,
                 s->floorHeight, s->ceilHeight,
                 (unsigned)s->floorColor,
@@ -7672,7 +8382,9 @@ static int saveTextMap(const char *path)
                 s->floorTexAngle,
                 s->ceilTexScaleX,
                 s->ceilTexScaleY,
-                s->ceilTexAngle);
+                s->ceilTexAngle,
+                s->sectorFlags
+            );
     }
 
 
@@ -7839,7 +8551,7 @@ static int loadTextMap(const char *path)
         uint8_t texFlag;
         unsigned stateFlags = 0;
 
-        if (fscanf(f, "%d %d %d %f %f %u %u %u %u %d %u %f %f %f %f %f %f %f %f %f %f %f %f",
+        if (fscanf(f, "%d %d %d %f %f %u %u %u %u %d %u %f %f %f %f %f %f %f %f %f %f %f %f %u",
                 &newMap.sectors[i].wallStart,
                 &newMap.sectors[i].wallCount,
                 &newMap.sectors[i].boundaryCount,
@@ -7859,7 +8571,9 @@ static int loadTextMap(const char *path)
                 &newMap.sectors[i].floorTexAngle,
                 &newMap.sectors[i].ceilTexScaleX,
                 &newMap.sectors[i].ceilTexScaleY,
-                &newMap.sectors[i].ceilTexAngle) != 23) {
+                &newMap.sectors[i].ceilTexAngle,
+                &newMap.sectors[i].sectorFlags
+            ) != 24) {
             fclose(f);
             return 0;
         }
@@ -8100,6 +8814,7 @@ int exportBinaryMap(const char *path)
         float ceilTexScaleX   = s->ceilTexScaleX;
         float ceilTexScaleY   = s->ceilTexScaleY;
         float ceilTexAngle    = s->ceilTexAngle;
+        uint32_t sectorFlags  = s->sectorFlags;
 
         
 
@@ -8111,7 +8826,7 @@ int exportBinaryMap(const char *path)
             fwrite(&floorColor,     sizeof(floorColor),     1, f) != 1 ||
             fwrite(&ceilColor,      sizeof(ceilColor),      1, f) != 1 ||
             fwrite(&glowlevel,      sizeof(glowlevel),      1, f) != 1 ||
-            fwrite(&sectorClamps,   sizeof(sectorClamps),      1, f) != 1 ||
+            fwrite(&sectorClamps,   sizeof(sectorClamps),   1, f) != 1 ||
             fwrite(&tagId,          sizeof(tagId),          1, f) != 1 ||
             fwrite(&stateFlags,     sizeof(stateFlags),     1, f) != 1 ||
             fwrite(&floorMinHeight, sizeof(floorMinHeight), 1, f) != 1 ||
@@ -8125,7 +8840,9 @@ int exportBinaryMap(const char *path)
             fwrite(&floorTexAngle,  sizeof(floorTexAngle),  1, f) != 1 ||
             fwrite(&ceilTexScaleX,  sizeof(ceilTexScaleX),  1, f) != 1 ||
             fwrite(&ceilTexScaleY,  sizeof(ceilTexScaleY),  1, f) != 1 ||
-            fwrite(&ceilTexAngle,   sizeof(ceilTexAngle),   1, f) != 1) {
+            fwrite(&ceilTexAngle,   sizeof(ceilTexAngle),   1, f) != 1 ||
+            fwrite(&sectorFlags,    sizeof(sectorFlags),    1, f) != 1
+        ) {
             fclose(f);
             return 0;
         }
@@ -8577,7 +9294,7 @@ static void finalizeDraftSector(void)
             w->openBottom = 0.0f;
             w->openTop = 0.0f;
             w->upperColor = g_ed.newWallUpperColor;
-            w->midColor   = g_ed.newWallMidColor;
+            w->midColor   = ED_SOLID_MIDDLE_TEXTURE;
             w->lowerColor = g_ed.newWallLowerColor;
             w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
             clearWallTexFlags(w);
@@ -9213,6 +9930,7 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
         int bestWall = -1;
         float bestWallDistSq = 99999999.0f;
         int bestPriority = -999999;
+        int bestOwnerSideMatch = -1;
 
         for (int i = 0; i < g_edMap.wallCount; i++) {
             const EdWall *w = &g_edMap.walls[i];
@@ -9225,12 +9943,16 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
 
             int owner;
             int priority = 0;
+            int ownerSideMatch = 0;
 
             if (d2 > worldPickSq) {
                 continue;
             }
 
             owner = findSectorOwningWall(i);
+            if (w->flags & RC3D_WALL_PORTAL) {
+                ownerSideMatch = isPointOnWallOwnerSide(i, worldX, worldY);
+            }
 
             if (selected) {
                 priority = 4;
@@ -9248,11 +9970,19 @@ static void updateHover(float worldX, float worldY, int mouseX, int mouseY)
             if (priority > bestPriority) {
                 bestPriority = priority;
                 bestWallDistSq = d2;
+                bestOwnerSideMatch = ownerSideMatch;
                 bestWall = i;
             }
-            else if (priority == bestPriority && d2 < bestWallDistSq) {
-                bestWallDistSq = d2;
-                bestWall = i;
+            else if (priority == bestPriority) {
+                if (ownerSideMatch > bestOwnerSideMatch) {
+                    bestWallDistSq = d2;
+                    bestOwnerSideMatch = ownerSideMatch;
+                    bestWall = i;
+                }
+                else if (ownerSideMatch == bestOwnerSideMatch && d2 < bestWallDistSq) {
+                    bestWallDistSq = d2;
+                    bestWall = i;
+                }
             }
         }
 
@@ -9305,45 +10035,8 @@ static int getSectorFillStepY(int sectorIndex)
     return 4;
 }
 
-static int wrapTextureCoordLocal(int v, int size)
-{
-    if (size <= 0) {
-        return 0;
-    }
 
-    v %= size;
-    if (v < 0) {
-        v += size;
-    }
 
-    return v;
-}
-
-static int resolveSectorTextureCoord(int v, int size, int clampLow, int clampHigh)
-{
-    if (size <= 0) {
-        return 0;
-    }
-
-    if (v < 0) {
-        if (clampLow) {
-            return 0;
-        }
-        v %= size;
-        if (v < 0) v += size;
-        return v;
-    }
-
-    if (v >= size) {
-        if (clampHigh) {
-            return size - 1;
-        }
-        v %= size;
-        return v;
-    }
-
-    return v;
-}
 static void getSectorTextureUVBounds(const EdSector *sec,
                                      float *outUMin, float *outUMax,
                                      float *outVMin, float *outVMax)
@@ -9646,7 +10339,10 @@ static void drawTexturedSectorSpan(int x0, int x1, int y, const EdSector *sec)
             clampVMin, clampVMax
         );
 
-        *dst++ = tex[(ty * TEXTURE_WIDTH) + tx];
+        *dst++ = getIsoLitTextureIndex(tex[(ty * TEXTURE_WIDTH) + tx],
+                                       sec->glowlevel,
+                                       x,
+                                       y);
 
         texU += texUStep;
         texV += texVStep;
@@ -10059,6 +10755,12 @@ void drawHoverPanel(void)
         return;
     }
 
+    if (hasMultiObjectSelection()) {
+        snprintf(buf, sizeof(buf), "Selected objects: %d", getObjectEditSelectionCount());
+        drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
+        return;
+    }
+
     /* selected takes priority over hover */
     if (g_ed.hoverVert    >= 0) vertex_id = g_ed.hoverVert;
     if (g_ed.selectedVert >= 0) vertex_id = g_ed.selectedVert;
@@ -10258,6 +10960,7 @@ static void drawExpandedEditorPanel(void)
              (g_ed.selectionType == ED_SEL_SECTOR) ||
              (g_ed.selectionType == ED_SEL_OBJECT) ||
             (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0) ||
+            hasMultiObjectSelection() ||
             hasMultiWallSelection() ||
             hasMultiSectorSelection())
         {
@@ -10286,6 +10989,8 @@ static void drawExpandedEditorPanel(void)
         }
         if(g_ed.selectionType == ED_SEL_OBJECT){
             drawText(x, y, "--- OBJECTS HELP", ED_EXPANDED_MENU_TEXT);
+            y += ED_ROW_STEP; drawText(x, y, "[LMB-DRAG] move object, [CTRL+CLICK] add/remove objects", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "[CTRL+C]/[CTRL+V] copy/paste object at cursor", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Tag: Just an identifier for the object", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Type: Is used to identify what this object is", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Radius: Collision test area for the object", ED_TEXT_COL);
@@ -10311,6 +11016,14 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Generic Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "bit 0 : 0x01 = enable / disable (recommended use of this flag)", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+        }
+        if(hasMultiObjectSelection()){
+            drawText(x, y, "--- MULTI OBJECT HELP", ED_EXPANDED_MENU_TEXT);
+            y += ED_ROW_STEP;
+            drawText(x, y, "[CTRL+CLICK] add/remove objects, [LMB-DRAG] selected object moves the full group", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+            drawText(x, y, "[DEL] deletes the selected objects", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(hasMultiWallSelection()){
@@ -10439,44 +11152,136 @@ static int getWallNormal(int wallIndex)
     return -1;
 }
 
-
-
-
-static void drawWallNormal(int wallIndex, uint8_t colour)
+static int getPointSideOfWall(int wallIndex, float px, float py)
 {
+    const EdWall *w;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    const float eps = 0.0001f;
+    float dx, dy;
+    float cross;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
+        return 0;
+    }
+
+    w = &g_edMap.walls[wallIndex];
+    if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+        w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+        return 0;
+    }
+
+    a = &g_edMap.verts[w->v0];
+    b = &g_edMap.verts[w->v1];
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+
+    if (((dx * dx) + (dy * dy)) <= eps) {
+        return 0;
+    }
+
+    cross = cross2_local(dx, dy, px - a->x, py - a->y);
+    if (cross > eps) return -1;   /* point is left of v0->v1 */
+    if (cross < -eps) return 1;   /* point is right of v0->v1 */
+
+    return 0;
+}
+
+static int isPointOnWallOwnerSide(int wallIndex, float px, float py)
+{
+    const int pointSide = getPointSideOfWall(wallIndex, px, py);
+    const int inward = getWallNormal(wallIndex);
+
+    if (pointSide == 0 || inward < 0) {
+        return 0;
+    }
+
+    if (inward == 1) {
+        return (pointSide > 0);
+    }
+
+    return (pointSide < 0);
+}
+
+static void drawWallIndicator(int wallIndex,
+                              uint8_t colour,
+                              float normalLen,
+                              int normalDirection,
+                              int drawTip)
+{
+    const EdWall *w;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    float dx, dy, len;
+    float mx, my;
+    float nx, ny;
+    float ex, ey;
+    int sx0, sy0, sx1, sy1;
+
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
 
-    const EdWall *w = &g_edMap.walls[wallIndex];
-    const EdVec2 *a = &g_edMap.verts[w->v0];
-    const EdVec2 *b = &g_edMap.verts[w->v1];
+    w = &g_edMap.walls[wallIndex];
+    if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+        w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+        return;
+    }
 
-    const float dx = b->x - a->x;
-    const float dy = b->y - a->y;
-    const float len = sqrtf((dx * dx) + (dy * dy));
+    a = &g_edMap.verts[w->v0];
+    b = &g_edMap.verts[w->v1];
+
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+    len = sqrtf((dx * dx) + (dy * dy));
     if (len <= 0.0001f) return;
 
-    /* midpoint of wall */
-    const float mx = (a->x + b->x) * 0.5f;
-    const float my = (a->y + b->y) * 0.5f;
+    mx = (a->x + b->x) * 0.5f;
+    my = (a->y + b->y) * 0.5f;
 
-    /* right-hand normal from v0->v1 */
-    const float nx =  dy / len;
-    const float ny = -dx / len;
+    nx =  dy / len;
+    ny = -dx / len;
 
-    /* draw length in world units */
-    const float normalLen = 0.15f;
+    if (normalDirection < 0) {
+        nx = -nx;
+        ny = -ny;
+    }
 
-    const float ex = mx + (nx * normalLen);
-    const float ey = my + (ny * normalLen);
+    ex = mx + (nx * normalLen);
+    ey = my + (ny * normalLen);
 
-    int sx0, sy0, sx1, sy1;
     worldToScreen(mx, my, &sx0, &sy0);
     worldToScreen(ex, ey, &sx1, &sy1);
 
     drawLine(sx0, sy0, sx1, sy1, colour);
 
-    /* tiny tip marker so it reads better */
-    //drawRect(sx1 - 1, sy1 - 1, 3, 3, colour);
+    if (drawTip) {
+        drawRect(sx1 - 1, sy1 - 1, 3, 3, colour);
+    }
+}
+
+static void drawWallOwnerSideIndicator(int wallIndex,
+                                       uint8_t colour,
+                                       float normalLen,
+                                       int drawTip)
+{
+    const int inward = getWallNormal(wallIndex);
+
+    if (inward < 0) {
+        return;
+    }
+
+    drawWallIndicator(wallIndex,
+                      colour,
+                      normalLen,
+                      (inward == 1) ? 1 : -1,
+                      drawTip);
+}
+
+
+
+
+static void drawWallNormal(int wallIndex, uint8_t colour)
+{
+    drawWallIndicator(wallIndex, colour, 0.05f, 1, 0);
 }
 
 static int objectUsesSectorTarget(const EdObject *o)
@@ -12060,7 +12865,7 @@ static void drawObjectSectorLinks(void)
 
             worldToScreen(sectorX, sectorY, &x1, &y1);
 
-            if ((g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject == i) ||
+            if (isObjectInEditSelection(i) ||
                 isSectorInEditSelection(sectorIndex)) {
                 col = ED_COLOUR_SELECTED_SECTOR;
             } else if (g_ed.hoverObject == i || g_ed.hoverSector == sectorIndex) {
@@ -12091,8 +12896,8 @@ static void drawObjectBakedLinks(void)
             continue;
         }
 
-        if ((g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject == i) ||
-            (g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject == targetIndex)) {
+        if (isObjectInEditSelection(i) ||
+            isObjectInEditSelection(targetIndex)) {
             col = ED_COLOUR_SELECTED_SECTOR;
         } else if (g_ed.hoverObject == i || g_ed.hoverObject == targetIndex) {
             col = ED_COLOUR_HOVER_WALL;
@@ -12221,6 +13026,15 @@ static void drawMapGeometry(void)
 
             if (!(w->flags & RC3D_WALL_PORTAL)) {
                 drawWallNormal(i, c);
+            } else {
+                drawWallOwnerSideIndicator(i, c, 0.05f, 0);
+
+                if (i == g_ed.hoverWall) {
+                    drawWallOwnerSideIndicator(i, ED_COLOUR_HOVER_WALL, 0.06f, 1);
+                }
+                else if (isWallInEditSelection(i)) {
+                    drawWallOwnerSideIndicator(i, ED_COLOUR_SELECTED_WALL, 0.06f, 1);
+                }
             }
         }
     }
@@ -12410,6 +13224,8 @@ void rc3dEditInit(void)
 
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 162 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS,  194 + controloffw, 384 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_QUICK_TEXTURE, 260 + controloffw, 384 + controloff + inspectWallYOffset, 100, 24, "Quick Inv.");
     
 
     // sector inspector UI - wall
@@ -12417,9 +13233,6 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
-
-
-    
 
     // sector inspector UI - sector / heights
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_COPY_PROPS,  206 + controloffw,  58 + controloff, 96, ED_BTN_H, "Copy Props");
@@ -12483,6 +13296,32 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,  164 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_MINUS,  336 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_CEIL_FLOW_PLUS,   364 + controloffw, 496 + controloff + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+
+    //// SECTOR FLAG BITS ////
+    sector_button_y_offsets = 5;
+    sector_button_y_offsets += controloff;
+    sector_button_y_offsets += 495;
+    sector_button_y_offsets += 190;
+
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT0,   8 + controloffw + (50 * 0), sector_button_y_offsets, 48, 24, "0:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT1,   8 + controloffw + (50 * 1), sector_button_y_offsets, 48, 24, "1:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT2,   8 + controloffw + (50 * 2), sector_button_y_offsets, 48, 24, "2:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT3,   8 + controloffw + (50 * 3), sector_button_y_offsets, 48, 24, "3:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT4,   8 + controloffw + (50 * 4), sector_button_y_offsets, 48, 24, "4:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT5,   8 + controloffw + (50 * 5), sector_button_y_offsets, 48, 24, "5:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT6,   8 + controloffw + (50 * 6), sector_button_y_offsets, 48, 24, "6:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT7,   8 + controloffw + (50 * 7), sector_button_y_offsets, 48, 24, "7:", 0);
+
+    sector_button_y_offsets += 30;
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT8,   8 + controloffw + (50 * 0), sector_button_y_offsets, 48, 24, "8:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT9,   8 + controloffw + (50 * 1), sector_button_y_offsets, 48, 24, "9:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT10,  8 + controloffw + (50 * 2), sector_button_y_offsets, 48, 24, "10:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT11,  8 + controloffw + (50 * 3), sector_button_y_offsets, 48, 24, "11:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT12,  8 + controloffw + (50 * 4), sector_button_y_offsets, 48, 24, "12:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT13,  8 + controloffw + (50 * 5), sector_button_y_offsets, 48, 24, "13:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT14,  8 + controloffw + (50 * 6), sector_button_y_offsets, 48, 24, "14:", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_SECTOR_FLAGS_BIT15,  8 + controloffw + (50 * 7), sector_button_y_offsets, 48, 24, "15:", 0);
+
 
 
     //// OBJECT INSPECT UI - Fun stuff right?
@@ -13099,6 +13938,7 @@ static void flipSelectedWallFacing(void)
                      RC3D_WALL_MIDDLE |
                      RC3D_WALL_UPPER |
                      RC3D_WALL_LOWER |
+                     RC3D_WALL_DOUBLESIDED |
                      RC3D_WALL_TRANSPARENCY |
                      RC3D_WALL_MANUAL_TARGET);
     }
@@ -13353,7 +14193,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wShared->openBottom = 0.0f;
     wShared->openTop = 0.0f;
     wShared->upperColor = g_ed.newWallUpperColor;
-    wShared->midColor   = g_ed.newWallMidColor;
+    wShared->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wShared->lowerColor = g_ed.newWallLowerColor;
     wShared->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wShared);
@@ -13364,7 +14204,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wSide0->openBottom = 0.0f;
     wSide0->openTop = 0.0f;
     wSide0->upperColor = g_ed.newWallUpperColor;
-    wSide0->midColor   = g_ed.newWallMidColor;
+    wSide0->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wSide0->lowerColor = g_ed.newWallLowerColor;
     wSide0->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wSide0);
@@ -13375,7 +14215,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wFar->openBottom = 0.0f;
     wFar->openTop = 0.0f;
     wFar->upperColor = g_ed.newWallUpperColor;
-    wFar->midColor   = g_ed.newWallMidColor;
+    wFar->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wFar->lowerColor = g_ed.newWallLowerColor;
     wFar->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wFar);
@@ -13386,7 +14226,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wSide1->openBottom = 0.0f;
     wSide1->openTop = 0.0f;
     wSide1->upperColor = g_ed.newWallUpperColor;
-    wSide1->midColor   = g_ed.newWallMidColor;
+    wSide1->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wSide1->lowerColor = g_ed.newWallLowerColor;
     wSide1->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wSide1);
@@ -13465,6 +14305,7 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_QUICK_TEXTURE, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 0);
@@ -13498,6 +14339,10 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_X2, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_Y1, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_CLAMP_Y2, 0);
+
+    for (int i = GUI_BTN_SECTOR_FLAGS_BIT0; i <= GUI_BTN_SECTOR_FLAGS_BIT15; i++) {
+        rcguiSetButtonVisible(&g_ui, i, 0);
+    }
     
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_SECTOR_FTEX_SX_MINUS, 0);
@@ -13706,6 +14551,7 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_QUICK_TEXTURE, 1);
 
     getSelectedWallClampState(&clampXL, &clampXR, &clampYT, &clampYB, &flipX, &flipY,
                               &mixedXL, &mixedXR, &mixedYT, &mixedYB, &mixedFlipX, &mixedFlipY);
@@ -13797,6 +14643,14 @@ static void editorShowSectorInspectorButtons(void)
     rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_X2, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPX2));
     rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_Y1, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPY1));
     rcguiSetToggleChecked(&g_ui, GUI_BTN_SECTOR_CLAMP_Y2, !!(g_edMap.sectors[g_ed.selectedSector].texFlags & RC3D_SECTORTEX_CLAMPY2));
+
+    for (int bit = 0; bit < 16; bit++) {
+        const int btnId = GUI_BTN_SECTOR_FLAGS_BIT0 + bit;
+        const int checked = (int)((g_edMap.sectors[g_ed.selectedSector].sectorFlags >> bit) & 1u);
+
+        rcguiSetButtonVisible(&g_ui, btnId, 1);
+        rcguiSetToggleChecked(&g_ui, btnId, checked);
+    }
 }
 
 static void editorShowObjectInspectorButtons(void)
@@ -14142,6 +14996,35 @@ static void handleEditorUI(int mouseX, int mouseY,
             }
             break; 
 
+            case GUI_BTN_SECTOR_FLAGS_BIT0:
+            case GUI_BTN_SECTOR_FLAGS_BIT1:
+            case GUI_BTN_SECTOR_FLAGS_BIT2:
+            case GUI_BTN_SECTOR_FLAGS_BIT3:
+            case GUI_BTN_SECTOR_FLAGS_BIT4:
+            case GUI_BTN_SECTOR_FLAGS_BIT5:
+            case GUI_BTN_SECTOR_FLAGS_BIT6:
+            case GUI_BTN_SECTOR_FLAGS_BIT7:
+            case GUI_BTN_SECTOR_FLAGS_BIT8:
+            case GUI_BTN_SECTOR_FLAGS_BIT9:
+            case GUI_BTN_SECTOR_FLAGS_BIT10:
+            case GUI_BTN_SECTOR_FLAGS_BIT11:
+            case GUI_BTN_SECTOR_FLAGS_BIT12:
+            case GUI_BTN_SECTOR_FLAGS_BIT13:
+            case GUI_BTN_SECTOR_FLAGS_BIT14:
+            case GUI_BTN_SECTOR_FLAGS_BIT15:
+            {
+                if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
+                    EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
+                    const int bit = hit - GUI_BTN_SECTOR_FLAGS_BIT0;
+
+                    pushUndoState();
+                    sec->sectorFlags ^= (1u << bit);
+
+                    rcguiSetToggleChecked(&g_ui, hit, (sec->sectorFlags >> bit) & 1u);
+                }
+            }
+            break;
+
             case GUI_BTN_SECTOR_FLOOR_MINUS:
                 if (sec) { pushUndoState(); sec->floorHeight -= uiStep; if (sec->ceilHeight < sec->floorHeight + 0.1f) sec->ceilHeight = sec->floorHeight + 0.1f; syncAllPortals(); }
                 break;
@@ -14358,6 +15241,13 @@ static void handleEditorUI(int mouseX, int mouseY,
                     for (int i = 0; i < wallCount; i++) adjustWallTexBrightness(wallIndices[i], 1);
                 }
                 break;
+
+            case GUI_BTN_WALL_QUICK_TEXTURE:
+                if (hasAnyWallEditSelection()) {
+                    pushUndoState();
+                    textureTargetApply(TEX_TARGET_WALL_MIDDLE, 255);
+                }
+            break; 
 
             case GUI_BTN_OBJECT_TAGID_MINUS:
                 if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
@@ -14617,6 +15507,8 @@ static void drawInspectorPanel(void)
         (g_ed.selectionType == ED_SEL_VERTEX) ? "VERTEX" :
         (g_ed.selectionType == ED_SEL_WALL)   ? "WALL" :
         (g_ed.selectionType == ED_SEL_SECTOR) ? "SECTOR" :
+        (g_ed.selectionType == ED_SEL_OBJECT) ? "OBJECT" :
+        hasMultiObjectSelection() ? "MULTI OBJECT" :
         hasMultiSectorSelection() ? "MULTI SECTOR" :
         hasMultiWallSelection() ? "MULTI WALL" :
         (g_ed.selectedVertCount > 0) ? "MULTI VERT" : "NONE");
@@ -14739,14 +15631,6 @@ static void drawInspectorPanel(void)
         int lowerColorMixed = 0;
         unsigned texFlags = 0;
         int texFlagsMixed = 0;
-        int clampXL = 0;
-        //int clampXLMixed = 0;
-        int clampXR = 0;
-        //int clampXRMixed = 0;
-        int clampYT = 0;
-        //int clampYTMixed = 0;
-        int clampYB = 0;
-        //int clampYBMixed = 0;
         float texScaleX = 0.0f;
         int texScaleXMixed = 0;
         float texScaleY = 0.0f;
@@ -14758,10 +15642,6 @@ static void drawInspectorPanel(void)
         char upperBuf[16];
         char midBuf[16];
         char lowerBuf[16];
-        //const char *clampXLText = " ";
-        //const char *clampXRText = " ";
-        //const char *clampYTText = " ";
-        //const char *clampYBText = " ";
 
         if (w) {
             neighbour = w->neighbour;
@@ -14772,10 +15652,6 @@ static void drawInspectorPanel(void)
             midColor = w->midColor;
             lowerColor = w->lowerColor;
             texFlags = w->tex_flags;
-            clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
-            clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
-            clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
-            clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
             texScaleX = w->texScaleX;
             texScaleY = w->texScaleY;
             wallTexAngleDeg = RAD2DEG(getWallTexAngle(w));
@@ -14783,10 +15659,6 @@ static void drawInspectorPanel(void)
 
             for (int i = 1; i < wallCount; i++) {
                 const EdWall *other = &g_edMap.walls[wallIndices[i]];
-                //const int otherClampXL = (other->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
-                //const int otherClampXR = (other->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
-                //const int otherClampYT = (other->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
-                //const int otherClampYB = (other->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
                 const float otherTexAngleDeg = RAD2DEG(getWallTexAngle(other));
 
                 if (other->neighbour != neighbour) neighbourMixed = 1;
@@ -14797,10 +15669,6 @@ static void drawInspectorPanel(void)
                 if (other->midColor != midColor) midColorMixed = 1;
                 if (other->lowerColor != lowerColor) lowerColorMixed = 1;
                 if (other->tex_flags != texFlags) texFlagsMixed = 1;
-                //if (otherClampXL != clampXL) clampXLMixed = 1;
-                //if (otherClampXR != clampXR) clampXRMixed = 1;
-                //if (otherClampYT != clampYT) clampYTMixed = 1;
-                //if (otherClampYB != clampYB) clampYBMixed = 1;
                 if (fabsf(other->texScaleX - texScaleX) > ED_EPSILON) texScaleXMixed = 1;
                 if (fabsf(other->texScaleY - texScaleY) > ED_EPSILON) texScaleYMixed = 1;
                 if (fabsf(otherTexAngleDeg - wallTexAngleDeg) > 0.05f) wallTexAngleMixed = 1;
@@ -14816,11 +15684,6 @@ static void drawInspectorPanel(void)
 
         if (lowerColorMixed) snprintf(lowerBuf, sizeof(lowerBuf), "Mixed");
         else snprintf(lowerBuf, sizeof(lowerBuf), "%u", lowerColor);
-
-        //clampXLText = clampXLMixed ? "Mix" : (clampXL ? "\x2" : " ");
-        //clampXRText = clampXRMixed ? "Mix" : (clampXR ? "\x2" : " ");
-        //clampYTText = clampYTMixed ? "Mix" : (clampYT ? "\x2" : " ");
-        //clampYBText = clampYBMixed ? "Mix" : (clampYB ? "\x2" : " ");
 
         py = 40;
 
@@ -14916,6 +15779,36 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py + 126, "Arrow Left / Right rotates selection", ED_TEXT_COL);
         drawText(px + 16, py + 148, "[SHIFT] = 15\xb0, [ALT] = 1\xb0", ED_TEXT_COL);
     }
+    else if (hasMultiObjectSelection()) {
+        const int primaryObject = getPrimaryObjectEditIndex();
+
+        py = 40;
+
+        drawRect(px + 8, py, pw - 16, 166, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 166, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        py += 8;
+
+        snprintf(buf, sizeof(buf), "OBJECTS (%d)", g_ed.selectedObjectCount);
+        drawText(px + 16, py, buf, ED_INSPECTOR_TEXT_COL); py += 24;
+
+        snprintf(buf, sizeof(buf), "Primary object: %d", primaryObject);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        if (g_ed.hasCopiedObject) {
+            if (g_ed.copiedObjectSourceObject >= 0) {
+                snprintf(buf, sizeof(buf), "Object clip: Object %d", g_ed.copiedObjectSourceObject);
+            } else {
+                snprintf(buf, sizeof(buf), "Object clip: Ready");
+            }
+        } else {
+            snprintf(buf, sizeof(buf), "Object clip: Empty");
+        }
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        drawText(px + 16, py, "CTRL+Click adds/removes objects", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "LMB drag a selected object to move the whole group", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "Delete removes the selected object group", ED_TEXT_COL); py += 20;
+    }
 
     else if (hasMultiSectorSelection()) {
         const int primarySector = getPrimarySectorEditIndex();
@@ -14963,8 +15856,8 @@ static void drawInspectorPanel(void)
         const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 580, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 580, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect (px + 8, py, pw - 16, 798, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 798, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
         py += 8;
 
@@ -15066,7 +15959,6 @@ static void drawInspectorPanel(void)
         drawRect(px + 12,  py, pw - 24, 148, ED_INSPECTOR_PANELS_BACKPANEL);
         drawRectL(px + 12, py, pw - 24, 148, ED_INSPECTOR_PANELS_PANELFRAME);
 
-        
         py += 6;
         drawText(px + 18,  py, "SECTOR MOVER", ED_INSPECTOR_PANELS_HEADER_TEXT); py += 20;
 
@@ -15091,6 +15983,17 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "C_flow: %.3f", sec->ceilFlowHeight);
         drawText(px + 218, py, buf, ED_TEXT_COL); py += 24;
 
+
+        /////// SECTOR FLAG SETTINGS //////
+        py += 6;
+        drawRect(px + 12,  py, pw - 24, 148, ED_INSPECTOR_PANELS_BACKPANEL);
+        drawRectL(px + 12, py, pw - 24, 148, ED_INSPECTOR_PANELS_PANELFRAME);
+
+        py += 6;
+        drawText(px + 18,  py, "SECTOR FLAGS:", ED_INSPECTOR_PANELS_HEADER_TEXT); 
+        snprintf(buf, sizeof(buf), "Value: 0x%04X", (unsigned)(sec->sectorFlags & 0xFFFFu));
+        drawText(px + 148, py, buf, ED_TEXT_COL); py += 20;
+
     }
     
     //### Selected Object #####################################
@@ -15108,7 +16011,7 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "X: %.4f,  Y: %.4f,  Z: %.4f", o->x, o->y, o->z);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
 
-        drawText(px + 16, py + y_off, "[SHIFT+LMB] drag object [DEL] deletes", ED_TEXT_COL);
+        drawText(px + 16, py + y_off, "[LMB] drag object [CTRL+CLICK] multi-select [DEL] deletes", ED_TEXT_COL);
 
         //----------------------------
         y_off += 30;
@@ -15256,10 +16159,10 @@ static void drawUndoHistoryPopup(void)
     drawText(px + 12, py + 12, "Undo History", ED_INSPECTOR_TEXT_COL);
     drawText(px + 12, py + 32, "Newest undo is at the top. Enter or click restores that snapshot.", ED_TEXT_COL);
 
-    rowY = py + 56;
+    rowY = py + ED_UNDO_HISTORY_HEADER_H;
     visibleRows = g_undoCount - g_ed.undoHistoryScrollPos;
-    if (visibleRows > ED_UNDO_HISTORY_VISIBLE_ROWS) {
-        visibleRows = ED_UNDO_HISTORY_VISIBLE_ROWS;
+    if (visibleRows > getUndoHistoryVisibleRowCapacity()) {
+        visibleRows = getUndoHistoryVisibleRowCapacity();
     }
 
     for (int row = 0; row < visibleRows; row++) {
@@ -15502,6 +16405,10 @@ void rc3dEditUpdate(float dt,
             g_ed.pendingLeftAction = ED_PENDING_LEFT_NONE;
             beginObjectDragFromPress(g_ed.hoverObject);
         }
+        else if (g_ed.hoverObject >= 0) {
+            g_ed.pendingLeftTargetIndex = g_ed.hoverObject;
+            g_ed.pendingLeftAction = ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG;
+        }
         else if (ctrlDown) {
             if (g_ed.hoverSector >= 0) {
                 g_ed.pendingLeftTargetIndex = g_ed.hoverSector;
@@ -15657,7 +16564,17 @@ void rc3dEditUpdate(float dt,
     }
 
     if (keyPressedOnce(keys, SDL_SCANCODE_DELETE)) {
-        if (g_ed.selectedObject >= 0) {
+        if (hasMultiObjectSelection()) {
+            int objectIndices[ED_MAX_OBJECTS];
+            const int objectCount = collectObjectEditSelectionIndices(objectIndices, ED_MAX_OBJECTS);
+
+            if (objectCount > 0) {
+                pushUndoState();
+                for (int i = objectCount - 1; i >= 0; i--) {
+                    deleteObjectByIndex(objectIndices[i]);
+                }
+            }
+        } else if (g_ed.selectedObject >= 0) {
             pushUndoState();
             deleteObjectByIndex(g_ed.selectedObject);
 
@@ -15783,16 +16700,39 @@ void rc3dEditUpdate(float dt,
 
     // copy
     if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_C)) {
-        if (hasAnySectorEditSelection()) {
+        if (hasSingleObjectSelection()) {
+            copySelectedObjectToClipboard();
+        } else if (hasAnySectorEditSelection()) {
             copySelectedSectorGeometryToClipboard();
         } else {
-            setEditorStatus("Select at least one sector to copy");
+            setEditorStatus("Select an object or at least one sector to copy");
         }
     }
 
     // paste
     if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_V)) {
-        if (g_ed.hasCopiedSectorGeometry) {
+        if (g_ed.clipboardMode == ED_CLIPBOARD_OBJECT && g_ed.hasCopiedObject) {
+            pushUndoState();
+            if (!pasteObjectFromClipboard(worldX, worldY)) {
+                performUndo();
+            } else {
+                updateHover(worldX, worldY, mouseX, mouseY);
+            }
+        } else if (g_ed.clipboardMode == ED_CLIPBOARD_SECTOR_GEOMETRY && g_ed.hasCopiedSectorGeometry) {
+            pushUndoState();
+            if (!pasteSectorGeometryFromClipboard(worldX, worldY)) {
+                performUndo();
+            } else {
+                updateHover(worldX, worldY, mouseX, mouseY);
+            }
+        } else if (g_ed.hasCopiedObject) {
+            pushUndoState();
+            if (!pasteObjectFromClipboard(worldX, worldY)) {
+                performUndo();
+            } else {
+                updateHover(worldX, worldY, mouseX, mouseY);
+            }
+        } else if (g_ed.hasCopiedSectorGeometry) {
             pushUndoState();
             if (!pasteSectorGeometryFromClipboard(worldX, worldY)) {
                 performUndo();
@@ -15800,7 +16740,7 @@ void rc3dEditUpdate(float dt,
                 updateHover(worldX, worldY, mouseX, mouseY);
             }
         } else {
-            setEditorStatus("No copied sector geometry");
+            setEditorStatus("No copied object or sector geometry");
         }
     }
 

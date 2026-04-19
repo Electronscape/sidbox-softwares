@@ -88,7 +88,7 @@
 // DRAFTING colours
 // walls
 #define ED_COLOUR_DRAFTWALL         11
-#define ED_COLOUR_HOVER_WALL        9  
+#define ED_COLOUR_HOVER_WALL        1
 #define ED_COLOUR_SELECTED_WALL     8  
 #define ED_COLOUR_WALL              11
 #define ED_COLOUR_WALLO             8
@@ -101,6 +101,11 @@
 
 #define ED_COLOUR_VERTEX_SPLIT_PREV 7
 #define ED_COLOUR_MULTI_SELECT_RANGE_BOX    1
+
+
+#define RC3D_SECTOR_FLAGS_FLICKERING_LIGHTS 0x100
+#define RC3D_SECTOR_FLAGS_PULSATING_LIGHT   0x200
+#define RC3D_SECTOR_FLAGS_FULLBRIGHT        0x400
 
 void rc3dEditInit(void);
 void rc3dEditUpdate(float dt,

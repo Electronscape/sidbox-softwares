@@ -72,6 +72,7 @@ typedef struct {
 
     int32_t tagId;          /* runtime trigger/tag id */
     uint32_t stateFlags;    /* runtime-controlled sector state flags */
+    uint32_t sectorFlags;   /* runtime-sector flags, they do things! */
     float floorMinHeight;   /* runtime lower bound for floor */
     float floorMaxHeight;   /* runtime upper bound for floor */
     float ceilMinHeight;    /* runtime lower bound for ceiling */
@@ -86,6 +87,10 @@ typedef struct {
     float ceilTexScaleX;
     float ceilTexScaleY;
     float ceilTexAngle;
+
+    // Runtime Memory;      
+    uint8_t originalLightLevel;
+    int8_t PulsatingLightTimeDir;
 } RC3D_Sector;
 
 

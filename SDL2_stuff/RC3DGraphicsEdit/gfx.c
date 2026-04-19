@@ -327,19 +327,63 @@ uint8_t fb[SCREEN_W * SCREEN_H] = {0};
 uint32_t pb[SCREEN_W * SCREEN_H] = {0xFF0000FF};
 
 static uint32_t g_ditherSeed = 0x12345678;
+static int g_paletteBandsInitialized = 0;
 
-static inline void putPixelFast(int32_t x, int32_t y, uint8_t colIndex)
+#define GFX_BASE_TEXTURE_PAL_START   64
+#define GFX_BASE_TEXTURE_PAL_COUNT   64
+#define GFX_DIM_TEXTURE_PAL_START   128
+#define GFX_BRIGHT_TEXTURE_PAL_START 192
+
+static uint32_t scalePaletteColour(uint32_t argb, int numerator, int denominator)
 {
+    int a = (int)((argb >> 24) & 0xFFu);
+    int r = (int)((argb >> 16) & 0xFFu);
+    int g = (int)((argb >>  8) & 0xFFu);
+    int b = (int)(argb & 0xFFu);
+
+    if (denominator <= 0) {
+        denominator = 1;
+    }
+
+    r = (r * numerator + (denominator / 2)) / denominator;
+    g = (g * numerator + (denominator / 2)) / denominator;
+    b = (b * numerator + (denominator / 2)) / denominator;
+
+    if (r < 0) r = 0; else if (r > 255) r = 255;
+    if (g < 0) g = 0; else if (g > 255) g = 255;
+    if (b < 0) b = 0; else if (b > 255) b = 255;
+
+    return ((uint32_t)a << 24) |
+           ((uint32_t)r << 16) |
+           ((uint32_t)g << 8) |
+           (uint32_t)b;
+}
+
+static void ensureDerivedPaletteBands(void)
+{
+    if (g_paletteBandsInitialized) {
+        return;
+    }
+
+    for (int i = 0; i < GFX_BASE_TEXTURE_PAL_COUNT; i++) {
+        const uint32_t base = clut[GFX_BASE_TEXTURE_PAL_START + i];
+
+        clut[GFX_DIM_TEXTURE_PAL_START + i] = scalePaletteColour(base, 11, 16);
+        clut[GFX_BRIGHT_TEXTURE_PAL_START + i] = scalePaletteColour(base, 20, 16);
+    }
+
+    g_paletteBandsInitialized = 1;
+}
+
+static inline void putPixelFast(int32_t x, int32_t y, uint8_t colIndex){
     fb[(y * SCREEN_W) + x] = colIndex;
 }
 
-static inline uint8_t *fbRowPtr(int y)
-{
+static inline uint8_t *fbRowPtr(int y){
     return &fb[y * SCREEN_W];
 }
 
-static inline int clampi(int v, int lo, int hi)
-{
+static inline int clampi(int v, int lo, int hi){
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
@@ -355,6 +399,8 @@ void videoMemToScreen(void)
     uint32_t *dst = pb;
     const uint32_t *lut = clut;
     const uint8_t *end = fb + (SCREEN_W * SCREEN_H);
+
+    ensureDerivedPaletteBands();
 
     while (src < end) {
         *dst++ = lut[*src++];
