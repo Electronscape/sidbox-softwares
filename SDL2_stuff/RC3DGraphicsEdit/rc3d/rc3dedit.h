@@ -62,6 +62,9 @@
 #define ED_COLOUR_BTN_TEXT_HOVER        16
 
 
+#define ED_COLOUR_TOOLTIP_BG        15
+#define ED_COLOUR_TOOLTIP_BORDER    14
+#define ED_COLOUR_TOOLTIP_TEXT      7
 
 #define ED_COLOUR_TEXT_BAR_BG       4
 #define ED_COLOUR_TEXT_BAR_BORDER   3
@@ -114,6 +117,7 @@ void rc3dEditUpdate(float dt,
                     int mouseY,
                     uint32_t mouseButtons,
                     int mouseWheelY);
+int rc3dEditHandleTextInput(const char *text);
 
 static void handleEditorUI(int mouseX, int mouseY,
                            int leftDown, int leftPressed, int leftReleased,

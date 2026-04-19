@@ -1,9 +1,139 @@
 #include "rcgui.h"
 #include "rc3dedit.h"
 
+#include <SDL2/SDL.h>
+
+#include <stddef.h>
 #include <string.h>
 
 #include "../gfx.h"
+
+static const char *rcguiGetTooltipText(const RCGUI_Button *btn)
+{
+    if (!btn) {
+        return NULL;
+    }
+
+    if (btn->tooltip && btn->tooltip[0]) {
+        return btn->tooltip;
+    }
+
+    if (btn->text && btn->text[0]) {
+        return btn->text;
+    }
+
+    return NULL;
+}
+
+static void rcguiMeasureTooltipText(const char *tooltip, int *outMaxChars, int *outLineCount)
+{
+    int maxChars = 0;
+    int lineCount = 1;
+    int curChars = 0;
+
+    if (!tooltip) {
+        if (outMaxChars) *outMaxChars = 0;
+        if (outLineCount) *outLineCount = 0;
+        return;
+    }
+
+    for (const char *p = tooltip; ; p++) {
+        if (*p == '\n' || *p == '\0') {
+            if (curChars > maxChars) {
+                maxChars = curChars;
+            }
+
+            if (*p == '\0') {
+                break;
+            }
+
+            lineCount++;
+            curChars = 0;
+            continue;
+        }
+
+        curChars++;
+    }
+
+    if (outMaxChars) *outMaxChars = maxChars;
+    if (outLineCount) *outLineCount = lineCount;
+}
+
+static void rcguiDrawTooltip(const RCGUI_Context *ui)
+{
+    const RCGUI_Button *btn;
+    const char *tooltip;
+    int x, y, w, h;
+    int maxChars;
+    int lineCount;
+    int lineY;
+    const char *lineStart;
+
+    if (!ui || ui->tooltipId == 0) {
+        return;
+    }
+
+    btn = rcguiGetButtonConst(ui, ui->tooltipId);
+    tooltip = rcguiGetTooltipText(btn);
+
+    if (!btn || !btn->visible || !tooltip) {
+        return;
+    }
+
+    rcguiMeasureTooltipText(tooltip, &maxChars, &lineCount);
+    if (maxChars <= 0 || lineCount <= 0) {
+        return;
+    }
+
+    w = maxChars * 8 + 12;
+    h = lineCount * 16 + 12;
+    x = ui->mouseX + 14;
+    y = ui->mouseY + 22;
+
+    if (x + w > SCREEN_W - 12) {
+        x = SCREEN_W - w - 12;
+    }
+
+    if (y + h > SCREEN_H - 12) {
+        y = ui->mouseY - h - 20;
+    }
+
+    if (x < 4) x = 4;
+    if (y < 4) y = 4;
+
+    drawRect(x-3, y-3, w+6, h+6, 16);
+    drawRect(x, y, w, h, ED_COLOUR_TOOLTIP_BG);
+    drawRectL(x, y, w, h, ED_COLOUR_TOOLTIP_BORDER);
+
+    lineStart = tooltip;
+    lineY = y + 6;
+
+    for (const char *p = tooltip; ; p++) {
+        if (*p == '\n' || *p == '\0') {
+            char lineBuf[256];
+            ptrdiff_t lineLen = p - lineStart;
+
+            if (lineLen < 0) {
+                lineLen = 0;
+            }
+
+            if ((size_t)lineLen >= sizeof(lineBuf)) {
+                lineLen = (ptrdiff_t)(sizeof(lineBuf) - 1);
+            }
+
+            memcpy(lineBuf, lineStart, (size_t)lineLen);
+            lineBuf[lineLen] = '\0';
+            drawText(x + 6, lineY, lineBuf, ED_COLOUR_TOOLTIP_TEXT);
+            lineY += 16;
+
+            if (*p == '\0') {
+                break;
+            }
+
+            lineStart = p + 1;
+        }
+    }
+}
 
 static void rcguiDrawOneButton(const RCGUI_Context *ui, const RCGUI_Button *btn)
 {
@@ -75,6 +205,7 @@ void rcguiInit(RCGUI_Context *ui)
     ui->btnDisabled = ED_COLOUR_BTN_BG_DISABLED;
     ui->btnTextDisabled = ED_COLOUR_BTN_TXT_DISABLED;
     ui->btnBorderDisabled = ED_COLOUR_BTN_FRAME_DISABLED;
+    ui->tooltipDelayMs = 350u;
 }
 
 void rcguiSetButtonColours(RCGUI_Context *ui,
@@ -155,6 +286,7 @@ int rcguiCreateButton(RCGUI_Context *ui,
     btn->w = w;
     btn->h = h;
     btn->text = text;
+    btn->tooltip = NULL;
     btn->type = RCGUI_CONTROL_BUTTON;
     btn->visible = 1;
     btn->disabled = 0;
@@ -193,6 +325,7 @@ int rcguiCreateToggleBox(RCGUI_Context *ui,
     btn->w = w;
     btn->h = h;
     btn->text = text;
+    btn->tooltip = NULL;
     btn->type = RCGUI_CONTROL_TOGGLEBOX;
     btn->visible = 1;
     btn->disabled = 0;
@@ -208,6 +341,19 @@ void rcguiSetButtonText(RCGUI_Context *ui, int id, const char *text)
     RCGUI_Button *btn = rcguiGetButton(ui, id);
     if (!btn) return;
     btn->text = text;
+}
+
+void rcguiSetButtonTooltip(RCGUI_Context *ui, int id, const char *tooltip)
+{
+    RCGUI_Button *btn = rcguiGetButton(ui, id);
+    if (!btn) return;
+    btn->tooltip = tooltip;
+}
+
+void rcguiSetTooltipDelay(RCGUI_Context *ui, uint32_t delayMs)
+{
+    if (!ui) return;
+    ui->tooltipDelayMs = delayMs;
 }
 
 void rcguiSetButtonRect(RCGUI_Context *ui, int id, int x, int y, int w, int h)
@@ -267,6 +413,8 @@ void rcguiUpdate(RCGUI_Context *ui,
                  int leftReleased)
 {
     int i;
+    int currentTooltipId = 0;
+    uint32_t nowMs;
 
     ui->mouseX = mouseX;
     ui->mouseY = mouseY;
@@ -276,6 +424,7 @@ void rcguiUpdate(RCGUI_Context *ui,
 
     ui->hotId = 0;
     ui->hitId = 0;
+    ui->tooltipId = 0;
 
     for (i = 0; i < ui->buttonCount; i++) {
         RCGUI_Button *btn = &ui->buttons[i];
@@ -288,11 +437,15 @@ void rcguiUpdate(RCGUI_Context *ui,
             continue;
         }
 
+        hot = rcguiPointInRect(mouseX, mouseY, btn->x, btn->y, btn->w, btn->h);
+
+        if (hot && rcguiGetTooltipText(btn)) {
+            currentTooltipId = btn->id;
+        }
+
         if (btn->disabled) {
             continue;
         }
-
-        hot = rcguiPointInRect(mouseX, mouseY, btn->x, btn->y, btn->w, btn->h);
 
         if (hot) {
             ui->hotId = btn->id;
@@ -320,6 +473,18 @@ void rcguiUpdate(RCGUI_Context *ui,
     if (!leftDown) {
         ui->activeId = 0;
     }
+
+    nowMs = SDL_GetTicks();
+
+    if (currentTooltipId != ui->tooltipHoverId) {
+        ui->tooltipHoverId = currentTooltipId;
+        ui->tooltipHoverStartMs = nowMs;
+    }
+
+    if (currentTooltipId != 0 &&
+        (nowMs - ui->tooltipHoverStartMs) >= ui->tooltipDelayMs) {
+        ui->tooltipId = currentTooltipId;
+    }
 }
 
 void rcguiDraw(const RCGUI_Context *ui)
@@ -329,6 +494,8 @@ void rcguiDraw(const RCGUI_Context *ui)
     for (i = 0; i < ui->buttonCount; i++) {
         rcguiDrawOneButton(ui, &ui->buttons[i]);
     }
+
+    rcguiDrawTooltip(ui);
 }
 
 int rcguiGetButtonHit(RCGUI_Context *ui)

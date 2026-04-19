@@ -16,10 +16,24 @@
 #define RC3D_SECTOR_STATE_LOWER_CEILING  0x04u
 #define RC3D_SECTOR_STATE_RAISE_CEILING  0x08u
 
-#define OBJECT_TRIGGER_SIMPLESPRITE 0
-#define OBJECT_TRIGGER_SECTOR_DISTANCE     1
-#define OBJECT_TRIGGER_SECTOR_STEPPED_IN   2
-#define OBJECT_TRIGGER_SECTOR_STEPPED_OUT  3
+//#define OBJECT_TRIGGER_SIMPLESPRITE 0
+//#define OBJECT_TRIGGER_SECTOR_DISTANCE     1
+//#define OBJECT_TRIGGER_SECTOR_STEPPED_IN   2
+//#define OBJECT_TRIGGER_SECTOR_STEPPED_OUT  3
+
+
+typedef enum {
+    RC3D_OBJTYPE_SPRITE                 = 0u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT   = 1u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER   = 2u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT    = 3u,
+    RC3D_OBJTYPE_ROUTE_PREVIEW          = 4u,
+    RC3D_OBJTYPE_BAKED_ROUTE_NODE       = 5u,
+    RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT   = 6u,
+    RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER   = 7u,
+    RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT    = 8u
+} RC3D_ObjectType;
+
 
 #define OBJECT_TYPE_BASIC_SPRITE    0
 #define OBJECT_TYPE_ENTEREXIT       1
@@ -27,6 +41,8 @@
 #define OBJECT_TYPE_EXITONLY        3
 #define OBJECT_TYPE_NAVIGATION      4
 #define OBJECT_TYPE_BAKEDNAV        5   // use this in the run time
+
+#define OBJECT_GENERAL_FLAGS_ENABLE 0x01    // bit 0, just a basic enable ;)
 
 
 extern int g_viewport_top;
@@ -57,9 +73,11 @@ extern float g_draw_distance;
 
 
 
-#define RC3D_SECTOR_FLAGS_FLICKERING_LIGHTS 0x100
-#define RC3D_SECTOR_FLAGS_PULSATING_LIGHT   0x200
-#define RC3D_SECTOR_FLAGS_FULLBRIGHT        0x400
+#define RC3D_SECTOR_FLAGS_FLICKERING_LIGHTS     0x100
+#define RC3D_SECTOR_FLAGS_PULSATING_LIGHT       0x200
+#define RC3D_SECTOR_FLAGS_FULLBRIGHT            0x400
+#define RC3D_SECTOR_FLAGS_EFFECTWALLS           0x800
+#define RC3D_SECTOR_FLAGS_DAMAGEZONE            0x1000   /// YEAH, STAY out of these zones if you can ;)
 
 
 typedef int32_t RC3D_Fixed;
@@ -177,8 +195,11 @@ void rc3dSpriteSetSize(int spriteId, float width, float height);
 void rc3dSpriteSetTexture(int spriteId, uint8_t texId);
 void rc3dSpriteSetBaseZ(int spriteId, float baseZ);
 
+int rc3dGetSectorByTag(int32_t tagId);  // get the first sector with this tagid
 int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags);
+void rc3dSetSectorLightLevel(int32_t sectorId, uint8_t level);
 
+// Textures API
 void shiftTexture(uint8_t texIndex, int8_t dir);
 void shiftTextureFX(
     uint8_t texIndex,
@@ -195,9 +216,13 @@ void copyTextureToTexture(uint8_t *from, uint8_t *to, int sizex, int sizey);
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx);
 void rc3dRender(void);
 
+// objects API
+int rc3dSetObjectStateByTag(int32_t tagId, uint32_t stateFlags);
+void enableObject(int tagId, uint8_t en);
+int getObjectState(int pTagId);
+void processObjects(int pTagId, int pType);
 
-void processObjects();
-
+// maploading API
 int rc3dLoadMapBinary(const char *path);
 void rc3dUnloadMapBinary(void);
 

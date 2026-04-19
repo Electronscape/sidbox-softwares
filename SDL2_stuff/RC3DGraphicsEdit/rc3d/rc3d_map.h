@@ -3,6 +3,21 @@
 
 #include <stdint.h>
 
+
+#define RC3D_SECTOR_STATE_NONE                  0u
+#define RC3D_SECTOR_STATE_RAISE_FLOOR           0x01u
+#define RC3D_SECTOR_STATE_LOWER_FLOOR           0x02u
+#define RC3D_SECTOR_STATE_LOWER_CEILING         0x04u
+#define RC3D_SECTOR_STATE_RAISE_CEILING         0x08u
+
+
+#define RC3D_SECTOR_FLAGS_FLICKERING_LIGHTS     0x100
+#define RC3D_SECTOR_FLAGS_PULSATING_LIGHT       0x200
+#define RC3D_SECTOR_FLAGS_FULLBRIGHT            0x400
+#define RC3D_SECTOR_FLAGS_EFFECTWALLS           0x800
+#define RC3D_SECTOR_FLAGS_DAMAGEZONE            0x1000   /// YEAH, STAY out of these zones if you can ;)
+
+
 #define RC3D_WALL_PORTAL   0x01
 #define RC3D_WALL_UPPER    0x02
 #define RC3D_WALL_MIDDLE   0x04
@@ -90,6 +105,18 @@ typedef struct {
 } RC3D_Sector;
 
 
+typedef enum {
+    RC3D_OBJTYPE_SPRITE = 0u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT = 1u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER = 2u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT = 3u,
+    RC3D_OBJTYPE_ROUTE_PREVIEW = 4u,
+    RC3D_OBJTYPE_BAKED_ROUTE_NODE = 5u,
+    RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT = 6u,
+    RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER = 7u,
+    RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT = 8u
+} RC3D_ObjectType;
+
 
 typedef struct {
     float x;
@@ -98,7 +125,7 @@ typedef struct {
     int tagId;
     int targetTagId;
     uint32_t flags;
-    uint32_t type;
+    uint32_t type;    /* RC3D_ObjectType built-ins, higher values are runtime-defined */
     float radius;
     uint8_t textureId;
     uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag

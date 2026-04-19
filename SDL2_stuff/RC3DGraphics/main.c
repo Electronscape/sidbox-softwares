@@ -169,6 +169,19 @@ void moveSprite();
 RC3D_Texture forcefield[4];
 RC3D_Texture water[4];
 
+#define MAP_SPECIFIC_OBJECT_TEST    20
+void doCustomGameLogic(){   // to demonstrate how to use the engine for the bits available
+    //void rc3dSetSectorLightLevel(int sectorId, uint8_t level)
+    int theSector = rc3dGetSectorByTag(20); // this map should only Have one sector with this tag number
+    if (theSector){
+        if(getObjectState(MAP_SPECIFIC_OBJECT_TEST))
+            rc3dSetSectorLightLevel(theSector, 7);
+        else 
+            rc3dSetSectorLightLevel(theSector, 0);
+    }
+
+}
+
 int main(int argc, char **argv)
 {
     if (BasicSDL2Setup() != 0) {
@@ -253,6 +266,10 @@ int main(int argc, char **argv)
         if(gFrame){
             lastTicks = nowTicks;
             pendingMouseDx = 0;
+
+
+            doCustomGameLogic();
+
             rc3dUpdate(dt, keys, mouseDx);
 
             for(int tfrm = 0; tfrm < 2; tfrm++){

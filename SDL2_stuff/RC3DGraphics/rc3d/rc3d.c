@@ -5704,6 +5704,55 @@ static RC3D_Sector *rc3dMutableSectorData(void)
     return (RC3D_Sector *)g_map->sectors;
 }
 
+static RC3D_Wall *rc3dMutableWallData(void)
+{
+    if (!g_map || !g_map->walls || g_map->wallCount <= 0) {
+        return NULL;
+    }
+
+    return (RC3D_Wall *)g_map->walls;
+}
+
+static inline uint32_t rc3dWallTextureFlagsWithGlow(uint32_t textureFlags, uint8_t glowLevel)
+{
+    const uint32_t packedGlow =
+        (((uint32_t)rc3dClampGlowLevel(glowLevel)) & RC3D_TEX_WALL_GLOW_MAX) << RC3D_TEX_WALL_GLOW_SHIFT;
+
+    return (textureFlags & ~RC3D_TEX_WALL_GLOW_MASK) | packedGlow;
+}
+
+static void rc3dSyncSectorWallGlow(int sectorId, uint8_t glowLevel)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    RC3D_Wall *walls = rc3dMutableWallData();
+
+    if (!g_map || !sectors || !walls || (unsigned)sectorId >= (unsigned)g_map->sectorCount) {
+        return;
+    }
+
+    {
+        const RC3D_Sector *sec = &sectors[sectorId];
+        const int start = sec->wallStart;
+        const int end = start + sec->wallCount;
+
+        if (!(sec->sectorFlags & RC3D_SECTOR_FLAGS_EFFECTWALLS)) {
+            return;
+        }
+
+        if (start < 0 || end < start || end > g_map->wallCount) {
+            return;
+        }
+
+        glowLevel = rc3dClampGlowLevel(glowLevel);
+
+        for (int wi = start; wi < end; ++wi) {
+            walls[wi].texture_flags = rc3dWallTextureFlagsWithGlow(
+                walls[wi].texture_flags,
+                glowLevel);
+        }
+    }
+}
+
 static void rc3dClampPlayerIntoCurrentSector(void)
 {
     if (!g_map) return;
@@ -5730,21 +5779,94 @@ static void rc3dClampPlayerIntoCurrentSector(void)
 
 void rc3dSetSectorLightLevel(int sectorId, uint8_t level){
     RC3D_Sector *sectors = rc3dMutableSectorData();
-    RC3D_Sector *sec = &sectors[sectorId];
-    sec->glowlevel = level;
+    if (!g_map || !sectors || (unsigned)sectorId >= (unsigned)g_map->sectorCount) {
+        return;
+    }
+
+    level = rc3dClampGlowLevel(level);
+    sectors[sectorId].glowlevel = level;
+    rc3dSyncSectorWallGlow(sectorId, level);
 
 }
 
 static int lightPulsationTimer = 0;
+static int rc3dShouldAdvancePulsatingLights(void)
+{
+    lightPulsationTimer++;
+    if (lightPulsationTimer > 4) {
+        lightPulsationTimer = 0;
+        return 1;
+    }
+
+    return 0;
+}
+
+static void rc3dAdvanceSectorPulse(int sectorId, RC3D_Sector *sec, uint32_t sectorFlags)
+{
+    int glow;
+    int dir;
+    int targetGlow;
+
+    if (!sec) {
+        return;
+    }
+
+    glow = (int)rc3dClampGlowLevel(sec->glowlevel);
+    dir = (sec->PulsatingLightTimeDir < 0) ? -1 : 1;
+    targetGlow = (sectorFlags & RC3D_SECTOR_FLAGS_FULLBRIGHT) ? 7 : (int)sec->originalLightLevel;
+    if (targetGlow < 0) targetGlow = 0;
+    if (targetGlow > (int)RC3D_TEX_WALL_GLOW_MAX) targetGlow = (int)RC3D_TEX_WALL_GLOW_MAX;
+
+    if (targetGlow <= 0) {
+        sec->PulsatingLightTimeDir = 1;
+        rc3dSetSectorLightLevel(sectorId, 0u);
+        return;
+    }
+
+    if (dir > 0) {
+        if (glow >= targetGlow) {
+            dir = -1;
+            glow = targetGlow - 1;
+        } else {
+            glow++;
+            if (glow >= targetGlow) {
+                glow = targetGlow;
+                dir = -1;
+            }
+        }
+    } else {
+        if (glow <= 0) {
+            dir = 1;
+            glow = 1;
+        } else {
+            glow--;
+            if (glow <= 0) {
+                glow = 0;
+                dir = 1;
+            }
+        }
+    }
+
+    if (glow < 0) glow = 0;
+    if (glow > targetGlow) glow = targetGlow;
+
+    sec->PulsatingLightTimeDir = (int8_t)dir;
+    rc3dSetSectorLightLevel(sectorId, (uint8_t)glow);
+}
+
 static void rc3dUpdateSectorMotion(float dt)
 {
     RC3D_Sector *sectors = rc3dMutableSectorData();
     int anySectorMoved = 0;
+    int advancePulsatingLights = 0;
 
     if (!g_map || !sectors || dt <= 0.0f) {
         return;
     }
 
+    advancePulsatingLights = rc3dShouldAdvancePulsatingLights();
+
+    int secFlicker = randRange(1, 8);
     for (int i = 0; i < g_map->sectorCount; ++i) {
         RC3D_Sector *sec = &sectors[i];
         uint32_t stateFlags = rc3dSanitizeSectorStateFlags(sec->stateFlags);
@@ -5756,25 +5878,18 @@ static void rc3dUpdateSectorMotion(float dt)
 
         // do the sectorFlags
         if (sectorFlags & RC3D_SECTOR_FLAGS_FLICKERING_LIGHTS){
-            int secFlicker = randRange(1, 8);
+            
             // sec->PulsatingLightTimeDir;
             if(secFlicker == 2) rc3dSetSectorLightLevel(i, (sectorFlags & RC3D_SECTOR_FLAGS_FULLBRIGHT) ? 7 : sec->originalLightLevel);
             if(secFlicker == 5) rc3dSetSectorLightLevel(i, 0);
         }
         
-        if (sectorFlags & RC3D_SECTOR_FLAGS_PULSATING_LIGHT){
-            lightPulsationTimer++;
-            if(lightPulsationTimer > 4){
-                lightPulsationTimer = 0;
-                uint8_t tLightB = (sectorFlags & RC3D_SECTOR_FLAGS_FULLBRIGHT) ? 7 : sec->originalLightLevel;
-                sec->glowlevel += sec->PulsatingLightTimeDir;
-                if(sec->glowlevel > tLightB) sec->PulsatingLightTimeDir = -1;
-                if(sec->glowlevel == 0) sec->PulsatingLightTimeDir =  1;
-                
-                //sec->PulsatingLightTimeDir = 1 - sec->PulsatingLightTimeDir;
+        if ((sectorFlags & RC3D_SECTOR_FLAGS_PULSATING_LIGHT) && advancePulsatingLights){
+            rc3dAdvanceSectorPulse(i, sec, sectorFlags);
+        }
 
-            }
-
+        if (sectorFlags & RC3D_SECTOR_FLAGS_EFFECTWALLS) {
+            rc3dSyncSectorWallGlow(i, sec->glowlevel);
         }
 
         if (stateFlags & RC3D_SECTOR_STATE_RAISE_FLOOR) {
@@ -6025,6 +6140,48 @@ int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags)
     return changedCount;
 }
 
+static RC3D_Object *rc3dMutableObjectData(void)
+{
+    if (!g_map || !g_map->objects || g_map->objectCount <= 0) {
+        return NULL;
+    }
+
+    return (RC3D_Object *)g_map->objects;
+}
+
+int rc3dSetObjectStateByTag(int32_t tagId, uint32_t stateFlags){
+    int changedCount = 0;
+    RC3D_Object *objs = rc3dMutableObjectData();
+
+    if (!objs) {
+        return 0;
+    }
+   
+    for (int i = 0; i < g_map->objectCount; ++i){
+        if (objs[i].tagId == tagId) {
+            objs[i].flags = stateFlags;
+            changedCount++; 
+        }
+    }
+    return changedCount;
+}
+
+
+
+int rc3dGetSectorByTag(int32_t tagId){
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+
+    if (!g_map || !sectors) {
+        return 0;
+    }
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        if (sectors[i].tagId == tagId) {
+            return i;
+        }
+    }
+    return 0;
+}
+
 
 
 static inline float distance3D(float x1, float y1, float z1,   float x2, float y2, float z2){
@@ -6040,6 +6197,19 @@ static inline float distance2D(float x1, float y1,   float x2, float y2){
     return (dx * dx) + (dy * dy);
 }
 
+static inline int rc3dObjectMatchesPlayerElevation(const RC3D_Object *obj)
+{
+    const float playerFeet = g_player.z - RC3D_PLAYER_EYE_HEIGHT;
+    const float playerHead = playerFeet + PLAYER_HEIGHT;
+
+    if (!obj) {
+        return 0;
+    }
+
+    return (obj->z >= (playerFeet - RC3D_EPSILON)) &&
+           (obj->z <= (playerHead + RC3D_EPSILON));
+}
+
 #define RC3D_PROFILE_OBJ_LINES 16
 static float obj1dist[RC3D_PROFILE_OBJ_LINES] = {0.0f};
 
@@ -6047,21 +6217,59 @@ static float obj1dist[RC3D_PROFILE_OBJ_LINES] = {0.0f};
 
 // API CALL
 void enableObject(int tagId, uint8_t en){
-    int objCnt = g_map->objectCount;
+    RC3D_Object *objs = rc3dMutableObjectData();
+    int objCnt;
+
+    if (!objs) {
+        return;
+    }
+
+    objCnt = g_map->objectCount;
     for (int i = 0; i < objCnt; i++) {
-        RC3D_Object *obj = &g_map->objects[i];
+        RC3D_Object *obj = &objs[i];
         if(tagId == obj->tagId){
             if(en)
-                obj->flags |= en;
+                obj->flags |= OBJECT_GENERAL_FLAGS_ENABLE;
             else
-                obj->flags &= ~en;
+                obj->flags &= ~OBJECT_GENERAL_FLAGS_ENABLE;
         }
     }
 }
 
+// an api for just reading weather a player is with in the object range or not
+int getObjectState(int pTagId){
+    int objCnt;
+    const float px = g_player.x;
+    const float py = g_player.y;
+
+    if (!g_map || !g_map->objects) {
+        return -1;
+    }
+    objCnt = g_map->objectCount;
+    if (objCnt <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < objCnt; i++) {
+        const RC3D_Object *obj = &g_map->objects[i];
+        const float distSq = distance2D(px, py, obj->x, obj->y);
+        if((obj->tagId == pTagId) &&
+           (obj->flags & OBJECT_GENERAL_FLAGS_ENABLE) &&
+           rc3dObjectMatchesPlayerElevation(obj)){
+            const float radiusSq = obj->radius * obj->radius;
+            return (distSq < radiusSq) ? 1 : 0;
+        }
+    }
+
+    return 0;
+}
+
 // API CALLER
-void processObjects(int pTagId, int pType)
+#define OBJTRIG_TYPE_SECTORS    1   // just a local non magic number
+#define OBJTRIG_TYPE_OBJECTS    2   // to other objects
+void processObjects(int pTagId, int pType)  // engine internal systems
 {
+    RC3D_Object *objs = rc3dMutableObjectData();
     int objCnt;
     const float px = g_player.x;
     const float py = g_player.y;
@@ -6070,7 +6278,7 @@ void processObjects(int pTagId, int pType)
         return;
     }
 
-    if (!g_map || !g_map->objects) {
+    if (!objs) {
         return;
     }
 
@@ -6080,7 +6288,13 @@ void processObjects(int pTagId, int pType)
     }
 
     for (int i = 0; i < objCnt; i++) {
-        RC3D_Object *obj = &g_map->objects[i];
+        RC3D_Object *obj = &objs[i];
+
+        // Only trigger objects that overlap the player's current vertical span.
+        if (!rc3dObjectMatchesPlayerElevation(obj)) {
+            continue;
+        }
+
         const float distSq = distance2D(px, py, obj->x, obj->y);
         const float radiusSq = obj->radius * obj->radius;
         const int inside = (distSq < radiusSq) ? 1 : 0;
@@ -6098,47 +6312,85 @@ void processObjects(int pTagId, int pType)
             continue;
         }
 
-        if (!(obj->flags & 0x01)) continue;
-        if (pType  != 0 && obj->type  != pType)  continue;
+        if (!(obj->flags & OBJECT_GENERAL_FLAGS_ENABLE)) continue;  // enabled bit
+        if (pType  != 0 && obj->type  != (uint32_t)pType)  continue;
         if (pTagId != 0 && obj->tagId != pTagId) continue;
 
 
         RC3D_PROFILER_DO(g_profiler.objectEdgeChanges++);
 
         obj->trigger = (uint8_t)inside;
+        
+        int procType = 0;
 
         switch (obj->type) {
-            case OBJECT_TRIGGER_SIMPLESPRITE:
+            // general sprite, just decorative
+            case RC3D_OBJTYPE_SPRITE:
                 break;
 
-            case OBJECT_TRIGGER_SECTOR_DISTANCE:
+            // triggers for sectors!
+            case RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT:
+                procType = OBJTRIG_TYPE_SECTORS;
                 flagToSet = inside ? obj->inFlag : obj->outFlag;
                 break;
 
-            case OBJECT_TRIGGER_SECTOR_STEPPED_IN:
+            case RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER:
                 if (inside) {
+                    procType = OBJTRIG_TYPE_SECTORS;
                     flagToSet = obj->inFlag;
                 }
                 break;
 
-            case OBJECT_TRIGGER_SECTOR_STEPPED_OUT:
+            case RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT:
                 if (!inside) {
+                    procType = OBJTRIG_TYPE_SECTORS;
                     flagToSet = obj->outFlag;
                 }
                 break;
 
+            // triggers for OTHER objects
+            case RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT:
+                procType = OBJTRIG_TYPE_OBJECTS;
+                flagToSet = inside ? obj->inFlag : obj->outFlag;
+                break;
+
+            case RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER:
+                if (inside) {
+                    procType = OBJTRIG_TYPE_OBJECTS;
+                    flagToSet = obj->inFlag;
+                }
+                break;
+            case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:
+                if (!inside) {
+                    procType = OBJTRIG_TYPE_OBJECTS;
+                    flagToSet = obj->outFlag;
+                }
+                break;
             default:
                 break;
         }
 
-        if (obj->targetTagId != 0 && flagToSet != 0) {
-            const int changed = rc3dSetSectorStateByTag(obj->targetTagId, flagToSet);
-            RC3D_PROFILER_DO(
-                if (changed > 0) {
-                    g_profiler.sectorStateWrites += (uint32_t)changed;
-                }
-            );
+        if (procType == OBJTRIG_TYPE_SECTORS){
+            if (obj->targetTagId != 0) {
+                const int changed = rc3dSetSectorStateByTag(obj->targetTagId, flagToSet);
+                RC3D_PROFILER_DO(
+                    if (changed > 0) {
+                        g_profiler.sectorStateWrites += (uint32_t)changed;
+                    }
+                );
+            }
         }
+        if (procType == OBJTRIG_TYPE_OBJECTS){
+            if (obj->targetTagId != 0) {
+                const int changed = rc3dSetObjectStateByTag(obj->targetTagId, flagToSet);
+                RC3D_PROFILER_DO(
+                    if (changed > 0) {
+                        g_profiler.sectorStateWrites += (uint32_t)changed;
+                    }
+                );
+            }
+        }
+
     }
 }
 
@@ -6219,9 +6471,12 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
     if(gamelogictime> 8){
         gamelogictime = 0;
         // standard object(triggers)
-        processObjects(0, OBJECT_TYPE_ENTEREXIT);
-        processObjects(0, OBJECT_TYPE_ENTERONLY);
-        processObjects(0, OBJECT_TYPE_EXITONLY);
+        processObjects(0, RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT);
+        processObjects(0, RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER);
+        processObjects(0, RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT);
+        processObjects(0, RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT);
+        processObjects(0, RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER);
+        processObjects(0, RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT);
     }
 
     rc3dUpdateHeadbob(dt, isMoving);
@@ -6334,6 +6589,10 @@ void rc3dRender(void)
         char buf[64];
         const int dbgObjectCount =
             (g_map->objectCount < RC3D_PROFILE_OBJ_LINES) ? g_map->objectCount : RC3D_PROFILE_OBJ_LINES;
+
+
+        snprintf(buf, sizeof(buf), "X:%.3f, Y:%.03f, Z:%.03f", g_player.x, g_player.y, g_player.z - RC3D_PLAYER_EYE_HEIGHT);
+        drawTextO(8, 8, buf, 92);
 
         snprintf(buf, sizeof(buf), "SECTOR %d", g_player.sector);
         drawTextO(8, 16, buf, 92);

@@ -38,11 +38,22 @@
 #define ED_PICK_DIST_PX         25
 #define ED_CLICK_DRAG_TOLERANCE_PX 5
 #define ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT 64.0f
-#define ED_OBJECT_TYPE_ROUTE_PREVIEW 4u
-#define ED_OBJECT_TYPE_BAKED_ROUTE_NODE 5u
 #define ED_ROUTE_PREVIEW_MAX_POINTS 4096
 #define ED_ROUTE_PREVIEW_MAX_GRID_CELLS 120000
 #define ED_ROUTE_PREVIEW_PORTAL_SAMPLES 9
+#define ED_OBJECT_LABEL_MAX 64
+#define ED_OBJECT_LABEL_MAP_DRAW_MAX 24
+#define ED_OBJECT_NOTE_SECTION_X (EDIT_VIEW_PORT_WIDTH + 20)
+#define ED_OBJECT_NOTE_SECTION_Y 602
+#define ED_OBJECT_NOTE_SECTION_W (ED_INSPECTOR_PANEL - 40)
+#define ED_OBJECT_NOTE_SECTION_H 78
+#define ED_OBJECT_LABELS_TOGGLE_W 168
+#define ED_OBJECT_LABELS_TOGGLE_X (ED_OBJECT_NOTE_SECTION_X + ED_OBJECT_NOTE_SECTION_W - ED_OBJECT_LABELS_TOGGLE_W - 8)
+#define ED_OBJECT_LABELS_TOGGLE_Y (ED_OBJECT_NOTE_SECTION_Y + 4)
+#define ED_OBJECT_NOTE_BOX_X (ED_OBJECT_NOTE_SECTION_X + 8)
+#define ED_OBJECT_NOTE_BOX_Y (ED_OBJECT_NOTE_SECTION_Y + 26)
+#define ED_OBJECT_NOTE_BOX_W (ED_OBJECT_NOTE_SECTION_W - 16)
+#define ED_OBJECT_NOTE_BOX_H 24
 #define ED_TEXTURE_BASE_PAL_START    64u
 #define ED_TEXTURE_DIM_PAL_START    128u
 #define ED_TEXTURE_BRIGHT_PAL_START 192u
@@ -231,6 +242,7 @@ enum
     GUI_BTN_OBJECT_GET_ZAXIS,
     GUI_BTN_OBJECT_BAKE_ROUTE,
     GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE,
+    GUI_BTN_OBJECT_LABELS_VISIBLE,
 
     GUI_BTN_OBJECT_FLAGS_bit0, 
     GUI_BTN_OBJECT_FLAGS_bit1, 
@@ -484,13 +496,14 @@ typedef struct {
     int tagId;
     int targetTagId;
     uint32_t flags;
-    uint32_t type;
+    uint32_t type;    /* RC3D_ObjectType built-ins, higher values are runtime-defined */
     float radius;
     uint8_t textureId;
     uint8_t inFlag;     // when inside the boundery set the targetTagIds flag to this flag
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
     float scalex;
     float scaley;
+    char label[ED_OBJECT_LABEL_MAX];
 } EdObject;
 
 typedef struct {
@@ -704,6 +717,10 @@ typedef struct {
     EdConfirmAction confirmAction;
     char confirmText[256];
     int requestQuit;
+    int showObjectLabels;
+    int objectLabelEditActive;
+    int objectLabelEditObject;
+    char objectLabelEditBuffer[ED_OBJECT_LABEL_MAX];
 
     int bUseVectorFill;
     int bUseTextureFill;
@@ -1444,6 +1461,8 @@ static int addObject(float x, float y, float z, int tagId, float radius, uint8_t
 static int findObjectNearMouse(int mouseX, int mouseY);
 static void drawEditorObjectDiamond(int cx, int cy, int size, uint8_t colour);
 static void drawMapObjects(void);
+static void drawObjectLabels(void);
+static void drawObjectObjectLinks(void);
 static void drawObjectBakedLinks(void);
 static void drawSelectedObjectRoutePreview(void);
 static void deleteObjectByIndex(int objectIndex);
@@ -1454,6 +1473,12 @@ static int clearBakedRouteNodesFromObject(int objectIndex);
 static int bakeSelectedObjectRouteToNodes(void);
 static int objectIsBakedRouteNode(const EdObject *o);
 static int findNextAvailableObjectTagId(void);
+static void beginObjectLabelEditing(int objectIndex);
+static void finishObjectLabelEditing(int commit);
+static int handleObjectLabelTextInput(const char *text);
+static int handleObjectLabelEditorKeys(const uint8_t *keys);
+static int mouseInObjectNoteBox(int mouseX, int mouseY);
+static void syncObjectLabelEditorState(void);
 static int collectBakedRouteNodeChain(int objectIndex,
                                       int *outNodeIndices,
                                       int maxOut,
@@ -1515,6 +1540,7 @@ static void drawIsometricPreview(void);
 /////// GUI PARTS
 static void handleEditorUI(int mouseX, int mouseY, int leftDown, int leftPressed, int leftReleased, float worldX, float worldY, float dt);
 static void refreshEditorUIButtonState(void);
+static void initEditorButtonTooltips(void);
 static void drawValidatorPanel(void);
 static void validateMap(void);
 static void validatorAddLineEx(uint8_t targetType, int targetIndex, const char *fmt, ...);
@@ -1555,6 +1581,7 @@ static void toggleWallMultiSelection(int wallIndex);
 static int collectWallEditSelectionIndices(int *outIndices, int maxOut);
 
 static void getSectorUVOrigin(const EdSector *sec, float *outX, float *outY);
+static int keyPressedOnce(const uint8_t *keys, SDL_Scancode sc);
 
 #define ED_GUI_DIRTY_FRAME_COUNT 2
 
@@ -3367,15 +3394,290 @@ static int addObject(float x, float y, float z, int tagId, float radius, uint8_t
     o->z = z;
     o->tagId = tagId;
     o->targetTagId = 0;
+    o->flags = 0u;
+    o->type = RC3D_OBJTYPE_SPRITE;
     o->radius = (radius < 0.01f) ? 0.25f : radius;
     o->textureId = textureId;
     o->inFlag = 0x00;
     o->outFlag = 0x00;
     o->scalex = 1.0f;
     o->scaley = 1.0f;
+    o->label[0] = '\0';
 
     g_edMap.objectCount++;
     return g_edMap.objectCount - 1;
+}
+
+static void sanitizeEditorObjectLabel(char *dst, size_t dstSize, const char *src)
+{
+    size_t outLen = 0u;
+
+    if (!dst || dstSize == 0u) {
+        return;
+    }
+
+    dst[0] = '\0';
+    if (!src) {
+        return;
+    }
+
+    for (const unsigned char *p = (const unsigned char *)src; *p != '\0'; p++) {
+        unsigned char c = *p;
+
+        if (c == '\r' || c == '\n') {
+            break;
+        }
+
+        if (c == '\t') {
+            c = ' ';
+        }
+
+        if (c < 32u || c > 126u) {
+            continue;
+        }
+
+        if (outLen + 1u >= dstSize) {
+            break;
+        }
+
+        dst[outLen++] = (char)c;
+    }
+
+    dst[outLen] = '\0';
+}
+
+static const char *getObjectLabelTextForDisplay(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return "";
+    }
+
+    if (g_ed.objectLabelEditActive &&
+        g_ed.objectLabelEditObject == objectIndex) {
+        return g_ed.objectLabelEditBuffer;
+    }
+
+    return g_edMap.objects[objectIndex].label;
+}
+
+static void buildObjectLabelPreviewText(const char *src,
+                                        int maxChars,
+                                        char *out,
+                                        size_t outSize)
+{
+    size_t len;
+
+    if (!out || outSize == 0u) {
+        return;
+    }
+
+    out[0] = '\0';
+    if (!src) {
+        return;
+    }
+
+    len = strlen(src);
+    if (maxChars < 4) {
+        maxChars = 4;
+    }
+
+    if ((int)len <= maxChars) {
+        snprintf(out, outSize, "%s", src);
+        return;
+    }
+
+    snprintf(out, outSize, "%.*s...", maxChars - 3, src);
+}
+
+static void buildObjectLabelTailText(const char *src,
+                                     int maxChars,
+                                     char *out,
+                                     size_t outSize)
+{
+    size_t len;
+    const char *start;
+
+    if (!out || outSize == 0u) {
+        return;
+    }
+
+    out[0] = '\0';
+    if (!src) {
+        return;
+    }
+
+    len = strlen(src);
+    if (maxChars < 1) {
+        maxChars = 1;
+    }
+
+    if ((int)len <= maxChars) {
+        snprintf(out, outSize, "%s", src);
+        return;
+    }
+
+    start = src + (len - (size_t)maxChars);
+    snprintf(out, outSize, "%s", start);
+}
+
+static void beginObjectLabelEditing(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return;
+    }
+
+    g_ed.objectLabelEditActive = 1;
+    g_ed.objectLabelEditObject = objectIndex;
+    sanitizeEditorObjectLabel(g_ed.objectLabelEditBuffer,
+                              sizeof(g_ed.objectLabelEditBuffer),
+                              g_edMap.objects[objectIndex].label);
+    SDL_StartTextInput();
+    rc3dGuiDirty();
+}
+
+static void finishObjectLabelEditing(int commit)
+{
+    if (!g_ed.objectLabelEditActive) {
+        return;
+    }
+
+    if (commit &&
+        g_ed.objectLabelEditObject >= 0 &&
+        g_ed.objectLabelEditObject < g_edMap.objectCount) {
+        EdObject *o = &g_edMap.objects[g_ed.objectLabelEditObject];
+
+        if (strncmp(o->label,
+                    g_ed.objectLabelEditBuffer,
+                    sizeof(o->label)) != 0) {
+            pushUndoState();
+            sanitizeEditorObjectLabel(o->label,
+                                      sizeof(o->label),
+                                      g_ed.objectLabelEditBuffer);
+        }
+    }
+
+    g_ed.objectLabelEditActive = 0;
+    g_ed.objectLabelEditObject = -1;
+    g_ed.objectLabelEditBuffer[0] = '\0';
+    SDL_StopTextInput();
+    rc3dGuiDirty();
+}
+
+static int handleObjectLabelTextInput(const char *text)
+{
+    char sanitized[ED_OBJECT_LABEL_MAX];
+    size_t curLen;
+    size_t addLen;
+
+    if (!g_ed.objectLabelEditActive || !text || text[0] == '\0') {
+        return 0;
+    }
+
+    sanitizeEditorObjectLabel(sanitized, sizeof(sanitized), text);
+    if (sanitized[0] == '\0') {
+        return 0;
+    }
+
+    curLen = strlen(g_ed.objectLabelEditBuffer);
+    addLen = strlen(sanitized);
+    if (curLen >= sizeof(g_ed.objectLabelEditBuffer) - 1u) {
+        return 0;
+    }
+
+    if (curLen + addLen >= sizeof(g_ed.objectLabelEditBuffer)) {
+        addLen = (sizeof(g_ed.objectLabelEditBuffer) - 1u) - curLen;
+    }
+
+    if (addLen <= 0u) {
+        return 0;
+    }
+
+    memcpy(g_ed.objectLabelEditBuffer + curLen, sanitized, addLen);
+    g_ed.objectLabelEditBuffer[curLen + addLen] = '\0';
+    rc3dGuiDirty();
+    return 1;
+}
+
+static int handleObjectLabelEditorKeys(const uint8_t *keys)
+{
+    if (!g_ed.objectLabelEditActive) {
+        return 0;
+    }
+
+    if ((keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) &&
+        keyPressedOnce(keys, SDL_SCANCODE_V)) {
+        char *clipText = SDL_GetClipboardText();
+        int changed = 0;
+
+        if (clipText) {
+            changed = handleObjectLabelTextInput(clipText);
+            SDL_free(clipText);
+        }
+        return changed;
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_BACKSPACE) ||
+        keyPressedOnce(keys, SDL_SCANCODE_DELETE)) {
+        size_t len = strlen(g_ed.objectLabelEditBuffer);
+
+        if (len > 0u) {
+            g_ed.objectLabelEditBuffer[len - 1u] = '\0';
+            rc3dGuiDirty();
+            return 1;
+        }
+        return 0;
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_RETURN) ||
+        keyPressedOnce(keys, SDL_SCANCODE_KP_ENTER)) {
+        finishObjectLabelEditing(1);
+        return 1;
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_ESCAPE)) {
+        finishObjectLabelEditing(0);
+        return 1;
+    }
+
+    return 0;
+}
+
+static int objectLabelEditingHasValidSelection(void)
+{
+    return (g_ed.selectionType == ED_SEL_OBJECT) &&
+           (g_ed.selectedObject >= 0) &&
+           (g_ed.selectedObject < g_edMap.objectCount);
+}
+
+static int mouseInObjectNoteBox(int mouseX, int mouseY)
+{
+    if (!objectLabelEditingHasValidSelection()) {
+        return 0;
+    }
+
+    return pointInRectLocal(mouseX, mouseY,
+                            ED_OBJECT_NOTE_BOX_X,
+                            ED_OBJECT_NOTE_BOX_Y,
+                            ED_OBJECT_NOTE_BOX_W,
+                            ED_OBJECT_NOTE_BOX_H);
+}
+
+static void syncObjectLabelEditorState(void)
+{
+    if (!g_ed.objectLabelEditActive) {
+        return;
+    }
+
+    if (g_ed.objectLabelEditObject < 0 ||
+        g_ed.objectLabelEditObject >= g_edMap.objectCount) {
+        finishObjectLabelEditing(0);
+        return;
+    }
+
+    if (g_ed.selectionType != ED_SEL_OBJECT ||
+        g_ed.selectedObject != g_ed.objectLabelEditObject) {
+        finishObjectLabelEditing(1);
+    }
 }
 
 static int findObjectNearMouse(int mouseX, int mouseY)
@@ -3419,9 +3721,9 @@ static void drawMapObjects(void)
         int size = 6;
         uint8_t objectCol = ED_START_COL;
 
-        if (o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW) {
+        if (o->type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
             objectCol = ED_PORTAL_COL;
-        } else if (o->type == ED_OBJECT_TYPE_BAKED_ROUTE_NODE) {
+        } else if (o->type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
             objectCol = ED_COLOUR_WALL_SPECIAL;
         }
 
@@ -3449,10 +3751,76 @@ static void drawMapObjects(void)
     }
 }
 
+static void drawObjectLabels(void)
+{
+    if (!g_ed.showObjectLabels) {
+        return;
+    }
+
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+        const char *label = getObjectLabelTextForDisplay(i);
+        char preview[ED_OBJECT_LABEL_MAX];
+        int sx, sy;
+        int boxW, boxH;
+        int boxX, boxY;
+        int textY;
+        int rs = 0;
+        uint8_t border = ED_COLOUR_TEXT_BAR_BORDER;
+
+        if (!label || label[0] == '\0') {
+            continue;
+        }
+
+        buildObjectLabelPreviewText(label,
+                                    ED_OBJECT_LABEL_MAP_DRAW_MAX,
+                                    preview,
+                                    sizeof(preview));
+        if (preview[0] == '\0') {
+            continue;
+        }
+
+        worldToScreen(o->x, o->y, &sx, &sy);
+        if (o->radius > 0.01f) {
+            rs = (int)lroundf(o->radius * g_ed.zoom);
+        }
+
+        boxW = (int)strlen(preview) * ED_FONT_W + 8;
+        boxH = ED_FONT_H + 6;
+        boxX = sx - (boxW / 2);
+        boxY = sy - ((rs > 6) ? (rs + boxH + 4) : (boxH + 10));
+        textY = boxY + 3;
+
+        if (boxX < 4) boxX = 4;
+        if ((boxX + boxW) > (EDIT_VIEW_PORT_WIDTH - 4)) {
+            boxX = EDIT_VIEW_PORT_WIDTH - boxW - 4;
+        }
+        if (boxY < 36) boxY = 36;
+
+        if (isObjectInEditSelection(i)) {
+            border = ED_COLOUR_SELECTED_WALL;
+        } else if (g_ed.hoverObject == i) {
+            border = ED_COLOUR_HOVER_WALL;
+        }
+
+        drawRect(boxX, boxY, boxW, boxH, ED_COLOUR_TEXT_BAR_BG);
+        drawRectL(boxX, boxY, boxW, boxH, border);
+        drawText(boxX + 4, textY, preview, ED_TEXT_COL);
+    }
+}
+
 static void deleteObjectByIndex(int objectIndex)
 {
     if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
         return;
+    }
+
+    if (g_ed.objectLabelEditActive) {
+        if (g_ed.objectLabelEditObject == objectIndex) {
+            finishObjectLabelEditing(0);
+        } else if (g_ed.objectLabelEditObject > objectIndex) {
+            g_ed.objectLabelEditObject--;
+        }
     }
 
     for (int i = objectIndex; i < (g_edMap.objectCount - 1); i++) {
@@ -3548,7 +3916,7 @@ static int bakeSelectedObjectRouteToNodes(void)
         return 0;
     }
 
-    if (g_edMap.objects[g_ed.selectedObject].type != ED_OBJECT_TYPE_ROUTE_PREVIEW) {
+    if (g_edMap.objects[g_ed.selectedObject].type != RC3D_OBJTYPE_ROUTE_PREVIEW) {
         setEditorStatus("Bake Route only works on Type 4 route objects");
         return 0;
     }
@@ -3611,7 +3979,7 @@ static int bakeSelectedObjectRouteToNodes(void)
             g_edMap.objects[newIndex].z = nodeZ;
         }
 
-        g_edMap.objects[newIndex].type = ED_OBJECT_TYPE_BAKED_ROUTE_NODE;
+        g_edMap.objects[newIndex].type = RC3D_OBJTYPE_BAKED_ROUTE_NODE;
         g_edMap.objects[newIndex].targetTagId = nextTag;
         g_edMap.objects[newIndex].flags = 0u;
         g_edMap.objects[newIndex].inFlag = 0u;
@@ -8109,6 +8477,11 @@ static void beginNewMap(void)
     g_ed.confirmVisible = 0;
     g_ed.confirmAction = ED_CONFIRM_NONE;
     g_ed.confirmText[0] = '\0';
+    g_ed.showObjectLabels = 1;
+    g_ed.objectLabelEditActive = 0;
+    g_ed.objectLabelEditObject = -1;
+    g_ed.objectLabelEditBuffer[0] = '\0';
+    SDL_StopTextInput();
 
     g_ed.holdRepeatButtonId = 0;
     g_ed.holdRepeatDelayTimer = 0.0f;
@@ -8335,7 +8708,7 @@ static int saveTextMap(const char *path)
     FILE *f = fopen(path, "w");
     if (!f) return 0;
 
-    fprintf(f, "MAPEDIT5\n");
+    fprintf(f, "MAPEDIT6\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
 
@@ -8410,7 +8783,28 @@ static int saveTextMap(const char *path)
             );
     }
 
+    fprintf(f, "OBJECTLABELS %d\n", g_edMap.objectCount);
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        char sanitized[ED_OBJECT_LABEL_MAX];
+
+        sanitizeEditorObjectLabel(sanitized, sizeof(sanitized), g_edMap.objects[i].label);
+        fprintf(f, "%s\n", sanitized);
+    }
+
     fclose(f);
+
+
+    const char *fname1 = strrchr(path, '/');
+    const char *fname2 = strrchr(path, '\\');
+    const char *fname = path;
+
+    if (fname1 && fname2) fname = (fname1 > fname2) ? fname1 + 1 : fname2 + 1;
+    else if (fname1) fname = fname1 + 1;
+    else if (fname2) fname = fname2 + 1;
+
+    snprintf(mapfilename, sizeof(mapfilename), "map: %s", fname);
+
+    
     return 1;
 }
 
@@ -8448,6 +8842,8 @@ static int loadTextMap(const char *path)
         mapVersion = 4;
     } else if (strcmp(tag, "MAPEDIT5") == 0) {
         mapVersion = 5;
+    } else if (strcmp(tag, "MAPEDIT6") == 0) {
+        mapVersion = 6;
     } else {
         fclose(f);
         return 0;
@@ -8643,9 +9039,41 @@ static int loadTextMap(const char *path)
         }
     }
 
+    if (mapVersion >= 6) {
+        char lineBuf[256];
+        int labelCount = 0;
+        int ch;
+
+        if (fscanf(f, "%63s %d", tag, &labelCount) != 2 || strcmp(tag, "OBJECTLABELS") != 0) {
+            fclose(f);
+            return 0;
+        }
+
+        if (labelCount != newMap.objectCount) {
+            fclose(f);
+            return 0;
+        }
+
+        do {
+            ch = fgetc(f);
+        } while (ch != '\n' && ch != EOF);
+
+        for (int i = 0; i < labelCount; i++) {
+            if (!fgets(lineBuf, sizeof(lineBuf), f)) {
+                fclose(f);
+                return 0;
+            }
+
+            sanitizeEditorObjectLabel(newMap.objects[i].label,
+                                      sizeof(newMap.objects[i].label),
+                                      lineBuf);
+        }
+    }
+
     fclose(f);
 
     /* only commit after full successful parse */
+    finishObjectLabelEditing(0);
     g_edMap = newMap;
     touchRoutePreviewMap();
     resetUndoRedoHistory();
@@ -8672,6 +9100,9 @@ static int loadTextMap(const char *path)
     g_ed.draggingObject = 0;
     g_ed.draggingPan = 0;
     g_ed.boxSelectWalls = 0;
+    g_ed.objectLabelEditActive = 0;
+    g_ed.objectLabelEditObject = -1;
+    g_ed.objectLabelEditBuffer[0] = '\0';
     clearPendingLeftMouseAction();
 
     g_ed.splitPreviewValid = 0;
@@ -8930,7 +9361,7 @@ static int exportCStringMap(const char *path)
         const EdSector *s = &g_edMap.sectors[i];
 
         fprintf(f,
-            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %d, %uu, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff },\n",
+            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %d, %d, %uu, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff, %.6ff },\n",
             s->wallStart,
             s->wallCount,
             s->boundaryCount,
@@ -8940,6 +9371,7 @@ static int exportCStringMap(const char *path)
             (unsigned)s->ceilColor,
             (unsigned)clampLightLevel((int)s->glowlevel),
             (unsigned)s->texFlags,
+            (unsigned)s->sectorFlags,
             s->tagId,
             (unsigned)s->stateFlags,
             s->floorMinHeight,
@@ -11006,6 +11438,9 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "Type 4 uses object Radius as wall-clearance for the preview path", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "5 - baked nav node (TargetTag -> next node or final object)", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Type 4 Bake Route turns the current preview into movable Type 5 nodes", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "6 - object trigger type. eg. enable / disable another object", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "7 - object trigger on entry (player walks into object)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "8 - object trigger on exit  (player walks out of object)", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_NONE          = 0x00", ED_TEXT_COL);
@@ -11015,7 +11450,7 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "bit 3 : 0x08 = RC3D_SECTOR_STATE_RAISE_CEILING", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Generic Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
-            y += ED_ROW_STEP; drawText(x, y, "bit 0 : 0x01 = enable / disable (recommended use of this flag)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "bit 0 : 0x01 = enable / disable (great default for object triggers)", ED_TEXT_COL);
             y += ED_ROW_STEP;
         }
         if(hasMultiObjectSelection()){
@@ -11284,18 +11719,84 @@ static void drawWallNormal(int wallIndex, uint8_t colour)
     drawWallIndicator(wallIndex, colour, 0.05f, 1, 0);
 }
 
+static const char *getObjectTypeName(uint32_t type)
+{
+    switch ((RC3D_ObjectType)type) {
+        case RC3D_OBJTYPE_SPRITE:
+            return "floating sprite";
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT:
+            return "sector trigger (in/out)";
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER:
+            return "sector trigger (entry)";
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT:
+            return "sector trigger (exit)";
+        case RC3D_OBJTYPE_ROUTE_PREVIEW:
+            return "route preview";
+        case RC3D_OBJTYPE_BAKED_ROUTE_NODE:
+            return "baked route node";
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT:
+            return "object trigger (in/out)";
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER:
+            return "object trigger (entry)";
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:
+            return "object trigger (exit)";
+        default:
+            return "custom / engine-defined";
+    }
+}
+
+static int objectTypeUsesSectorTarget(uint32_t type)
+{
+    return (type == RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT) ||
+           (type == RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER) ||
+           (type == RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT);
+}
+
+static int objectTypeUsesTriggerObjectTarget(uint32_t type)
+{
+    return (type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) ||
+           (type == RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER) ||
+           (type == RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT);
+}
+
+static int objectTypeUsesRoutePreviewTarget(uint32_t type)
+{
+    return (type == RC3D_OBJTYPE_ROUTE_PREVIEW);
+}
+
+static int objectTypeIsBakedRouteNode(uint32_t type)
+{
+    return (type == RC3D_OBJTYPE_BAKED_ROUTE_NODE);
+}
+
+static int objectTypeUsesInsidePayload(uint32_t type)
+{
+    return (type == RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT) ||
+           (type == RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER) ||
+           (type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) ||
+           (type == RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER);
+}
+
+static int objectTypeUsesOutsidePayload(uint32_t type)
+{
+    return (type == RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT) ||
+           (type == RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT) ||
+           (type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) ||
+           (type == RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT);
+}
+
 static int objectUsesSectorTarget(const EdObject *o)
 {
     if (!o) return 0;
 
-    return (o->type >= 1u && o->type <= 3u);
+    return objectTypeUsesSectorTarget(o->type);
 }
 
-static int objectUsesObjectTarget(const EdObject *o)
+static int objectUsesRoutePreviewTarget(const EdObject *o)
 {
     if (!o) return 0;
 
-    return (o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW);
+    return objectTypeUsesRoutePreviewTarget(o->type);
 }
 
 static int findObjectByTagId(int tagId)
@@ -11313,11 +11814,30 @@ static int findObjectByTagId(int tagId)
     return -1;
 }
 
+static int objectTagIdHasDuplicate(int tagId, int ignoreObjectIndex)
+{
+    if (tagId <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        if (i == ignoreObjectIndex) {
+            continue;
+        }
+
+        if (g_edMap.objects[i].tagId == tagId) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static int objectIsBakedRouteNode(const EdObject *o)
 {
     if (!o) return 0;
 
-    return (o->type == ED_OBJECT_TYPE_BAKED_ROUTE_NODE);
+    return objectTypeIsBakedRouteNode(o->type);
 }
 
 static int findNextAvailableObjectTagId(void)
@@ -12114,7 +12634,7 @@ static int buildObjectRoutePreviewPathFast(int objectIndex,
     if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
 
     src = &g_edMap.objects[objectIndex];
-    if (!objectUsesObjectTarget(src)) return 0;
+    if (!objectUsesRoutePreviewTarget(src)) return 0;
 
     targetObjectIndex = findObjectByTagId(src->targetTagId);
     if (targetObjectIndex < 0 || targetObjectIndex >= g_edMap.objectCount) return 0;
@@ -12354,7 +12874,7 @@ static int buildObjectRoutePreviewPathGrid(int objectIndex,
     if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return 0;
 
     src = &g_edMap.objects[objectIndex];
-    if (!objectUsesObjectTarget(src)) return 0;
+    if (!objectUsesRoutePreviewTarget(src)) return 0;
 
     targetObjectIndex = findObjectByTagId(src->targetTagId);
     if (targetObjectIndex < 0 || targetObjectIndex >= g_edMap.objectCount) return 0;
@@ -12878,6 +13398,102 @@ static void drawObjectSectorLinks(void)
     }
 }
 
+static int objectTypeUsesEnabledFlagBit(uint32_t type)
+{
+    return objectTypeUsesSectorTarget(type) ||
+           objectTypeUsesTriggerObjectTarget(type);
+}
+
+static void getLinkLineAxisOffset(int x0, int y0, int x1, int y1, int *outOx, int *outOy)
+{
+    int ox = 0;
+    int oy = 0;
+    const int dx = x1 - x0;
+    const int dy = y1 - y0;
+
+    if (dx != 0 || dy != 0) {
+        if (abs(dx) >= abs(dy)) {
+            oy = 1;
+        } else {
+            ox = 1;
+        }
+    }
+
+    if (outOx) *outOx = ox;
+    if (outOy) *outOy = oy;
+}
+
+static void drawEditorLinkLine(int x0, int y0, int x1, int y1, uint8_t colour, int thickness)
+{
+    int ox = 0;
+    int oy = 0;
+
+    if (thickness < 1) {
+        thickness = 1;
+    }
+
+    getLinkLineAxisOffset(x0, y0, x1, y1, &ox, &oy);
+
+    if (thickness >= 3) {
+        drawLine(x0 - ox, y0 - oy, x1 - ox, y1 - oy, colour);
+        drawLine(x0 + ox, y0 + oy, x1 + ox, y1 + oy, colour);
+    }
+
+    drawLine(x0, y0, x1, y1, colour);
+}
+
+static uint8_t getObjectObjectLinkColour(const EdObject *src, const EdObject *dst)
+{
+    (void)src;
+
+    if (!dst) {
+        return 14;
+    }
+
+    if (objectTypeUsesEnabledFlagBit(dst->type)) {
+        return (dst->flags & 0x01u) ? 8 : 10;
+    }
+
+    return 14;
+}
+
+static void drawObjectObjectLinks(void)
+{
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *src = &g_edMap.objects[i];
+        const int targetIndex = findObjectByTagId(src->targetTagId);
+        const EdObject *dst;
+        uint8_t col;
+        int x0, y0, x1, y1;
+        int thickness = 1;
+
+        if (!objectTypeUsesTriggerObjectTarget(src->type)) {
+            continue;
+        }
+
+        if (src->targetTagId <= 0) {
+            continue;
+        }
+
+        if (targetIndex < 0 || targetIndex >= g_edMap.objectCount || targetIndex == i) {
+            continue;
+        }
+
+        dst = &g_edMap.objects[targetIndex];
+        col = getObjectObjectLinkColour(src, dst);
+
+        if (src->type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) {
+            thickness = 3;
+        }
+
+        worldToScreen(src->x, src->y, &x0, &y0);
+        worldToScreen(dst->x, dst->y, &x1, &y1);
+
+        drawEditorLinkLine(x0, y0, x1, y1, col, thickness);
+        drawRect(x1 - 1, y1 - 1, 3, 3, col);
+    }
+}
+
 static void drawObjectBakedLinks(void)
 {
     for (int i = 0; i < g_edMap.objectCount; i++) {
@@ -12891,7 +13507,7 @@ static void drawObjectBakedLinks(void)
         }
 
         if (!objectIsBakedRouteNode(o) &&
-            !(o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW &&
+            !(o->type == RC3D_OBJTYPE_ROUTE_PREVIEW &&
               objectIsBakedRouteNode(&g_edMap.objects[targetIndex]))) {
             continue;
         }
@@ -13075,8 +13691,10 @@ static void drawMapGeometry(void)
 
     drawMapObjects();
     drawObjectSectorLinks();
+    drawObjectObjectLinks();
     drawObjectBakedLinks();
     drawSelectedObjectRoutePreview();
+    drawObjectLabels();
 
     /* -------------------------------------------------- */
     /* draft                                              */
@@ -13145,6 +13763,443 @@ RCGUI_Context g_ui;
 #define GLYPH_MINUS     "\xf0\xf1"
 #define GLYPH_PLUS      "\xf2\xf3"
 
+static void setEditorButtonTooltip(int id, const char *tooltip)
+{
+    rcguiSetButtonTooltip(&g_ui, id, tooltip);
+}
+
+static void setEditorButtonTooltipPair(int minusId,
+                                       int plusId,
+                                       const char *minusTooltip,
+                                       const char *plusTooltip)
+{
+    setEditorButtonTooltip(minusId, minusTooltip);
+    setEditorButtonTooltip(plusId, plusTooltip);
+}
+
+static char g_objectFlagTooltips[8][192];
+static char g_objectInFlagTooltips[8][224];
+static char g_objectOutFlagTooltips[8][224];
+static char g_objectTypeMinusTooltip[160];
+static char g_objectTypePlusTooltip[160];
+static char g_objectTargetMinusTooltip[192];
+static char g_objectTargetPlusTooltip[192];
+static char g_objectRadiusMinusTooltip[160];
+static char g_objectRadiusPlusTooltip[160];
+static char g_objectBakeRouteTooltip[160];
+static char g_objectClearBakedRouteTooltip[160];
+
+static const char *getSectorStateBitName(int bit)
+{
+    switch (bit) {
+        case 0:
+            return "RC3D_SECTOR_STATE_RAISE_FLOOR";
+        case 1:
+            return "RC3D_SECTOR_STATE_LOWER_FLOOR";
+        case 2:
+            return "RC3D_SECTOR_STATE_LOWER_CEILING";
+        case 3:
+            return "RC3D_SECTOR_STATE_RAISE_CEILING";
+        default:
+            return NULL;
+    }
+}
+
+static void buildObjectFlagTooltip(char *dst, size_t dstSize, uint32_t type, int bit)
+{
+    if (!dst || dstSize == 0u) {
+        return;
+    }
+
+    if (bit == 0) {
+        if (objectTypeUsesSectorTarget(type) || objectTypeUsesTriggerObjectTarget(type)) {
+            snprintf(dst, dstSize,
+                     "Toggle object flag bit %d\n\nRecommended: use bit 0 to enable or disable this trigger.",
+                     bit);
+            return;
+        }
+
+        if (type == RC3D_OBJTYPE_ROUTE_PREVIEW || type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+            snprintf(dst, dstSize,
+                     "Toggle object flag bit %d\n\nBuilt-in route objects ignore this, so it is free for custom logic.",
+                     bit);
+            return;
+        }
+
+        snprintf(dst, dstSize,
+                 "Toggle object flag bit %d\n\nRecommended generic use: enable or disable the object.",
+                 bit);
+        return;
+    }
+
+    snprintf(dst, dstSize,
+             "Toggle object flag bit %d\n\nGeneric custom flag on this object.",
+             bit);
+}
+
+static void buildObjectPayloadTooltip(char *dst,
+                                      size_t dstSize,
+                                      uint32_t type,
+                                      int bit,
+                                      int isInside)
+{
+    const int usesPayload = isInside ? objectTypeUsesInsidePayload(type)
+                                     : objectTypeUsesOutsidePayload(type);
+
+    if (!dst || dstSize == 0u) {
+        return;
+    }
+
+    if (objectTypeUsesSectorTarget(type)) {
+        const char *stateName = getSectorStateBitName(bit);
+
+        if (!usesPayload) {
+            snprintf(dst, dstSize,
+                     "%s payload bit %d is unused for Type %u (%s).\n\nBuilt-in sector payload lives on the %s side.",
+                     isInside ? "Inside" : "Outside",
+                     bit,
+                     (unsigned)type,
+                     getObjectTypeName(type),
+                     isInside ? "outside" : "inside");
+            return;
+        }
+
+        if (type == RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER) {
+            snprintf(dst, dstSize,
+                     "Set target sector state bit %d when the player enters this object radius",
+                     bit);
+        } else if (type == RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT) {
+            snprintf(dst, dstSize,
+                     "Set target sector state bit %d when the player exits this object radius",
+                     bit);
+        } else {
+            snprintf(dst, dstSize,
+                     "Set target sector state bit %d while %s the object radius",
+                     bit,
+                     isInside ? "inside" : "outside");
+        }
+
+        if (stateName) {
+            const size_t used = strlen(dst);
+            if (used < dstSize) {
+                snprintf(dst + used, dstSize - used, "\n\n%s", stateName);
+            }
+        }
+        return;
+    }
+
+    if (objectTypeUsesTriggerObjectTarget(type)) {
+        if (!usesPayload) {
+            snprintf(dst, dstSize,
+                     "%s payload bit %d is unused for Type %u (%s).\n\nBuilt-in object payload lives on the %s side.",
+                     isInside ? "Inside" : "Outside",
+                     bit,
+                     (unsigned)type,
+                     getObjectTypeName(type),
+                     isInside ? "outside" : "inside");
+            return;
+        }
+
+        if (type == RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER) {
+            snprintf(dst, dstSize,
+                     "Set target object flag bit %d when the player enters this object radius",
+                     bit);
+        } else if (type == RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT) {
+            snprintf(dst, dstSize,
+                     "Set target object flag bit %d when the player exits this object radius",
+                     bit);
+        } else {
+            snprintf(dst, dstSize,
+                     "Set target object flag bit %d while %s the object radius",
+                     bit,
+                     isInside ? "inside" : "outside");
+        }
+
+        if (bit == 0) {
+            const size_t used = strlen(dst);
+            if (used < dstSize) {
+                snprintf(dst + used, dstSize - used,
+                         "\n\nRecommended target object use: bit 0 = enable / disable.");
+            }
+        }
+        return;
+    }
+
+    if (type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
+        snprintf(dst, dstSize,
+                 "%s payload bit %d is unused by Type 4 route preview objects.\n\nYour runtime can still repurpose this field.",
+                 isInside ? "Inside" : "Outside",
+                 bit);
+        return;
+    }
+
+    if (type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+        snprintf(dst, dstSize,
+                 "%s payload bit %d is unused by Type 5 baked route nodes.\n\nYour runtime can still repurpose this field.",
+                 isInside ? "Inside" : "Outside",
+                 bit);
+        return;
+    }
+
+    if (type == RC3D_OBJTYPE_SPRITE) {
+        snprintf(dst, dstSize,
+                 "%s payload bit %d is unused by floating sprite objects in the demo runtime.\n\nYour runtime can still reuse it.",
+                 isInside ? "Inside" : "Outside",
+                 bit);
+        return;
+    }
+
+    snprintf(dst, dstSize,
+             "%s payload bit %d belongs to custom object type %u.\n\nYour runtime decides what this field means.",
+             isInside ? "Inside" : "Outside",
+             bit,
+             (unsigned)type);
+}
+
+static void refreshObjectInspectorTooltips(const EdObject *o)
+{
+    const uint32_t type = o ? o->type : RC3D_OBJTYPE_SPRITE;
+    const char *targetKind = "target tag id";
+    const char *targetDetail = "Meaning depends on your runtime.";
+    const char *radiusThing = "object radius";
+
+    snprintf(g_objectTypeMinusTooltip, sizeof(g_objectTypeMinusTooltip),
+             "Decrease the object type id\n\nCurrent: %u - %s",
+             (unsigned)type, getObjectTypeName(type));
+    snprintf(g_objectTypePlusTooltip, sizeof(g_objectTypePlusTooltip),
+             "Increase the object type id\n\nCurrent: %u - %s",
+             (unsigned)type, getObjectTypeName(type));
+
+    if (objectTypeUsesSectorTarget(type)) {
+        targetKind = "target sector tag id";
+        targetDetail = "This built-in trigger looks for sectors with a matching Tag ID.";
+        radiusThing = "trigger radius";
+    } else if (objectTypeUsesTriggerObjectTarget(type)) {
+        targetKind = "target object tag id";
+        targetDetail = "This built-in trigger looks for objects with a matching Tag ID.";
+        radiusThing = "trigger radius";
+    } else if (type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
+        targetKind = "route target object tag id";
+        targetDetail = "Type 4 previews a path from this object to the object with that Tag ID.";
+        radiusThing = "route preview clearance radius";
+    } else if (type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+        targetKind = "next node target tag id";
+        targetDetail = "Type 5 chains to the next baked node or final target object.";
+        radiusThing = "baked node radius";
+    } else if (type == RC3D_OBJTYPE_SPRITE) {
+        targetKind = "target tag id";
+        targetDetail = "Floating sprites do not use TargetTag in the demo runtime.";
+        radiusThing = "sprite radius";
+    }
+
+    snprintf(g_objectTargetMinusTooltip, sizeof(g_objectTargetMinusTooltip),
+             "Decrease the %s\n\n%s",
+             targetKind, targetDetail);
+    snprintf(g_objectTargetPlusTooltip, sizeof(g_objectTargetPlusTooltip),
+             "Increase the %s\n\n%s",
+             targetKind, targetDetail);
+    snprintf(g_objectRadiusMinusTooltip, sizeof(g_objectRadiusMinusTooltip),
+             "Decrease the %s",
+             radiusThing);
+    snprintf(g_objectRadiusPlusTooltip, sizeof(g_objectRadiusPlusTooltip),
+             "Increase the %s",
+             radiusThing);
+
+    if (type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
+        snprintf(g_objectBakeRouteTooltip, sizeof(g_objectBakeRouteTooltip),
+                 "Bake the selected route preview\ninto Type 5 baked route nodes");
+        snprintf(g_objectClearBakedRouteTooltip, sizeof(g_objectClearBakedRouteTooltip),
+                 "Delete baked route nodes\nfrom this route preview");
+    } else if (type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+        snprintf(g_objectBakeRouteTooltip, sizeof(g_objectBakeRouteTooltip),
+                 "Bake Route only works on Type 4 route preview objects.");
+        snprintf(g_objectClearBakedRouteTooltip, sizeof(g_objectClearBakedRouteTooltip),
+                 "Clear baked nodes from the owning Type 4 route preview object.");
+    } else {
+        snprintf(g_objectBakeRouteTooltip, sizeof(g_objectBakeRouteTooltip),
+                 "Bake Route only works on Type 4 route preview objects.");
+        snprintf(g_objectClearBakedRouteTooltip, sizeof(g_objectClearBakedRouteTooltip),
+                 "Delete baked route nodes\nfrom a Type 4 route preview object");
+    }
+
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TYPE_MINUS, GUI_BTN_OBJECT_TYPE_PLUS,
+                               g_objectTypeMinusTooltip, g_objectTypePlusTooltip);
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TARGETTAGID_MINUS, GUI_BTN_OBJECT_TARGETTAGID_PLUS,
+                               g_objectTargetMinusTooltip, g_objectTargetPlusTooltip);
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_RADIUS_MINUS, GUI_BTN_OBJECT_RADIUS_PLUS,
+                               g_objectRadiusMinusTooltip, g_objectRadiusPlusTooltip);
+    setEditorButtonTooltip(GUI_BTN_OBJECT_BAKE_ROUTE, g_objectBakeRouteTooltip);
+    setEditorButtonTooltip(GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, g_objectClearBakedRouteTooltip);
+
+    for (int bit = 0; bit < 8; bit++) {
+        buildObjectFlagTooltip(g_objectFlagTooltips[bit], sizeof(g_objectFlagTooltips[bit]), type, bit);
+        buildObjectPayloadTooltip(g_objectInFlagTooltips[bit], sizeof(g_objectInFlagTooltips[bit]), type, bit, 1);
+        buildObjectPayloadTooltip(g_objectOutFlagTooltips[bit], sizeof(g_objectOutFlagTooltips[bit]), type, bit, 0);
+
+        setEditorButtonTooltip(GUI_BTN_OBJECT_FLAGS_bit0 + bit, g_objectFlagTooltips[bit]);
+        setEditorButtonTooltip(GUI_BTN_OBJECT_INFLAGS_bit0 + bit, g_objectInFlagTooltips[bit]);
+        setEditorButtonTooltip(GUI_BTN_OBJECT_OUTFLAGS_bit0 + bit, g_objectOutFlagTooltips[bit]);
+    }
+}
+
+static void initEditorButtonTooltips(void)
+{
+    static int builtDynamicTooltips = 0;
+    static char sectorFlagTooltips[16][64];
+
+    if (!builtDynamicTooltips) {
+        for (int bit = 0; bit < 16; bit++) {
+            switch (bit) {
+                case 8:
+                    snprintf(sectorFlagTooltips[bit], sizeof(sectorFlagTooltips[bit]),
+                             "Toggle sector flag bit %d\n\nRC3D_SECTOR_FLAGS_FLICKERING_LIGHTS", bit);
+                    break;
+                case 9:
+                    snprintf(sectorFlagTooltips[bit], sizeof(sectorFlagTooltips[bit]),
+                             "Toggle sector flag bit %d\n\nRC3D_SECTOR_FLAGS_PULSATING_LIGHT", bit);
+                    break;
+                case 10:
+                    snprintf(sectorFlagTooltips[bit], sizeof(sectorFlagTooltips[bit]),
+                             "Toggle sector flag bit %d\n\nRC3D_SECTOR_FLAGS_FULLBRIGHT", bit);
+                    break;
+                case 11:
+                    snprintf(sectorFlagTooltips[bit], sizeof(sectorFlagTooltips[bit]),
+                             "Toggle sector flag bit %d\n\nRC3D_SECTOR_FLAGS_EFFECTWALLS", bit);
+                    break;
+                case 12:
+                    snprintf(sectorFlagTooltips[bit], sizeof(sectorFlagTooltips[bit]),
+                             "Toggle sector flag bit %d\n\nRC3D_SECTOR_FLAGS_DAMAGEZONE", bit);
+                    break;
+                default:
+                    snprintf(sectorFlagTooltips[bit], sizeof(sectorFlagTooltips[bit]),
+                             "Toggle sector flag bit %d", bit);
+                    break;
+            }
+        }
+
+        builtDynamicTooltips = 1;
+    }
+
+    setEditorButtonTooltip(GUI_BTN_HELP, "Open the editor help");
+    setEditorButtonTooltip(GUI_BTN_QUIT, "Quit the editor");
+    setEditorButtonTooltip(GUI_BTN_UNDO, "Undo the last change");
+    setEditorButtonTooltip(GUI_BTN_REDO, "Redo the last undone change");
+    setEditorButtonTooltip(GUI_BTN_NEWMAP, "Start a new blank map");
+    setEditorButtonTooltip(GUI_BTN_LOAD, "Load a map from disk");
+    setEditorButtonTooltip(GUI_BTN_SAVE, "Save the current map");
+    setEditorButtonTooltip(GUI_BTN_EXPORT, "Export the current map");
+    setEditorButtonTooltip(GUI_BTN_GRID, "Toggle grid snap\n1.0 <-> 0.1 units");
+    setEditorButtonTooltip(GUI_BTN_FINISH, "Build the current draft\ninto map geometry");
+    setEditorButtonTooltip(GUI_BTN_CLRDRAFT, "Clear the current draft points");
+    setEditorButtonTooltip(GUI_BTN_SHOWTEXTURE_BROWSER, "Show or hide\nthe texture browser");
+
+    setEditorButtonTooltip(GUI_BTN_SECTOR_CUTTER, "Build sectors\nfrom the current draft");
+    setEditorButtonTooltip(GUI_BTN_REPAIR_TOPOLOGY, "Repair topology\nand portal links");
+    setEditorButtonTooltip(GUI_BTN_CLEANMAP, "Clean and normalize the current map");
+    setEditorButtonTooltip(GUI_BTN_MAPVALIDATOR, "Run the map validator");
+    setEditorButtonTooltip(GUI_BTN_LAUNCH_TEST_MAP, "Export and launch the test map");
+
+    setEditorButtonTooltipPair(GUI_BTN_PLAYER_START_ANGLE_MINUS, GUI_BTN_PLAYER_START_ANGLE_PLUS,
+                               "Rotate the player start angle left", "Rotate the player start angle right");
+    setEditorButtonTooltip(GUI_BTN_OBJECT_LABELS_VISIBLE,
+                           "Show or hide editor-only object labels in the viewport");
+
+    setEditorButtonTooltip(GUI_BTN_WALL_SOLID, "Set the selected wall to solid");
+    setEditorButtonTooltip(GUI_BTN_WALL_PORTAL, "Set the selected wall to a portal");
+    setEditorButtonTooltip(GUI_BTN_WALL_WINDOW, "Set the selected wall to a window portal");
+    setEditorButtonTooltip(GUI_BTN_WALL_DOOR, "Set the selected wall to a door");
+    setEditorButtonTooltip(GUI_BTN_WALL_TRANSPARENCY, "Toggle wall transparency");
+    setEditorButtonTooltip(GUI_BTN_WALL_FLAG_DOUBLESIDED, "Toggle double-sided wall rendering");
+    setEditorButtonTooltip(GUI_BTN_WALL_COPY_PROPS, "Copy properties from the selected wall");
+    setEditorButtonTooltip(GUI_BTN_WALL_PASTE_PROPS, "Paste copied properties onto selected walls");
+
+    setEditorButtonTooltip(GUI_BTN_WALL_CLAMP_XL, "Clamp the wall texture on the left edge");
+    setEditorButtonTooltip(GUI_BTN_WALL_CLAMP_XR, "Clamp the wall texture on the right edge");
+    setEditorButtonTooltip(GUI_BTN_WALL_CLAMP_YT, "Clamp the wall texture on the top edge");
+    setEditorButtonTooltip(GUI_BTN_WALL_CLAMP_YB, "Clamp the wall texture on the bottom edge");
+    setEditorButtonTooltip(GUI_BTN_WALL_FLIP_X, "Flip the wall texture horizontally");
+    setEditorButtonTooltip(GUI_BTN_WALL_FLIP_Y, "Flip the wall texture vertically");
+
+    setEditorButtonTooltipPair(GUI_BTN_WALL_OPENBOT_MINUS, GUI_BTN_WALL_OPENBOT_PLUS,
+                               "Lower the wall bottom opening", "Raise the wall bottom opening");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_OPENTOP_MINUS, GUI_BTN_WALL_OPENTOP_PLUS,
+                               "Lower the wall top opening", "Raise the wall top opening");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_SX_MINUS, GUI_BTN_WALL_TEX_SX_PLUS,
+                               "Decrease wall texture X scale", "Increase wall texture X scale");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_SY_MINUS, GUI_BTN_WALL_TEX_SY_PLUS,
+                               "Decrease wall texture Y scale", "Increase wall texture Y scale");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_ROT_MINUS, GUI_BTN_WALL_TEX_ROT_PLUS,
+                               "Rotate the wall texture left", "Rotate the wall texture right");
+    setEditorButtonTooltip(GUI_BTN_WALL_TEX_ROT_RESET, "Reset wall texture rotation");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_BRIGHT_MINUS, GUI_BTN_WALL_TEX_BRIGHT_PLUS,
+                               "Dim the wall texture brightness", "Brighten the wall texture");
+    setEditorButtonTooltip(GUI_BTN_WALL_QUICK_TEXTURE, "Quick-set wall middle texture\nto 255");
+
+    setEditorButtonTooltip(GUI_BTN_SECTOR_COPY_PROPS, "Copy properties from the selected sector");
+    setEditorButtonTooltip(GUI_BTN_SECTOR_PASTE_PROPS, "Paste copied properties onto selected sectors");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MINUS, GUI_BTN_SECTOR_FLOOR_PLUS,
+                               "Lower the sector floor", "Raise the sector floor");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MINUS, GUI_BTN_SECTOR_CEIL_PLUS,
+                               "Lower the sector ceiling", "Raise the sector ceiling");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_GLOW_MINUS, GUI_BTN_SECTOR_GLOW_PLUS,
+                               "Decrease the sector glow level", "Increase the sector glow level");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_TAG_MINUS, GUI_BTN_SECTOR_TAG_PLUS,
+                               "Decrease the sector tag id", "Increase the sector tag id");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_STATE_MINUS, GUI_BTN_SECTOR_STATE_PLUS,
+                               "Decrease the sector mover state", "Increase the sector mover state");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MIN_MINUS, GUI_BTN_SECTOR_FLOOR_MIN_PLUS,
+                               "Lower the sector floor minimum", "Raise the sector floor minimum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MAX_MINUS, GUI_BTN_SECTOR_FLOOR_MAX_PLUS,
+                               "Lower the sector floor maximum", "Raise the sector floor maximum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MIN_MINUS, GUI_BTN_SECTOR_CEIL_MIN_PLUS,
+                               "Lower the sector ceiling minimum", "Raise the sector ceiling minimum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MAX_MINUS, GUI_BTN_SECTOR_CEIL_MAX_PLUS,
+                               "Lower the sector ceiling maximum", "Raise the sector ceiling maximum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,
+                               "Lower the sector floor flow height", "Raise the sector floor flow height");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_FLOW_MINUS, GUI_BTN_SECTOR_CEIL_FLOW_PLUS,
+                               "Lower the sector ceiling flow height", "Raise the sector ceiling flow height");
+
+    setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_X1, "Clamp the sector texture on the X1 edge");
+    setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_X2, "Clamp the sector texture on the X2 edge");
+    setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_Y1, "Clamp the sector texture on the Y1 edge");
+    setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_Y2, "Clamp the sector texture on the Y2 edge");
+
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_SX_MINUS, GUI_BTN_SECTOR_CTEX_SX_PLUS,
+                               "Decrease ceiling texture X scale", "Increase ceiling texture X scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_SY_MINUS, GUI_BTN_SECTOR_CTEX_SY_PLUS,
+                               "Decrease ceiling texture Y scale", "Increase ceiling texture Y scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_ROT_MINUS, GUI_BTN_SECTOR_CTEX_ROT_PLUS,
+                               "Rotate the ceiling texture left", "Rotate the ceiling texture right");
+    setEditorButtonTooltip(GUI_BTN_SECTOR_CTEX_ROT_RESET, "Reset ceiling texture rotation");
+
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_SX_MINUS, GUI_BTN_SECTOR_FTEX_SX_PLUS,
+                               "Decrease floor texture X scale", "Increase floor texture X scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_SY_MINUS, GUI_BTN_SECTOR_FTEX_SY_PLUS,
+                               "Decrease floor texture Y scale", "Increase floor texture Y scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_ROT_MINUS, GUI_BTN_SECTOR_FTEX_ROT_PLUS,
+                               "Rotate the floor texture left", "Rotate the floor texture right");
+    setEditorButtonTooltip(GUI_BTN_SECTOR_FTEX_ROT_RESET, "Reset floor texture rotation");
+
+    for (int bit = 0; bit < 16; bit++) {
+        setEditorButtonTooltip(GUI_BTN_SECTOR_FLAGS_BIT0 + bit, sectorFlagTooltips[bit]);
+    }
+
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TAGID_MINUS, GUI_BTN_OBJECT_TAGID_PLUS,
+                               "Decrease the object tag id", "Increase the object tag id");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ZAXIS_MINUS, GUI_BTN_OBJECT_ZAXIS_PLUS,
+                               "Lower the object Z position", "Raise the object Z position");
+    setEditorButtonTooltip(GUI_BTN_OBJECT_GET_ZAXIS, "Snap the object Z\nto its sector floor");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEX_MINUS, GUI_BTN_OBJECT_TSCALEX_PLUS,
+                               "Decrease the object X texture scale", "Increase the object X texture scale");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEY_MINUS, GUI_BTN_OBJECT_TSCALEY_PLUS,
+                               "Decrease the object Y texture scale", "Increase the object Y texture scale");
+    refreshObjectInspectorTooltips(NULL);
+
+    setEditorButtonTooltip(GUI_BTN_CONFIRM_YES, "Confirm this action");
+    setEditorButtonTooltip(GUI_BTN_CONFIRM_NO, "Cancel this action");
+}
+
 
 void rc3dEditInit(void)
 {
@@ -13153,6 +14208,7 @@ void rc3dEditInit(void)
     beginNewMap();
 
     rcguiInit(&g_ui);
+    rcguiSetTooltipDelay(&g_ui, 100);
 
     g_ed.bShowGridOverall = 1;
     initRememberedDialogDirs();
@@ -13192,6 +14248,14 @@ void rc3dEditInit(void)
     // Player Angle settings
     rcguiCreateButton(&g_ui, GUI_BTN_PLAYER_START_ANGLE_MINUS, controloffw + (50 * 2) + 14, 234 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
     rcguiCreateButton(&g_ui, GUI_BTN_PLAYER_START_ANGLE_PLUS,  controloffw + (50 * 5) + 14, 234 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+    rcguiCreateToggleBox(&g_ui,
+                         GUI_BTN_OBJECT_LABELS_VISIBLE,
+                         ED_OBJECT_LABELS_TOGGLE_X,
+                         ED_OBJECT_LABELS_TOGGLE_Y,
+                         ED_OBJECT_LABELS_TOGGLE_W,
+                         ED_BTN_H,
+                         "Show Obj Labels",
+                         1);
 
     /* expanded panel button rows aligned to 16px font + 6px spacing */
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_SOLID,               controloffw + (64 * 0), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Sld");
@@ -13366,44 +14430,46 @@ void rc3dEditInit(void)
         sector_button_y_offsets += 4;
         sector_button_y_offsets += 34;
         sector_button_y_offsets += 25;
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 0", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
 
         sector_button_y_offsets += 25;
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_FLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
 
         // Toggling InFlags
         sector_button_y_offsets += 33;
         sector_button_y_offsets += 25;
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 0", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
 
         sector_button_y_offsets += 25;
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_INFLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
 
         // Toggling OutFlags
         sector_button_y_offsets += 33;
         sector_button_y_offsets += 25;
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit0, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 0", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit1, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 1", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit2, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 2", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit3, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 3", 0);
 
         sector_button_y_offsets += 25;
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
-        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 8", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit4, 16  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 4", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit5, 92  + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 5", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit6, 168 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 6", 0);
+        rcguiCreateToggleBox(&g_ui,     GUI_BTN_OBJECT_OUTFLAGS_bit7, 244 + controloffw, 156 + sector_button_y_offsets, 72, ED_BTN_H, "bit 7", 0);
+
+        
 
     }
 
@@ -13417,6 +14483,8 @@ void rc3dEditInit(void)
                       (EDIT_VIEW_PORT_WIDTH / 2) + 14,
                       (EDIT_VIEW_PORT_HEIGHT / 2) + 10,
                       56, ED_BTN_H, "No");
+
+    initEditorButtonTooltips();
 }
 
 
@@ -14397,6 +15465,7 @@ static void editorHideInspectorButtons(void)
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_LABELS_VISIBLE, 0);
 }
 
 
@@ -14663,6 +15732,7 @@ static void editorShowObjectInspectorButtons(void)
     }
 
     o = &g_edMap.objects[g_ed.selectedObject];
+    refreshObjectInspectorTooltips(o);
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 1);
@@ -14679,9 +15749,11 @@ static void editorShowObjectInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEX_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEY_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TSCALEY_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_LABELS_VISIBLE, 1);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_OBJECT_LABELS_VISIBLE, g_ed.showObjectLabels ? 1 : 0);
 
 
-    if (o->type == ED_OBJECT_TYPE_ROUTE_PREVIEW) {
+    if (o->type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
         bakedNodeCount = collectBakedRouteNodeChain(g_ed.selectedObject, NULL, 0, NULL);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE, 1);
         rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, 1);
@@ -14734,6 +15806,25 @@ static void editorShowObjectInspectorButtons(void)
     }
 }
 
+static int editorShowsDefaultInspectorPanel(void)
+{
+    return (g_ed.selectionType == ED_SEL_NONE) &&
+           (g_ed.selectedVertCount <= 0) &&
+           !hasMultiWallSelection() &&
+           !hasMultiSectorSelection() &&
+           !hasMultiObjectSelection();
+}
+
+static void editorShowDefaultInspectorButtons(void)
+{
+    if (!editorShowsDefaultInspectorPanel()) {
+        return;
+    }
+
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_PLAYER_START_ANGLE_PLUS, 1);
+}
+
 static void editorRefreshConfirmButtons(void)
 {
     rcguiSetButtonVisible(&g_ui, GUI_BTN_CONFIRM_YES, g_ed.confirmVisible);
@@ -14760,6 +15851,7 @@ static void refreshEditorUIButtonState(void)
     editorShowWallInspectorButtons();
     editorShowSectorInspectorButtons();
     editorShowObjectInspectorButtons();
+    editorShowDefaultInspectorButtons();
 }
 
 
@@ -14793,6 +15885,16 @@ static void handleEditorUI(int mouseX, int mouseY,
 
     if (g_ed.selectedSector >= 0 && g_ed.selectedSector < g_edMap.sectorCount) {
         sec = &g_edMap.sectors[g_ed.selectedSector];
+    }
+
+    if (leftPressed && mouseInObjectNoteBox(mouseX, mouseY)) {
+        if (!g_ed.objectLabelEditActive ||
+            g_ed.objectLabelEditObject != g_ed.selectedObject) {
+            beginObjectLabelEditing(g_ed.selectedObject);
+        }
+
+        g_ed.uiMouseCaptured = 1;
+        return;
     }
 
     hit = rcguiGetButtonHit(&g_ui);
@@ -14847,6 +15949,11 @@ static void handleEditorUI(int mouseX, int mouseY,
             case GUI_BTN_FINISH:   executeEditorAction(ED_ACT_FINISH_DRAFT, worldX, worldY); break;
             case GUI_BTN_CLRDRAFT: executeEditorAction(ED_ACT_CLEAR_DRAFT, worldX, worldY); break;
             case GUI_BTN_SHOWTEXTURE_BROWSER: executeEditorAction(ED_ACT_OPENTEXTUREBROWSER, worldX, worldY); break;
+            case GUI_BTN_OBJECT_LABELS_VISIBLE:
+                g_ed.showObjectLabels = g_ed.showObjectLabels ? 0 : 1;
+                rcguiSetToggleChecked(&g_ui, GUI_BTN_OBJECT_LABELS_VISIBLE, g_ed.showObjectLabels);
+                rc3dGuiDirty();
+                break;
 
             case GUI_BTN_SECTOR_CUTTER: executeEditorAction(ED_ACT_SECTOR_CUTTER, worldX, worldY); break;
             case GUI_BTN_REPAIR_TOPOLOGY: executeEditorAction(ED_ACT_REPAIR_TOPOLOGY, worldX, worldY); break;
@@ -15999,12 +17106,45 @@ static void drawInspectorPanel(void)
     //### Selected Object #####################################
     else if (g_ed.selectionType == ED_SEL_OBJECT && g_ed.selectedObject >= 0) {
         const EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+        const char *flagHeader = "FLAGS (generic use)";
+        const char *inHeader = "Inside Object Radius";
+        const char *outHeader = "Outside Object Radius";
         int y_off = 48;
 
-        drawRect( px + 8, py + 40, pw - 16, 552, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py + 40, pw - 16, 552, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        if (objectTypeUsesSectorTarget(o->type) || objectTypeUsesTriggerObjectTarget(o->type)) {
+            flagHeader = "FLAGS (trigger gate / custom)";
+        }
 
-        snprintf(buf, sizeof(buf), "OBJECT %d", g_ed.selectedObject);
+        if (o->type == RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER) {
+            inHeader = "On Entry -> Sector Flags";
+            outHeader = "Outside side unused";
+        } else if (o->type == RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT) {
+            inHeader = "Inside side unused";
+            outHeader = "On Exit -> Sector Flags";
+        } else if (o->type == RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT) {
+            inHeader = "Inside -> Sector Flags";
+            outHeader = "Outside -> Sector Flags";
+        } else if (o->type == RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER) {
+            inHeader = "On Entry -> Object Flags";
+            outHeader = "Outside side unused";
+        } else if (o->type == RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT) {
+            inHeader = "Inside side unused";
+            outHeader = "On Exit -> Object Flags";
+        } else if (o->type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) {
+            inHeader = "Inside -> Object Flags";
+            outHeader = "Outside -> Object Flags";
+        } else if (o->type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
+            inHeader = "Inside Payload (unused)";
+            outHeader = "Outside Payload (unused)";
+        } else if (o->type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+            inHeader = "Inside Payload (unused)";
+            outHeader = "Outside Payload (unused)";
+        }
+
+        drawRect( px + 8, py + 40, pw - 16, 652, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py + 40, pw - 16, 652, ED_INSPECTOR_PARENT_PANELS_FRAME);
+
+        snprintf(buf, sizeof(buf), "OBJECT %d: (%s)", g_ed.selectedObject, getObjectTypeName(o->type));
         drawText(px + 16, py + y_off, buf, ED_INSPECTOR_TEXT_COL);  y_off += 30;
 
         //----------------------------
@@ -16023,13 +17163,25 @@ static void drawInspectorPanel(void)
         drawText(px + 18,  py + y_off + 2, "___________                  ______________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
         py += 30;
 
-        snprintf(buf, sizeof(buf), "Tag: %d", o->tagId);
+        snprintf(buf, sizeof(buf),
+                 objectTagIdHasDuplicate(o->tagId, g_ed.selectedObject) ? "Tag: %d*" : "Tag: %d",
+                 o->tagId);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
-        snprintf(buf, sizeof(buf), "Type: %d", o->type);
+        snprintf(buf, sizeof(buf), "Type: %u", (unsigned)o->type);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
-        snprintf(buf, sizeof(buf), "TargetTag: %d", o->targetTagId);
+        if (objectTypeUsesSectorTarget(o->type)) {
+            snprintf(buf, sizeof(buf), "Target STag: %d", o->targetTagId);
+        } else if (objectTypeUsesTriggerObjectTarget(o->type)) {
+            snprintf(buf, sizeof(buf), "Target OTag: %d", o->targetTagId);
+        } else if (o->type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
+            snprintf(buf, sizeof(buf), "Route TTag: %d", o->targetTagId);
+        } else if (o->type == RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+            snprintf(buf, sizeof(buf), "Next TTag: %d", o->targetTagId);
+        } else {
+            snprintf(buf, sizeof(buf), "TargetTag: %d", o->targetTagId);
+        }
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
         snprintf(buf, sizeof(buf), "Radius: %.3f", o->radius);
@@ -16048,7 +17200,7 @@ static void drawInspectorPanel(void)
         drawRectL(px + 12, py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_PANELFRAME);
         
         y_off += 6;
-        snprintf(buf, sizeof(buf),     "FLAGS (generic use): 0x%02X", (unsigned)o->flags);
+        snprintf(buf, sizeof(buf),     "%s: 0x%02X", flagHeader, (unsigned)o->flags);
         drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
         drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
         
@@ -16058,7 +17210,7 @@ static void drawInspectorPanel(void)
         drawRectL(px + 12, py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_PANELFRAME);
 
         y_off += 6;
-        snprintf(buf, sizeof(buf),     "Inside Object Radius: 0x%02X", (unsigned)o->inFlag);
+        snprintf(buf, sizeof(buf),     "%s: 0x%02X", inHeader, (unsigned)o->inFlag);
         drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
         drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
 
@@ -16068,10 +17220,62 @@ static void drawInspectorPanel(void)
         drawRectL(px + 12, py + y_off, pw - 24, 80, ED_INSPECTOR_PANELS_PANELFRAME);
 
         y_off += 6;
-        snprintf(buf, sizeof(buf),     "Outside Object Radius: 0x%02X", (unsigned)o->outFlag);
+        snprintf(buf, sizeof(buf),     "%s: 0x%02X", outHeader, (unsigned)o->outFlag);
         drawText(px + 18,  py + y_off, buf, ED_INSPECTOR_PANELS_HEADER_TEXT);      
         drawText(px + 18,  py + y_off + 2, "____________________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
 
+        {
+            const char *labelText = getObjectLabelTextForDisplay(g_ed.selectedObject);
+            char noteTail[ED_OBJECT_LABEL_MAX];
+            const int noteActive = g_ed.objectLabelEditActive &&
+                                   g_ed.objectLabelEditObject == g_ed.selectedObject;
+            const int noteMaxChars = (ED_OBJECT_NOTE_BOX_W - 10) / ED_FONT_W;
+            const size_t labelLen = strlen(labelText);
+            const int noteTextX = ED_OBJECT_NOTE_BOX_X + 4;
+            const int noteTextY = ED_OBJECT_NOTE_BOX_Y + 4;
+            const uint8_t noteBorder = noteActive ? ED_COLOUR_SELECTED_WALL
+                                                  : ED_COLOUR_TEXT_BAR_BORDER;
+
+            drawRect(ED_OBJECT_NOTE_SECTION_X, ED_OBJECT_NOTE_SECTION_Y, ED_OBJECT_NOTE_SECTION_W, ED_OBJECT_NOTE_SECTION_H, ED_INSPECTOR_PANELS_BACKPANEL);
+            drawRectL(ED_OBJECT_NOTE_SECTION_X, ED_OBJECT_NOTE_SECTION_Y, ED_OBJECT_NOTE_SECTION_W, ED_OBJECT_NOTE_SECTION_H, ED_INSPECTOR_PANELS_PANELFRAME);
+            drawText(ED_OBJECT_NOTE_SECTION_X + 8, ED_OBJECT_NOTE_SECTION_Y + 6, "EDITOR LABEL / NOTE", ED_INSPECTOR_PANELS_HEADER_TEXT);
+
+            drawRect(ED_OBJECT_NOTE_BOX_X, ED_OBJECT_NOTE_BOX_Y, ED_OBJECT_NOTE_BOX_W, ED_OBJECT_NOTE_BOX_H, ED_COLOUR_TEXT_BAR_BG);
+            drawRectL(ED_OBJECT_NOTE_BOX_X, ED_OBJECT_NOTE_BOX_Y, ED_OBJECT_NOTE_BOX_W, ED_OBJECT_NOTE_BOX_H, noteBorder);
+
+            buildObjectLabelTailText(labelText, noteMaxChars, noteTail, sizeof(noteTail));
+
+            if (noteTail[0] != '\0') {
+                drawText(noteTextX, noteTextY, noteTail, ED_TEXT_COL);
+            } else if (!noteActive) {
+                drawText(noteTextX, noteTextY, "Click to add an editor label", ED_INSPECTOR_PANELS_HEADER_TEXT);
+            }
+
+            if (noteActive) {
+                int caretX = noteTextX + ((int)strlen(noteTail) * ED_FONT_W);
+
+                if (caretX > (ED_OBJECT_NOTE_BOX_X + ED_OBJECT_NOTE_BOX_W - 6)) {
+                    caretX = ED_OBJECT_NOTE_BOX_X + ED_OBJECT_NOTE_BOX_W - 6;
+                }
+
+                drawLine(caretX,
+                         ED_OBJECT_NOTE_BOX_Y + 4,
+                         caretX,
+                         ED_OBJECT_NOTE_BOX_Y + ED_OBJECT_NOTE_BOX_H - 5,
+                         ED_TEXT_COL);
+            }
+
+            snprintf(buf, sizeof(buf),
+                     noteActive
+                        ? "Editor-only. Enter=save Esc=cancel %u/%u"
+                        : "Editor-only. Click box to edit %u/%u",
+                     (unsigned)labelLen,
+                     (unsigned)(ED_OBJECT_LABEL_MAX - 1));
+            drawText(ED_OBJECT_NOTE_SECTION_X + 8,
+                     ED_OBJECT_NOTE_SECTION_Y + 54,
+                     buf,
+                     ED_TEXT_COL);
+        }
 
     }
 
@@ -16214,6 +17418,8 @@ void rc3dEditUpdate(float dt,
     const int middleDown = (mouseButtons & SDL_BUTTON_MMASK) != 0;
 
     const int leftPressed  = leftDown && !g_ed.prevLeftDown;
+    const int rightPressed = rightDown && !g_ed.prevRightDown;
+    const int middlePressed = middleDown && !g_ed.prevMiddleDown;
     const int leftReleased = !leftDown && g_ed.prevLeftDown;
 
     float worldX, worldY;
@@ -16231,6 +17437,30 @@ void rc3dEditUpdate(float dt,
     bCtrlHold = ctrlDown;
     bShiftHold = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
     bAltHold = keys[SDL_SCANCODE_LALT] || keys[SDL_SCANCODE_RALT];
+
+    syncObjectLabelEditorState();
+
+    if (g_ed.objectLabelEditActive &&
+        ((leftPressed && !mouseInObjectNoteBox(mouseX, mouseY)) ||
+         rightPressed ||
+         middlePressed)) {
+        finishObjectLabelEditing(1);
+    }
+
+    {
+        const int handledObjectLabelKey = handleObjectLabelEditorKeys(keys);
+
+        if (handledObjectLabelKey || g_ed.objectLabelEditActive) {
+            g_ed.uiMouseCaptured = 1;
+            g_ed.hoverVert = -1;
+            g_ed.hoverWall = -1;
+            g_ed.hoverSector = -1;
+            g_ed.hoverObject = -1;
+            g_ed.splitPreviewValid = 0;
+            finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
+            return;
+        }
+    }
 
     if (keyPressedOnce(keys, SDL_SCANCODE_KP_MULTIPLY) ||
         (g_ed.isometricView && keyPressedOnce(keys, SDL_SCANCODE_ESCAPE))) {
@@ -16338,6 +17568,17 @@ void rc3dEditUpdate(float dt,
     handleEditorUI(mouseX, mouseY, leftDown, leftPressed, leftReleased, worldX, worldY, dt);
     if (handleTextureBrowserMouse(mouseX, mouseY, leftDown, leftPressed, 0)) {
         g_ed.uiMouseCaptured = 1;
+    }
+
+    if (g_ed.objectLabelEditActive) {
+        g_ed.uiMouseCaptured = 1;
+        g_ed.hoverVert = -1;
+        g_ed.hoverWall = -1;
+        g_ed.hoverSector = -1;
+        g_ed.hoverObject = -1;
+        g_ed.splitPreviewValid = 0;
+        finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
+        return;
     }
 
     /* blunt inspector swallow:
@@ -17155,6 +18396,12 @@ void rc3dEditUpdate(float dt,
 
     refreshEditorUIButtonState();
     finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
+}
+
+int rc3dEditHandleTextInput(const char *text)
+{
+    syncObjectLabelEditorState();
+    return handleObjectLabelTextInput(text);
 }
 
 void drawFilename(){

@@ -234,6 +234,12 @@ int main(void)
                         dirty = 1;
                         break;
 
+                    case SDL_TEXTINPUT:
+                        if (rc3dEditHandleTextInput(e.text.text)) {
+                            dirty = 1;
+                        }
+                        break;
+
                     case SDL_MOUSEWHEEL:
                         mouseWheelY += e.wheel.y;
                         dirty = 1;
@@ -299,7 +305,6 @@ int main(void)
     printf("Did you have fun??\n");
     return 0;
 }
-
 
 
 

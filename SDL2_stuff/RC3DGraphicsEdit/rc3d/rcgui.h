@@ -21,6 +21,7 @@ typedef struct
     int w;
     int h;
     const char *text;
+    const char *tooltip;
 
     uint8_t type;
     uint8_t visible;
@@ -43,6 +44,10 @@ typedef struct
     int hotId;
     int activeId;
     int hitId;
+    int tooltipId;
+    int tooltipHoverId;
+    uint32_t tooltipHoverStartMs;
+    uint32_t tooltipDelayMs;
 
     int buttonCount;
     RCGUI_Button buttons[RCGUI_MAX_BUTTONS];
@@ -91,6 +96,8 @@ RCGUI_Button *rcguiGetButton(RCGUI_Context *ui, int id);
 const RCGUI_Button *rcguiGetButtonConst(const RCGUI_Context *ui, int id);
 
 void rcguiSetButtonText(RCGUI_Context *ui, int id, const char *text);
+void rcguiSetButtonTooltip(RCGUI_Context *ui, int id, const char *tooltip);
+void rcguiSetTooltipDelay(RCGUI_Context *ui, uint32_t delayMs);
 void rcguiSetButtonRect(RCGUI_Context *ui, int id, int x, int y, int w, int h);
 void rcguiSetButtonVisible(RCGUI_Context *ui, int id, int visible);
 void rcguiSetButtonDisabled(RCGUI_Context *ui, int id, int disabled);
