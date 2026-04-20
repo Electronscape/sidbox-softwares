@@ -88,13 +88,11 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define RC3D_WALL_POINTLIGHT_ENABLE    1
 #define RC3D_WALL_POINTLIGHT_STRENGTH  1.25f
 
-#define RC3D_TEXID_SPRITE_MAN       RC3D_SPRITE_TEX_MAN
-#define RC3D_TEXID_SPRITE_GRICY     RC3D_SPRITE_TEX_GRICY
-#define RC3D_TEXID_SKYBOX           255
+#define RC3D_TEXID_SKYBOX               255
 
-#define RC3D_SPRITE_TEX_TRANSPARENT 0
-#define RC3D_TEST_SPRITE_WIDTH      0.75f
-#define RC3D_TEST_SPRITE_HEIGHT     0.75f
+#define RC3D_SPRITE_TEX_TRANSPARENT     0
+#define RC3D_TEST_SPRITE_WIDTH          0.75f
+#define RC3D_TEST_SPRITE_HEIGHT         0.75f
 
 static float g_renderEyeZ = 0.0f;
 static float g_halfFovRad = 0.0f;
@@ -104,7 +102,7 @@ static float g_camStepConst = 0.0f;
 static float g_angleToLutScale = 0.0f;
 static float g_sinLut[RC3D_TRIG_LUT_SIZE];
 static float g_cosLut[RC3D_TRIG_LUT_SIZE];
-static int g_trigLutInit = 0;
+static int   g_trigLutInit = 0;
 static float g_lightBrightRange = RC3D_LIGHT_DEFAULT_BRIGHT_RANGE;
 static float g_lightMidRange = RC3D_LIGHT_DEFAULT_MID_RANGE;
 static float g_lightDarkRange = RC3D_LIGHT_DEFAULT_DARK_RANGE;
@@ -1237,15 +1235,6 @@ static void rc3dBuildDefaultTextures(void)
 
     snprintf(filename, sizeof(filename), "./textures/255.ppb");
     LoadPPB(filename, tex_skybox);
-
-    tindex = 0;
-    for (y = 0; y < RC3D_TEX_SIZE; ++y) {
-        for (x = 0; x < RC3D_TEX_SIZE; ++x) {
-            g_rc3dTextures[RC3D_TEXID_SPRITE_MAN].pix[tindex] = spr_oiiacat[tindex];
-            g_rc3dTextures[RC3D_TEXID_SPRITE_GRICY].pix[tindex] = spr_gricy1[tindex];
-            tindex++;
-        }
-    }
 
     rc3dBuildTextureTransparencyMasks();
     g_rc3dTexturesInit = 1;
@@ -6105,7 +6094,7 @@ void rc3dInit(void)
     rc3dResetPlayerFromMapStart();
     rc3dClearSprites();
     //rc3dInitTestSprite();
-    int spriteTmp = 0;
+    //int spriteTmp = 0;
 
     for(int o = 0; o < g_map->objectCount; o++){
         if(g_map->objects[o].type == OBJECT_TYPE_BASIC_SPRITE){    // basic Sprites
@@ -6206,8 +6195,8 @@ static inline int rc3dObjectMatchesPlayerElevation(const RC3D_Object *obj)
         return 0;
     }
 
-    return (obj->z >= (playerFeet - RC3D_EPSILON)) &&
-           (obj->z <= (playerHead + RC3D_EPSILON));
+    return (obj->z >= (playerFeet - 0.05f)) &&
+           (obj->z <= (playerHead + 0.05f));
 }
 
 #define RC3D_PROFILE_OBJ_LINES 16

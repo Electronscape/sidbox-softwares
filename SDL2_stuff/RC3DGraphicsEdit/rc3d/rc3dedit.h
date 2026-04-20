@@ -69,6 +69,10 @@
 #define ED_COLOUR_TEXT_BAR_BG       4
 #define ED_COLOUR_TEXT_BAR_BORDER   3
 
+#define ED_OBJECT_TEXT_NOTE_BG      16
+#define ED_OBJECT_TEXT_NOTE_BORDER  4
+#define ED_OBJECT_TEXT_TEXT         3
+
 // map validator
 #define ED_VALIDATOR_TEXT                   2
 #define ED_VALIDATOR_SELECTION_BG           3

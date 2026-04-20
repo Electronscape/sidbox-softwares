@@ -782,6 +782,7 @@ typedef struct {
 
 
 char mapfilename[256];
+static char g_currentMapPath[1024];
 static EditorMap g_edMap;
 static EditorState g_ed;
 static EdRoutePreviewCache g_routePreviewCache;
@@ -3791,11 +3792,15 @@ static void drawObjectLabels(void)
         boxY = sy - ((rs > 6) ? (rs + boxH + 4) : (boxH + 10));
         textY = boxY + 3;
 
+        if (textY < 38) textY = 38;
+        if (textY > SCREEN_H - 86) textY = SCREEN_H - 86;
+
         if (boxX < 4) boxX = 4;
         if ((boxX + boxW) > (EDIT_VIEW_PORT_WIDTH - 4)) {
             boxX = EDIT_VIEW_PORT_WIDTH - boxW - 4;
         }
         if (boxY < 36) boxY = 36;
+        if (boxY > SCREEN_H - (86 + 3)) boxY = SCREEN_H - (86 + 3);
 
         if (isObjectInEditSelection(i)) {
             border = ED_COLOUR_SELECTED_WALL;
@@ -3803,9 +3808,13 @@ static void drawObjectLabels(void)
             border = ED_COLOUR_HOVER_WALL;
         }
 
-        drawRect(boxX, boxY, boxW, boxH, ED_COLOUR_TEXT_BAR_BG);
+        //#define ED_OBJECT_TEXT_NOTE_BG      16
+        //#define ED_OBJECT_TEXT_NOTE_BORDER  4
+        //#define ED_OBJECT_TEXT_TEXT         3
+
+        drawRect(boxX, boxY, boxW, boxH, ED_OBJECT_TEXT_NOTE_BG);
         drawRectL(boxX, boxY, boxW, boxH, border);
-        drawText(boxX + 4, textY, preview, ED_TEXT_COL);
+        drawText(boxX + 4, textY, preview, ED_OBJECT_TEXT_TEXT);
     }
 }
 
@@ -5145,6 +5154,36 @@ static void initializeNewSectorDefaults(EdSector *sec, int wallStart, int wallCo
     sec->ceilTexScaleX = 1.0f;
     sec->ceilTexScaleY = 1.0f;
     sec->ceilTexAngle = 0.0f;
+
+    resetSectorMovePropertiesToCurrentHeights(sec);
+    sanitizeSectorProperties(sec);
+}
+
+static void initializeNewSectorDefaultsFromParent(EdSector *sec,
+                                                  int wallStart,
+                                                  int wallCount,
+                                                  int boundaryCount,
+                                                  const EdSector *parent)
+{
+    initializeNewSectorDefaults(sec, wallStart, wallCount, boundaryCount);
+
+    if (!sec || !parent) {
+        return;
+    }
+
+    sec->floorHeight = parent->floorHeight;
+    sec->ceilHeight = parent->ceilHeight;
+    sec->floorColor = parent->floorColor;
+    sec->ceilColor = parent->ceilColor;
+    sec->glowlevel = parent->glowlevel;
+    sec->texFlags = parent->texFlags;
+
+    sec->floorTexScaleX = parent->floorTexScaleX;
+    sec->floorTexScaleY = parent->floorTexScaleY;
+    sec->floorTexAngle = parent->floorTexAngle;
+    sec->ceilTexScaleX = parent->ceilTexScaleX;
+    sec->ceilTexScaleY = parent->ceilTexScaleY;
+    sec->ceilTexAngle = parent->ceilTexAngle;
 
     resetSectorMovePropertiesToCurrentHeights(sec);
     sanitizeSectorProperties(sec);
@@ -6657,6 +6696,7 @@ static int buildInnerSectorsFromSelectedSector(void)
         {
             const int newSectorIndex = g_edMap.sectorCount;
             const int newWallStart = g_edMap.wallCount;
+            const EdSector *outer = &g_edMap.sectors[g_ed.selectedSector];
 
             for (int i = loopCount - 1; i >= 0; i--) {
                 const EdWall *src = &g_edMap.walls[loopWalls[i]];
@@ -6674,10 +6714,11 @@ static int buildInnerSectorsFromSelectedSector(void)
                 clearWallTexFlags(dst);
             }
 
-            initializeNewSectorDefaults(&g_edMap.sectors[newSectorIndex],
-                                        newWallStart,
-                                        loopCount,
-                                        loopCount);
+            initializeNewSectorDefaultsFromParent(&g_edMap.sectors[newSectorIndex],
+                                                  newWallStart,
+                                                  loopCount,
+                                                  loopCount,
+                                                  outer);
 
             g_edMap.sectorCount++;
             createdCount++;
@@ -8465,6 +8506,7 @@ static void beginNewMap(void)
     resetUndoRedoHistory();
 
     strcpy(mapfilename, "new_map.txt");
+    g_currentMapPath[0] = '\0';
 
     g_edMap.startSector = 0;
     g_edMap.startX = 0.0f;
@@ -8803,6 +8845,7 @@ static int saveTextMap(const char *path)
     else if (fname2) fname = fname2 + 1;
 
     snprintf(mapfilename, sizeof(mapfilename), "map: %s", fname);
+    snprintf(g_currentMapPath, sizeof(g_currentMapPath), "%s", path);
 
     
     return 1;
@@ -9120,6 +9163,7 @@ static int loadTextMap(const char *path)
     else if (fname2) fname = fname2 + 1;
 
     snprintf(mapfilename, sizeof(mapfilename), "map: %s", fname);
+    snprintf(g_currentMapPath, sizeof(g_currentMapPath), "%s", path);
 
     return 1;
 }
@@ -9950,10 +9994,11 @@ static int finalizeDraftSectorAttached(void)
             }
         }
 
-        initializeNewSectorDefaults(&g_edMap.sectors[newSectorIndex],
-                                    newWallStart,
-                                    g_ed.draftCount,
-                                    g_ed.draftCount);
+        initializeNewSectorDefaultsFromParent(&g_edMap.sectors[newSectorIndex],
+                                              newWallStart,
+                                              g_ed.draftCount,
+                                              g_ed.draftCount,
+                                              &g_edMap.sectors[outerSectorIndex]);
 
         g_edMap.sectorCount++;
 
@@ -14617,6 +14662,11 @@ static int editorSaveMapDialog(char *outPath, size_t outPathSize)
     return 1;
 }
 
+static int editorHasCurrentMapPath(void)
+{
+    return g_currentMapPath[0] != '\0';
+}
+
 
 
 static int hasFileExtInsensitive(const char *path, const char *ext)
@@ -14788,6 +14838,27 @@ static void doSaveMap(void)
     }
 
     setEditorStatus("Map saved");
+}
+
+static void doQuickSaveMap(void)
+{
+    char path[1024];
+
+    if (editorHasCurrentMapPath()) {
+        snprintf(path, sizeof(path), "%s", g_currentMapPath);
+    } else {
+        if (!editorSaveMapDialog(path, sizeof(path))) {
+            setEditorStatus("Quick save cancelled");
+            return;
+        }
+    }
+
+    if (!saveTextMap(path)) {
+        setEditorStatus("Quick save failed");
+        return;
+    }
+
+    setEditorStatus("Map quick-saved");
 }
 
 static void doExportMap(void)
@@ -15299,10 +15370,11 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wSide1->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wSide1);
 
-    initializeNewSectorDefaults(&g_edMap.sectors[newSectorIndex],
-                                newWallStart,
-                                4,
-                                4);
+    initializeNewSectorDefaultsFromParent(&g_edMap.sectors[newSectorIndex],
+                                          newWallStart,
+                                          4,
+                                          4,
+                                          &g_edMap.sectors[ownerSector]);
 
     g_edMap.sectorCount++;
 
@@ -17441,6 +17513,16 @@ void rc3dEditUpdate(float dt,
     syncObjectLabelEditorState();
 
     if (g_ed.objectLabelEditActive &&
+        ctrlDown &&
+        keyPressedOnce(keys, SDL_SCANCODE_S)) {
+        finishObjectLabelEditing(1);
+        doQuickSaveMap();
+        g_ed.uiMouseCaptured = 1;
+        finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
+        return;
+    }
+
+    if (g_ed.objectLabelEditActive &&
         ((leftPressed && !mouseInObjectNoteBox(mouseX, mouseY)) ||
          rightPressed ||
          middlePressed)) {
@@ -17914,6 +17996,13 @@ void rc3dEditUpdate(float dt,
         executeEditorAction(ED_ACT_CLEAN_MAP, worldX, worldY);
     }
 
+    if (keyPressedOnce(keys, SDL_SCANCODE_C)){
+        executeEditorAction(ED_ACT_SECTOR_CUTTER, worldX, worldY);
+        executeEditorAction(ED_ACT_REPAIR_TOPOLOGY, worldX, worldY);
+        executeEditorAction(ED_ACT_CLEAN_MAP, worldX, worldY);
+        setEditorStatus("Map Action: Cleaned Full.");
+    }
+
     if (keyPressedOnce(keys, SDL_SCANCODE_F9)) {
         executeEditorAction(ED_ACT_VALIDATE_MAP, worldX, worldY);
     }
@@ -18329,6 +18418,10 @@ void rc3dEditUpdate(float dt,
 
     if (keyPressedOnce(keys, SDL_SCANCODE_F2)) {
         executeEditorAction(ED_ACT_LOAD, worldX, worldY);
+    }
+
+    if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_S)) {
+        doQuickSaveMap();
     }
 
     if (keyPressedOnce(keys, SDL_SCANCODE_F3)) {
