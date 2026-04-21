@@ -109,12 +109,13 @@ typedef enum {
     RC3D_OBJTYPE_SPRITE = 0u,
     RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT = 1u,
     RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER = 2u,
-    RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT = 3u,
-    RC3D_OBJTYPE_ROUTE_PREVIEW = 4u,
-    RC3D_OBJTYPE_BAKED_ROUTE_NODE = 5u,
+    RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT  = 3u,
+    RC3D_OBJTYPE_ROUTE_PREVIEW        = 4u,
+    RC3D_OBJTYPE_BAKED_ROUTE_NODE     = 5u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT = 6u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER = 7u,
-    RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT = 8u
+    RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT  = 8u,
+    RC3D_OBJTYPE_OBJECT_TELEPORTER    = 9u
 } RC3D_ObjectType;
 
 
@@ -132,6 +133,7 @@ typedef struct {
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
     float scalex;
     float scaley;
+    float angle;      /* radians, used for teleporter exit facing and editor direction markers */
 } RC3D_Object;
 
 

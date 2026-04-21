@@ -506,10 +506,6 @@ static int rc3dPositionBlockedInSectorFixed(
 
 
 
-
-
-
-
 static uint32_t g_randState = 0x12345678u;
 
 void randSeed(uint32_t seed)
@@ -628,6 +624,7 @@ static int tryMovePlayerSliding(float moveX, float moveY);
 static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
 static void rc3dResolvePlayerPenetrationInSector(int sectorIndex);
+static void rc3dMinimapRevealCurrentSector(void);
 
 
 void screenupdate(void);
@@ -653,6 +650,10 @@ static inline int64_t rc3dFixedSq(RC3D_Fixed v){
 
 static inline int rc3dSectorIndexValid(int sectorIndex){
     return g_map && ((unsigned)sectorIndex < (unsigned)g_map->sectorCount);
+}
+
+static inline int rc3dSectorIsMinimapDiscovered(const RC3D_Sector *sec){
+    return sec && ((sec->sectorFlags & RC3D_SECTOR_FLAGS_MINIMAP_DISCOVERED) != 0u);
 }
 
 static inline void rc3dSyncPlayerFloatXY(void){
@@ -1210,7 +1211,7 @@ static inline uint8_t rc3dApplyShadeProfileToTexel(
 
 extern uint8_t spr_oiiacat[];
 extern uint8_t tex_notset[];
-extern uint8_t spr_gricy1[];
+//extern uint8_t spr_gricy1[];
 extern uint8_t tex_skybox[RC3D_SKYBOX_W * RC3D_SKYBOX_H];
 
 static void rc3dBuildDefaultTextures(void)
@@ -2316,7 +2317,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             !readExact(f, &objects[i].inFlag, sizeof(uint8_t)) ||
             !readExact(f, &objects[i].outFlag, sizeof(uint8_t)) ||
             !readExact(f, &objects[i].scalex, sizeof(float)) || 
-            !readExact(f, &objects[i].scaley, sizeof(float)) 
+            !readExact(f, &objects[i].scaley, sizeof(float)) || 
+            !readExact(f, &objects[i].angle,  sizeof(float)) 
         )
         {
             fclose(f);
@@ -2436,6 +2438,7 @@ int rc3dLoadMapBinary(const char *path)
     }
 
     rc3dResetPlayerFromMapStart();
+    rc3dMinimapResetDiscovery();
     rc3dClearSprites();
     //rc3dInitTestSprite();
 
@@ -2459,6 +2462,7 @@ void rc3dUnloadMapBinary(void)
     }
 
     rc3dResetPlayerFromMapStart();
+    rc3dMinimapResetDiscovery();
     rc3dClearSprites();
     //rc3dInitTestSprite();
 }
@@ -3074,6 +3078,7 @@ static int rc3dTryOrbitalUnstuckInSector(int sectorIndex)
 
                 rc3dSetPlayerWorldXYFixed(testX, testY);
                 g_player.sector = sectorIndex;
+                rc3dMinimapRevealCurrentSector();
                 return 1;
             }
         }
@@ -3153,6 +3158,7 @@ static int rc3dCommitPlayerMoveFixed(RC3D_Fixed newX, RC3D_Fixed newY, int newSe
 
     rc3dSetPlayerWorldXYFixed(newX, newY);
     g_player.sector = newSector;
+    rc3dMinimapRevealCurrentSector();
 
     if (rc3dSectorNeedsDropResolve(oldSector, newSector)) {
         rc3dResolvePlayerPenetrationInSector(newSector);
@@ -5573,6 +5579,40 @@ static int clipLineToRect(
     }
 }
 
+static uint8_t rc3dGetMiniMapWallColour(const RC3D_Wall *w, int wallIndex)
+{
+    const RC3D_Wall *backWall;
+    const RC3D_WallCache *wc;
+    const int thisMidHidden = (w->midColor == RC3D_TEXID_SKYBOX);
+    int backMidHidden;
+
+    if (!w || w->neighbour < 0) {
+        return 2;
+    }
+
+    if (!g_map || !g_map->walls || !g_wallCache ||
+        (unsigned)wallIndex >= (unsigned)g_wallCacheCount)
+    {
+        return 27;
+    }
+
+    wc = &g_wallCache[wallIndex];
+    if ((unsigned)wc->backWallIndex >= (unsigned)g_map->wallCount) {
+        return 27;
+    }
+
+    backWall = &g_map->walls[wc->backWallIndex];
+    backMidHidden = (backWall->midColor == RC3D_TEXID_SKYBOX);
+
+    /* If only one side hides its middle texture, treat it like a solid wall on the minimap. */
+    if (thisMidHidden != backMidHidden)
+    {
+        return 2;
+    }
+
+    return 27;
+}
+
 static void drawMiniMap(void)
 {
     const int mapY = 8;
@@ -5606,6 +5646,10 @@ static void drawMiniMap(void)
             const int start = sec->wallStart;
             const int end = start + sec->wallCount;
 
+            if (!rc3dSectorIsMinimapDiscovered(sec)) {
+                continue;
+            }
+
             for (int wi = start; wi < end; wi++) {
                 const RC3D_Wall *w = &walls[wi];
                 const RC3D_Vec2 *a = &verts[w->v0];
@@ -5617,7 +5661,7 @@ static void drawMiniMap(void)
                 int y1 = centerY + (int)((b->y - g_player.y) * scale);
 
                 if (clipLineToRect(&x0, &y0, &x1, &y1, left, top, right, bottom)) {
-                    drawLine(x0, y0, x1, y1, (w->neighbour >= 0) ? 27 : 2);
+                    drawLine(x0, y0, x1, y1, rc3dGetMiniMapWallColour(w, wi));
                 }
             }
         }
@@ -5691,6 +5735,35 @@ static RC3D_Sector *rc3dMutableSectorData(void)
     }
 
     return (RC3D_Sector *)g_map->sectors;
+}
+
+static int rc3dMinimapSetSectorDiscoveredInternal(int sectorId, int discovered)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    const uint32_t discoveryBit = RC3D_SECTOR_FLAGS_MINIMAP_DISCOVERED;
+    uint32_t oldFlags;
+    uint32_t newFlags;
+
+    if (!g_map || !sectors || (unsigned)sectorId >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    oldFlags = sectors[sectorId].sectorFlags;
+    newFlags = discovered ? (oldFlags | discoveryBit) : (oldFlags & ~discoveryBit);
+
+    if (oldFlags == newFlags) {
+        return 0;
+    }
+
+    sectors[sectorId].sectorFlags = newFlags;
+    return 1;
+}
+
+static void rc3dMinimapRevealCurrentSector(void)
+{
+    if (rc3dSectorIndexValid(g_player.sector)) {
+        rc3dMinimapSetSectorDiscoveredInternal(g_player.sector, 1);
+    }
 }
 
 static RC3D_Wall *rc3dMutableWallData(void)
@@ -5776,6 +5849,42 @@ void rc3dSetSectorLightLevel(int sectorId, uint8_t level){
     sectors[sectorId].glowlevel = level;
     rc3dSyncSectorWallGlow(sectorId, level);
 
+}
+
+int rc3dMinimapRevealSector(int32_t sectorId)
+{
+    return rc3dMinimapSetSectorDiscoveredInternal((int)sectorId, 1);
+}
+
+int rc3dMinimapRevealAll(void)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    int changedCount = 0;
+
+    if (!g_map || !sectors) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        changedCount += rc3dMinimapSetSectorDiscoveredInternal(i, 1);
+    }
+
+    return changedCount;
+}
+
+void rc3dMinimapResetDiscovery(void)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+
+    if (!g_map || !sectors) {
+        return;
+    }
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        sectors[i].sectorFlags &= ~RC3D_SECTOR_FLAGS_MINIMAP_DISCOVERED;
+    }
+
+    rc3dMinimapRevealCurrentSector();
 }
 
 static int lightPulsationTimer = 0;
@@ -6054,6 +6163,7 @@ static void rc3dResetPlayerFromMapStart(void)
     }
 
     g_player.vz = 0.0f;
+    rc3dMinimapRevealCurrentSector();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -6092,6 +6202,7 @@ void rc3dInit(void)
     }
 
     rc3dResetPlayerFromMapStart();
+    rc3dMinimapResetDiscovery();
     rc3dClearSprites();
     //rc3dInitTestSprite();
     //int spriteTmp = 0;
@@ -6253,6 +6364,127 @@ int getObjectState(int pTagId){
     return 0;
 }
 
+static RC3D_Object *rc3dFindTeleporterDestination(const RC3D_Object *source)
+{
+    RC3D_Object *objs = rc3dMutableObjectData();
+    RC3D_Object *fallback = NULL;
+
+    if (!source || !objs || source->targetTagId == 0) {
+        return NULL;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        RC3D_Object *candidate = &objs[i];
+
+        if (candidate == source) {
+            continue;
+        }
+
+        if (candidate->type != RC3D_OBJTYPE_OBJECT_TELEPORTER) {
+            continue;
+        }
+
+        if (!(candidate->flags & OBJECT_GENERAL_FLAGS_ENABLE)) {
+            continue;
+        }
+
+        if (candidate->tagId != source->targetTagId) {
+            continue;
+        }
+
+        if (candidate->targetTagId == source->tagId) {
+            return candidate;
+        }
+
+        if (!fallback) {
+            fallback = candidate;
+        }
+    }
+
+    return fallback;
+}
+
+static void rc3dRefreshTeleporterTriggerStates(void)
+{
+    RC3D_Object *objs = rc3dMutableObjectData();
+
+    if (!objs) {
+        return;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        RC3D_Object *obj = &objs[i];
+        const float distSq = distance2D(g_player.x, g_player.y, obj->x, obj->y);
+        const float radiusSq = obj->radius * obj->radius;
+
+        if (obj->type != RC3D_OBJTYPE_OBJECT_TELEPORTER) {
+            continue;
+        }
+
+        if (!(obj->flags & OBJECT_GENERAL_FLAGS_ENABLE) ||
+            !rc3dObjectMatchesPlayerElevation(obj))
+        {
+            obj->trigger = 0u;
+            continue;
+        }
+
+        obj->trigger = (distSq < radiusSq) ? 1u : 0u;
+    }
+}
+
+static int rc3dTeleportPlayerToPairedObject(const RC3D_Object *source)
+{
+    RC3D_Object *dest;
+    const RC3D_Fixed oldX = g_player.xFixed;
+    const RC3D_Fixed oldY = g_player.yFixed;
+    const float oldZ = g_player.z;
+    const float oldVz = g_player.vz;
+    const int oldSector = g_player.sector;
+    RC3D_Fixed destX;
+    RC3D_Fixed destY;
+    int destSector;
+
+    if (!source || !g_map) {
+        return 0;
+    }
+
+    dest = rc3dFindTeleporterDestination(source);
+    if (!dest) {
+        return 0;
+    }
+
+    destSector = findSectorForSpritePosition(dest->x, dest->y, -1);
+    if (!rc3dSectorIndexValid(destSector)) {
+        return 0;
+    }
+
+    destX = rc3dFloatToFixed(dest->x);
+    destY = rc3dFloatToFixed(dest->y);
+
+    rc3dSetPlayerWorldXYFixed(destX, destY);
+
+    g_player.angle = dest->angle;
+
+    g_player.sector = destSector;
+    g_player.z = g_map->sectors[destSector].floorHeight + RC3D_PLAYER_EYE_HEIGHT;
+    g_player.vz = 0.0f;
+
+    rc3dResolvePlayerPenetrationInSector(destSector);
+    rc3dClampPlayerIntoCurrentSector();
+
+    if (!rc3dPositionFitsInSectorFixed(g_player.xFixed, g_player.yFixed, destSector)) {
+        rc3dSetPlayerWorldXYFixed(oldX, oldY);
+        g_player.sector = oldSector;
+        g_player.z = oldZ;
+        g_player.vz = oldVz;
+        return 0;
+    }
+
+    rc3dMinimapRevealCurrentSector();
+    rc3dRefreshTeleporterTriggerStates();
+    return 1;
+}
+
 // API CALLER
 #define OBJTRIG_TYPE_SECTORS    1   // just a local non magic number
 #define OBJTRIG_TYPE_OBJECTS    2   // to other objects
@@ -6353,6 +6585,16 @@ void processObjects(int pTagId, int pType)  // engine internal systems
                 if (!inside) {
                     procType = OBJTRIG_TYPE_OBJECTS;
                     flagToSet = obj->outFlag;
+                }
+                break;
+
+            case RC3D_OBJTYPE_OBJECT_TELEPORTER:
+                if (inside) {
+                    if (rc3dTeleportPlayerToPairedObject(obj)) {
+                        return;
+                    }
+
+                    obj->trigger = 0u;
                 }
                 break;
             default:
@@ -6466,6 +6708,7 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
         processObjects(0, RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT);
         processObjects(0, RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER);
         processObjects(0, RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT);
+        processObjects(0, RC3D_OBJTYPE_OBJECT_TELEPORTER);
     }
 
     rc3dUpdateHeadbob(dt, isMoving);
@@ -6486,6 +6729,7 @@ static int rc3dEnsurePlayerSectorValid(void)
     if (rc3dSectorIndexValid(g_player.sector)) {
         if (pointInSectorFixed(g_player.xFixed, g_player.yFixed, g_player.sector)) {
             rc3dClampPlayerIntoCurrentSector();
+            rc3dMinimapRevealCurrentSector();
             return 1;
         }
     }
@@ -6494,6 +6738,7 @@ static int rc3dEnsurePlayerSectorValid(void)
 
     if (rc3dSectorIndexValid(g_player.sector)) {
         rc3dClampPlayerIntoCurrentSector();
+        rc3dMinimapRevealCurrentSector();
         return 1;
     }
 

@@ -41,19 +41,34 @@
 #define ED_ROUTE_PREVIEW_MAX_POINTS 4096
 #define ED_ROUTE_PREVIEW_MAX_GRID_CELLS 120000
 #define ED_ROUTE_PREVIEW_PORTAL_SAMPLES 9
+
 #define ED_OBJECT_LABEL_MAX 64
 #define ED_OBJECT_LABEL_MAP_DRAW_MAX 24
+
 #define ED_OBJECT_NOTE_SECTION_X (EDIT_VIEW_PORT_WIDTH + 20)
 #define ED_OBJECT_NOTE_SECTION_Y 602
 #define ED_OBJECT_NOTE_SECTION_W (ED_INSPECTOR_PANEL - 40)
 #define ED_OBJECT_NOTE_SECTION_H 78
+
 #define ED_OBJECT_LABELS_TOGGLE_W 168
 #define ED_OBJECT_LABELS_TOGGLE_X (ED_OBJECT_NOTE_SECTION_X + ED_OBJECT_NOTE_SECTION_W - ED_OBJECT_LABELS_TOGGLE_W - 8)
 #define ED_OBJECT_LABELS_TOGGLE_Y (ED_OBJECT_NOTE_SECTION_Y + 4)
+
 #define ED_OBJECT_NOTE_BOX_X (ED_OBJECT_NOTE_SECTION_X + 8)
 #define ED_OBJECT_NOTE_BOX_Y (ED_OBJECT_NOTE_SECTION_Y + 26)
 #define ED_OBJECT_NOTE_BOX_W (ED_OBJECT_NOTE_SECTION_W - 16)
 #define ED_OBJECT_NOTE_BOX_H 24
+
+#define ED_OBJECT_TYPE_SELECTOR_X       (EDIT_VIEW_PORT_WIDTH + 18)
+#define ED_OBJECT_TYPE_SELECTOR_Y       188
+#define ED_OBJECT_TYPE_SELECTOR_W       246
+#define ED_OBJECT_TYPE_SELECTOR_H       24
+#define ED_OBJECT_TYPE_POPUP_X          (EDIT_VIEW_PORT_WIDTH + 12)
+#define ED_OBJECT_TYPE_POPUP_W          (246 + 150)
+#define ED_OBJECT_TYPE_POPUP_ROW_H      22
+#define ED_OBJECT_TYPE_POPUP_HEADER_H   26
+#define ED_OBJECT_TYPE_POPUP_FOOTER_H   20
+
 #define ED_TEXTURE_BASE_PAL_START    64u
 #define ED_TEXTURE_DIM_PAL_START    128u
 #define ED_TEXTURE_BRIGHT_PAL_START 192u
@@ -233,6 +248,8 @@ enum
     GUI_BTN_OBJECT_TARGETTAGID_MINUS,
     GUI_BTN_OBJECT_RADIUS_PLUS,
     GUI_BTN_OBJECT_RADIUS_MINUS,
+    GUI_BTN_OBJECT_ANGLE_PLUS,
+    GUI_BTN_OBJECT_ANGLE_MINUS,
     GUI_BTN_OBJECT_ZAXIS_PLUS,
     GUI_BTN_OBJECT_ZAXIS_MINUS,
     GUI_BTN_OBJECT_TSCALEX_MINUS,
@@ -503,6 +520,7 @@ typedef struct {
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
     float scalex;
     float scaley;
+    float angle;      /* radians, used for teleporter exit facing and editor arrows */
     char label[ED_OBJECT_LABEL_MAX];
 } EdObject;
 
@@ -721,6 +739,12 @@ typedef struct {
     int objectLabelEditActive;
     int objectLabelEditObject;
     char objectLabelEditBuffer[ED_OBJECT_LABEL_MAX];
+    int objectLabelCaretPos;
+    int objectLabelViewStart;
+    float objectLabelBackspaceRepeatTimer;
+    int objectTypePopupVisible;
+    int objectTypePopupObject;
+    int objectTypePopupSelectedIndex;
 
     int bUseVectorFill;
     int bUseTextureFill;
@@ -1477,7 +1501,8 @@ static int findNextAvailableObjectTagId(void);
 static void beginObjectLabelEditing(int objectIndex);
 static void finishObjectLabelEditing(int commit);
 static int handleObjectLabelTextInput(const char *text);
-static int handleObjectLabelEditorKeys(const uint8_t *keys);
+static int handleObjectLabelEditorKeys(const uint8_t *keys, float dt);
+static void setObjectLabelCaretFromMouseX(int mouseX);
 static int mouseInObjectNoteBox(int mouseX, int mouseY);
 static void syncObjectLabelEditorState(void);
 static int collectBakedRouteNodeChain(int objectIndex,
@@ -1536,6 +1561,7 @@ static void drawFilledSectorIsoBruteForceScanline(int sectorIndex,
 static void screenToIsoWorldOnPlaneF(float sx, float sy, float wz, float *wx, float *wy);
 static void screenToIsoWorldOnPlane(int sx, int sy, float wz, float *wx, float *wy);
 static void worldToIsoScreen(float wx, float wy, float wz, int *sx, int *sy);
+static void drawIsoSpriteObject(int objectIndex);
 static void drawIsometricPreview(void);
 
 /////// GUI PARTS
@@ -1565,6 +1591,12 @@ static int handleUndoHistoryPopupInput(const uint8_t *keys,
                                        int mouseY,
                                        int leftPressed,
                                        int mouseWheelY);
+static void drawObjectTypePopup(void);
+static int handleObjectTypePopupInput(const uint8_t *keys,
+                                      int mouseX,
+                                      int mouseY,
+                                      int leftPressed,
+                                      int mouseWheelY);
 static void finishEditorInputFrame(const uint8_t *keys,
                                    int leftDown,
                                    int rightDown,
@@ -1702,6 +1734,8 @@ static int isAutoRepeatUIButton(int buttonId)
         case GUI_BTN_OBJECT_TARGETTAGID_MINUS:
         case GUI_BTN_OBJECT_RADIUS_PLUS:
         case GUI_BTN_OBJECT_RADIUS_MINUS:
+        case GUI_BTN_OBJECT_ANGLE_PLUS:
+        case GUI_BTN_OBJECT_ANGLE_MINUS:
         case GUI_BTN_OBJECT_ZAXIS_PLUS:
         case GUI_BTN_OBJECT_ZAXIS_MINUS:
         case GUI_BTN_OBJECT_GET_ZAXIS:
@@ -3403,6 +3437,7 @@ static int addObject(float x, float y, float z, int tagId, float radius, uint8_t
     o->outFlag = 0x00;
     o->scalex = 1.0f;
     o->scaley = 1.0f;
+    o->angle = 0.0f;
     o->label[0] = '\0';
 
     g_edMap.objectCount++;
@@ -3521,6 +3556,159 @@ static void buildObjectLabelTailText(const char *src,
     snprintf(out, outSize, "%s", start);
 }
 
+static int getObjectNoteBoxVisibleCharCount(void)
+{
+    int visibleChars = (ED_OBJECT_NOTE_BOX_W - 10) / ED_FONT_W;
+
+    if (visibleChars < 1) {
+        visibleChars = 1;
+    }
+
+    if (visibleChars > (ED_OBJECT_LABEL_MAX - 1)) {
+        visibleChars = ED_OBJECT_LABEL_MAX - 1;
+    }
+
+    return visibleChars;
+}
+
+static void clampObjectLabelEditorView(void)
+{
+    const int len = (int)strlen(g_ed.objectLabelEditBuffer);
+    const int visibleChars = getObjectNoteBoxVisibleCharCount();
+    const int maxViewStart = (len > visibleChars) ? (len - visibleChars) : 0;
+
+    if (g_ed.objectLabelCaretPos < 0) {
+        g_ed.objectLabelCaretPos = 0;
+    }
+    if (g_ed.objectLabelCaretPos > len) {
+        g_ed.objectLabelCaretPos = len;
+    }
+
+    if (g_ed.objectLabelViewStart < 0) {
+        g_ed.objectLabelViewStart = 0;
+    }
+    if (g_ed.objectLabelViewStart > maxViewStart) {
+        g_ed.objectLabelViewStart = maxViewStart;
+    }
+}
+
+static void ensureObjectLabelCaretVisible(void)
+{
+    const int visibleChars = getObjectNoteBoxVisibleCharCount();
+
+    clampObjectLabelEditorView();
+
+    if (g_ed.objectLabelCaretPos < g_ed.objectLabelViewStart) {
+        g_ed.objectLabelViewStart = g_ed.objectLabelCaretPos;
+    } else if (g_ed.objectLabelCaretPos > (g_ed.objectLabelViewStart + visibleChars)) {
+        g_ed.objectLabelViewStart = g_ed.objectLabelCaretPos - visibleChars;
+    }
+
+    clampObjectLabelEditorView();
+}
+
+static int setObjectLabelCaretPos(int caretPos)
+{
+    const int prevCaretPos = g_ed.objectLabelCaretPos;
+    const int prevViewStart = g_ed.objectLabelViewStart;
+
+    g_ed.objectLabelCaretPos = caretPos;
+    ensureObjectLabelCaretVisible();
+
+    if (g_ed.objectLabelCaretPos != prevCaretPos ||
+        g_ed.objectLabelViewStart != prevViewStart) {
+        rc3dGuiDirty();
+        return 1;
+    }
+
+    return 0;
+}
+
+static void buildObjectLabelWindowText(const char *src,
+                                       int startChar,
+                                       int maxChars,
+                                       char *out,
+                                       size_t outSize)
+{
+    size_t len;
+    size_t copyLen;
+
+    if (!out || outSize == 0u) {
+        return;
+    }
+
+    out[0] = '\0';
+    if (!src) {
+        return;
+    }
+
+    if (startChar < 0) {
+        startChar = 0;
+    }
+    if (maxChars < 1) {
+        maxChars = 1;
+    }
+
+    len = strlen(src);
+    if ((size_t)startChar >= len) {
+        return;
+    }
+
+    copyLen = len - (size_t)startChar;
+    if (copyLen > (size_t)maxChars) {
+        copyLen = (size_t)maxChars;
+    }
+    if (copyLen >= outSize) {
+        copyLen = outSize - 1u;
+    }
+
+    memcpy(out, src + startChar, copyLen);
+    out[copyLen] = '\0';
+}
+
+static void resetObjectLabelBackspaceRepeat(void)
+{
+    g_ed.objectLabelBackspaceRepeatTimer = 0.0f;
+}
+
+static int clearObjectLabelEditorText(void)
+{
+    if (g_ed.objectLabelEditBuffer[0] == '\0' &&
+        g_ed.objectLabelCaretPos == 0 &&
+        g_ed.objectLabelViewStart == 0) {
+        return 0;
+    }
+
+    g_ed.objectLabelEditBuffer[0] = '\0';
+    g_ed.objectLabelCaretPos = 0;
+    g_ed.objectLabelViewStart = 0;
+    resetObjectLabelBackspaceRepeat();
+    rc3dGuiDirty();
+    return 1;
+}
+
+static int deleteObjectLabelCharBeforeCaret(void)
+{
+    const size_t len = strlen(g_ed.objectLabelEditBuffer);
+
+    if (g_ed.objectLabelCaretPos <= 0 || len == 0u) {
+        return 0;
+    }
+
+    {
+        const size_t deletePos = (size_t)(g_ed.objectLabelCaretPos - 1);
+
+        memmove(g_ed.objectLabelEditBuffer + deletePos,
+                g_ed.objectLabelEditBuffer + deletePos + 1u,
+                len - deletePos);
+    }
+
+    g_ed.objectLabelCaretPos--;
+    ensureObjectLabelCaretVisible();
+    rc3dGuiDirty();
+    return 1;
+}
+
 static void beginObjectLabelEditing(int objectIndex)
 {
     if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
@@ -3532,6 +3720,13 @@ static void beginObjectLabelEditing(int objectIndex)
     sanitizeEditorObjectLabel(g_ed.objectLabelEditBuffer,
                               sizeof(g_ed.objectLabelEditBuffer),
                               g_edMap.objects[objectIndex].label);
+    g_ed.objectLabelCaretPos = (int)strlen(g_ed.objectLabelEditBuffer);
+    g_ed.objectLabelViewStart = g_ed.objectLabelCaretPos - getObjectNoteBoxVisibleCharCount();
+    if (g_ed.objectLabelViewStart < 0) {
+        g_ed.objectLabelViewStart = 0;
+    }
+    resetObjectLabelBackspaceRepeat();
+    ensureObjectLabelCaretVisible();
     SDL_StartTextInput();
     rc3dGuiDirty();
 }
@@ -3560,6 +3755,9 @@ static void finishObjectLabelEditing(int commit)
     g_ed.objectLabelEditActive = 0;
     g_ed.objectLabelEditObject = -1;
     g_ed.objectLabelEditBuffer[0] = '\0';
+    g_ed.objectLabelCaretPos = 0;
+    g_ed.objectLabelViewStart = 0;
+    resetObjectLabelBackspaceRepeat();
     SDL_StopTextInput();
     rc3dGuiDirty();
 }
@@ -3568,6 +3766,7 @@ static int handleObjectLabelTextInput(const char *text)
 {
     char sanitized[ED_OBJECT_LABEL_MAX];
     size_t curLen;
+    size_t caretPos;
     size_t addLen;
 
     if (!g_ed.objectLabelEditActive || !text || text[0] == '\0') {
@@ -3581,6 +3780,14 @@ static int handleObjectLabelTextInput(const char *text)
 
     curLen = strlen(g_ed.objectLabelEditBuffer);
     addLen = strlen(sanitized);
+    if (g_ed.objectLabelCaretPos < 0) {
+        g_ed.objectLabelCaretPos = 0;
+    }
+    if ((size_t)g_ed.objectLabelCaretPos > curLen) {
+        g_ed.objectLabelCaretPos = (int)curLen;
+    }
+    caretPos = (size_t)g_ed.objectLabelCaretPos;
+
     if (curLen >= sizeof(g_ed.objectLabelEditBuffer) - 1u) {
         return 0;
     }
@@ -3593,20 +3800,33 @@ static int handleObjectLabelTextInput(const char *text)
         return 0;
     }
 
-    memcpy(g_ed.objectLabelEditBuffer + curLen, sanitized, addLen);
-    g_ed.objectLabelEditBuffer[curLen + addLen] = '\0';
+    memmove(g_ed.objectLabelEditBuffer + caretPos + addLen,
+            g_ed.objectLabelEditBuffer + caretPos,
+            (curLen - caretPos) + 1u);
+    memcpy(g_ed.objectLabelEditBuffer + caretPos, sanitized, addLen);
+    g_ed.objectLabelCaretPos = (int)(caretPos + addLen);
+    ensureObjectLabelCaretVisible();
     rc3dGuiDirty();
     return 1;
 }
 
-static int handleObjectLabelEditorKeys(const uint8_t *keys)
+static int handleObjectLabelEditorKeys(const uint8_t *keys, float dt)
 {
+    const int ctrlDown = (keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) ? 1 : 0;
+    const int backspaceDown = keys[SDL_SCANCODE_BACKSPACE] ? 1 : 0;
+    const float backspaceRepeatRate = 0.05f;
+    size_t len;
+
     if (!g_ed.objectLabelEditActive) {
+        resetObjectLabelBackspaceRepeat();
         return 0;
     }
 
-    if ((keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) &&
-        keyPressedOnce(keys, SDL_SCANCODE_V)) {
+    if (!backspaceDown) {
+        resetObjectLabelBackspaceRepeat();
+    }
+
+    if (ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_V)) {
         char *clipText = SDL_GetClipboardText();
         int changed = 0;
 
@@ -3617,12 +3837,59 @@ static int handleObjectLabelEditorKeys(const uint8_t *keys)
         return changed;
     }
 
-    if (keyPressedOnce(keys, SDL_SCANCODE_BACKSPACE) ||
-        keyPressedOnce(keys, SDL_SCANCODE_DELETE)) {
-        size_t len = strlen(g_ed.objectLabelEditBuffer);
+    len = strlen(g_ed.objectLabelEditBuffer);
 
-        if (len > 0u) {
-            g_ed.objectLabelEditBuffer[len - 1u] = '\0';
+    if ((ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_LEFT)) ||
+        keyPressedOnce(keys, SDL_SCANCODE_HOME)) {
+        return setObjectLabelCaretPos(0);
+    }
+
+    if ((ctrlDown && keyPressedOnce(keys, SDL_SCANCODE_RIGHT)) ||
+        keyPressedOnce(keys, SDL_SCANCODE_END)) {
+        return setObjectLabelCaretPos((int)len);
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_LEFT)) {
+        return setObjectLabelCaretPos(g_ed.objectLabelCaretPos - 1);
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_RIGHT)) {
+        return setObjectLabelCaretPos(g_ed.objectLabelCaretPos + 1);
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_BACKSPACE)) {
+        if (ctrlDown) {
+            return clearObjectLabelEditorText();
+        }
+        g_ed.objectLabelBackspaceRepeatTimer = backspaceRepeatRate;
+        return deleteObjectLabelCharBeforeCaret();
+    }
+
+    if (backspaceDown) {
+        int deletedAny = 0;
+
+        g_ed.objectLabelBackspaceRepeatTimer -= dt;
+        while (g_ed.objectLabelBackspaceRepeatTimer <= 0.0f) {
+            g_ed.objectLabelBackspaceRepeatTimer += backspaceRepeatRate;
+            if (!deleteObjectLabelCharBeforeCaret()) {
+                break;
+            }
+            deletedAny = 1;
+        }
+
+        if (deletedAny) {
+            return 1;
+        }
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_DELETE)) {
+        if ((size_t)g_ed.objectLabelCaretPos < len) {
+            const size_t deletePos = (size_t)g_ed.objectLabelCaretPos;
+
+            memmove(g_ed.objectLabelEditBuffer + deletePos,
+                    g_ed.objectLabelEditBuffer + deletePos + 1u,
+                    len - deletePos);
+            ensureObjectLabelCaretVisible();
             rc3dGuiDirty();
             return 1;
         }
@@ -3641,6 +3908,25 @@ static int handleObjectLabelEditorKeys(const uint8_t *keys)
     }
 
     return 0;
+}
+
+static void setObjectLabelCaretFromMouseX(int mouseX)
+{
+    const int noteTextX = ED_OBJECT_NOTE_BOX_X + 4;
+    int column = (mouseX - noteTextX + (ED_FONT_W / 2)) / ED_FONT_W;
+
+    if (!g_ed.objectLabelEditActive) {
+        return;
+    }
+
+    if (column < 0) {
+        column = 0;
+    }
+    if (column > getObjectNoteBoxVisibleCharCount()) {
+        column = getObjectNoteBoxVisibleCharCount();
+    }
+
+    setObjectLabelCaretPos(g_ed.objectLabelViewStart + column);
 }
 
 static int objectLabelEditingHasValidSelection(void)
@@ -3714,6 +4000,74 @@ static void drawEditorObjectDiamond(int cx, int cy, int size, uint8_t colour)
     drawLine(cx - size, cy, cx, cy - size, colour);
 }
 
+static float normalizeEditorAngle(float angle)
+{
+    const float tau = (float)(M_PI * 2.0);
+
+    while (angle < 0.0f) {
+        angle += tau;
+    }
+    while (angle >= tau) {
+        angle -= tau;
+    }
+
+    return angle;
+}
+
+static float getObjectAngleStepRadians(const uint8_t *modKeys)
+{
+    if (!modKeys) {
+        return DEG2RAD(5.0f);
+    }
+
+    if (modKeys[SDL_SCANCODE_LCTRL] || modKeys[SDL_SCANCODE_RCTRL]) {
+        return DEG2RAD(45.0f);
+    }
+    if (modKeys[SDL_SCANCODE_LSHIFT] || modKeys[SDL_SCANCODE_RSHIFT]) {
+        return DEG2RAD(15.0f);
+    }
+    if (modKeys[SDL_SCANCODE_LALT] || modKeys[SDL_SCANCODE_RALT]) {
+        return DEG2RAD(1.0f);
+    }
+
+    return DEG2RAD(5.0f);
+}
+
+static void drawScreenDirectionArrow(int sx,
+                                     int sy,
+                                     float angle,
+                                     int length,
+                                     int headLength,
+                                     uint8_t colour)
+{
+    int fx, fy;
+    int lx, ly;
+    int rx, ry;
+    const float leftWing = angle + DEG2RAD(150.0f);
+    const float rightWing = angle - DEG2RAD(150.0f);
+
+    if (length < 4) {
+        length = 4;
+    }
+    if (headLength < 3) {
+        headLength = 3;
+    }
+    if (headLength >= length) {
+        headLength = length - 1;
+    }
+
+    fx = sx + (int)lroundf(cosf(angle) * (float)length);
+    fy = sy + (int)lroundf(sinf(angle) * (float)length);
+    lx = fx + (int)lroundf(cosf(leftWing) * (float)headLength);
+    ly = fy + (int)lroundf(sinf(leftWing) * (float)headLength);
+    rx = fx + (int)lroundf(cosf(rightWing) * (float)headLength);
+    ry = fy + (int)lroundf(sinf(rightWing) * (float)headLength);
+
+    drawLine(sx, sy, fx, fy, colour);
+    drawLine(fx, fy, lx, ly, colour);
+    drawLine(fx, fy, rx, ry, colour);
+}
+
 static void drawMapObjects(void)
 {
     for (int i = 0; i < g_edMap.objectCount; i++) {
@@ -3721,6 +4075,7 @@ static void drawMapObjects(void)
         int sx, sy;
         int size = 6;
         uint8_t objectCol = ED_START_COL;
+        uint8_t arrowCol;
 
         if (o->type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
             objectCol = ED_PORTAL_COL;
@@ -3742,6 +4097,25 @@ static void drawMapObjects(void)
         drawEditorObjectDiamond(sx, sy, size, objectCol);
 
         drawRect(sx - 1, sy - 1, 3, 3, objectCol);
+
+        arrowCol = objectCol;
+        if (isObjectInEditSelection(i)) {
+            arrowCol = ED_COLOUR_SELECTED_WALL;
+        } else if (i == g_ed.hoverObject) {
+            arrowCol = ED_COLOUR_HOVER_WALL;
+        }
+
+        {
+            int arrowLen = 10;
+
+            if (o->radius > 0.01f) {
+                arrowLen = (int)lroundf(o->radius * g_ed.zoom);
+                if (arrowLen < 10) arrowLen = 10;
+            }
+            if (arrowLen > 22) arrowLen = 22;
+
+            drawScreenDirectionArrow(sx, sy, o->angle, arrowLen, 5, arrowCol);
+        }
 
         if (o->radius > 0.01f) {
             const int rs = (int)lroundf(o->radius * g_ed.zoom);
@@ -3972,6 +4346,8 @@ static int bakeSelectedObjectRouteToNodes(void)
         const int nodeTag = firstNodeTag + nodeCount;
         const int nextTag = (i + 2 < pathCount) ? (nodeTag + 1) : g_edMap.objects[finalTargetIndex].tagId;
         float nodeZ = g_edMap.objects[sourceIndex].z;
+        const float nodeAngle = atan2f(pathY[i + 1] - pathY[i],
+                                       pathX[i + 1] - pathX[i]);
         const int sectorIndex = findSectorForPoint(pathX[i], pathY[i]);
         const int newIndex = addObject(pathX[i], pathY[i], nodeZ,
                                        nodeTag,
@@ -3995,6 +4371,7 @@ static int bakeSelectedObjectRouteToNodes(void)
         g_edMap.objects[newIndex].outFlag = 0u;
         g_edMap.objects[newIndex].scalex = 1.0f;
         g_edMap.objects[newIndex].scaley = 1.0f;
+        g_edMap.objects[newIndex].angle = normalizeEditorAngle(nodeAngle);
         nodeCount++;
     }
 
@@ -4934,13 +5311,107 @@ static void drawIsoStartMarker(void)
     drawLine(sx, sy, fx, fy, ED_START_COL);
 }
 
+static void drawIsoSpriteObject(int objectIndex)
+{
+    const EdObject *o;
+    uint8_t *tex;
+    float floorZ;
+    uint8_t lightLevel = 0;
+    float scaleX;
+    float scaleY;
+    int anchorX, anchorY;
+    int floorX, floorY;
+    int spriteW, spriteH;
+    int drawX0, drawY0;
+    const uint8_t markerCol = ED_START_COL;
+
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) {
+        return;
+    }
+
+    o = &g_edMap.objects[objectIndex];
+    if (o->type != RC3D_OBJTYPE_SPRITE) {
+        return;
+    }
+
+    tex = getTexturePtr(o->textureId);
+    scaleX = fabsf(o->scalex);
+    scaleY = fabsf(o->scaley);
+    if (scaleX < 0.05f) scaleX = 0.05f;
+    if (scaleY < 0.05f) scaleY = 0.05f;
+
+    floorZ = o->z;
+    {
+        const int sectorIndex = findSectorForPoint(o->x, o->y);
+        if (sectorIndex >= 0 && sectorIndex < g_edMap.sectorCount) {
+            floorZ = g_edMap.sectors[sectorIndex].floorHeight;
+            lightLevel = clampLightLevel((int)g_edMap.sectors[sectorIndex].glowlevel);
+        }
+    }
+
+    worldToIsoScreen(o->x, o->y, o->z, &anchorX, &anchorY);
+    worldToIsoScreen(o->x, o->y, floorZ, &floorX, &floorY);
+
+    spriteW = (int)lroundf(scaleX * getIsoScaleZ()) * 2.2f;
+    spriteH = (int)lroundf(scaleY * getIsoScaleZ()) * 2.2f;
+    if (spriteW < 6) spriteW = 6;
+    if (spriteH < 6) spriteH = 6;
+
+    drawX0 = anchorX - (spriteW / 2);
+    drawY0 = anchorY - spriteH;
+
+    if (fabsf(o->z - floorZ) > 0.01f) {
+        drawLine(floorX, floorY, anchorX, anchorY, markerCol);
+    }
+
+    if (tex) {
+        const int srcW = TEXTURE_WIDTH;
+        const int srcH = TEXTURE_HEIGHT;
+        const int drawX1 = drawX0 + spriteW;
+        const int drawY1 = drawY0 + spriteH;
+        const int clipX0 = clampi_local(drawX0, 0, EDIT_VIEW_PORT_WIDTH);
+        const int clipY0 = clampi_local(drawY0, 0, EDIT_VIEW_PORT_HEIGHT);
+        const int clipX1 = clampi_local(drawX1, 0, EDIT_VIEW_PORT_WIDTH);
+        const int clipY1 = clampi_local(drawY1, 0, EDIT_VIEW_PORT_HEIGHT);
+
+        for (int py = clipY0; py < clipY1; py++) {
+            const int localY = py - drawY0;
+            const int srcY = (localY * srcH) / spriteH;
+
+            for (int px = clipX0; px < clipX1; px++) {
+                const int localX = px - drawX0;
+                const int srcX = (localX * srcW) / spriteW;
+                const uint8_t texel = tex[(srcY * srcW) + srcX];
+                const uint8_t texelcol = getIsoLitTextureIndex(texel,
+                                                                 lightLevel,
+                                                                 px,
+                                                                 py);
+                if (texelcol !=0) fb[(py * SCREEN_W) + px] = texelcol;
+            }
+        }
+    } else {
+        drawEditorObjectDiamond(anchorX, anchorY - (spriteH / 2), spriteW / 3, markerCol);
+    }
+
+    if (isObjectInEditSelection(objectIndex)) {
+        drawRectL(drawX0 - 1, drawY0 - 1, spriteW + 2, spriteH + 2, ED_COLOUR_SELECTED_WALL);
+        drawEditorObjectDiamond(anchorX, anchorY, 4, ED_COLOUR_SELECTED_WALL);
+    } else {
+        drawEditorObjectDiamond(anchorX, anchorY, 3, markerCol);
+    }
+
+    drawRect(anchorX - 1, anchorY - 1, 3, 3, markerCol);
+}
+
 static void drawIsometricPreview(void)
 {
     IsoSortEntry sectorOrder[ED_MAX_SECTORS];
     IsoSortEntry wallOrder[ED_MAX_WALLS];
+    IsoSortEntry objectOrder[ED_MAX_OBJECTS];
     int wallOwners[ED_MAX_WALLS];
     int sectorOrderCount = 0;
     int wallOrderCount = 0;
+    int objectOrderCount = 0;
 
     //clearScreen(16);
 
@@ -4999,8 +5470,40 @@ static void drawIsometricPreview(void)
 
     qsort(wallOrder, wallOrderCount, sizeof(wallOrder[0]), compareIsoSortEntry);
 
-    for (int i = 0; i < wallOrderCount; i++) {
-        drawIsoWallSections(wallOrder[i].index, wallOwners[wallOrder[i].index]);
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+
+        if (o->type != RC3D_OBJTYPE_SPRITE) {
+            continue;
+        }
+
+        objectOrder[objectOrderCount].index = i;
+        objectOrder[objectOrderCount].depth =
+            (o->x + o->y) + (o->z * 0.25f);
+        objectOrderCount++;
+    }
+
+    qsort(objectOrder, objectOrderCount, sizeof(objectOrder[0]), compareIsoSortEntry);
+
+    {
+        int wallPos = 0;
+        int objectPos = 0;
+
+        while (wallPos < wallOrderCount || objectPos < objectOrderCount) {
+            const int drawWallNext =
+                (objectPos >= objectOrderCount) ||
+                ((wallPos < wallOrderCount) &&
+                 (wallOrder[wallPos].depth <= objectOrder[objectPos].depth));
+
+            if (drawWallNext) {
+                drawIsoWallSections(wallOrder[wallPos].index,
+                                    wallOwners[wallOrder[wallPos].index]);
+                wallPos++;
+            } else {
+                drawIsoSpriteObject(objectOrder[objectPos].index);
+                objectPos++;
+            }
+        }
     }
 
     drawIsoStartMarker();
@@ -8523,6 +9026,9 @@ static void beginNewMap(void)
     g_ed.objectLabelEditActive = 0;
     g_ed.objectLabelEditObject = -1;
     g_ed.objectLabelEditBuffer[0] = '\0';
+    g_ed.objectLabelCaretPos = 0;
+    g_ed.objectLabelViewStart = 0;
+    g_ed.objectLabelBackspaceRepeatTimer = 0.0f;
     SDL_StopTextInput();
 
     g_ed.holdRepeatButtonId = 0;
@@ -8750,7 +9256,7 @@ static int saveTextMap(const char *path)
     FILE *f = fopen(path, "w");
     if (!f) return 0;
 
-    fprintf(f, "MAPEDIT6\n");
+    fprintf(f, "MAPEDIT7\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
 
@@ -8808,7 +9314,7 @@ static int saveTextMap(const char *path)
         const EdObject *o = &g_edMap.objects[i];
 
         // commented types! damn this would get messy real quick
-        fprintf(f, "%.6f %.6f %.6f %d %d %u %u %.6f %u %u %u %.6f %.6f\n",
+        fprintf(f, "%.6f %.6f %.6f %d %d %u %u %.6f %u %u %u %.6f %.6f %.6f\n",
                 o->x,       // %.6f
                 o->y,       // %.6f
                 o->z,       // %.6f
@@ -8821,7 +9327,8 @@ static int saveTextMap(const char *path)
                 (unsigned)o->inFlag,    // %u
                 (unsigned)o->outFlag,   // %u
                 o->scalex,  // %.6f
-                o->scaley   // %.6f
+                o->scaley,  // %.6f
+                o->angle    // %.6f
             );
     }
 
@@ -8887,6 +9394,8 @@ static int loadTextMap(const char *path)
         mapVersion = 5;
     } else if (strcmp(tag, "MAPEDIT6") == 0) {
         mapVersion = 6;
+    } else if (strcmp(tag, "MAPEDIT7") == 0) {
+        mapVersion = 7;
     } else {
         fclose(f);
         return 0;
@@ -9051,23 +9560,47 @@ static int loadTextMap(const char *path)
             unsigned inFlag;
             unsigned outFlag;
 
-            if (fscanf(f, "%f %f %f %d %d %u %u %f %u %u %u %f %f",
-                    &newMap.objects[i].x,
-                    &newMap.objects[i].y,
-                    &newMap.objects[i].z,
-                    &newMap.objects[i].tagId,
-                    &newMap.objects[i].targetTagId,
-                    &flags,
-                    &type,
-                    &newMap.objects[i].radius,
-                    &texId,
-                    &inFlag,
-                    &outFlag,
-                    &newMap.objects[i].scalex,
-                    &newMap.objects[i].scaley
-                ) != 13) {
-                fclose(f);
-                return 0;
+            newMap.objects[i].angle = 0.0f;
+
+            if (mapVersion >= 7) {
+                if (fscanf(f, "%f %f %f %d %d %u %u %f %u %u %u %f %f %f",
+                        &newMap.objects[i].x,
+                        &newMap.objects[i].y,
+                        &newMap.objects[i].z,
+                        &newMap.objects[i].tagId,
+                        &newMap.objects[i].targetTagId,
+                        &flags,
+                        &type,
+                        &newMap.objects[i].radius,
+                        &texId,
+                        &inFlag,
+                        &outFlag,
+                        &newMap.objects[i].scalex,
+                        &newMap.objects[i].scaley,
+                        &newMap.objects[i].angle
+                    ) != 14) {
+                    fclose(f);
+                    return 0;
+                }
+            } else {
+                if (fscanf(f, "%f %f %f %d %d %u %u %f %u %u %u %f %f",
+                        &newMap.objects[i].x,
+                        &newMap.objects[i].y,
+                        &newMap.objects[i].z,
+                        &newMap.objects[i].tagId,
+                        &newMap.objects[i].targetTagId,
+                        &flags,
+                        &type,
+                        &newMap.objects[i].radius,
+                        &texId,
+                        &inFlag,
+                        &outFlag,
+                        &newMap.objects[i].scalex,
+                        &newMap.objects[i].scaley
+                    ) != 13) {
+                    fclose(f);
+                    return 0;
+                }
             }
 
             newMap.objects[i].flags = (uint32_t)flags;
@@ -9075,6 +9608,7 @@ static int loadTextMap(const char *path)
             newMap.objects[i].textureId = (uint8_t)texId;
             newMap.objects[i].inFlag = (uint8_t)inFlag;
             newMap.objects[i].outFlag = (uint8_t)outFlag;
+            newMap.objects[i].angle = normalizeEditorAngle(newMap.objects[i].angle);
 
             if (newMap.objects[i].radius < 0.01f) {
                 newMap.objects[i].radius = 0.25f;
@@ -9146,6 +9680,9 @@ static int loadTextMap(const char *path)
     g_ed.objectLabelEditActive = 0;
     g_ed.objectLabelEditObject = -1;
     g_ed.objectLabelEditBuffer[0] = '\0';
+    g_ed.objectLabelCaretPos = 0;
+    g_ed.objectLabelViewStart = 0;
+    g_ed.objectLabelBackspaceRepeatTimer = 0.0f;
     clearPendingLeftMouseAction();
 
     g_ed.splitPreviewValid = 0;
@@ -9323,6 +9860,7 @@ int exportBinaryMap(const char *path)
         }
     }
 
+    /* objects */
     for (int i = 0; i < g_edMap.objectCount; i++) {
         const EdObject *o = &g_edMap.objects[i];
         float x = o->x;
@@ -9338,6 +9876,7 @@ int exportBinaryMap(const char *path)
         uint8_t outFlag = o->outFlag;
         float sclx = o->scalex;
         float scly = o->scaley;
+        const float angle = g_edMap.objects[i].angle;
 
         if (fwrite(&x, sizeof(x), 1, f)           != 1 ||
             fwrite(&y, sizeof(y), 1, f)           != 1 ||
@@ -9351,12 +9890,14 @@ int exportBinaryMap(const char *path)
             fwrite(&inFlag, sizeof(inFlag), 1, f) != 1 ||
             fwrite(&outFlag, sizeof(outFlag), 1, f) != 1 ||
             fwrite(&sclx, sizeof(sclx), 1, f) != 1 ||
-            fwrite(&scly, sizeof(scly), 1, f) != 1
+            fwrite(&scly, sizeof(scly), 1, f) != 1 ||
+            fwrite(&angle, sizeof(angle), 1, f) != 1
         ) {
             fclose(f);
             return 0;
         }
     }
+
 
 
     fclose(f);
@@ -9438,7 +9979,7 @@ static int exportCStringMap(const char *path)
         const EdObject *o = &g_edMap.objects[i];
 
         fprintf(f,
-            "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u, %u, %u, %.6ff, %.6ff},\n",
+            "    { %.6ff, %.6ff, %.6ff, %d, %d, %u, %u, %.6ff, %u, %u, %u, %.6ff, %.6ff, %.6ff },\n",
             o->x,
             o->y,
             o->z,
@@ -9451,7 +9992,8 @@ static int exportCStringMap(const char *path)
             (unsigned)o->inFlag,
             (unsigned)o->outFlag,
             o->scalex,
-            o->scaley
+            o->scaley,
+            o->angle
         );
     }
     fprintf(f, "};\n\n");
@@ -11280,8 +11822,10 @@ void drawHoverPanel(void)
         const EdObject *o = &g_edMap.objects[object_id];
 
         snprintf(buf, sizeof(buf),
-                 "Object %d  X %.2f  Y %.2f  Z %.2f  Tag %d  Radius %.2f  Tex %u",
-                 object_id, o->x, o->y, o->z, o->tagId, o->radius, (unsigned)o->textureId);
+                 "Object %d  X %.2f  Y %.2f  Z %.2f  Tag %d  Radius %.2f  Angle %.1f deg  Tex %u",
+                 object_id, o->x, o->y, o->z, o->tagId, o->radius,
+                 RAD2DEG(normalizeEditorAngle(o->angle)),
+                 (unsigned)o->textureId);
         drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
         return;
     }
@@ -11471,6 +12015,7 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "Tag: Just an identifier for the object", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Type: Is used to identify what this object is", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Radius: Collision test area for the object", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "Angle: Facing direction used by arrows and teleporter-style objects", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "InFlag: These are flags that get copied to the Target Id", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "OutFlag: These are flags that get copied to the Target Id", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
@@ -11486,6 +12031,7 @@ static void drawExpandedEditorPanel(void)
             y += ED_ROW_STEP; drawText(x, y, "6 - object trigger type. eg. enable / disable another object", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "7 - object trigger on entry (player walks into object)", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "8 - object trigger on exit  (player walks out of object)", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "9 - object teleporter (TargetTag -> destination object, Angle -> exit facing)", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "------------------------------------------------------------------------------------------------", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Flags to use: (but not set in stone)", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "RC3D_SECTOR_STATE_NONE          = 0x00", ED_TEXT_COL);
@@ -11785,6 +12331,8 @@ static const char *getObjectTypeName(uint32_t type)
             return "object trigger (entry)";
         case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:
             return "object trigger (exit)";
+        case RC3D_OBJTYPE_OBJECT_TELEPORTER:
+            return "object teleporter";
         default:
             return "custom / engine-defined";
     }
@@ -11802,6 +12350,12 @@ static int objectTypeUsesTriggerObjectTarget(uint32_t type)
     return (type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) ||
            (type == RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER) ||
            (type == RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT);
+}
+
+static int objectTypeUsesObjectTarget(uint32_t type)
+{
+    return objectTypeUsesTriggerObjectTarget(type) ||
+           (type == RC3D_OBJTYPE_OBJECT_TELEPORTER);
 }
 
 static int objectTypeUsesRoutePreviewTarget(uint32_t type)
@@ -11828,6 +12382,362 @@ static int objectTypeUsesOutsidePayload(uint32_t type)
            (type == RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT) ||
            (type == RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT) ||
            (type == RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT);
+}
+
+static int objectTypeHasBuiltinSelectorEntry(uint32_t type)
+{
+    return type <= (uint32_t)RC3D_OBJTYPE_OBJECT_TELEPORTER;
+}
+
+static int getObjectTypePopupItemCountForCurrentType(uint32_t currentType)
+{
+    int itemCount = (int)RC3D_OBJTYPE_OBJECT_TELEPORTER + 1;
+
+    if (!objectTypeHasBuiltinSelectorEntry(currentType)) {
+        itemCount++;
+    }
+
+    return itemCount;
+}
+
+static uint32_t getObjectTypePopupTypeForItemIndex(uint32_t currentType, int itemIndex)
+{
+    const int maxBuiltinType = (int)RC3D_OBJTYPE_OBJECT_TELEPORTER;
+
+    if (!objectTypeHasBuiltinSelectorEntry(currentType)) {
+        if (itemIndex <= 0) {
+            return currentType;
+        }
+        itemIndex--;
+    }
+
+    if (itemIndex < 0) {
+        itemIndex = 0;
+    }
+    if (itemIndex > maxBuiltinType) {
+        itemIndex = maxBuiltinType;
+    }
+
+    return (uint32_t)itemIndex;
+}
+
+static int getObjectTypePopupIndexForCurrentType(uint32_t currentType)
+{
+    if (!objectTypeHasBuiltinSelectorEntry(currentType)) {
+        return 0;
+    }
+
+    return (int)currentType;
+}
+
+static void buildObjectTypeSelectorText(char *dst, size_t dstSize, uint32_t type)
+{
+    if (!dst || dstSize == 0u) {
+        return;
+    }
+
+    snprintf(dst, dstSize, "%u: %s", (unsigned)type, getObjectTypeName(type));
+}
+
+static void buildObjectTypePopupItemLabel(char *dst,
+                                          size_t dstSize,
+                                          uint32_t currentType,
+                                          int itemIndex)
+{
+    const uint32_t type = getObjectTypePopupTypeForItemIndex(currentType, itemIndex);
+
+    if (!dst || dstSize == 0u) {
+        return;
+    }
+
+    if (!objectTypeHasBuiltinSelectorEntry(currentType) && itemIndex == 0) {
+        snprintf(dst, dstSize, "Current custom %u: %s",
+                 (unsigned)type,
+                 getObjectTypeName(type));
+        return;
+    }
+
+    snprintf(dst, dstSize, "%u: %s",
+             (unsigned)type,
+             getObjectTypeName(type));
+}
+
+static int objectTypePopupHasValidSelection(void)
+{
+    return (g_ed.selectionType == ED_SEL_OBJECT) &&
+           (g_ed.selectedObject >= 0) &&
+           (g_ed.selectedObject < g_edMap.objectCount);
+}
+
+static void getObjectTypeSelectorRect(int *x, int *y, int *w, int *h)
+{
+    if (x) *x = ED_OBJECT_TYPE_SELECTOR_X;
+    if (y) *y = ED_OBJECT_TYPE_SELECTOR_Y;
+    if (w) *w = ED_OBJECT_TYPE_SELECTOR_W;
+    if (h) *h = ED_OBJECT_TYPE_SELECTOR_H;
+}
+
+static int mouseInObjectTypeSelector(int mouseX, int mouseY)
+{
+    int x, y, w, h;
+
+    if (!objectTypePopupHasValidSelection()) {
+        return 0;
+    }
+
+    getObjectTypeSelectorRect(&x, &y, &w, &h);
+    return pointInRectLocal(mouseX, mouseY, x, y, w, h);
+}
+
+static int getObjectTypePopupHeightForType(uint32_t currentType)
+{
+    return ED_OBJECT_TYPE_POPUP_HEADER_H +
+           ED_OBJECT_TYPE_POPUP_FOOTER_H +
+           (getObjectTypePopupItemCountForCurrentType(currentType) * ED_OBJECT_TYPE_POPUP_ROW_H);
+}
+
+static void getObjectTypePopupRect(uint32_t currentType, int *x, int *y, int *w, int *h)
+{
+    int popupY = ED_OBJECT_TYPE_SELECTOR_Y + ED_OBJECT_TYPE_SELECTOR_H + 4;
+    const int popupH = getObjectTypePopupHeightForType(currentType) + 8;
+
+    if ((popupY + popupH) > (EDIT_VIEW_PORT_HEIGHT - 8)) {
+        popupY = (EDIT_VIEW_PORT_HEIGHT - 8) - popupH;
+    }
+    if (popupY < 40) {
+        popupY = 40;
+    }
+
+    if (x) *x = ED_OBJECT_TYPE_POPUP_X;
+    if (y) *y = popupY;
+    if (w) *w = ED_OBJECT_TYPE_POPUP_W;
+    if (h) *h = popupH;
+}
+
+static void clampObjectTypePopupSelection(void)
+{
+    int itemCount;
+
+    if (!g_ed.objectTypePopupVisible || !objectTypePopupHasValidSelection()) {
+        return;
+    }
+
+    itemCount = getObjectTypePopupItemCountForCurrentType(g_edMap.objects[g_ed.selectedObject].type);
+    if (itemCount <= 0) {
+        g_ed.objectTypePopupSelectedIndex = 0;
+        return;
+    }
+
+    if (g_ed.objectTypePopupSelectedIndex < 0) {
+        g_ed.objectTypePopupSelectedIndex = 0;
+    }
+    if (g_ed.objectTypePopupSelectedIndex >= itemCount) {
+        g_ed.objectTypePopupSelectedIndex = itemCount - 1;
+    }
+}
+
+static void closeObjectTypePopup(void)
+{
+    g_ed.objectTypePopupVisible = 0;
+    g_ed.objectTypePopupObject = -1;
+    g_ed.objectTypePopupSelectedIndex = 0;
+    rc3dGuiDirty();
+}
+
+static void openObjectTypePopup(void)
+{
+    if (!objectTypePopupHasValidSelection()) {
+        return;
+    }
+
+    g_ed.objectTypePopupVisible = 1;
+    g_ed.objectTypePopupObject = g_ed.selectedObject;
+    g_ed.objectTypePopupSelectedIndex =
+        getObjectTypePopupIndexForCurrentType(g_edMap.objects[g_ed.selectedObject].type);
+    clampObjectTypePopupSelection();
+    rc3dGuiDirty();
+}
+
+static void syncObjectTypePopupState(void)
+{
+    if (!g_ed.objectTypePopupVisible) {
+        return;
+    }
+
+    if (g_ed.objectLabelEditActive ||
+        !objectTypePopupHasValidSelection() ||
+        g_ed.selectedObject != g_ed.objectTypePopupObject) {
+        closeObjectTypePopup();
+        return;
+    }
+
+    clampObjectTypePopupSelection();
+}
+
+static int applyObjectTypePopupSelection(int itemIndex)
+{
+    EdObject *o;
+    uint32_t newType;
+    char status[160];
+
+    if (!objectTypePopupHasValidSelection()) {
+        closeObjectTypePopup();
+        return 0;
+    }
+
+    o = &g_edMap.objects[g_ed.selectedObject];
+    newType = getObjectTypePopupTypeForItemIndex(o->type, itemIndex);
+
+    if (o->type != newType) {
+        pushUndoState();
+        o->type = newType;
+        snprintf(status, sizeof(status),
+                 "Object type set to %u (%s)",
+                 (unsigned)newType,
+                 getObjectTypeName(newType));
+        setEditorStatus(status);
+    }
+
+    closeObjectTypePopup();
+    return 1;
+}
+
+static int handleObjectTypePopupInput(const uint8_t *keys,
+                                      int mouseX,
+                                      int mouseY,
+                                      int leftPressed,
+                                      int mouseWheelY)
+{
+    int px, py, pw, ph;
+    int sx, sy, sw, sh;
+    int itemCount;
+    int changed = 0;
+
+    if (!g_ed.objectTypePopupVisible) {
+        return 0;
+    }
+
+    if (!objectTypePopupHasValidSelection() ||
+        g_ed.selectedObject != g_ed.objectTypePopupObject) {
+        closeObjectTypePopup();
+        return 1;
+    }
+
+    itemCount = getObjectTypePopupItemCountForCurrentType(g_edMap.objects[g_ed.selectedObject].type);
+    getObjectTypePopupRect(g_edMap.objects[g_ed.selectedObject].type, &px, &py, &pw, &ph);
+    getObjectTypeSelectorRect(&sx, &sy, &sw, &sh);
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_ESCAPE)) {
+        closeObjectTypePopup();
+        return 1;
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_UP)) {
+        g_ed.objectTypePopupSelectedIndex--;
+        changed = 1;
+    }
+    if (keyPressedOnce(keys, SDL_SCANCODE_DOWN)) {
+        g_ed.objectTypePopupSelectedIndex++;
+        changed = 1;
+    }
+    if (keyPressedOnce(keys, SDL_SCANCODE_HOME)) {
+        g_ed.objectTypePopupSelectedIndex = 0;
+        changed = 1;
+    }
+    if (keyPressedOnce(keys, SDL_SCANCODE_END)) {
+        g_ed.objectTypePopupSelectedIndex = itemCount - 1;
+        changed = 1;
+    }
+
+    if (mouseWheelY != 0) {
+        g_ed.objectTypePopupSelectedIndex -= mouseWheelY;
+        changed = 1;
+    }
+
+    if (changed) {
+        clampObjectTypePopupSelection();
+        rc3dGuiDirty();
+    }
+
+    if (keyPressedOnce(keys, SDL_SCANCODE_RETURN) ||
+        keyPressedOnce(keys, SDL_SCANCODE_KP_ENTER)) {
+        applyObjectTypePopupSelection(g_ed.objectTypePopupSelectedIndex);
+        return 1;
+    }
+
+    if (leftPressed) {
+        const int rowsY = py + ED_OBJECT_TYPE_POPUP_HEADER_H;
+        const int rowsH = itemCount * ED_OBJECT_TYPE_POPUP_ROW_H;
+
+        if (pointInRectLocal(mouseX, mouseY, sx, sy, sw, sh)) {
+            closeObjectTypePopup();
+            return 1;
+        }
+
+        if (!pointInRectLocal(mouseX, mouseY, px, py, pw, ph)) {
+            closeObjectTypePopup();
+            return 1;
+        }
+
+        if (pointInRectLocal(mouseX, mouseY, px + 8, rowsY, pw - 16, rowsH)) {
+            const int row = (mouseY - rowsY) / ED_OBJECT_TYPE_POPUP_ROW_H;
+
+            if (row >= 0 && row < itemCount) {
+                g_ed.objectTypePopupSelectedIndex = row;
+                clampObjectTypePopupSelection();
+                applyObjectTypePopupSelection(row);
+                return 1;
+            }
+        }
+    }
+
+    return 1;
+}
+
+static void drawObjectTypePopup(void)
+{
+    char buf[256];
+    int px, py, pw, ph;
+    int itemCount;
+    uint32_t currentType;
+
+    if (!g_ed.objectTypePopupVisible || !objectTypePopupHasValidSelection()) {
+        return;
+    }
+
+    currentType = g_edMap.objects[g_ed.selectedObject].type;
+    itemCount = getObjectTypePopupItemCountForCurrentType(currentType);
+    getObjectTypePopupRect(currentType, &px, &py, &pw, &ph);
+
+    px += 4;
+
+    drawRect(px, py, pw, ph, ED_UI_BG);
+    drawRectL(px, py, pw, ph, ED_UI_BORDER);
+    drawText(px + 8, py + 6, "Object Type", ED_INSPECTOR_TEXT_COL);
+    drawText(px + 160, py + 6, "[Enter] apply [Esc] close", ED_TEXT_COL);
+
+    for (int row = 0; row < itemCount; row++) {
+        const int itemY = py + ED_OBJECT_TYPE_POPUP_HEADER_H + (row * ED_OBJECT_TYPE_POPUP_ROW_H);
+        const int selected = (row == g_ed.objectTypePopupSelectedIndex);
+        const uint8_t bg = selected ? ED_COLOUR_BTN_BG_ACTIVE : ED_COLOUR_BTN_BG;
+        const uint8_t border = selected ? ED_COLOUR_BTN_FRAME : ED_COLOUR_BTN_FRAME_DISABLED;
+        const uint8_t textCol = selected ? ED_COLOUR_BTN_TXT_DISABLED : ED_COLOUR_BTN_TEXT;
+
+        buildObjectTypePopupItemLabel(buf, sizeof(buf), currentType, row);
+        drawRect(px + 8, itemY, pw - 16, ED_OBJECT_TYPE_POPUP_ROW_H - 2, bg);
+        drawRectL(px + 8, itemY, pw - 16, ED_OBJECT_TYPE_POPUP_ROW_H - 2, border);
+        drawText(px + 16, itemY + 3, buf, textCol);
+    }
+
+    if (!objectTypeHasBuiltinSelectorEntry(currentType)) {
+        drawText(px + 8, py + ph - 24,
+                 "Top row keeps the current custom type.",
+                 ED_TEXT_COL);
+    } else {
+        drawText(px + 8, py + ph - 24,
+                 "Click a row to swap types.",
+                 ED_TEXT_COL);
+    }
 }
 
 static int objectUsesSectorTarget(const EdObject *o)
@@ -13487,6 +14397,68 @@ static void drawEditorLinkLine(int x0, int y0, int x1, int y1, uint8_t colour, i
     drawLine(x0, y0, x1, y1, colour);
 }
 
+static void drawEditorLinkArrows(int x0,
+                                 int y0,
+                                 int x1,
+                                 int y1,
+                                 uint8_t colour,
+                                 int maxArrows)
+{
+    const float dx = (float)(x1 - x0);
+    const float dy = (float)(y1 - y0);
+    const float len = sqrtf((dx * dx) + (dy * dy));
+    float ux, uy;
+    float px, py;
+    float arrowLen;
+    float wingHalfWidth;
+    float arrowOffset;
+    int arrowCount;
+
+    if (maxArrows < 1 || len < 12.0f) {
+        return;
+    }
+
+    ux = dx / len;
+    uy = dy / len;
+    px = -uy;
+    py = ux;
+
+    arrowLen = len * 0.12f;
+    if (arrowLen < 8.0f) arrowLen = 8.0f;
+    if (arrowLen > 12.0f) arrowLen = 12.0f;
+    wingHalfWidth = arrowLen * 0.45f;
+    arrowOffset = arrowLen * 0.75f;
+    if (arrowOffset < 5.0f) arrowOffset = 5.0f;
+    if (arrowOffset > 8.0f) arrowOffset = 8.0f;
+
+    arrowCount = (int)(len / 96.0f);
+    if (arrowCount < 1) {
+        arrowCount = 1;
+    }
+    if (arrowCount > maxArrows) {
+        arrowCount = maxArrows;
+    }
+
+    for (int i = 0; i < arrowCount; i++) {
+        const float t = (float)(i + 1) / (float)(arrowCount + 1);
+        const float midX = (float)x0 + (dx * t);
+        const float midY = (float)y0 + (dy * t);
+        const float tipX = midX + (px * arrowOffset);
+        const float tipY = midY + (py * arrowOffset);
+        const float baseX = tipX - (ux * arrowLen);
+        const float baseY = tipY - (uy * arrowLen);
+        const int sx = (int)lroundf(tipX);
+        const int sy = (int)lroundf(tipY);
+        const int lx = (int)lroundf(baseX + (px * wingHalfWidth));
+        const int ly = (int)lroundf(baseY + (py * wingHalfWidth));
+        const int rx = (int)lroundf(baseX - (px * wingHalfWidth));
+        const int ry = (int)lroundf(baseY - (py * wingHalfWidth));
+
+        drawLine(sx, sy, lx, ly, colour);
+        drawLine(sx, sy, rx, ry, colour);
+    }
+}
+
 static uint8_t getObjectObjectLinkColour(const EdObject *src, const EdObject *dst)
 {
     (void)src;
@@ -13512,7 +14484,7 @@ static void drawObjectObjectLinks(void)
         int x0, y0, x1, y1;
         int thickness = 1;
 
-        if (!objectTypeUsesTriggerObjectTarget(src->type)) {
+        if (!objectTypeUsesObjectTarget(src->type)) {
             continue;
         }
 
@@ -13535,6 +14507,9 @@ static void drawObjectObjectLinks(void)
         worldToScreen(dst->x, dst->y, &x1, &y1);
 
         drawEditorLinkLine(x0, y0, x1, y1, col, thickness);
+        if (src->type == RC3D_OBJTYPE_OBJECT_TELEPORTER) {
+            drawEditorLinkArrows(x0, y0, x1, y1, col, 3);
+        }
         drawRect(x1 - 1, y1 - 1, 3, 3, col);
     }
 }
@@ -13831,6 +14806,8 @@ static char g_objectTargetMinusTooltip[192];
 static char g_objectTargetPlusTooltip[192];
 static char g_objectRadiusMinusTooltip[160];
 static char g_objectRadiusPlusTooltip[160];
+static char g_objectAngleMinusTooltip[192];
+static char g_objectAnglePlusTooltip[192];
 static char g_objectBakeRouteTooltip[160];
 static char g_objectClearBakedRouteTooltip[160];
 
@@ -13970,6 +14947,14 @@ static void buildObjectPayloadTooltip(char *dst,
         return;
     }
 
+    if (type == RC3D_OBJTYPE_OBJECT_TELEPORTER) {
+        snprintf(dst, dstSize,
+                 "%s payload bit %d is unused by object teleporters in the demo runtime.\n\nYour runtime can still repurpose this field.",
+                 isInside ? "Inside" : "Outside",
+                 bit);
+        return;
+    }
+
     if (type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
         snprintf(dst, dstSize,
                  "%s payload bit %d is unused by Type 4 route preview objects.\n\nYour runtime can still repurpose this field.",
@@ -14007,6 +14992,7 @@ static void refreshObjectInspectorTooltips(const EdObject *o)
     const char *targetKind = "target tag id";
     const char *targetDetail = "Meaning depends on your runtime.";
     const char *radiusThing = "object radius";
+    const char *angleThing = "object facing angle";
 
     snprintf(g_objectTypeMinusTooltip, sizeof(g_objectTypeMinusTooltip),
              "Decrease the object type id\n\nCurrent: %u - %s",
@@ -14019,6 +15005,11 @@ static void refreshObjectInspectorTooltips(const EdObject *o)
         targetKind = "target sector tag id";
         targetDetail = "This built-in trigger looks for sectors with a matching Tag ID.";
         radiusThing = "trigger radius";
+    } else if (type == RC3D_OBJTYPE_OBJECT_TELEPORTER) {
+        targetKind = "target object tag id";
+        targetDetail = "This teleporter links to the object with the matching Tag ID.";
+        radiusThing = "teleport activation radius";
+        angleThing = "teleporter exit facing";
     } else if (objectTypeUsesTriggerObjectTarget(type)) {
         targetKind = "target object tag id";
         targetDetail = "This built-in trigger looks for objects with a matching Tag ID.";
@@ -14049,6 +15040,12 @@ static void refreshObjectInspectorTooltips(const EdObject *o)
     snprintf(g_objectRadiusPlusTooltip, sizeof(g_objectRadiusPlusTooltip),
              "Increase the %s",
              radiusThing);
+    snprintf(g_objectAngleMinusTooltip, sizeof(g_objectAngleMinusTooltip),
+             "Rotate the %s left",
+             angleThing);
+    snprintf(g_objectAnglePlusTooltip, sizeof(g_objectAnglePlusTooltip),
+             "Rotate the %s right",
+             angleThing);
 
     if (type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
         snprintf(g_objectBakeRouteTooltip, sizeof(g_objectBakeRouteTooltip),
@@ -14073,6 +15070,8 @@ static void refreshObjectInspectorTooltips(const EdObject *o)
                                g_objectTargetMinusTooltip, g_objectTargetPlusTooltip);
     setEditorButtonTooltipPair(GUI_BTN_OBJECT_RADIUS_MINUS, GUI_BTN_OBJECT_RADIUS_PLUS,
                                g_objectRadiusMinusTooltip, g_objectRadiusPlusTooltip);
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ANGLE_MINUS, GUI_BTN_OBJECT_ANGLE_PLUS,
+                               g_objectAngleMinusTooltip, g_objectAnglePlusTooltip);
     setEditorButtonTooltip(GUI_BTN_OBJECT_BAKE_ROUTE, g_objectBakeRouteTooltip);
     setEditorButtonTooltip(GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, g_objectClearBakedRouteTooltip);
 
@@ -14235,6 +15234,8 @@ static void initEditorButtonTooltips(void)
     setEditorButtonTooltipPair(GUI_BTN_OBJECT_ZAXIS_MINUS, GUI_BTN_OBJECT_ZAXIS_PLUS,
                                "Lower the object Z position", "Raise the object Z position");
     setEditorButtonTooltip(GUI_BTN_OBJECT_GET_ZAXIS, "Snap the object Z\nto its sector floor");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ANGLE_MINUS, GUI_BTN_OBJECT_ANGLE_PLUS,
+                               "Rotate the object facing left", "Rotate the object facing right");
     setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEX_MINUS, GUI_BTN_OBJECT_TSCALEX_PLUS,
                                "Decrease the object X texture scale", "Increase the object X texture scale");
     setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEY_MINUS, GUI_BTN_OBJECT_TSCALEY_PLUS,
@@ -14440,14 +15441,14 @@ void rc3dEditInit(void)
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS,  136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS,   164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
-        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE,   220 + controloffw, 156 + sector_button_y_offsets, 156, 24, "Bake Route");
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_BAKE_ROUTE,   260 + controloffw, 156 + sector_button_y_offsets, 156, 24, "Bake Route");
 
         sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TYPE_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_TYPE_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
         
-        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, 220 + controloffw, 156 + sector_button_y_offsets, 156, 24, "Clear Baked");
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE, 260 + controloffw, 156 + sector_button_y_offsets, 156, 24, "Clear Baked");
         
 
         sector_button_y_offsets += 30;
@@ -14457,6 +15458,8 @@ void rc3dEditInit(void)
         sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS,  164 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ANGLE_MINUS, 336 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
+        rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ANGLE_PLUS,  364 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_PLUS);
 
         sector_button_y_offsets += 30;
         rcguiCreateButton(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 136 + controloffw, 156 + sector_button_y_offsets, 24, 24, GLYPH_MINUS);
@@ -15509,6 +16512,8 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ANGLE_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ANGLE_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 0);
@@ -15808,12 +16813,12 @@ static void editorShowObjectInspectorButtons(void)
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TAGID_MINUS, 1);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TYPE_PLUS, 1);
-    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TYPE_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_TARGETTAGID_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_RADIUS_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ANGLE_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ANGLE_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_PLUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_ZAXIS_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_OBJECT_GET_ZAXIS, 1);
@@ -15964,7 +16969,14 @@ static void handleEditorUI(int mouseX, int mouseY,
             g_ed.objectLabelEditObject != g_ed.selectedObject) {
             beginObjectLabelEditing(g_ed.selectedObject);
         }
+        setObjectLabelCaretFromMouseX(mouseX);
 
+        g_ed.uiMouseCaptured = 1;
+        return;
+    }
+
+    if (leftPressed && mouseInObjectTypeSelector(mouseX, mouseY)) {
+        openObjectTypePopup();
         g_ed.uiMouseCaptured = 1;
         return;
     }
@@ -15999,6 +17011,7 @@ static void handleEditorUI(int mouseX, int mouseY,
     {
         const uint8_t *modKeys = SDL_GetKeyboardState(NULL);
         float uiStep = 0.1f;
+        const float angleStep = getObjectAngleStepRadians(modKeys);
 
         if (modKeys[SDL_SCANCODE_LCTRL] || modKeys[SDL_SCANCODE_RCTRL]) {
             uiStep = 10.0f;
@@ -16484,6 +17497,20 @@ static void handleEditorUI(int mouseX, int mouseY,
                     pushUndoState();
                     o->radius += uiStep;
                     if (o->radius < 0.01f) o->radius = 0.01f;
+                }
+                break;
+            case GUI_BTN_OBJECT_ANGLE_MINUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->angle = normalizeEditorAngle(o->angle - angleStep);
+                }
+                break;
+            case GUI_BTN_OBJECT_ANGLE_PLUS:
+                if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
+                    EdObject *o = &g_edMap.objects[g_ed.selectedObject];
+                    pushUndoState();
+                    o->angle = normalizeEditorAngle(o->angle + angleStep);
                 }
                 break;
             case GUI_BTN_OBJECT_ZAXIS_MINUS:
@@ -17223,7 +18250,7 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "X: %.4f,  Y: %.4f,  Z: %.4f", o->x, o->y, o->z);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
 
-        drawText(px + 16, py + y_off, "[LMB] drag object [CTRL+CLICK] multi-select [DEL] deletes", ED_TEXT_COL);
+        drawText(px + 16, py + y_off, "[LMB] drag, [CTRL+LCLK] multi-select, [DEL] delete", ED_TEXT_COL);
 
         //----------------------------
         y_off += 30;
@@ -17231,8 +18258,8 @@ static void drawInspectorPanel(void)
         drawRectL(px + 12, py + y_off, pw - 24, 211, ED_INSPECTOR_PANELS_PANELFRAME);
         
         y_off += 6;
-        drawText(px + 18,  py + y_off,     "PROPERTIES:                  PATHING NODES:", ED_INSPECTOR_PANELS_HEADER_TEXT);
-        drawText(px + 18,  py + y_off + 2, "___________                  ______________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
+        drawText(px + 18,  py + y_off,     "PROPERTIES:                      PATHING NODES:", ED_INSPECTOR_PANELS_HEADER_TEXT);
+        drawText(px + 18,  py + y_off + 2, "___________                      ______________", ED_INSPECTOR_PANELS_HEADER_TEXT);      
         py += 30;
 
         snprintf(buf, sizeof(buf),
@@ -17240,12 +18267,37 @@ static void drawInspectorPanel(void)
                  o->tagId);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
-        snprintf(buf, sizeof(buf), "Type: %u", (unsigned)o->type);
-        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+        {
+            char typeSelectorBuf[96];
+            const uint8_t selectorBorder = g_ed.objectTypePopupVisible
+                                         ? ED_COLOUR_SELECTED_WALL
+                                         : ED_COLOUR_TEXT_BAR_BORDER;
+
+            buildObjectTypeSelectorText(typeSelectorBuf, sizeof(typeSelectorBuf), o->type);
+            drawRect(ED_OBJECT_TYPE_SELECTOR_X,
+                     ED_OBJECT_TYPE_SELECTOR_Y,
+                     ED_OBJECT_TYPE_SELECTOR_W,
+                     ED_OBJECT_TYPE_SELECTOR_H,
+                     ED_COLOUR_TEXT_BAR_BG);
+            drawRectL(ED_OBJECT_TYPE_SELECTOR_X,
+                      ED_OBJECT_TYPE_SELECTOR_Y,
+                      ED_OBJECT_TYPE_SELECTOR_W,
+                      ED_OBJECT_TYPE_SELECTOR_H,
+                      selectorBorder);
+            drawText(ED_OBJECT_TYPE_SELECTOR_X + 8,
+                     ED_OBJECT_TYPE_SELECTOR_Y + 4,
+                     typeSelectorBuf,
+                     ED_TEXT_COL);
+            drawText(ED_OBJECT_TYPE_SELECTOR_X + ED_OBJECT_TYPE_SELECTOR_W - 16,
+                     ED_OBJECT_TYPE_SELECTOR_Y + 4,
+                     g_ed.objectTypePopupVisible ? "^" : "v",
+                     ED_INSPECTOR_PANELS_HEADER_TEXT);
+        }
+        y_off += 30;
 
         if (objectTypeUsesSectorTarget(o->type)) {
             snprintf(buf, sizeof(buf), "Target STag: %d", o->targetTagId);
-        } else if (objectTypeUsesTriggerObjectTarget(o->type)) {
+        } else if (objectTypeUsesObjectTarget(o->type)) {
             snprintf(buf, sizeof(buf), "Target OTag: %d", o->targetTagId);
         } else if (o->type == RC3D_OBJTYPE_ROUTE_PREVIEW) {
             snprintf(buf, sizeof(buf), "Route TTag: %d", o->targetTagId);
@@ -17257,7 +18309,9 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
         snprintf(buf, sizeof(buf), "Radius: %.3f", o->radius);
-        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
+        drawText(px + 16, py + y_off, buf, ED_TEXT_COL);
+        snprintf(buf, sizeof(buf), "Angle: %.1f deg", RAD2DEG(normalizeEditorAngle(o->angle)));
+        drawText(px + 218, py + y_off, buf, ED_TEXT_COL);   y_off += 30;
 
         snprintf(buf, sizeof(buf), "Z-Axis: %.3f", o->z);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
@@ -17298,10 +18352,10 @@ static void drawInspectorPanel(void)
 
         {
             const char *labelText = getObjectLabelTextForDisplay(g_ed.selectedObject);
-            char noteTail[ED_OBJECT_LABEL_MAX];
+            char noteVisible[ED_OBJECT_LABEL_MAX];
             const int noteActive = g_ed.objectLabelEditActive &&
                                    g_ed.objectLabelEditObject == g_ed.selectedObject;
-            const int noteMaxChars = (ED_OBJECT_NOTE_BOX_W - 10) / ED_FONT_W;
+            const int noteMaxChars = getObjectNoteBoxVisibleCharCount();
             const size_t labelLen = strlen(labelText);
             const int noteTextX = ED_OBJECT_NOTE_BOX_X + 4;
             const int noteTextY = ED_OBJECT_NOTE_BOX_Y + 4;
@@ -17315,16 +18369,35 @@ static void drawInspectorPanel(void)
             drawRect(ED_OBJECT_NOTE_BOX_X, ED_OBJECT_NOTE_BOX_Y, ED_OBJECT_NOTE_BOX_W, ED_OBJECT_NOTE_BOX_H, ED_COLOUR_TEXT_BAR_BG);
             drawRectL(ED_OBJECT_NOTE_BOX_X, ED_OBJECT_NOTE_BOX_Y, ED_OBJECT_NOTE_BOX_W, ED_OBJECT_NOTE_BOX_H, noteBorder);
 
-            buildObjectLabelTailText(labelText, noteMaxChars, noteTail, sizeof(noteTail));
+            if (noteActive) {
+                ensureObjectLabelCaretVisible();
+                buildObjectLabelWindowText(labelText,
+                                           g_ed.objectLabelViewStart,
+                                           noteMaxChars,
+                                           noteVisible,
+                                           sizeof(noteVisible));
+            } else {
+                buildObjectLabelTailText(labelText, noteMaxChars, noteVisible, sizeof(noteVisible));
+            }
 
-            if (noteTail[0] != '\0') {
-                drawText(noteTextX, noteTextY, noteTail, ED_TEXT_COL);
+            if (noteVisible[0] != '\0') {
+                drawText(noteTextX, noteTextY, noteVisible, ED_TEXT_COL);
             } else if (!noteActive) {
                 drawText(noteTextX, noteTextY, "Click to add an editor label", ED_INSPECTOR_PANELS_HEADER_TEXT);
             }
 
             if (noteActive) {
-                int caretX = noteTextX + ((int)strlen(noteTail) * ED_FONT_W);
+                int caretColumn = g_ed.objectLabelCaretPos - g_ed.objectLabelViewStart;
+                int caretX;
+
+                if (caretColumn < 0) {
+                    caretColumn = 0;
+                }
+                if (caretColumn > noteMaxChars) {
+                    caretColumn = noteMaxChars;
+                }
+
+                caretX = noteTextX + (caretColumn * ED_FONT_W);
 
                 if (caretX > (ED_OBJECT_NOTE_BOX_X + ED_OBJECT_NOTE_BOX_W - 6)) {
                     caretX = ED_OBJECT_NOTE_BOX_X + ED_OBJECT_NOTE_BOX_W - 6;
@@ -17511,6 +18584,7 @@ void rc3dEditUpdate(float dt,
     bAltHold = keys[SDL_SCANCODE_LALT] || keys[SDL_SCANCODE_RALT];
 
     syncObjectLabelEditorState();
+    syncObjectTypePopupState();
 
     if (g_ed.objectLabelEditActive &&
         ctrlDown &&
@@ -17523,6 +18597,12 @@ void rc3dEditUpdate(float dt,
     }
 
     if (g_ed.objectLabelEditActive &&
+        leftPressed &&
+        mouseInObjectNoteBox(mouseX, mouseY)) {
+        setObjectLabelCaretFromMouseX(mouseX);
+    }
+
+    if (g_ed.objectLabelEditActive &&
         ((leftPressed && !mouseInObjectNoteBox(mouseX, mouseY)) ||
          rightPressed ||
          middlePressed)) {
@@ -17530,7 +18610,7 @@ void rc3dEditUpdate(float dt,
     }
 
     {
-        const int handledObjectLabelKey = handleObjectLabelEditorKeys(keys);
+        const int handledObjectLabelKey = handleObjectLabelEditorKeys(keys, dt);
 
         if (handledObjectLabelKey || g_ed.objectLabelEditActive) {
             g_ed.uiMouseCaptured = 1;
@@ -17542,6 +18622,12 @@ void rc3dEditUpdate(float dt,
             finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
             return;
         }
+    }
+
+    if (handleObjectTypePopupInput(keys, mouseX, mouseY, leftPressed, mouseWheelY)) {
+        g_ed.uiMouseCaptured = 1;
+        finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
+        return;
     }
 
     if (keyPressedOnce(keys, SDL_SCANCODE_KP_MULTIPLY) ||
@@ -18572,4 +19658,5 @@ void rc3dEditRender(void)
     drawActiveTips();
 
     rcguiDraw(&g_ui);
+    drawObjectTypePopup();
 }

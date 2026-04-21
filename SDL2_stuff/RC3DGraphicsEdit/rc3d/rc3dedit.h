@@ -97,7 +97,7 @@
 #define ED_COLOUR_DRAFTWALL         11
 #define ED_COLOUR_HOVER_WALL        1
 #define ED_COLOUR_SELECTED_WALL     8  
-#define ED_COLOUR_WALL              11
+#define ED_COLOUR_WALL              26//11
 #define ED_COLOUR_WALLO             8
 #define ED_COLOUR_WALL_SPECIAL      14
 
@@ -123,12 +123,7 @@ void rc3dEditUpdate(float dt,
                     int mouseWheelY);
 int rc3dEditHandleTextInput(const char *text);
 
-static void handleEditorUI(int mouseX, int mouseY,
-                           int leftDown, int leftPressed, int leftReleased,
-                           float worldX, float worldY,
-                           float dt);
 
-                           
 void rc3dEditRender(void);
 int rc3dGuiCheckDirty();
 

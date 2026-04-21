@@ -31,7 +31,8 @@ typedef enum {
     RC3D_OBJTYPE_BAKED_ROUTE_NODE       = 5u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT   = 6u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER   = 7u,
-    RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT    = 8u
+    RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT    = 8u,
+    RC3D_OBJTYPE_OBJECT_TELEPORTER      = 9u
 } RC3D_ObjectType;
 
 
@@ -41,6 +42,7 @@ typedef enum {
 #define OBJECT_TYPE_EXITONLY        3
 #define OBJECT_TYPE_NAVIGATION      4
 #define OBJECT_TYPE_BAKEDNAV        5   // use this in the run time
+#define OBJECT_TYPE_TELEPORTER      9
 
 #define OBJECT_GENERAL_FLAGS_ENABLE 0x01    // bit 0, just a basic enable ;)
 
@@ -78,6 +80,7 @@ extern float g_draw_distance;
 #define RC3D_SECTOR_FLAGS_FULLBRIGHT            0x400
 #define RC3D_SECTOR_FLAGS_EFFECTWALLS           0x800
 #define RC3D_SECTOR_FLAGS_DAMAGEZONE            0x1000   /// YEAH, STAY out of these zones if you can ;)
+#define RC3D_SECTOR_FLAGS_MINIMAP_DISCOVERED    0x2000   /* runtime minimap discovery */
 
 
 typedef int32_t RC3D_Fixed;
@@ -195,9 +198,16 @@ void rc3dSpriteSetSize(int spriteId, float width, float height);
 void rc3dSpriteSetTexture(int spriteId, uint8_t texId);
 void rc3dSpriteSetBaseZ(int spriteId, float baseZ);
 
+
+// Sector API
 int rc3dGetSectorByTag(int32_t tagId);  // get the first sector with this tagid
 int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags);
 void rc3dSetSectorLightLevel(int32_t sectorId, uint8_t level);
+
+// Sector API - Minimapping
+int rc3dMinimapRevealSector(int32_t sectorId);
+int rc3dMinimapRevealAll(void);
+void rc3dMinimapResetDiscovery(void);
 
 // Textures API
 void shiftTexture(uint8_t texIndex, int8_t dir);

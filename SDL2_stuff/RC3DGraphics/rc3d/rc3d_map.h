@@ -108,6 +108,7 @@ float x;
     uint8_t outFlag;    // when outside the boundery set the targetTagIds flag to this flag
     float scalex;       // texture scale x
     float scaley;       // texture scale y
+    float angle;      /* radians, used for teleporter exit facing and editor direction markers */
     
     // runtime side only
     uint8_t trigger;    // used to savestate
