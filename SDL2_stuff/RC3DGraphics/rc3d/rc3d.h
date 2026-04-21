@@ -118,7 +118,8 @@ typedef struct {
 } RC3D_BlockingContact;
 
 typedef struct {
-    uint8_t pix[RC3D_TEX_SIZE * RC3D_TEX_SIZE];
+    //uint8_t pix[RC3D_TEX_SIZE * RC3D_TEX_SIZE];
+    uint8_t *pix;
 } RC3D_Texture;
 
 typedef struct {
@@ -220,6 +221,9 @@ void shiftTextureFX(
     float timescaley,
     float frametime);
 
+int rc3dTextureAlloc(RC3D_Texture *texture);
+void rc3dTextureFree(RC3D_Texture *texture);
+int rc3dTextureSetSlotPixels(uint8_t textureindex, uint8_t *pixels);
 uint8_t *rc3d_GetTexturePtr(uint8_t textureindex);
 void copyTextureToTexture(uint8_t *from, uint8_t *to, int sizex, int sizey);
 

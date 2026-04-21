@@ -590,6 +590,11 @@ void LoadPPB(const char *filename, uint8_t *img){
         return;
     }
 
+    if (!img) {
+        fclose(fp);
+        return;
+    }
+
     if (fread(&head, 1, sizeof(head), fp) != sizeof(head)) {
         fclose(fp);
         return;
@@ -605,7 +610,6 @@ void LoadPPB(const char *filename, uint8_t *img){
 
     fclose(fp);
 }
-
 
 
 

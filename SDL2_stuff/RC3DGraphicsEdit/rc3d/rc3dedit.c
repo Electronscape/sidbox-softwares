@@ -377,6 +377,7 @@ typedef enum {
     ED_PENDING_LEFT_MULTI_DRAG,
     ED_PENDING_LEFT_VERTEX,
     ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG,
+    ED_PENDING_LEFT_OBJECT_CLICK_OR_BOX,
     ED_PENDING_LEFT_WALL_CLICK_OR_BOX,
     ED_PENDING_LEFT_WALL_DRAG,
     ED_PENDING_LEFT_SECTOR_CLICK_OR_BOX,
@@ -644,6 +645,7 @@ typedef struct {
     /* box select */
     int boxSelecting;
     int boxSelectWalls;
+    int boxSelectObjects;
     int boxStartMouseX;
     int boxStartMouseY;
     int boxEndMouseX;
@@ -768,6 +770,7 @@ typedef struct {
     int pendingLeftCtrlDown;
     int pendingLeftAltDown;
     int pendingLeftBoxSelectWalls;
+    int pendingLeftBoxSelectObjects;
 
     // Interfacing
     int holdRepeatButtonId;
@@ -941,7 +944,17 @@ static void removeMultiObjectSelection(int objectIndex)
 
 static void normalizeObjectSelectionState(void)
 {
-    if (g_ed.selectedObjectCount == 1 && g_ed.selectionType == ED_SEL_NONE) {
+    const int hasOtherSelection =
+        (g_ed.selectionType == ED_SEL_VERTEX) ||
+        (g_ed.selectionType == ED_SEL_WALL) ||
+        (g_ed.selectionType == ED_SEL_SECTOR) ||
+        (g_ed.selectedVertCount > 0) ||
+        (g_ed.selectedWallCount > 0) ||
+        (g_ed.selectedSectorCount > 0);
+
+    if (g_ed.selectedObjectCount == 1 &&
+        g_ed.selectionType == ED_SEL_NONE &&
+        !hasOtherSelection) {
         const int objectIndex = getFirstMultiSelectedObjectIndex();
 
         clearMultiObjectSelection();
@@ -1017,7 +1030,7 @@ static int collectObjectEditSelectionIndices(int *outIndices, int maxOut)
 
 static int hasAnyObjectEditSelection(void)
 {
-    return hasSingleObjectSelection();
+    return hasSingleObjectSelection() || (g_ed.selectedObjectCount > 0);
 }
 
 static void clearMultiSectorSelection(void)
@@ -1452,7 +1465,7 @@ static void setWallTexScaleY(EdWall *w, float scaleY);
 static float getWallTexAngle(const EdWall *w);
 static void clearPendingLeftMouseAction(void);
 static void selectExplicitTarget(EdSelectionType type, int index);
-static void beginBoxSelect(int mouseX, int mouseY, int selectWalls);
+static void beginBoxSelect(int mouseX, int mouseY, int selectWalls, int selectObjects);
 static void updateBoxSelect(int mouseX, int mouseY);
 static void beginMultiVertexDrag(float worldX, float worldY);
 static void beginSectorDrag(int sectorIndex, float worldX, float worldY);
@@ -1533,8 +1546,8 @@ static void pathDirnameFromFile(char *outDir, size_t outDirSize, const char *pat
 static void initRememberedDialogDirs(void);
 
 // rotation of selections - prototypes
-static int collectSelectedVertexPivot(float *outCx, float *outCy);
-static void rotateSelectedVertices(float angleRad);
+static int collectSelectedVertexObjectPivot(float *outCx, float *outCy);
+static void rotateSelectedVertexObjectSelection(float angleRad);
 static void drawSectorSelectionHighlight(int sectorIndex);
 
 // sector fill stuffs, prototypes
@@ -2064,7 +2077,20 @@ static int textureTargetCurrentIndex(TextureTarget t)
 
     if (hasAnyObjectEditSelection()) {
         if (t == TEX_TARGET_OBJECT) {
-            return g_edMap.objects[g_ed.selectedObject].textureId;
+            int objectIndices[ED_MAX_OBJECTS];
+            const int objectCount = collectObjectEditSelectionIndices(objectIndices, ED_MAX_OBJECTS);
+
+            if (objectCount > 0) {
+                const int current = g_edMap.objects[objectIndices[0]].textureId;
+
+                for (int i = 1; i < objectCount; i++) {
+                    if (g_edMap.objects[objectIndices[i]].textureId != current) {
+                        return -1;
+                    }
+                }
+
+                return current;
+            }
         }
     }
 
@@ -2088,9 +2114,17 @@ static void textureTargetApply(TextureTarget t, int texIndex)
 
     if (hasAnyObjectEditSelection()) {
         if (t == TEX_TARGET_OBJECT) {
-            EdObject *o = &g_edMap.objects[g_ed.selectedObject];
-            o->textureId = (uint8_t)texIndex;
-            return;
+            int objectIndices[ED_MAX_OBJECTS];
+            const int objectCount = collectObjectEditSelectionIndices(objectIndices, ED_MAX_OBJECTS);
+
+            for (int i = 0; i < objectCount; i++) {
+                EdObject *o = &g_edMap.objects[objectIndices[i]];
+                o->textureId = (uint8_t)texIndex;
+            }
+
+            if (objectCount > 0) {
+                return;
+            }
         }
     }
 
@@ -3016,6 +3050,7 @@ static void restoreSnapshot(const EditorSnapshot *s)
 
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
+    g_ed.boxSelectObjects = 0;
     g_ed.draggingMultiVertex = 0;
     g_ed.dragMultiVertCount = 0;
     clearPendingLeftMouseAction();
@@ -4386,23 +4421,15 @@ static int bakeSelectedObjectRouteToNodes(void)
     return 1;
 }
 
-static void beginObjectDragFromPress(int objectIndex)
+static void beginCurrentObjectSelectionDrag(float worldX, float worldY)
 {
     int objectIndices[ED_MAX_OBJECTS];
     int objectCount;
 
-    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
-
-    if (!isObjectInEditSelection(objectIndex)) {
-        selectExplicitTarget(ED_SEL_OBJECT, objectIndex);
-    }
-
-    pushUndoState();
-
     g_ed.draggingObject = 0;
     g_ed.dragObjectCount = 0;
-    g_ed.dragObjectStartWorldX = g_ed.pendingLeftWorldX;
-    g_ed.dragObjectStartWorldY = g_ed.pendingLeftWorldY;
+    g_ed.dragObjectStartWorldX = worldX;
+    g_ed.dragObjectStartWorldY = worldY;
 
     objectCount = collectObjectEditSelectionIndices(objectIndices, ED_MAX_OBJECTS);
 
@@ -4421,6 +4448,23 @@ static void beginObjectDragFromPress(int objectIndex)
 
     if (g_ed.dragObjectCount > 0) {
         g_ed.draggingObject = 1;
+    }
+}
+
+static void beginObjectDragFromPress(int objectIndex)
+{
+    if (objectIndex < 0 || objectIndex >= g_edMap.objectCount) return;
+
+    if (!isObjectInEditSelection(objectIndex)) {
+        selectExplicitTarget(ED_SEL_OBJECT, objectIndex);
+    }
+
+    pushUndoState();
+
+    beginCurrentObjectSelectionDrag(g_ed.pendingLeftWorldX, g_ed.pendingLeftWorldY);
+
+    if (g_ed.selectedVertCount > 0) {
+        beginMultiVertexDrag(g_ed.pendingLeftWorldX, g_ed.pendingLeftWorldY);
     }
 }
 
@@ -8278,6 +8322,7 @@ static void clearPendingLeftMouseAction(void)
     g_ed.pendingLeftCtrlDown = 0;
     g_ed.pendingLeftAltDown = 0;
     g_ed.pendingLeftBoxSelectWalls = 0;
+    g_ed.pendingLeftBoxSelectObjects = 0;
 }
 
 static int pendingLeftExceededDragTolerance(int mouseX, int mouseY)
@@ -8473,6 +8518,9 @@ static void promotePendingLeftMouseAction(int mouseX, int mouseY)
         case ED_PENDING_LEFT_MULTI_DRAG:
             pushUndoState();
             beginMultiVertexDrag(g_ed.pendingLeftWorldX, g_ed.pendingLeftWorldY);
+            if (g_ed.selectedObjectCount > 0) {
+                beginCurrentObjectSelectionDrag(g_ed.pendingLeftWorldX, g_ed.pendingLeftWorldY);
+            }
             break;
 
         case ED_PENDING_LEFT_VERTEX:
@@ -8484,6 +8532,19 @@ static void promotePendingLeftMouseAction(int mouseX, int mouseY)
                 toggleObjectMultiSelection(g_ed.pendingLeftTargetIndex);
             } else {
                 beginObjectDragFromPress(g_ed.pendingLeftTargetIndex);
+            }
+            break;
+
+        case ED_PENDING_LEFT_OBJECT_CLICK_OR_BOX:
+            if (isObjectInEditSelection(g_ed.pendingLeftTargetIndex)) {
+                beginObjectDragFromPress(g_ed.pendingLeftTargetIndex);
+            } else {
+                clearAllSelections();
+                beginBoxSelect(g_ed.pendingLeftMouseX,
+                               g_ed.pendingLeftMouseY,
+                               0,
+                               1);
+                updateBoxSelect(mouseX, mouseY);
             }
             break;
 
@@ -8506,7 +8567,8 @@ static void promotePendingLeftMouseAction(int mouseX, int mouseY)
                 clearAllSelections();
                 beginBoxSelect(g_ed.pendingLeftMouseX,
                                g_ed.pendingLeftMouseY,
-                               1);
+                               1,
+                               0);
                 updateBoxSelect(mouseX, mouseY);
             }
             break;
@@ -8533,7 +8595,8 @@ static void promotePendingLeftMouseAction(int mouseX, int mouseY)
             clearAllSelections();
             beginBoxSelect(g_ed.pendingLeftMouseX,
                            g_ed.pendingLeftMouseY,
-                           g_ed.pendingLeftBoxSelectWalls);
+                           g_ed.pendingLeftBoxSelectWalls,
+                           g_ed.pendingLeftBoxSelectObjects);
             updateBoxSelect(mouseX, mouseY);
             break;
 
@@ -8553,6 +8616,7 @@ static void commitPendingLeftMouseClick(void)
             break;
 
         case ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG:
+        case ED_PENDING_LEFT_OBJECT_CLICK_OR_BOX:
             if (g_ed.pendingLeftCtrlDown) {
                 toggleObjectMultiSelection(g_ed.pendingLeftTargetIndex);
             } else {
@@ -8644,6 +8708,7 @@ static void cancelActiveSelection(void)
     g_ed.draggingMultiVertex = 0;
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
+    g_ed.boxSelectObjects = 0;
     g_ed.splitPreviewValid = 0;
     clearPendingLeftMouseAction();
 }
@@ -8677,10 +8742,11 @@ static int findSelectedVertexNearMouse(int mouseX, int mouseY)
     return best;
 }
 
-static void beginBoxSelect(int mouseX, int mouseY, int selectWalls)
+static void beginBoxSelect(int mouseX, int mouseY, int selectWalls, int selectObjects)
 {
     g_ed.boxSelecting = 1;
     g_ed.boxSelectWalls = selectWalls ? 1 : 0;
+    g_ed.boxSelectObjects = selectObjects ? 1 : 0;
     g_ed.boxStartMouseX = mouseX;
     g_ed.boxStartMouseY = mouseY;
     g_ed.boxEndMouseX = mouseX;
@@ -8806,10 +8872,25 @@ static void finalizeBoxSelect(void)
                 g_ed.selectedVertCount++;
             }
         }
+
+        if (g_ed.boxSelectObjects) {
+            for (int i = 0; i < g_edMap.objectCount; i++) {
+                int sx, sy;
+
+                worldToScreen(g_edMap.objects[i].x, g_edMap.objects[i].y, &sx, &sy);
+
+                if (sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1) {
+                    addMultiObjectSelection(i);
+                }
+            }
+
+            normalizeObjectSelectionState();
+        }
     }
 
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
+    g_ed.boxSelectObjects = 0;
 }
 
 static void beginMultiVertexDrag(float worldX, float worldY)
@@ -8859,13 +8940,14 @@ static void dragMultiVertexSelectionTo(float worldX, float worldY)
     syncAllPortals();
 }
 
-static int collectSelectedVertexPivot(float *outCx, float *outCy)
+static int collectSelectedVertexObjectPivot(float *outCx, float *outCy)
 {
     float minX, minY, maxX, maxY;
     int found = 0;
+    const int objectCount = getObjectEditSelectionCount();
 
     if (!outCx || !outCy) return 0;
-    if (g_ed.selectedVertCount <= 0) return 0;
+    if (g_ed.selectedVertCount <= 0 && objectCount <= 0) return 0;
 
     minX = 0.0f;
     minY = 0.0f;
@@ -8887,6 +8969,21 @@ static int collectSelectedVertexPivot(float *outCx, float *outCy)
         }
     }
 
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        if (!isObjectInEditSelection(i)) continue;
+
+        if (!found) {
+            minX = maxX = g_edMap.objects[i].x;
+            minY = maxY = g_edMap.objects[i].y;
+            found = 1;
+        } else {
+            if (g_edMap.objects[i].x < minX) minX = g_edMap.objects[i].x;
+            if (g_edMap.objects[i].x > maxX) maxX = g_edMap.objects[i].x;
+            if (g_edMap.objects[i].y < minY) minY = g_edMap.objects[i].y;
+            if (g_edMap.objects[i].y > maxY) maxY = g_edMap.objects[i].y;
+        }
+    }
+
     if (!found) return 0;
 
     *outCx = (minX + maxX) * 0.5f;
@@ -8894,15 +8991,16 @@ static int collectSelectedVertexPivot(float *outCx, float *outCy)
     return 1;
 }
 
-static void rotateSelectedVertices(float angleRad)
+static void rotateSelectedVertexObjectSelection(float angleRad)
 {
     float cx, cy;
     float s, c;
+    const int objectCount = getObjectEditSelectionCount();
+    const int selectionCount = g_ed.selectedVertCount + objectCount;
 
-    if (g_ed.selectionType != ED_SEL_NONE) return;
-    if (g_ed.selectedVertCount <= 1) return;
+    if (selectionCount <= 1) return;
 
-    if (!collectSelectedVertexPivot(&cx, &cy)) return;
+    if (!collectSelectedVertexObjectPivot(&cx, &cy)) return;
 
     s = sinf(angleRad);
     c = cosf(angleRad);
@@ -8923,6 +9021,24 @@ static void rotateSelectedVertices(float angleRad)
         g_edMap.verts[i].y = snapf(cy + ry);
     }
 
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        float dx, dy;
+        float rx, ry;
+
+        if (!isObjectInEditSelection(i)) continue;
+
+        dx = g_edMap.objects[i].x - cx;
+        dy = g_edMap.objects[i].y - cy;
+
+        rx = (dx * c) - (dy * s);
+        ry = (dx * s) + (dy * c);
+
+        g_edMap.objects[i].x = snapf(cx + rx);
+        g_edMap.objects[i].y = snapf(cy + ry);
+        g_edMap.objects[i].angle = normalizeEditorAngle(g_edMap.objects[i].angle + angleRad);
+    }
+
+    touchRoutePreviewMap();
     syncAllPortals();
 }
 
@@ -9076,6 +9192,7 @@ static void beginNewMap(void)
 
     g_ed.boxSelecting = 0;
     g_ed.boxSelectWalls = 0;
+    g_ed.boxSelectObjects = 0;
     g_ed.boxStartMouseX = 0;
     g_ed.boxStartMouseY = 0;
     g_ed.boxEndMouseX = 0;
@@ -9677,6 +9794,7 @@ static int loadTextMap(const char *path)
     g_ed.draggingObject = 0;
     g_ed.draggingPan = 0;
     g_ed.boxSelectWalls = 0;
+    g_ed.boxSelectObjects = 0;
     g_ed.objectLabelEditActive = 0;
     g_ed.objectLabelEditObject = -1;
     g_ed.objectLabelEditBuffer[0] = '\0';
@@ -11762,6 +11880,16 @@ void drawHoverPanel(void)
         return;
     }
 
+    if (g_ed.selectedVertCount > 0 &&
+        g_ed.selectedObjectCount > 0 &&
+        g_ed.selectionType == ED_SEL_NONE) {
+        snprintf(buf, sizeof(buf), "Selected vertices: %d   Selected objects: %d",
+                 g_ed.selectedVertCount,
+                 g_ed.selectedObjectCount);
+        drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
+        return;
+    }
+
     if (g_ed.selectedVertCount > 0 && g_ed.selectionType == ED_SEL_NONE) {
         snprintf(buf, sizeof(buf), "Selected vertices: %d", g_ed.selectedVertCount);
         drawText(8, EDIT_VIEW_PORT_HEIGHT + 4, buf, ED_TEXT_COL);
@@ -11962,7 +12090,7 @@ static void drawExpandedEditorPanel(void)
 
         drawText(x, y, "[ENTER] finish draft, [ESC] unselect / clear draft, [DEL] delete hovered", ED_TEXT_COL);
         y += ED_ROW_STEP;
-        drawText(x, y, "[SHIFT] vertices, [CTRL] sectors, [ALT] walls", ED_TEXT_COL);
+        drawText(x, y, "[SHIFT] vertices, [SHIFT+DRAG] box vertices + objects, [CTRL] sectors, [ALT] walls", ED_TEXT_COL);
         y += ED_ROW_STEP;
         drawText(x, y, "[F6] auto-build sectors from closed inner wall loops", ED_TEXT_COL);
         y += ED_ROW_STEP;
@@ -12011,6 +12139,7 @@ static void drawExpandedEditorPanel(void)
         if(g_ed.selectionType == ED_SEL_OBJECT){
             drawText(x, y, "--- OBJECTS HELP", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP; drawText(x, y, "[LMB-DRAG] move object, [CTRL+CLICK] add/remove objects", ED_TEXT_COL);
+            y += ED_ROW_STEP; drawText(x, y, "[SHIFT+DRAG] box-select vertices + objects", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "[CTRL+C]/[CTRL+V] copy/paste object at cursor", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Tag: Just an identifier for the object", ED_TEXT_COL);
             y += ED_ROW_STEP; drawText(x, y, "Type: Is used to identify what this object is", ED_TEXT_COL);
@@ -12048,6 +12177,8 @@ static void drawExpandedEditorPanel(void)
             drawText(x, y, "--- MULTI OBJECT HELP", ED_EXPANDED_MENU_TEXT);
             y += ED_ROW_STEP;
             drawText(x, y, "[CTRL+CLICK] add/remove objects, [LMB-DRAG] selected object moves the full group", ED_TEXT_COL);
+            y += ED_ROW_STEP;
+            drawText(x, y, "[ARROW-LEFT]/[ARROW-RIGHT] rotate the selected object group", ED_TEXT_COL);
             y += ED_ROW_STEP;
             drawText(x, y, "[DEL] deletes the selected objects", ED_TEXT_COL);
             y += ED_ROW_STEP;
@@ -16938,8 +17069,8 @@ static void handleEditorUI(int mouseX, int mouseY,
                            float dt)
 {
     int hit;
-    EdWall *w = 0;
-    EdSector *sec = 0;
+    EdWall *w = NULL;
+    EdSector *sec = NULL;
 
     rcguiUpdate(&g_ui, mouseX, mouseY, leftDown, leftPressed, leftReleased);
 
@@ -17972,6 +18103,24 @@ static void drawInspectorPanel(void)
         else snprintf(buf, sizeof(buf), "Brightness: %u / 7", wallTexBrightness);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
     }
+    else if (g_ed.selectionType == ED_SEL_NONE &&
+             g_ed.selectedVertCount > 0 &&
+             g_ed.selectedObjectCount > 0) {
+        drawRect(px + 8, py + 40, pw - 16, 150, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py + 40, pw - 16, 150, ED_INSPECTOR_PARENT_PANELS_FRAME);
+
+        drawText(px + 16, py + 48, "VERTEX + OBJECT SELECTION", ED_INSPECTOR_TEXT_COL);
+
+        snprintf(buf, sizeof(buf), "Selected verts: %d   Objects: %d",
+                 g_ed.selectedVertCount,
+                 g_ed.selectedObjectCount);
+        drawText(px + 16, py + 76, buf, ED_TEXT_COL);
+
+        drawText(px + 16, py + 104, "SHIFT+drag box-selects vertices and objects together", ED_TEXT_COL);
+        drawText(px + 16, py + 126, "Shift-drag a selected vertex, or drag a selected object, to move all", ED_TEXT_COL);
+        drawText(px + 16, py + 148, "Arrow Left / Right rotates verts and object positions/facing", ED_TEXT_COL);
+        drawText(px + 16, py + 170, "Delete removes selected objects; vertex delete stays single-vertex", ED_TEXT_COL);
+    }
     else if (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 0) {
         drawRect(px + 8, py + 40, pw - 16, 130, ED_INSPECTOR_PARENT_PANELS_BG);
         drawRectL(px + 8, py + 40, pw - 16, 130, ED_INSPECTOR_PARENT_PANELS_FRAME);
@@ -17990,8 +18139,8 @@ static void drawInspectorPanel(void)
 
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 166, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 166, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect(px + 8, py, pw - 16, 186, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 186, ED_INSPECTOR_PARENT_PANELS_FRAME);
         py += 8;
 
         snprintf(buf, sizeof(buf), "OBJECTS (%d)", g_ed.selectedObjectCount);
@@ -18012,7 +18161,9 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
 
         drawText(px + 16, py, "CTRL+Click adds/removes objects", ED_TEXT_COL); py += 20;
-        drawText(px + 16, py, "LMB drag a selected object to move the whole group", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "SHIFT+drag box-selects vertices and objects together", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "Shift-drag a selected vertex, or drag a selected object, to move all", ED_TEXT_COL); py += 20;
+        drawText(px + 16, py, "Arrow Left / Right rotates the selected object group", ED_TEXT_COL); py += 20;
         drawText(px + 16, py, "Delete removes the selected object group", ED_TEXT_COL); py += 20;
     }
 
@@ -18250,7 +18401,7 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "X: %.4f,  Y: %.4f,  Z: %.4f", o->x, o->y, o->z);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 20;
 
-        drawText(px + 16, py + y_off, "[LMB] drag, [CTRL+LCLK] multi-select, [DEL] delete", ED_TEXT_COL);
+        drawText(px + 16, py + y_off, "[LMB] drag, [CTRL+LCLK] multi-select, [SHIFT+DRAG] box verts + objects", ED_TEXT_COL);
 
         //----------------------------
         y_off += 30;
@@ -18798,6 +18949,8 @@ void rc3dEditUpdate(float dt,
         g_ed.draggingSector = 0;
         g_ed.draggingMultiVertex = 0;
         g_ed.boxSelecting = 0;
+        g_ed.boxSelectWalls = 0;
+        g_ed.boxSelectObjects = 0;
         clearPendingLeftMouseAction();
 
         g_ed.pendingLeftMouseDown = 1;
@@ -18808,11 +18961,14 @@ void rc3dEditUpdate(float dt,
         g_ed.pendingLeftCtrlDown = ctrlDown;
         g_ed.pendingLeftAltDown = altDown;
         g_ed.pendingLeftBoxSelectWalls = 0;
+        g_ed.pendingLeftBoxSelectObjects = 0;
 
         if (shiftDown && g_ed.hoverObject >= 0) {
             g_ed.pendingLeftTargetIndex = g_ed.hoverObject;
-            g_ed.pendingLeftAction = ED_PENDING_LEFT_NONE;
-            beginObjectDragFromPress(g_ed.hoverObject);
+            g_ed.pendingLeftAction =
+                isObjectInEditSelection(g_ed.hoverObject)
+                    ? ED_PENDING_LEFT_OBJECT_CLICK_OR_DRAG
+                    : ED_PENDING_LEFT_OBJECT_CLICK_OR_BOX;
         }
         else if (g_ed.hoverObject >= 0) {
             g_ed.pendingLeftTargetIndex = g_ed.hoverObject;
@@ -18852,6 +19008,7 @@ void rc3dEditUpdate(float dt,
                 g_ed.pendingLeftAction = ED_PENDING_LEFT_VERTEX;
             }
             else {
+                g_ed.pendingLeftBoxSelectObjects = 1;
                 g_ed.pendingLeftAction = ED_PENDING_LEFT_EMPTY_CLICK_OR_BOX;
             }
         }
@@ -19521,10 +19678,13 @@ void rc3dEditUpdate(float dt,
     if (keyPressedOnce(keys, SDL_SCANCODE_G)){
         g_ed.bShowGridOverall = 1 - g_ed.bShowGridOverall;
     }
+    // rotate selected multi-selection (vertices and/or objects)
+    {
+        const int rotateObjectCount = getObjectEditSelectionCount();
 
-
-    // rotate selected vertices
-    if (g_ed.selectionType == ED_SEL_NONE && g_ed.selectedVertCount > 1) {
+        if ((g_ed.selectedVertCount + rotateObjectCount) > 1 &&
+            g_ed.selectionType != ED_SEL_WALL &&
+            g_ed.selectionType != ED_SEL_SECTOR) {
         float rotateStep = 90.0f * (float)(M_PI / 180.0f);  // default rotate (90 is perfect)
 
         // starts to get funny here, BUT should keep to snapping to current grid!
@@ -19536,13 +19696,14 @@ void rc3dEditUpdate(float dt,
 
         if (keyPressedOnce(keys, SDL_SCANCODE_LEFT)) {
             pushUndoState();
-            rotateSelectedVertices(-rotateStep);
+            rotateSelectedVertexObjectSelection(-rotateStep);
         }
 
         if (keyPressedOnce(keys, SDL_SCANCODE_RIGHT)) {
             pushUndoState();
-            rotateSelectedVertices(+rotateStep);
+            rotateSelectedVertexObjectSelection(+rotateStep);
         }
+    }
     }
 
 

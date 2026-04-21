@@ -169,6 +169,35 @@ void moveSprite();
 RC3D_Texture forcefield[4];
 RC3D_Texture water[4];
 
+static void freeTextureFrames(RC3D_Texture *frames, int count)
+{
+    if (!frames || count <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        rc3dTextureFree(&frames[i]);
+    }
+}
+
+static int loadTextureFrames(RC3D_Texture *frames, const char *const *paths, int count)
+{
+    if (!frames || !paths || count <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        if (!rc3dTextureAlloc(&frames[i])) {
+            freeTextureFrames(frames, count);
+            return 0;
+        }
+
+        LoadPPB(paths[i], frames[i].pix);
+    }
+
+    return 1;
+}
+
 #define MAP_SPECIFIC_OBJECT_TEST    20
 void doCustomGameLogic(){   // to demonstrate how to use the engine for the bits available
     //void rc3dSetSectorLightLevel(int sectorId, uint8_t level)
@@ -184,6 +213,19 @@ void doCustomGameLogic(){   // to demonstrate how to use the engine for the bits
 
 int main(int argc, char **argv)
 {
+    static const char *const forcefieldFrames[4] = {
+        "textures/15a.ppb",
+        "textures/15b.ppb",
+        "textures/15c.ppb",
+        "textures/15d.ppb"
+    };
+    static const char *const waterFrames[4] = {
+        "textures/05a.ppb",
+        "textures/05b.ppb",
+        "textures/05c.ppb",
+        "textures/05d.ppb"
+    };
+
     if (BasicSDL2Setup() != 0) {
         return 1;
     }
@@ -200,16 +242,15 @@ int main(int argc, char **argv)
         printf("Using built-in map instead\n");
     }
 
-
-    LoadPPB("textures/15a.ppb", forcefield[0].pix);
-    LoadPPB("textures/15b.ppb", forcefield[1].pix);
-    LoadPPB("textures/15c.ppb", forcefield[2].pix);
-    LoadPPB("textures/15d.ppb", forcefield[3].pix);
-
-    LoadPPB("textures/05a.ppb", water[0].pix);
-    LoadPPB("textures/05b.ppb", water[1].pix);
-    LoadPPB("textures/05c.ppb", water[2].pix);
-    LoadPPB("textures/05d.ppb", water[3].pix);
+    if (!loadTextureFrames(forcefield, forcefieldFrames, 4) ||
+        !loadTextureFrames(water, waterFrames, 4))
+    {
+        freeTextureFrames(forcefield, 4);
+        freeTextureFrames(water, 4);
+        EndSDL2Session();
+        fprintf(stderr, "Failed to allocate animated texture buffers\n");
+        return 1;
+    }
     
     rc3dInit();
     rc3dPreparePalette();
@@ -303,6 +344,8 @@ int main(int argc, char **argv)
         //SDL_RenderPresent(ren);
     }while (running) ;
 
+    freeTextureFrames(forcefield, 4);
+    freeTextureFrames(water, 4);
     EndSDL2Session();
     printf("Dead cool wasnt it!!?\n");
     return 0;

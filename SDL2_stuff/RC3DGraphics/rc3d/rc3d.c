@@ -359,6 +359,7 @@ static float wallTexRotSinGlobal = 0.0f;
 static float projPlaneGlobal = 0.0f;
 
 static RC3D_Texture g_rc3dTextures[256];
+static uint8_t g_rc3dTextureOwnsPixels[256];
 static int g_rc3dTexturesInit = 0;
 static uint64_t g_textureTransparentColumnMask[256];
 static uint8_t g_textureHasTransparency[256];
@@ -1214,6 +1215,49 @@ extern uint8_t tex_notset[];
 //extern uint8_t spr_gricy1[];
 extern uint8_t tex_skybox[RC3D_SKYBOX_W * RC3D_SKYBOX_H];
 
+static inline size_t rc3dTexturePixelCount(void)
+{
+    return (size_t)RC3D_TEX_SIZE * (size_t)RC3D_TEX_SIZE;
+}
+
+static uint8_t *rc3dTexturePixelsForRead(uint8_t textureindex)
+{
+    if (g_rc3dTextures[textureindex].pix) {
+        return g_rc3dTextures[textureindex].pix;
+    }
+
+    return tex_notset;
+}
+
+static void rc3dReleaseTextureSlotPixels(uint8_t textureindex)
+{
+    if (g_rc3dTextureOwnsPixels[textureindex] && g_rc3dTextures[textureindex].pix) {
+        free(g_rc3dTextures[textureindex].pix);
+    }
+
+    g_rc3dTextures[textureindex].pix = NULL;
+    g_rc3dTextureOwnsPixels[textureindex] = 0u;
+}
+
+static int rc3dEnsureTextureSlotPixels(uint8_t textureindex)
+{
+    uint8_t *pixels;
+
+    if (g_rc3dTextures[textureindex].pix) {
+        return 1;
+    }
+
+    pixels = (uint8_t *)malloc(rc3dTexturePixelCount());
+    if (!pixels) {
+        return 0;
+    }
+
+    memcpy(pixels, tex_notset, rc3dTexturePixelCount());
+    g_rc3dTextures[textureindex].pix = pixels;
+    g_rc3dTextureOwnsPixels[textureindex] = 1u;
+    return 1;
+}
+
 static void rc3dBuildDefaultTextures(void)
 {
     int x, y, i;
@@ -1221,15 +1265,26 @@ static void rc3dBuildDefaultTextures(void)
     char filename[256];
 
     for (i = 0; i < 256; ++i) {
-        tindex = 0;
-        for (y = 0; y < RC3D_TEX_SIZE; ++y) {
-            for (x = 0; x < RC3D_TEX_SIZE; ++x) {
-                g_rc3dTextures[i].pix[(y * RC3D_TEX_SIZE) + x] = tex_notset[tindex++];
+        if (!g_rc3dTextures[i].pix) {
+            tindex = 0;
+            if (!rc3dEnsureTextureSlotPixels((uint8_t)i)) {
+                fprintf(stderr, "rc3dBuildDefaultTextures: failed to allocate texture slot %d\n", i);
+                return;
+            }
+
+            for (y = 0; y < RC3D_TEX_SIZE; ++y) {
+                for (x = 0; x < RC3D_TEX_SIZE; ++x) {
+                    g_rc3dTextures[i].pix[(y * RC3D_TEX_SIZE) + x] = tex_notset[tindex++];
+                }
             }
         }
     }
 
     for (tindex = 0; tindex < 255; tindex++) {
+        if (!g_rc3dTextureOwnsPixels[tindex]) {
+            continue;
+        }
+
         snprintf(filename, sizeof(filename), "./textures/%02u.ppb", (unsigned)tindex);
         LoadPPB(filename, g_rc3dTextures[tindex].pix);
     }
@@ -1237,15 +1292,67 @@ static void rc3dBuildDefaultTextures(void)
     snprintf(filename, sizeof(filename), "./textures/255.ppb");
     LoadPPB(filename, tex_skybox);
 
+    //g_rc3dTextures[0xf9].pix = fb;
+
+
     rc3dBuildTextureTransparencyMasks();
     g_rc3dTexturesInit = 1;
 }
 
+int rc3dTextureAlloc(RC3D_Texture *texture)
+{
+    if (!texture) {
+        return 0;
+    }
+
+    if (texture->pix) {
+        return 1;
+    }
+
+    texture->pix = (uint8_t *)calloc(rc3dTexturePixelCount(), sizeof(uint8_t));
+    return texture->pix ? 1 : 0;
+}
+
+void rc3dTextureFree(RC3D_Texture *texture)
+{
+    if (!texture || !texture->pix) {
+        return;
+    }
+
+    free(texture->pix);
+    texture->pix = NULL;
+}
+
+int rc3dTextureSetSlotPixels(uint8_t textureindex, uint8_t *pixels)
+{
+    if (g_rc3dTextures[textureindex].pix == pixels) {
+        return 1;
+    }
+
+    rc3dReleaseTextureSlotPixels(textureindex);
+    g_rc3dTextures[textureindex].pix = pixels;
+    g_rc3dTextureOwnsPixels[textureindex] = 0u;
+
+    if (g_rc3dTexturesInit) {
+        rc3dBuildTextureTransparencyMasks();
+    }
+
+    return 1;
+}
+
 uint8_t *rc3d_GetTexturePtr(uint8_t textureindex){
+    if (!rc3dEnsureTextureSlotPixels(textureindex)) {
+        return NULL;
+    }
+
     return g_rc3dTextures[textureindex].pix;
 }
 
 void copyTextureToTexture(uint8_t *from, uint8_t *to, int sizex, int sizey){
+    if (!from || !to || sizex <= 0 || sizey <= 0) {
+        return;
+    }
+
     for(int p = 0; p < (sizex * sizey); p++){
         *to++ = *from++;
     }
@@ -1438,10 +1545,11 @@ static void rc3dBuildTextureTransparencyMasks(void)
     for (int texId = 0; texId < 256; ++texId) {
         uint64_t columnMask = 0u;
         int hasTransparency = 0;
+        const uint8_t *texels = rc3dTexturePixelsForRead((uint8_t)texId);
 
         for (int x = 0; x < RC3D_TEX_SIZE; ++x) {
             for (int y = 0; y < RC3D_TEX_SIZE; ++y) {
-                if (g_rc3dTextures[texId].pix[(y * RC3D_TEX_SIZE) + x] == RC3D_SPRITE_TEX_TRANSPARENT) {
+                if (texels[(y * RC3D_TEX_SIZE) + x] == RC3D_SPRITE_TEX_TRANSPARENT) {
                     columnMask |= (1ULL << x);
                     hasTransparency = 1;
                     break;
@@ -3460,7 +3568,7 @@ static inline void drawTexturedPlaneSpan(
         const float eyeZ = g_renderEyeZ;
         const float planeFactor = (planeZ - eyeZ) * projPlaneGlobal;
         const float *invTable = &g_invDTable[SCREEN_H];
-        const uint8_t *texels = g_rc3dTextures[texId].pix;
+        const uint8_t *texels = rc3dTexturePixelsForRead(texId);
         const uint8_t texFlags = sec->texFlags;
         uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
 
@@ -3710,7 +3818,7 @@ static inline void renderTexturedBandIfVisible(
             }
 
             {
-                const uint8_t *texels = g_rc3dTextures[texId].pix;
+                const uint8_t *texels = rc3dTexturePixelsForRead(texId);
                 uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
                 //const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
                 const float shadeDist = (hitDist * RC3D_LIGHT_WALL_DIST_SCALE) + g_wallShadeBiasGlobal;
@@ -3842,7 +3950,7 @@ static inline void renderMaskedTexturedBandIfVisible(
             }
 
             {
-                const uint8_t *texels = g_rc3dTextures[texId].pix;
+                const uint8_t *texels = rc3dTexturePixelsForRead(texId);
                 uint8_t *dst = rc3dViewportPixelPtr(sx, y0);
                 int opaqueSpanStart = -1;
                 //const float shadeDist = hitDist * RC3D_LIGHT_WALL_DIST_SCALE;
@@ -5124,7 +5232,7 @@ static int rc3dBuildVisibleSpriteList(float eyeZ, float dirX, float dirY)
             break;
         }
 
-        texels = g_rc3dTextures[sprite->texId].pix;
+        texels = rc3dTexturePixelsForRead(sprite->texId);
         insertAt = visibleCount;
 
         while (insertAt > 0) {
