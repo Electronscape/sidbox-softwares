@@ -14,7 +14,7 @@
 #include "rc3d/rc3d.h"
 
 
-#define FPS        60
+#define FPS        75
 
 int tmr1;
 //static uint8_t mouseAction = 0;
@@ -328,6 +328,10 @@ int main(int argc, char **argv)
 
             shiftTexture(4, TEXSHIFT_UP);
             shiftTextureFX(4, TEXSHIFT_SINOUSSX | TEXSHIFT_SINOUSCY, 12.0f, 12.0f, 2.0f, 1.0f, dt);
+            static float bum = 0.0f;
+            bum += (0.10 * dt);
+            if(bum>1.0f) bum = 0.0f;
+            rc3dSetSectorWallTextureOffset(14, bum,0);
         
             rc3dRender();
         }

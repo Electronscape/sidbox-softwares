@@ -414,6 +414,7 @@ void rcguiUpdate(RCGUI_Context *ui,
 {
     int i;
     int currentTooltipId = 0;
+    int prevTooltipId;
     uint32_t nowMs;
 
     ui->mouseX = mouseX;
@@ -424,6 +425,7 @@ void rcguiUpdate(RCGUI_Context *ui,
 
     ui->hotId = 0;
     ui->hitId = 0;
+    prevTooltipId = ui->tooltipId;
     ui->tooltipId = 0;
 
     for (i = 0; i < ui->buttonCount; i++) {
@@ -484,6 +486,13 @@ void rcguiUpdate(RCGUI_Context *ui,
     if (currentTooltipId != 0 &&
         (nowMs - ui->tooltipHoverStartMs) >= ui->tooltipDelayMs) {
         ui->tooltipId = currentTooltipId;
+    } else if (currentTooltipId != 0) {
+        /* Keep the editor ticking until the hover delay expires. */
+        rc3dGuiDirty();
+    }
+
+    if (ui->tooltipId != prevTooltipId) {
+        rc3dGuiDirty();
     }
 }
 

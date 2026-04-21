@@ -174,6 +174,26 @@ enum
     GUI_BTN_WALL_CLAMP_YT,
     GUI_BTN_WALL_CLAMP_YB,
     GUI_BTN_WALL_FLIP_Y,
+    GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS,
+    GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS,
+    GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS,
+    GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS,
+
+    GUI_BTN_WALL_COPY_PROPS,
+    GUI_BTN_WALL_PASTE_PROPS,
+    GUI_BTN_WALL_OPENBOT_MINUS,
+    GUI_BTN_WALL_OPENBOT_PLUS,
+    GUI_BTN_WALL_OPENTOP_MINUS,
+    GUI_BTN_WALL_OPENTOP_PLUS,
+    GUI_BTN_WALL_TEX_SX_MINUS,
+    GUI_BTN_WALL_TEX_SX_PLUS,
+    GUI_BTN_WALL_TEX_SY_MINUS,
+    GUI_BTN_WALL_TEX_SY_PLUS,
+    GUI_BTN_WALL_TEX_ROT_MINUS,
+    GUI_BTN_WALL_TEX_ROT_PLUS,
+    GUI_BTN_WALL_TEX_ROT_RESET,
+    GUI_BTN_WALL_TEX_BRIGHT_MINUS,
+    GUI_BTN_WALL_TEX_BRIGHT_PLUS,
 
     GUI_BTN_WALL_QUICK_TEXTURE,
 
@@ -224,21 +244,7 @@ enum
     GUI_BTN_SECTOR_FLAGS_BIT14,
     GUI_BTN_SECTOR_FLAGS_BIT15,
 
-    GUI_BTN_WALL_COPY_PROPS,
-    GUI_BTN_WALL_PASTE_PROPS,
-    GUI_BTN_WALL_OPENBOT_MINUS,
-    GUI_BTN_WALL_OPENBOT_PLUS,
-    GUI_BTN_WALL_OPENTOP_MINUS,
-    GUI_BTN_WALL_OPENTOP_PLUS,
-    GUI_BTN_WALL_TEX_SX_MINUS,
-    GUI_BTN_WALL_TEX_SX_PLUS,
-    GUI_BTN_WALL_TEX_SY_MINUS,
-    GUI_BTN_WALL_TEX_SY_PLUS,
-    GUI_BTN_WALL_TEX_ROT_MINUS,
-    GUI_BTN_WALL_TEX_ROT_PLUS,
-    GUI_BTN_WALL_TEX_ROT_RESET,
-    GUI_BTN_WALL_TEX_BRIGHT_MINUS,
-    GUI_BTN_WALL_TEX_BRIGHT_PLUS,
+
 
     GUI_BTN_OBJECT_TAGID_PLUS,
     GUI_BTN_OBJECT_TAGID_MINUS,
@@ -420,6 +426,8 @@ typedef struct {
     uint32_t tex_flags;  // texture clamp/uv behaviour flags, packed wall brightness
     float texScaleX;
     float texScaleY;
+    float texOffsetX;
+    float texOffsetY;
 } EdWall;
 
 
@@ -492,6 +500,8 @@ typedef struct {
     uint32_t tex_flags;
     float texScaleX;
     float texScaleY;
+    float texOffsetX;
+    float texOffsetY;
 } EdWallClipboard;
 
 typedef struct {
@@ -1701,6 +1711,10 @@ static int isAutoRepeatUIButton(int buttonId)
         case GUI_BTN_WALL_TEX_ROT_PLUS:
         case GUI_BTN_WALL_TEX_BRIGHT_MINUS:
         case GUI_BTN_WALL_TEX_BRIGHT_PLUS:
+        case GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS:
+        case GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS:
+        case GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS:
+        case GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS:
 
         /* sector */
         case GUI_BTN_SECTOR_FLOOR_MINUS:
@@ -5182,6 +5196,9 @@ static void drawIsoWallFace(int wallIndex,
                 texU = along * faceUSpan;
                 texV = relHeight * faceVSpan / (zTop - zBottom);
 
+                texU += (w->texOffsetX * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleX;
+                texV += (w->texOffsetY * ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT) / texScaleY;
+
                 if (flipTexX) {
                     texU = faceUSpan - texU;
                 }
@@ -5615,6 +5632,8 @@ static void clearWallTexFlags(EdWall *w)
     w->tex_flags = RC3D_TEX_FLAG_DEFAULT;
     w->texScaleX = 1.0f;
     w->texScaleY = 1.0f;
+    w->texOffsetX = 0.0f;
+    w->texOffsetY = 0.0f;
 }
 
 static uint8_t wallClipboardFlagsFromWall(const EdWall *w)
@@ -6277,6 +6296,8 @@ static void copyWallPropsToClipboard(int wallIndex)
     clip->tex_flags = wall->tex_flags;
     clip->texScaleX = wall->texScaleX;
     clip->texScaleY = wall->texScaleY;
+    clip->texOffsetX = wall->texOffsetX;
+    clip->texOffsetY = wall->texOffsetY;
 
     g_ed.hasCopiedWallProps = 1;
     g_ed.copiedWallPropsSourceWall = wallIndex;
@@ -6312,6 +6333,8 @@ static void pasteWallPropsFromClipboardToWall(int wallIndex)
     wall->tex_flags = clip->tex_flags;
     setWallTexScaleX(wall, clip->texScaleX);
     setWallTexScaleY(wall, clip->texScaleY);
+    wall->texOffsetX = clip->texOffsetX;
+    wall->texOffsetY = clip->texOffsetY;
 }
 
 static float wrapAnglePositive(float angleRad)
@@ -6402,6 +6425,26 @@ static void setWallTexScaleY(EdWall *w, float scaleY)
 {
     if (!w) return;
     w->texScaleY = clampWallTexScale(scaleY);
+}
+
+static void adjustWallTexOffsetX(int wallIndex, float delta)
+{
+    EdWall *w;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+
+    w = &g_edMap.walls[wallIndex];
+    w->texOffsetX += delta;
+}
+
+static void adjustWallTexOffsetY(int wallIndex, float delta)
+{
+    EdWall *w;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
+
+    w = &g_edMap.walls[wallIndex];
+    w->texOffsetY += delta;
 }
 
 static void setWallTexAngleEx(int wallIndex, float angleRad)
@@ -9373,7 +9416,7 @@ static int saveTextMap(const char *path)
     FILE *f = fopen(path, "w");
     if (!f) return 0;
 
-    fprintf(f, "MAPEDIT7\n");
+    fprintf(f, "MAPEDIT8\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
 
@@ -9385,7 +9428,7 @@ static int saveTextMap(const char *path)
     fprintf(f, "WALLS %d\n", g_edMap.wallCount);
     for (int i = 0; i < g_edMap.wallCount; i++) {
         const EdWall *w = &g_edMap.walls[i];
-        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %u %.6f %.6f\n",
+        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %u %.6f %.6f %.6f %.6f\n",
             w->v0, w->v1, w->neighbour,
             w->openBottom, w->openTop,
             (unsigned)w->upperColor,
@@ -9394,7 +9437,9 @@ static int saveTextMap(const char *path)
             (unsigned)w->flags,
             (unsigned)w->tex_flags,
             w->texScaleX,
-            w->texScaleY);
+            w->texScaleY,
+            w->texOffsetX,
+            w->texOffsetY);
     }
 
     fprintf(f, "SECTORS %d\n", g_edMap.sectorCount);
@@ -9513,6 +9558,8 @@ static int loadTextMap(const char *path)
         mapVersion = 6;
     } else if (strcmp(tag, "MAPEDIT7") == 0) {
         mapVersion = 7;
+    } else if (strcmp(tag, "MAPEDIT8") == 0) {
+        mapVersion = 8;
     } else {
         fclose(f);
         return 0;
@@ -9566,7 +9613,22 @@ static int loadTextMap(const char *path)
         unsigned tex_flags;
         clearWallTexFlags(&newMap.walls[i]);
 
-        if (mapVersion >= 3) {
+        if (mapVersion >= 8) {
+            if (fscanf(f, "%d %d %d %f %f %u %u %u %u %u %f %f %f %f",
+                    &newMap.walls[i].v0,
+                    &newMap.walls[i].v1,
+                    &newMap.walls[i].neighbour,
+                    &newMap.walls[i].openBottom,
+                    &newMap.walls[i].openTop,
+                    &uc, &mc, &lc, &flags, &tex_flags,
+                    &newMap.walls[i].texScaleX,
+                    &newMap.walls[i].texScaleY,
+                    &newMap.walls[i].texOffsetX,
+                    &newMap.walls[i].texOffsetY) != 14) {
+                fclose(f);
+                return 0;
+            }
+        } else if (mapVersion >= 3) {
             if (fscanf(f, "%d %d %d %f %f %u %u %u %u %u %f %f",
                     &newMap.walls[i].v0,
                     &newMap.walls[i].v1,
@@ -9898,6 +9960,8 @@ int exportBinaryMap(const char *path)
         uint32_t tex_flags = w->tex_flags;
         float texScaleX    = w->texScaleX;
         float texScaleY    = w->texScaleY;
+        float texOffsetX    = w->texOffsetX;
+        float texOffsetY    = w->texOffsetY;
 
         if (fwrite(&v0,         sizeof(v0),         1, f) != 1 ||
             fwrite(&v1,         sizeof(v1),         1, f) != 1 ||
@@ -9910,7 +9974,10 @@ int exportBinaryMap(const char *path)
             fwrite(&flags,      sizeof(flags),      1, f) != 1 ||
             fwrite(&tex_flags,  sizeof(tex_flags),  1, f) != 1 ||
             fwrite(&texScaleX,  sizeof(texScaleX),  1, f) != 1 ||
-            fwrite(&texScaleY,  sizeof(texScaleY),  1, f) != 1) {
+            fwrite(&texScaleY,  sizeof(texScaleY),  1, f) != 1 ||
+            fwrite(&texOffsetX, sizeof(texOffsetX),  1, f) != 1 ||
+            fwrite(&texOffsetY, sizeof(texOffsetY),  1, f) != 1
+        ) {
             fclose(f);
             return 0;
         }
@@ -10043,7 +10110,7 @@ static int exportCStringMap(const char *path)
         const EdWall *w = &g_edMap.walls[i];
 
         fprintf(f,
-            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %uu, %.6ff, %.6ff },\n",
+            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %uu, %.6ff, %.6ff, %.6ff, %.6ff },\n",
             w->v0,
             w->v1,
             w->neighbour,
@@ -10055,7 +10122,9 @@ static int exportCStringMap(const char *path)
             (unsigned)w->flags,
             (unsigned)w->tex_flags,
             w->texScaleX,
-            w->texScaleY);
+            w->texScaleY,
+            w->texOffsetX,
+            w->texOffsetY);
     }
     fprintf(f, "};\n\n");
 
@@ -10987,8 +11056,9 @@ static void repairMapTopology(void)
     float nearEps  = g_ed.currentGridStep * 0.05f;
     int mergedAny = 0;
 
-    if (nearEps < 0.001f) nearEps = 0.001f;
-    if (nearEps > 0.05f)  nearEps = 0.05f;
+    //if (nearEps < 0.001f) nearEps = 0.001f;
+    //if (nearEps > 0.05f)  nearEps = 0.005f;
+    nearEps = 0.001f;
 
     clearMultiVertexSelection();
 
@@ -12444,28 +12514,21 @@ static void drawWallNormal(int wallIndex, uint8_t colour)
 static const char *getObjectTypeName(uint32_t type)
 {
     switch ((RC3D_ObjectType)type) {
-        case RC3D_OBJTYPE_SPRITE:
-            return "floating sprite";
-        case RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT:
-            return "sector trigger (in/out)";
-        case RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER:
-            return "sector trigger (entry)";
-        case RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT:
-            return "sector trigger (exit)";
-        case RC3D_OBJTYPE_ROUTE_PREVIEW:
-            return "route preview";
-        case RC3D_OBJTYPE_BAKED_ROUTE_NODE:
-            return "baked route node";
-        case RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT:
-            return "object trigger (in/out)";
-        case RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER:
-            return "object trigger (entry)";
-        case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:
-            return "object trigger (exit)";
-        case RC3D_OBJTYPE_OBJECT_TELEPORTER:
-            return "object teleporter";
+        case RC3D_OBJTYPE_SPRITE:               return "floating sprite";
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT: return "sector trigger (in/out)";
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER: return "sector trigger (entry)";
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT:  return "sector trigger (exit)";
+        case RC3D_OBJTYPE_ROUTE_PREVIEW:        return "route preview";
+        case RC3D_OBJTYPE_BAKED_ROUTE_NODE:     return "baked route node";
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT: return "object trigger (in/out)";
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER: return "object trigger (entry)";
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:  return "object trigger (exit)";
+        case RC3D_OBJTYPE_OBJECT_TELEPORTER:    return "object teleporter";
+        case RC3D_OBJTYPE_OBJECT_CLICKABLE:     return "clickable object";
+        case RC3D_OBJTYPE_OBJECT_ACTIOBUTTON:   return "firebutton object";
+        case RC3D_OBJTYPE_OBJECT_GENERIC_USER:  return "generic user defined";
         default:
-            return "custom / engine-defined";
+            return "UNDEFINED:EDITOR_BUG!";
     }
 }
 
@@ -12517,12 +12580,12 @@ static int objectTypeUsesOutsidePayload(uint32_t type)
 
 static int objectTypeHasBuiltinSelectorEntry(uint32_t type)
 {
-    return type <= (uint32_t)RC3D_OBJTYPE_OBJECT_TELEPORTER;
+    return type <= (uint32_t)RC3D_OBJTYPE_ENDLIST;
 }
 
 static int getObjectTypePopupItemCountForCurrentType(uint32_t currentType)
 {
-    int itemCount = (int)RC3D_OBJTYPE_OBJECT_TELEPORTER + 1;
+    int itemCount = (int)RC3D_OBJTYPE_ENDLIST;
 
     if (!objectTypeHasBuiltinSelectorEntry(currentType)) {
         itemCount++;
@@ -12533,7 +12596,7 @@ static int getObjectTypePopupItemCountForCurrentType(uint32_t currentType)
 
 static uint32_t getObjectTypePopupTypeForItemIndex(uint32_t currentType, int itemIndex)
 {
-    const int maxBuiltinType = (int)RC3D_OBJTYPE_OBJECT_TELEPORTER;
+    const int maxBuiltinType = (int)RC3D_OBJTYPE_ENDLIST;
 
     if (!objectTypeHasBuiltinSelectorEntry(currentType)) {
         if (itemIndex <= 0) {
@@ -12842,6 +12905,8 @@ static void drawObjectTypePopup(void)
 
     px += 4;
 
+    #define DROPPAD 6
+    drawRectDots(px - DROPPAD, py - DROPPAD, pw + (DROPPAD * 2), ph + (DROPPAD * 2), 16);
     drawRect(px, py, pw, ph, ED_UI_BG);
     drawRectL(px, py, pw, ph, ED_UI_BORDER);
     drawText(px + 8, py + 6, "Object Type", ED_INSPECTOR_TEXT_COL);
@@ -12917,6 +12982,59 @@ static int objectTagIdHasDuplicate(int tagId, int ignoreObjectIndex)
     }
 
     return 0;
+}
+
+static int sectorTagIdHasDuplicate(int tagId, int ignoreSectorIndex)
+{
+    if (tagId <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_edMap.sectorCount; i++) {
+        if (i == ignoreSectorIndex) {
+            continue;
+        }
+
+        if (g_edMap.sectors[i].tagId == tagId) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int sectorTagIdHasLinkedObject(int tagId)
+{
+    if (tagId <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        const EdObject *o = &g_edMap.objects[i];
+
+        if (!objectUsesSectorTarget(o)) {
+            continue;
+        }
+
+        if (o->targetTagId == tagId) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static char sectorTagIdDisplayMarker(int tagId, int ignoreSectorIndex)
+{
+    if (!sectorTagIdHasDuplicate(tagId, ignoreSectorIndex)) {
+        return '\0';
+    }
+
+    if (sectorTagIdHasLinkedObject(tagId)) {
+        return '!';
+    }
+
+    return '*';
 }
 
 static int objectIsBakedRouteNode(const EdObject *o)
@@ -15295,82 +15413,58 @@ static void initEditorButtonTooltips(void)
     setEditorButtonTooltip(GUI_BTN_WALL_FLIP_X, "Flip the wall texture horizontally");
     setEditorButtonTooltip(GUI_BTN_WALL_FLIP_Y, "Flip the wall texture vertically");
 
-    setEditorButtonTooltipPair(GUI_BTN_WALL_OPENBOT_MINUS, GUI_BTN_WALL_OPENBOT_PLUS,
-                               "Lower the wall bottom opening", "Raise the wall bottom opening");
-    setEditorButtonTooltipPair(GUI_BTN_WALL_OPENTOP_MINUS, GUI_BTN_WALL_OPENTOP_PLUS,
-                               "Lower the wall top opening", "Raise the wall top opening");
-    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_SX_MINUS, GUI_BTN_WALL_TEX_SX_PLUS,
-                               "Decrease wall texture X scale", "Increase wall texture X scale");
-    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_SY_MINUS, GUI_BTN_WALL_TEX_SY_PLUS,
-                               "Decrease wall texture Y scale", "Increase wall texture Y scale");
-    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_ROT_MINUS, GUI_BTN_WALL_TEX_ROT_PLUS,
-                               "Rotate the wall texture left", "Rotate the wall texture right");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_OPENBOT_MINUS, GUI_BTN_WALL_OPENBOT_PLUS, "Lower the wall bottom opening", "Raise the wall bottom opening");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_OPENTOP_MINUS, GUI_BTN_WALL_OPENTOP_PLUS, "Lower the wall top opening", "Raise the wall top opening");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_SX_MINUS, GUI_BTN_WALL_TEX_SX_PLUS, "Decrease wall texture X scale", "Increase wall texture X scale");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_SY_MINUS, GUI_BTN_WALL_TEX_SY_PLUS, "Decrease wall texture Y scale", "Increase wall texture Y scale");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_ROT_MINUS, GUI_BTN_WALL_TEX_ROT_PLUS, "Rotate the wall texture left", "Rotate the wall texture right");
+
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS, GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS, "Decrease wall texture X offset", "Increase wall texture X offset");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS, GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS, "Decrease wall texture Y offset", "Increase wall texture Y offset");
+
     setEditorButtonTooltip(GUI_BTN_WALL_TEX_ROT_RESET, "Reset wall texture rotation");
-    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_BRIGHT_MINUS, GUI_BTN_WALL_TEX_BRIGHT_PLUS,
-                               "Dim the wall texture brightness", "Brighten the wall texture");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_TEX_BRIGHT_MINUS, GUI_BTN_WALL_TEX_BRIGHT_PLUS, "Dim the wall texture brightness", "Brighten the wall texture");
     setEditorButtonTooltip(GUI_BTN_WALL_QUICK_TEXTURE, "Quick-set wall middle texture\nto 255");
 
     setEditorButtonTooltip(GUI_BTN_SECTOR_COPY_PROPS, "Copy properties from the selected sector");
     setEditorButtonTooltip(GUI_BTN_SECTOR_PASTE_PROPS, "Paste copied properties onto selected sectors");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MINUS, GUI_BTN_SECTOR_FLOOR_PLUS,
-                               "Lower the sector floor", "Raise the sector floor");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MINUS, GUI_BTN_SECTOR_CEIL_PLUS,
-                               "Lower the sector ceiling", "Raise the sector ceiling");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_GLOW_MINUS, GUI_BTN_SECTOR_GLOW_PLUS,
-                               "Decrease the sector glow level", "Increase the sector glow level");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_TAG_MINUS, GUI_BTN_SECTOR_TAG_PLUS,
-                               "Decrease the sector tag id", "Increase the sector tag id");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_STATE_MINUS, GUI_BTN_SECTOR_STATE_PLUS,
-                               "Decrease the sector mover state", "Increase the sector mover state");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MIN_MINUS, GUI_BTN_SECTOR_FLOOR_MIN_PLUS,
-                               "Lower the sector floor minimum", "Raise the sector floor minimum");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MAX_MINUS, GUI_BTN_SECTOR_FLOOR_MAX_PLUS,
-                               "Lower the sector floor maximum", "Raise the sector floor maximum");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MIN_MINUS, GUI_BTN_SECTOR_CEIL_MIN_PLUS,
-                               "Lower the sector ceiling minimum", "Raise the sector ceiling minimum");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MAX_MINUS, GUI_BTN_SECTOR_CEIL_MAX_PLUS,
-                               "Lower the sector ceiling maximum", "Raise the sector ceiling maximum");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,
-                               "Lower the sector floor flow height", "Raise the sector floor flow height");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_FLOW_MINUS, GUI_BTN_SECTOR_CEIL_FLOW_PLUS,
-                               "Lower the sector ceiling flow height", "Raise the sector ceiling flow height");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MINUS, GUI_BTN_SECTOR_FLOOR_PLUS, "Lower the sector floor", "Raise the sector floor");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MINUS, GUI_BTN_SECTOR_CEIL_PLUS, "Lower the sector ceiling", "Raise the sector ceiling");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_GLOW_MINUS, GUI_BTN_SECTOR_GLOW_PLUS, "Decrease the sector glow level", "Increase the sector glow level");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_TAG_MINUS, GUI_BTN_SECTOR_TAG_PLUS, "Decrease the sector tag id", "Increase the sector tag id");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_STATE_MINUS, GUI_BTN_SECTOR_STATE_PLUS, "Decrease the sector mover state", "Increase the sector mover state");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MIN_MINUS, GUI_BTN_SECTOR_FLOOR_MIN_PLUS, "Lower the sector floor minimum", "Raise the sector floor minimum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_MAX_MINUS, GUI_BTN_SECTOR_FLOOR_MAX_PLUS, "Lower the sector floor maximum", "Raise the sector floor maximum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MIN_MINUS, GUI_BTN_SECTOR_CEIL_MIN_PLUS, "Lower the sector ceiling minimum", "Raise the sector ceiling minimum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_MAX_MINUS, GUI_BTN_SECTOR_CEIL_MAX_PLUS, "Lower the sector ceiling maximum", "Raise the sector ceiling maximum");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FLOOR_FLOW_MINUS, GUI_BTN_SECTOR_FLOOR_FLOW_PLUS, "Lower the sector floor flow height", "Raise the sector floor flow height");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CEIL_FLOW_MINUS, GUI_BTN_SECTOR_CEIL_FLOW_PLUS, "Lower the sector ceiling flow height", "Raise the sector ceiling flow height");
 
     setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_X1, "Clamp the sector texture on the X1 edge");
     setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_X2, "Clamp the sector texture on the X2 edge");
     setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_Y1, "Clamp the sector texture on the Y1 edge");
     setEditorButtonTooltip(GUI_BTN_SECTOR_CLAMP_Y2, "Clamp the sector texture on the Y2 edge");
 
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_SX_MINUS, GUI_BTN_SECTOR_CTEX_SX_PLUS,
-                               "Decrease ceiling texture X scale", "Increase ceiling texture X scale");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_SY_MINUS, GUI_BTN_SECTOR_CTEX_SY_PLUS,
-                               "Decrease ceiling texture Y scale", "Increase ceiling texture Y scale");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_ROT_MINUS, GUI_BTN_SECTOR_CTEX_ROT_PLUS,
-                               "Rotate the ceiling texture left", "Rotate the ceiling texture right");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_SX_MINUS, GUI_BTN_SECTOR_CTEX_SX_PLUS, "Decrease ceiling texture X scale", "Increase ceiling texture X scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_SY_MINUS, GUI_BTN_SECTOR_CTEX_SY_PLUS, "Decrease ceiling texture Y scale", "Increase ceiling texture Y scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_CTEX_ROT_MINUS, GUI_BTN_SECTOR_CTEX_ROT_PLUS, "Rotate the ceiling texture left", "Rotate the ceiling texture right");
     setEditorButtonTooltip(GUI_BTN_SECTOR_CTEX_ROT_RESET, "Reset ceiling texture rotation");
 
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_SX_MINUS, GUI_BTN_SECTOR_FTEX_SX_PLUS,
-                               "Decrease floor texture X scale", "Increase floor texture X scale");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_SY_MINUS, GUI_BTN_SECTOR_FTEX_SY_PLUS,
-                               "Decrease floor texture Y scale", "Increase floor texture Y scale");
-    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_ROT_MINUS, GUI_BTN_SECTOR_FTEX_ROT_PLUS,
-                               "Rotate the floor texture left", "Rotate the floor texture right");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_SX_MINUS, GUI_BTN_SECTOR_FTEX_SX_PLUS, "Decrease floor texture X scale", "Increase floor texture X scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_SY_MINUS, GUI_BTN_SECTOR_FTEX_SY_PLUS, "Decrease floor texture Y scale", "Increase floor texture Y scale");
+    setEditorButtonTooltipPair(GUI_BTN_SECTOR_FTEX_ROT_MINUS, GUI_BTN_SECTOR_FTEX_ROT_PLUS, "Rotate the floor texture left", "Rotate the floor texture right");
     setEditorButtonTooltip(GUI_BTN_SECTOR_FTEX_ROT_RESET, "Reset floor texture rotation");
 
     for (int bit = 0; bit < 16; bit++) {
         setEditorButtonTooltip(GUI_BTN_SECTOR_FLAGS_BIT0 + bit, sectorFlagTooltips[bit]);
     }
 
-    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TAGID_MINUS, GUI_BTN_OBJECT_TAGID_PLUS,
-                               "Decrease the object tag id", "Increase the object tag id");
-    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ZAXIS_MINUS, GUI_BTN_OBJECT_ZAXIS_PLUS,
-                               "Lower the object Z position", "Raise the object Z position");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TAGID_MINUS, GUI_BTN_OBJECT_TAGID_PLUS, "Decrease the object tag id", "Increase the object tag id");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ZAXIS_MINUS, GUI_BTN_OBJECT_ZAXIS_PLUS, "Lower the object Z position", "Raise the object Z position");
     setEditorButtonTooltip(GUI_BTN_OBJECT_GET_ZAXIS, "Snap the object Z\nto its sector floor");
-    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ANGLE_MINUS, GUI_BTN_OBJECT_ANGLE_PLUS,
-                               "Rotate the object facing left", "Rotate the object facing right");
-    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEX_MINUS, GUI_BTN_OBJECT_TSCALEX_PLUS,
-                               "Decrease the object X texture scale", "Increase the object X texture scale");
-    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEY_MINUS, GUI_BTN_OBJECT_TSCALEY_PLUS,
-                               "Decrease the object Y texture scale", "Increase the object Y texture scale");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_ANGLE_MINUS, GUI_BTN_OBJECT_ANGLE_PLUS, "Rotate the object facing left", "Rotate the object facing right");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEX_MINUS, GUI_BTN_OBJECT_TSCALEX_PLUS, "Decrease the object X texture scale", "Increase the object X texture scale");
+    setEditorButtonTooltipPair(GUI_BTN_OBJECT_TSCALEY_MINUS, GUI_BTN_OBJECT_TSCALEY_PLUS, "Decrease the object Y texture scale", "Increase the object Y texture scale");
     refreshObjectInspectorTooltips(NULL);
 
     setEditorButtonTooltip(GUI_BTN_CONFIRM_YES, "Confirm this action");
@@ -15385,7 +15479,7 @@ void rc3dEditInit(void)
     beginNewMap();
 
     rcguiInit(&g_ui);
-    rcguiSetTooltipDelay(&g_ui, 100);
+    rcguiSetTooltipDelay(&g_ui, 300);
 
     g_ed.bShowGridOverall = 1;
     initRememberedDialogDirs();
@@ -15419,7 +15513,7 @@ void rc3dEditInit(void)
 
     #define controloff 33
     #define controloffw 16 + (SCREEN_W - ED_INSPECTOR_PANEL)
-    #define inspectWallYOffset 20
+    int inspectWallYOffset = 20;
 
 
     // Player Angle settings
@@ -15435,6 +15529,22 @@ void rc3dEditInit(void)
                          1);
 
     /* expanded panel button rows aligned to 16px font + 6px spacing */
+    inspectWallYOffset = 20;
+
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_COPY_PROPS,    176 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Copy Props");
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PASTE_PROPS,   278 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Paste Props");
+
+    // sector inspector UI - wall
+    inspectWallYOffset += 30;
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 182 + controloffw, 60 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 60 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+    inspectWallYOffset += 30;
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 60 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 60 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+
+
+    inspectWallYOffset = 20;
+    // Wall flagging
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_SOLID,               controloffw + (64 * 0), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Sld");
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_PORTAL,              controloffw + (64 * 1), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Prtl");
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_WINDOW,              controloffw + (64 * 2), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Wndw");
@@ -15442,16 +15552,25 @@ void rc3dEditInit(void)
     rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_TRANSPARENCY,     controloffw + (64 * 4), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Transp",0);
     rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, controloffw + (68 * 5), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "DblSdd", 0);
 
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_COPY_PROPS,    176 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Copy Props");
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_PASTE_PROPS,   278 + controloffw,  60 + controloff + inspectWallYOffset, 96, ED_BTN_H, "Paste Props");
     
 
-    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (90 * 0) + 80, 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Left",0);
-    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (90 * 1) + 80, 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Right",0);
-    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLIP_X,   controloffw + (90 * 2) + 80, 256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Flip",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (90 * 0) + 80,  256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Left",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XR, controloffw + (90 * 1) + 80,  256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Right",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLIP_X,   controloffw + (90 * 2) + 80,  256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Flip",0);
+    inspectWallYOffset += 30;
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS, controloffw + 136, 256 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS,  controloffw + 164, 256 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+    //
+
+    
     rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_YT, controloffw + (90 * 0) + 80, 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Top", 0);
     rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_YB, controloffw + (90 * 1) + 80, 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Bottom", 0);
     rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLIP_Y,   controloffw + (90 * 2) + 80, 288 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Flip", 0);
+    inspectWallYOffset += 30;
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS, controloffw + 136, 288 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS,  controloffw + 164, 288 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
+    
+
     
 
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_TEX_SX_MINUS, 136 + controloffw, 320 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
@@ -15469,11 +15588,6 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_QUICK_TEXTURE, 260 + controloffw, 384 + controloff + inspectWallYOffset, 100, 24, "Quick Inv.");
     
 
-    // sector inspector UI - wall
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_MINUS, 182 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENTOP_PLUS,  214 + controloffw, 88 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 182 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
-    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS,  214 + controloffw, 116 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
 
     // sector inspector UI - sector / heights
     rcguiCreateButton(&g_ui, GUI_BTN_SECTOR_COPY_PROPS,  206 + controloffw,  58 + controloff, 96, ED_BTN_H, "Copy Props");
@@ -16579,6 +16693,10 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_QUICK_TEXTURE, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_MINUS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OPENBOT_PLUS, 0);
@@ -16828,6 +16946,11 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_ROT_RESET, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_MINUS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEX_BRIGHT_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS, 1);
+
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_QUICK_TEXTURE, 1);
 
     getSelectedWallClampState(&clampXL, &clampXR, &clampYT, &clampYB, &flipX, &flipY,
@@ -17571,6 +17694,52 @@ static void handleEditorUI(int mouseX, int mouseY,
                     textureTargetApply(TEX_TARGET_WALL_MIDDLE, 255);
                 }
             break; 
+            
+
+            case GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        adjustWallTexOffsetX(wallIndices[i], -uiStep);
+                    }
+                }
+                break;
+
+            case GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        adjustWallTexOffsetX(wallIndices[i], uiStep);
+                    }
+                }
+                break;
+
+            case GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        adjustWallTexOffsetY(wallIndices[i], -uiStep);
+                    }
+                }
+                break;
+
+            case GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS:
+                if (hasAnyWallEditSelection()) {
+                    int wallIndices[ED_MAX_WALLS];
+                    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+                    pushUndoState();
+                    for (int i = 0; i < wallCount; i++) {
+                        adjustWallTexOffsetY(wallIndices[i], uiStep);
+                    }
+                }
+                break;
+
 
             case GUI_BTN_OBJECT_TAGID_MINUS:
                 if (g_ed.selectedObject >= 0 && g_ed.selectedObject < g_edMap.objectCount) {
@@ -17873,19 +18042,14 @@ static void drawInspectorPanel(void)
     ///// Wall texture / edit mode /////////////////////////////////////////
     else if (g_ed.selectionType == ED_SEL_WALL && g_ed.selectedWall >= 0) {
         const EdWall *w = &g_edMap.walls[g_ed.selectedWall];
-        //const int clampXL = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXL) != 0;
-        //const int clampXR = (w->tex_flags & RC3D_TEX_FLAG_CLAMPXR) != 0;
-        //const int clampYT = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYT) != 0;
-        //const int clampYB = (w->tex_flags & RC3D_TEX_FLAG_CLAMPYB) != 0;
         const float wallTexAngleDeg = RAD2DEG(getWallTexAngle(w));
         const unsigned wallTexBrightness = (unsigned)getWallTexBrightness(w);
 
         py = 40;
+        drawRect(px + 8, py, pw - 16, 490, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 490, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
-        drawRect(px + 8, py, pw - 16, 430, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 430, ED_INSPECTOR_PARENT_PANELS_FRAME);
         py += 6;
-
         snprintf(buf, sizeof(buf), "WALL %d", g_ed.selectedWall);
         drawText(px + 16, py, buf, ED_INSPECTOR_TEXT_COL); py += 30;
 
@@ -17927,23 +18091,26 @@ static void drawInspectorPanel(void)
         //snprintf(buf, sizeof(buf), "Clamp X:  L[%s] R[%s]", clampXL ? "\x2" : " ", clampXR ? "\x2" : " ");
         snprintf(buf, sizeof(buf), "Clamp X:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
+        snprintf(buf, sizeof(buf), "Offset X: %.3f", w->texOffsetX);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
         //snprintf(buf, sizeof(buf), "Clamp Y:  T[%s] B[%s]", clampYT ? "\x2" : " ", clampYB ? "\x2" : " ");
         snprintf(buf, sizeof(buf), "Clamp Y:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
-        py += 5;
+        snprintf(buf, sizeof(buf), "Offset Y: %.3f", w->texOffsetY);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
+        py += 5;
         snprintf(buf, sizeof(buf), "Scale X: %.3f           Scale Y: %.3f", w->texScaleX, w->texScaleY);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
-        py += 1;
 
+        py += 1;
         snprintf(buf, sizeof(buf), "Tex angle: %.1f\xb0", wallTexAngleDeg);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
-        py += 1;
 
+        py += 1;
         snprintf(buf, sizeof(buf), "Brightness: %u / 7", wallTexBrightness);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
-
     }
     else if (hasMultiWallSelection()) {
         int wallIndices[ED_MAX_WALLS];
@@ -17968,6 +18135,10 @@ static void drawInspectorPanel(void)
         int lowerColorMixed = 0;
         unsigned texFlags = 0;
         int texFlagsMixed = 0;
+        float texOffsetX = 0.0f;
+        int texOffsetXMixed = 0;
+        float texOffsetY = 0.0f;
+        int texOffsetYMixed = 0;
         float texScaleX = 0.0f;
         int texScaleXMixed = 0;
         float texScaleY = 0.0f;
@@ -17989,6 +18160,8 @@ static void drawInspectorPanel(void)
             midColor = w->midColor;
             lowerColor = w->lowerColor;
             texFlags = w->tex_flags;
+            texOffsetX = w->texOffsetX;
+            texOffsetY = w->texOffsetY;
             texScaleX = w->texScaleX;
             texScaleY = w->texScaleY;
             wallTexAngleDeg = RAD2DEG(getWallTexAngle(w));
@@ -18006,6 +18179,8 @@ static void drawInspectorPanel(void)
                 if (other->midColor != midColor) midColorMixed = 1;
                 if (other->lowerColor != lowerColor) lowerColorMixed = 1;
                 if (other->tex_flags != texFlags) texFlagsMixed = 1;
+                if (fabsf(other->texOffsetX - texOffsetX) > ED_EPSILON) texOffsetXMixed = 1;
+                if (fabsf(other->texOffsetY - texOffsetY) > ED_EPSILON) texOffsetYMixed = 1;
                 if (fabsf(other->texScaleX - texScaleX) > ED_EPSILON) texScaleXMixed = 1;
                 if (fabsf(other->texScaleY - texScaleY) > ED_EPSILON) texScaleYMixed = 1;
                 if (fabsf(otherTexAngleDeg - wallTexAngleDeg) > 0.05f) wallTexAngleMixed = 1;
@@ -18024,8 +18199,8 @@ static void drawInspectorPanel(void)
 
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 438, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 438, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect(px + 8, py, pw - 16, 498, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 498, ED_INSPECTOR_PARENT_PANELS_FRAME);
         py += 6;
 
         snprintf(buf, sizeof(buf), "WALLS (%d)", wallCount);
@@ -18074,7 +18249,15 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "Clamp X:");
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
+        if (texOffsetXMixed) snprintf(buf, sizeof(buf), "Offset X: Mixed");
+        else snprintf(buf, sizeof(buf), "Offset X: %.3f", texOffsetX);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
+
         snprintf(buf, sizeof(buf), "Clamp Y:");
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
+
+        if (texOffsetYMixed) snprintf(buf, sizeof(buf), "Offset Y: Mixed");
+        else snprintf(buf, sizeof(buf), "Offset Y: %.3f", texOffsetY);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
         if (texScaleXMixed && texScaleYMixed) {
@@ -18211,6 +18394,7 @@ static void drawInspectorPanel(void)
     
     else if (g_ed.selectionType == ED_SEL_SECTOR && g_ed.selectedSector >= 0) {
         const EdSector *sec = &g_edMap.sectors[g_ed.selectedSector];
+        const char sectorTagMarker = sectorTagIdDisplayMarker(sec->tagId, g_ed.selectedSector);
         py = 40;
 
         drawRect (px + 8, py, pw - 16, 798, ED_INSPECTOR_PARENT_PANELS_BG);
@@ -18320,7 +18504,11 @@ static void drawInspectorPanel(void)
         drawText(px + 18,  py, "SECTOR MOVER", ED_INSPECTOR_PANELS_HEADER_TEXT); py += 20;
 
         py += 6;
-        snprintf(buf, sizeof(buf), "Tag ID: %d", sec->tagId);
+        if (sectorTagMarker != '\0') {
+            snprintf(buf, sizeof(buf), "Tag ID: %d%c", sec->tagId, sectorTagMarker);
+        } else {
+            snprintf(buf, sizeof(buf), "Tag ID: %d", sec->tagId);
+        }
         drawText(px + 18, py, buf, ED_TEXT_COL);
         snprintf(buf, sizeof(buf), "State: 0x%04X", (unsigned)sec->stateFlags);
         drawText(px + 218, py, buf, ED_TEXT_COL); py += 30;
@@ -18418,31 +18606,18 @@ static void drawInspectorPanel(void)
                  o->tagId);
         drawText(px + 16, py + y_off, buf, ED_TEXT_COL);    y_off += 30;
 
-        {
+        { /* Selected Object Type (drop down head) */
             char typeSelectorBuf[96];
             const uint8_t selectorBorder = g_ed.objectTypePopupVisible
                                          ? ED_COLOUR_SELECTED_WALL
                                          : ED_COLOUR_TEXT_BAR_BORDER;
 
             buildObjectTypeSelectorText(typeSelectorBuf, sizeof(typeSelectorBuf), o->type);
-            drawRect(ED_OBJECT_TYPE_SELECTOR_X,
-                     ED_OBJECT_TYPE_SELECTOR_Y,
-                     ED_OBJECT_TYPE_SELECTOR_W,
-                     ED_OBJECT_TYPE_SELECTOR_H,
-                     ED_COLOUR_TEXT_BAR_BG);
-            drawRectL(ED_OBJECT_TYPE_SELECTOR_X,
-                      ED_OBJECT_TYPE_SELECTOR_Y,
-                      ED_OBJECT_TYPE_SELECTOR_W,
-                      ED_OBJECT_TYPE_SELECTOR_H,
-                      selectorBorder);
-            drawText(ED_OBJECT_TYPE_SELECTOR_X + 8,
-                     ED_OBJECT_TYPE_SELECTOR_Y + 4,
-                     typeSelectorBuf,
-                     ED_TEXT_COL);
-            drawText(ED_OBJECT_TYPE_SELECTOR_X + ED_OBJECT_TYPE_SELECTOR_W - 16,
-                     ED_OBJECT_TYPE_SELECTOR_Y + 4,
-                     g_ed.objectTypePopupVisible ? "^" : "v",
-                     ED_INSPECTOR_PANELS_HEADER_TEXT);
+            drawRect(ED_OBJECT_TYPE_SELECTOR_X,  ED_OBJECT_TYPE_SELECTOR_Y, ED_OBJECT_TYPE_SELECTOR_W, ED_OBJECT_TYPE_SELECTOR_H, ED_COLOUR_TEXT_BAR_BG);
+            drawRect(ED_OBJECT_TYPE_SELECTOR_X,  ED_OBJECT_TYPE_SELECTOR_Y, ED_OBJECT_TYPE_SELECTOR_W, ED_OBJECT_TYPE_SELECTOR_H, ED_COLOUR_TEXT_BAR_BG);
+            drawRectL(ED_OBJECT_TYPE_SELECTOR_X, ED_OBJECT_TYPE_SELECTOR_Y, ED_OBJECT_TYPE_SELECTOR_W, ED_OBJECT_TYPE_SELECTOR_H, selectorBorder);
+            drawText(ED_OBJECT_TYPE_SELECTOR_X + 4, ED_OBJECT_TYPE_SELECTOR_Y + 4, typeSelectorBuf, ED_TEXT_COL);
+            drawText(ED_OBJECT_TYPE_SELECTOR_X + ED_OBJECT_TYPE_SELECTOR_W - 16, ED_OBJECT_TYPE_SELECTOR_Y + 4, g_ed.objectTypePopupVisible ? "^" : "v", ED_INSPECTOR_PANELS_HEADER_TEXT);
         }
         y_off += 30;
 

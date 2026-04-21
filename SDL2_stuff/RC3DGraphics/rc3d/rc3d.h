@@ -204,6 +204,8 @@ void rc3dSpriteSetBaseZ(int spriteId, float baseZ);
 int rc3dGetSectorByTag(int32_t tagId);  // get the first sector with this tagid
 int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags);
 void rc3dSetSectorLightLevel(int32_t sectorId, uint8_t level);
+int rc3dSetWallTextureOffset(int32_t wallId, float offsetX, float offsetY);
+int rc3dSetSectorWallTextureOffset(int32_t tagId, float offsetX, float offsetY);
 
 // Sector API - Minimapping
 int rc3dMinimapRevealSector(int32_t sectorId);

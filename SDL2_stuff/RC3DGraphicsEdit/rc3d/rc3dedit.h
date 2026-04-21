@@ -125,6 +125,7 @@ int rc3dEditHandleTextInput(const char *text);
 
 
 void rc3dEditRender(void);
+void rc3dGuiDirty(void);
 int rc3dGuiCheckDirty();
 
 #endif

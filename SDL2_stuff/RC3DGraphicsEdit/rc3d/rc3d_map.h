@@ -62,6 +62,8 @@ typedef struct {
     uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
     float texScaleX;        /* wall texture UV scale X */
     float texScaleY;        /* wall texture UV scale Y */
+    float texOffsetX;       /* wall texture UV offset X */
+    float texOffsetY;       /* wall texture UV offset X */
 
 } RC3D_Wall;
 
@@ -115,7 +117,11 @@ typedef enum {
     RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT = 6u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER = 7u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT  = 8u,
-    RC3D_OBJTYPE_OBJECT_TELEPORTER    = 9u
+    RC3D_OBJTYPE_OBJECT_TELEPORTER    = 9u,
+    RC3D_OBJTYPE_OBJECT_CLICKABLE     = 10u,
+    RC3D_OBJTYPE_OBJECT_ACTIOBUTTON   = 11u,
+    RC3D_OBJTYPE_OBJECT_GENERIC_USER  = 12u,    // add stuff after this!!
+    RC3D_OBJTYPE_ENDLIST          
 } RC3D_ObjectType;
 
 

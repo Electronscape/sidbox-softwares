@@ -353,6 +353,7 @@ static int g_loadedMapValid = 0;
 
 static int horizonGlobal = 0;
 static float wallTexUBaseGlobal = 0.0f;
+static float wallTexOffsetYGlobal = 0.0f;
 static float wallTexInvScaleYGlobal = 1.0f;
 static float wallTexRotCosGlobal = 1.0f;
 static float wallTexRotSinGlobal = 0.0f;
@@ -2346,7 +2347,10 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
             !readExact(f, &walls[i].texture_flags, sizeof(uint32_t)) ||
             !readExact(f, &walls[i].texScaleX, sizeof(float)) ||
-            !readExact(f, &walls[i].texScaleY, sizeof(float))) {
+            !readExact(f, &walls[i].texScaleY, sizeof(float)) ||
+            !readExact(f, &walls[i].texOffsetX, sizeof(float)) ||
+            !readExact(f, &walls[i].texOffsetY, sizeof(float))
+        ) {
             fclose(f);
             free(verts);
             free(walls);
@@ -3781,6 +3785,7 @@ static inline void renderTexturedBandIfVisible(
 
             float vLocal0;
             float vStep;
+            float vOffset = 0.0f;
 
             {
                 const float sample0 = baseWorldFromTop + ((float)y0 * k);
@@ -3815,6 +3820,20 @@ static inline void renderTexturedBandIfVisible(
                         vStep = k * texPerWorld;
                     }
                 }
+            }
+
+            if (fabsf(wallTexOffsetYGlobal) > RC3D_EPSILON) {
+                if (stretchY) {
+                    vOffset = (wallTexOffsetYGlobal / worldSpan) * (float)RC3D_TEX_SIZE;
+                } else {
+                    vOffset = wallTexOffsetYGlobal * texPerWorld;
+                }
+
+                if (flipY) {
+                    vOffset = -vOffset;
+                }
+
+                vLocal0 += vOffset;
             }
 
             {
@@ -3913,6 +3932,7 @@ static inline void renderMaskedTexturedBandIfVisible(
 
             float vLocal0;
             float vStep;
+            float vOffset = 0.0f;
 
             {
                 const float sample0 = baseWorldFromTop + ((float)y0 * k);
@@ -3947,6 +3967,20 @@ static inline void renderMaskedTexturedBandIfVisible(
                         vStep = k * texPerWorld;
                     }
                 }
+            }
+
+            if (fabsf(wallTexOffsetYGlobal) > RC3D_EPSILON) {
+                if (stretchY) {
+                    vOffset = (wallTexOffsetYGlobal / worldSpan) * (float)RC3D_TEX_SIZE;
+                } else {
+                    vOffset = wallTexOffsetYGlobal * texPerWorld;
+                }
+
+                if (flipY) {
+                    vOffset = -vOffset;
+                }
+
+                vLocal0 += vOffset;
             }
 
             {
@@ -4388,6 +4422,8 @@ static inline void renderColumnTrace(
                     const float wallDy = wc ? wc->dy : (vb->y - va->y);
                     float wallTexInvScaleX = wc ? wc->texInvScaleX : (1.0f / ((fabsf(w->texScaleX) < RC3D_EPSILON) ? 1.0f : w->texScaleX));
                     float wallTexInvScaleY = wc ? wc->texInvScaleY : (1.0f / ((fabsf(w->texScaleY) < RC3D_EPSILON) ? 1.0f : w->texScaleY));
+                    const float wallTexOffsetX = w->texOffsetX;
+                    const float wallTexOffsetY = w->texOffsetY;
 
                     //wallTexInvScaleX *= -1.0f;
 
@@ -4422,9 +4458,23 @@ static inline void renderColumnTrace(
                         }
                     }
                     wallTexInvScaleYGlobal = wallTexInvScaleY;
+                    wallTexOffsetYGlobal = wallTexOffsetY;
 
                     {
                         const int flipX = (w->texture_flags & RC3D_TEX_FLAG_FLIPX) ? 1 : 0;
+                        float uOffset = 0.0f;
+
+                        if (wc && wc->texXMode == RC3D_TEX_XMODE_STRETCH) {
+                            if (wallLen > RC3D_EPSILON) {
+                                uOffset = (wallTexOffsetX / wallLen) * (float)RC3D_TEX_SIZE;
+                            }
+                        } else {
+                            uOffset = wallTexOffsetX * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
+                        }
+
+                        if (flipX) {
+                            uOffset = -uOffset;
+                        }
 
                         if (wc && wc->texXMode == RC3D_TEX_XMODE_STRETCH) {
                             if (uNorm < 0.0f) uNorm = 0.0f;
@@ -4434,26 +4484,30 @@ static inline void renderColumnTrace(
                                 uNorm = 1.0f - uNorm;
                             }
 
-                            wallTexUBaseGlobal = uNorm * (float)RC3D_TEX_SIZE;
+                            wallTexUBaseGlobal = (uNorm * (float)RC3D_TEX_SIZE) + uOffset;
 
                         } else if (wc && wc->texXMode == RC3D_TEX_XMODE_CLAMP_RIGHT) {
                             if (flipX) {
                                 wallTexUBaseGlobal =
                                     ((wallLen - distAlongWall) * wallTexInvScaleX * (float)RC3D_TEX_SIZE) -
-                                    (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE);
+                                    (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE) +
+                                    uOffset;
                             } else {
                                 wallTexUBaseGlobal =
                                     (distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE) -
-                                    (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE);
+                                    (wallLen * wallTexInvScaleX * (float)RC3D_TEX_SIZE) +
+                                    uOffset;
                             }
 
                         } else {
                             if (flipX) {
                                 wallTexUBaseGlobal =
-                                    (wallLen - distAlongWall) * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
+                                    ((wallLen - distAlongWall) * wallTexInvScaleX * (float)RC3D_TEX_SIZE) +
+                                    uOffset;
                             } else {
                                 wallTexUBaseGlobal =
-                                    distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE;
+                                    (distAlongWall * wallTexInvScaleX * (float)RC3D_TEX_SIZE) +
+                                    uOffset;
                             }
                         }
                     }
@@ -4490,6 +4544,7 @@ static inline void renderColumnTrace(
 
                             if (midMasked && maskedDepth < RC3D_MAX_MASKED_TRACE_DEPTH) {
                                 const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexOffsetY = wallTexOffsetYGlobal;
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
@@ -4543,6 +4598,7 @@ static inline void renderColumnTrace(
                                 }
 
                                 wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexOffsetYGlobal = savedWallTexOffsetY;
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
@@ -4588,6 +4644,7 @@ static inline void renderColumnTrace(
                                 int maskedClipBottom = clipBottom;
 
                                 const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexOffsetY = wallTexOffsetYGlobal;
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
@@ -4615,6 +4672,7 @@ static inline void renderColumnTrace(
                                 }
 
                                 wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexOffsetYGlobal = savedWallTexOffsetY;
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
@@ -4665,6 +4723,7 @@ static inline void renderColumnTrace(
                                 const int maskedClipTop = clampi(secTop, clipTop, clipBottom);
                                 const int maskedClipBottom = clampi(secBot, clipTop, clipBottom);
                                 const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexOffsetY = wallTexOffsetYGlobal;
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
@@ -4689,6 +4748,7 @@ static inline void renderColumnTrace(
                                 }
 
                                 wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexOffsetYGlobal = savedWallTexOffsetY;
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
@@ -4819,6 +4879,7 @@ static inline void renderColumnTrace(
                             {
                                 int entryWallInNext = -1;
                                 const float savedWallTexUBase = wallTexUBaseGlobal;
+                                const float savedWallTexOffsetY = wallTexOffsetYGlobal;
                                 const float savedWallTexInvScaleY = wallTexInvScaleYGlobal;
                                 const float savedWallTexRotCos = wallTexRotCosGlobal;
                                 const float savedWallTexRotSin = wallTexRotSinGlobal;
@@ -4859,6 +4920,7 @@ static inline void renderColumnTrace(
                                 g_traceSuppressSectorPlanes = savedSuppressSectorPlanes;
                                 g_traceAllowBackSectorPlaneFills = savedAllowBackSectorPlaneFills;
                                 wallTexUBaseGlobal = savedWallTexUBase;
+                                wallTexOffsetYGlobal = savedWallTexOffsetY;
                                 wallTexInvScaleYGlobal = savedWallTexInvScaleY;
                                 wallTexRotCosGlobal = savedWallTexRotCos;
                                 wallTexRotSinGlobal = savedWallTexRotSin;
@@ -5957,6 +6019,56 @@ void rc3dSetSectorLightLevel(int sectorId, uint8_t level){
     sectors[sectorId].glowlevel = level;
     rc3dSyncSectorWallGlow(sectorId, level);
 
+}
+
+int rc3dSetWallTextureOffset(int32_t wallId, float offsetX, float offsetY)
+{
+    RC3D_Wall *walls = rc3dMutableWallData();
+
+    if (!g_map || !walls || (unsigned)wallId >= (unsigned)g_map->wallCount) {
+        return 0;
+    }
+
+    walls[wallId].texOffsetX = offsetX;
+    walls[wallId].texOffsetY = offsetY;
+    return 1;
+}
+
+int rc3dSetSectorWallTextureOffset(int32_t tagId, float offsetX, float offsetY)
+{
+    RC3D_Sector *sectors = rc3dMutableSectorData();
+    RC3D_Wall *walls = rc3dMutableWallData();
+    int changedCount = 0;
+
+    if (!g_map || !sectors || !walls) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        const RC3D_Sector *sec;
+        int start;
+        int end;
+
+        if (sectors[i].tagId != tagId) {
+            continue;
+        }
+
+        sec = &sectors[i];
+        start = sec->wallStart;
+        end = start + sec->wallCount;
+
+        if (start < 0 || end < start || end > g_map->wallCount) {
+            continue;
+        }
+
+        for (int wi = start; wi < end; ++wi) {
+            walls[wi].texOffsetX = offsetX;
+            walls[wi].texOffsetY = offsetY;
+            changedCount++;
+        }
+    }
+
+    return changedCount;
 }
 
 int rc3dMinimapRevealSector(int32_t sectorId)

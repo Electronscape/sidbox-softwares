@@ -736,7 +736,7 @@ void drawRectDots(int x, int y, int w, int h, uint8_t col)
     for (int yy = y0; yy <= y1; yy++) {
         //memset(&fb[(yy * SCREEN_W) + x0], col, fillW);
         for (int xx = x0; xx <= x1; xx++){
-            if (((xx + yy) & 3) == 0 ) {
+            if (((xx + yy) & 1) == 0 ) {
                 fb[(yy * SCREEN_W) + xx] = col;
             }
         }
