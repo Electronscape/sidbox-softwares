@@ -23,7 +23,7 @@
 
 
 typedef enum {
-    RC3D_OBJTYPE_SPRITE                 = 0u,
+    RC3D_OBJTYPE_SPRITE = 0u,
     RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT   = 1u,
     RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER   = 2u,
     RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT    = 3u,
@@ -32,7 +32,12 @@ typedef enum {
     RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT   = 6u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER   = 7u,
     RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT    = 8u,
-    RC3D_OBJTYPE_OBJECT_TELEPORTER      = 9u
+    RC3D_OBJTYPE_OBJECT_TELEPORTER      = 9u,
+    RC3D_OBJTYPE_OBJECT_CLICKABLE       = 10u,
+    RC3D_OBJTYPE_OBJECT_ACTIOBUTTON     = 11u,
+    RC3D_OBJTYPE_OBJECT_GENERIC_USER    = 12u,    // add stuff after this!!
+    RC3D_OBJTYPE_OBJECT_ENEMY_1         = 13u,
+    RC3D_OBJTYPE_OBJECT_FRIENDLY_1      = 14u
 } RC3D_ObjectType;
 
 
@@ -43,6 +48,8 @@ typedef enum {
 #define OBJECT_TYPE_NAVIGATION      4
 #define OBJECT_TYPE_BAKEDNAV        5   // use this in the run time
 #define OBJECT_TYPE_TELEPORTER      9
+#define OBJECT_TYPE_ENEMY_1         13
+#define OBJECT_TYPE_FRIENDLY_1      14
 
 #define OBJECT_GENERAL_FLAGS_ENABLE 0x01    // bit 0, just a basic enable ;)
 
@@ -237,7 +244,6 @@ int rc3dSetObjectStateByTag(int32_t tagId, uint32_t stateFlags);
 void enableObject(int tagId, uint8_t en);
 int getObjectState(int pTagId);
 void processObjects(int pTagId, int pType);
-
 // maploading API
 int rc3dLoadMapBinary(const char *path);
 void rc3dUnloadMapBinary(void);

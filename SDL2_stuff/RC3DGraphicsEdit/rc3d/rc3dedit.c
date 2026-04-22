@@ -24,7 +24,7 @@
 #define ED_MAX_VERTS            4096
 #define ED_MAX_WALLS            4096
 #define ED_MAX_SECTORS          512
-#define ED_MAX_OBJECTS          1024
+#define ED_MAX_OBJECTS          512
 #define ED_MAX_DRAFT_POINTS     128
 
 #define ED_ORPHANED_SECTOR_TEXTURE  254      // when deleting a sector and it leaves walls behind, set it to this texture
@@ -38,6 +38,7 @@
 #define ED_PICK_DIST_PX         25
 #define ED_CLICK_DRAG_TOLERANCE_PX 5
 #define ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT 64.0f
+
 #define ED_ROUTE_PREVIEW_MAX_POINTS 4096
 #define ED_ROUTE_PREVIEW_MAX_GRID_CELLS 120000
 #define ED_ROUTE_PREVIEW_PORTAL_SAMPLES 9
@@ -12527,6 +12528,8 @@ static const char *getObjectTypeName(uint32_t type)
         case RC3D_OBJTYPE_OBJECT_CLICKABLE:     return "clickable object";
         case RC3D_OBJTYPE_OBJECT_ACTIOBUTTON:   return "firebutton object";
         case RC3D_OBJTYPE_OBJECT_GENERIC_USER:  return "generic user defined";
+        case RC3D_OBJTYPE_OBJECT_ENEMY_1:       return "enemy object (moving)";
+        case RC3D_OBJTYPE_OBJECT_FRIENDLY_1:    return "friendly object (moving)";
         default:
             return "UNDEFINED:EDITOR_BUG!";
     }

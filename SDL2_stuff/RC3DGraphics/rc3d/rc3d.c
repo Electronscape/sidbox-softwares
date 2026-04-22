@@ -63,6 +63,13 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define PLAYER_HEIGHT          0.6f
 #define PLAYER_STEPUP          0.35f
 #define PLAYER_RADIUS          0.40f
+#define RC3D_ENEMY_PATROL_SPEED 1.25f
+#define RC3D_ENEMY_STEPUP       0.35f
+#define RC3D_ENEMY_MIN_HEIGHT   0.55f
+#define RC3D_ENEMY_NODE_REACH_MIN 0.15f
+#define RC3D_ENEMY_BLOCKED_REVERSE_TIME 5.0f
+#define RC3D_ENEMY_BLOCKED_PROGRESS_TOLERANCE 0.5f
+#define RC3D_MAX_NAV_ROUTE_NODES 256
 
 
 #define RC3D_LIGHT_BANK_START            64
@@ -627,6 +634,27 @@ static void rc3dRefreshDynamicPortalCache(void);
 static void rc3dRefreshSpritePlacement(RC3D_Sprite *sprite);
 static void rc3dResolvePlayerPenetrationInSector(int sectorIndex);
 static void rc3dMinimapRevealCurrentSector(void);
+static void rc3dResetObjectRuntimeState(void);
+static void rc3dUpdateEnemyPatrols(float dt);
+static int rc3dFindActorBlockingContactInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    float actorRadius,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp,
+    int sectorIndex,
+    float fallbackNX,
+    float fallbackNY,
+    RC3D_BlockingContact *outContact);
+static int rc3dActorPositionFitsInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    float actorRadius,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp,
+    int sectorIndex);
 
 
 void screenupdate(void);
@@ -1662,6 +1690,7 @@ void rc3dClearSprites(void)
     memset(g_sprites, 0, sizeof(g_sprites));
     memset(g_visibleSprites, 0, sizeof(g_visibleSprites));
     g_visibleSpriteCount = 0;
+    rc3dResetObjectRuntimeState();
 }
 
 int rc3dSpriteCreate(float x, float y, float z, float width, float height, uint8_t texId)
@@ -2449,6 +2478,15 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         objects[i].type = otype;
 
         objects[i].trigger = 0;
+        objects[i].spriteId = RC3D_INVALID_SPRITE;
+        objects[i].sector = -1;
+        objects[i].vz = 0.0f;
+        objects[i].navTargetTag = 0;
+        objects[i].navPrevTag = 0;
+        objects[i].navTravelDir = 1;
+        objects[i].navBlockedTime = 0.0f;
+        objects[i].navBlockedAnchorX = objects[i].x;
+        objects[i].navBlockedAnchorY = objects[i].y;
 
         if (objects[i].radius < 0.01f) {
             objects[i].radius = 0.25f;
@@ -2842,6 +2880,1048 @@ static int findSectorForSpritePosition(float x, float y, int preferredSector)
     return -1;
 }
 
+static int rc3dObjectIsNavNode(const RC3D_Object *obj)
+{
+    if (!obj) {
+        return 0;
+    }
+
+    return (obj->type == RC3D_OBJTYPE_ROUTE_PREVIEW) ||
+           (obj->type == RC3D_OBJTYPE_BAKED_ROUTE_NODE);
+}
+
+static float rc3dObjectActorHeight(const RC3D_Object *obj)
+{
+    float height = RC3D_ENEMY_MIN_HEIGHT;
+
+    if (!obj) {
+        return height;
+    }
+
+    if (obj->scaley > height) {
+        height = obj->scaley;
+    }
+
+    return height;
+}
+
+static float rc3dObjectActorRadius(const RC3D_Object *obj)
+{
+    float radius = 0.10f;
+
+    if (!obj) {
+        return radius;
+    }
+
+    if (obj->radius > radius) {
+        radius = obj->radius;
+    }
+
+    return radius;
+}
+
+static int rc3dFindNavNodeIndexByTag(int tagId)
+{
+    if (!g_map || !g_map->objects || g_map->objectCount <= 0 || tagId == 0) {
+        return -1;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        const RC3D_Object *obj = &g_map->objects[i];
+
+        if (!rc3dObjectIsNavNode(obj)) {
+            continue;
+        }
+
+        if (obj->tagId == tagId) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int rc3dAddUniqueNavIndex(int *outIndices, int count, int maxIndices, int nodeIndex)
+{
+    if (!outIndices || maxIndices <= 0 || nodeIndex < 0) {
+        return count;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        if (outIndices[i] == nodeIndex) {
+            return count;
+        }
+    }
+
+    if (count < maxIndices) {
+        outIndices[count++] = nodeIndex;
+    }
+
+    return count;
+}
+
+static int rc3dNavLinkAllowed(int fromNodeIndex, int toNodeIndex)
+{
+    const RC3D_Object *fromNode;
+    const RC3D_Object *toNode;
+
+    if (!g_map || !g_map->objects ||
+        fromNodeIndex < 0 || fromNodeIndex >= g_map->objectCount ||
+        toNodeIndex < 0 || toNodeIndex >= g_map->objectCount)
+    {
+        return 0;
+    }
+
+    fromNode = &g_map->objects[fromNodeIndex];
+    toNode = &g_map->objects[toNodeIndex];
+
+    if (!rc3dObjectIsNavNode(fromNode) || !rc3dObjectIsNavNode(toNode)) {
+        return 0;
+    }
+
+    if ((fromNode->type == RC3D_OBJTYPE_ROUTE_PREVIEW) &&
+        (toNode->type == RC3D_OBJTYPE_ROUTE_PREVIEW))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int rc3dFindNavOutgoingNodeIndex(int nodeIndex)
+{
+    int nextIndex;
+
+    if (!g_map || !g_map->objects || nodeIndex < 0 || nodeIndex >= g_map->objectCount) {
+        return -1;
+    }
+
+    nextIndex = rc3dFindNavNodeIndexByTag(g_map->objects[nodeIndex].targetTagId);
+    if (nextIndex < 0 || nextIndex == nodeIndex) {
+        return -1;
+    }
+
+    if (!rc3dNavLinkAllowed(nodeIndex, nextIndex)) {
+        return -1;
+    }
+
+    return nextIndex;
+}
+
+static int rc3dCollectNavIncomingIndices(int nodeIndex, int *outIndices, int maxIndices)
+{
+    int count = 0;
+    const RC3D_Object *node;
+
+    if (!g_map || !g_map->objects || !outIndices ||
+        nodeIndex < 0 || nodeIndex >= g_map->objectCount || maxIndices <= 0)
+    {
+        return 0;
+    }
+
+    node = &g_map->objects[nodeIndex];
+    if (!rc3dObjectIsNavNode(node)) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        const RC3D_Object *candidate = &g_map->objects[i];
+
+        if (i == nodeIndex || !rc3dObjectIsNavNode(candidate)) {
+            continue;
+        }
+
+        if (candidate->targetTagId != node->tagId) {
+            continue;
+        }
+
+        if (!rc3dNavLinkAllowed(i, nodeIndex)) {
+            continue;
+        }
+
+        count = rc3dAddUniqueNavIndex(outIndices, count, maxIndices, i);
+    }
+
+    return count;
+}
+
+static int rc3dCollectNavNeighborIndices(int nodeIndex, int *outIndices, int maxIndices)
+{
+    int count = 0;
+    const int outgoingIndex = rc3dFindNavOutgoingNodeIndex(nodeIndex);
+
+    if (!outIndices || maxIndices <= 0) {
+        return 0;
+    }
+
+    if (outgoingIndex >= 0) {
+        count = rc3dAddUniqueNavIndex(outIndices, count, maxIndices, outgoingIndex);
+    }
+
+    count += rc3dCollectNavIncomingIndices(nodeIndex, outIndices + count, maxIndices - count);
+    return count;
+}
+
+static int rc3dCollectConnectedNavIndices(int anchorTag, int *outIndices, int maxIndices)
+{
+    int queue[RC3D_MAX_NAV_ROUTE_NODES];
+    int count = 0;
+    int queueCount = 0;
+    int queueHead = 0;
+    const int anchorIndex = rc3dFindNavNodeIndexByTag(anchorTag);
+
+    if (!outIndices || maxIndices <= 0 || anchorIndex < 0) {
+        return 0;
+    }
+
+    count = rc3dAddUniqueNavIndex(outIndices, count, maxIndices, anchorIndex);
+    if (count <= 0) {
+        return 0;
+    }
+
+    queue[queueCount++] = anchorIndex;
+
+    while (queueHead < queueCount && count < maxIndices) {
+        int neighbors[RC3D_MAX_NAV_ROUTE_NODES];
+        const int currentIndex = queue[queueHead++];
+        const int neighborCount =
+            rc3dCollectNavNeighborIndices(currentIndex, neighbors, RC3D_MAX_NAV_ROUTE_NODES);
+
+        for (int i = 0; i < neighborCount && count < maxIndices; ++i) {
+            const int beforeCount = count;
+
+            count = rc3dAddUniqueNavIndex(outIndices, count, maxIndices, neighbors[i]);
+            if (count > beforeCount && queueCount < RC3D_MAX_NAV_ROUTE_NODES) {
+                queue[queueCount++] = neighbors[i];
+            }
+        }
+    }
+
+    return count;
+}
+
+static int rc3dFindListedNavNodeSlotByTag(const int *nodeIndices, int nodeCount, int tagId)
+{
+    if (!nodeIndices || nodeCount <= 0 || tagId == 0) {
+        return -1;
+    }
+
+    for (int i = 0; i < nodeCount; ++i) {
+        if (g_map->objects[nodeIndices[i]].tagId == tagId) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int rc3dFindNearestListedNavNodeSlot(const RC3D_Object *obj, const int *nodeIndices, int nodeCount)
+{
+    int bestSlot = -1;
+    float bestDistSq = 0.0f;
+
+    if (!obj || !nodeIndices || nodeCount <= 0) {
+        return -1;
+    }
+
+    for (int i = 0; i < nodeCount; ++i) {
+        const RC3D_Object *node = &g_map->objects[nodeIndices[i]];
+        const float dx = node->x - obj->x;
+        const float dy = node->y - obj->y;
+        const float distSq = (dx * dx) + (dy * dy);
+
+        if (bestSlot < 0 || distSq < bestDistSq) {
+            bestSlot = i;
+            bestDistSq = distSq;
+        }
+    }
+
+    return bestSlot;
+}
+
+static int rc3dFindNearestConnectedNavNodeIndex(const RC3D_Object *obj, int anchorTag)
+{
+    int connectedIndices[RC3D_MAX_NAV_ROUTE_NODES];
+    const int connectedCount =
+        rc3dCollectConnectedNavIndices(anchorTag, connectedIndices, RC3D_MAX_NAV_ROUTE_NODES);
+    const int nearestSlot =
+        rc3dFindNearestListedNavNodeSlot(obj, connectedIndices, connectedCount);
+
+    if (nearestSlot < 0) {
+        return -1;
+    }
+
+    return connectedIndices[nearestSlot];
+}
+
+static int rc3dChooseNextPatrolNodeIndex(int currentNodeIndex, int fromTag)
+{
+    int incoming[RC3D_MAX_NAV_ROUTE_NODES];
+    int choices[RC3D_MAX_NAV_ROUTE_NODES];
+    int choiceCount = 0;
+    const int outgoingIndex = rc3dFindNavOutgoingNodeIndex(currentNodeIndex);
+    const int incomingCount =
+        rc3dCollectNavIncomingIndices(currentNodeIndex, incoming, RC3D_MAX_NAV_ROUTE_NODES);
+    const int fromIndex = (fromTag != 0) ? rc3dFindNavNodeIndexByTag(fromTag) : -1;
+
+    if (outgoingIndex < 0 && incomingCount <= 0) {
+        return -1;
+    }
+
+    if (outgoingIndex >= 0 &&
+        fromTag != 0 &&
+        g_map->objects[outgoingIndex].tagId == fromTag)
+    {
+        for (int i = 0; i < incomingCount; ++i) {
+            const RC3D_Object *neighbor = &g_map->objects[incoming[i]];
+
+            if (neighbor->tagId == fromTag) {
+                continue;
+            }
+
+            choices[choiceCount++] = incoming[i];
+        }
+
+        if (choiceCount > 0) {
+            if (choiceCount == 1) {
+                return choices[0];
+            }
+
+            return choices[randRange(0u, (uint32_t)(choiceCount - 1))];
+        }
+
+        if (outgoingIndex >= 0) {
+            return outgoingIndex;
+        }
+
+        if (fromIndex >= 0) {
+            return fromIndex;
+        }
+    }
+
+    if (outgoingIndex >= 0 &&
+        (fromTag == 0 || g_map->objects[outgoingIndex].tagId != fromTag))
+    {
+        return outgoingIndex;
+    }
+
+    for (int i = 0; i < incomingCount; ++i) {
+        const RC3D_Object *neighbor = &g_map->objects[incoming[i]];
+
+        if (neighbor->tagId == fromTag) {
+            continue;
+        }
+
+        choices[choiceCount++] = incoming[i];
+    }
+
+    if (choiceCount > 0) {
+        if (choiceCount == 1) {
+            return choices[0];
+        }
+
+        return choices[randRange(0u, (uint32_t)(choiceCount - 1))];
+    }
+
+    if (fromIndex >= 0) {
+        return fromIndex;
+    }
+
+    if (outgoingIndex >= 0) {
+        return outgoingIndex;
+    }
+
+    return incoming[0];
+}
+
+static int rc3dFindNearestNavNodeIndex(const RC3D_Object *obj)
+{
+    int bestIndex = -1;
+    float bestDistSq = 0.0f;
+
+    if (!obj || !g_map || !g_map->objects || g_map->objectCount <= 0) {
+        return -1;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        const RC3D_Object *node = &g_map->objects[i];
+        const float dx = node->x - obj->x;
+        const float dy = node->y - obj->y;
+        const float distSq = (dx * dx) + (dy * dy);
+
+        if (!rc3dObjectIsNavNode(node)) {
+            continue;
+        }
+
+        if (bestIndex < 0 || distSq < bestDistSq) {
+            bestIndex = i;
+            bestDistSq = distSq;
+        }
+    }
+
+    return bestIndex;
+}
+
+static int rc3dActorFitsInSector(int sectorIndex, float feetZ, float actorHeight, float maxStepUp)
+{
+    const RC3D_Sector *sec;
+    float transitionFeet;
+
+    if (!rc3dSectorIndexValid(sectorIndex)) {
+        return 0;
+    }
+
+    sec = &g_map->sectors[sectorIndex];
+    transitionFeet = feetZ;
+
+    if (sec->floorHeight > transitionFeet) {
+        transitionFeet = sec->floorHeight;
+    }
+
+    if (transitionFeet > (feetZ + maxStepUp + RC3D_EPSILON)) {
+        return 0;
+    }
+
+    if ((sec->ceilHeight - sec->floorHeight) < (actorHeight - RC3D_EPSILON)) {
+        return 0;
+    }
+
+    if ((transitionFeet + actorHeight) > (sec->ceilHeight + RC3D_EPSILON)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int rc3dFindSectorForActorPositionFixed(
+    RC3D_Fixed x,
+    RC3D_Fixed y,
+    float actorRadius,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp,
+    int preferredSector)
+{
+    int bestSector = -1;
+    float bestScore = 1e30f;
+
+    if (!g_map || !g_map->sectors || g_map->sectorCount <= 0) {
+        return -1;
+    }
+
+    if (rc3dSectorIndexValid(preferredSector) &&
+        rc3dActorPositionFitsInSectorFixed(
+            x, y, actorRadius, feetZ, actorHeight, maxStepUp, preferredSector))
+    {
+        return preferredSector;
+    }
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        const RC3D_Sector *sec = &g_map->sectors[i];
+        const float score = fabsf(sec->floorHeight - feetZ);
+
+        if (i == preferredSector) {
+            continue;
+        }
+
+        if (!rc3dActorPositionFitsInSectorFixed(
+                x, y, actorRadius, feetZ, actorHeight, maxStepUp, i))
+        {
+            continue;
+        }
+
+        if (score < bestScore) {
+            bestScore = score;
+            bestSector = i;
+        }
+    }
+
+    return bestSector;
+}
+
+static int rc3dActorPortalAllowsPassage(
+    const RC3D_Wall *w,
+    int sectorIndex,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp)
+{
+    RC3D_PortalView portalView;
+    float transitionFeet = feetZ;
+
+    if (!rc3dBuildPortalView(w, sectorIndex, &portalView)) {
+        return 0;
+    }
+
+    {
+        const RC3D_Sector *sec = &g_map->sectors[sectorIndex];
+        const RC3D_Sector *nextSec = &g_map->sectors[w->neighbour];
+
+        if (sec->floorHeight > transitionFeet) {
+            transitionFeet = sec->floorHeight;
+        }
+
+        if (nextSec->floorHeight > transitionFeet) {
+            transitionFeet = nextSec->floorHeight;
+        }
+    }
+
+    if (transitionFeet > (feetZ + maxStepUp + RC3D_EPSILON)) {
+        return 0;
+    }
+
+    if ((portalView.openTop - portalView.openBottom) < (actorHeight - RC3D_EPSILON)) {
+        return 0;
+    }
+
+    if (transitionFeet < (portalView.openBottom - RC3D_EPSILON)) {
+        return 0;
+    }
+
+    if ((transitionFeet + actorHeight) > (portalView.openTop + RC3D_EPSILON)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static float rc3dOrient2f(float ax, float ay, float bx, float by, float cx, float cy)
+{
+    return ((bx - ax) * (cy - ay)) - ((by - ay) * (cx - ax));
+}
+
+static int rc3dPointOnSegment2f(float ax, float ay, float bx, float by, float px, float py)
+{
+    const float minX = fminf(ax, bx) - 0.0001f;
+    const float maxX = fmaxf(ax, bx) + 0.0001f;
+    const float minY = fminf(ay, by) - 0.0001f;
+    const float maxY = fmaxf(ay, by) + 0.0001f;
+
+    return (px >= minX) && (px <= maxX) && (py >= minY) && (py <= maxY);
+}
+
+static int rc3dSegmentsIntersect2f(
+    float ax, float ay,
+    float bx, float by,
+    float cx, float cy,
+    float dx, float dy)
+{
+    const float o1 = rc3dOrient2f(ax, ay, bx, by, cx, cy);
+    const float o2 = rc3dOrient2f(ax, ay, bx, by, dx, dy);
+    const float o3 = rc3dOrient2f(cx, cy, dx, dy, ax, ay);
+    const float o4 = rc3dOrient2f(cx, cy, dx, dy, bx, by);
+
+    if (((o1 > 0.0f) != (o2 > 0.0f)) && ((o3 > 0.0f) != (o4 > 0.0f))) {
+        return 1;
+    }
+
+    if (fabsf(o1) <= 0.0001f && rc3dPointOnSegment2f(ax, ay, bx, by, cx, cy)) return 1;
+    if (fabsf(o2) <= 0.0001f && rc3dPointOnSegment2f(ax, ay, bx, by, dx, dy)) return 1;
+    if (fabsf(o3) <= 0.0001f && rc3dPointOnSegment2f(cx, cy, dx, dy, ax, ay)) return 1;
+    if (fabsf(o4) <= 0.0001f && rc3dPointOnSegment2f(cx, cy, dx, dy, bx, by)) return 1;
+
+    return 0;
+}
+
+static int rc3dActorCanTraverseToSector(
+    const RC3D_Object *obj,
+    int fromSector,
+    int toSector,
+    float fromX,
+    float fromY,
+    float toX,
+    float toY)
+{
+    const RC3D_Sector *sec;
+    const float actorHeight = rc3dObjectActorHeight(obj);
+    int start;
+    int end;
+
+    if (!obj || !rc3dSectorIndexValid(fromSector) || !rc3dSectorIndexValid(toSector)) {
+        return 0;
+    }
+
+    sec = &g_map->sectors[fromSector];
+    start = sec->wallStart;
+    end = start + sec->wallCount;
+    if (start < 0 || end < start || end > g_map->wallCount) {
+        return 0;
+    }
+
+    for (int wi = sec->wallStart; wi < end; ++wi) {
+        const RC3D_Wall *w = &g_map->walls[wi];
+        const RC3D_Vec2 *a;
+        const RC3D_Vec2 *b;
+
+        if (w->neighbour != toSector || !(w->flags & RC3D_WALL_PORTAL)) {
+            continue;
+        }
+
+        if (!rc3dActorPortalAllowsPassage(w, fromSector, obj->z, actorHeight, RC3D_ENEMY_STEPUP)) {
+            continue;
+        }
+
+        a = &g_map->verts[w->v0];
+        b = &g_map->verts[w->v1];
+
+        if (rc3dSegmentsIntersect2f(fromX, fromY, toX, toY, a->x, a->y, b->x, b->y)) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int rc3dFindSectorForEnemyStep(const RC3D_Object *obj, float fromX, float fromY, float toX, float toY)
+{
+    const RC3D_Fixed toXFixed = rc3dFloatToFixed(toX);
+    const RC3D_Fixed toYFixed = rc3dFloatToFixed(toY);
+    const float actorRadius = rc3dObjectActorRadius(obj);
+    const float actorHeight = rc3dObjectActorHeight(obj);
+    const int currentSector = obj ? obj->sector : -1;
+
+    if (!obj || !g_map || !g_map->objects) {
+        return -1;
+    }
+
+    if (rc3dSectorIndexValid(currentSector) &&
+        rc3dActorPositionFitsInSectorFixed(
+            toXFixed,
+            toYFixed,
+            actorRadius,
+            obj->z,
+            actorHeight,
+            RC3D_ENEMY_STEPUP,
+            currentSector))
+    {
+        return currentSector;
+    }
+
+    for (int i = 0; i < g_map->sectorCount; ++i) {
+        if (i == currentSector) {
+            continue;
+        }
+
+        if (!rc3dActorPositionFitsInSectorFixed(
+                toXFixed,
+                toYFixed,
+                actorRadius,
+                obj->z,
+                actorHeight,
+                RC3D_ENEMY_STEPUP,
+                i))
+        {
+            continue;
+        }
+
+        if (!rc3dSectorIndexValid(currentSector) ||
+            rc3dActorCanTraverseToSector(obj, currentSector, i, fromX, fromY, toX, toY))
+        {
+            return i;
+        }
+    }
+
+    return rc3dFindSectorForActorPositionFixed(
+        toXFixed,
+        toYFixed,
+        actorRadius,
+        obj->z,
+        actorHeight,
+        RC3D_ENEMY_STEPUP,
+        currentSector);
+}
+
+static int rc3dEnsureEnemySectorValid(RC3D_Object *obj)
+{
+    const float actorRadius = rc3dObjectActorRadius(obj);
+    const float actorHeight = rc3dObjectActorHeight(obj);
+    int sector;
+
+    if (!obj || !g_map || !g_map->sectors || g_map->sectorCount <= 0) {
+        return 0;
+    }
+
+    sector = rc3dFindSectorForActorPositionFixed(
+        rc3dFloatToFixed(obj->x),
+        rc3dFloatToFixed(obj->y),
+        actorRadius,
+        obj->z,
+        actorHeight,
+        RC3D_ENEMY_STEPUP,
+        obj->sector);
+
+    if (!rc3dSectorIndexValid(sector)) {
+        obj->sector = -1;
+        return 0;
+    }
+
+    obj->sector = (int16_t)sector;
+
+    if (obj->z < g_map->sectors[sector].floorHeight) {
+        obj->z = g_map->sectors[sector].floorHeight;
+        obj->vz = 0.0f;
+    }
+
+    if ((obj->z + actorHeight) > g_map->sectors[sector].ceilHeight) {
+        obj->z = g_map->sectors[sector].ceilHeight - actorHeight;
+        if (obj->z < g_map->sectors[sector].floorHeight) {
+            obj->z = g_map->sectors[sector].floorHeight;
+        }
+        obj->vz = 0.0f;
+    }
+
+    return 1;
+}
+
+static int rc3dEnemyOverlapsOtherEnemyAtPosition(
+    const RC3D_Object *obj,
+    float nextX,
+    float nextY,
+    float nextZ,
+    const RC3D_Object **outBlocker)
+{
+    const float actorRadius = rc3dObjectActorRadius(obj);
+    const float actorHeight = rc3dObjectActorHeight(obj);
+    const float actorTop = nextZ + actorHeight;
+
+    if (outBlocker) {
+        *outBlocker = NULL;
+    }
+
+    if (!obj || !g_map || !g_map->objects || g_map->objectCount <= 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        const RC3D_Object *other = &g_map->objects[i];
+        const float otherRadius = rc3dObjectActorRadius(other);
+        const float otherHeight = rc3dObjectActorHeight(other);
+        const float otherTop = other->z + otherHeight;
+        const float minDist = actorRadius + otherRadius;
+        const float minDistSq = minDist * minDist;
+        const float nextDx = nextX - other->x;
+        const float nextDy = nextY - other->y;
+        const float nextDistSq = (nextDx * nextDx) + (nextDy * nextDy);
+
+        if (other == obj || other->type != RC3D_OBJTYPE_OBJECT_ENEMY_1) {
+            continue;
+        }
+
+        if ((actorTop <= (other->z + RC3D_EPSILON)) ||
+            (otherTop <= (nextZ + RC3D_EPSILON)))
+        {
+            continue;
+        }
+
+        if (nextDistSq >= minDistSq) {
+            continue;
+        }
+
+        {
+            const float currentDx = obj->x - other->x;
+            const float currentDy = obj->y - other->y;
+            const float currentDistSq = (currentDx * currentDx) + (currentDy * currentDy);
+
+            if ((currentDistSq < minDistSq) && (nextDistSq > (currentDistSq + 0.0001f))) {
+                continue;
+            }
+        }
+
+        if (outBlocker) {
+            *outBlocker = other;
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rc3dTryMoveEnemyStep(
+    RC3D_Object *obj,
+    float stepX,
+    float stepY,
+    float *outMovedX,
+    float *outMovedY)
+{
+    const float nextX = obj->x + stepX;
+    const float nextY = obj->y + stepY;
+    const int nextSector = rc3dFindSectorForEnemyStep(obj, obj->x, obj->y, nextX, nextY);
+
+    if (nextSector < 0) {
+        return 0;
+    }
+
+    if (rc3dEnemyOverlapsOtherEnemyAtPosition(obj, nextX, nextY, obj->z, NULL)) {
+        return 0;
+    }
+
+    obj->x = nextX;
+    obj->y = nextY;
+    obj->sector = (int16_t)nextSector;
+
+    if (outMovedX) *outMovedX = stepX;
+    if (outMovedY) *outMovedY = stepY;
+    return 1;
+}
+
+static int rc3dTrySlideEnemyStep(
+    RC3D_Object *obj,
+    float moveX,
+    float moveY,
+    float *outMovedX,
+    float *outMovedY)
+{
+    const float actorRadius = rc3dObjectActorRadius(obj);
+    const float actorHeight = rc3dObjectActorHeight(obj);
+    const RC3D_Fixed tryX = rc3dFloatToFixed(obj->x + moveX);
+    const RC3D_Fixed tryY = rc3dFloatToFixed(obj->y + moveY);
+    const float moveLen = sqrtf((moveX * moveX) + (moveY * moveY));
+    float pushNX;
+    float pushNY;
+    RC3D_BlockingContact contact;
+
+    if (!obj || !rc3dSectorIndexValid(obj->sector) || moveLen <= RC3D_EPSILON) {
+        return 0;
+    }
+
+    pushNX = -moveX / moveLen;
+    pushNY = -moveY / moveLen;
+
+    if (!rc3dFindActorBlockingContactInSectorFixed(
+            tryX,
+            tryY,
+            actorRadius,
+            obj->z,
+            actorHeight,
+            RC3D_ENEMY_STEPUP,
+            obj->sector,
+            pushNX,
+            pushNY,
+            &contact))
+    {
+        return 0;
+    }
+
+    if ((unsigned)contact.wallIndex >= (unsigned)g_map->wallCount) {
+        return 0;
+    }
+
+    {
+        const RC3D_Wall *w = &g_map->walls[contact.wallIndex];
+        const RC3D_Vec2 *a = &g_map->verts[w->v0];
+        const RC3D_Vec2 *b = &g_map->verts[w->v1];
+        float wallX = b->x - a->x;
+        float wallY = b->y - a->y;
+        const float wallLen = sqrtf((wallX * wallX) + (wallY * wallY));
+
+        if (wallLen <= RC3D_EPSILON) {
+            return 0;
+        }
+
+        wallX /= wallLen;
+        wallY /= wallLen;
+
+        {
+            const float slideAmt = (moveX * wallX) + (moveY * wallY);
+            const float slideX = wallX * slideAmt;
+            const float slideY = wallY * slideAmt;
+            const float contactNudge =
+                fminf(contact.penetration + RC3D_EPSILON, RC3D_COLLISION_SKIN * 0.5f);
+            const float nudgeX = contact.normalX * contactNudge;
+            const float nudgeY = contact.normalY * contactNudge;
+
+            if (rc3dTryMoveEnemyStep(obj, slideX + nudgeX, slideY + nudgeY, outMovedX, outMovedY)) {
+                return 1;
+            }
+
+            if (rc3dTryMoveEnemyStep(obj, slideX + nudgeX, nudgeY, outMovedX, outMovedY)) {
+                return 1;
+            }
+
+            if (rc3dTryMoveEnemyStep(obj, nudgeX, slideY + nudgeY, outMovedX, outMovedY)) {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targetY, float dt)
+{
+    const float dx = targetX - obj->x;
+    const float dy = targetY - obj->y;
+    const float dist = sqrtf((dx * dx) + (dy * dy));
+    float moveX;
+    float moveY;
+    int substeps;
+    int moved = 0;
+    float lastMoveX = 0.0f;
+    float lastMoveY = 0.0f;
+
+    if (!obj || dist <= RC3D_EPSILON || dt <= 0.0f) {
+        return 0;
+    }
+
+    {
+        float step = RC3D_ENEMY_PATROL_SPEED * dt;
+
+        if (step > dist) {
+            step = dist;
+        }
+
+        moveX = (dx / dist) * step;
+        moveY = (dy / dist) * step;
+    }
+
+    substeps = (int)ceilf(sqrtf((moveX * moveX) + (moveY * moveY)) / 0.20f);
+    if (substeps < 1) {
+        substeps = 1;
+    }
+
+    moveX /= (float)substeps;
+    moveY /= (float)substeps;
+
+    for (int i = 0; i < substeps; ++i) {
+        const float stepLen = sqrtf((moveX * moveX) + (moveY * moveY));
+        const RC3D_Object *blockingEnemy = NULL;
+        const float actorRadius = rc3dObjectActorRadius(obj);
+        const float dirX = (stepLen > RC3D_EPSILON) ? (moveX / stepLen) : 0.0f;
+        const float dirY = (stepLen > RC3D_EPSILON) ? (moveY / stepLen) : 0.0f;
+        const float sideX = -dirY;
+        const float sideY = dirX;
+        const float avoidStep = fmaxf(actorRadius * 0.85f, stepLen);
+        int preferSign = 1;
+
+        if (rc3dTryMoveEnemyStep(obj, moveX, moveY, &lastMoveX, &lastMoveY)) {
+            moved = 1;
+            continue;
+        }
+
+        if (rc3dEnemyOverlapsOtherEnemyAtPosition(
+                obj,
+                obj->x + moveX,
+                obj->y + moveY,
+                obj->z,
+                &blockingEnemy))
+        {
+            if (blockingEnemy) {
+                const float relX = blockingEnemy->x - obj->x;
+                const float relY = blockingEnemy->y - obj->y;
+                const float sideDot = (relX * sideX) + (relY * sideY);
+
+                if (fabsf(sideDot) <= 0.001f) {
+                    preferSign = ((obj->tagId ^ blockingEnemy->tagId) & 1) ? 1 : -1;
+                } else {
+                    preferSign = (sideDot > 0.0f) ? -1 : 1;
+                }
+            }
+
+            if (rc3dTryMoveEnemyStep(
+                    obj,
+                    moveX + (sideX * avoidStep * (float)preferSign),
+                    moveY + (sideY * avoidStep * (float)preferSign),
+                    &lastMoveX,
+                    &lastMoveY))
+            {
+                moved = 1;
+                continue;
+            }
+
+            if (rc3dTryMoveEnemyStep(
+                    obj,
+                    moveX - (sideX * avoidStep * (float)preferSign),
+                    moveY - (sideY * avoidStep * (float)preferSign),
+                    &lastMoveX,
+                    &lastMoveY))
+            {
+                moved = 1;
+                continue;
+            }
+
+            if (rc3dTryMoveEnemyStep(
+                    obj,
+                    sideX * avoidStep * (float)preferSign,
+                    sideY * avoidStep * (float)preferSign,
+                    &lastMoveX,
+                    &lastMoveY))
+            {
+                moved = 1;
+                continue;
+            }
+
+            if (rc3dTryMoveEnemyStep(
+                    obj,
+                    -sideX * avoidStep * (float)preferSign,
+                    -sideY * avoidStep * (float)preferSign,
+                    &lastMoveX,
+                    &lastMoveY))
+            {
+                moved = 1;
+                continue;
+            }
+        }
+
+        if (rc3dTrySlideEnemyStep(obj, moveX, moveY, &lastMoveX, &lastMoveY)) {
+            moved = 1;
+            continue;
+        }
+
+        break;
+    }
+
+    if (moved) {
+        obj->angle = atan2f(lastMoveY, lastMoveX);
+    }
+
+    return moved;
+}
+
+static void rc3dUpdateEnemyVertical(RC3D_Object *obj, float dt)
+{
+    const float actorHeight = rc3dObjectActorHeight(obj);
+    float targetZ;
+
+    if (!obj || !rc3dEnsureEnemySectorValid(obj)) {
+        return;
+    }
+
+    targetZ = g_map->sectors[obj->sector].floorHeight;
+
+    if (obj->z > targetZ) {
+        obj->vz -= RC3D_GRAVITY * dt;
+        obj->z += obj->vz * dt;
+
+        if (obj->z <= targetZ) {
+            obj->z = targetZ;
+            obj->vz = 0.0f;
+        }
+    } else {
+        const float dz = targetZ - obj->z;
+
+        if (dz > 0.0f) {
+            const float riseSpeed = dz * 10.0f;
+            const float maxRise = RC3D_STEP_SNAP_SPEED * dt;
+            float stepUp = riseSpeed * dt;
+
+            if (stepUp > maxRise) stepUp = maxRise;
+            if (stepUp > dz) stepUp = dz;
+
+            obj->z += stepUp;
+        }
+
+        obj->vz = 0.0f;
+    }
+
+    if ((obj->z + actorHeight) > g_map->sectors[obj->sector].ceilHeight) {
+        obj->z = g_map->sectors[obj->sector].ceilHeight - actorHeight;
+        if (obj->z < g_map->sectors[obj->sector].floorHeight) {
+            obj->z = g_map->sectors[obj->sector].floorHeight;
+        }
+        obj->vz = 0.0f;
+    }
+}
+
 static int64_t pointSegmentDistSqFixed(
     RC3D_Fixed px, RC3D_Fixed py,
     RC3D_Fixed ax, RC3D_Fixed ay,
@@ -2876,6 +3956,228 @@ static int64_t pointSegmentDistSqFixed(
     if (outClosestY) *outClosestY = cy;
 
     return rc3dFixedSq(px - cx) + rc3dFixedSq(py - cy);
+}
+
+static int rc3dWallBlocksActorMovement(
+    const RC3D_Wall *w,
+    int sectorIndex,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp)
+{
+    if (w->flags & RC3D_WALL_SOLID) {
+        return 1;
+    }
+
+    if (w->flags & RC3D_WALL_PORTAL) {
+        return !rc3dActorPortalAllowsPassage(w, sectorIndex, feetZ, actorHeight, maxStepUp);
+    }
+
+    if (w->flags & (RC3D_WALL_MIDDLE | RC3D_WALL_UPPER | RC3D_WALL_LOWER)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rc3dActorPositionBlockedInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    float actorRadius,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp,
+    int sectorIndex)
+{
+    const RC3D_Fixed radiusFixed = rc3dFloatToFixed(actorRadius);
+    const int64_t radiusSq = rc3dFixedSq(radiusFixed);
+    const RC3D_Sector *sec;
+    int start;
+    int end;
+
+    if (!g_map || !g_map->sectors || !g_map->walls) {
+        return 0;
+    }
+
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    sec = &g_map->sectors[sectorIndex];
+    start = sec->wallStart;
+    end = start + sec->wallCount;
+
+    if (start < 0 || end < start || end > g_map->wallCount) {
+        return 0;
+    }
+
+    for (int wi = start; wi < end; ++wi) {
+        const RC3D_Wall *w = &g_map->walls[wi];
+        RC3D_Fixed ax;
+        RC3D_Fixed ay;
+        RC3D_Fixed bx;
+        RC3D_Fixed by;
+
+        if (!rc3dWallBlocksActorMovement(w, sectorIndex, feetZ, actorHeight, maxStepUp)) {
+            continue;
+        }
+
+        if (!rc3dGetWallFixedEndpoints(w, &ax, &ay, &bx, &by)) {
+            continue;
+        }
+
+        if (pointSegmentDistSqFixed(px, py, ax, ay, bx, by, NULL, NULL) < radiusSq) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int rc3dFindActorBlockingContactInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    float actorRadius,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp,
+    int sectorIndex,
+    float fallbackNX,
+    float fallbackNY,
+    RC3D_BlockingContact *outContact)
+{
+    const RC3D_Fixed radiusFixed = rc3dFloatToFixed(actorRadius);
+    const int64_t radiusSq = rc3dFixedSq(radiusFixed);
+    const float radiusF = rc3dFixedToFloat(radiusFixed);
+    const RC3D_Sector *sec;
+    int start;
+    int end;
+    RC3D_BlockingContact best;
+    int64_t bestDistSq = radiusSq;
+
+    if (!g_map || !g_map->sectors || !g_map->walls) {
+        return 0;
+    }
+
+    if ((unsigned)sectorIndex >= (unsigned)g_map->sectorCount) {
+        return 0;
+    }
+
+    sec = &g_map->sectors[sectorIndex];
+    start = sec->wallStart;
+    end = start + sec->wallCount;
+
+    if (start < 0 || end < start || end > g_map->wallCount) {
+        return 0;
+    }
+
+    best.hit = 0;
+    best.wallIndex = -1;
+    best.normalX = fallbackNX;
+    best.normalY = fallbackNY;
+    best.penetration = 0.0f;
+
+    for (int wi = start; wi < end; ++wi) {
+        const RC3D_Wall *w = &g_map->walls[wi];
+        RC3D_Fixed ax;
+        RC3D_Fixed ay;
+        RC3D_Fixed bx;
+        RC3D_Fixed by;
+        RC3D_Fixed cx = 0;
+        RC3D_Fixed cy = 0;
+        RC3D_Fixed dx = 0;
+        RC3D_Fixed dy = 0;
+        int64_t distSq;
+
+        if (!rc3dWallBlocksActorMovement(w, sectorIndex, feetZ, actorHeight, maxStepUp)) {
+            continue;
+        }
+
+        if (!rc3dGetWallFixedEndpoints(w, &ax, &ay, &bx, &by)) {
+            continue;
+        }
+
+        distSq = pointSegmentDistSqFixed(px, py, ax, ay, bx, by, &cx, &cy);
+        if (distSq >= bestDistSq) {
+            continue;
+        }
+
+        {
+            float nx = fallbackNX;
+            float ny = fallbackNY;
+            float dist = 0.0f;
+            const RC3D_Fixed abx = bx - ax;
+            const RC3D_Fixed aby = by - ay;
+            const int64_t abLenSq = rc3dFixedSq(abx) + rc3dFixedSq(aby);
+
+            dx = px - cx;
+            dy = py - cy;
+
+            if (distSq > 0) {
+                const float dxF = rc3dFixedToFloat(dx);
+                const float dyF = rc3dFixedToFloat(dy);
+
+                dist = sqrtf((dxF * dxF) + (dyF * dyF));
+                if (dist > RC3D_EPSILON) {
+                    nx = dxF / dist;
+                    ny = dyF / dist;
+                }
+            } else if (abLenSq > 0) {
+                const float abxF = rc3dFixedToFloat(abx);
+                const float abyF = rc3dFixedToFloat(aby);
+                const float invWallLen = 1.0f / sqrtf((abxF * abxF) + (abyF * abyF));
+                nx = -abyF * invWallLen;
+                ny =  abxF * invWallLen;
+
+                if (((nx * fallbackNX) + (ny * fallbackNY)) < 0.0f) {
+                    nx = -nx;
+                    ny = -ny;
+                }
+            }
+
+            best.hit = 1;
+            best.wallIndex = wi;
+            best.normalX = nx;
+            best.normalY = ny;
+            best.penetration = radiusF - dist;
+            bestDistSq = distSq;
+        }
+    }
+
+    if (best.hit) {
+        if (outContact) {
+            *outContact = best;
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
+static int rc3dActorPositionFitsInSectorFixed(
+    RC3D_Fixed px,
+    RC3D_Fixed py,
+    float actorRadius,
+    float feetZ,
+    float actorHeight,
+    float maxStepUp,
+    int sectorIndex)
+{
+    if (!pointInSectorFixed(px, py, sectorIndex)) {
+        return 0;
+    }
+
+    if (!rc3dActorFitsInSector(sectorIndex, feetZ, actorHeight, maxStepUp)) {
+        return 0;
+    }
+
+    if (rc3dActorPositionBlockedInSectorFixed(
+            px, py, actorRadius, feetZ, actorHeight, maxStepUp, sectorIndex))
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 static int wallOpeningAllowsPlayerPassage(const RC3D_Wall *w, int sectorIndex)
@@ -6363,7 +7665,241 @@ static void rc3dUpdatePlayerVertical(float dt)
     }
 }
 
+static void rc3dResetObjectRuntimeState(void)
+{
+    if (!g_map || !g_map->objects || g_map->objectCount <= 0) {
+        return;
+    }
 
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        RC3D_Object *obj = (RC3D_Object *)&g_map->objects[i];
+        obj->trigger = 0u;
+        obj->spriteId = RC3D_INVALID_SPRITE;
+        obj->sector = -1;
+        obj->vz = 0.0f;
+        obj->navTargetTag = 0;
+        obj->navPrevTag = 0;
+        obj->navTravelDir = 1;
+        obj->navBlockedTime = 0.0f;
+        obj->navBlockedAnchorX = obj->x;
+        obj->navBlockedAnchorY = obj->y;
+    }
+}
+
+static int rc3dObjectUsesSprite(const RC3D_Object *obj)
+{
+    if (!obj) {
+        return 0;
+    }
+
+    return (obj->type == RC3D_OBJTYPE_SPRITE) ||
+           (obj->type == RC3D_OBJTYPE_OBJECT_ENEMY_1);
+}
+
+static void rc3dSyncRuntimeObjectSprite(RC3D_Object *obj)
+{
+    if (!obj || !rc3dSpriteHandleValid(obj->spriteId)) {
+        return;
+    }
+
+    rc3dSpriteSetTexture(obj->spriteId, obj->textureId);
+    rc3dSpriteSetSize(obj->spriteId, obj->scalex, obj->scaley);
+    rc3dSpriteSetPosition(obj->spriteId, obj->x, obj->y);
+    rc3dSpriteSetBaseZ(obj->spriteId, obj->z);
+    rc3dSpriteSetActive(obj->spriteId, 1);
+}
+
+static void rc3dBindRuntimeObjectSprites(void)
+{
+    if (!g_map || !g_map->objects || g_map->objectCount <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        RC3D_Object *obj = (RC3D_Object *)&g_map->objects[i];
+
+        obj->spriteId = RC3D_INVALID_SPRITE;
+        obj->sector = -1;
+        obj->vz = 0.0f;
+        obj->navTargetTag = 0;
+        obj->navPrevTag = 0;
+        obj->navTravelDir = 1;
+        obj->navBlockedTime = 0.0f;
+        obj->navBlockedAnchorX = obj->x;
+        obj->navBlockedAnchorY = obj->y;
+        if (!rc3dObjectUsesSprite(obj)) {
+            continue;
+        }
+
+        obj->spriteId = (int16_t)rc3dSpriteCreate(
+            obj->x,
+            obj->y,
+            obj->z,
+            obj->scalex,
+            obj->scaley,
+            obj->textureId);
+
+        if (obj->type == RC3D_OBJTYPE_OBJECT_ENEMY_1) {
+            rc3dEnsureEnemySectorValid(obj);
+        } else {
+            obj->sector = (int16_t)findSectorForSpritePosition(obj->x, obj->y, -1);
+        }
+
+        rc3dSyncRuntimeObjectSprite(obj);
+    }
+}
+
+static void rc3dUpdateEnemyPatrols(float dt)
+{
+    if (!g_map || !g_map->objects || g_map->objectCount <= 0 || dt <= 0.0f) {
+        return;
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        RC3D_Object *obj = (RC3D_Object *)&g_map->objects[i];
+        int connectedIndices[RC3D_MAX_NAV_ROUTE_NODES];
+        int connectedCount;
+        int routeAnchorTag;
+        int targetNodeIndex;
+        const RC3D_Object *targetNode;
+        float reachDist;
+        float targetDistSq;
+        float progressDistSq;
+        int moved;
+
+        if (obj->type != RC3D_OBJTYPE_OBJECT_ENEMY_1) {
+            continue;
+        }
+
+        if (!rc3dEnsureEnemySectorValid(obj)) {
+            rc3dSyncRuntimeObjectSprite(obj);
+            continue;
+        }
+
+        routeAnchorTag = obj->targetTagId;
+        if (rc3dFindNavNodeIndexByTag(routeAnchorTag) < 0) {
+            routeAnchorTag = obj->navTargetTag;
+        }
+        if (rc3dFindNavNodeIndexByTag(routeAnchorTag) < 0) {
+            const int nearestNodeIndex = rc3dFindNearestNavNodeIndex(obj);
+            if (nearestNodeIndex >= 0) {
+                routeAnchorTag = g_map->objects[nearestNodeIndex].tagId;
+            }
+        }
+
+        connectedCount = rc3dCollectConnectedNavIndices(
+            routeAnchorTag,
+            connectedIndices,
+            RC3D_MAX_NAV_ROUTE_NODES);
+        if (connectedCount <= 0) {
+            obj->navBlockedTime = 0.0f;
+            obj->navBlockedAnchorX = obj->x;
+            obj->navBlockedAnchorY = obj->y;
+            rc3dUpdateEnemyVertical(obj, dt);
+            rc3dSyncRuntimeObjectSprite(obj);
+            continue;
+        }
+
+        targetNodeIndex = rc3dFindNavNodeIndexByTag(obj->navTargetTag);
+        if (rc3dFindListedNavNodeSlotByTag(connectedIndices, connectedCount, obj->navTargetTag) < 0) {
+            targetNodeIndex = -1;
+        }
+
+        if (targetNodeIndex < 0) {
+            targetNodeIndex = rc3dFindNearestConnectedNavNodeIndex(obj, routeAnchorTag);
+            if (targetNodeIndex < 0) {
+                targetNodeIndex = connectedIndices[0];
+            }
+
+            obj->navTargetTag = g_map->objects[targetNodeIndex].tagId;
+            obj->navPrevTag = 0;
+            obj->navBlockedTime = 0.0f;
+            obj->navBlockedAnchorX = obj->x;
+            obj->navBlockedAnchorY = obj->y;
+        }
+
+        targetNode = &g_map->objects[targetNodeIndex];
+        reachDist = targetNode->radius * 0.35f;
+        if (reachDist < RC3D_ENEMY_NODE_REACH_MIN) {
+            reachDist = RC3D_ENEMY_NODE_REACH_MIN;
+        }
+
+        targetDistSq =
+            ((targetNode->x - obj->x) * (targetNode->x - obj->x)) +
+            ((targetNode->y - obj->y) * (targetNode->y - obj->y));
+
+        if (targetDistSq <= (reachDist * reachDist)) {
+            const int nextNodeIndex =
+                rc3dChooseNextPatrolNodeIndex(targetNodeIndex, obj->navPrevTag);
+
+            obj->navBlockedTime = 0.0f;
+            obj->navBlockedAnchorX = obj->x;
+            obj->navBlockedAnchorY = obj->y;
+
+            if (nextNodeIndex >= 0) {
+                obj->navPrevTag = targetNode->tagId;
+                obj->navTargetTag = g_map->objects[nextNodeIndex].tagId;
+                targetNodeIndex = nextNodeIndex;
+                targetNode = &g_map->objects[targetNodeIndex];
+            }
+        }
+
+        reachDist = targetNode->radius * 0.35f;
+        if (reachDist < RC3D_ENEMY_NODE_REACH_MIN) {
+            reachDist = RC3D_ENEMY_NODE_REACH_MIN;
+        }
+
+        targetDistSq =
+            ((targetNode->x - obj->x) * (targetNode->x - obj->x)) +
+            ((targetNode->y - obj->y) * (targetNode->y - obj->y));
+
+        moved = rc3dMoveEnemyTowardPoint(obj, targetNode->x, targetNode->y, dt);
+        progressDistSq =
+            ((obj->x - obj->navBlockedAnchorX) * (obj->x - obj->navBlockedAnchorX)) +
+            ((obj->y - obj->navBlockedAnchorY) * (obj->y - obj->navBlockedAnchorY));
+
+        if (targetDistSq > (reachDist * reachDist) &&
+            progressDistSq >= (RC3D_ENEMY_BLOCKED_PROGRESS_TOLERANCE * RC3D_ENEMY_BLOCKED_PROGRESS_TOLERANCE))
+        {
+            obj->navBlockedTime = 0.0f;
+            obj->navBlockedAnchorX = obj->x;
+            obj->navBlockedAnchorY = obj->y;
+        } else if (targetDistSq > (reachDist * reachDist)) {
+            if (!moved && obj->navBlockedTime <= 0.0f) {
+                obj->navBlockedAnchorX = obj->x;
+                obj->navBlockedAnchorY = obj->y;
+            }
+
+            obj->navBlockedTime += dt;
+
+            if (obj->navBlockedTime >= RC3D_ENEMY_BLOCKED_REVERSE_TIME) {
+                obj->navBlockedTime = 0.0f;
+                obj->navBlockedAnchorX = obj->x;
+                obj->navBlockedAnchorY = obj->y;
+
+                if (obj->navPrevTag != 0) {
+                    const int oldTargetTag = obj->navTargetTag;
+                    obj->navTargetTag = obj->navPrevTag;
+                    obj->navPrevTag = oldTargetTag;
+                } else {
+                    const int nearestNodeIndex = rc3dFindNearestConnectedNavNodeIndex(obj, routeAnchorTag);
+
+                    if (nearestNodeIndex >= 0) {
+                        obj->navTargetTag = g_map->objects[nearestNodeIndex].tagId;
+                        obj->navPrevTag = 0;
+                    }
+                }
+            }
+        } else {
+            obj->navBlockedTime = 0.0f;
+            obj->navBlockedAnchorX = obj->x;
+            obj->navBlockedAnchorY = obj->y;
+        }
+
+        rc3dUpdateEnemyVertical(obj, dt);
+        rc3dSyncRuntimeObjectSprite(obj);
+    }
+}
 
 static void rc3dResetPlayerFromMapStart(void)
 {
@@ -6424,19 +7960,7 @@ void rc3dInit(void)
     rc3dResetPlayerFromMapStart();
     rc3dMinimapResetDiscovery();
     rc3dClearSprites();
-    //rc3dInitTestSprite();
-    //int spriteTmp = 0;
-
-    for(int o = 0; o < g_map->objectCount; o++){
-        if(g_map->objects[o].type == OBJECT_TYPE_BASIC_SPRITE){    // basic Sprites
-            //spriteTmp = rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, g_map->objects[o].scalex, g_map->objects[o].scalex, g_map->objects[o].textureId);
-            rc3dSpriteCreate(g_map->objects[o].x, g_map->objects[o].y, g_map->objects[o].z, 
-                g_map->objects[o].scalex, 
-                g_map->objects[o].scaley, 
-                g_map->objects[o].textureId
-            );
-        }
-    }
+    rc3dBindRuntimeObjectSprites();
 }
 
 int rc3dSetSectorStateByTag(int32_t tagId, uint32_t stateFlags)
@@ -6847,6 +8371,8 @@ void processObjects(int pTagId, int pType)  // engine internal systems
 
 int scancode_f1 = 0;
 int scancode_m = 0;
+int scancode_f2 = 0;    // on off AI
+uint8_t bUseAi = 1;
 
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 {
@@ -6897,6 +8423,15 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
     else
         scancode_m = 0;
 
+    if (keys[SDL_SCANCODE_F2]) { 
+        if(scancode_f2 == 0){
+            scancode_f2 = 1;
+            bUseAi = 1 - bUseAi;
+        }
+    }
+    else
+        scancode_f2 = 0;
+
     if (keys[SDL_SCANCODE_1]) {
         rc3dSetSectorStateByTag(1, RC3D_SECTOR_STATE_RAISE_FLOOR | RC3D_SECTOR_STATE_LOWER_CEILING);
     }
@@ -6933,6 +8468,9 @@ void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx)
 
     rc3dUpdateHeadbob(dt, isMoving);
     rc3dUpdatePlayerVertical(dt);
+    if(bUseAi){
+        rc3dUpdateEnemyPatrols(dt);
+    }
 
 #if RC3D_DRAW_PROFILER
     g_profiler.updateMs = rc3dProfilerTicksToMs(SDL_GetPerformanceCounter() - updateStart);

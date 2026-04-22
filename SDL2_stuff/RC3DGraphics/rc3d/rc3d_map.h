@@ -114,6 +114,15 @@ float x;
     
     // runtime side only
     uint8_t trigger;    // used to savestate
+    int16_t spriteId;   // bound runtime sprite handle, -1 when unused
+    int16_t sector;     // current runtime sector
+    float vz;           // runtime vertical velocity
+    int32_t navTargetTag;  // runtime patrol target nav tag, 0 when unattached
+    int32_t navPrevTag;    // runtime previous nav tag so patrol can choose branches
+    int8_t navTravelDir;   // runtime patrol direction: +1 forward, -1 backward
+    float navBlockedTime;  // runtime blocked-door timer before patrol reversal
+    float navBlockedAnchorX;  // runtime progress checkpoint for stuck detection
+    float navBlockedAnchorY;  // runtime progress checkpoint for stuck detection
 } RC3D_Object;
 
 

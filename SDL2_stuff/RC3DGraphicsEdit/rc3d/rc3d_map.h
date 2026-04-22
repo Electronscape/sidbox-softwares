@@ -121,6 +121,8 @@ typedef enum {
     RC3D_OBJTYPE_OBJECT_CLICKABLE     = 10u,
     RC3D_OBJTYPE_OBJECT_ACTIOBUTTON   = 11u,
     RC3D_OBJTYPE_OBJECT_GENERIC_USER  = 12u,    // add stuff after this!!
+    RC3D_OBJTYPE_OBJECT_ENEMY_1       = 13u,
+    RC3D_OBJTYPE_OBJECT_FRIENDLY_1    = 14u,
     RC3D_OBJTYPE_ENDLIST          
 } RC3D_ObjectType;
 
