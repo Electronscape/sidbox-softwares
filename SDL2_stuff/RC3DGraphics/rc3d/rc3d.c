@@ -69,6 +69,14 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define RC3D_ENEMY_NODE_REACH_MIN 0.15f
 #define RC3D_ENEMY_BLOCKED_REVERSE_TIME 5.0f
 #define RC3D_ENEMY_BLOCKED_PROGRESS_TOLERANCE 0.5f
+#define RC3D_ENEMY_AVOID_STEER_RESPONSE 6.5f
+#define RC3D_ENEMY_AVOID_RELEASE_RESPONSE 3.0f
+#define RC3D_ENEMY_AVOID_SOFT_STEER_SCALE 0.55f
+#define RC3D_ENEMY_AVOID_SIDE_COMMIT_BAND 0.10f
+#define RC3D_ENEMY_AVOID_HARD_FALLBACK_DELAY 0.20f
+#define RC3D_ENEMY_CROWD_RELAX_PASSES 2
+#define RC3D_ENEMY_CROWD_SOFT_BUFFER 0.04f
+#define RC3D_ENEMY_CROWD_NUDGE_SPEED 0.50f
 #define RC3D_MAX_NAV_ROUTE_NODES 256
 
 
@@ -636,6 +644,7 @@ static void rc3dResolvePlayerPenetrationInSector(int sectorIndex);
 static void rc3dMinimapRevealCurrentSector(void);
 static void rc3dResetObjectRuntimeState(void);
 static void rc3dUpdateEnemyPatrols(float dt);
+static void rc3dSyncRuntimeObjectSprite(RC3D_Object *obj);
 static int rc3dFindActorBlockingContactInSectorFixed(
     RC3D_Fixed px,
     RC3D_Fixed py,
@@ -2487,6 +2496,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         objects[i].navBlockedTime = 0.0f;
         objects[i].navBlockedAnchorX = objects[i].x;
         objects[i].navBlockedAnchorY = objects[i].y;
+        objects[i].navAvoidSteer = 0.0f;
 
         if (objects[i].radius < 0.01f) {
             objects[i].radius = 0.25f;
@@ -2918,6 +2928,25 @@ static float rc3dObjectActorRadius(const RC3D_Object *obj)
     }
 
     return radius;
+}
+
+static float rc3dClampFloat(float value, float minValue, float maxValue)
+{
+    if (value < minValue) {
+        return minValue;
+    }
+
+    if (value > maxValue) {
+        return maxValue;
+    }
+
+    return value;
+}
+
+static float rc3dBlendToward(float current, float target, float response, float dt)
+{
+    const float blend = 1.0f - expf(-response * dt);
+    return current + ((target - current) * blend);
 }
 
 static int rc3dFindNavNodeIndexByTag(int tagId)
@@ -3664,6 +3693,29 @@ static int rc3dTryMoveEnemyStep(
     return 1;
 }
 
+static int rc3dTryMoveEnemyStepBounded(
+    RC3D_Object *obj,
+    float stepX,
+    float stepY,
+    float maxStepLen,
+    float *outMovedX,
+    float *outMovedY)
+{
+    const float stepLen = sqrtf((stepX * stepX) + (stepY * stepY));
+
+    if (maxStepLen <= RC3D_EPSILON || stepLen <= RC3D_EPSILON) {
+        return 0;
+    }
+
+    if (stepLen > maxStepLen) {
+        const float scale = maxStepLen / stepLen;
+        stepX *= scale;
+        stepY *= scale;
+    }
+
+    return rc3dTryMoveEnemyStep(obj, stepX, stepY, outMovedX, outMovedY);
+}
+
 static int rc3dTrySlideEnemyStep(
     RC3D_Object *obj,
     float moveX,
@@ -3747,6 +3799,127 @@ static int rc3dTrySlideEnemyStep(
     return 0;
 }
 
+static void rc3dResolveEnemyCrowding(float dt)
+{
+    const int objectCount = g_map ? g_map->objectCount : 0;
+    const float maxNudgePerPass =
+        (RC3D_ENEMY_CROWD_NUDGE_SPEED * dt) / (float)RC3D_ENEMY_CROWD_RELAX_PASSES;
+
+    if (!g_map || !g_map->objects || objectCount <= 1 || dt <= 0.0f ||
+        maxNudgePerPass <= RC3D_EPSILON)
+    {
+        return;
+    }
+
+    {
+        float crowdNudgeX[objectCount];
+        float crowdNudgeY[objectCount];
+
+        for (int pass = 0; pass < RC3D_ENEMY_CROWD_RELAX_PASSES; ++pass) {
+            int anyCrowding = 0;
+
+            memset(crowdNudgeX, 0, sizeof(crowdNudgeX));
+            memset(crowdNudgeY, 0, sizeof(crowdNudgeY));
+
+            for (int i = 0; i < objectCount; ++i) {
+                const RC3D_Object *obj = &g_map->objects[i];
+                const float objRadius = rc3dObjectActorRadius(obj);
+                const float objHeight = rc3dObjectActorHeight(obj);
+                const float objTop = obj->z + objHeight;
+
+                if (obj->type != RC3D_OBJTYPE_OBJECT_ENEMY_1 || !rc3dSectorIndexValid(obj->sector)) {
+                    continue;
+                }
+
+                for (int j = i + 1; j < objectCount; ++j) {
+                    const RC3D_Object *other = &g_map->objects[j];
+                    const float otherRadius = rc3dObjectActorRadius(other);
+                    const float otherHeight = rc3dObjectActorHeight(other);
+                    const float otherTop = other->z + otherHeight;
+                    const float desiredDist = objRadius + otherRadius + RC3D_ENEMY_CROWD_SOFT_BUFFER;
+                    const float desiredDistSq = desiredDist * desiredDist;
+                    const float dx = obj->x - other->x;
+                    const float dy = obj->y - other->y;
+                    const float distSq = (dx * dx) + (dy * dy);
+                    float nx;
+                    float ny;
+                    float dist;
+                    float sharedPush;
+
+                    if (other->type != RC3D_OBJTYPE_OBJECT_ENEMY_1 || !rc3dSectorIndexValid(other->sector)) {
+                        continue;
+                    }
+
+                    if ((objTop <= (other->z + RC3D_EPSILON)) ||
+                        (otherTop <= (obj->z + RC3D_EPSILON)))
+                    {
+                        continue;
+                    }
+
+                    if (distSq >= desiredDistSq) {
+                        continue;
+                    }
+
+                    if (distSq > 0.000001f) {
+                        dist = sqrtf(distSq);
+                        nx = dx / dist;
+                        ny = dy / dist;
+                    } else if (((i ^ j) & 1) != 0) {
+                        dist = 0.0f;
+                        nx = 0.70710678f;
+                        ny = 0.70710678f;
+                    } else {
+                        dist = 0.0f;
+                        nx = -0.70710678f;
+                        ny = 0.70710678f;
+                    }
+
+                    sharedPush = (desiredDist - dist) * 0.5f;
+                    if (sharedPush <= RC3D_EPSILON) {
+                        continue;
+                    }
+
+                    crowdNudgeX[i] += nx * sharedPush;
+                    crowdNudgeY[i] += ny * sharedPush;
+                    crowdNudgeX[j] -= nx * sharedPush;
+                    crowdNudgeY[j] -= ny * sharedPush;
+                    anyCrowding = 1;
+                }
+            }
+
+            if (!anyCrowding) {
+                break;
+            }
+
+            for (int i = 0; i < objectCount; ++i) {
+                RC3D_Object *obj = (RC3D_Object *)&g_map->objects[i];
+
+                if (obj->type != RC3D_OBJTYPE_OBJECT_ENEMY_1 || !rc3dSectorIndexValid(obj->sector)) {
+                    continue;
+                }
+
+                rc3dTryMoveEnemyStepBounded(
+                    obj,
+                    crowdNudgeX[i],
+                    crowdNudgeY[i],
+                    maxNudgePerPass,
+                    NULL,
+                    NULL);
+            }
+        }
+    }
+
+    for (int i = 0; i < objectCount; ++i) {
+        RC3D_Object *obj = (RC3D_Object *)&g_map->objects[i];
+
+        if (obj->type != RC3D_OBJTYPE_OBJECT_ENEMY_1) {
+            continue;
+        }
+
+        rc3dSyncRuntimeObjectSprite(obj);
+    }
+}
+
 static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targetY, float dt)
 {
     const float dx = targetX - obj->x;
@@ -3784,19 +3957,17 @@ static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targe
 
     for (int i = 0; i < substeps; ++i) {
         const float stepLen = sqrtf((moveX * moveX) + (moveY * moveY));
+        const float substepDt = dt / (float)substeps;
         const RC3D_Object *blockingEnemy = NULL;
         const float actorRadius = rc3dObjectActorRadius(obj);
         const float dirX = (stepLen > RC3D_EPSILON) ? (moveX / stepLen) : 0.0f;
         const float dirY = (stepLen > RC3D_EPSILON) ? (moveY / stepLen) : 0.0f;
         const float sideX = -dirY;
         const float sideY = dirX;
-        const float avoidStep = fmaxf(actorRadius * 0.85f, stepLen);
+        const float sideCommitBand = fmaxf(actorRadius * RC3D_ENEMY_AVOID_SIDE_COMMIT_BAND, 0.04f);
+        float desiredAvoidSteer = 0.0f;
+        float avoidOffset = 0.0f;
         int preferSign = 1;
-
-        if (rc3dTryMoveEnemyStep(obj, moveX, moveY, &lastMoveX, &lastMoveY)) {
-            moved = 1;
-            continue;
-        }
 
         if (rc3dEnemyOverlapsOtherEnemyAtPosition(
                 obj,
@@ -3810,17 +3981,59 @@ static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targe
                 const float relY = blockingEnemy->y - obj->y;
                 const float sideDot = (relX * sideX) + (relY * sideY);
 
-                if (fabsf(sideDot) <= 0.001f) {
-                    preferSign = ((obj->tagId ^ blockingEnemy->tagId) & 1) ? 1 : -1;
+                if (fabsf(sideDot) <= sideCommitBand) {
+                    if (fabsf(obj->navAvoidSteer) > 0.05f) {
+                        preferSign = (obj->navAvoidSteer >= 0.0f) ? 1 : -1;
+                    } else {
+                        preferSign = ((obj->tagId ^ blockingEnemy->tagId) & 1) ? 1 : -1;
+                    }
                 } else {
                     preferSign = (sideDot > 0.0f) ? -1 : 1;
                 }
             }
 
-            if (rc3dTryMoveEnemyStep(
+            desiredAvoidSteer = (float)preferSign;
+        }
+
+        obj->navAvoidSteer = rc3dClampFloat(
+            rc3dBlendToward(
+                obj->navAvoidSteer,
+                desiredAvoidSteer,
+                (blockingEnemy != NULL)
+                    ? RC3D_ENEMY_AVOID_STEER_RESPONSE
+                    : RC3D_ENEMY_AVOID_RELEASE_RESPONSE,
+                substepDt),
+            -1.0f,
+            1.0f);
+        avoidOffset = stepLen * RC3D_ENEMY_AVOID_SOFT_STEER_SCALE * obj->navAvoidSteer;
+
+        if (fabsf(avoidOffset) > 0.0025f) {
+            if (rc3dTryMoveEnemyStepBounded(
                     obj,
-                    moveX + (sideX * avoidStep * (float)preferSign),
-                    moveY + (sideY * avoidStep * (float)preferSign),
+                    moveX + (sideX * avoidOffset),
+                    moveY + (sideY * avoidOffset),
+                    stepLen,
+                    &lastMoveX,
+                    &lastMoveY))
+            {
+                moved = 1;
+                continue;
+            }
+        }
+
+        if (rc3dTryMoveEnemyStep(obj, moveX, moveY, &lastMoveX, &lastMoveY)) {
+            moved = 1;
+            continue;
+        }
+
+        if (blockingEnemy && obj->navBlockedTime >= RC3D_ENEMY_AVOID_HARD_FALLBACK_DELAY) {
+            const float hardAvoidOffset = stepLen * (float)preferSign;
+
+            if (rc3dTryMoveEnemyStepBounded(
+                    obj,
+                    moveX + (sideX * hardAvoidOffset),
+                    moveY + (sideY * hardAvoidOffset),
+                    stepLen,
                     &lastMoveX,
                     &lastMoveY))
             {
@@ -3828,10 +4041,11 @@ static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targe
                 continue;
             }
 
-            if (rc3dTryMoveEnemyStep(
+            if (rc3dTryMoveEnemyStepBounded(
                     obj,
-                    moveX - (sideX * avoidStep * (float)preferSign),
-                    moveY - (sideY * avoidStep * (float)preferSign),
+                    moveX - (sideX * hardAvoidOffset),
+                    moveY - (sideY * hardAvoidOffset),
+                    stepLen,
                     &lastMoveX,
                     &lastMoveY))
             {
@@ -3839,10 +4053,11 @@ static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targe
                 continue;
             }
 
-            if (rc3dTryMoveEnemyStep(
+            if (rc3dTryMoveEnemyStepBounded(
                     obj,
-                    sideX * avoidStep * (float)preferSign,
-                    sideY * avoidStep * (float)preferSign,
+                    sideX * hardAvoidOffset,
+                    sideY * hardAvoidOffset,
+                    stepLen,
                     &lastMoveX,
                     &lastMoveY))
             {
@@ -3850,10 +4065,11 @@ static int rc3dMoveEnemyTowardPoint(RC3D_Object *obj, float targetX, float targe
                 continue;
             }
 
-            if (rc3dTryMoveEnemyStep(
+            if (rc3dTryMoveEnemyStepBounded(
                     obj,
-                    -sideX * avoidStep * (float)preferSign,
-                    -sideY * avoidStep * (float)preferSign,
+                    -sideX * hardAvoidOffset,
+                    -sideY * hardAvoidOffset,
+                    stepLen,
                     &lastMoveX,
                     &lastMoveY))
             {
@@ -7085,6 +7301,33 @@ static uint8_t rc3dGetMiniMapWallColour(const RC3D_Wall *w, int wallIndex)
     return 27;
 }
 
+static void rc3dDrawMiniMapDot(
+    int centerX,
+    int centerY,
+    int left,
+    int top,
+    int right,
+    int bottom,
+    uint8_t colour)
+{
+    #define monster_dot_pad 0
+    const int dotLeft = centerX - monster_dot_pad;
+    const int dotTop = centerY - monster_dot_pad;
+    const int dotRight = centerX + monster_dot_pad;
+    const int dotBottom = centerY + monster_dot_pad;
+
+    if (dotRight < left || dotLeft > right || dotBottom < top || dotTop > bottom) {
+        return;
+    }
+
+    drawRect(
+        (dotLeft < left) ? left : dotLeft,
+        (dotTop < top) ? top : dotTop,
+        ((dotRight > right) ? right : dotRight) - ((dotLeft < left) ? left : dotLeft) + 1,
+        ((dotBottom > bottom) ? bottom : dotBottom) - ((dotTop < top) ? top : dotTop) + 1,
+        colour);
+}
+
 static void drawMiniMap(void)
 {
     const int mapY = 8;
@@ -7136,6 +7379,33 @@ static void drawMiniMap(void)
                     drawLine(x0, y0, x1, y1, rc3dGetMiniMapWallColour(w, wi));
                 }
             }
+        }
+    }
+
+    {
+        const RC3D_Object *objects = g_map->objects;
+
+        for (int i = 0; i < g_map->objectCount; ++i) {
+            const RC3D_Object *obj = &objects[i];
+            int dotX;
+            int dotY;
+
+            if (obj->type != RC3D_OBJTYPE_OBJECT_ENEMY_1) {
+                continue;
+            }
+
+            if (!rc3dSectorIndexValid(obj->sector)) {
+                continue;
+            }
+
+            if (!rc3dSectorIsMinimapDiscovered(&g_map->sectors[obj->sector])) {
+                continue;
+            }
+
+            dotX = centerX + (int)((obj->x - g_player.x) * scale);
+            dotY = centerY + (int)((obj->y - g_player.y) * scale);
+
+            rc3dDrawMiniMapDot(dotX, dotY, left, top, right, bottom, 48);
         }
     }
 
@@ -7683,6 +7953,7 @@ static void rc3dResetObjectRuntimeState(void)
         obj->navBlockedTime = 0.0f;
         obj->navBlockedAnchorX = obj->x;
         obj->navBlockedAnchorY = obj->y;
+        obj->navAvoidSteer = 0.0f;
     }
 }
 
@@ -7727,6 +7998,7 @@ static void rc3dBindRuntimeObjectSprites(void)
         obj->navBlockedTime = 0.0f;
         obj->navBlockedAnchorX = obj->x;
         obj->navBlockedAnchorY = obj->y;
+        obj->navAvoidSteer = 0.0f;
         if (!rc3dObjectUsesSprite(obj)) {
             continue;
         }
@@ -7772,6 +8044,7 @@ static void rc3dUpdateEnemyPatrols(float dt)
         }
 
         if (!rc3dEnsureEnemySectorValid(obj)) {
+            obj->navAvoidSteer = 0.0f;
             rc3dSyncRuntimeObjectSprite(obj);
             continue;
         }
@@ -7795,6 +8068,7 @@ static void rc3dUpdateEnemyPatrols(float dt)
             obj->navBlockedTime = 0.0f;
             obj->navBlockedAnchorX = obj->x;
             obj->navBlockedAnchorY = obj->y;
+            obj->navAvoidSteer = 0.0f;
             rc3dUpdateEnemyVertical(obj, dt);
             rc3dSyncRuntimeObjectSprite(obj);
             continue;
@@ -7899,6 +8173,8 @@ static void rc3dUpdateEnemyPatrols(float dt)
         rc3dUpdateEnemyVertical(obj, dt);
         rc3dSyncRuntimeObjectSprite(obj);
     }
+
+    rc3dResolveEnemyCrowding(dt);
 }
 
 static void rc3dResetPlayerFromMapStart(void)

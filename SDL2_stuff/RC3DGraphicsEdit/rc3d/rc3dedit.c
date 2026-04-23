@@ -1517,6 +1517,7 @@ static void drawSelectedObjectRoutePreview(void);
 static void deleteObjectByIndex(int objectIndex);
 static void beginObjectDragFromPress(int objectIndex);
 static void dragSelectedObjectTo(float worldX, float worldY);
+static void syncNavigationNodeAngles(void);
 static int findObjectByTagId(int tagId);
 static int clearBakedRouteNodesFromObject(int objectIndex);
 static int bakeSelectedObjectRouteToNodes(void);
@@ -4064,6 +4065,36 @@ static float normalizeEditorAngle(float angle)
     return angle;
 }
 
+static void syncNavigationNodeAngles(void)
+{
+    for (int i = 0; i < g_edMap.objectCount; i++) {
+        EdObject *o = &g_edMap.objects[i];
+        const EdObject *target;
+        const int targetIndex = findObjectByTagId(o->targetTagId);
+        float dx;
+        float dy;
+
+        if (o->type != RC3D_OBJTYPE_ROUTE_PREVIEW &&
+            o->type != RC3D_OBJTYPE_BAKED_ROUTE_NODE) {
+            continue;
+        }
+
+        if (targetIndex < 0 || targetIndex >= g_edMap.objectCount || targetIndex == i) {
+            continue;
+        }
+
+        target = &g_edMap.objects[targetIndex];
+        dx = target->x - o->x;
+        dy = target->y - o->y;
+
+        if ((fabsf(dx) < 0.0001f) && (fabsf(dy) < 0.0001f)) {
+            continue;
+        }
+
+        o->angle = normalizeEditorAngle(atan2f(dy, dx));
+    }
+}
+
 static float getObjectAngleStepRadians(const uint8_t *modKeys)
 {
     if (!modKeys) {
@@ -4235,10 +4266,11 @@ static void drawObjectLabels(void)
         //#define ED_OBJECT_TEXT_NOTE_BG      16
         //#define ED_OBJECT_TEXT_NOTE_BORDER  4
         //#define ED_OBJECT_TEXT_TEXT         3
-
-        drawRect(boxX, boxY, boxW, boxH, ED_OBJECT_TEXT_NOTE_BG);
-        drawRectL(boxX, boxY, boxW, boxH, border);
-        drawText(boxX + 4, textY, preview, ED_OBJECT_TEXT_TEXT);
+        if ((g_ed.zoom > 64) || (border == ED_COLOUR_HOVER_WALL) || (border == ED_COLOUR_SELECTED_WALL)) {
+            drawRect(boxX, boxY, boxW, boxH, ED_OBJECT_TEXT_NOTE_BG);
+            drawRectL(boxX, boxY, boxW, boxH, border);
+            drawText(boxX + 4, textY, preview, ED_OBJECT_TEXT_TEXT);
+        }
     }
 }
 
@@ -9417,6 +9449,8 @@ static int saveTextMap(const char *path)
     FILE *f = fopen(path, "w");
     if (!f) return 0;
 
+    syncNavigationNodeAngles();
+
     fprintf(f, "MAPEDIT8\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
@@ -9832,6 +9866,7 @@ static int loadTextMap(const char *path)
     /* only commit after full successful parse */
     finishObjectLabelEditing(0);
     g_edMap = newMap;
+    syncNavigationNodeAngles();
     touchRoutePreviewMap();
     resetUndoRedoHistory();
 
@@ -9890,6 +9925,8 @@ int exportBinaryMap(const char *path)
 {
     FILE *f = fopen(path, "wb");
     if (!f) return 0;
+
+    syncNavigationNodeAngles();
 
     /* file header */
     {
@@ -10095,6 +10132,8 @@ static int exportCStringMap(const char *path)
 {
     FILE *f = fopen(path, "w");
     if (!f) return 0;
+
+    syncNavigationNodeAngles();
 
     fprintf(f, "#include \"rc3d_map.h\"\n\n");
 
@@ -14966,7 +15005,9 @@ static void drawMapGeometry(void)
     drawObjectObjectLinks();
     drawObjectBakedLinks();
     drawSelectedObjectRoutePreview();
+
     drawObjectLabels();
+    
 
     /* -------------------------------------------------- */
     /* draft                                              */
@@ -19912,6 +19953,7 @@ void rc3dEditUpdate(float dt,
         }
     }
 
+    syncNavigationNodeAngles();
     refreshEditorUIButtonState();
     finishEditorInputFrame(keys, leftDown, rightDown, middleDown, mouseX, mouseY);
 }

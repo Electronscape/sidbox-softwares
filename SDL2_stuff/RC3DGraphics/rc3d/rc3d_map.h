@@ -123,6 +123,7 @@ float x;
     float navBlockedTime;  // runtime blocked-door timer before patrol reversal
     float navBlockedAnchorX;  // runtime progress checkpoint for stuck detection
     float navBlockedAnchorY;  // runtime progress checkpoint for stuck detection
+    float navAvoidSteer;   // runtime smoothed lateral avoidance steer, -1..1
 } RC3D_Object;
 
 

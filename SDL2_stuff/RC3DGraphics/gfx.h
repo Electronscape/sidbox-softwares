@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 
-#define SCREEN_TEST 2
+#define SCREEN_TEST 0
 
 
 
