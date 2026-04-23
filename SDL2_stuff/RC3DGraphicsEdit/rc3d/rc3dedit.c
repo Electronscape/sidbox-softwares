@@ -1537,6 +1537,8 @@ static int isAutoRepeatUIButton(int buttonId)
         case GUI_BTN_WALL_TEX_ROT_PLUS:
         case GUI_BTN_WALL_TEX_BRIGHT_MINUS:
         case GUI_BTN_WALL_TEX_BRIGHT_PLUS:
+        case GUI_BTN_WALL_OBJ_ID_MINUS:
+        case GUI_BTN_WALL_OBJ_ID_PLUS:
         case GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS:
         case GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS:
         case GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS:
@@ -18237,7 +18239,7 @@ static void drawInspectorPanel(void)
 
         py += 30;   // additional 
         py += 30;   // additional 
-        snprintf(buf, sizeof(buf), "Targ ObjID: 0x%02X", (unsigned)w->targetObjID);
+        snprintf(buf, sizeof(buf), "Targ ObjID: %u", (unsigned)w->targetObjID);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
 
@@ -18406,7 +18408,7 @@ static void drawInspectorPanel(void)
         py += 30;
         py += 30;
         if (targetObjIDMixed) snprintf(buf, sizeof(buf), "Targ ObjID: Mixed");
-        else snprintf(buf, sizeof(buf), "Targ ObjID: 0x%02X", targetObjID);
+        else snprintf(buf, sizeof(buf), "Targ ObjID: %u", targetObjID);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
 
