@@ -238,6 +238,8 @@ void copyTextureToTexture(uint8_t *from, uint8_t *to, int sizex, int sizey);
 
 void rc3dUpdate(float dt, const uint8_t *keys, int mouseDx);
 void rc3dRender(void);
+int rc3dGetClickableWallAtScreen(int screenX, int screenY, int *outWallIndex);
+int rc3dActivateClickableWall(int wallIndex);
 
 // objects API
 int rc3dSetObjectStateByTag(int32_t tagId, uint32_t stateFlags);

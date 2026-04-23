@@ -18,14 +18,20 @@
 #define RC3D_SECTOR_FLAGS_DAMAGEZONE            0x1000   /// YEAH, STAY out of these zones if you can ;)
 
 
-#define RC3D_WALL_PORTAL   0x01
-#define RC3D_WALL_UPPER    0x02
-#define RC3D_WALL_MIDDLE   0x04
-#define RC3D_WALL_LOWER    0x08
-#define RC3D_WALL_SOLID    0x10
-#define RC3D_WALL_MANUAL_TARGET 0x20
-#define RC3D_WALL_TRANSPARENCY  0x40
-#define RC3D_WALL_DOUBLESIDED   0x80
+#define RC3D_WALL_PORTAL            0x0001u
+#define RC3D_WALL_UPPER             0x0002u
+#define RC3D_WALL_MIDDLE            0x0004u
+#define RC3D_WALL_LOWER             0x0008u
+#define RC3D_WALL_SOLID             0x0010u
+#define RC3D_WALL_MANUAL_TARGET     0x0020u
+#define RC3D_WALL_TRANSPARENCY      0x0040u
+#define RC3D_WALL_DOUBLESIDED       0x0080u
+#define RC3D_WALL_CLICKABLE         0x0100u
+#define RC3D_WALL_CLICK_ENABLE      0x0200u
+#define RC3D_WALL_CLICK_ACT_ENTER   0x0400u
+#define RC3D_WALL_CLICK_ACT_EXIT    0x0800u
+
+
 
 #define RC3D_TEX_FLAG_DEFAULT       0x00u
 #define RC3D_TEX_FLAG_CLAMPXL       0x01u
@@ -57,8 +63,10 @@ typedef struct {
     uint8_t upperColor;     /* above opening */
     uint8_t midColor;       /* middle slab */
     uint8_t lowerColor;     /* below opening */
+    uint8_t targetObjID;    /* use this to trigger */
 
-    uint8_t flags;          /* wall flags */
+    uint16_t flags;          /* wall flags */
+    uint16_t _pad2;
     uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
     float texScaleX;        /* wall texture UV scale X */
     float texScaleY;        /* wall texture UV scale Y */

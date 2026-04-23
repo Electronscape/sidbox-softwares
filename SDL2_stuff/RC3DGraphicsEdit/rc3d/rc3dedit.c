@@ -74,7 +74,7 @@
 #define ED_TEXTURE_DIM_PAL_START    128u
 #define ED_TEXTURE_BRIGHT_PAL_START 192u
 #define ED_TEXTURE_PAL_COUNT         64u
-#define RC3D_WALL_PORTAL_STYLE_FLAGS (RC3D_WALL_MIDDLE | RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED)
+#define RC3D_WALL_PORTAL_STYLE_FLAGS (RC3D_WALL_MIDDLE | RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED | RC3D_WALL_CLICKABLE | RC3D_WALL_CLICK_ENABLE | RC3D_WALL_CLICK_ACT_ENTER | RC3D_WALL_CLICK_ACT_EXIT)
 
 
 
@@ -142,188 +142,6 @@ uint8_t bCtrlHold   = 0;
 uint8_t bAltHold   = 0;
 
 
-enum
-{
-    GUI_BTN_UNDO = 100,
-    GUI_BTN_REDO,
-    GUI_BTN_QUIT,
-    GUI_BTN_HELP,
-    GUI_BTN_NEWMAP,
-    GUI_BTN_LOAD,
-    GUI_BTN_SAVE,
-    GUI_BTN_EXPORT,
-    GUI_BTN_GRID,
-    GUI_BTN_FINISH,
-    GUI_BTN_CLRDRAFT,
-    GUI_BTN_VALIDATOR,
-    GUI_BTN_SHOWTEXTURE_BROWSER,
-
-    GUI_BTN_PLAYER_START_ANGLE_MINUS,
-    GUI_BTN_PLAYER_START_ANGLE_PLUS,
-
-    GUI_BTN_WALL_SOLID,
-    GUI_BTN_WALL_PORTAL,
-    GUI_BTN_WALL_WINDOW,
-    GUI_BTN_WALL_DOOR,
-    GUI_BTN_WALL_TRANSPARENCY,
-    GUI_BTN_WALL_FLAG_DOUBLESIDED,
-    GUI_BTN_WALL_SPLIT,
-
-    GUI_BTN_WALL_CLAMP_XL,
-    GUI_BTN_WALL_CLAMP_XR,
-    GUI_BTN_WALL_FLIP_X,
-    GUI_BTN_WALL_CLAMP_YT,
-    GUI_BTN_WALL_CLAMP_YB,
-    GUI_BTN_WALL_FLIP_Y,
-    GUI_BTN_WALL_TEXTURE_X_OFFSET_MINUS,
-    GUI_BTN_WALL_TEXTURE_X_OFFSET_PLUS,
-    GUI_BTN_WALL_TEXTURE_Y_OFFSET_MINUS,
-    GUI_BTN_WALL_TEXTURE_Y_OFFSET_PLUS,
-
-    GUI_BTN_WALL_COPY_PROPS,
-    GUI_BTN_WALL_PASTE_PROPS,
-    GUI_BTN_WALL_OPENBOT_MINUS,
-    GUI_BTN_WALL_OPENBOT_PLUS,
-    GUI_BTN_WALL_OPENTOP_MINUS,
-    GUI_BTN_WALL_OPENTOP_PLUS,
-    GUI_BTN_WALL_TEX_SX_MINUS,
-    GUI_BTN_WALL_TEX_SX_PLUS,
-    GUI_BTN_WALL_TEX_SY_MINUS,
-    GUI_BTN_WALL_TEX_SY_PLUS,
-    GUI_BTN_WALL_TEX_ROT_MINUS,
-    GUI_BTN_WALL_TEX_ROT_PLUS,
-    GUI_BTN_WALL_TEX_ROT_RESET,
-    GUI_BTN_WALL_TEX_BRIGHT_MINUS,
-    GUI_BTN_WALL_TEX_BRIGHT_PLUS,
-
-    GUI_BTN_WALL_QUICK_TEXTURE,
-
-    
-    GUI_BTN_SECTOR_FLOOR_MINUS,
-    GUI_BTN_SECTOR_FLOOR_PLUS,
-    GUI_BTN_SECTOR_CEIL_MINUS,
-    GUI_BTN_SECTOR_CEIL_PLUS,
-    GUI_BTN_SECTOR_GLOW_MINUS,
-    GUI_BTN_SECTOR_GLOW_PLUS,
-    GUI_BTN_SECTOR_TAG_MINUS,
-    GUI_BTN_SECTOR_TAG_PLUS,
-    GUI_BTN_SECTOR_STATE_MINUS,
-    GUI_BTN_SECTOR_STATE_PLUS,
-    GUI_BTN_SECTOR_FLOOR_MIN_MINUS,
-    GUI_BTN_SECTOR_FLOOR_MIN_PLUS,
-    GUI_BTN_SECTOR_FLOOR_MAX_MINUS,
-    GUI_BTN_SECTOR_FLOOR_MAX_PLUS,
-    GUI_BTN_SECTOR_CEIL_MIN_MINUS,
-    GUI_BTN_SECTOR_CEIL_MIN_PLUS,
-    GUI_BTN_SECTOR_CEIL_MAX_MINUS,
-    GUI_BTN_SECTOR_CEIL_MAX_PLUS,
-    GUI_BTN_SECTOR_FLOOR_FLOW_MINUS,
-    GUI_BTN_SECTOR_FLOOR_FLOW_PLUS,
-    GUI_BTN_SECTOR_CEIL_FLOW_MINUS,
-    GUI_BTN_SECTOR_CEIL_FLOW_PLUS,
-    GUI_BTN_SECTOR_COPY_PROPS,
-    GUI_BTN_SECTOR_PASTE_PROPS,
-    GUI_BTN_SECTOR_CLAMP_X1,
-    GUI_BTN_SECTOR_CLAMP_X2,
-    GUI_BTN_SECTOR_CLAMP_Y1,
-    GUI_BTN_SECTOR_CLAMP_Y2,
-
-    GUI_BTN_SECTOR_FLAGS_BIT0,  ///// 0-7 BITS //////////////
-    GUI_BTN_SECTOR_FLAGS_BIT1,
-    GUI_BTN_SECTOR_FLAGS_BIT2,
-    GUI_BTN_SECTOR_FLAGS_BIT3,
-    GUI_BTN_SECTOR_FLAGS_BIT4,
-    GUI_BTN_SECTOR_FLAGS_BIT5,
-    GUI_BTN_SECTOR_FLAGS_BIT6,
-    GUI_BTN_SECTOR_FLAGS_BIT7,
-    GUI_BTN_SECTOR_FLAGS_BIT8,  ///// 8-15 BITS /////////////
-    GUI_BTN_SECTOR_FLAGS_BIT9,
-    GUI_BTN_SECTOR_FLAGS_BIT10,
-    GUI_BTN_SECTOR_FLAGS_BIT11,
-    GUI_BTN_SECTOR_FLAGS_BIT12,
-    GUI_BTN_SECTOR_FLAGS_BIT13,
-    GUI_BTN_SECTOR_FLAGS_BIT14,
-    GUI_BTN_SECTOR_FLAGS_BIT15,
-
-
-
-    GUI_BTN_OBJECT_TAGID_PLUS,
-    GUI_BTN_OBJECT_TAGID_MINUS,
-    GUI_BTN_OBJECT_TYPE_PLUS,
-    GUI_BTN_OBJECT_TYPE_MINUS,
-    GUI_BTN_OBJECT_TARGETTAGID_PLUS,
-    GUI_BTN_OBJECT_TARGETTAGID_MINUS,
-    GUI_BTN_OBJECT_RADIUS_PLUS,
-    GUI_BTN_OBJECT_RADIUS_MINUS,
-    GUI_BTN_OBJECT_ANGLE_PLUS,
-    GUI_BTN_OBJECT_ANGLE_MINUS,
-    GUI_BTN_OBJECT_ZAXIS_PLUS,
-    GUI_BTN_OBJECT_ZAXIS_MINUS,
-    GUI_BTN_OBJECT_TSCALEX_MINUS,
-    GUI_BTN_OBJECT_TSCALEX_PLUS,
-    GUI_BTN_OBJECT_TSCALEY_MINUS,
-    GUI_BTN_OBJECT_TSCALEY_PLUS,
-    GUI_BTN_OBJECT_GET_ZAXIS,
-    GUI_BTN_OBJECT_BAKE_ROUTE,
-    GUI_BTN_OBJECT_CLEAR_BAKED_ROUTE,
-    GUI_BTN_OBJECT_LABELS_VISIBLE,
-
-    GUI_BTN_OBJECT_FLAGS_bit0, 
-    GUI_BTN_OBJECT_FLAGS_bit1, 
-    GUI_BTN_OBJECT_FLAGS_bit2, 
-    GUI_BTN_OBJECT_FLAGS_bit3, 
-    GUI_BTN_OBJECT_FLAGS_bit4, 
-    GUI_BTN_OBJECT_FLAGS_bit5, 
-    GUI_BTN_OBJECT_FLAGS_bit6, 
-    GUI_BTN_OBJECT_FLAGS_bit7, 
-
-    GUI_BTN_OBJECT_INFLAGS_bit0,
-    GUI_BTN_OBJECT_INFLAGS_bit1,
-    GUI_BTN_OBJECT_INFLAGS_bit2,
-    GUI_BTN_OBJECT_INFLAGS_bit3,
-    GUI_BTN_OBJECT_INFLAGS_bit4,
-    GUI_BTN_OBJECT_INFLAGS_bit5,
-    GUI_BTN_OBJECT_INFLAGS_bit6,
-    GUI_BTN_OBJECT_INFLAGS_bit7,
-
-    GUI_BTN_OBJECT_OUTFLAGS_bit0,
-    GUI_BTN_OBJECT_OUTFLAGS_bit1,
-    GUI_BTN_OBJECT_OUTFLAGS_bit2,
-    GUI_BTN_OBJECT_OUTFLAGS_bit3,
-    GUI_BTN_OBJECT_OUTFLAGS_bit4,
-    GUI_BTN_OBJECT_OUTFLAGS_bit5,
-    GUI_BTN_OBJECT_OUTFLAGS_bit6,
-    GUI_BTN_OBJECT_OUTFLAGS_bit7,
-
-
-
-    GUI_BTN_CONFIRM_YES,
-    GUI_BTN_CONFIRM_NO,
-
-    GUI_BTN_SECTOR_CUTTER,      // F6
-    GUI_BTN_REPAIR_TOPOLOGY,    // F7
-    GUI_BTN_CLEANMAP,           // F8
-    GUI_BTN_MAPVALIDATOR,       // F9
-    GUI_BTN_LAUNCH_TEST_MAP,    // F12
-
-
-    GUI_BTN_SECTOR_FTEX_SX_MINUS,
-    GUI_BTN_SECTOR_FTEX_SX_PLUS,
-    GUI_BTN_SECTOR_FTEX_SY_MINUS,
-    GUI_BTN_SECTOR_FTEX_SY_PLUS,
-    GUI_BTN_SECTOR_FTEX_ROT_MINUS,
-    GUI_BTN_SECTOR_FTEX_ROT_PLUS,
-    GUI_BTN_SECTOR_FTEX_ROT_RESET,
-
-    GUI_BTN_SECTOR_CTEX_SX_MINUS,
-    GUI_BTN_SECTOR_CTEX_SX_PLUS,
-    GUI_BTN_SECTOR_CTEX_SY_MINUS,
-    GUI_BTN_SECTOR_CTEX_SY_PLUS,
-    GUI_BTN_SECTOR_CTEX_ROT_MINUS,
-    GUI_BTN_SECTOR_CTEX_ROT_PLUS,
-    GUI_BTN_SECTOR_CTEX_ROT_RESET,
-};
-
 
 typedef enum {
     ED_ACT_NONE = 0,
@@ -352,6 +170,9 @@ typedef enum {
     ED_ACT_WALL_SPLIT,
     ED_ACT_WALL_TRANSPARENCY,
     ED_ACT_WALL_DOUBLESIDED,
+    ED_ACT_WALL_CLICKABLE,
+    ED_ACT_WALL_OBJ_ACT_ENTER,
+    ED_ACT_WALL_OBJ_ACT_EXIT,
 
     ED_ACT_WALL_EXTRUDE
 } EdAction;
@@ -422,9 +243,11 @@ typedef struct {
     uint8_t upperColor;
     uint8_t midColor;
     uint8_t lowerColor;
+    uint8_t targetObjID;    /* use this to trigger */
 
-    uint8_t flags;       // wall behaviour/type flags
-    uint32_t tex_flags;  // texture clamp/uv behaviour flags, packed wall brightness
+    uint16_t flags;         // wall behaviour/type flags
+    uint16_t _pad2;         // padding
+    uint32_t tex_flags;     // texture clamp/uv behaviour flags, packed wall brightness
     float texScaleX;
     float texScaleY;
     float texOffsetX;
@@ -497,7 +320,8 @@ typedef struct {
     uint8_t upperColor;
     uint8_t midColor;
     uint8_t lowerColor;
-    uint8_t flags;
+    uint8_t targetObjID;
+    uint16_t flags;
     uint32_t tex_flags;
     float texScaleX;
     float texScaleY;
@@ -4198,6 +4022,7 @@ static void drawMapObjects(void)
             drawScreenDirectionArrow(sx, sy, o->angle, arrowLen, 5, arrowCol);
         }
 
+        if((o->type != RC3D_OBJTYPE_ROUTE_PREVIEW) && (o->type != RC3D_OBJTYPE_BAKED_ROUTE_NODE) || (isObjectInEditSelection(i) || i == g_ed.hoverObject))
         if (o->radius > 0.01f) {
             const int rs = (int)lroundf(o->radius * g_ed.zoom);
             if (rs > 2) {
@@ -5669,16 +5494,21 @@ static void clearWallTexFlags(EdWall *w)
     w->texOffsetY = 0.0f;
 }
 
-static uint8_t wallClipboardFlagsFromWall(const EdWall *w)
+static uint16_t wallClipboardFlagsFromWall(const EdWall *w)
 {
     if (!w) return 0;
 
-    return (uint8_t)(w->flags & (RC3D_WALL_UPPER |
-                                 RC3D_WALL_MIDDLE |
-                                 RC3D_WALL_LOWER |
-                                 RC3D_WALL_SOLID |
-                                 RC3D_WALL_TRANSPARENCY |
-                                 RC3D_WALL_MANUAL_TARGET));
+    return (uint16_t)(w->flags & (RC3D_WALL_UPPER |
+                                  RC3D_WALL_MIDDLE |
+                                  RC3D_WALL_LOWER |
+                                  RC3D_WALL_SOLID |
+                                  RC3D_WALL_TRANSPARENCY |
+                                  RC3D_WALL_DOUBLESIDED |
+                                  RC3D_WALL_CLICKABLE |
+                                  RC3D_WALL_CLICK_ENABLE |
+                                  RC3D_WALL_CLICK_ACT_ENTER |
+                                  RC3D_WALL_CLICK_ACT_EXIT |
+                                  RC3D_WALL_MANUAL_TARGET));
 }
 
 static uint8_t clampLightLevel(int level)
@@ -6325,6 +6155,7 @@ static void copyWallPropsToClipboard(int wallIndex)
     clip->upperColor = wall->upperColor;
     clip->midColor = wall->midColor;
     clip->lowerColor = wall->lowerColor;
+    clip->targetObjID = wall->targetObjID;
     clip->flags = wallClipboardFlagsFromWall(wall);
     clip->tex_flags = wall->tex_flags;
     clip->texScaleX = wall->texScaleX;
@@ -6343,13 +6174,13 @@ static void pasteWallPropsFromClipboardToWall(int wallIndex)
 {
     EdWall *wall;
     const EdWallClipboard *clip;
-    uint8_t preservedPortal;
+    uint16_t preservedPortal;
 
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
 
     wall = &g_edMap.walls[wallIndex];
     clip = &g_ed.copiedWallProps;
-    preservedPortal = (uint8_t)(wall->flags & RC3D_WALL_PORTAL);
+    preservedPortal = (uint16_t)(wall->flags & RC3D_WALL_PORTAL);
 
     wall->openBottom = clip->openBottom;
     wall->openTop = clip->openTop;
@@ -6362,6 +6193,7 @@ static void pasteWallPropsFromClipboardToWall(int wallIndex)
     wall->upperColor = clip->upperColor;
     wall->midColor = clip->midColor;
     wall->lowerColor = clip->lowerColor;
+    wall->targetObjID = clip->targetObjID;
     wall->flags = preservedPortal | clip->flags;
     wall->tex_flags = clip->tex_flags;
     setWallTexScaleX(wall, clip->texScaleX);
@@ -7097,8 +6929,8 @@ static void setPortalPair(int wallA, int sectorA, int wallB, int sectorB)
     EdWall *b = &g_edMap.walls[wallB];
     const EdSector *sa = &g_edMap.sectors[sectorA];
     const EdSector *sb = &g_edMap.sectors[sectorB];
-    const uint8_t preservedA = (uint8_t)(a->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
-    const uint8_t preservedB = (uint8_t)(b->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
+    const uint16_t preservedA = (uint16_t)(a->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
+    const uint16_t preservedB = (uint16_t)(b->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
 
     const float openBottom = (sa->floorHeight > sb->floorHeight) ? sa->floorHeight : sb->floorHeight;
     const float openTop    = (sa->ceilHeight  < sb->ceilHeight)  ? sa->ceilHeight  : sb->ceilHeight;
@@ -7126,9 +6958,13 @@ static void setPortalPair(int wallA, int sectorA, int wallB, int sectorB)
 
     if (openTop <= openBottom) {
         a->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE |
-                   (preservedA & (RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED));
+                   (preservedA & (RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED |
+                                  RC3D_WALL_CLICKABLE | RC3D_WALL_CLICK_ENABLE |
+                                  RC3D_WALL_CLICK_ACT_ENTER | RC3D_WALL_CLICK_ACT_EXIT));
         b->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE |
-                   (preservedB & (RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED));
+                   (preservedB & (RC3D_WALL_MANUAL_TARGET | RC3D_WALL_TRANSPARENCY | RC3D_WALL_DOUBLESIDED |
+                                  RC3D_WALL_CLICKABLE | RC3D_WALL_CLICK_ENABLE |
+                                  RC3D_WALL_CLICK_ACT_ENTER | RC3D_WALL_CLICK_ACT_EXIT));
         a->neighbour = -1;
         b->neighbour = -1;
         a->openBottom = 0.0f;
@@ -7143,7 +6979,7 @@ static void syncAllPortals(void)
     for (int wi = 0; wi < g_edMap.wallCount; wi++) {
         EdWall *w = &g_edMap.walls[wi];
         if (w->neighbour >= 0) {
-            const uint8_t preservedFlags = (uint8_t)(w->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
+            const uint16_t preservedFlags = (uint16_t)(w->flags & RC3D_WALL_PORTAL_STYLE_FLAGS);
             w->neighbour = -1;
             w->openBottom = 0.0f;
             w->openTop = 0.0f;
@@ -7333,6 +7169,7 @@ static int buildInnerSectorsFromSelectedSector(void)
                 dst->upperColor = src->upperColor;
                 dst->midColor   = ED_SOLID_MIDDLE_TEXTURE;
                 dst->lowerColor = src->lowerColor;
+                dst->targetObjID = src->targetObjID;
                 dst->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
                 clearWallTexFlags(dst);
             }
@@ -8143,7 +7980,7 @@ static void collapseUnlinkedPortalWallToSolid(int wallIndex)
 {
     EdWall *w;
     uint8_t solidCol;
-    uint8_t preservedFlags;
+    uint16_t preservedFlags;
 
     if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) return;
 
@@ -8156,9 +7993,13 @@ static void collapseUnlinkedPortalWallToSolid(int wallIndex)
     if (solidCol == 0) solidCol = w->lowerColor;
     if (solidCol == 0) solidCol = g_ed.newWallMidColor;
 
-    preservedFlags = (uint8_t)(w->flags & (RC3D_WALL_MANUAL_TARGET |
-                                           RC3D_WALL_TRANSPARENCY |
-                                           RC3D_WALL_DOUBLESIDED));
+    preservedFlags = (uint16_t)(w->flags & (RC3D_WALL_MANUAL_TARGET |
+                                            RC3D_WALL_TRANSPARENCY |
+                                            RC3D_WALL_DOUBLESIDED |
+                                            RC3D_WALL_CLICKABLE |
+                                            RC3D_WALL_CLICK_ENABLE |
+                                            RC3D_WALL_CLICK_ACT_ENTER |
+                                            RC3D_WALL_CLICK_ACT_EXIT));
 
     w->neighbour = -1;
     w->openBottom = 0.0f;
@@ -9451,7 +9292,7 @@ static int saveTextMap(const char *path)
 
     syncNavigationNodeAngles();
 
-    fprintf(f, "MAPEDIT8\n");
+    fprintf(f, "MAPEDIT9\n");
     fprintf(f, "START %.6f %.6f %.6f %d\n",
             g_edMap.startX, g_edMap.startY, g_edMap.startAngle, g_edMap.startSector);
 
@@ -9463,12 +9304,13 @@ static int saveTextMap(const char *path)
     fprintf(f, "WALLS %d\n", g_edMap.wallCount);
     for (int i = 0; i < g_edMap.wallCount; i++) {
         const EdWall *w = &g_edMap.walls[i];
-        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %u %.6f %.6f %.6f %.6f\n",
+        fprintf(f, "%d %d %d %.6f %.6f %u %u %u %u %u %u %.6f %.6f %.6f %.6f\n",
             w->v0, w->v1, w->neighbour,
             w->openBottom, w->openTop,
             (unsigned)w->upperColor,
             (unsigned)w->midColor,
             (unsigned)w->lowerColor,
+            (unsigned)w->targetObjID,
             (unsigned)w->flags,
             (unsigned)w->tex_flags,
             w->texScaleX,
@@ -9595,6 +9437,8 @@ static int loadTextMap(const char *path)
         mapVersion = 7;
     } else if (strcmp(tag, "MAPEDIT8") == 0) {
         mapVersion = 8;
+    } else if (strcmp(tag, "MAPEDIT9") == 0) {
+        mapVersion = 9;
     } else {
         fclose(f);
         return 0;
@@ -9645,10 +9489,26 @@ static int loadTextMap(const char *path)
     newMap.wallCount = count;
     for (int i = 0; i < count; i++) {
         unsigned uc, mc, lc, flags;
+        unsigned targetObjID = 0;
         unsigned tex_flags;
         clearWallTexFlags(&newMap.walls[i]);
 
-        if (mapVersion >= 8) {
+        if (mapVersion >= 9) {
+            if (fscanf(f, "%d %d %d %f %f %u %u %u %u %u %u %f %f %f %f",
+                    &newMap.walls[i].v0,
+                    &newMap.walls[i].v1,
+                    &newMap.walls[i].neighbour,
+                    &newMap.walls[i].openBottom,
+                    &newMap.walls[i].openTop,
+                    &uc, &mc, &lc, &targetObjID, &flags, &tex_flags,
+                    &newMap.walls[i].texScaleX,
+                    &newMap.walls[i].texScaleY,
+                    &newMap.walls[i].texOffsetX,
+                    &newMap.walls[i].texOffsetY) != 15) {
+                fclose(f);
+                return 0;
+            }
+        } else if (mapVersion >= 8) {
             if (fscanf(f, "%d %d %d %f %f %u %u %u %u %u %f %f %f %f",
                     &newMap.walls[i].v0,
                     &newMap.walls[i].v1,
@@ -9692,7 +9552,8 @@ static int loadTextMap(const char *path)
         newMap.walls[i].upperColor = (uint8_t)uc;
         newMap.walls[i].midColor   = (uint8_t)mc;
         newMap.walls[i].lowerColor = (uint8_t)lc;
-        newMap.walls[i].flags      = (uint8_t)flags;
+        newMap.walls[i].targetObjID = (uint8_t)targetObjID;
+        newMap.walls[i].flags      = (uint16_t)flags;
         newMap.walls[i].tex_flags  = (uint32_t)tex_flags;
         setWallTexScaleX(&newMap.walls[i], newMap.walls[i].texScaleX);
         setWallTexScaleY(&newMap.walls[i], newMap.walls[i].texScaleY);
@@ -9710,7 +9571,7 @@ static int loadTextMap(const char *path)
     newMap.sectorCount = count;
     for (int i = 0; i < count; i++) {
         unsigned fc, cc, glow = 0;
-        uint8_t texFlag;
+        unsigned texFlag = 0;
         unsigned stateFlags = 0;
 
         if (fscanf(f, "%d %d %d %f %f %u %u %u %u %d %u %f %f %f %f %f %f %f %f %f %f %f %f %u",
@@ -9994,7 +9855,8 @@ int exportBinaryMap(const char *path)
         uint8_t upper      = w->upperColor;
         uint8_t mid        = w->midColor;
         uint8_t lower      = w->lowerColor;
-        uint8_t flags      = w->flags;
+        uint8_t targid      = w->targetObjID;
+        uint16_t flags      = w->flags;
         uint32_t tex_flags = w->tex_flags;
         float texScaleX    = w->texScaleX;
         float texScaleY    = w->texScaleY;
@@ -10009,6 +9871,7 @@ int exportBinaryMap(const char *path)
             fwrite(&upper,      sizeof(upper),      1, f) != 1 ||
             fwrite(&mid,        sizeof(mid),        1, f) != 1 ||
             fwrite(&lower,      sizeof(lower),      1, f) != 1 ||
+            fwrite(&targid,     sizeof(targid),     1, f) != 1 ||
             fwrite(&flags,      sizeof(flags),      1, f) != 1 ||
             fwrite(&tex_flags,  sizeof(tex_flags),  1, f) != 1 ||
             fwrite(&texScaleX,  sizeof(texScaleX),  1, f) != 1 ||
@@ -10150,7 +10013,7 @@ static int exportCStringMap(const char *path)
         const EdWall *w = &g_edMap.walls[i];
 
         fprintf(f,
-            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %uu, %.6ff, %.6ff, %.6ff, %.6ff },\n",
+            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %uu, 0u, %uu, %.6ff, %.6ff, %.6ff, %.6ff },\n",
             w->v0,
             w->v1,
             w->neighbour,
@@ -10159,6 +10022,7 @@ static int exportCStringMap(const char *path)
             (unsigned)w->upperColor,
             (unsigned)w->midColor,
             (unsigned)w->lowerColor,
+            (unsigned)w->targetObjID,
             (unsigned)w->flags,
             (unsigned)w->tex_flags,
             w->texScaleX,
@@ -10391,6 +10255,7 @@ static int splitSelectedSectorByDraftLine(void)
         newWallsA[countA].upperColor = g_ed.newWallUpperColor;
         newWallsA[countA].midColor   = g_ed.newWallMidColor;
         newWallsA[countA].lowerColor = g_ed.newWallLowerColor;
+        newWallsA[countA].targetObjID = 0;
         newWallsA[countA].flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
         clearWallTexFlags(&newWallsA[countA]);
         countA++;
@@ -10426,6 +10291,7 @@ static int splitSelectedSectorByDraftLine(void)
         newWallsB[countB].upperColor = g_ed.newWallUpperColor;
         newWallsB[countB].midColor   = g_ed.newWallMidColor;
         newWallsB[countB].lowerColor = g_ed.newWallLowerColor;
+        newWallsB[countB].targetObjID = 0;
         newWallsB[countB].flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
         clearWallTexFlags(&newWallsB[countB]);
         countB++;
@@ -10541,6 +10407,7 @@ static void finalizeDraftSector(void)
             w->upperColor = g_ed.newWallUpperColor;
             w->midColor   = ED_SOLID_MIDDLE_TEXTURE;
             w->lowerColor = g_ed.newWallLowerColor;
+            w->targetObjID = 0;
             w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
             clearWallTexFlags(w);
         }
@@ -10699,6 +10566,7 @@ static int finalizeDraftSectorAttached(void)
             w->upperColor = g_ed.newWallUpperColor;
             w->midColor   = g_ed.newWallMidColor;
             w->lowerColor = g_ed.newWallLowerColor;
+            w->targetObjID = 0;
             w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
             clearWallTexFlags(w);
         }
@@ -10730,6 +10598,7 @@ static int finalizeDraftSectorAttached(void)
                 w->upperColor = g_ed.newWallUpperColor;
                 w->midColor   = g_ed.newWallMidColor;
                 w->lowerColor = g_ed.newWallLowerColor;
+                w->targetObjID = 0;
                 w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
                 clearWallTexFlags(w);
             }
@@ -10758,6 +10627,7 @@ static int finalizeDraftSectorAttached(void)
                 w->upperColor = g_ed.newWallUpperColor;
                 w->midColor   = g_ed.newWallMidColor;
                 w->lowerColor = g_ed.newWallLowerColor;
+                w->targetObjID = 0;
                 w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
                 clearWallTexFlags(w);
             }
@@ -10842,6 +10712,7 @@ static void finalizeDraftInnerSolid(void)
         w->upperColor = g_ed.newWallUpperColor;
         w->midColor   = g_ed.newWallMidColor;
         w->lowerColor = g_ed.newWallLowerColor;
+        w->targetObjID = 0;
         w->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
         clearWallTexFlags(w);
     }
@@ -14765,6 +14636,54 @@ static uint8_t getObjectObjectLinkColour(const EdObject *src, const EdObject *ds
     return 14;
 }
 
+static int getWallClickableLinkAnchor(int wallIndex, float *outX, float *outY)
+{
+    const EdWall *w;
+    const EdVec2 *a;
+    const EdVec2 *b;
+    float mx, my;
+
+    if (wallIndex < 0 || wallIndex >= g_edMap.wallCount) {
+        return 0;
+    }
+
+    w = &g_edMap.walls[wallIndex];
+    if (w->v0 < 0 || w->v0 >= g_edMap.vertCount ||
+        w->v1 < 0 || w->v1 >= g_edMap.vertCount) {
+        return 0;
+    }
+
+    a = &g_edMap.verts[w->v0];
+    b = &g_edMap.verts[w->v1];
+    mx = (a->x + b->x) * 0.5f;
+    my = (a->y + b->y) * 0.5f;
+
+    {
+        const float dx = b->x - a->x;
+        const float dy = b->y - a->y;
+        const float len = sqrtf((dx * dx) + (dy * dy));
+        const int inward = getWallNormal(wallIndex);
+
+        if (len > 0.0001f && inward >= 0) {
+            float nx = dy / len;
+            float ny = -dx / len;
+            const float offset = clampf_local(g_ed.currentGridStep * 0.25f, 0.06f, 0.18f);
+
+            if (inward == 0) {
+                nx = -nx;
+                ny = -ny;
+            }
+
+            mx += nx * offset;
+            my += ny * offset;
+        }
+    }
+
+    if (outX) *outX = mx;
+    if (outY) *outY = my;
+    return 1;
+}
+
 static void drawObjectObjectLinks(void)
 {
     for (int i = 0; i < g_edMap.objectCount; i++) {
@@ -14801,6 +14720,49 @@ static void drawObjectObjectLinks(void)
         if (src->type == RC3D_OBJTYPE_OBJECT_TELEPORTER) {
             drawEditorLinkArrows(x0, y0, x1, y1, col, 3);
         }
+        drawRect(x1 - 1, y1 - 1, 3, 3, col);
+    }
+}
+
+static void drawWallClickableObjectLinks(void)
+{
+    for (int i = 0; i < g_edMap.wallCount; i++) {
+        const EdWall *w = &g_edMap.walls[i];
+        const int targetIndex = findObjectByTagId((int)w->targetObjID);
+        float anchorX, anchorY;
+        uint8_t col = ED_COLOUR_WALL_SPECIAL;
+        int x0, y0, x1, y1;
+
+        if ((w->flags & RC3D_WALL_CLICKABLE) == 0u) {
+            continue;
+        }
+
+        if (w->targetObjID == 0u) {
+            continue;
+        }
+
+        if (targetIndex < 0 || targetIndex >= g_edMap.objectCount) {
+            continue;
+        }
+
+        if (!getWallClickableLinkAnchor(i, &anchorX, &anchorY)) {
+            continue;
+        }
+
+        if (isWallInEditSelection(i) || isObjectInEditSelection(targetIndex)) {
+            col = ED_COLOUR_SELECTED_WALL;
+        } else if (g_ed.hoverWall == i || g_ed.hoverObject == targetIndex) {
+            col = ED_COLOUR_HOVER_WALL;
+        }
+
+        worldToScreen(anchorX, anchorY, &x0, &y0);
+        worldToScreen(g_edMap.objects[targetIndex].x,
+                      g_edMap.objects[targetIndex].y,
+                      &x1,
+                      &y1);
+
+        drawEditorLinkLine(x0, y0, x1, y1, col, 1);
+        drawEditorLinkArrows(x0, y0, x1, y1, col, 2);
         drawRect(x1 - 1, y1 - 1, 3, 3, col);
     }
 }
@@ -15001,6 +14963,7 @@ static void drawMapGeometry(void)
     }
 
     drawMapObjects();
+    drawWallClickableObjectLinks();
     drawObjectSectorLinks();
     drawObjectObjectLinks();
     drawObjectBakedLinks();
@@ -15447,6 +15410,11 @@ static void initEditorButtonTooltips(void)
     setEditorButtonTooltip(GUI_BTN_WALL_DOOR, "Set the selected wall to a door");
     setEditorButtonTooltip(GUI_BTN_WALL_TRANSPARENCY, "Toggle wall transparency");
     setEditorButtonTooltip(GUI_BTN_WALL_FLAG_DOUBLESIDED, "Toggle double-sided wall rendering");
+    setEditorButtonTooltip(GUI_BTN_WALL_FLAG_CLICKABLE, "Toggle whether this wall can be a clickable hot spot");
+    setEditorButtonTooltipPair(GUI_BTN_WALL_OBJ_ID_MINUS, GUI_BTN_WALL_OBJ_ID_PLUS,
+                               "Decrease the wall target object id", "Increase the wall target object id");
+    setEditorButtonTooltip(GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER, "Toggle whether the wall triggers on enter");
+    setEditorButtonTooltip(GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT, "Toggle whether the wall triggers on exit");
     setEditorButtonTooltip(GUI_BTN_WALL_COPY_PROPS, "Copy properties from the selected wall");
     setEditorButtonTooltip(GUI_BTN_WALL_PASTE_PROPS, "Paste copied properties onto selected walls");
 
@@ -15593,9 +15561,18 @@ void rc3dEditInit(void)
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_PORTAL,              controloffw + (64 * 1), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Prtl");
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_WINDOW,              controloffw + (64 * 2), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Wndw");
     rcguiCreateButton(&g_ui, GUI_BTN_WALL_DOOR,                controloffw + (64 * 3), 194 + controloff + inspectWallYOffset, 60, ED_BTN_H, "Door");
-    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_TRANSPARENCY,     controloffw + (64 * 4), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Transp",0);
-    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, controloffw + (68 * 5), 194 + controloff + inspectWallYOffset, 80, ED_BTN_H, "DblSdd", 0);
+    
+    inspectWallYOffset += 30;
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_TRANSPARENCY,     controloffw + (88 * 0), 194 + controloff + inspectWallYOffset, 84, ED_BTN_H, "Transp",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, controloffw + (88 * 1), 194 + controloff + inspectWallYOffset, 84, ED_BTN_H, "DblSdd", 0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_CLICKABLE,   controloffw + (88 * 2), 194 + controloff + inspectWallYOffset, 84, ED_BTN_H, "Clkable", 0);
+  
+    inspectWallYOffset += 30;
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OBJ_ID_MINUS,              controloffw + 150,      192 + controloff + inspectWallYOffset, 24, 24, GLYPH_MINUS);
+    rcguiCreateButton(&g_ui, GUI_BTN_WALL_OBJ_ID_PLUS,               controloffw + 150 + 28, 192 + controloff + inspectWallYOffset, 24, 24, GLYPH_PLUS);
 
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER,     controloffw + 222 + (88 * 0), 194 + controloff + inspectWallYOffset, 84, ED_BTN_H, "O_ENTR",0);
+    rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT,      controloffw + 222 + (88 * 1), 194 + controloff + inspectWallYOffset, 84, ED_BTN_H, "O_EXIT",0);
     
 
     rcguiCreateToggleBox(&g_ui, GUI_BTN_WALL_CLAMP_XL, controloffw + (90 * 0) + 80,  256 + controloff + inspectWallYOffset, 80, ED_BTN_H, "Left",0);
@@ -16370,6 +16347,10 @@ static void flipSelectedWallFacing(void)
                      RC3D_WALL_UPPER |
                      RC3D_WALL_LOWER |
                      RC3D_WALL_DOUBLESIDED |
+                     RC3D_WALL_CLICKABLE |
+                     RC3D_WALL_CLICK_ENABLE |
+                     RC3D_WALL_CLICK_ACT_ENTER |
+                     RC3D_WALL_CLICK_ACT_EXIT |
                      RC3D_WALL_TRANSPARENCY |
                      RC3D_WALL_MANUAL_TARGET);
     }
@@ -16435,6 +16416,101 @@ static void doWallMakeDoubleSided(void)
         }
 
         rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, newState);
+    }
+}
+
+static void doWallMakeClickable(void)
+{
+    int wallIndices[ED_MAX_WALLS];
+    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+
+    if (wallCount <= 0) {
+        return;
+    }
+
+    pushUndoState();
+
+    /* use first selected wall as the source */
+    {
+        const EdWall *host = &g_edMap.walls[wallIndices[0]];
+        const int newState = (host->flags & RC3D_WALL_CLICKABLE) ? 0 : 1;
+
+        for (int i = 0; i < wallCount; i++) {
+            EdWall *w = &g_edMap.walls[wallIndices[i]];
+
+            if (newState) {
+                w->flags |= RC3D_WALL_CLICKABLE;
+            } else {
+                w->flags &= ~RC3D_WALL_CLICKABLE;
+            }
+        }
+
+        rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_CLICKABLE, newState);
+    }
+}
+
+static void doWallToggleClickActionFlag(uint16_t flag, int buttonId)
+{
+    int wallIndices[ED_MAX_WALLS];
+    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+
+    if (wallCount <= 0) {
+        return;
+    }
+
+    pushUndoState();
+
+    /* use first selected wall as the source */
+    {
+        const EdWall *host = &g_edMap.walls[wallIndices[0]];
+        const int newState = (host->flags & flag) ? 0 : 1;
+
+        for (int i = 0; i < wallCount; i++) {
+            EdWall *w = &g_edMap.walls[wallIndices[i]];
+
+            if (newState) {
+                w->flags |= flag;
+            } else {
+                w->flags &= ~flag;
+            }
+        }
+
+        rcguiSetToggleChecked(&g_ui, buttonId, newState);
+    }
+}
+
+static void doWallMakeObjectActEnter(void)
+{
+    doWallToggleClickActionFlag(RC3D_WALL_CLICK_ACT_ENTER, GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER);
+}
+
+static void doWallMakeObjectActExit(void)
+{
+    doWallToggleClickActionFlag(RC3D_WALL_CLICK_ACT_EXIT, GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT);
+}
+
+static void adjustSelectedWallTargetObjID(int delta)
+{
+    int wallIndices[ED_MAX_WALLS];
+    const int wallCount = collectWallEditSelectionIndices(wallIndices, ED_MAX_WALLS);
+
+    if (wallCount <= 0) {
+        return;
+    }
+
+    pushUndoState();
+
+    for (int i = 0; i < wallCount; i++) {
+        EdWall *wall = &g_edMap.walls[wallIndices[i]];
+        int targetObjID = (int)wall->targetObjID + delta;
+
+        if (targetObjID < 0) {
+            targetObjID = 0;
+        } else if (targetObjID > 255) {
+            targetObjID = 255;
+        }
+
+        wall->targetObjID = (uint8_t)targetObjID;
     }
 }
 
@@ -16505,6 +16581,9 @@ static void executeEditorAction(EdAction action, float worldX, float worldY)
         case ED_ACT_WALL_SPLIT: doWallSplitAtCursor(worldX, worldY); break;
         case ED_ACT_WALL_TRANSPARENCY: doWallMakeTransparent(); break;
         case ED_ACT_WALL_DOUBLESIDED:  doWallMakeDoubleSided(); break;
+        case ED_ACT_WALL_CLICKABLE: doWallMakeClickable(); break;
+        case ED_ACT_WALL_OBJ_ACT_ENTER: doWallMakeObjectActEnter(); break;
+        case ED_ACT_WALL_OBJ_ACT_EXIT: doWallMakeObjectActExit(); break;
         case ED_ACT_WALL_EXTRUDE: doExtrudeWall(); break;
         case ED_ACT_OPENTEXTUREBROWSER: doOpenTextureBrowser(); break;
         
@@ -16626,6 +16705,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wShared->upperColor = g_ed.newWallUpperColor;
     wShared->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wShared->lowerColor = g_ed.newWallLowerColor;
+    wShared->targetObjID = 0;
     wShared->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wShared);
 
@@ -16637,6 +16717,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wSide0->upperColor = g_ed.newWallUpperColor;
     wSide0->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wSide0->lowerColor = g_ed.newWallLowerColor;
+    wSide0->targetObjID = 0;
     wSide0->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wSide0);
 
@@ -16648,6 +16729,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wFar->upperColor = g_ed.newWallUpperColor;
     wFar->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wFar->lowerColor = g_ed.newWallLowerColor;
+    wFar->targetObjID = 0;
     wFar->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wFar);
 
@@ -16659,6 +16741,7 @@ static int extrudeWallToNewSector(int wallIndex, float depth)
     wSide1->upperColor = g_ed.newWallUpperColor;
     wSide1->midColor   = ED_SOLID_MIDDLE_TEXTURE;
     wSide1->lowerColor = g_ed.newWallLowerColor;
+    wSide1->targetObjID = 0;
     wSide1->flags = RC3D_WALL_SOLID | RC3D_WALL_MIDDLE;
     clearWallTexFlags(wSide1);
 
@@ -16719,6 +16802,12 @@ static void editorHideInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_CLICKABLE, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OBJ_ID_MINUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OBJ_ID_PLUS, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER, 0);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT, 0);
+
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 0);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 0);
 
@@ -16960,11 +17049,20 @@ static void editorShowWallInspectorButtons(void)
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_DOOR, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_TRANSPARENCY, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_CLICKABLE, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OBJ_ID_MINUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_OBJ_ID_PLUS, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER, 1);
+    rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT, 1);
 
 
 
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_TRANSPARENCY, w->flags & RC3D_WALL_TRANSPARENCY ? 1 : 0);
     rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_DOUBLESIDED, w->flags & RC3D_WALL_DOUBLESIDED ? 1 : 0);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_CLICKABLE, w->flags & RC3D_WALL_CLICKABLE ? 1 : 0);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER, w->flags & RC3D_WALL_CLICK_ACT_ENTER ? 1 : 0);
+    rcguiSetToggleChecked(&g_ui, GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT,  w->flags & RC3D_WALL_CLICK_ACT_EXIT  ? 1 : 0);
+
 
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_COPY_PROPS, 1);
     rcguiSetButtonVisible(&g_ui, GUI_BTN_WALL_PASTE_PROPS, 1);
@@ -17350,6 +17448,16 @@ static void handleEditorUI(int mouseX, int mouseY,
             case GUI_BTN_WALL_SPLIT: executeEditorAction(ED_ACT_WALL_SPLIT, worldX, worldY); break;
             case GUI_BTN_WALL_TRANSPARENCY: executeEditorAction(ED_ACT_WALL_TRANSPARENCY, worldX, worldY); break;
             case GUI_BTN_WALL_FLAG_DOUBLESIDED: executeEditorAction(ED_ACT_WALL_DOUBLESIDED, worldX, worldY); break;
+            case GUI_BTN_WALL_FLAG_CLICKABLE: executeEditorAction(ED_ACT_WALL_CLICKABLE, worldX, worldY); break;
+            case GUI_BTN_WALL_FLAG_OBJ_ACT_ENTER: executeEditorAction(ED_ACT_WALL_OBJ_ACT_ENTER, worldX, worldY); break;
+            case GUI_BTN_WALL_FLAG_OBJ_ACT_EXIT: executeEditorAction(ED_ACT_WALL_OBJ_ACT_EXIT, worldX, worldY); break;
+
+            case GUI_BTN_WALL_OBJ_ID_MINUS:
+                adjustSelectedWallTargetObjID(-1);
+                break;
+            case GUI_BTN_WALL_OBJ_ID_PLUS:
+                adjustSelectedWallTargetObjID(1);
+                break;
 
             case GUI_BTN_WALL_COPY_PROPS:
                 if (hasAnyWallEditSelection()) {
@@ -18090,8 +18198,8 @@ static void drawInspectorPanel(void)
         const unsigned wallTexBrightness = (unsigned)getWallTexBrightness(w);
 
         py = 40;
-        drawRect(px + 8, py, pw - 16, 490, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 490, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect (px + 8, py, pw - 16, 546, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 546, ED_INSPECTOR_PARENT_PANELS_FRAME);
 
         py += 6;
         snprintf(buf, sizeof(buf), "WALL %d", g_ed.selectedWall);
@@ -18121,13 +18229,19 @@ static void drawInspectorPanel(void)
         snprintf(buf, sizeof(buf), "Open Bottom: %.3f", w->openBottom);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
-        snprintf(buf, sizeof(buf), "Flags: %u", (unsigned)w->flags);
+        snprintf(buf, sizeof(buf), "Flags: 0x%04X (%u)", (unsigned)w->flags, (unsigned)w->flags);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
 
         snprintf(buf, sizeof(buf), "Upper: %u   Mid: %u   Lower: %u", (unsigned)w->upperColor, (unsigned)w->midColor, (unsigned)w->lowerColor);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
         py += 30;   // additional 
+        py += 30;   // additional 
+        snprintf(buf, sizeof(buf), "Targ ObjID: 0x%02X", (unsigned)w->targetObjID);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
+
+
+        
 
         snprintf(buf, sizeof(buf), "Tex flags: 0x%08X", (unsigned)w->tex_flags);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
@@ -18177,6 +18291,8 @@ static void drawInspectorPanel(void)
         int midColorMixed = 0;
         unsigned lowerColor = 0;
         int lowerColorMixed = 0;
+        unsigned targetObjID = 0;
+        int targetObjIDMixed = 0;
         unsigned texFlags = 0;
         int texFlagsMixed = 0;
         float texOffsetX = 0.0f;
@@ -18203,6 +18319,7 @@ static void drawInspectorPanel(void)
             upperColor = w->upperColor;
             midColor = w->midColor;
             lowerColor = w->lowerColor;
+            targetObjID = w->targetObjID;
             texFlags = w->tex_flags;
             texOffsetX = w->texOffsetX;
             texOffsetY = w->texOffsetY;
@@ -18222,6 +18339,7 @@ static void drawInspectorPanel(void)
                 if (other->upperColor != upperColor) upperColorMixed = 1;
                 if (other->midColor != midColor) midColorMixed = 1;
                 if (other->lowerColor != lowerColor) lowerColorMixed = 1;
+                if (other->targetObjID != targetObjID) targetObjIDMixed = 1;
                 if (other->tex_flags != texFlags) texFlagsMixed = 1;
                 if (fabsf(other->texOffsetX - texOffsetX) > ED_EPSILON) texOffsetXMixed = 1;
                 if (fabsf(other->texOffsetY - texOffsetY) > ED_EPSILON) texOffsetYMixed = 1;
@@ -18243,14 +18361,18 @@ static void drawInspectorPanel(void)
 
         py = 40;
 
-        drawRect(px + 8, py, pw - 16, 498, ED_INSPECTOR_PARENT_PANELS_BG);
-        drawRectL(px + 8, py, pw - 16, 498, ED_INSPECTOR_PARENT_PANELS_FRAME);
+        drawRect (px + 8, py, pw - 16, 546, ED_INSPECTOR_PARENT_PANELS_BG);
+        drawRectL(px + 8, py, pw - 16, 546, ED_INSPECTOR_PARENT_PANELS_FRAME);
         py += 6;
 
         snprintf(buf, sizeof(buf), "WALLS (%d)", wallCount);
         drawText(px + 16, py, buf, ED_INSPECTOR_TEXT_COL); py += 30;
 
         snprintf(buf, sizeof(buf), "First wall: %d", primaryWall);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
+
+        if (neighbourMixed) snprintf(buf, sizeof(buf), "Neighbour: Mixed");
+        else snprintf(buf, sizeof(buf), "Neighbour: %d", neighbour);
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
 
         if (g_ed.hasCopiedWallProps) {
@@ -18264,9 +18386,6 @@ static void drawInspectorPanel(void)
         }
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
 
-        if (neighbourMixed) snprintf(buf, sizeof(buf), "Neighbour: Mixed");
-        else snprintf(buf, sizeof(buf), "Neighbour: %d", neighbour);
-        drawText(px + 16, py, buf, ED_TEXT_COL); py += 20;
         py += 8;
 
         if (openTopMixed) snprintf(buf, sizeof(buf), "Open Top: Mixed");
@@ -18285,6 +18404,11 @@ static void drawInspectorPanel(void)
         drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
 
         py += 30;
+        py += 30;
+        if (targetObjIDMixed) snprintf(buf, sizeof(buf), "Targ ObjID: Mixed");
+        else snprintf(buf, sizeof(buf), "Targ ObjID: 0x%02X", targetObjID);
+        drawText(px + 16, py, buf, ED_TEXT_COL); py += 30;
+
 
         if (texFlagsMixed) snprintf(buf, sizeof(buf), "Tex flags: Mixed");
         else snprintf(buf, sizeof(buf), "Tex flags: 0x%08X", texFlags);

@@ -1,6 +1,24 @@
 #include "rc3d_map.h"
 
-#define WALL_ENTRY(...)   { __VA_ARGS__, RC3D_TEX_FLAG_DEFAULT, 1.0f, 1.0f }
+#define WALL_ENTRY(v0, v1, neighbour, openBottom, openTop, upperColor, midColor, lowerColor, flags) \
+    {                                                                                                 \
+        v0,                                                                                            \
+        v1,                                                                                            \
+        neighbour,                                                                                     \
+        openBottom,                                                                                    \
+        openTop,                                                                                       \
+        upperColor,                                                                                    \
+        midColor,                                                                                      \
+        lowerColor,                                                                                    \
+        0u,                                                                                            \
+        flags,                                                                                         \
+        0u,                                                                                            \
+        RC3D_TEX_FLAG_DEFAULT,                                                                         \
+        1.0f,                                                                                          \
+        1.0f,                                                                                          \
+        0.0f,                                                                                          \
+        0.0f                                                                                           \
+    }
 #define SECTOR_ENTRY(wallStart, wallCount, boundaryCount, floorHeight, ceilHeight, floorColor, ceilColor) \
     {                                                                                                      \
         wallStart,                                                                                         \

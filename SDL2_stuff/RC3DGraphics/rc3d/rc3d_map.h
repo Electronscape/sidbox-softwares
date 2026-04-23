@@ -3,14 +3,20 @@
 
 #include <stdint.h>
 
-#define RC3D_WALL_PORTAL        0x01
-#define RC3D_WALL_UPPER         0x02
-#define RC3D_WALL_MIDDLE        0x04
-#define RC3D_WALL_LOWER         0x08
-#define RC3D_WALL_SOLID         0x10
-#define RC3D_WALL_MANUAL_TARGET 0x20
-#define RC3D_WALL_TRANSPARENCY  0x40
-#define RC3D_WALL_DOUBLESIDED   0x80
+
+#define RC3D_WALL_PORTAL            0x0001u
+#define RC3D_WALL_UPPER             0x0002u
+#define RC3D_WALL_MIDDLE            0x0004u
+#define RC3D_WALL_LOWER             0x0008u
+#define RC3D_WALL_SOLID             0x0010u
+#define RC3D_WALL_MANUAL_TARGET     0x0020u
+#define RC3D_WALL_TRANSPARENCY      0x0040u
+#define RC3D_WALL_DOUBLESIDED       0x0080u
+#define RC3D_WALL_CLICKABLE         0x0100u
+#define RC3D_WALL_CLICK_ENABLE      0x0200u
+#define RC3D_WALL_CLICK_ACT_ENTER   0x0400u
+#define RC3D_WALL_CLICK_ACT_EXIT    0x0800u
+
 
 
 #define RC3D_SECTORTEX_CLAMPX1  0x01
@@ -50,8 +56,10 @@ typedef struct {
     uint8_t upperColor;     /* above opening */
     uint8_t midColor;       /* middle slab */
     uint8_t lowerColor;     /* below opening */
+    uint8_t targetObjId;    /* linked object tag id for clickable wall actions */
 
-    uint8_t flags;          /* wall flags */
+    uint16_t flags;          /* wall flags */
+    uint16_t _pad2;         /* wall flags padding */
     uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
     float texScaleX;        /* wall texture UV scale X */
     float texScaleY;        /* wall texture UV scale Y */
@@ -124,6 +132,7 @@ float x;
     float navBlockedAnchorX;  // runtime progress checkpoint for stuck detection
     float navBlockedAnchorY;  // runtime progress checkpoint for stuck detection
     float navAvoidSteer;   // runtime smoothed lateral avoidance steer, -1..1
+    uint8_t chasePlayer;   // runtime player-chase latch while the mob is pursuing
 } RC3D_Object;
 
 

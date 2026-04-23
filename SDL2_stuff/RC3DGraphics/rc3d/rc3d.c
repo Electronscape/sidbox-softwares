@@ -63,7 +63,11 @@ float g_draw_distance = RC3D_MAX_RAY_DIST;
 #define PLAYER_HEIGHT          0.6f
 #define PLAYER_STEPUP          0.35f
 #define PLAYER_RADIUS          0.40f
+
+#define RC3D_WALL_CLICK_RANGE   2.0f
+
 #define RC3D_ENEMY_PATROL_SPEED 1.25f
+#define RC3D_ENEMY_CHASE_RANGE  4.0f
 #define RC3D_ENEMY_STEPUP       0.35f
 #define RC3D_ENEMY_MIN_HEIGHT   0.55f
 #define RC3D_ENEMY_NODE_REACH_MIN 0.15f
@@ -645,6 +649,7 @@ static void rc3dMinimapRevealCurrentSector(void);
 static void rc3dResetObjectRuntimeState(void);
 static void rc3dUpdateEnemyPatrols(float dt);
 static void rc3dSyncRuntimeObjectSprite(RC3D_Object *obj);
+static inline int rc3dObjectMatchesPlayerElevation(const RC3D_Object *obj);
 static int rc3dFindActorBlockingContactInSectorFixed(
     RC3D_Fixed px,
     RC3D_Fixed py,
@@ -1854,7 +1859,7 @@ static int rc3dBuildFixedVertCacheForCurrentMap(void)
 }
 
 
-static inline uint8_t rc3dClassifyWallFlags(uint8_t flags)
+static inline uint8_t rc3dClassifyWallFlags(uint16_t flags)
 {
     if (flags & RC3D_WALL_SOLID) {
         return RC3D_WALLCLASS_SOLID;
@@ -2382,7 +2387,8 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
             !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
             !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
-            !readExact(f, &walls[i].flags, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].targetObjId, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].flags, sizeof(uint16_t)) ||
             !readExact(f, &walls[i].texture_flags, sizeof(uint32_t)) ||
             !readExact(f, &walls[i].texScaleX, sizeof(float)) ||
             !readExact(f, &walls[i].texScaleY, sizeof(float)) ||
@@ -2400,6 +2406,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         walls[i].v0 = (int)v0;
         walls[i].v1 = (int)v1;
         walls[i].neighbour = (int)neighbour;
+        walls[i]._pad2 = 0u;
     }
 
     for (uint32_t i = 0; i < sectorCount; i++) {
@@ -2497,6 +2504,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         objects[i].navBlockedAnchorX = objects[i].x;
         objects[i].navBlockedAnchorY = objects[i].y;
         objects[i].navAvoidSteer = 0.0f;
+        objects[i].chasePlayer = 0u;
 
         if (objects[i].radius < 0.01f) {
             objects[i].radius = 0.25f;
@@ -2947,6 +2955,38 @@ static float rc3dBlendToward(float current, float target, float response, float 
 {
     const float blend = 1.0f - expf(-response * dt);
     return current + ((target - current) * blend);
+}
+
+static void rc3dResetEnemyMoveRuntime(RC3D_Object *obj)
+{
+    if (!obj) {
+        return;
+    }
+
+    obj->navBlockedTime = 0.0f;
+    obj->navBlockedAnchorX = obj->x;
+    obj->navBlockedAnchorY = obj->y;
+    obj->navAvoidSteer = 0.0f;
+}
+
+static int rc3dEnemyShouldChasePlayer(const RC3D_Object *obj)
+{
+    if (!obj || RC3D_ENEMY_CHASE_RANGE <= RC3D_EPSILON) {
+        return 0;
+    }
+
+    if (!rc3dObjectMatchesPlayerElevation(obj)) {
+        return 0;
+    }
+
+    {
+        const float dx = g_player.x - obj->x;
+        const float dy = g_player.y - obj->y;
+        const float distSq = (dx * dx) + (dy * dy);
+        const float chaseRangeSq = RC3D_ENEMY_CHASE_RANGE * RC3D_ENEMY_CHASE_RANGE;
+
+        return distSq <= chaseRangeSq;
+    }
 }
 
 static int rc3dFindNavNodeIndexByTag(int tagId)
@@ -6585,7 +6625,7 @@ static void rc3dBuildVisibleTraceForColumn(int sx)
         const RC3D_Sector *sec;
         const RC3D_Wall *w;
         const RC3D_WallCache *wc = NULL;
-        uint8_t flags;
+        uint16_t flags;
         uint8_t wallClass;
         int wallMasked;
         float correctedDist;
@@ -6740,6 +6780,325 @@ static void rc3dBuildVisibleTraceForColumn(int sx)
 
         return;
     }
+}
+
+static int rc3dScreenYHitsVisibleWallBand(int sy, int y0, int y1, int clipTop, int clipBottom)
+{
+    if (y0 < clipTop) {
+        y0 = clipTop;
+    }
+
+    if (y1 > clipBottom) {
+        y1 = clipBottom;
+    }
+
+    return (y0 <= y1) && (sy >= y0) && (sy <= y1);
+}
+
+int rc3dGetClickableWallAtScreen(int screenX, int screenY, int *outWallIndex)
+{
+    const float playerX = g_player.x;
+    const float playerY = g_player.y;
+    const float playerZ = g_player.z + fabsf(sinf(g_player.tHeadbob) * 0.075f);
+    const float clickRangeSq = RC3D_WALL_CLICK_RANGE * RC3D_WALL_CLICK_RANGE;
+    int sx;
+    int sy;
+    int currentSector;
+    int clipTop = 0;
+    int clipBottom;
+    int ignoreWallIndexA = -1;
+    int ignoreWallIndexB = -1;
+    float rayMinT = 0.0f;
+    float rdx;
+    float rdy;
+
+    if (outWallIndex) {
+        *outWallIndex = -1;
+    }
+
+    if (!g_map || !g_map->sectors || !g_map->walls || !g_map->verts) {
+        return 0;
+    }
+
+    if (RC3D_WALL_CLICK_RANGE <= RC3D_EPSILON) {
+        return 0;
+    }
+
+    rc3dRefreshViewport();
+    if (!rc3dEnsurePlayerSectorValid()) {
+        return 0;
+    }
+
+    sx = screenX - g_viewport_left;
+    sy = screenY - g_viewport_top;
+    if ((unsigned)sx >= (unsigned)g_viewport_width ||
+        (unsigned)sy >= (unsigned)g_viewport_height)
+    {
+        return 0;
+    }
+
+    clipBottom = g_viewport_height - 1;
+    currentSector = g_player.sector;
+
+    if ((unsigned)sx < (unsigned)g_columnRayCacheCount) {
+        rdx = g_columnRayCache[sx].rdx;
+        rdy = g_columnRayCache[sx].rdy;
+    } else {
+        float dirX = 1.0f;
+        float dirY = 0.0f;
+        const float cameraX = rc3dViewportCameraX(sx);
+        float planeX;
+        float planeY;
+
+        rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
+        planeX = -dirY * g_planeScaleConst;
+        planeY = dirX * g_planeScaleConst;
+        rdx = dirX + (planeX * cameraX);
+        rdy = dirY + (planeY * cameraX);
+    }
+
+    for (int step = 0; step < RC3D_MAX_PORTAL_STEPS; ++step) {
+        RC3D_WallHit hit;
+        const RC3D_Sector *sec;
+        const RC3D_Wall *w;
+        const RC3D_WallCache *wc = NULL;
+        uint8_t wallClass;
+        float correctedDist;
+        float worldDistSq;
+        float scale;
+        int secTop;
+        int secBot;
+
+        if ((unsigned)currentSector >= (unsigned)g_map->sectorCount || clipTop > clipBottom) {
+            return 0;
+        }
+
+        sec = &g_map->sectors[currentSector];
+        hit = findNearestWallInSector(
+            currentSector,
+            playerX,
+            playerY,
+            rdx,
+            rdy,
+            ignoreWallIndexA,
+            ignoreWallIndexB,
+            rayMinT,
+            -1);
+
+        if (!hit.hit) {
+            return 0;
+        }
+
+        correctedDist = hit.t;
+        if (correctedDist <= RC3D_EPSILON) {
+            return 0;
+        }
+
+        worldDistSq =
+            ((rdx * correctedDist) * (rdx * correctedDist)) +
+            ((rdy * correctedDist) * (rdy * correctedDist));
+        if (worldDistSq > clickRangeSq) {
+            return 0;
+        }
+
+        w = &g_map->walls[hit.wallIndex];
+        if (g_wallCache && hit.wallIndex >= 0 && hit.wallIndex < g_wallCacheCount) {
+            wc = &g_wallCache[hit.wallIndex];
+            wallClass = wc->wallClass;
+        } else {
+            wallClass = rc3dClassifyWallFlags(w->flags);
+        }
+
+        scale = g_projPlaneConst / correctedDist;
+        secTop = rc3dProjectTopPixel(g_viewport_height / 2, sec->ceilHeight, playerZ, scale);
+        secBot = rc3dProjectBottomPixel(g_viewport_height / 2, sec->floorHeight, playerZ, scale);
+
+        if (wallClass == RC3D_WALLCLASS_PORTAL) {
+            const int nextSectorIndex = w->neighbour;
+            RC3D_PortalView portalView;
+            int openTop;
+            int openBot;
+            int entryWallInNext = -1;
+
+            if ((unsigned)nextSectorIndex >= (unsigned)g_map->sectorCount) {
+                return 0;
+            }
+
+            if (!rc3dBuildPortalView(w, currentSector, &portalView)) {
+                return 0;
+            }
+
+            openTop = rc3dProjectTopPixel(g_viewport_height / 2, portalView.openTop, playerZ, scale);
+            openBot = rc3dProjectBottomPixel(g_viewport_height / 2, portalView.openBottom, playerZ, scale);
+
+            if (openTop < secTop) openTop = secTop;
+            if (openTop < clipTop) openTop = clipTop;
+
+            if (openBot > secBot) openBot = secBot;
+            if (openBot > clipBottom) openBot = clipBottom;
+
+            if (w->flags & RC3D_WALL_CLICKABLE) {
+                if (portalView.hasUpper &&
+                    rc3dScreenYHitsVisibleWallBand(sy, secTop, openTop - 1, clipTop, clipBottom))
+                {
+                    if (outWallIndex) {
+                        *outWallIndex = hit.wallIndex;
+                    }
+                    return 1;
+                }
+
+                if (portalView.hasLower &&
+                    rc3dScreenYHitsVisibleWallBand(sy, openBot + 1, secBot, clipTop, clipBottom))
+                {
+                    if (outWallIndex) {
+                        *outWallIndex = hit.wallIndex;
+                    }
+                    return 1;
+                }
+
+                if ((w->flags & RC3D_WALL_MIDDLE) &&
+                    rc3dScreenYHitsVisibleWallBand(sy, openTop, openBot, clipTop, clipBottom))
+                {
+                    if (outWallIndex) {
+                        *outWallIndex = hit.wallIndex;
+                    }
+                    return 1;
+                }
+            }
+
+            if ((sy >= openTop) && (sy <= openBot)) {
+                if (wc) {
+                    entryWallInNext = wc->backWallIndex;
+                }
+
+                currentSector = nextSectorIndex;
+                clipTop = openTop;
+                clipBottom = openBot;
+                ignoreWallIndexA = hit.wallIndex;
+                ignoreWallIndexB = entryWallInNext;
+                rayMinT = hit.t + RC3D_EPSILON;
+                continue;
+            }
+
+            return 0;
+        }
+
+        if ((w->flags & RC3D_WALL_CLICKABLE) == 0u) {
+            return 0;
+        }
+
+        if (wallClass == RC3D_WALLCLASS_SOLID) {
+            if (rc3dScreenYHitsVisibleWallBand(sy, secTop, secBot, clipTop, clipBottom)) {
+                if (outWallIndex) {
+                    *outWallIndex = hit.wallIndex;
+                }
+                return 1;
+            }
+
+            return 0;
+        }
+
+        if (wallClass == RC3D_WALLCLASS_MIDDLE) {
+            const int midTopY = rc3dProjectTopPixel(g_viewport_height / 2, w->openTop, playerZ, scale);
+            const int midBotY = rc3dProjectBottomPixel(g_viewport_height / 2, w->openBottom, playerZ, scale);
+
+            if (rc3dScreenYHitsVisibleWallBand(sy, midTopY, midBotY, clipTop, clipBottom)) {
+                if (outWallIndex) {
+                    *outWallIndex = hit.wallIndex;
+                }
+                return 1;
+            }
+
+            return 0;
+        }
+
+        if ((w->flags & RC3D_WALL_UPPER) &&
+            rc3dScreenYHitsVisibleWallBand(
+                sy,
+                secTop,
+                rc3dProjectTopPixel(g_viewport_height / 2, w->openTop, playerZ, scale) - 1,
+                clipTop,
+                clipBottom))
+        {
+            if (outWallIndex) {
+                *outWallIndex = hit.wallIndex;
+            }
+            return 1;
+        }
+
+        if ((w->flags & RC3D_WALL_LOWER) &&
+            rc3dScreenYHitsVisibleWallBand(
+                sy,
+                rc3dProjectBottomPixel(g_viewport_height / 2, w->openBottom, playerZ, scale) + 1,
+                secBot,
+                clipTop,
+                clipBottom))
+        {
+            if (outWallIndex) {
+                *outWallIndex = hit.wallIndex;
+            }
+            return 1;
+        }
+
+        return 0;
+    }
+
+    return 0;
+}
+
+static RC3D_Object *rc3dMutableObjectData(void);
+static int rc3dFireObjectTriggerAction(RC3D_Object *obj, int inside, int resetTriggerOnTeleportFail, int *outTeleported);
+
+int rc3dActivateClickableWall(int wallIndex)
+{
+    RC3D_Object *objs = rc3dMutableObjectData();
+    const RC3D_Wall *wall;
+    int actionCount = 0;
+    int targetTagId;
+
+    if (!g_map || !g_map->walls || !objs) {
+        return 0;
+    }
+
+    if ((unsigned)wallIndex >= (unsigned)g_map->wallCount) {
+        return 0;
+    }
+
+    wall = &g_map->walls[wallIndex];
+    if ((wall->flags & RC3D_WALL_CLICKABLE) == 0u) {
+        return 0;
+    }
+
+    targetTagId = (int)wall->targetObjId;
+    if (targetTagId == 0) {
+        return 0;
+    }
+
+    if (wall->flags & RC3D_WALL_CLICK_ENABLE) {
+        //enableObject(targetTagId, 1u);
+    }
+
+    for (int i = 0; i < g_map->objectCount; ++i) {
+        RC3D_Object *obj = &objs[i];
+
+        if (obj->tagId != targetTagId) {
+            continue;
+        }
+
+        if (!(obj->flags & OBJECT_GENERAL_FLAGS_ENABLE)) {
+            continue;
+        }
+
+        if (wall->flags & RC3D_WALL_CLICK_ACT_ENTER) {
+            actionCount += rc3dFireObjectTriggerAction(obj, 1, 0, NULL);
+        }
+
+        if (wall->flags & RC3D_WALL_CLICK_ACT_EXIT) {
+            actionCount += rc3dFireObjectTriggerAction(obj, 0, 0, NULL);
+        }
+    }
+
+    return actionCount;
 }
 
 
@@ -7954,6 +8313,7 @@ static void rc3dResetObjectRuntimeState(void)
         obj->navBlockedAnchorX = obj->x;
         obj->navBlockedAnchorY = obj->y;
         obj->navAvoidSteer = 0.0f;
+        obj->chasePlayer = 0u;
     }
 }
 
@@ -7999,6 +8359,7 @@ static void rc3dBindRuntimeObjectSprites(void)
         obj->navBlockedAnchorX = obj->x;
         obj->navBlockedAnchorY = obj->y;
         obj->navAvoidSteer = 0.0f;
+        obj->chasePlayer = 0u;
         if (!rc3dObjectUsesSprite(obj)) {
             continue;
         }
@@ -8034,6 +8395,9 @@ static void rc3dUpdateEnemyPatrols(float dt)
         int routeAnchorTag;
         int targetNodeIndex;
         const RC3D_Object *targetNode;
+        float playerDistSq;
+        float playerStopDist;
+        float playerStopDistSq;
         float reachDist;
         float targetDistSq;
         float progressDistSq;
@@ -8044,9 +8408,67 @@ static void rc3dUpdateEnemyPatrols(float dt)
         }
 
         if (!rc3dEnsureEnemySectorValid(obj)) {
-            obj->navAvoidSteer = 0.0f;
+            rc3dResetEnemyMoveRuntime(obj);
+            obj->chasePlayer = 0u;
             rc3dSyncRuntimeObjectSprite(obj);
             continue;
+        }
+
+        playerStopDist = PLAYER_RADIUS + rc3dObjectActorRadius(obj);
+        playerStopDistSq = playerStopDist * playerStopDist;
+        playerDistSq =
+            ((g_player.x - obj->x) * (g_player.x - obj->x)) +
+            ((g_player.y - obj->y) * (g_player.y - obj->y));
+
+        if (rc3dEnemyShouldChasePlayer(obj)) {
+            if (!obj->chasePlayer) {
+                obj->chasePlayer = 1u;
+                rc3dResetEnemyMoveRuntime(obj);
+            }
+
+            moved = 0;
+            if (playerDistSq > playerStopDistSq) {
+                moved = rc3dMoveEnemyTowardPoint(obj, g_player.x, g_player.y, dt);
+            }
+
+            progressDistSq =
+                ((obj->x - obj->navBlockedAnchorX) * (obj->x - obj->navBlockedAnchorX)) +
+                ((obj->y - obj->navBlockedAnchorY) * (obj->y - obj->navBlockedAnchorY));
+
+            if (playerDistSq > playerStopDistSq &&
+                progressDistSq >=
+                    (RC3D_ENEMY_BLOCKED_PROGRESS_TOLERANCE * RC3D_ENEMY_BLOCKED_PROGRESS_TOLERANCE))
+            {
+                obj->navBlockedTime = 0.0f;
+                obj->navBlockedAnchorX = obj->x;
+                obj->navBlockedAnchorY = obj->y;
+            } else if (playerDistSq > playerStopDistSq) {
+                if (!moved && obj->navBlockedTime <= 0.0f) {
+                    obj->navBlockedAnchorX = obj->x;
+                    obj->navBlockedAnchorY = obj->y;
+                }
+
+                obj->navBlockedTime += dt;
+
+                if (obj->navBlockedTime >= RC3D_ENEMY_BLOCKED_REVERSE_TIME) {
+                    obj->navBlockedTime = 0.0f;
+                    obj->navBlockedAnchorX = obj->x;
+                    obj->navBlockedAnchorY = obj->y;
+                }
+            } else {
+                obj->navBlockedTime = 0.0f;
+                obj->navBlockedAnchorX = obj->x;
+                obj->navBlockedAnchorY = obj->y;
+            }
+
+            rc3dUpdateEnemyVertical(obj, dt);
+            rc3dSyncRuntimeObjectSprite(obj);
+            continue;
+        }
+
+        if (obj->chasePlayer) {
+            obj->chasePlayer = 0u;
+            rc3dResetEnemyMoveRuntime(obj);
         }
 
         routeAnchorTag = obj->targetTagId;
@@ -8065,10 +8487,7 @@ static void rc3dUpdateEnemyPatrols(float dt)
             connectedIndices,
             RC3D_MAX_NAV_ROUTE_NODES);
         if (connectedCount <= 0) {
-            obj->navBlockedTime = 0.0f;
-            obj->navBlockedAnchorX = obj->x;
-            obj->navBlockedAnchorY = obj->y;
-            obj->navAvoidSteer = 0.0f;
+            rc3dResetEnemyMoveRuntime(obj);
             rc3dUpdateEnemyVertical(obj, dt);
             rc3dSyncRuntimeObjectSprite(obj);
             continue;
@@ -8087,9 +8506,7 @@ static void rc3dUpdateEnemyPatrols(float dt)
 
             obj->navTargetTag = g_map->objects[targetNodeIndex].tagId;
             obj->navPrevTag = 0;
-            obj->navBlockedTime = 0.0f;
-            obj->navBlockedAnchorX = obj->x;
-            obj->navBlockedAnchorY = obj->y;
+            rc3dResetEnemyMoveRuntime(obj);
         }
 
         targetNode = &g_map->objects[targetNodeIndex];
@@ -8508,6 +8925,89 @@ static int rc3dTeleportPlayerToPairedObject(const RC3D_Object *source)
 // API CALLER
 #define OBJTRIG_TYPE_SECTORS    1   // just a local non magic number
 #define OBJTRIG_TYPE_OBJECTS    2   // to other objects
+static int rc3dFireObjectTriggerAction(RC3D_Object *obj, int inside, int resetTriggerOnTeleportFail, int *outTeleported)
+{
+    int procType = 0;
+    uint8_t flagToSet = 0;
+
+    if (outTeleported) {
+        *outTeleported = 0;
+    }
+
+    if (!obj) {
+        return 0;
+    }
+
+    switch (obj->type) {
+        case RC3D_OBJTYPE_SPRITE:
+            break;
+
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT:
+            procType = OBJTRIG_TYPE_SECTORS;
+            flagToSet = inside ? obj->inFlag : obj->outFlag;
+            break;
+
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER:
+            if (inside) {
+                procType = OBJTRIG_TYPE_SECTORS;
+                flagToSet = obj->inFlag;
+            }
+            break;
+
+        case RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT:
+            if (!inside) {
+                procType = OBJTRIG_TYPE_SECTORS;
+                flagToSet = obj->outFlag;
+            }
+            break;
+
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT:
+            procType = OBJTRIG_TYPE_OBJECTS;
+            flagToSet = inside ? obj->inFlag : obj->outFlag;
+            break;
+
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER:
+            if (inside) {
+                procType = OBJTRIG_TYPE_OBJECTS;
+                flagToSet = obj->inFlag;
+            }
+            break;
+
+        case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:
+            if (!inside) {
+                procType = OBJTRIG_TYPE_OBJECTS;
+                flagToSet = obj->outFlag;
+            }
+            break;
+
+        case RC3D_OBJTYPE_OBJECT_TELEPORTER:
+            if (inside && rc3dTeleportPlayerToPairedObject(obj)) {
+                if (outTeleported) {
+                    *outTeleported = 1;
+                }
+                return 1;
+            }
+
+            if (inside && resetTriggerOnTeleportFail) {
+                obj->trigger = 0u;
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    if ((procType == OBJTRIG_TYPE_SECTORS) && (obj->targetTagId != 0)) {
+        return rc3dSetSectorStateByTag(obj->targetTagId, flagToSet);
+    }
+
+    if ((procType == OBJTRIG_TYPE_OBJECTS) && (obj->targetTagId != 0)) {
+        return rc3dSetObjectStateByTag(obj->targetTagId, flagToSet);
+    }
+
+    return 0;
+}
+
 void processObjects(int pTagId, int pType)  // engine internal systems
 {
     RC3D_Object *objs = rc3dMutableObjectData();
@@ -8540,7 +9040,6 @@ void processObjects(int pTagId, int pType)  // engine internal systems
         const float radiusSq = obj->radius * obj->radius;
         const int inside = (distSq < radiusSq) ? 1 : 0;
         const int wasInside = (obj->trigger != 0) ? 1 : 0;
-        uint8_t flagToSet = 0;
 
         RC3D_PROFILER_DO(g_profiler.objectsProcessed++);
 
@@ -8561,84 +9060,19 @@ void processObjects(int pTagId, int pType)  // engine internal systems
         RC3D_PROFILER_DO(g_profiler.objectEdgeChanges++);
 
         obj->trigger = (uint8_t)inside;
-        
-        int procType = 0;
 
-        switch (obj->type) {
-            // general sprite, just decorative
-            case RC3D_OBJTYPE_SPRITE:
-                break;
+        {
+            int teleported = 0;
+            const int changed = rc3dFireObjectTriggerAction(obj, inside, 1, &teleported);
 
-            // triggers for sectors!
-            case RC3D_OBJTYPE_SECTOR_TRIGGER_INOUT:
-                procType = OBJTRIG_TYPE_SECTORS;
-                flagToSet = inside ? obj->inFlag : obj->outFlag;
-                break;
-
-            case RC3D_OBJTYPE_SECTOR_TRIGGER_ENTER:
-                if (inside) {
-                    procType = OBJTRIG_TYPE_SECTORS;
-                    flagToSet = obj->inFlag;
+            RC3D_PROFILER_DO(
+                if (changed > 0) {
+                    g_profiler.sectorStateWrites += (uint32_t)changed;
                 }
-                break;
+            );
 
-            case RC3D_OBJTYPE_SECTOR_TRIGGER_EXIT:
-                if (!inside) {
-                    procType = OBJTRIG_TYPE_SECTORS;
-                    flagToSet = obj->outFlag;
-                }
-                break;
-
-            // triggers for OTHER objects
-            case RC3D_OBJTYPE_OBJECT_TRIGGER_INOUT:
-                procType = OBJTRIG_TYPE_OBJECTS;
-                flagToSet = inside ? obj->inFlag : obj->outFlag;
-                break;
-
-            case RC3D_OBJTYPE_OBJECT_TRIGGER_ENTER:
-                if (inside) {
-                    procType = OBJTRIG_TYPE_OBJECTS;
-                    flagToSet = obj->inFlag;
-                }
-                break;
-            case RC3D_OBJTYPE_OBJECT_TRIGGER_EXIT:
-                if (!inside) {
-                    procType = OBJTRIG_TYPE_OBJECTS;
-                    flagToSet = obj->outFlag;
-                }
-                break;
-
-            case RC3D_OBJTYPE_OBJECT_TELEPORTER:
-                if (inside) {
-                    if (rc3dTeleportPlayerToPairedObject(obj)) {
-                        return;
-                    }
-
-                    obj->trigger = 0u;
-                }
-                break;
-            default:
-                break;
-        }
-
-        if (procType == OBJTRIG_TYPE_SECTORS){
-            if (obj->targetTagId != 0) {
-                const int changed = rc3dSetSectorStateByTag(obj->targetTagId, flagToSet);
-                RC3D_PROFILER_DO(
-                    if (changed > 0) {
-                        g_profiler.sectorStateWrites += (uint32_t)changed;
-                    }
-                );
-            }
-        }
-        if (procType == OBJTRIG_TYPE_OBJECTS){
-            if (obj->targetTagId != 0) {
-                const int changed = rc3dSetObjectStateByTag(obj->targetTagId, flagToSet);
-                RC3D_PROFILER_DO(
-                    if (changed > 0) {
-                        g_profiler.sectorStateWrites += (uint32_t)changed;
-                    }
-                );
+            if (teleported) {
+                return;
             }
         }
 

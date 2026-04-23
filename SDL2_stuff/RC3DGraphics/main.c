@@ -81,6 +81,62 @@ static void drawFPSCounter(void) {
     drawTextO(0, 1, buf, 15);
 }
 
+static int clampScreenCoord(int value, int maxValue)
+{
+    if (maxValue <= 0) {
+        return 0;
+    }
+
+    if (value < 0) {
+        return 0;
+    }
+
+    if (value >= maxValue) {
+        return maxValue - 1;
+    }
+
+    return value;
+}
+
+static int windowToScreenCoord(int value, int screenSize)
+{
+    return clampScreenCoord(value / ZOOM, screenSize);
+}
+
+static int screenToWindowCoord(int value, int screenSize)
+{
+    const int clamped = clampScreenCoord(value, screenSize);
+    return (clamped * ZOOM) + (ZOOM / 2);
+}
+
+static void drawCursorGlyph(int x, int y, const uint8_t glyph[8], uint8_t color)
+{
+    for (int row = 0; row < 8; ++row) {
+        uint8_t bits = glyph[row];
+
+        for (int col = 0; col < 8; ++col) {
+            if (bits & (0x80u >> col)) {
+                putPixel(x + col, y + row, color);
+            }
+        }
+    }
+}
+
+static void drawMousePointerCursor(int x, int y, int clickable)
+{
+    static const uint8_t cursorNormal[8] = {
+        0x80, 0xC0, 0xE0, 0xF0, 0xE0, 0xB0, 0x18, 0x08
+    };
+    static const uint8_t cursorClickable[8] = {
+        0x86, 0xC9, 0xE9, 0xF7, 0xE1, 0xB0, 0x18, 0x08
+    };
+    const uint8_t *glyph = clickable ? cursorClickable : cursorNormal;
+    const uint8_t color = clickable ? 29u : 2u;
+
+    drawCursorGlyph(x + 1, y + 1, glyph, 16u);
+    drawCursorGlyph(x, y, glyph, color);
+}
+
 
 SDL_Window *sdl_win;
 SDL_Renderer *ren;
@@ -257,12 +313,17 @@ int main(int argc, char **argv)
     rc3dLightRange(1.0f, 0.75f, 6.0f);
     rc3dSetDrawDistance(32.0f);
 
+    SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     
     uint32_t lastTicks = SDL_GetTicks();
 
     int pendingMouseDx = 0;
+    int mousePointerMode = 0;
+    int pointerX = SCREEN_W / 2;
+    int pointerY = SCREEN_H / 2;
+    int hoveredWallIndex = -1;
 
     //rc3dSetViewport(0, 60, 360, 200);
     randSeed(12345);
@@ -280,11 +341,46 @@ int main(int argc, char **argv)
             }
 
             if (e.type == SDL_MOUSEMOTION) {
-                pendingMouseDx += e.motion.xrel;
+                if (mousePointerMode) {
+                    pointerX = windowToScreenCoord(e.motion.x, SCREEN_W);
+                    pointerY = windowToScreenCoord(e.motion.y, SCREEN_H);
+                } else {
+                    pendingMouseDx += e.motion.xrel;
+                }
             }
 
             if (e.type == SDL_MOUSEBUTTONDOWN){
-                moveSprite();
+                if (e.button.button == SDL_BUTTON_RIGHT) {
+                    pendingMouseDx = 0;
+
+                    if (mousePointerMode) {
+                        pointerX = windowToScreenCoord(e.button.x, SCREEN_W);
+                        pointerY = windowToScreenCoord(e.button.y, SCREEN_H);
+                        mousePointerMode = 0;
+                        hoveredWallIndex = -1;
+                        SDL_SetRelativeMouseMode(SDL_TRUE);
+                    } else {
+                        mousePointerMode = 1;
+                        SDL_SetRelativeMouseMode(SDL_FALSE);
+                        SDL_WarpMouseInWindow(
+                            sdl_win,
+                            screenToWindowCoord(pointerX, SCREEN_W),
+                            screenToWindowCoord(pointerY, SCREEN_H));
+                    }
+                    continue;
+                }
+
+                if (mousePointerMode && e.button.button == SDL_BUTTON_LEFT) {
+                    int wallIndex = -1;
+
+                    pointerX = windowToScreenCoord(e.button.x, SCREEN_W);
+                    pointerY = windowToScreenCoord(e.button.y, SCREEN_H);
+
+                    if (rc3dGetClickableWallAtScreen(pointerX, pointerY, &wallIndex)) {
+                        rc3dActivateClickableWall(wallIndex);
+                        printf("wall number %d was clicked\n", wallIndex);
+                    }
+                }
             }
         }
 
@@ -292,7 +388,7 @@ int main(int argc, char **argv)
 
         uint32_t nowTicks = SDL_GetTicks();
         float dt = (float)(nowTicks - lastTicks) / 1000.0f;
-        int mouseDx = pendingMouseDx;
+        int mouseDx = mousePointerMode ? 0 : pendingMouseDx;
         const uint8_t *keys = SDL_GetKeyboardState(NULL);
         static float nframeT[2] = {
             0.250f,
@@ -303,6 +399,15 @@ int main(int argc, char **argv)
             0.0f
         };
         static int ffFrame[2] = {0,0};
+
+        if (mousePointerMode) {
+            int mouseWindowX = 0;
+            int mouseWindowY = 0;
+
+            SDL_GetMouseState(&mouseWindowX, &mouseWindowY);
+            pointerX = windowToScreenCoord(mouseWindowX, SCREEN_W);
+            pointerY = windowToScreenCoord(mouseWindowY, SCREEN_H);
+        }
 
         if(gFrame){
             lastTicks = nowTicks;
@@ -334,18 +439,18 @@ int main(int argc, char **argv)
             rc3dSetSectorWallTextureOffset(14, bum,0);
         
             rc3dRender();
+
+            hoveredWallIndex = -1;
+            if (mousePointerMode) {
+                rc3dGetClickableWallAtScreen(pointerX, pointerY, &hoveredWallIndex);
+                drawMousePointerCursor(pointerX, pointerY, hoveredWallIndex >= 0);
+            }
         }
-
-        //rc3dRender();
-
+            
         if(!gFrame){
             drawFPSCounter();
             screenupdate();
         }
-        //videoMemToScreen();
-        //SDL_UpdateTexture(tex, NULL, pb, SCREEN_W * (int)sizeof(uint32_t));
-        //SDL_RenderCopy(ren, tex, NULL, NULL);
-        //SDL_RenderPresent(ren);
     }while (running) ;
 
     freeTextureFrames(forcefield, 4);
