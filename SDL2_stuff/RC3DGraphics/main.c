@@ -314,16 +314,21 @@ int main(int argc, char **argv)
     rc3dSetDrawDistance(32.0f);
 
     SDL_ShowCursor(SDL_DISABLE);
-    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     
     uint32_t lastTicks = SDL_GetTicks();
 
     int pendingMouseDx = 0;
-    int mousePointerMode = 0;
+    int mousePointerMode = 1;
     int pointerX = SCREEN_W / 2;
     int pointerY = SCREEN_H / 2;
     int hoveredWallIndex = -1;
+
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+    SDL_WarpMouseInWindow(
+        sdl_win,
+        screenToWindowCoord(pointerX, SCREEN_W),
+        screenToWindowCoord(pointerY, SCREEN_H));
 
     //rc3dSetViewport(0, 60, 360, 200);
     randSeed(12345);
@@ -351,21 +356,13 @@ int main(int argc, char **argv)
 
             if (e.type == SDL_MOUSEBUTTONDOWN){
                 if (e.button.button == SDL_BUTTON_RIGHT) {
-                    pendingMouseDx = 0;
-
                     if (mousePointerMode) {
+                        pendingMouseDx = 0;
                         pointerX = windowToScreenCoord(e.button.x, SCREEN_W);
                         pointerY = windowToScreenCoord(e.button.y, SCREEN_H);
                         mousePointerMode = 0;
                         hoveredWallIndex = -1;
                         SDL_SetRelativeMouseMode(SDL_TRUE);
-                    } else {
-                        mousePointerMode = 1;
-                        SDL_SetRelativeMouseMode(SDL_FALSE);
-                        SDL_WarpMouseInWindow(
-                            sdl_win,
-                            screenToWindowCoord(pointerX, SCREEN_W),
-                            screenToWindowCoord(pointerY, SCREEN_H));
                     }
                     continue;
                 }
@@ -380,6 +377,19 @@ int main(int argc, char **argv)
                         rc3dActivateClickableWall(wallIndex);
                         printf("wall number %d was clicked\n", wallIndex);
                     }
+                }
+            }
+
+            if (e.type == SDL_MOUSEBUTTONUP) {
+                if ((e.button.button == SDL_BUTTON_RIGHT) && !mousePointerMode) {
+                    pendingMouseDx = 0;
+                    mousePointerMode = 1;
+                    SDL_SetRelativeMouseMode(SDL_FALSE);
+                    SDL_WarpMouseInWindow(
+                        sdl_win,
+                        screenToWindowCoord(pointerX, SCREEN_W),
+                        screenToWindowCoord(pointerY, SCREEN_H));
+                    continue;
                 }
             }
         }

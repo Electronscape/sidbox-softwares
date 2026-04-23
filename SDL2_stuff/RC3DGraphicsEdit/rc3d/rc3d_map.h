@@ -63,10 +63,10 @@ typedef struct {
     uint8_t upperColor;     /* above opening */
     uint8_t midColor;       /* middle slab */
     uint8_t lowerColor;     /* below opening */
-    uint8_t targetObjID;    /* use this to trigger */
+    uint8_t pad1;
 
+    uint16_t targetObjID;    /* use this to trigger */
     uint16_t flags;          /* wall flags */
-    uint16_t _pad2;
     uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
     float texScaleX;        /* wall texture UV scale X */
     float texScaleY;        /* wall texture UV scale Y */

@@ -2387,7 +2387,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
             !readExact(f, &walls[i].upperColor, sizeof(uint8_t)) ||
             !readExact(f, &walls[i].midColor, sizeof(uint8_t)) ||
             !readExact(f, &walls[i].lowerColor, sizeof(uint8_t)) ||
-            !readExact(f, &walls[i].targetObjId, sizeof(uint8_t)) ||
+            !readExact(f, &walls[i].targetObjId, sizeof(uint16_t)) ||
             !readExact(f, &walls[i].flags, sizeof(uint16_t)) ||
             !readExact(f, &walls[i].texture_flags, sizeof(uint32_t)) ||
             !readExact(f, &walls[i].texScaleX, sizeof(float)) ||
@@ -2406,7 +2406,7 @@ int rc3dMapLoadBinary(const char *path, RC3D_Map *outMap)
         walls[i].v0 = (int)v0;
         walls[i].v1 = (int)v1;
         walls[i].neighbour = (int)neighbour;
-        walls[i]._pad2 = 0u;
+        walls[i].pad1 = 0u;
     }
 
     for (uint32_t i = 0; i < sectorCount; i++) {

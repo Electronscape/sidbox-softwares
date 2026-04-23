@@ -243,10 +243,9 @@ typedef struct {
     uint8_t upperColor;
     uint8_t midColor;
     uint8_t lowerColor;
-    uint8_t targetObjID;    /* use this to trigger */
-
+    uint8_t pad1;
+    uint16_t targetObjID;   /* use this to trigger */
     uint16_t flags;         // wall behaviour/type flags
-    uint16_t _pad2;         // padding
     uint32_t tex_flags;     // texture clamp/uv behaviour flags, packed wall brightness
     float texScaleX;
     float texScaleY;
@@ -320,7 +319,7 @@ typedef struct {
     uint8_t upperColor;
     uint8_t midColor;
     uint8_t lowerColor;
-    uint8_t targetObjID;
+    uint16_t targetObjID;
     uint16_t flags;
     uint32_t tex_flags;
     float texScaleX;
@@ -4037,7 +4036,7 @@ static void drawMapObjects(void)
 static void drawObjectLabels(void)
 {
     if (!g_ed.showObjectLabels) {
-        return;
+        //return;
     }
 
     for (int i = 0; i < g_edMap.objectCount; i++) {
@@ -4093,7 +4092,7 @@ static void drawObjectLabels(void)
         //#define ED_OBJECT_TEXT_NOTE_BG      16
         //#define ED_OBJECT_TEXT_NOTE_BORDER  4
         //#define ED_OBJECT_TEXT_TEXT         3
-        if ((g_ed.zoom > 64) || (border == ED_COLOUR_HOVER_WALL) || (border == ED_COLOUR_SELECTED_WALL)) {
+        if ((g_ed.showObjectLabels && (g_ed.zoom > 64)) || (border == ED_COLOUR_HOVER_WALL) || (border == ED_COLOUR_SELECTED_WALL) || (g_ed.hoverObject == i) || (isObjectInEditSelection(i))) {
             drawRect(boxX, boxY, boxW, boxH, ED_OBJECT_TEXT_NOTE_BG);
             drawRectL(boxX, boxY, boxW, boxH, border);
             drawText(boxX + 4, textY, preview, ED_OBJECT_TEXT_TEXT);
@@ -9057,7 +9056,7 @@ static void beginNewMap(void)
     g_ed.confirmVisible = 0;
     g_ed.confirmAction = ED_CONFIRM_NONE;
     g_ed.confirmText[0] = '\0';
-    g_ed.showObjectLabels = 1;
+    g_ed.showObjectLabels = 0;
     g_ed.objectLabelEditActive = 0;
     g_ed.objectLabelEditObject = -1;
     g_ed.objectLabelEditBuffer[0] = '\0';
@@ -9554,7 +9553,10 @@ static int loadTextMap(const char *path)
         newMap.walls[i].upperColor = (uint8_t)uc;
         newMap.walls[i].midColor   = (uint8_t)mc;
         newMap.walls[i].lowerColor = (uint8_t)lc;
-        newMap.walls[i].targetObjID = (uint8_t)targetObjID;
+        if (targetObjID > UINT16_MAX) {
+            targetObjID = UINT16_MAX;
+        }
+        newMap.walls[i].targetObjID = (uint16_t)targetObjID;
         newMap.walls[i].flags      = (uint16_t)flags;
         newMap.walls[i].tex_flags  = (uint32_t)tex_flags;
         setWallTexScaleX(&newMap.walls[i], newMap.walls[i].texScaleX);
@@ -9857,7 +9859,7 @@ int exportBinaryMap(const char *path)
         uint8_t upper      = w->upperColor;
         uint8_t mid        = w->midColor;
         uint8_t lower      = w->lowerColor;
-        uint8_t targid      = w->targetObjID;
+        uint16_t targid      = w->targetObjID;
         uint16_t flags      = w->flags;
         uint32_t tex_flags = w->tex_flags;
         float texScaleX    = w->texScaleX;
@@ -10015,7 +10017,7 @@ static int exportCStringMap(const char *path)
         const EdWall *w = &g_edMap.walls[i];
 
         fprintf(f,
-            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, %u, %uu, 0u, %uu, %.6ff, %.6ff, %.6ff, %.6ff },\n",
+            "    { %d, %d, %d, %.6ff, %.6ff, %u, %u, %u, 0u, %uu, %uu, %uu, %.6ff, %.6ff, %.6ff, %.6ff },\n",
             w->v0,
             w->v1,
             w->neighbour,
@@ -14730,10 +14732,7 @@ static void drawWallClickableObjectLinks(void)
 {
     for (int i = 0; i < g_edMap.wallCount; i++) {
         const EdWall *w = &g_edMap.walls[i];
-        const int targetIndex = findObjectByTagId((int)w->targetObjID);
         float anchorX, anchorY;
-        uint8_t col = ED_COLOUR_WALL_SPECIAL;
-        int x0, y0, x1, y1;
 
         if ((w->flags & RC3D_WALL_CLICKABLE) == 0u) {
             continue;
@@ -14743,29 +14742,32 @@ static void drawWallClickableObjectLinks(void)
             continue;
         }
 
-        if (targetIndex < 0 || targetIndex >= g_edMap.objectCount) {
-            continue;
-        }
-
         if (!getWallClickableLinkAnchor(i, &anchorX, &anchorY)) {
             continue;
         }
 
-        if (isWallInEditSelection(i) || isObjectInEditSelection(targetIndex)) {
-            col = ED_COLOUR_SELECTED_WALL;
-        } else if (g_ed.hoverWall == i || g_ed.hoverObject == targetIndex) {
-            col = ED_COLOUR_HOVER_WALL;
+        for (int targetIndex = 0; targetIndex < g_edMap.objectCount; targetIndex++) {
+            const EdObject *target = &g_edMap.objects[targetIndex];
+            uint8_t col = ED_COLOUR_WALL_SPECIAL;
+            int x0, y0, x1, y1;
+
+            if (target->tagId != (int)w->targetObjID) {
+                continue;
+            }
+
+            if (isWallInEditSelection(i) || isObjectInEditSelection(targetIndex)) {
+                col = ED_COLOUR_SELECTED_WALL;
+            } else if (g_ed.hoverWall == i || g_ed.hoverObject == targetIndex) {
+                col = ED_COLOUR_HOVER_WALL;
+            }
+
+            worldToScreen(anchorX, anchorY, &x0, &y0);
+            worldToScreen(target->x, target->y, &x1, &y1);
+
+            drawEditorLinkLine(x0, y0, x1, y1, col, 1);
+            drawEditorLinkArrows(x0, y0, x1, y1, col, 2);
+            drawRect(x1 - 1, y1 - 1, 3, 3, col);
         }
-
-        worldToScreen(anchorX, anchorY, &x0, &y0);
-        worldToScreen(g_edMap.objects[targetIndex].x,
-                      g_edMap.objects[targetIndex].y,
-                      &x1,
-                      &y1);
-
-        drawEditorLinkLine(x0, y0, x1, y1, col, 1);
-        drawEditorLinkArrows(x0, y0, x1, y1, col, 2);
-        drawRect(x1 - 1, y1 - 1, 3, 3, col);
     }
 }
 
@@ -16508,11 +16510,11 @@ static void adjustSelectedWallTargetObjID(int delta)
 
         if (targetObjID < 0) {
             targetObjID = 0;
-        } else if (targetObjID > 255) {
-            targetObjID = 255;
+        } else if ((unsigned)targetObjID > UINT16_MAX) {
+            targetObjID = (int)UINT16_MAX;
         }
 
-        wall->targetObjID = (uint8_t)targetObjID;
+        wall->targetObjID = (uint16_t)targetObjID;
     }
 }
 

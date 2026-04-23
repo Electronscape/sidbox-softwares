@@ -56,10 +56,10 @@ typedef struct {
     uint8_t upperColor;     /* above opening */
     uint8_t midColor;       /* middle slab */
     uint8_t lowerColor;     /* below opening */
-    uint8_t targetObjId;    /* linked object tag id for clickable wall actions */
+    uint8_t pad1;
 
+    uint16_t targetObjId;    /* linked object tag id for clickable wall actions */
     uint16_t flags;          /* wall flags */
-    uint16_t _pad2;         /* wall flags padding */
     uint32_t texture_flags; /* low bits: clamp flags, bits 4..19: angle, bits 20..23: brightness */
     float texScaleX;        /* wall texture UV scale X */
     float texScaleY;        /* wall texture UV scale Y */
