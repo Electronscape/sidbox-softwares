@@ -7780,8 +7780,8 @@ static void drawMiniMap(void)
 
         rc3dLookupAngleTrig(g_player.angle, &dirX, &dirY);
 
-        int x1 = centerX + (int)(dirX * 12.0f);
-        int y1 = centerY + (int)(dirY * 12.0f);
+        int x1 = centerX + (int)(dirX * 6.0f);
+        int y1 = centerY + (int)(dirY * 6.0f);
 
         if (clipLineToRect(&x0, &y0, &x1, &y1, left, top, right, bottom)) {
             drawLine(x0, y0, x1, y1, 31);
