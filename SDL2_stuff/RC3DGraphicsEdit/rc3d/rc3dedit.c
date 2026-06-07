@@ -38,6 +38,8 @@
 #define ED_PICK_DIST_PX         25
 #define ED_CLICK_DRAG_TOLERANCE_PX 5
 #define ED_TEXTURE_FILL_TEXELS_PER_WORLD_UNIT 64.0f
+#define ED_ISO_Y_SCALE_RATIO 0.5f
+#define ED_ISO_Z_SCALE_RATIO 1.35f
 
 #define ED_ROUTE_PREVIEW_MAX_POINTS 4096
 #define ED_ROUTE_PREVIEW_MAX_GRID_CELLS 120000
@@ -4375,12 +4377,12 @@ static float getIsoScaleX(void)
 
 static float getIsoScaleY(void)
 {
-    return g_ed.zoom * 0.5f;
+    return g_ed.zoom * ED_ISO_Y_SCALE_RATIO;
 }
 
 static float getIsoScaleZ(void)
 {
-    return g_ed.zoom * 0.5f;
+    return g_ed.zoom * ED_ISO_Z_SCALE_RATIO;
 }
 
 static float getIsoCenterX(void)
@@ -5384,7 +5386,7 @@ static void drawIsometricPreview(void)
 
         wallOrder[wallOrderCount].index = i;
         wallOrder[wallOrderCount].depth =
-            ((a->x + a->y + b->x + b->y) * 0.5f) + (zTop * 0.25f);
+            ((a->x + a->y + b->x + b->y) * 0.5f) + (zTop * 0.55f);
         wallOrderCount++;
     }
 
