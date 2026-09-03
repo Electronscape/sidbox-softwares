@@ -493,6 +493,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gfxPalleteSelect->setFocusPolicy(Qt::StrongFocus);
     ui->gfxPalleteSelect->setFocus();
 
+    ui->frmIconInfoMetaEditor->hide();
 
     // Add it to the scene
     palettePixmap = scene->addPixmap(QPixmap::fromImage(paletteImg));
@@ -533,6 +534,25 @@ MainWindow::MainWindow(QWidget *parent)
     connect(updateTimer, &QTimer::timeout, this, &MainWindow::renderEditorCanvas);
 
     ui->chkShowGrid->setChecked(gridEnabled);
+
+    // .info editor
+    connect(ui->cmdOpenIconMetaEditor, &QPushButton::clicked, this, [this](){
+        ui->frmIconInfoMetaEditor->show();
+        //ui->frmFontWorkbench->topLevelWidget();
+        ui->frmIconInfoMetaEditor->raise();
+    });
+
+    connect(ui->cmdCloseInfoEditor, &QPushButton::clicked, this, [this](){
+        ui->frmIconInfoMetaEditor->hide();
+    });
+
+    connect(ui->cmdSaveInfoFile, &QPushButton::clicked, this, [this](){
+        QString filename = QFileDialog::getSaveFileName(this, "Save icon '.info'", "", "icon info (*.info)");
+        if(!filename.isEmpty())
+            //ExportToPPB(filename.toUtf8().constData(), bits);
+            ExportInfoMeta(filename.toUtf8().constData());
+    });
+
 
     connect(ui->cmdReorgPalette, &QPushButton::clicked, this, [this](){
         // Create a vector of indices for sorting
@@ -1897,6 +1917,123 @@ void UndoIconArea(){
 }
 
 
+// all we need is the icon data, and the commandline and params
+int MainWindow::ExportInfoMeta(const char *filename)
+{
+    if (!filename || !icon_area)
+        return 0;
+
+    if (icon_width <= 0 || icon_height <= 0 ||
+        icon_width > 65535 || icon_height > 65535) {
+        printf("Export failed: invalid icon dimensions\n");
+        return 0;
+    }
+
+    const QByteArray cmdline =
+        ui->txtInfoCmdLine->text().toUtf8();
+
+    const QByteArray params =
+        ui->txtInfoParams->toPlainText().toUtf8();
+
+    // uint8_t length fields cannot hold more than 255 bytes.
+    if (cmdline.size() > 255) {
+        printf("Export failed: command line exceeds 255 bytes\n");
+        return 0;
+    }
+
+    // Parameters are limited to 64 bytes by this format.
+    if (params.size() > 64) {
+        printf("Export failed: parameters exceed 64 bytes\n");
+        return 0;
+    }
+
+    const uint16_t imgW = static_cast<uint16_t>(icon_width);
+    const uint16_t imgH = static_cast<uint16_t>(icon_height);
+
+    const uint8_t cmdlineLen =
+        static_cast<uint8_t>(cmdline.size());
+
+    const uint8_t paramLen =
+        static_cast<uint8_t>(params.size());
+
+    printf("Export .info as '%s'\n", filename);
+
+    FILE *f = fopen(filename, "wb");
+    if (!f)
+        return 0;
+
+    /*
+        File layout:
+
+        uint16_t width;                  big-endian
+        uint16_t height;                 big-endian
+        uint8_t  pixels[width * height];
+        uint8_t  cmdlineLen;
+        char     cmdline[cmdlineLen];
+        uint8_t  paramLen;
+        char     params[paramLen];
+    */
+
+    // Width: big-endian
+    fputc((imgW >> 8) & 0xFF, f);
+    fputc(imgW & 0xFF, f);
+
+    // Height: big-endian
+    fputc((imgH >> 8) & 0xFF, f);
+    fputc(imgH & 0xFF, f);
+
+    if (ferror(f)) {
+        fclose(f);
+        return 0;
+    }
+
+    // Raw 8-bit icon pixels.
+    for (uint16_t y = 0; y < imgH; ++y) {
+        for (uint16_t x = 0; x < imgW; ++x) {
+            const uint8_t pixel =
+                static_cast<uint8_t>((*icon_area)[y][x]);
+
+            if (fwrite(&pixel, sizeof(pixel), 1, f) != 1) {
+                fclose(f);
+                return 0;
+            }
+        }
+    }
+
+
+    // Command line length and bytes.
+    if (fwrite(&cmdlineLen, sizeof(cmdlineLen), 1, f) != 1) {
+        fclose(f);
+        return 0;
+    }
+
+    if (cmdlineLen > 0) {
+        if (fwrite(cmdline.constData(), sizeof(char),
+                   cmdlineLen, f) != cmdlineLen) {
+            fclose(f);
+            return 0;
+        }
+    }
+
+    // Parameter length and bytes.
+    if (fwrite(&paramLen, sizeof(paramLen), 1, f) != 1) {
+        fclose(f);
+        return 0;
+    }
+
+    if (paramLen > 0) {
+        if (fwrite(params.constData(), sizeof(char),
+                   paramLen, f) != paramLen) {
+            fclose(f);
+            return 0;
+        }
+    }
+
+    if (fclose(f) != 0)
+        return 0;
+
+    return 1;
+}
 
 void MainWindow::ResizeIconArea(int newWidth, int newHeight, int oldWidth, int oldHeight){
     if (newWidth <= 0 || newHeight <= 0) return;
@@ -3164,6 +3301,55 @@ void MainWindow::saveProjectIcon(const char *filename){
         fwrite(icon_area_back[y].data(), sizeof(uint8_t), icon_width, f);
     }
 
+
+    // [ info meta infomation ]
+    /*
+    // - command line -
+    const QByteArray cmdstrline = ui->txtInfoCmdLine->text().toUtf8();
+    const uint8_t cmdstrlen = static_cast<uint8_t>(cmdstrline.size());  // should never be longer thn 64 bytes
+    fwrite(&cmdstrlen, sizeof(cmdstrlen), 1, f);
+    fwrite(cmdstrline.constData(), sizeof(char), cmdstrlen, f);
+
+    // - params -
+    const QByteArray paramlines = ui->txtInfoParams->toPlainText().toUtf8();
+    const uint8_t paramslsize = static_cast<uint8_t>(paramlines.size());  // should never be longer thn 64 bytes
+    fwrite(&paramslsize, sizeof(paramslsize), 1, f);
+    fwrite(paramlines.constData(), sizeof(char), paramslsize, f);
+    //
+    */
+    const QByteArray cmdline = ui->txtInfoCmdLine->text().toUtf8();
+    const QByteArray params = ui->txtInfoParams->toPlainText().toUtf8();
+    const uint8_t cmdlineLen = static_cast<uint8_t>(cmdline.size());
+    const uint8_t paramLen = static_cast<uint8_t>(params.size());
+    // Command line length and bytes.
+    if (fwrite(&cmdlineLen, sizeof(cmdlineLen), 1, f) != 1) {
+        fclose(f);
+        return;
+    }
+
+    if (cmdlineLen > 0) {
+        if (fwrite(cmdline.constData(), sizeof(char),
+                   cmdlineLen, f) != cmdlineLen) {
+            fclose(f);
+            return;
+        }
+    }
+
+    // Parameter length and bytes.
+    if (fwrite(&paramLen, sizeof(paramLen), 1, f) != 1) {
+        fclose(f);
+        return;
+    }
+
+    if (paramLen > 0) {
+        if (fwrite(params.constData(), sizeof(char),
+                   paramLen, f) != paramLen) {
+            fclose(f);
+            return;
+        }
+    }
+
+
     fclose(f);
 }
 
@@ -3233,6 +3419,78 @@ void MainWindow::loadProjectIcon(const char *filename){
                 return;
             }
         }
+
+        // [ info meta information ]
+        uint8_t cmdlineLen = 0;
+
+        if (fread(&cmdlineLen, sizeof(cmdlineLen), 1, f) != 1) {
+            // Older project file without metadata.
+            ui->txtInfoCmdLine->clear();
+            ui->txtInfoParams->clear();
+
+            QMessageBox::warning(
+                this,
+                "Load Icon",
+                "Additional .info metadata is missing.\n"
+                "This is normal for older project files."
+            );
+        } else {
+            // ---- Command line ----
+            QByteArray cmdline(cmdlineLen, '\0');
+
+            if (cmdlineLen > 0) {
+                if (fread(cmdline.data(), sizeof(char),
+                          cmdlineLen, f) != cmdlineLen) {
+                    QMessageBox::warning(
+                        this,
+                        "Load Icon",
+                        "Command-line metadata is corrupted!"
+                    );
+                    fclose(f);
+                    return;
+                }
+            }
+
+            // ---- Parameters ----
+            uint8_t paramLen = 0;
+
+            if (fread(&paramLen, sizeof(paramLen), 1, f) != 1) {
+                QMessageBox::warning(
+                    this,
+                    "Load Icon",
+                    "Parameter metadata is missing!"
+                );
+                fclose(f);
+                return;
+            }
+
+            QByteArray params(paramLen, '\0');
+
+            if (paramLen > 0) {
+                if (fread(params.data(), sizeof(char),
+                          paramLen, f) != paramLen) {
+                    QMessageBox::warning(
+                        this,
+                        "Load Icon",
+                        "Parameter metadata is corrupted!"
+                    );
+                    fclose(f);
+                    return;
+                }
+            }
+
+            // ---- Restore editor contents ----
+            ui->txtInfoCmdLine->setText(
+                QString::fromUtf8(cmdline.constData(), cmdline.size())
+            );
+
+            ui->txtInfoParams->setPlainText(
+                QString::fromUtf8(params.constData(), params.size())
+            );
+        }
+
+
+
 
         fclose(f);
         CommitIconArea();
@@ -5425,11 +5683,18 @@ void MainWindow::reSize(){
     QWidget *vboxh = ui->vboxTextoutputv;
     QWidget *fonteditBox = ui->frmFontWorkbench;
     QWidget *sysoptions = ui->frmOptions;
+    QWidget *iconinfoedit = ui->frmIconInfoMetaEditor;
+
 
     //WinXW = wincontainer->width() - 2;
     //WinXH = wincontainer->height() - 28;
     WinXW = frmGFXedit->width() + 6;
     WinXH = frmGFXedit->height() - 14;
+
+    if(iconinfoedit){
+        iconinfoedit->resize(WinXW - 8, WinXH - 8);
+
+    }
 
 
     if(container){

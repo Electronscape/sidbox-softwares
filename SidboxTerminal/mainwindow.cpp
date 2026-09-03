@@ -82,13 +82,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     //serial->listPorts();   // show in Application Output
 
-
+    connect(ui->cmdHIDCtrl, &QPushButton::clicked, this, [=](){
+        MainWindow::StartKBTrans();
+    });
 
 
     connect(ui->cmdOpenPort, &QPushButton::clicked, this, [=]() {
         MainWindow::OpenSerialPort();
     });
 
+    connect(ui->cmdClosePort, &QPushButton::clicked, this, [=](){
+        MainWindow::CloseSerialPort();
+    });
 
     connect(ui->txtCommandLine, &QLineEdit::returnPressed, this, [=]() { sendCurrentCommand(); });
     connect(ui->cmdSend, &QPushButton::clicked, this, [=]() { sendCurrentCommand(); });
@@ -178,6 +183,59 @@ MainWindow::MainWindow(QWidget *parent)
 
 }
 
+
+
+void MainWindow::StartKBTrans()
+{
+    if (kbtransProcess && kbtransProcess->state() != QProcess::NotRunning) {
+        statusBar()->showMessage("Keyboard translator already running", 0);
+        return;
+    }
+
+    QString kbtransPath = QDir(QCoreApplication::applicationDirPath()).filePath("kbtrans");
+
+    kbtransProcess = new QProcess(this);
+
+    QString program = "pkexec";
+
+    QStringList args;
+    args << kbtransPath;
+    args << "--parent-pid";
+    args << QString::number(QCoreApplication::applicationPid());
+    args << "/dev/input/event7";
+    args << "/dev/ttyUSB0";
+
+    connect(kbtransProcess, &QProcess::readyReadStandardOutput, this, [this]() {
+        qDebug() << "kbtrans:" << kbtransProcess->readAllStandardOutput();
+    });
+
+    connect(kbtransProcess, &QProcess::readyReadStandardError, this, [this]() {
+        qDebug() << "kbtrans err:" << kbtransProcess->readAllStandardError();
+    });
+
+    connect(kbtransProcess,
+            QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this,
+            [this](int exitCode, QProcess::ExitStatus) {
+                qDebug() << "kbtrans exited:" << exitCode;
+                statusBar()->showMessage("Keyboard translator stopped", 0);
+                kbtransProcess->deleteLater();
+                kbtransProcess = nullptr;
+            });
+
+    kbtransProcess->start(program, args);
+
+    if (!kbtransProcess->waitForStarted(3000)) {
+        statusBar()->showMessage("Failed to start keyboard translator", 0);
+        qDebug() << kbtransProcess->errorString();
+        kbtransProcess->deleteLater();
+        kbtransProcess = nullptr;
+        return;
+    }
+
+    statusBar()->showMessage("Keyboard translator auth requested (IMPORTANT!!!! - Use: CTRL+SHIFT+ESC to stop KBTrans!)", 0);
+}
+
 void MainWindow::showEvent(QShowEvent *event){
     //QMessageBox::information(this, "hello world", "hello");
 
@@ -253,7 +311,19 @@ bool MainWindow::OpenSerialPort(){
     }
 
     return success; // <-- return the result
+}
 
+bool MainWindow::CloseSerialPort()
+{
+    if (!serial) {
+        statusBar()->showMessage("Serial object not available", 0);
+        return false;
+    }
+
+    serial->closePort();
+
+    statusBar()->showMessage("Serial port closed", 0);
+    return true;
 }
 
 void MainWindow::OpenDirectoryBoss(){
@@ -292,8 +362,31 @@ void MainWindow::OpenFTP(){
     }
 }
 
+
+
+
+void MainWindow::StopKBTrans()
+{
+    if (!kbtransProcess) {
+        statusBar()->showMessage("Keyboard translator is not running", 0);
+        return;
+    }
+
+    if (kbtransProcess->state() != QProcess::NotRunning) {
+        kbtransProcess->terminate();
+        kbtransProcess->waitForFinished(500);
+    }
+
+    kbtransProcess->deleteLater();
+    kbtransProcess = nullptr;
+
+    statusBar()->showMessage("Keyboard translator stop requested", 0);
+}
+
+
 MainWindow::~MainWindow()
 {
+    StopKBTrans();
 
     delete ui;
 }

@@ -6,6 +6,7 @@
 #include <QString>
 #include <QList>
 #include <QSettings>
+#include <QProcess>
 
 #include "directoryboss.h"
 #include "frmftp.h"
@@ -46,6 +47,9 @@ private:
     void saveWindowState();
 
 
+    QProcess *kbtransProcess = nullptr;
+
+
 private slots:
     // menu items!
     void on_actionAbout_triggered();
@@ -55,6 +59,10 @@ private slots:
     void OpenFTP();
     void OpenDirectoryBoss();
     bool OpenSerialPort();
+    bool CloseSerialPort();
+
+    void StartKBTrans();
+    void StopKBTrans();
 
 
 };

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'directoryboss.ui'
 **
-** Created by: Qt User Interface Compiler version 6.10.1
+** Created by: Qt User Interface Compiler version 6.11.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -175,6 +175,7 @@ public:
         cmdParentDir->setObjectName("cmdParentDir");
         cmdParentDir->setGeometry(QRect(490, 30, 40, 26));
         lstDirList = new QListWidget(groupBox);
+        new QListWidgetItem(lstDirList);
         new QListWidgetItem(lstDirList);
         new QListWidgetItem(lstDirList);
         new QListWidgetItem(lstDirList);
@@ -830,21 +831,23 @@ public:
         QListWidgetItem *___qlistwidgetitem4 = lstDirList->item(4);
         ___qlistwidgetitem4->setText(QCoreApplication::translate("DirectoryBoss", "song.s3m", nullptr));
         QListWidgetItem *___qlistwidgetitem5 = lstDirList->item(5);
-        ___qlistwidgetitem5->setText(QCoreApplication::translate("DirectoryBoss", "song.sap", nullptr));
+        ___qlistwidgetitem5->setText(QCoreApplication::translate("DirectoryBoss", "song.sba", nullptr));
         QListWidgetItem *___qlistwidgetitem6 = lstDirList->item(6);
-        ___qlistwidgetitem6->setText(QCoreApplication::translate("DirectoryBoss", "song.sid", nullptr));
+        ___qlistwidgetitem6->setText(QCoreApplication::translate("DirectoryBoss", "song.sap", nullptr));
         QListWidgetItem *___qlistwidgetitem7 = lstDirList->item(7);
-        ___qlistwidgetitem7->setText(QCoreApplication::translate("DirectoryBoss", "song.stp", nullptr));
+        ___qlistwidgetitem7->setText(QCoreApplication::translate("DirectoryBoss", "song.sid", nullptr));
         QListWidgetItem *___qlistwidgetitem8 = lstDirList->item(8);
-        ___qlistwidgetitem8->setText(QCoreApplication::translate("DirectoryBoss", "song.tfx", nullptr));
+        ___qlistwidgetitem8->setText(QCoreApplication::translate("DirectoryBoss", "song.stp", nullptr));
         QListWidgetItem *___qlistwidgetitem9 = lstDirList->item(9);
-        ___qlistwidgetitem9->setText(QCoreApplication::translate("DirectoryBoss", "song.vgm", nullptr));
+        ___qlistwidgetitem9->setText(QCoreApplication::translate("DirectoryBoss", "song.tfx", nullptr));
         QListWidgetItem *___qlistwidgetitem10 = lstDirList->item(10);
-        ___qlistwidgetitem10->setText(QCoreApplication::translate("DirectoryBoss", "song.vgp", nullptr));
+        ___qlistwidgetitem10->setText(QCoreApplication::translate("DirectoryBoss", "song.vgm", nullptr));
         QListWidgetItem *___qlistwidgetitem11 = lstDirList->item(11);
-        ___qlistwidgetitem11->setText(QCoreApplication::translate("DirectoryBoss", "song.wav", nullptr));
+        ___qlistwidgetitem11->setText(QCoreApplication::translate("DirectoryBoss", "song.vgp", nullptr));
         QListWidgetItem *___qlistwidgetitem12 = lstDirList->item(12);
-        ___qlistwidgetitem12->setText(QCoreApplication::translate("DirectoryBoss", "song.ym", nullptr));
+        ___qlistwidgetitem12->setText(QCoreApplication::translate("DirectoryBoss", "song.wav", nullptr));
+        QListWidgetItem *___qlistwidgetitem13 = lstDirList->item(13);
+        ___qlistwidgetitem13->setText(QCoreApplication::translate("DirectoryBoss", "song.ym", nullptr));
         lstDirList->setSortingEnabled(__sortingEnabled);
 
         cmdGetDir->setText(QCoreApplication::translate("DirectoryBoss", "get dir...", nullptr));
@@ -857,7 +860,7 @@ public:
 #if QT_CONFIG(tooltip)
         txtAcceptFiles->setToolTip(QString());
 #endif // QT_CONFIG(tooltip)
-        txtAcceptFiles->setText(QCoreApplication::translate("DirectoryBoss", "sid,wav,mod,s3m,ym,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,app", nullptr));
+        txtAcceptFiles->setText(QCoreApplication::translate("DirectoryBoss", "sba,sid,wav,mod,s3m,xm,ym,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app", nullptr));
         cmdFiltersetDefaults->setText(QCoreApplication::translate("DirectoryBoss", "Default", nullptr));
         cmdFiltersetChipTunes->setText(QCoreApplication::translate("DirectoryBoss", "chip tunes", nullptr));
         cmdFiltersetAppsAndDatas->setText(QCoreApplication::translate("DirectoryBoss", "apps", nullptr));

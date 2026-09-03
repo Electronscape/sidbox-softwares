@@ -1,7 +1,7 @@
 SidboxTerminal: \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o \
-  /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o \
+  /usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o \
   CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o \
   CMakeFiles/SidboxTerminal.dir/main.cpp.o \
   CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o \
@@ -9,39 +9,46 @@ SidboxTerminal: \
   CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o \
   CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o \
   CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o \
-  /usr/lib64/libQt6Widgets.so.6.10.1 \
-  /usr/lib64/libQt6SerialPort.so.6.10.1 \
-  /tmp/ccX8MwkI.o \
-  /usr/lib64/libQt6Gui.so.6.10.1 \
+  /usr/lib64/libQt6Widgets.so.6.11.2 \
+  /usr/lib64/libQt6SerialPort.so.6.11.2 \
+  /tmp/cc19OwzI.o \
+  /usr/lib64/libQt6Gui.so.6.11.2 \
   /usr/lib64/libGLX.so \
   /usr/lib64/libOpenGL.so \
-  /usr/lib64/libQt6Core.so.6.10.1 \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libstdc++.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so \
+  /usr/lib64/libQt6Core.so.6.11.2 \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libstdc++.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libm.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libm.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libm.so \
   /lib64/libm.so.6 \
   /lib64/libmvec.so.1 \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so \
   /lib64/libgcc_s.so.1 \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libc.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libc.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libc.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libatomic_asneeded.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libatomic_asneeded.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libatomic_asneeded.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libatomic.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libatomic.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libatomic.so \
+  /usr/lib64/libatomic.so.1.2.0 \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libc.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libc.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libc.so \
   /lib64/libc.so.6 \
   /usr/lib64/libc_nonshared.a \
   /lib64/ld-linux-x86-64.so.2 \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so \
   /lib64/libgcc_s.so.1 \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a \
-  /usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a \
-  /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o \
-  /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a \
+  /usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a \
+  /usr/lib/gcc/x86_64-redhat-linux/16/crtend.o \
+  /usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o \
   /usr/lib64/libudev.so.1 \
   /usr/lib64/libEGL.so.1 \
   /usr/lib64/libfontconfig.so.1 \
@@ -57,14 +64,13 @@ SidboxTerminal: \
   /usr/lib64/libGLdispatch.so.0 \
   /usr/lib64/libicui18n.so.77 \
   /usr/lib64/libicuuc.so.77 \
-  /usr/lib64/libzstd.so.1 \
   /usr/lib64/libsystemd.so.0 \
   /usr/lib64/libdouble-conversion.so.3 \
   /usr/lib64/libb2.so.1 \
   /usr/lib64/libpcre2-16.so.0 \
   /usr/lib64/libcrypto.so.3 \
+  /usr/lib64/libzstd.so.1 \
   /lib64/ld-linux-x86-64.so.2 \
-  /usr/lib64/libcap.so.2 \
   /usr/lib64/libxml2.so.2 \
   /usr/lib64/libxcb.so.1 \
   /usr/lib64/libpcre2-8.so.0 \
@@ -78,11 +84,11 @@ SidboxTerminal: \
   /usr/lib64/libXau.so.6 \
   /usr/lib64/libbrotlicommon.so.1
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o:
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o:
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o:
+/usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o:
 
 CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o:
 
@@ -98,49 +104,63 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o:
 
 CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o:
 
-/usr/lib64/libQt6Widgets.so.6.10.1:
+/usr/lib64/libQt6Widgets.so.6.11.2:
 
-/usr/lib64/libQt6SerialPort.so.6.10.1:
+/usr/lib64/libQt6SerialPort.so.6.11.2:
 
-/tmp/ccX8MwkI.o:
+/tmp/cc19OwzI.o:
 
-/usr/lib64/libQt6Gui.so.6.10.1:
+/usr/lib64/libQt6Gui.so.6.11.2:
 
 /usr/lib64/libGLX.so:
 
 /usr/lib64/libOpenGL.so:
 
-/usr/lib64/libQt6Core.so.6.10.1:
+/usr/lib64/libQt6Core.so.6.11.2:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libstdc++.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libstdc++.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libm.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libm.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libm.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libm.so:
 
 /lib64/libm.so.6:
 
 /lib64/libmvec.so.1:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so:
 
 /lib64/libgcc_s.so.1:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libc.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libatomic_asneeded.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libc.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libatomic_asneeded.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libc.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libatomic_asneeded.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/libatomic.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/libatomic.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/libatomic.so:
+
+/usr/lib64/libatomic.so.1.2.0:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libc.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libc.so:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/libc.so:
 
 /lib64/libc.so.6:
 
@@ -148,21 +168,21 @@ CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o:
 
 /lib64/ld-linux-x86-64.so.2:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc_s.so:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc_s.so:
 
 /lib64/libgcc_s.so.1:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/libgcc.a:
+/usr/lib/gcc/x86_64-redhat-linux/16/libgcc.a:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/crtend.o:
+/usr/lib/gcc/x86_64-redhat-linux/16/crtend.o:
 
-/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o:
+/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o:
 
 /usr/lib64/libudev.so.1:
 
@@ -194,8 +214,6 @@ CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o:
 
 /usr/lib64/libicuuc.so.77:
 
-/usr/lib64/libzstd.so.1:
-
 /usr/lib64/libsystemd.so.0:
 
 /usr/lib64/libdouble-conversion.so.3:
@@ -206,9 +224,9 @@ CMakeFiles/SidboxTerminal.dir/kfmparser.cpp.o:
 
 /usr/lib64/libcrypto.so.3:
 
-/lib64/ld-linux-x86-64.so.2:
+/usr/lib64/libzstd.so.1:
 
-/usr/lib64/libcap.so.2:
+/lib64/ld-linux-x86-64.so.2:
 
 /usr/lib64/libxml2.so.2:
 
