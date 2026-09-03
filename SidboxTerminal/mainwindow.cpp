@@ -18,6 +18,8 @@
 #include <QWindow>
 #include <QTimer>
 
+char portname[128] = {0}; // global now as we'll need it for the HID info
+
 void MainWindow::sendCurrentCommand()
 {
     QString cmd = ui->txtCommandLine->text().trimmed();
@@ -193,24 +195,37 @@ void MainWindow::StartKBTrans()
     }
 
     QString kbtransPath = QDir(QCoreApplication::applicationDirPath()).filePath("kbtrans");
+    QString keyboardPath = settings->value("hidparams/kboard").toString();
+    QString serialPath = QString("/dev/%1").arg(portname);
 
     kbtransProcess = new QProcess(this);
 
-    QString program = "pkexec";
-
-    QStringList args;
-    args << kbtransPath;
-    args << "--parent-pid";
-    args << QString::number(QCoreApplication::applicationPid());
-    args << "/dev/input/event7";
-    args << "/dev/ttyUSB0";
-
     connect(kbtransProcess, &QProcess::readyReadStandardOutput, this, [this]() {
-        qDebug() << "kbtrans:" << kbtransProcess->readAllStandardOutput();
+        QString text = QString::fromUtf8(kbtransProcess->readAllStandardOutput()).trimmed();
+        QStringList lines = text.split('\n', Qt::SkipEmptyParts);
+
+        if (!lines.isEmpty()) {
+            QString lastLine = lines.last().trimmed();
+            qDebug() << "kbtrans:" << lastLine;
+            statusBar()->showMessage(
+                lastLine + "    IMPORTANT: Ctrl+Shift+Esc exits keyboard mode",
+                0
+                );
+        }
     });
 
     connect(kbtransProcess, &QProcess::readyReadStandardError, this, [this]() {
-        qDebug() << "kbtrans err:" << kbtransProcess->readAllStandardError();
+        QString text = QString::fromUtf8(kbtransProcess->readAllStandardError()).trimmed();
+        QStringList lines = text.split('\n', Qt::SkipEmptyParts);
+
+        if (!lines.isEmpty()) {
+            QString lastLine = lines.last().trimmed();
+            qDebug() << "kbtrans err:" << lastLine;
+            statusBar()->showMessage(
+                "kbtrans: " + lastLine + "    IMPORTANT: Ctrl+Shift+Esc exits keyboard mode",
+                0
+                );
+        }
     });
 
     connect(kbtransProcess,
@@ -219,21 +234,35 @@ void MainWindow::StartKBTrans()
             [this](int exitCode, QProcess::ExitStatus) {
                 qDebug() << "kbtrans exited:" << exitCode;
                 statusBar()->showMessage("Keyboard translator stopped", 0);
+
                 kbtransProcess->deleteLater();
                 kbtransProcess = nullptr;
             });
+
+    QString program = "pkexec";
+
+    QStringList args;
+    args << kbtransPath;
+    args << "--parent-pid";
+    args << QString::number(QCoreApplication::applicationPid());
+    args << keyboardPath;
+    args << serialPath;
 
     kbtransProcess->start(program, args);
 
     if (!kbtransProcess->waitForStarted(3000)) {
         statusBar()->showMessage("Failed to start keyboard translator", 0);
         qDebug() << kbtransProcess->errorString();
+
         kbtransProcess->deleteLater();
         kbtransProcess = nullptr;
         return;
     }
 
-    statusBar()->showMessage("Keyboard translator auth requested (IMPORTANT!!!! - Use: CTRL+SHIFT+ESC to stop KBTrans!)", 0);
+    statusBar()->showMessage(
+        "Keyboard translator auth requested - IMPORTANT: Ctrl+Shift+Esc exits keyboard mode",
+        0
+        );
 }
 
 void MainWindow::showEvent(QShowEvent *event){
@@ -292,7 +321,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
 
 bool MainWindow::OpenSerialPort(){
-    char portname[128];
+
+    portname[0] = '\0';
+
+
     for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts()) {
         if (info.vendorIdentifier() == 0x10c4 && info.productIdentifier() == 0xea60) {
             QString qstr = info.portName();    // QString
