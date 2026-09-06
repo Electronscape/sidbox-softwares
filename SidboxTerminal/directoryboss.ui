@@ -599,7 +599,7 @@
 </string>
      </property>
      <property name="text">
-      <string>sba,sid,wav,mod,s3m,xm,ym,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app</string>
+      <string>sba,sid,wav,mod,s3m,xm,ym,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80</string>
      </property>
     </widget>
     <widget class="QPushButton" name="cmdFiltersetDefaults">

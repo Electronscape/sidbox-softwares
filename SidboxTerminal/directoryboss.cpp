@@ -503,7 +503,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
             QMap<QString, std::function<void(const QString&)>> handlers;
 
             QString txForPlay, txForPics, txForEmulator, txForApps, txForMica;
-            QString txForC64Tape, txForZXTapeTZX, txForZXTapeTPA;
+            QString txForC64Tape, txForZXTapeTZX, txForZXTapeTPA, txForZ80EmuZ80;
 
             txForPlay = QString("play \"%1/%2\" %3\n").arg(ui->txtFilePath->text()).arg(folderName).arg(ui->scrSubSong->value());
             txForPlay.replace("//","/");
@@ -528,6 +528,9 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
 
             txForZXTapeTPA = QString("tape_tzx \"%1/%2\"\n").arg(ui->txtFilePath->text()).arg(folderName);
             txForZXTapeTPA.replace("//","/");
+
+            txForZ80EmuZ80 = QString("zx \"%1/%2\"\n").arg(ui->txtFilePath->text()).arg(folderName);
+            txForZ80EmuZ80.replace("//","/");
 
 
             handlers["wav"] = [this, txForPlay](const QString &f){ serial->writeData(txForPlay.toUtf8()); };
@@ -566,10 +569,11 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
             // Emulator stuff
             handlers["gg"] = [this, txForEmulator](const QString &f){ serial->writeData(txForEmulator.toUtf8()); };
             handlers["sms"] = handlers["gg"];
+                        // spectrum emulator
+            handlers["z80"] = [this, txForZ80EmuZ80](const QString &f){ serial->writeData(txForZ80EmuZ80.toUtf8()); };
 
             // Runnables/commands
             handlers["app"] = [this, txForApps](const QString &f){ serial->writeData(txForApps.toUtf8()); };
-
             handlers["prg"] = [this, txForMica](const QString &f){ serial->writeData(txForMica.toUtf8()); };
 
             // spectrum tapes
