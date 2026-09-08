@@ -119,6 +119,15 @@ DirectoryBoss::DirectoryBoss(SerialHandler *sh, QWidget *parent)
         serial->writeData("dir .\r\n");
     });
 
+    connect(ui->cmdGetDirSDCard, &QPushButton::clicked, this, [=](){
+        //serial->writeData("cd SDCARD:\r\n");
+        serial->writeData("dir SDCARD:\r\n");
+    });
+
+    connect(ui->cmdGetDirRamDisk, &QPushButton::clicked, this, [=](){
+        serial->writeData("dir RAM:\r\n");
+    });
+
 
     connect(ui->txtFilePath, &QLineEdit::returnPressed, this, [=]() { sendNewDirectory(); });
     connect(ui->cmdChangeDir, &QPushButton::clicked, this, [=]() { sendNewDirectory(); });
