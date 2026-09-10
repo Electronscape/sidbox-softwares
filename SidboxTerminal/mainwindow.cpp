@@ -233,7 +233,7 @@ void MainWindow::StartKBTrans()
             this,
             [this](int exitCode, QProcess::ExitStatus) {
                 qDebug() << "kbtrans exited:" << exitCode;
-                statusBar()->showMessage("Keyboard translator stopped", 0);
+                statusBar()->showMessage("Keyboard translator stopped (make sure port is open)", 0);
 
                 kbtransProcess->deleteLater();
                 kbtransProcess = nullptr;
