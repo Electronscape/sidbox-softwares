@@ -1184,6 +1184,13 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
 
+    connect(ui->cmdExportCrtBitmap, &QPushButton::clicked, this, [this](){
+        uint16_t bits;   // collect the config bits
+        bits = ui->chkExportRLE->isChecked() * ExportRLE;
+        bits += ui->chkExportSBVRAM->isChecked() * ExportSidBoxVRAM;
+        ExportCRTToH("", bits);   // this is just a .H output
+    });
+
 
     connect(ui->cmdSavePalette, &QPushButton::clicked, this, [this](){
         // save de palette!!
@@ -2565,7 +2572,198 @@ void MainWindow::ExportToILBM(const char *filename){
     free(bodyBuf);
     fclose(f);
 }
+int MainWindow::ExportCRTToH(const char *filename, const uint16_t modes){
+    QString output;
+    output += "#include <stdint.h>\n\n";
+    output += "// CRT ready image (RGBI packed output) two pixels packed into 1 byte\n";
+    output += "// Image Params //\n";
 
+    uint16_t    imgW, imgH; // 16bit never should see an image 64k wide or in height! IMAGING the storage size!!
+    uint32_t    imgLen;
+
+    // temp local vars, might need to manipulate these later
+
+    uint8_t w_lo = (icon_width >> 8) & 0xFF;
+    uint8_t w_hi = icon_width & 0xFF;
+
+    uint8_t h_lo = (icon_height >> 8) & 0xFF;
+    uint8_t h_hi = icon_height & 0xFF;
+
+    // Packed 4-bit per pixel size (2 pixels per byte)
+    imgLen = (icon_width * icon_height + 1) / 2;
+    imgW = icon_width;
+    imgH = icon_height;
+
+    uint8_t il_v0 = (imgLen >> 24) & 0xff;
+    uint8_t il_v1 = (imgLen >> 16) & 0xff;
+    uint8_t il_v2 = (imgLen >> 8) & 0xff;
+    uint8_t il_v3 = (imgLen >> 0) & 0xff;
+
+    QString rleData;
+    uint8_t isCells = ui->chkCellDivider->isChecked();
+
+    output += "#include <stdint.h>\n\n";
+    output += "// Image Params //\n";
+    if(!(modes & ExportRLE))
+        output += "// non compressed \n";
+    else {
+        output += "// RLE compressed bytes are now (how-many), (pixel colour index), ...\n";
+        if(isCells) {
+            output += "// !!! NOTE: Cells are enabled but will be ignored because RLE is active\n";
+            isCells = false;
+        }
+    }
+
+    if(isCells){
+        output += "// image is arranged as cells \n";
+        output += "//     Width: " + QString("%1").arg(cell_width) + "px\n";
+        output += "//    Height: " + QString("%1").arg(cell_height) + "px ";
+        output += "\n";
+    }
+
+    output += "\n";
+    output += "uint8_t image[] = {\n";
+
+    uint8_t configbits = 0;
+
+    configbits = (!!(modes & ExportRLE) << 4) |
+                 ((isCells << 5));
+
+    output += QString("    %1,                 // Colour depth (1,2,4,8 bit colour modes) + 0x10 if RLE\n")
+                  .arg(hex8(configbits));
+    output += QString("    %1, %2,             // image width (%3)\n")
+                  .arg(hex8(w_lo))
+                  .arg(hex8(w_hi))
+                  .arg(imgW);
+
+    // Image height
+    output += QString("    %1, %2,             // image height (%3)\n")
+                  .arg(hex8(h_lo))
+                  .arg(hex8(h_hi))
+                  .arg(imgH);
+
+    // Total image array size
+    if(!(modes & ExportRLE)){
+        output += QString("    %1, %2, %3, %4, // total image array size: %5 bytes\n")
+                  .arg(hex8(il_v0))
+                  .arg(hex8(il_v1))
+                  .arg(hex8(il_v2))
+                  .arg(hex8(il_v3))
+                  .arg(imgLen);
+    } else {
+        int rleSize;
+        rleData = generateRLE((*icon_area), icon_width, icon_height, 16, rleSize);
+
+        il_v0 = (rleSize >> 24) & 0xff;
+        il_v1 = (rleSize >> 16) & 0xff;
+        il_v2 = (rleSize >> 8) & 0xff;
+        il_v3 = (rleSize >> 0) & 0xff;
+
+        output += QString("    %1, %2, %3, %4, // total image array size: %5 bytes\n")
+                      .arg(hex8(il_v0))
+                      .arg(hex8(il_v1))
+                      .arg(hex8(il_v2))
+                      .arg(hex8(il_v3))
+                      .arg(rleSize);
+    }
+
+    const uint8_t colWidthMax = 16;
+
+    if(!(modes & ExportRLE)){
+        /// Uncompressed, unchanged or cell-divided
+        output += "    ";
+        int columnstep = 0;
+        bool firstElement = true;
+
+        if(!isCells){
+            // Normal row-by-row (2 pixels per byte)
+            for (uint16_t y = 0; y < icon_height; y++) {
+                for (uint16_t x = 0; x < icon_width; x += 2) {
+                    uint8_t p1 = (*icon_area)[y][x] & 0x0F;
+                    uint8_t p2 = ((x + 1) < icon_width) ? ((*icon_area)[y][x + 1] & 0x0F) : 0;
+                    uint8_t colDat = p1 | (p2 << 4);
+
+                    if (!firstElement) output += ", ";
+                    firstElement = false;
+
+                    if(columnstep >= colWidthMax){
+                        output += "\n    ";
+                        columnstep = 0;
+                    }
+                    output += QString("%1").arg(hex8(colDat));
+                    columnstep++;
+                }
+            }
+        } else {
+            // Cell-divided output (2 pixels per byte)
+            int cellsX = icon_width / cell_width;
+            int cellsY = icon_height / cell_height;
+
+            for(int cy = 0; cy < cellsY; cy++){
+                for(int cx = 0; cx < cellsX; cx++){
+                    int baseX = cx * cell_width;
+                    int baseY = cy * cell_height;
+
+                    for(int y = 0; y < cell_height; y++){
+                        for(int x = 0; x < cell_width; x += 2){
+                            uint8_t p1 = (*icon_area)[baseY + y][baseX + x] & 0x0F;
+                            uint8_t p2 = ((x + 1) < cell_width) ? ((*icon_area)[baseY + y][baseX + x + 1] & 0x0F) : 0;
+                            uint8_t colDat = p1 | (p2 << 4);
+
+                            if(!firstElement) output += ", ";
+                            firstElement = false;
+
+                            if(columnstep >= colWidthMax){
+                                output += "\n    ";
+                                columnstep = 0;
+                            }
+                            output += QString("%1").arg(hex8(colDat));
+                            columnstep++;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        output += "    ";
+        output += rleData;
+    }
+
+    output += "\n};\n";
+
+    if(isCells){
+        output += "\n\n\n";
+        output += "// Cell to image pointer list\n";
+        output += "uint8_t *images[] = {\n";
+
+        int cellsX = icon_width / cell_width;
+        int cellsY = icon_height / cell_height;
+        int cellSize = (cell_width * cell_height + 1) / 2;
+        int cellIndex = 0;
+
+        for(int cy=0; cy<cellsY; cy++){
+            for(int cx=0; cx<cellsX; cx++){
+                int offset = (cy * cellsX + cx) * cellSize;
+                output += QString("    image + %1, //    %2\n")
+                              .arg(offset, 6, 10, QLatin1Char(' '))
+                              .arg(cellIndex, 3, 10, QLatin1Char(' '));
+
+                cellIndex ++;
+            }
+        }
+
+        output += "};\n";
+    }
+
+    // Show in the text view
+    ui->txtOutputText->setPlainText(output);
+    ui->txtOutputText->setCursorWidth(2);
+
+    doHighlighter();
+
+    ui->outputTextView->show();
+    return 0;
+}
 
 void MainWindow::ExportImageToH(const char *filename, const uint16_t modes){
     // export the icon_area according to colour bit size and rotation and memory mapping. GONNA be some funky crap

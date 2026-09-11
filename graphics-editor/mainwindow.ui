@@ -6768,6 +6768,19 @@ HOLD ALT and CLICK the ending colour.</string>
         <string>raw.ppb ...</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="cmdExportCrtBitmap">
+       <property name="geometry">
+        <rect>
+         <x>126</x>
+         <y>50</y>
+         <width>90</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>crt image ...</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QPushButton" name="cmdOpenFontWorkbench">
       <property name="geometry">
