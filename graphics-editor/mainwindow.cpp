@@ -546,11 +546,18 @@ MainWindow::MainWindow(QWidget *parent)
         ui->frmIconInfoMetaEditor->hide();
     });
 
-    connect(ui->cmdSaveInfoFile, &QPushButton::clicked, this, [this](){
+    connect(ui->cmdSaveInfoFile1F, &QPushButton::clicked, this, [this](){
         QString filename = QFileDialog::getSaveFileName(this, "Save icon '.info'", "", "icon info (*.info)");
         if(!filename.isEmpty())
             //ExportToPPB(filename.toUtf8().constData(), bits);
-            ExportInfoMeta(filename.toUtf8().constData());
+            ExportInfoMeta(filename.toUtf8().constData(), 1);
+    });
+
+    connect(ui->cmdSaveInfoFile2F, &QPushButton::clicked, this, [this](){
+        QString filename = QFileDialog::getSaveFileName(this, "Save icon '.info'", "", "icon info (*.info)");
+        if(!filename.isEmpty())
+            //ExportToPPB(filename.toUtf8().constData(), bits);
+            ExportInfoMeta(filename.toUtf8().constData(), 2);
     });
 
 
@@ -1532,10 +1539,12 @@ MainWindow::MainWindow(QWidget *parent)
         }
 
         renderPaletteCanvas();
+        renderEditorCanvas();
     });
 
     connect(ui->chkPaletteBankBack, &QPushButton::clicked, this, [this](){
         CCLUT = CLUTB;
+
         active_icon_area = &icon_area_back;
         if(bEditorPage){
             icon_area = &icon_area_scratchpage;
@@ -1543,8 +1552,13 @@ MainWindow::MainWindow(QWidget *parent)
             icon_area = active_icon_area;
         }
         renderPaletteCanvas();
+        renderEditorCanvas();
     });
 
+    connect(ui->chkOverLappingBuffers, &QCheckBox::clicked, this, [this](){
+        renderPaletteCanvas();
+        renderEditorCanvas();
+    });
 
     connect(ui->chkColourBits1, &QRadioButton::clicked, this, [this](){ paletteDepth = 2;   });
     connect(ui->chkColourBits2, &QRadioButton::clicked, this, [this](){ paletteDepth = 4;   });
@@ -1925,8 +1939,9 @@ void UndoIconArea(){
 
 
 // all we need is the icon data, and the commandline and params
-int MainWindow::ExportInfoMeta(const char *filename)
+int MainWindow::ExportInfoMeta(const char *filename, uint8_t frames)
 {
+    if(frames!=2) frames = 1;
     if (!filename || !icon_area)
         return 0;
 
@@ -1957,11 +1972,8 @@ int MainWindow::ExportInfoMeta(const char *filename)
     const uint16_t imgW = static_cast<uint16_t>(icon_width);
     const uint16_t imgH = static_cast<uint16_t>(icon_height);
 
-    const uint8_t cmdlineLen =
-        static_cast<uint8_t>(cmdline.size());
-
-    const uint8_t paramLen =
-        static_cast<uint8_t>(params.size());
+    const uint8_t cmdlineLen = static_cast<uint8_t>(cmdline.size());
+    const uint8_t paramLen   = static_cast<uint8_t>(params.size());
 
     printf("Export .info as '%s'\n", filename);
 
@@ -1994,11 +2006,12 @@ int MainWindow::ExportInfoMeta(const char *filename)
         return 0;
     }
 
+    /// ##### FRAME 1 #####################
     // Raw 8-bit icon pixels.
     for (uint16_t y = 0; y < imgH; ++y) {
         for (uint16_t x = 0; x < imgW; ++x) {
             const uint8_t pixel =
-                static_cast<uint8_t>((*icon_area)[y][x]);
+                static_cast<uint8_t>((icon_area_front)[y][x]);
 
             if (fwrite(&pixel, sizeof(pixel), 1, f) != 1) {
                 fclose(f);
@@ -2035,6 +2048,32 @@ int MainWindow::ExportInfoMeta(const char *filename)
             return 0;
         }
     }
+
+
+    // ########## FRAME 2
+    if(frames==2){
+        // Width: big-endian
+        fputc((imgW >> 8) & 0xFF, f);
+        fputc(imgW & 0xFF, f);
+
+        // Height: big-endian
+        fputc((imgH >> 8) & 0xFF, f);
+        fputc(imgH & 0xFF, f);
+
+        // Raw 8-bit icon pixels.
+        for (uint16_t y = 0; y < imgH; ++y) {
+            for (uint16_t x = 0; x < imgW; ++x) {
+                const uint8_t pixel =
+                    static_cast<uint8_t>((icon_area_back)[y][x]);
+
+                if (fwrite(&pixel, sizeof(pixel), 1, f) != 1) {
+                    fclose(f);
+                    return 0;
+                }
+            }
+        }
+    }
+
 
     if (fclose(f) != 0)
         return 0;
@@ -6004,6 +6043,8 @@ void MainWindow::renderEditorCanvas(){
     int xOffset = ui->scrEditorH->value();
     int yOffset = ui->scrEditorV->value();
 
+    bool useOverLay = ui->chkOverLappingBuffers->isChecked();
+
     editorImg = QImage(visibleWidth, visibleHeight, QImage::Format_RGB32);
 
     QRgb gridColor = gridEnabled ? QColor(gridRed, gridGreen, gridBlue).rgb() : 0; // choose color
@@ -6031,14 +6072,31 @@ void MainWindow::renderEditorCanvas(){
                 scan[x] = base; // simple scratch pad area
             } else {
 
-                int cindexf = (icon_area_front)[imgY + yOffset][imgX + xOffset];
-                int cindexb = (icon_area_back) [imgY + yOffset][imgX + xOffset];
+                if(useOverLay==0){  // normal overlay system
+                    // render the image now
+                    int cindexf = (icon_area_front)[imgY + yOffset][imgX + xOffset];
+                    int cindexb = (icon_area_back) [imgY + yOffset][imgX + xOffset];
 
-                // rendering front, unless its transparent
-                if(cindexf == 0)    // front is transparent pixel
-                    base = colourSqueeze(CLUTB[cindexb]);
-                else
+                    // rendering front, unless its transparent
+                    if(cindexf == 0)    // front is transparent pixel
+                        base = colourSqueeze(CLUTB[cindexb]);
+                    else
+                        base = colourSqueeze(CLUTF[cindexf]);
+                } else {
+                    // render the image now
+                    int cindexf;
+                    int cindexb;
+                    if(icon_area == &icon_area_front)
+                        cindexf = (icon_area_front)[imgY + yOffset][imgX + xOffset];
+                    else
+                        cindexf = (icon_area_back) [imgY + yOffset][imgX + xOffset];
+
+                    // rendering front, unless its transparent
+                    //if(cindexf == 0)    // front is transparent pixel
+                        //base = colourSqueeze(CLUTB[cindexb]);
+                    //else
                     base = colourSqueeze(CLUTF[cindexf]);
+                }
 
                 scan[x] = base; // simple scratch pad area
             }
@@ -6401,6 +6459,14 @@ void MainWindow::renderPaletteCanvas(){
 
     const int GridX = SelectedX * PALETTE_BOX_HSIZE;
     const int GridY = SelectedY * PALETTE_BOX_VSIZE;
+
+    int bOverLayer = ui->chkOverLappingBuffers->isChecked();
+
+    if(bOverLayer){
+        //if(icon_area == &icon_area_front)
+            CCLUT = CLUTF ;
+
+    }
 
     for(int i = 0; i < 256; i++){
         CLUTRGB[0][i] = (CCLUT[i] >>16) & 0xff;

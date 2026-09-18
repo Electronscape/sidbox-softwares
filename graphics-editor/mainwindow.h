@@ -88,7 +88,7 @@ private:
     void ExportToILBM(const char *filename);
     int ExportToPPB(const char *filename, const uint16_t modes);
     void ExportImageToH(const char *filename, const uint16_t modes);
-    int ExportInfoMeta(const char *filename);
+    int ExportInfoMeta(const char *filename, uint8_t frames);
     int ExportCRTToH(const char *filename, const uint16_t modes);
 
     void readToolXY(int *rx, int *ry);

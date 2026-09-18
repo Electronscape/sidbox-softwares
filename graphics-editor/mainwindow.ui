@@ -6453,11 +6453,14 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QRadioButton" name="chkPaletteBankBack">
        <property name="geometry">
         <rect>
-         <x>8</x>
+         <x>4</x>
          <y>2</y>
-         <width>60</width>
+         <width>50</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Buffer 2 - Also Icon Frame 2 (.info)</string>
        </property>
        <property name="text">
         <string>Back</string>
@@ -6466,17 +6469,38 @@ HOLD ALT and CLICK the ending colour.</string>
       <widget class="QRadioButton" name="chkPaletteBankFront">
        <property name="geometry">
         <rect>
-         <x>78</x>
+         <x>57</x>
          <y>2</y>
-         <width>60</width>
+         <width>55</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Buffer 1 - Also Icon Frame 1 (.info)</string>
        </property>
        <property name="text">
         <string>Front</string>
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="chkOverLappingBuffers">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>1</y>
+         <width>20</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Unticked: Overlapping Enabled
+TICK: only show selected buffer (not both over lapping each other)
+Will always use colour palette Front</string>
+       </property>
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </widget>
@@ -7059,12 +7083,12 @@ HOLD ALT and CLICK the ending colour.</string>
        <string>Edit info commands</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="cmdSaveInfoFile">
+     <widget class="QPushButton" name="cmdSaveInfoFile1F">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>144</x>
         <y>30</y>
-        <width>121</width>
+        <width>130</width>
         <height>24</height>
        </rect>
       </property>
@@ -7105,8 +7129,64 @@ HOLD ALT and CLICK the ending colour.</string>
         </disabled>
        </palette>
       </property>
+      <property name="toolTip">
+       <string>1 Frame .info icon</string>
+      </property>
       <property name="text">
-       <string>Save &quot;.info&quot; ...</string>
+       <string>1F - Save &quot;.info&quot; ...</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cmdSaveInfoFile2F">
+      <property name="geometry">
+       <rect>
+        <x>280</x>
+        <y>30</y>
+        <width>130</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>85</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>85</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>85</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
+      <property name="toolTip">
+       <string>2 Frames .info icon</string>
+      </property>
+      <property name="text">
+       <string>2F - Save &quot;.info&quot; ...</string>
       </property>
      </widget>
     </widget>
