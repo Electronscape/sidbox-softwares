@@ -513,9 +513,13 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
 
             QString txForPlay, txForPics, txForEmulator, txForApps, txForMica;
             QString txForC64Tape, txForZXTapeTZX, txForZXTapeTPA, txForZ80EmuZ80;
+            QString txForMidi;
 
             txForPlay = QString("play \"%1/%2\" %3\n").arg(ui->txtFilePath->text()).arg(folderName).arg(ui->scrSubSong->value());
             txForPlay.replace("//","/");
+
+            txForMidi = QString("midiplay \"%1/%2\"\n").arg(ui->txtFilePath->text()).arg(folderName);
+            txForMidi.replace("//","/");
 
             txForPics = QString("piciff \"%1/%2\"\n").arg(ui->txtFilePath->text()).arg(folderName);
             txForPics.replace("//","/");
@@ -591,6 +595,8 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
 
             // C64 tapes
             handlers["tap"] = [this, txForC64Tape](const QString &f){ serial->writeData(txForC64Tape.toUtf8()); };
+
+            handlers["mid"] = [this, txForMidi](const QString &f){ serial->writeData(txForMidi.toUtf8()); };
 
             // ... etc
 
