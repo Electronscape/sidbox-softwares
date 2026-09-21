@@ -575,6 +575,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
             handlers["sa"]  = handlers["wav"];
             handlers["mus"] = handlers["wav"];
             handlers["str"] = handlers["wav"];
+            handlers["mid"] = handlers["wav"];
 
             // Viewable Pictures
             handlers["iff"] = [this, txForPics](const QString &f){ serial->writeData(txForPics.toUtf8()); };

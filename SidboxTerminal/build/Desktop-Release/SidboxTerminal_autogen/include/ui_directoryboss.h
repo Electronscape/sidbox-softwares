@@ -896,7 +896,7 @@ public:
 #if QT_CONFIG(tooltip)
         txtAcceptFiles->setToolTip(QString());
 #endif // QT_CONFIG(tooltip)
-        txtAcceptFiles->setText(QCoreApplication::translate("DirectoryBoss", "sba,sid,wav,mod,s3m,xm,ym,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80", nullptr));
+        txtAcceptFiles->setText(QCoreApplication::translate("DirectoryBoss", "sba,sid,wav,mod,s3m,xm,ym,mid,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80", nullptr));
         cmdFiltersetDefaults->setText(QCoreApplication::translate("DirectoryBoss", "Default", nullptr));
         cmdFiltersetChipTunes->setText(QCoreApplication::translate("DirectoryBoss", "chip tunes", nullptr));
         cmdFiltersetAppsAndDatas->setText(QCoreApplication::translate("DirectoryBoss", "apps", nullptr));
