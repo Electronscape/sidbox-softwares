@@ -133,7 +133,7 @@ DirectoryBoss::DirectoryBoss(SerialHandler *sh, QWidget *parent)
     connect(ui->cmdChangeDir, &QPushButton::clicked, this, [=]() { sendNewDirectory(); });
 
     connect(ui->cmdFiltersetDefaults, &QPushButton::clicked, this, [=](){
-        ui->txtAcceptFiles->setText("sid,wav,mod,s3m,ym,xm,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app");
+        ui->txtAcceptFiles->setText("sba,sid,wav,mp3,mod,s3m,xm,ym,mid,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80");
     });
 
     connect(ui->cmdFiltersetChipTunes, &QPushButton::clicked, this, [=](){
@@ -547,6 +547,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
 
 
             handlers["wav"] = [this, txForPlay](const QString &f){ serial->writeData(txForPlay.toUtf8()); };
+            handlers["mp3"] = handlers["wav"];
             handlers["sid"] = handlers["wav"];
             handlers["mod"] = handlers["wav"];
             handlers["s3m"] = handlers["wav"];
