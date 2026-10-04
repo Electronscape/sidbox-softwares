@@ -642,6 +642,7 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QScreen \
   /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
@@ -1424,6 +1425,8 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargetsPrecheck.cmake:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets-relwithdebinfo.cmake:
+
+/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginConfig.cmake:
 
 /usr/include/qt6/QtCore/qcalendar.h:
 
@@ -3073,6 +3076,8 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/qt6/QtCore/qyieldcpu.h:
 
+/usr/include/qt6/QtGui/QColor:
+
 /usr/include/qt6/QtCore/qjsonvalue.h:
 
 /usr/lib64/cmake/Qt6DBus/Qt6DBusVersionlessAliasTargets.cmake:
@@ -3632,8 +3637,6 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 /usr/include/qt6/QtCore/qtimezone.h:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QVkKhrDisplayIntegrationPluginAdditionalTargetInfo.cmake:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginConfig.cmake:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QGifPluginTargetsPrecheck.cmake:
 

@@ -1922,6 +1922,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: Sid
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QScreen \
   /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
@@ -2784,6 +2785,7 @@ CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o: /mnt/LinuxDatas/work/sidbox-s
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QDesktopServices \
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QTextCharFormat \
@@ -3694,6 +3696,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o: /mnt/LinuxDatas/work/sidbox-software
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QScreen \
   /usr/include/qt6/QtGui/QTextCharFormat \
@@ -5072,6 +5075,7 @@ CMakeFiles/SidboxTerminal.dir/main.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QScreen \
   /usr/include/qt6/QtGui/QTextCharFormat \
@@ -5943,6 +5947,7 @@ CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o: /mnt/LinuxDatas/work/sidbox-soft
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
   /usr/include/qt6/QtGui/QAction \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QKeyEvent \
   /usr/include/qt6/QtGui/QScreen \
@@ -6548,6 +6553,7 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: /mnt/LinuxDatas/work/sidbox-s
   /usr/include/math.h \
   /usr/include/pthread.h \
   /usr/include/qt6/QtCore/QByteArray \
+  /usr/include/qt6/QtCore/QCoreApplication \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -7038,7 +7044,7 @@ SidboxTerminal: /lib64/ld-linux-x86-64.so.2 \
   /lib64/libgcc_s.so.1 \
   /lib64/libm.so.6 \
   /lib64/libmvec.so.1 \
-  /tmp/ccSNYeTJ.o \
+  /tmp/ccg0fwuw.o \
   /usr/lib64/crt1.o \
   /usr/lib64/crti.o \
   /usr/lib64/crtn.o \
@@ -7176,6 +7182,8 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o:
 /usr/lib64/crti.o:
 
 /usr/lib64/crt1.o:
+
+/tmp/ccg0fwuw.o:
 
 /lib64/libmvec.so.1:
 
@@ -7930,8 +7938,6 @@ SidboxTerminal_autogen/mocs_compilation.cpp:
 /usr/lib/gcc/x86_64-redhat-linux/16/include/lwpintrin.h:
 
 /usr/include/qt6/QtCore/qgenericatomic.h:
-
-/tmp/ccSNYeTJ.o:
 
 /usr/include/qt6/QtCore/QSize:
 

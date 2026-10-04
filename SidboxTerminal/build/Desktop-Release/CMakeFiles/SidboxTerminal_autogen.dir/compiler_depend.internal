@@ -643,6 +643,7 @@
  /usr/include/qt6/QtCore/qxpfunctional.h
  /usr/include/qt6/QtCore/qxptype_traits.h
  /usr/include/qt6/QtCore/qyieldcpu.h
+ /usr/include/qt6/QtGui/QColor
  /usr/include/qt6/QtGui/QScreen
  /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
