@@ -7,7 +7,11 @@
 #include <QObject>
 #include <QtSerialPort/QtSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
+#include <QByteArray>
+#include <QColor>
 #include <QTextEdit>
+#include <QTextCharFormat>
+#include <array>
 
 
 class SerialHandler : public QObject
@@ -31,6 +35,15 @@ private slots:
 private:
     QSerialPort* serial;
     QTextEdit* textBox;
+    QTextCharFormat ansiFormat;
+    QByteArray ansiCarry;
+    std::array<QColor, 16> ansiPalette;
+
+    void loadAnsiPalette();
+    QColor ansiColor(int code, bool bright) const;
+    void resetAnsiFormat();
+    void appendAnsiData(const QByteArray &data, QString *plainText);
+    void applyAnsiSgr(const QByteArray &params);
 
 
 signals:

@@ -341,6 +341,7 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
   /usr/include/linux/types.h \
   /usr/include/locale.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -642,6 +643,7 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
@@ -1421,11 +1423,7 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
 
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargetsPrecheck.cmake:
 
-/usr/include/qt6/QtCore/qrunnable.h:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QEvdevMousePluginTargets.cmake:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QLinuxFbIntegrationPluginTargets-relwithdebinfo.cmake:
+/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets-relwithdebinfo.cmake:
 
 /usr/include/qt6/QtCore/qcalendar.h:
 
@@ -1686,6 +1684,8 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
 /usr/include/qt6/QtCore/QModelIndex:
 
 /usr/include/qt6/QtCore/QMap:
+
+/usr/lib/gcc/x86_64-redhat-linux/16/include/avxneconvertintrin.h:
 
 /usr/include/locale.h:
 
@@ -2353,6 +2353,8 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/bits/byteswap.h:
 
+/usr/include/qt6/QtCore/QByteArray:
+
 /usr/include/c++/16/experimental/source_location:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QGtk3ThemePluginTargets-relwithdebinfo.cmake:
@@ -2859,6 +2861,14 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/bits/thread-shared-types.h:
 
+/usr/include/qt6/QtCore/qrunnable.h:
+
+/usr/lib64/cmake/Qt6Gui/Qt6QEvdevMousePluginTargets.cmake:
+
+/usr/lib64/cmake/Qt6Gui/Qt6QLinuxFbIntegrationPluginTargets-relwithdebinfo.cmake:
+
+/usr/include/qt6/QtGui/QTextCharFormat:
+
 /usr/include/qt6/QtCore/qsavefile.h:
 
 /usr/lib64/cmake/Qt6Gui/Qt6DmaBufServerBufferPluginTargets-relwithdebinfo.cmake:
@@ -3153,6 +3163,10 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/qt6/QtWidgets/QTextEdit:
 
+/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets.cmake:
+
+/usr/include/qt6/QtWidgets/qabstractscrollarea.h:
+
 /usr/include/qt6/QtWidgets/qmainwindow.h:
 
 CMakeFiles/4.3.0/CMakeSystem.cmake:
@@ -3268,8 +3282,6 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 /usr/include/stdint.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/16/include/avxifmaintrin.h:
-
-/usr/lib/gcc/x86_64-redhat-linux/16/include/avxneconvertintrin.h:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QEvdevTabletPluginConfig.cmake:
 
@@ -3734,9 +3746,3 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 /usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginAdditionalTargetInfo.cmake:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandBradientDecorationPluginConfig.cmake:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets-relwithdebinfo.cmake:
-
-/usr/include/qt6/QtWidgets/qabstractscrollarea.h:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets.cmake:

@@ -650,6 +650,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtSerialPort/qserialportinfo.h \
  /usr/include/qt6/QtSerialPort/qtserialportversion.h \
  /usr/include/qt6/QtSerialPort/QSerialPortInfo \
+ /usr/include/qt6/QtCore/QByteArray /usr/include/qt6/QtGui/QColor \
  /usr/include/qt6/QtWidgets/QTextEdit \
  /usr/include/qt6/QtWidgets/qtextedit.h \
  /usr/include/qt6/QtWidgets/qabstractscrollarea.h \
@@ -658,6 +659,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtGui/qtextoption.h \
  /usr/include/qt6/QtGui/qtextcursor.h \
  /usr/include/qt6/QtGui/qtextformat.h /usr/include/qt6/QtGui/qpen.h \
+ /usr/include/qt6/QtGui/QTextCharFormat \
  /usr/include/qt6/QtCore/qtmochelpers.h \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/SidboxTerminal_autogen/EWIEGA46WW/moc_frmftp.cpp \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/SidboxTerminal_autogen/EWIEGA46WW/../../../../frmftp.h \

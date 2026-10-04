@@ -622,12 +622,13 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtSerialPort/qserialportinfo.h \
  /usr/include/qt6/QtSerialPort/qtserialportversion.h \
  /usr/include/qt6/QtSerialPort/QSerialPortInfo \
- /usr/include/qt6/QtWidgets/QTextEdit \
+ /usr/include/qt6/QtCore/QByteArray /usr/include/qt6/QtGui/QColor \
+ /usr/include/qt6/QtGui/qcolor.h /usr/include/qt6/QtGui/qtguiglobal.h \
+ /usr/include/qt6/QtGui/qtgui-config.h \
+ /usr/include/qt6/QtGui/qtguiexports.h /usr/include/qt6/QtGui/qrgb.h \
+ /usr/include/qt6/QtGui/qrgba64.h /usr/include/qt6/QtWidgets/QTextEdit \
  /usr/include/qt6/QtWidgets/qtextedit.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
- /usr/include/qt6/QtGui/qtguiglobal.h \
- /usr/include/qt6/QtGui/qtgui-config.h \
- /usr/include/qt6/QtGui/qtguiexports.h \
  /usr/include/qt6/QtWidgets/qtwidgets-config.h \
  /usr/include/qt6/QtWidgets/qtwidgetsexports.h \
  /usr/include/qt6/QtWidgets/qabstractscrollarea.h \
@@ -635,9 +636,7 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtGui/qwindowdefs.h /usr/include/qt6/QtGui/qaction.h \
  /usr/include/qt6/QtGui/qkeysequence.h /usr/include/qt6/QtGui/qicon.h \
  /usr/include/qt6/QtGui/qpixmap.h /usr/include/qt6/QtGui/qpaintdevice.h \
- /usr/include/qt6/QtGui/qcolor.h /usr/include/qt6/QtGui/qrgb.h \
- /usr/include/qt6/QtGui/qrgba64.h /usr/include/qt6/QtGui/qimage.h \
- /usr/include/qt6/QtGui/qpixelformat.h \
+ /usr/include/qt6/QtGui/qimage.h /usr/include/qt6/QtGui/qpixelformat.h \
  /usr/include/qt6/QtGui/qtransform.h /usr/include/qt6/QtGui/qpolygon.h \
  /usr/include/qt6/QtGui/qregion.h /usr/include/qt6/QtGui/qpalette.h \
  /usr/include/qt6/QtGui/qbrush.h /usr/include/qt6/QtGui/qfont.h \
@@ -649,6 +648,7 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtGui/qtextoption.h \
  /usr/include/qt6/QtGui/qtextcursor.h \
  /usr/include/qt6/QtGui/qtextformat.h /usr/include/qt6/QtGui/qpen.h \
+ /usr/include/qt6/QtGui/QTextCharFormat \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/directoryboss.h \
  /usr/include/qt6/QtWidgets/QMainWindow \
  /usr/include/qt6/QtWidgets/qmainwindow.h \
@@ -656,4 +656,6 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: \
  /usr/include/qt6/QtCore/QModelIndex /usr/include/qt6/QtCore/QSettings \
  /usr/include/qt6/QtCore/QList /usr/include/qt6/QtWidgets/QCheckBox \
  /usr/include/qt6/QtWidgets/qcheckbox.h \
- /usr/include/qt6/QtWidgets/qabstractbutton.h
+ /usr/include/qt6/QtWidgets/qabstractbutton.h \
+ /usr/include/qt6/QtCore/QCoreApplication /usr/include/qt6/QtGui/QFont \
+ /usr/include/qt6/QtGui/QTextCursor /usr/include/qt6/QtGui/QTextFormat

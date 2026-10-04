@@ -24,7 +24,7 @@ void MainWindow::sendCurrentCommand()
 {
     QString cmd = ui->txtCommandLine->text().trimmed();
     if (!cmd.isEmpty()) {
-        serial->writeData(cmd);
+        serial->writeData(cmd + "\r\n");
 
         // Add to history if not duplicate
         if (commandHistory.isEmpty() || commandHistory.last() != cmd)
@@ -473,6 +473,5 @@ void MainWindow::restoreWindowState(){
 
     printf("Restoring Settings here\rn");
 }
-
 
 

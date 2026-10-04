@@ -341,6 +341,7 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
   /usr/include/linux/types.h \
   /usr/include/locale.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -641,7 +642,9 @@ SidboxTerminal_autogen/timestamp: /mnt/LinuxDatas/work/sidbox-softwares/SidboxTe
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
@@ -1617,6 +1620,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: Sid
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -1919,6 +1923,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o: Sid
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
@@ -2477,6 +2482,7 @@ CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o: /mnt/LinuxDatas/work/sidbox-s
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -2780,6 +2786,7 @@ CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o: /mnt/LinuxDatas/work/sidbox-s
   /usr/include/qt6/QtCore/qyieldcpu.h \
   /usr/include/qt6/QtGui/QDesktopServices \
   /usr/include/qt6/QtGui/QIcon \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qabstracttextdocumentlayout.h \
   /usr/include/qt6/QtGui/qaction.h \
@@ -3384,6 +3391,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o: /mnt/LinuxDatas/work/sidbox-software
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QCoreApplication \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QDir \
@@ -3688,6 +3696,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o: /mnt/LinuxDatas/work/sidbox-software
   /usr/include/qt6/QtCore/qyieldcpu.h \
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
@@ -4759,6 +4768,7 @@ CMakeFiles/SidboxTerminal.dir/main.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QDebug \
   /usr/include/qt6/QtCore/QFile \
@@ -5064,6 +5074,7 @@ CMakeFiles/SidboxTerminal.dir/main.cpp.o: /mnt/LinuxDatas/work/sidbox-softwares/
   /usr/include/qt6/QtCore/qyieldcpu.h \
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
@@ -5625,6 +5636,7 @@ CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o: /mnt/LinuxDatas/work/sidbox-soft
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QDir \
   /usr/include/qt6/QtCore/QEvent \
@@ -5934,6 +5946,7 @@ CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o: /mnt/LinuxDatas/work/sidbox-soft
   /usr/include/qt6/QtGui/QIcon \
   /usr/include/qt6/QtGui/QKeyEvent \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/QWindow \
   /usr/include/qt6/QtGui/qaction.h \
@@ -6534,6 +6547,7 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: /mnt/LinuxDatas/work/sidbox-s
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -6830,6 +6844,11 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o: /mnt/LinuxDatas/work/sidbox-s
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
+  /usr/include/qt6/QtGui/QFont \
+  /usr/include/qt6/QtGui/QTextCharFormat \
+  /usr/include/qt6/QtGui/QTextCursor \
+  /usr/include/qt6/QtGui/QTextFormat \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
   /usr/include/qt6/QtGui/qbrush.h \
@@ -7019,7 +7038,7 @@ SidboxTerminal: /lib64/ld-linux-x86-64.so.2 \
   /lib64/libgcc_s.so.1 \
   /lib64/libm.so.6 \
   /lib64/libmvec.so.1 \
-  /tmp/ccwBCfBB.o \
+  /tmp/ccSNYeTJ.o \
   /usr/lib64/crt1.o \
   /usr/lib64/crti.o \
   /usr/lib64/crtn.o \
@@ -7165,6 +7184,10 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o:
 /lib64/libgcc_s.so.1:
 
 /lib64/ld-linux-x86-64.so.2:
+
+/usr/include/qt6/QtGui/QTextFormat:
+
+/usr/include/qt6/QtGui/QTextCursor:
 
 /usr/include/qt6/QtWidgets/qlayoutitem.h:
 
@@ -7496,8 +7519,6 @@ SidboxTerminal_autogen/mocs_compilation.cpp:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandWlShellIntegrationPluginTargets-relwithdebinfo.cmake:
 
-/tmp/ccwBCfBB.o:
-
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandIntegrationPluginTargetsPrecheck.cmake:
 
 /usr/include/qt6/QtCore/QDebug:
@@ -7518,11 +7539,9 @@ SidboxTerminal_autogen/mocs_compilation.cpp:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargetsPrecheck.cmake:
 
-/usr/include/qt6/QtCore/qrunnable.h:
+/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets-relwithdebinfo.cmake:
 
-/usr/lib64/cmake/Qt6Gui/Qt6QEvdevMousePluginTargets.cmake:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QLinuxFbIntegrationPluginTargets-relwithdebinfo.cmake:
+/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginConfig.cmake:
 
 /usr/include/qt6/QtCore/qcalendar.h:
 
@@ -7798,6 +7817,8 @@ SidboxTerminal_autogen/mocs_compilation.cpp:
 
 /usr/include/qt6/QtCore/QMap:
 
+/usr/lib/gcc/x86_64-redhat-linux/16/include/avxneconvertintrin.h:
+
 /usr/include/locale.h:
 
 /usr/include/qt6/QtCore/qtdeprecationmarkers.h:
@@ -7909,6 +7930,8 @@ SidboxTerminal_autogen/mocs_compilation.cpp:
 /usr/lib/gcc/x86_64-redhat-linux/16/include/lwpintrin.h:
 
 /usr/include/qt6/QtCore/qgenericatomic.h:
+
+/tmp/ccSNYeTJ.o:
 
 /usr/include/qt6/QtCore/QSize:
 
@@ -8520,6 +8543,8 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/bits/byteswap.h:
 
+/usr/include/qt6/QtCore/QByteArray:
+
 /usr/include/c++/16/experimental/source_location:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QGtk3ThemePluginTargets-relwithdebinfo.cmake:
@@ -9058,6 +9083,14 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/bits/thread-shared-types.h:
 
+/usr/include/qt6/QtCore/qrunnable.h:
+
+/usr/lib64/cmake/Qt6Gui/Qt6QEvdevMousePluginTargets.cmake:
+
+/usr/lib64/cmake/Qt6Gui/Qt6QLinuxFbIntegrationPluginTargets-relwithdebinfo.cmake:
+
+/usr/include/qt6/QtGui/QTextCharFormat:
+
 /usr/include/qt6/QtCore/qsavefile.h:
 
 /usr/lib64/cmake/Qt6Gui/Qt6DmaBufServerBufferPluginTargets-relwithdebinfo.cmake:
@@ -9274,6 +9307,8 @@ SidboxTerminal_autogen/moc_predefs.h:
 
 /usr/include/qt6/QtCore/qyieldcpu.h:
 
+/usr/include/qt6/QtGui/QColor:
+
 /usr/include/qt6/QtCore/qjsonvalue.h:
 
 /usr/lib64/cmake/Qt6DBus/Qt6DBusVersionlessAliasTargets.cmake:
@@ -9365,6 +9400,10 @@ SidboxTerminal_autogen/moc_predefs.h:
 /usr/include/qt6/QtWidgets/QMenu:
 
 /usr/include/qt6/QtWidgets/QTextEdit:
+
+/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets.cmake:
+
+/usr/include/qt6/QtWidgets/qabstractscrollarea.h:
 
 /usr/include/qt6/QtWidgets/qmainwindow.h:
 
@@ -9483,8 +9522,6 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 /usr/include/stdint.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/16/include/avxifmaintrin.h:
-
-/usr/lib/gcc/x86_64-redhat-linux/16/include/avxneconvertintrin.h:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QEvdevTabletPluginConfig.cmake:
 
@@ -9651,6 +9688,8 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 /usr/lib64/libgraphite2.so.3:
 
 /usr/lib64/cmake/Qt6/QtPublicCMakeEarlyPolicyHelpers.cmake:
+
+/usr/include/qt6/QtGui/QFont:
 
 /usr/include/c++/16/ext/string_conversions.h:
 
@@ -9862,8 +9901,6 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QVkKhrDisplayIntegrationPluginAdditionalTargetInfo.cmake:
 
-/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginConfig.cmake:
-
 /usr/lib64/cmake/Qt6Gui/Qt6QGifPluginTargetsPrecheck.cmake:
 
 /usr/include/qt6/QtGui/qcursor.h:
@@ -9983,9 +10020,3 @@ CMakeFiles/4.3.0/CMakeSystem.cmake:
 /usr/lib64/cmake/Qt6Gui/Qt6QPdfPluginAdditionalTargetInfo.cmake:
 
 /usr/lib64/cmake/Qt6Gui/Qt6QWaylandBradientDecorationPluginConfig.cmake:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets-relwithdebinfo.cmake:
-
-/usr/include/qt6/QtWidgets/qabstractscrollarea.h:
-
-/usr/lib64/cmake/Qt6Gui/Qt6QWaylandEglClientBufferPluginTargets.cmake:

@@ -320,6 +320,7 @@
   /usr/include/linux/types.h \
   /usr/include/locale.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDeadlineTimer \
   /usr/include/qt6/QtCore/QHash \
   /usr/include/qt6/QtCore/QList \
@@ -618,7 +619,9 @@
   /usr/include/qt6/QtCore/qxpfunctional.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QColor \
   /usr/include/qt6/QtGui/QScreen \
+  /usr/include/qt6/QtGui/QTextCharFormat \
   /usr/include/qt6/QtGui/QTransform \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \

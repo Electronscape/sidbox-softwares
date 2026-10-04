@@ -653,6 +653,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o: \
  /usr/include/qt6/QtSerialPort/qserialportinfo.h \
  /usr/include/qt6/QtSerialPort/qtserialportversion.h \
  /usr/include/qt6/QtSerialPort/QSerialPortInfo \
+ /usr/include/qt6/QtCore/QByteArray /usr/include/qt6/QtGui/QColor \
  /usr/include/qt6/QtWidgets/QTextEdit \
  /usr/include/qt6/QtWidgets/qtextedit.h \
  /usr/include/qt6/QtWidgets/qabstractscrollarea.h \
@@ -661,6 +662,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o: \
  /usr/include/qt6/QtGui/qtextoption.h \
  /usr/include/qt6/QtGui/qtextcursor.h \
  /usr/include/qt6/QtGui/qtextformat.h /usr/include/qt6/QtGui/qpen.h \
+ /usr/include/qt6/QtGui/QTextCharFormat \
  /mnt/LinuxDatas/work/sidbox-softwares/SidboxTerminal/build/Desktop-Release/SidboxTerminal_autogen/include/ui_frmftp.h \
  /usr/include/qt6/QtGui/QIcon /usr/include/qt6/QtWidgets/QApplication \
  /usr/include/qt6/QtWidgets/qapplication.h \

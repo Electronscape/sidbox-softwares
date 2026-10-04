@@ -342,6 +342,7 @@
  /usr/include/linux/types.h
  /usr/include/locale.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QHash
  /usr/include/qt6/QtCore/QList
@@ -642,7 +643,9 @@
  /usr/include/qt6/QtCore/qxpfunctional.h
  /usr/include/qt6/QtCore/qxptype_traits.h
  /usr/include/qt6/QtCore/qyieldcpu.h
+ /usr/include/qt6/QtGui/QColor
  /usr/include/qt6/QtGui/QScreen
+ /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
  /usr/include/qt6/QtGui/qaction.h
  /usr/include/qt6/QtGui/qbitmap.h
@@ -1619,6 +1622,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QHash
  /usr/include/qt6/QtCore/QList
@@ -1921,6 +1925,7 @@ CMakeFiles/SidboxTerminal.dir/SidboxTerminal_autogen/mocs_compilation.cpp.o
  /usr/include/qt6/QtCore/qxptype_traits.h
  /usr/include/qt6/QtCore/qyieldcpu.h
  /usr/include/qt6/QtGui/QScreen
+ /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
  /usr/include/qt6/QtGui/qaction.h
  /usr/include/qt6/QtGui/qbitmap.h
@@ -2480,6 +2485,7 @@ CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QHash
  /usr/include/qt6/QtCore/QList
@@ -2783,6 +2789,7 @@ CMakeFiles/SidboxTerminal.dir/directoryboss.cpp.o
  /usr/include/qt6/QtCore/qyieldcpu.h
  /usr/include/qt6/QtGui/QDesktopServices
  /usr/include/qt6/QtGui/QIcon
+ /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
  /usr/include/qt6/QtGui/qabstracttextdocumentlayout.h
  /usr/include/qt6/QtGui/qaction.h
@@ -3388,6 +3395,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QCoreApplication
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QDir
@@ -3692,6 +3700,7 @@ CMakeFiles/SidboxTerminal.dir/frmftp.cpp.o
  /usr/include/qt6/QtCore/qyieldcpu.h
  /usr/include/qt6/QtGui/QIcon
  /usr/include/qt6/QtGui/QScreen
+ /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
  /usr/include/qt6/QtGui/qaction.h
  /usr/include/qt6/QtGui/qbitmap.h
@@ -4765,6 +4774,7 @@ CMakeFiles/SidboxTerminal.dir/main.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QDebug
  /usr/include/qt6/QtCore/QFile
@@ -5070,6 +5080,7 @@ CMakeFiles/SidboxTerminal.dir/main.cpp.o
  /usr/include/qt6/QtCore/qyieldcpu.h
  /usr/include/qt6/QtGui/QIcon
  /usr/include/qt6/QtGui/QScreen
+ /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
  /usr/include/qt6/QtGui/qaction.h
  /usr/include/qt6/QtGui/qbitmap.h
@@ -5632,6 +5643,7 @@ CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QDir
  /usr/include/qt6/QtCore/QEvent
@@ -5941,6 +5953,7 @@ CMakeFiles/SidboxTerminal.dir/mainwindow.cpp.o
  /usr/include/qt6/QtGui/QIcon
  /usr/include/qt6/QtGui/QKeyEvent
  /usr/include/qt6/QtGui/QScreen
+ /usr/include/qt6/QtGui/QTextCharFormat
  /usr/include/qt6/QtGui/QTransform
  /usr/include/qt6/QtGui/QWindow
  /usr/include/qt6/QtGui/qaction.h
@@ -6542,6 +6555,7 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDeadlineTimer
  /usr/include/qt6/QtCore/QHash
  /usr/include/qt6/QtCore/QList
@@ -6838,6 +6852,11 @@ CMakeFiles/SidboxTerminal.dir/serialhandler.cpp.o
  /usr/include/qt6/QtCore/qxpfunctional.h
  /usr/include/qt6/QtCore/qxptype_traits.h
  /usr/include/qt6/QtCore/qyieldcpu.h
+ /usr/include/qt6/QtGui/QColor
+ /usr/include/qt6/QtGui/QFont
+ /usr/include/qt6/QtGui/QTextCharFormat
+ /usr/include/qt6/QtGui/QTextCursor
+ /usr/include/qt6/QtGui/QTextFormat
  /usr/include/qt6/QtGui/qaction.h
  /usr/include/qt6/QtGui/qbitmap.h
  /usr/include/qt6/QtGui/qbrush.h
@@ -7028,7 +7047,7 @@ SidboxTerminal
  /lib64/libgcc_s.so.1
  /lib64/libm.so.6
  /lib64/libmvec.so.1
- /tmp/ccwBCfBB.o
+ /tmp/ccSNYeTJ.o
  /usr/lib64/crt1.o
  /usr/lib64/crti.o
  /usr/lib64/crtn.o
