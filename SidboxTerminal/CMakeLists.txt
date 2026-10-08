@@ -11,10 +11,11 @@ qt_add_executable(SidboxTerminal
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    directoryboss.cpp directoryboss.h directoryboss.ui resources.qrc serialhandler.cpp serialhandler.h
+    directoryboss.cpp directoryboss.h directoryboss.ui  serialhandler.cpp serialhandler.h
     frmftp.h frmftp.cpp frmftp.ui
     kfmparser.h
     kfmparser.cpp
+    resources.qrc
 
 
 

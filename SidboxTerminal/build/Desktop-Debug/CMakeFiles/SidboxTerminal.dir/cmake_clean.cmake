@@ -21,7 +21,6 @@ file(REMOVE_RECURSE
   "SidboxTerminal.pdb"
   "SidboxTerminal_autogen/mocs_compilation.cpp"
   "SidboxTerminal_autogen/timestamp"
-  "qrc_resources.cpp"
 )
 
 # Per-language clean rules from dependency scanning.
