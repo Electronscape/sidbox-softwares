@@ -133,11 +133,11 @@ DirectoryBoss::DirectoryBoss(SerialHandler *sh, QWidget *parent)
     connect(ui->cmdChangeDir, &QPushButton::clicked, this, [=]() { sendNewDirectory(); });
 
     connect(ui->cmdFiltersetDefaults, &QPushButton::clicked, this, [=](){
-        ui->txtAcceptFiles->setText("sba,sid,wav,mp3,mod,s3m,xm,ym,mid,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80");
+        ui->txtAcceptFiles->setText("sba,sid,wav,mp3,mod,s3m,xm,ym,mid,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,spc,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80");
     });
 
     connect(ui->cmdFiltersetChipTunes, &QPushButton::clicked, this, [=](){
-        ui->txtAcceptFiles->setText("sid,ym,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,vgm");
+        ui->txtAcceptFiles->setText("sid,ym,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,vgm,spc");
     });
 
     connect(ui->cmdFiltersetAppsAndDatas, &QPushButton::clicked, this, [=](){
@@ -552,6 +552,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
             handlers["mod"] = handlers["wav"];
             handlers["s3m"] = handlers["wav"];
             handlers["ym"]  = handlers["wav"];
+            handlers["spc"]  = handlers["wav"];
             handlers["sap"] = handlers["wav"];
             handlers["tmc"] = handlers["wav"];
             handlers["cmc"] = handlers["wav"];

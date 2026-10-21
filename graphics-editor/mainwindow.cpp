@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <QMessageBox>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QFileDialog>
 //#include <functional>
 //#include <cstring>
@@ -470,7 +471,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-
+    // SIDBOX background palette is always opaque, including colour 0.
+    CLUTB[0] |= 0xFF000000u;
 
     loadDefaultFont();
 
@@ -639,7 +641,10 @@ MainWindow::MainWindow(QWidget *parent)
             QMessageBox::warning(this, "Invalid Input", "Enter a valid color number (hex or decimal).\nEG 0xFF1122 or 123456");
             return;
         }
-        CCLUT[numSelectedPaletteID] = lngColour;
+        // This editor has RGB controls only: front colour 0 is the
+        // transparent entry; every other entry in either bank is opaque.
+        CCLUT[numSelectedPaletteID] = (lngColour & 0x00FFFFFFu) |
+            ((CCLUT == CLUTF && numSelectedPaletteID == 0) ? 0u : 0xFF000000u);
 
         r = lngColour >> 16;
         g = lngColour >> 8;
@@ -1521,8 +1526,9 @@ MainWindow::MainWindow(QWidget *parent)
             // Clear icon_area
 
             for(int i = 0; i < 256; i++){
-                CCLUT[i] = DEFAULT_CLUT[i];
-                CBACKUP_CLUT[i] = DEFAULT_CLUT[i];
+                CCLUT[i] = (DEFAULT_CLUT[i] & 0x00FFFFFFu) |
+                    ((CCLUT == CLUTF && i == 0) ? 0u : 0xFF000000u);
+                CBACKUP_CLUT[i] = CCLUT[i];
             }
             renderPaletteCanvas();
             renderEditorCanvas(); // redraw empty icon
@@ -3039,14 +3045,23 @@ void MainWindow::doHighlighter()
 
 
 void MainWindow::SavePaletteData(const char *filename){
-        FILE *f = fopen(filename, "wb");
-        if(!f) {
-            QMessageBox::warning(this, "Save Palette Fail", "Cannot open file for writing!");
-            return;
-        }
-        fwrite(CLUTF, sizeof(uint32_t), 256, f);
-        fwrite(CLUTB, sizeof(uint32_t), 256, f);
-        fclose(f);
+    // GFXTool edits RGB only. Enforce the SIDBOX palette alpha convention
+    // when saving, including palettes created with older GFXTool versions.
+    for (int i = 0; i < 256; ++i) {
+        CLUTF[i] = (CLUTF[i] & 0x00FFFFFFu) | (i == 0 ? 0u : 0xFF000000u);
+        CLUTB[i] = (CLUTB[i] & 0x00FFFFFFu) | 0xFF000000u;
+    }
+
+    FILE *f = fopen(filename, "wb");
+    if(!f) {
+        QMessageBox::warning(this, "Save Palette Fail", "Cannot open file for writing!");
+        return;
+    }
+    const bool ok = fwrite(CLUTF, sizeof(uint32_t), 256, f) == 256 &&
+                    fwrite(CLUTB, sizeof(uint32_t), 256, f) == 256;
+    const bool closed = fclose(f) == 0;
+    if (!ok || !closed)
+        QMessageBox::warning(this, "Save Palette Fail", "Could not write the complete palette file!");
 }
 
 void MainWindow::LoadPaletteData(const char *filename){
@@ -3055,9 +3070,19 @@ void MainWindow::LoadPaletteData(const char *filename){
         QMessageBox::warning(this, "Load Palette Fail", "Cannot open file for read!");
         return;
     }
-    fread(CLUTF, sizeof(uint32_t), 256, f);
-    fread(CLUTB, sizeof(uint32_t), 256, f);
+    const bool ok = fread(CLUTF, sizeof(uint32_t), 256, f) == 256 &&
+                    fread(CLUTB, sizeof(uint32_t), 256, f) == 256;
     fclose(f);
+    if (!ok) {
+        QMessageBox::warning(this, "Load Palette Fail", "Palette file must contain two banks of 256 colours!");
+        return;
+    }
+    // Older files may contain missing alpha bytes. GFXTool has no
+    // alpha controls, so only foreground index 0 may be transparent.
+    for (int i = 0; i < 256; ++i) {
+        CLUTF[i] = (CLUTF[i] & 0x00FFFFFFu) | (i == 0 ? 0u : 0xFF000000u);
+        CLUTB[i] = (CLUTB[i] & 0x00FFFFFFu) | 0xFF000000u;
+    }
 
     renderPaletteCanvas();
     renderEditorCanvas(); // redraw empty icon
@@ -3100,7 +3125,8 @@ void MainWindow::doSpreadPalette(uint8_t targetID){
         r = r1 + (int)((r2 - r1) * t);
         g = g1 + (int)((g2 - g1) * t);
         b = b1 + (int)((b2 - b1) * t);
-        CCLUT[start + i] = (r << 16) | (g << 8) | b;
+        CCLUT[start + i] = (uint32_t(r) << 16) | (uint32_t(g) << 8) | b |
+            ((CCLUT == CLUTF && start + i == 0) ? 0u : 0xFF000000u);
     }
     renderPaletteCanvas();
 }
@@ -3137,7 +3163,8 @@ bool extractGifPalette(const QString &path, uint32_t CLUT[256])
         int r = p[offset + i*3 + 0];
         int g = p[offset + i*3 + 1];
         int b = p[offset + i*3 + 2];
-        CLUT[i] = (r << 16) | (g << 8) | b;
+        CLUT[i] = (uint32_t(r) << 16) | (uint32_t(g) << 8) | b |
+            ((CLUT == CLUTF && i == 0) ? 0u : 0xFF000000u);
     }
 
     return true;
@@ -3221,8 +3248,9 @@ bool extractPngPalette(const QString &path, uint32_t CLUT[256])
                     int g = gs / cnt;
                     int b = bs / cnt;
 
-                    CLUT[paletteRangerOffset + i] =
-                        (r << 16) | (g << 8) | b;
+                    const int index = paletteRangerOffset + i;
+                    CLUT[index] = (uint32_t(r) << 16) | (uint32_t(g) << 8) | b |
+                        ((CLUT == CLUTF && index == 0) ? 0u : 0xFF000000u);
                 }
 
                 return true;
@@ -3243,11 +3271,14 @@ bool extractPngPalette(const QString &path, uint32_t CLUT[256])
                     int r = p[pos+8 + i*3 + 0];
                     int g = p[pos+8 + i*3 + 1];
                     int b = p[pos+8 + i*3 + 2];
-                    CLUT[i + doffset] = (r << 16) | (g << 8) | b;
+                    const int index = i + doffset;
+                    CLUT[index] = (uint32_t(r) << 16) | (uint32_t(g) << 8) | b |
+                        ((CLUT == CLUTF && index == 0) ? 0u : 0xFF000000u);
                 }
                 // fill rest with black
                 if(paletteRanger == false)
-                    for (int i = n; i < 256; i++) CLUT[i] = 0;
+                    for (int i = n; i < 256; i++)
+                        CLUT[i] = (CLUT == CLUTF && i == 0) ? 0u : 0xFF000000u;
                 return true;
             }
         }
@@ -3310,7 +3341,7 @@ static inline int biasedPaletteDistance(int sr, int sg, int sb, int pr, int pg, 
 
 bool MainWindow::importGif(const QString &path){
 
-    bool isGIF, isPNG;
+    bool isGIF = false, isPNG = false;
     QImage img(path);
     if (img.isNull()) return false;
 
@@ -3347,7 +3378,8 @@ bool MainWindow::importGif(const QString &path){
             ct = img.colorTable();
             for (int i = 0; i < ct.size(); i++) {
                 int r = qRed(ct[i + ictoffset]), g = qGreen(ct[i + ictoffset]), b = qBlue(ct[i + ictoffset]);
-                CCLUT[i] = (r << 16) | (g << 8) | b;
+                CCLUT[i] = (uint32_t(r) << 16) | (uint32_t(g) << 8) | b |
+                    ((CCLUT == CLUTF && i == 0) ? 0u : 0xFF000000u);
                 CBACKUP_CLUT[i] = CCLUT[i];
             }
         }
@@ -3900,11 +3932,15 @@ void MainWindow::UpdatePrePaletteMixer(){
     ui->lblPaletteColour->setPalette(pal);
 
     ui->lblPaletteForeSelect->setPalette(pal);
-    CCLUT[numSelectedPaletteID] = (pltColourPreset[0] << 16) | (pltColourPreset[1] << 8) | (pltColourPreset[2]);
+    CCLUT[numSelectedPaletteID] =
+        (uint32_t(pltColourPreset[0]) << 16) |
+        (uint32_t(pltColourPreset[1]) << 8) |
+        uint32_t(pltColourPreset[2]) |
+        ((CCLUT == CLUTF && numSelectedPaletteID == 0) ? 0u : 0xFF000000u);
 
     renderPaletteCanvas();
 
-    bit32col = CCLUT[numSelectedPaletteID] | (255 << 24);    // making sure that the alpha channel is full solid
+    bit32col = CCLUT[numSelectedPaletteID] | 0xFF000000u; // RGB preview is always opaque
 
     // ---- RGB888 to RGB565 conversion ---- // TODO: convert the 32bit value (ignoring the alpha channel not important, to a RGB565 format)
     int r = pltColourPreset[0];
@@ -3943,9 +3979,20 @@ void MainWindow::SelectedPaletteID(){
     ui->txtPaletteG->setText(QString::number(g));
     ui->txtPaletteB->setText(QString::number(b));
 
-    ui->horizontalScrollBarR->setValue(r);
-    ui->horizontalScrollBarG->setValue(g);
-    ui->horizontalScrollBarB->setValue(b);
+    // Changing the selected swatch should not fire three separate
+    // colour edits while the RGB controls are being populated.
+    pltColourPreset[0] = r;
+    pltColourPreset[1] = g;
+    pltColourPreset[2] = b;
+    {
+        const QSignalBlocker blockR(ui->horizontalScrollBarR);
+        const QSignalBlocker blockG(ui->horizontalScrollBarG);
+        const QSignalBlocker blockB(ui->horizontalScrollBarB);
+        ui->horizontalScrollBarR->setValue(r);
+        ui->horizontalScrollBarG->setValue(g);
+        ui->horizontalScrollBarB->setValue(b);
+    }
+    UpdatePrePaletteMixer();
 }
 
 void MainWindow::doReassignedPalette(uint8_t targetPalID){
