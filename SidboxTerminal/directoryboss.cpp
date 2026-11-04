@@ -133,7 +133,7 @@ DirectoryBoss::DirectoryBoss(SerialHandler *sh, QWidget *parent)
     connect(ui->cmdChangeDir, &QPushButton::clicked, this, [=]() { sendNewDirectory(); });
 
     connect(ui->cmdFiltersetDefaults, &QPushButton::clicked, this, [=](){
-        ui->txtAcceptFiles->setText("sba,sid,wav,mp3,mod,s3m,xm,ym,mid,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,spc,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80");
+        ui->txtAcceptFiles->setText("sba,sid,wav,mp3,mod,s3m,xm,ym,mid,prg,tpz,tap,pls,tzx,scr,sap,tmc,cmc,dmc,fc,dlt,mpt,cmr,rmt,tm2,cm3,ay,rgb,stp,tfx,tpa,vgm,vgp,spc,iff,gg,sms,med,ast,dw,sa,mus,str,app,z80,avi");
     });
 
     connect(ui->cmdFiltersetChipTunes, &QPushButton::clicked, this, [=](){
@@ -578,6 +578,7 @@ void DirectoryBoss::onDirListDoubleClicked(const QModelIndex &index)
             handlers["mus"] = handlers["wav"];
             handlers["str"] = handlers["wav"];
             handlers["mid"] = handlers["wav"];
+            handlers["avi"] = handlers["wav"];
 
             // Viewable Pictures
             handlers["iff"] = [this, txForPics](const QString &f){ serial->writeData(txForPics.toUtf8()); };
